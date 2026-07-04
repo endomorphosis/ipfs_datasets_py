@@ -539,6 +539,80 @@ def test_modal_slots_emit_title_section_span_signature_slots_for_todo_cluster_se
             assert triple_values == expected[predicate]
 
 
+def test_modal_ir_decompiler_emits_legal_action_semantic_atoms_for_packet_000122() -> None:
+    text = (
+        "The Secretary, acting through the Director, shall conduct local asthma "
+        "surveillance activities to collect data on the prevalence of asthma. "
+        "A master shall deliver to a seaman a full and true account at least "
+        "48 hours before paying off or discharging the seaman."
+    )
+    second_start = text.index("A master")
+    document = ModalIRDocument(
+        document_id="us-code-packet-000122",
+        source="42 U.S.C. 247b; 46 U.S.C. 10310",
+        normalized_text=text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(name="conduct"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-packet-000122",
+                    start_char=0,
+                    end_char=second_start - 1,
+                    citation="42 U.S.C. 247b",
+                ),
+            ),
+            ModalIRFormula(
+                formula_id="f2",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FLogic",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(name="deliver"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-packet-000122",
+                    start_char=second_start,
+                    end_char=len(text),
+                    citation="46 U.S.C. 10310",
+                ),
+            ),
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+    triple_pairs = {
+        (str(triple.get("predicate", "")), str(triple.get("object", "")))
+        for triple in triples
+    }
+
+    assert "public_health_surveillance" in slot_map[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "seaman_discharge" in slot_map["typed-decompiler-source-semantic-atom"]
+    assert "wage_account_discharge" in slot_map[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "deontic->conditional_normative" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert ("typed_decompiler_semantic_atom", "seaman_discharge") in triple_pairs
+    assert (
+        "typed_decompiler_family_pair_semantic_atom",
+        "seaman_discharge:frame->temporal",
+    ) in triple_pairs
+
+
 def test_modal_slots_emit_terminal_and_profile_alignment_slots_for_todo_cluster_sections() -> None:
     expected_by_section = {
         ("50", "31 to 39."): {
@@ -955,6 +1029,57 @@ def test_modal_decompiler_refines_only_after_condition_as_deontic_temporal_scope
     ]
 
 
+def test_modal_decompiler_emits_condition_role_slot_pair_prototypes() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_condition_role_slot_pair",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="provide_emergency_notice", arguments=[]),
+        provenance=ModalIRProvenance(
+            source_id="condition-role-slot-pair-doc",
+            start_char=0,
+            end_char=103,
+            citation="29 U.S.C. 179",
+        ),
+        conditions=["not later than the Board shall file a petition"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id="condition-role-slot-pair-doc",
+        source="us_code",
+        normalized_text=(
+            "Not later than the Board shall file a petition, "
+            "the court shall provide emergency notice."
+        ),
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    semantic_slots = set(slot_texts["semantic_slot_prototype"])
+    family_slots = set(slot_texts["family_semantic_slot_prototype"])
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    role_slot = "slot-pair:conditions:0|predicate-role:subject+action+object+temporal"
+
+    assert role_slot in semantic_slots
+    assert f"deontic||{role_slot}" in family_slots
+    assert f"temporal||{role_slot}" in family_slots
+    assert f"deontic||{role_slot}||deontic.ir" in legal_ir_slots
+    assert f"temporal||{role_slot}||TDFOL.prover" in legal_ir_slots
+    assert (
+        "temporal||slot-pair:conditions:0|predicate-role:subject:board||deontic.ir"
+        in legal_ir_slots
+    )
+    assert (
+        "temporal||slot-pair:conditions:0|predicate-role:action:file||deontic.ir"
+        in legal_ir_slots
+    )
+
+
 def test_modal_decompiler_projects_condition_scope_typed_roles_to_triples() -> None:
     formula = ModalIRFormula(
         formula_id="f_condition_typed_roles",
@@ -1143,6 +1268,93 @@ def test_modal_decompiler_refines_frame_status_heading_typed_ir_slots() -> None:
         "typed_ir_refined_modal_pair_cue"
     ]
     assert "frame_to_o" in slot_texts["typed_ir_refined_modal_operator_pair_key"]
+
+
+def test_modal_decompiler_uses_status_atoms_as_target_reconstruction_cues() -> None:
+    text = (
+        "Sec. 1180 - Transferred From the U.S. Government Publishing Office. "
+        "Editorial Notes Codification Section 1180 was transferred to section "
+        "290aa-5 of Title 42."
+    )
+    formula = ModalIRFormula(
+        formula_id="f_transferred_heading_frame",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="transferred_heading", role="heading"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-21-1180-06cb70a4aa076ffd",
+            start_char=0,
+            end_char=len(text),
+            citation="21 U.S.C. 1180",
+        ),
+        metadata={"fallback_rule": "uscode_editorial_status_heading_v1"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-21-1180-06cb70a4aa076ffd",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "transferred" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "transferred:frame->temporal" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->temporal:transferred" in slot_texts[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert "frame->conditional_normative:transferred" in slot_texts[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+
+
+def test_modal_decompiler_uses_omitted_status_atom_for_deontic_reconstruction_cue() -> None:
+    text = (
+        "Sec. 752 - Omitted From the U.S. Government Publishing Office. "
+        "Section was omitted as obsolete."
+    )
+    formula = ModalIRFormula(
+        formula_id="f_omitted_heading_frame",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="omitted_heading", role="heading"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-25-752-715e6f2da21142e8",
+            start_char=0,
+            end_char=len(text),
+            citation="25 U.S.C. 752",
+        ),
+        metadata={"fallback_rule": "uscode_editorial_status_heading_v1"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-25-752-715e6f2da21142e8",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "omitted" in slot_texts["typed-decompiler-target-semantic-atom"]
+    assert "omitted:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->deontic:omitted" in slot_texts[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert "frame->conditional_normative:omitted" in slot_texts[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
 
 
 def test_modal_decompiler_refines_frame_statutory_deontic_temporal_slots() -> None:
@@ -1404,6 +1616,105 @@ def test_modal_decompiler_refines_effective_date_temporal_typed_ir_slots() -> No
         "typed_ir_refined_modal_pair_cue"
     ]
     assert "f_to_o_pipe" in slot_texts["typed_ir_refined_modal_operator_pair_key"]
+
+
+def test_modal_decompiler_emits_family_pair_semantic_reconstruction_text() -> None:
+    frame_text = (
+        "The authority under this section shall apply after the effective date."
+    )
+    frame_document = ModalIRDocument(
+        document_id="packet-002444-frame-semantic-reconstruction",
+        source="us_code",
+        normalized_text=frame_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-002444-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(name="authority_applies", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-22-967-cdb9be2f8d36afa2",
+                    start_char=0,
+                    end_char=len(frame_text),
+                    citation="22 U.S.C. 967",
+                ),
+                conditions=["after the effective date"],
+                metadata={"cue": "shall"},
+            )
+        ],
+    )
+    temporal_text = (
+        "On and after January 1, 2025, this section shall remain effective."
+    )
+    temporal_document = ModalIRDocument(
+        document_id="packet-002444-temporal-semantic-reconstruction",
+        source="us_code",
+        normalized_text=temporal_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-002444-temporal",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(name="remain_effective", role="clause"),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-16-8305-98035776ea89e400",
+                    start_char=0,
+                    end_char=len(temporal_text),
+                    citation="16 U.S.C. 8305",
+                ),
+                conditions=["on and after January 1, 2025"],
+            )
+        ],
+    )
+
+    frame_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(frame_document)
+    )
+    temporal_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(temporal_document)
+    )
+
+    frame_reconstructions = set(
+        frame_slots["typed_ir_family_pair_semantic_reconstruction"]
+    )
+    assert any(
+        value.startswith(
+            "legal frame source reconstructs obligation permission prohibition"
+        )
+        and "authority" in value
+        and "effective date" in value
+        for value in frame_reconstructions
+    )
+    assert any(
+        value.startswith("legal frame source reconstructs temporal deadline period")
+        and "after effective date" in value
+        for value in frame_reconstructions
+    )
+    assert {
+        "frame->deontic",
+        "frame->temporal",
+    }.issubset(set(frame_slots["typed_ir_cross_family_semantic_support"]))
+
+    temporal_reconstructions = set(
+        temporal_slots["typed_ir_family_pair_semantic_reconstruction"]
+    )
+    assert any(
+        value.startswith("temporal deadline period source reconstruction")
+        and "on and after" in value.lower()
+        and "january 1 2025" in value.lower()
+        for value in temporal_reconstructions
+    )
+    assert "temporal->temporal" in temporal_slots[
+        "typed_ir_cross_family_semantic_support"
+    ]
 
 
 def test_modal_decompiler_emits_domain_atoms_for_appropriation_and_research_sections() -> None:
@@ -1815,6 +2126,125 @@ def test_modal_decompiler_reconstructs_office_seal_as_cec_view_slot() -> None:
     )
 
 
+def test_modal_decompiler_reconstructs_foreign_relations_exchange_program_atoms() -> None:
+    source_text = (
+        "Sec. 2735 - Foreign relations exchange programs. The Secretary may "
+        "provide exchange programs under this section."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000461-foreign-relations-exchange-program",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000461-foreign-exchange",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="foreign_relations_exchange_programs",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-22-2735-6dca3bae4c640797",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="22 U.S.C. 2735",
+                ),
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert "foreign_relations_exchange_program" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "exchange_program" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert (
+        "frame||slot:source-semantic-atom:"
+        "foreign_relations_exchange_program||CEC.native"
+        in legal_ir_slots
+    )
+    assert (
+        "frame||slot:source-semantic-atom:"
+        "foreign_relations_exchange_program||knowledge_graphs.neo4j_compat"
+        in legal_ir_slots
+    )
+
+
+def test_modal_decompiler_reconstructs_repealed_biological_product_history_atoms() -> None:
+    source_text = (
+        "§§141 to 148. Repealed. Section 141 provided for regulation of sale "
+        "of and interstate traffic of viruses, serums, toxins, antitoxins."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000461-biological-products-repealed-history",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000461-biological-products",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="biological_product_regulation_history",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-42-141 to 148.-b4619e2a4060b8f9",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="42 U.S.C. 141 to 148.",
+                ),
+                metadata={"status_keyword": "repealed"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert "repealed" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "biological_product_regulation" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "biological_product_interstate_traffic" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert (
+        "frame||slot:source-semantic-atom:"
+        "biological_product_regulation||deontic.ir"
+        in legal_ir_slots
+    )
+    assert (
+        "frame||slot:source-semantic-atom:"
+        "biological_product_interstate_traffic||CEC.native"
+        in legal_ir_slots
+    )
+
+
 def test_modal_decompiler_emits_directional_frame_target_reconstruction_pairs() -> None:
     source_text = "Sec. 799 - Regulation of power resources."
     document = ModalIRDocument(
@@ -1905,3 +2335,104 @@ def test_modal_decompiler_emits_directional_temporal_deontic_reconstruction_pair
     assert "conditioned+temporal:temporal->deontic" in set(
         slot_texts["typed-decompiler-target-reconstruction-scope"]
     )
+
+
+def test_modal_decompiler_reconstructs_public_document_allotment_semantics() -> None:
+    source_text = (
+        "§731. Allotments of public documents printed after expiration of terms "
+        "of Members of Congress; rights of retiring Members to documents. "
+        "The Congressional allotment of public documents, other than the "
+        "Congressional Record, printed after the expiration of a Member's term "
+        "shall be available to the retiring Member."
+    )
+    document = ModalIRDocument(
+        document_id="packet-001018-public-document-allotment",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-001018-public-document-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="framed as",
+                ),
+                predicate=ModalIRPredicate(
+                    name="public_document_allotment",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-44-731.-0e92fb9cf6b137c3",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="44 U.S.C. 731.",
+                ),
+                metadata={"cue": "after"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert {
+        "public_document_allotment",
+        "post_term_member_right",
+        "post_term_public_document_allotment",
+        "retiring_member_document_right",
+        "temporal_condition",
+    }.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->temporal",
+    }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-pair"]))
+    assert {
+        "legal frame source reconstructs conditional obligation",
+        "legal frame source reconstructs temporal deadline period",
+    }.issubset(set(slot_texts["typed_ir_family_pair_reconstruction_support"]))
+
+
+def test_modal_decompiler_reconstructs_repealed_range_status_semantics() -> None:
+    source_text = (
+        "Secs. 262 to 297 - Repealed. Dec. 17, 1943, ch. 344, §1, "
+        "57 Stat. 600."
+    )
+    document = ModalIRDocument(
+        document_id="packet-001018-repealed-range",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-001018-repealed-range-deontic",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(
+                    name="repealed_sections_status",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-8-262-0a75e91cd7f00479",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="8 U.S.C. 262",
+                ),
+                metadata={"cue": "repealed"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "repealed" in set(slot_texts["typed-decompiler-source-semantic-atom"])
+    assert "deontic->temporal" in set(
+        slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "deontic->conditional_normative" in set(
+        slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "repealed" in set(slot_texts["source_status_clause_legal_semantic_atom"])

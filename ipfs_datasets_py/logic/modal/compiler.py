@@ -2940,6 +2940,16 @@ class DeterministicModalCompiler:
                 self.config.modal_temporal_target_family_outvote_margin,
             ),
             (
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                bool(signals.get("has_condition_or_exception_scope")),
+                "frame_conditional_normative_family_outvoted",
+                (
+                    "Frame evidence outvotes conditional-normative scope evidence "
+                    "for a compiler ambiguity policy pair."
+                ),
+                self.config.modal_conditional_target_family_outvote_margin,
+            ),
+            (
                 ModalLogicFamily.EPISTEMIC.value,
                 bool(
                     signals.get("has_epistemic_scope")
@@ -2949,6 +2959,19 @@ class DeterministicModalCompiler:
                 "frame_epistemic_family_outvoted",
                 (
                     "Frame evidence outvotes epistemic cue evidence for a "
+                    "compiler ambiguity policy pair."
+                ),
+                0.0,
+            ),
+            (
+                ModalLogicFamily.DOXASTIC.value,
+                bool(
+                    signals.get("has_doxastic_scope")
+                    or signals.get("has_doxastic_cue")
+                ),
+                "frame_doxastic_family_outvoted",
+                (
+                    "Frame evidence outvotes doxastic belief or intent evidence for a "
                     "compiler ambiguity policy pair."
                 ),
                 0.0,
@@ -3233,6 +3256,10 @@ class DeterministicModalCompiler:
         )
         if family_margin >= outvote_margin_threshold:
             return []
+        is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="temporal_deontic_scope_family_outvoted",
@@ -3245,6 +3272,19 @@ class DeterministicModalCompiler:
                 metadata={
                     "family_margin": round(family_margin, 6),
                     "family_ranking": list(ranking),
+                    "is_compiler_ambiguity_bundle_pair": (
+                        is_compiler_ambiguity_bundle_pair
+                    ),
+                    "ambiguity_policy_bundle": (
+                        "compiler_ambiguity"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
+                    "compiler_ambiguity_policy_pair": (
+                        f"{predicted_family}->{target_family}"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": outvote_margin_threshold,
                     "predicted_family": predicted_family,

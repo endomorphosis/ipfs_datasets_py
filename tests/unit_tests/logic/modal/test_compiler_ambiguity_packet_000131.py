@@ -1,22 +1,44 @@
-"""Regression coverage for packet-000122 refined modal family cue policy."""
+"""Regression coverage for packet-000131 compiler registry cue policies."""
 
 from __future__ import annotations
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
-    COMPILER_REFINED_PACKET_000122_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000131_FAMILY_PAIRS,
     ModalLogicFamily,
     compiler_ambiguity_policy_targets,
-    compiler_refined_modal_family_cue_margin_buffer,
+    compiler_required_adaptive_ambiguity_targets,
     is_compiler_ambiguity_policy_pair,
     is_compiler_required_adaptive_ambiguity_pair,
     is_priority_signal_free_adaptive_ambiguity_pair,
     is_signal_free_adaptive_ambiguity_pair,
+    priority_signal_free_adaptive_ambiguity_targets,
+    signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
 )
 
 
-def test_packet_000122_family_cue_pairs_are_registered() -> None:
+def test_packet_000131_family_pairs_are_explicit_compiler_policy_pairs() -> None:
     expected_pairs = (
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DOXASTIC.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.FRAME.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.TEMPORAL.value,
+        ),
         (
             ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
             ModalLogicFamily.DEONTIC.value,
@@ -30,30 +52,27 @@ def test_packet_000122_family_cue_pairs_are_registered() -> None:
             ModalLogicFamily.FRAME.value,
         ),
         (
-            ModalLogicFamily.FRAME.value,
-            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-        ),
-        (
-            ModalLogicFamily.FRAME.value,
             ModalLogicFamily.TEMPORAL.value,
-        ),
-        (
             ModalLogicFamily.FRAME.value,
-            ModalLogicFamily.DEONTIC.value,
-        ),
-        (
-            ModalLogicFamily.FRAME.value,
-            ModalLogicFamily.DOXASTIC.value,
         ),
         (
             ModalLogicFamily.TEMPORAL.value,
-            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.TEMPORAL.value,
         ),
     )
 
-    assert COMPILER_REFINED_PACKET_000122_FAMILY_PAIRS == expected_pairs
+    assert COMPILER_AMBIGUITY_PACKET_000131_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
@@ -70,11 +89,4 @@ def test_packet_000122_family_cue_pairs_are_registered() -> None:
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
-        )
-        assert (
-            compiler_refined_modal_family_cue_margin_buffer(
-                predicted_family,
-                target_family,
-            )
-            >= 0.0015
         )

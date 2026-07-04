@@ -45,6 +45,8 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "any individual who",
     "any entity that",
     "whoever",
+    "failure of",
+    "failure to",
     "as provided by",
     "as provided in",
     "as provided under",
@@ -378,6 +380,7 @@ _EPISTEMIC_SCOPE_PHRASES = (
     "findings that",
     "has reason to believe",
     "has reason to know",
+    "in the opinion of",
     "is deemed",
     "knowledge of",
     "reason to believe",
@@ -1054,6 +1057,13 @@ _DEONTIC_STUDY_REPORT_DUTY_SCOPE_PHRASES = (
     "shall conduct the study",
     "shall study",
     "study and report",
+)
+_DEONTIC_IMPLEMENTATION_BUDGET_SCOPE_PHRASES = (
+    "implementation of provisions",
+    "preparation and submission of annual budget program",
+    "annual budget program",
+    "maintenance of accounts",
+    "audit by government accountability office",
 )
 _TEMPORAL_NOTIFICATION_DEADLINE_SCOPE_RE = re.compile(
     r"\b(?:notification|notify|notifies|notified|notice|report|reports|"
@@ -2315,6 +2325,10 @@ def _weighted_modal_family_counts(
         resolved_signals,
     )
     _apply_vacant_section_frame_scope_backfill(
+        counts,
+        resolved_signals,
+    )
+    _apply_editorial_temporal_status_scope_backfill(
         counts,
         resolved_signals,
     )
@@ -4230,6 +4244,31 @@ def _apply_vacant_section_frame_scope_backfill(
     )
 
 
+def _apply_editorial_temporal_status_scope_backfill(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Keep effective-date/status evidence visible in editorial frame headings."""
+    if (
+        not bool(signals.get("has_frame_editorial_scope_phrase"))
+        or not bool(signals.get("has_frame_context"))
+        or not bool(signals.get("has_temporal_scope"))
+        or not bool(signals.get("has_temporal_status_scope"))
+        or bool(signals.get("has_vacant_section_scope"))
+    ):
+        return
+    frame_family = ModalLogicFamily.FRAME.value
+    temporal_family = ModalLogicFamily.TEMPORAL.value
+    frame_count = float(counts.get(frame_family, 0.0))
+    temporal_count = float(counts.get(temporal_family, 0.0))
+    if frame_count <= 0.0:
+        return
+    counts[temporal_family] = max(
+        temporal_count,
+        frame_count + 0.01,
+    )
+
+
 def _apply_directional_modal_family_pair_backfill(
     counts: Dict[str, float],
     signals: Mapping[str, bool],
@@ -5090,6 +5129,7 @@ def _apply_refined_modal_family_cue_pair_balance(
     conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
     frame_family = ModalLogicFamily.FRAME.value
     epistemic_family = ModalLogicFamily.EPISTEMIC.value
+    doxastic_family = ModalLogicFamily.DOXASTIC.value
     alethic_family = ModalLogicFamily.ALETHIC.value
 
     deontic_count = float(counts.get(deontic_family, 0.0))
@@ -5097,6 +5137,7 @@ def _apply_refined_modal_family_cue_pair_balance(
     conditional_count = float(counts.get(conditional_family, 0.0))
     frame_count = float(counts.get(frame_family, 0.0))
     epistemic_count = float(counts.get(epistemic_family, 0.0))
+    doxastic_count = float(counts.get(doxastic_family, 0.0))
     alethic_count = float(counts.get(alethic_family, 0.0))
 
     has_deontic_scope = bool(
@@ -5122,6 +5163,9 @@ def _apply_refined_modal_family_cue_pair_balance(
     )
     has_deontic_study_report_duty_scope_phrase = bool(
         signals.get("has_deontic_study_report_duty_scope_phrase")
+    )
+    has_deontic_implementation_budget_scope_phrase = bool(
+        signals.get("has_deontic_implementation_budget_scope_phrase")
     )
     has_temporal_notification_deadline_scope_phrase = bool(
         signals.get("has_temporal_notification_deadline_scope_phrase")
@@ -5180,6 +5224,10 @@ def _apply_refined_modal_family_cue_pair_balance(
         signals.get("has_epistemic_scope_phrase")
         or signals.get("has_epistemic_cue")
     )
+    has_doxastic_scope = bool(
+        signals.get("has_doxastic_scope")
+        or signals.get("has_doxastic_cue")
+    )
     has_direct_frame_scope_context = bool(
         signals.get("has_frame_context")
         or signals.get("has_frame_scope_phrase")
@@ -5224,6 +5272,7 @@ def _apply_refined_modal_family_cue_pair_balance(
             temporal_count,
             conditional_count,
             epistemic_count,
+            doxastic_count,
             alethic_count,
         )
         if (
@@ -5317,12 +5366,32 @@ def _apply_refined_modal_family_cue_pair_balance(
                 epistemic_floor,
             )
             epistemic_count = float(counts.get(epistemic_family, 0.0))
+        if (
+            frame_count > doxastic_count
+            and has_doxastic_scope
+            and bool(signals.get("has_doxastic_cue"))
+        ):
+            doxastic_floor = _scaled_competing_scope_backfill(
+                source_count=frame_count,
+                ratio=0.9,
+                minimum=max(
+                    doxastic_count,
+                    _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                ),
+                maximum=max(
+                    frame_count,
+                    _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                ),
+            )
+            counts[doxastic_family] = max(doxastic_count, doxastic_floor)
+            doxastic_count = float(counts.get(doxastic_family, 0.0))
         strongest_non_frame = max(
             strongest_non_frame,
             deontic_count,
             temporal_count,
             conditional_count,
             epistemic_count,
+            doxastic_count,
         )
         if strongest_non_frame > 0.0 and frame_count > strongest_non_frame:
             frame_cap = (
@@ -5363,6 +5432,13 @@ def _apply_refined_modal_family_cue_pair_balance(
                 frame_count + 0.01,
             )
             conditional_count = float(counts.get(conditional_family, 0.0))
+        if (
+            frame_count >= doxastic_count
+            and doxastic_count > 0.0
+            and bool(signals.get("has_doxastic_cue"))
+        ):
+            counts[doxastic_family] = max(doxastic_count, frame_count + 0.01)
+            doxastic_count = float(counts.get(doxastic_family, 0.0))
         if (
             frame_count >= epistemic_count
             and epistemic_count > 0.0
@@ -5475,15 +5551,36 @@ def _apply_refined_modal_family_cue_pair_balance(
     if (
         has_temporal_notification_deadline_scope_phrase
         and has_deontic_cue
-        and has_temporal_deadline_scope
         and temporal_count > 0.0
         and deontic_count > 0.0
     ):
+        temporal_margin = (
+            _STRONG_SCOPE_BACKFILL_WEIGHT
+            if has_temporal_deadline_scope
+            else _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+        )
         counts[temporal_family] = max(
             temporal_count,
-            deontic_count + 0.08,
+            deontic_count + temporal_margin,
         )
         temporal_count = float(counts.get(temporal_family, 0.0))
+
+    # temporal -> deontic:
+    # Study/report sections often contain deadlines and fiscal-year timing, but
+    # "shall conduct a study" remains the operative duty instead of a purely
+    # temporal event.
+    if (
+        temporal_count >= deontic_count
+        and has_deontic_study_report_duty_scope_phrase
+        and has_deontic_cue
+        and has_temporal_deadline_scope
+        and deontic_count > 0.0
+    ):
+        counts[deontic_family] = max(
+            deontic_count,
+            temporal_count + 0.01,
+        )
+        deontic_count = float(counts.get(deontic_family, 0.0))
 
     # frame/conditional/temporal -> deontic:
     # mandatory program-establishment clauses often contain purpose phrases,
@@ -5538,6 +5635,23 @@ def _apply_refined_modal_family_cue_pair_balance(
             frame_count + 0.01,
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
+
+    # frame -> epistemic:
+    # Public-land and townsite provisions often include settlement/authority
+    # frame nouns around an "in the opinion of" finding.  Preserve that
+    # determination evidence when it is otherwise just below frame scaffolding.
+    if (
+        frame_count >= epistemic_count
+        and epistemic_count > 0.0
+        and has_strong_epistemic_scope
+        and has_frame_scope_context
+        and not has_editorial_frame_context
+    ):
+        counts[epistemic_family] = max(
+            epistemic_count,
+            frame_count + 0.01,
+        )
+        epistemic_count = float(counts.get(epistemic_family, 0.0))
 
     # temporal -> deontic:
     # repeal-style statutory notes can surface dense date/status tokens that
@@ -6717,6 +6831,19 @@ def _apply_refined_modal_family_cue_pair_balance(
             _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
             deontic_increment,
         )
+        deontic_count = float(counts.get(deontic_family, 0.0))
+        if (
+            conditional_count >= deontic_count
+            and has_deontic_cue
+            and (
+                bool(signals.get("has_deontic_scope_phrase"))
+                or has_deontic_authorization_scope_phrase
+                or has_deontic_benefit_entitlement_scope_phrase
+                or has_deontic_report_duty_scope_phrase
+                or has_statutory_scope_reference
+            )
+        ):
+            counts[deontic_family] = max(deontic_count, conditional_count + 0.01)
 
     deontic_count = float(counts.get(deontic_family, 0.0))
     temporal_count = float(counts.get(temporal_family, 0.0))
@@ -6827,6 +6954,26 @@ def _apply_refined_modal_family_cue_pair_balance(
             frame_overflow = frame_count - frame_cap
             counts[frame_family] = frame_cap + (0.2 * math.log1p(frame_overflow))
 
+    # deontic -> conditional_normative:
+    # Implementation and budget-accounting sections use powers/functions
+    # language, but the legal force is scoped "with respect to" and through
+    # annual program/account/audit conditions. Apply this after generic
+    # smoothing so the packet-specific cue remains the final tie-breaker.
+    deontic_count = float(counts.get(deontic_family, 0.0))
+    conditional_count = float(counts.get(conditional_family, 0.0))
+    if (
+        deontic_count >= conditional_count
+        and has_deontic_implementation_budget_scope_phrase
+        and has_structural_conditional_scope
+        and has_statutory_scope_reference
+        and conditional_count > 0.0
+        and not has_deontic_cue
+    ):
+        counts[conditional_family] = max(
+            conditional_count,
+            deontic_count + 0.01,
+        )
+
 
 def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
     counts: Dict[str, float],
@@ -6921,6 +7068,7 @@ def _apply_competing_deontic_temporal_scope_phrase_reinforcement(
         and not bool(signals.get("has_temporal_within_scope"))
         and not bool(signals.get("has_temporal_status_scope"))
         and not bool(signals.get("has_calendar_date_scope"))
+        and not bool(signals.get("has_temporal_notification_deadline_scope_phrase"))
         and temporal_count >= deontic_count
     ):
         counts[deontic_family] = temporal_count + 0.01
@@ -7376,8 +7524,15 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_study_report_duty_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_STUDY_REPORT_DUTY_SCOPE_PHRASES
     )
+    deontic_implementation_budget_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_IMPLEMENTATION_BUDGET_SCOPE_PHRASES
+    )
     temporal_notification_deadline_scope_phrase = bool(
         _TEMPORAL_NOTIFICATION_DEADLINE_SCOPE_RE.search(normalized_text)
+        and not _contains_scope_phrase(
+            normalized_text,
+            tuple(_NON_TEMPORAL_PROCEDURAL_AFTER_CUES),
+        )
     )
     deontic_program_duty_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_PROGRAM_DUTY_SCOPE_PHRASES
@@ -7552,6 +7707,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         ),
         "has_deontic_study_report_duty_scope_phrase": bool(
             deontic_study_report_duty_scope_phrase
+        ),
+        "has_deontic_implementation_budget_scope_phrase": bool(
+            deontic_implementation_budget_scope_phrase
         ),
         "has_temporal_notification_deadline_scope_phrase": bool(
             temporal_notification_deadline_scope_phrase

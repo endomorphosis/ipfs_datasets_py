@@ -82,6 +82,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("if", "if"),
     ("when", "when"),
     ("until", "until"),
+    ("within", "within"),
     ("after", "after"),
     ("before", "before"),
     ("by", "by"),
@@ -107,6 +108,7 @@ _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "by": "deadline",
     "no_later_than": "deadline",
     "not_later_than": "deadline",
+    "within": "deadline",
     "upon": "after",
 }
 _USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
@@ -155,6 +157,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("civil actions", "civil_action"),
     ("civil action", "civil_action"),
     ("civil enforcement", "civil_enforcement"),
+    ("former jeopardy", "former_jeopardy_protection"),
+    ("double jeopardy", "former_jeopardy_protection"),
+    ("jeopardy for the same offense", "former_jeopardy_protection"),
     ("protection from liability", "liability_protection"),
     ("protected from liability", "liability_protection"),
     ("liability protection", "liability_protection"),
@@ -177,17 +182,43 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("national game preserve", "game_preserve"),
     ("white horse hill national game preserve", "white_horse_hill_game_preserve"),
     ("government publications", "government_publication_depository_access"),
+    ("public documents printed after expiration of terms", "post_term_public_document_allotment"),
+    ("allotments of public documents", "public_document_allotment"),
+    ("congressional allotment of public documents", "public_document_allotment"),
     ("free use of government publications", "government_publication_depository_access"),
     ("depository libraries", "government_publication_depository_access"),
+    ("distribution of precedents", "congressional_precedents_distribution"),
+    ("sets of the precedents", "congressional_precedents_distribution"),
+    ("official use", "official_use_restriction"),
+    ("property of the united states government", "government_property_marking"),
     ("free use of the general public", "public_access_requirement"),
+    ("retiring members to documents", "retiring_member_document_right"),
+    ("rights of retiring members", "retiring_member_document_right"),
+    ("expiration of terms of members of congress", "post_term_member_right"),
     ("disposal of unwanted publications", "publication_disposal_authority"),
     ("dispose of them after retention", "publication_disposal_authority"),
+    ("government losses in shipment", "government_shipment_loss_prevention"),
+    ("shipment of valuables", "valuable_shipment_regulation"),
+    ("valuables in shipment", "valuable_shipment_regulation"),
+    ("comply with the regulations", "regulatory_compliance_duty"),
+    ("prescribe regulations governing", "regulation_prescription_authority"),
+    ("risk of loss and destruction", "loss_damage_risk_mitigation"),
     ("annual report", "annual_report"),
     ("reports to congress", "congressional_report_duty"),
     ("report to congress", "congressional_report_duty"),
     ("report to congress; contents", "report_contents"),
     ("report contents", "report_contents"),
     ("contents within one year", "report_contents"),
+    ("university based research and development grant program", "university_research_grant_program"),
+    ("university-based research and development grant program", "university_research_grant_program"),
+    ("university based research and development program", "university_research_program"),
+    ("university-based research and development program", "university_research_program"),
+    ("research and development grant program", "research_development_grant_program"),
+    ("research and development program", "research_development_program"),
+    ("study carbon capture", "carbon_capture_research"),
+    ("carbon capture", "carbon_capture_research"),
+    ("actions taken to implement", "implementation_action_report"),
+    ("discussion of the actions", "implementation_action_report"),
     ("annual budget program", "budget_program_submission"),
     ("annually shall submit", "annual_report_duty"),
     ("prepare and submit", "submit_or_file"),
@@ -200,6 +231,17 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("shall submit the report", "report_duty"),
     ("shall submit a report", "report_duty"),
     ("study and report", "study_report_duty"),
+    ("expenditures of department", "department_expenditure_authorization"),
+    ("expenditures of the department", "department_expenditure_authorization"),
+    ("expenditures upon business assigned by law", "department_expenditure_authorization"),
+    ("business assigned by law to his department", "department_business_assignment"),
+    ("business assigned by law to her department", "department_business_assignment"),
+    ("business assigned by law to the department", "department_business_assignment"),
+    ("requisitions for the advance or payment of money", "treasury_requisition_payment"),
+    ("requisitions for advance or payment of money", "treasury_requisition_payment"),
+    ("advance or payment of money", "treasury_requisition_payment"),
+    ("out of the treasury", "treasury_payment_source"),
+    ("estimates or accounts for expenditures", "expenditure_account_estimate"),
     ("buying power maintenance accounts", "buying_power_account_maintenance"),
     ("buying power maintenance", "buying_power_account_maintenance"),
     ("maintenance of accounts", "account_maintenance"),
@@ -208,6 +250,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("custody of department records", "departmental_record_custody"),
     ("custody of departmental property", "departmental_property_custody"),
     ("custody of department property", "departmental_property_custody"),
+    ("custody of collections", "museum_collection_custody"),
+    ("custody and control", "museum_collection_custody"),
+    ("care and control", "museum_collection_custody"),
+    ("national museum of the american indian", "national_museum_american_indian"),
+    ("museum of the american indian", "national_museum_american_indian"),
+    ("board of trustees", "museum_board_trustees"),
+    ("board of regents", "museum_board_regents"),
     ("disposition of deceased veterans' personal property", "deceased_veterans_property_disposition"),
     ("disposition of deceased veterans personal property", "deceased_veterans_property_disposition"),
     ("deceased veterans' personal property", "deceased_veterans_property_disposition"),
@@ -225,23 +274,53 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("promotion and retention", "promotion_retention"),
     ("promotion of officers", "officer_promotion"),
     ("retention of officers", "officer_retention"),
+    (
+        "assignment of naval officers to key management positions",
+        "naval_officer_management_assignment",
+    ),
+    ("naval officers to key management positions", "naval_officer_management_assignment"),
+    ("key management positions", "management_position_assignment"),
     ("reserve active-status list", "reserve_active_status_list"),
     ("reserve active status list", "reserve_active_status_list"),
     ("active-status list", "active_status_list"),
     ("active status list", "active_status_list"),
+    ("national seashore recreational areas", "national_seashore_recreation_area"),
+    ("national seashore", "national_seashore_recreation_area"),
+    ("recreational areas", "recreation_area"),
+    ("safe and adequate interstate air transportation", "air_transportation_service_duty"),
+    ("safe and adequate air transportation", "air_transportation_service_duty"),
+    ("air carrier shall provide", "air_carrier_service_duty"),
+    ("interstate air transportation", "interstate_air_transportation"),
+    ("performance accountability system", "workforce_performance_accountability"),
+    ("state performance reports", "workforce_performance_reporting"),
+    ("workforce development", "workforce_development_program"),
     ("applicability of this chapter", "statutory_chapter_applicability"),
     ("applicability", "statutory_applicability"),
     ("short title", "statutory_short_title"),
     ("election of officers", "officer_election"),
     ("homestead entries", "homestead_entry_confirmation"),
     ("preemption and homestead entries", "homestead_entry_confirmation"),
+    ("advisory committee", "advisory_committee"),
+    ("appointment of an advisory committee", "advisory_committee_appointment"),
+    ("authorized appointment", "appointment_authority"),
     ("railroad lands", "railroad_land_status"),
     ("withdrawal or after restoration to market", "land_withdrawal_restoration_scope"),
     ("restoration to market", "land_withdrawal_restoration_scope"),
     ("irrigation projects", "irrigation_project"),
     ("irrigation project", "irrigation_project"),
+    ("international boundary and water commission", "international_boundary_water_commission"),
+    ("international storage dam", "international_storage_dam_authorization"),
+    ("rio grande", "rio_grande_water_project"),
+    ("joint construction, operation, and maintenance", "joint_infrastructure_operation"),
+    ("joint construction", "joint_infrastructure_operation"),
+    ("operation, and maintenance", "joint_infrastructure_operation"),
+    ("government of mexico", "mexico_bilateral_agreement"),
+    ("united states and mexico", "mexico_bilateral_agreement"),
+    ("conclude with the appropriate official", "international_agreement_authority"),
     ("agricultural commodity set-aside", "agricultural_commodity_set_aside"),
     ("agricultural commodity set aside", "agricultural_commodity_set_aside"),
+    ("perishable agricultural commodities", "perishable_agricultural_commodity"),
+    ("perishable agricultural commodity", "perishable_agricultural_commodity"),
     ("commodity set-aside", "commodity_set_aside"),
     ("commodity set aside", "commodity_set_aside"),
     ("determination of commodity value", "commodity_value_determination"),
@@ -261,6 +340,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("non-irrigable lands", "nonirrigable_land_status"),
     ("non-irrigable land", "nonirrigable_land_status"),
     ("foreign commercial service", "foreign_commercial_service"),
+    ("foreign relations exchange programs", "foreign_relations_exchange_program"),
+    ("foreign relations exchange program", "foreign_relations_exchange_program"),
+    ("foreign relations exchange", "foreign_relations_exchange_program"),
+    ("exchange programs", "exchange_program"),
+    ("exchange program", "exchange_program"),
+    ("foreign service buildings", "foreign_service_building"),
     (
         "powers, duties and liabilities of consular officers",
         "consular_officer_powers_duties_liabilities",
@@ -273,12 +358,30 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("consular officers", "consular_officer"),
     ("consular officer", "consular_officer"),
     ("foreign service", "foreign_service"),
+    ("transportation for illegal sexual activity", "illegal_sexual_activity_transport"),
+    ("illegal sexual activity", "illegal_sexual_activity"),
+    ("related crimes", "related_crime"),
     ("export promotion", "export_promotion"),
+    ("interstate traffic of viruses", "biological_product_interstate_traffic"),
+    ("interstate traffic of virus", "biological_product_interstate_traffic"),
+    ("sale of and interstate traffic", "biological_product_interstate_traffic"),
+    ("viruses, serums, toxins, antitoxins", "biological_product_regulation"),
+    ("viruses serums toxins antitoxins", "biological_product_regulation"),
+    ("serums, toxins, antitoxins", "biological_product_regulation"),
+    ("serums toxins antitoxins", "biological_product_regulation"),
     ("remain available until expended", "no_year_funding_availability"),
     ("available until expended", "no_year_funding_availability"),
+    ("availability of appropriated amounts", "appropriated_amount_availability"),
+    ("appropriated amounts", "appropriated_amount"),
+    ("amounts appropriated", "appropriated_amount"),
     ("available to the secretary", "secretary_availability"),
     ("made available to the secretary", "secretary_availability"),
     ("made available", "resource_availability"),
+    ("purchase paper in open market", "open_market_paper_purchase"),
+    ("purchase of paper in open market", "open_market_paper_purchase"),
+    ("paper in open market", "open_market_paper_purchase"),
+    ("government publishing office to purchase paper", "government_publication_purchase_authority"),
+    ("government publishing office may purchase paper", "government_publication_purchase_authority"),
     ("use of timber and stone by settlers", "settler_resource_use"),
     ("timber and stone by settlers", "settler_resource_use"),
     ("cutting of timber within forest", "timber_cutting_forest_scope"),
@@ -307,6 +410,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("located between", "date_range_temporal_scope"),
     ("findings and declaration", "congressional_findings_declaration"),
     ("congress finds and declares", "congressional_findings_declaration"),
+    ("national and international monuments and memorials", "monument_memorial_administration"),
+    ("national monuments and memorials", "monument_memorial_administration"),
+    ("international monuments and memorials", "monument_memorial_administration"),
+    ("national park", "national_park_resource"),
+    ("national parks", "national_park_resource"),
     ("judicial sales", "judicial_sale_execution"),
     ("executions and judicial sales", "judicial_sale_execution"),
     ("marshal's incapacity", "marshal_incapacity"),
@@ -316,10 +424,40 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("trial counsel", "military_trial_counsel_duty"),
     ("defense counsel", "military_defense_counsel_duty"),
     ("no land shall be patented", "patent_prohibition"),
+    ("prohibitions on lie detector use", "lie_detector_use_prohibition"),
+    ("prohibition on lie detector use", "lie_detector_use_prohibition"),
+    ("lie detector use", "lie_detector_use_prohibition"),
+    ("lie detector test", "lie_detector_test"),
+    ("lie detector tests", "lie_detector_test"),
+    ("polygraph test", "lie_detector_test"),
+    ("polygraph tests", "lie_detector_test"),
+    ("employee polygraph protection", "employee_polygraph_protection"),
     ("research program and plan", "research_program_plan"),
+    ("formula grants to states", "state_formula_grant"),
+    ("formula grants", "formula_grant"),
+    ("shall make an allotment", "state_allotment_duty"),
+    ("make an allotment", "state_allotment_duty"),
+    ("allotment each fiscal year", "fiscal_year_allotment"),
+    ("for each state in an amount", "state_allotment_amount"),
+    ("center for substance abuse treatment", "substance_abuse_treatment_program"),
+    ("substance abuse treatment", "substance_abuse_treatment_program"),
     ("grants for research", "research_grant"),
     ("grants for the conduct of research", "research_grant"),
     ("conduct of research", "research_activity"),
+    ("public information program", "public_information_program"),
+    ("information package for consumers", "consumer_information_package"),
+    ("alternative fuels and alternative fueled vehicles", "alternative_fuel_vehicle_program"),
+    ("alternative fueled vehicles", "alternative_fuel_vehicle_program"),
+    ("alternative fuels in motor vehicles", "alternative_fuel_vehicle_program"),
+    ("benefits and costs", "benefit_cost_information"),
+    ("environmental performance", "environmental_performance_disclosure"),
+    ("use of funds", "fund_use_authority"),
+    ("amounts provided under a grant or contract", "grant_contract_fund_use"),
+    ("grant or contract awarded", "grant_contract_award"),
+    ("training program development and support", "training_program_support"),
+    ("faculty development", "faculty_development"),
+    ("model demonstrations", "model_demonstration"),
+    ("trainee support", "trainee_support"),
     ("individuals with disabilities", "disability_services"),
     ("funds for printing, binding", "printing_binding"),
     ("printing, binding", "printing_binding"),
@@ -345,20 +483,106 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("seal from the plant variety protection office", "office_seal"),
     ("seal of office", "office_seal"),
     ("official seal", "official_seal"),
+    ("capitol visitor center", "capitol_visitor_center"),
+    ("assistant to the chief executive officer", "visitor_center_assistant"),
+    ("assistant to chief executive officer", "visitor_center_assistant"),
+    ("chief executive officer", "chief_executive_officer"),
+    ("absent uniformed services voter", "absent_uniformed_services_voter"),
+    ("absent uniformed services voters", "absent_uniformed_services_voter"),
+    ("uniformed services voter", "uniformed_services_voter"),
+    ("uniformed services voters", "uniformed_services_voter"),
+    ("overseas voters", "overseas_voter"),
+    ("overseas voter", "overseas_voter"),
+    ("management and disposition of vessels", "fishery_vessel_property_disposition"),
+    ("disposition of vessels and other property", "fishery_vessel_property_disposition"),
+    ("vessels and other property acquired", "fishery_vessel_property_disposition"),
+    ("fishery loans", "fishery_loan_property"),
+    ("arising out of fishery loans", "fishery_loan_property"),
+    ("border infrastructure and technology modernization", "border_infrastructure_modernization"),
+    ("border infrastructure", "border_infrastructure_modernization"),
+    ("technology modernization", "technology_modernization"),
+    ("trust territory of pacific islands", "trust_territory_purchasing_authority"),
+    ("make purchases through general services administration", "government_purchasing_authority"),
+    ("general services administration", "government_purchasing_authority"),
+    ("federal alcohol laws", "federal_alcohol_law_equal_treatment"),
+    ("equal treatment under federal alcohol laws", "federal_alcohol_law_equal_treatment"),
+    ("indian tribes under federal alcohol laws", "federal_alcohol_law_equal_treatment"),
     (
         "health professionals educational assistance program",
         "health_professional_education_assistance",
     ),
+    ("health professional educational assistance", "health_professional_education_assistance"),
+    ("health professionals educational assistance", "health_professional_education_assistance"),
+    ("educational assistance program", "education_assistance_benefit"),
     ("educational assistance", "education_assistance_benefit"),
+    ("scholarship program", "education_assistance_benefit"),
+    ("repayment amount", "education_assistance_repayment"),
+    ("repayment amounts", "education_assistance_repayment"),
+    ("repayment of amounts", "education_assistance_repayment"),
+    ("pay to the united states", "federal_repayment_obligation"),
+    ("amounts paid under this subchapter", "education_assistance_repayment"),
     ("moneys deposited by unknown parties", "unknown_party_deposit"),
     ("treasurer of the united states", "treasury_deposit"),
     ("costs and expenses", "cost_expense_charge"),
     ("charge on prize", "prize_proceeds_charge"),
     ("prize proceeds", "prize_proceeds_charge"),
     ("effect of act", "effect_of_act"),
+    ("construction", "statutory_construction"),
+    ("shall not be construed", "construction_no_effect"),
+    ("nothing in this", "construction_no_effect"),
+    ("force and effect", "statutory_force_effect"),
+    ("same force and effect", "statutory_force_effect"),
     ("relationship to other law", "legal_relationship_override"),
     ("payment authorization", "payment_authorization"),
+    ("establishment of the rio grande natural area", "natural_area_establishment"),
+    ("rio grande natural area", "natural_area_establishment"),
+    ("natural area", "conservation_area_management"),
+    ("management plan", "conservation_area_management"),
+    ("national seashore recreational areas", "national_seashore_recreation_area"),
+    ("national seashore recreation areas", "national_seashore_recreation_area"),
+    ("national seashore", "national_seashore_recreation_area"),
+    ("donation of lands", "land_donation_acceptance"),
+    ("donation of land", "land_donation_acceptance"),
+    ("accept donations", "land_donation_acceptance"),
+    ("accept donation", "land_donation_acceptance"),
+    ("acquisition of lands", "land_acquisition_authority"),
+    ("acquire lands", "land_acquisition_authority"),
+    ("acquire land", "land_acquisition_authority"),
+    ("transferred from the u.s. government publishing office", "editorial_transfer_status"),
+    ("transferred from the us government publishing office", "editorial_transfer_status"),
+    ("trade and rule of law", "trade_rule_of_law_compliance"),
+    ("rule of law issues", "trade_rule_of_law_compliance"),
+    ("united states-china relations", "china_relations_oversight"),
+    ("united states china relations", "china_relations_oversight"),
     ("fees for internal services", "internal_service_fee"),
+    ("full and true account", "wage_account_discharge"),
+    ("paying off or discharging", "seaman_discharge"),
+    ("discharging the seaman", "seaman_discharge"),
+    ("smart manufacturing", "smart_manufacturing_report"),
+    ("progress made in advancing smart manufacturing", "smart_manufacturing_report"),
+    ("expand the naval facilities", "naval_facility_expansion"),
+    ("naval facilities", "naval_facility_expansion"),
+    ("local asthma surveillance", "public_health_surveillance"),
+    ("asthma surveillance", "public_health_surveillance"),
+    ("collect data on the prevalence", "public_health_surveillance"),
+    ("magnet schools assistance", "education_assistance_program"),
+    (
+        "minority science and engineering improvement",
+        "science_engineering_education_program",
+    ),
+    ("bail on appeal or certiorari", "appeal_bail_rule"),
+    ("proposals; submission; payment for cost of examination", "proposal_examination_payment"),
+    ("submission; payment for cost of examination", "proposal_examination_payment"),
+    ("payment for cost of examination", "proposal_examination_payment"),
+    ("cost of examination", "examination_cost_payment"),
+    ("submit a proposal", "proposal_submission"),
+    ("submission of proposal", "proposal_submission"),
+    ("proposal therefor to the secretary", "proposal_submission"),
+    ("armed forces retirement home", "armed_forces_retirement_home"),
+    ("payments to retirement home", "retirement_home_payment"),
+    ("payment to retirement home", "retirement_home_payment"),
+    ("centers for disease control and prevention", "public_health_agency"),
+    ("center for disease control and prevention", "public_health_agency"),
     ("office of women's health", "office_of_womens_health"),
     ("office of womens health", "office_of_womens_health"),
     ("there is established", "office_establishment"),
@@ -372,6 +596,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("false, fictitious, or fraudulent", "false_fraudulent_claim"),
     ("knowing such claim to be false", "false_claim_knowledge"),
     ("claim upon or against the united states", "government_claim"),
+    ("trading without required certificate of documentation", "undocumented_trading_penalty"),
+    ("without required certificate of documentation", "documentation_certificate_requirement"),
+    ("required certificate of documentation", "documentation_certificate_requirement"),
+    ("certificate of documentation", "documentation_certificate_requirement"),
     ("predictive modeling and other analytics technologies", "predictive_analytics_disclosure"),
     ("predictive modeling technologies", "predictive_analytics_disclosure"),
     ("predictive modeling", "predictive_analytics"),
@@ -392,6 +620,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("state energy program", "state_energy_program"),
     ("eligible for funding", "funding_eligibility"),
     ("eligible for funds", "funding_eligibility"),
+    ("eligibility for services", "service_eligibility"),
+    ("determination of eligibility", "eligibility_determination"),
+    ("determine eligibility", "eligibility_determination"),
+    ("professional assessment committee", "professional_assessment_committee"),
+    ("congregate services program", "congregate_services_program"),
+    ("congregate services", "congregate_services_program"),
+    ("eligible to participate", "participation_eligibility"),
     ("eligible state", "funding_eligibility"),
     ("eligible states", "funding_eligibility"),
     ("per-capita combined", "per_capita_ranking"),
@@ -445,6 +680,16 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("criminal penalty for false statements", "false_statement_penalty"),
     ("knowingly and willfully", "scienter_requirement"),
     ("material fact", "material_fact_representation"),
+    ("destruction of letter boxes or mail", "postal_mailbox_destruction"),
+    ("letter boxes or mail", "postal_mailbox"),
+    ("mail receptacles", "postal_mailbox"),
+    ("postal service", "postal_service"),
+    ("treatment of certain credit", "cost_sharing_credit_treatment"),
+    ("cost sharing", "cost_sharing"),
+    ("non-federal share", "non_federal_cost_share"),
+    ("non federal share", "non_federal_cost_share"),
+    ("non-federal cost sharing", "non_federal_cost_share"),
+    ("non federal cost sharing", "non_federal_cost_share"),
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
@@ -895,6 +1140,10 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("dynamic", "[a]"),
     ),
     "by": (
+        ("conditional_normative", "O|"),
+        ("temporal", "F"),
+    ),
+    "within": (
         ("conditional_normative", "O|"),
         ("temporal", "F"),
     ),
@@ -1861,6 +2110,14 @@ def _decode_formula_phrases(
                 spans=spans,
             )
         )
+        phrases.extend(
+            _typed_decompiler_role_phrases(
+                formula=formula,
+                text=status_clause_text,
+                slot_prefix="source_status_clause",
+                spans=spans,
+            )
+        )
         for transition_slot, transition_value in _refined_contextual_modal_transition_slots(
             formula,
             text=status_clause_text,
@@ -2059,6 +2316,14 @@ def _fallback_section_heading_tail_phrases(
             spans=spans,
         )
     )
+    phrases.extend(
+        _typed_decompiler_role_phrases(
+            formula=formula,
+            text=heading_tail,
+            slot_prefix="section_heading_tail",
+            spans=spans,
+        )
+    )
     return phrases
 
 
@@ -2185,6 +2450,14 @@ def _fallback_surface_text_phrases(
             spans=spans,
         )
     )
+    phrases.extend(
+        _typed_decompiler_role_phrases(
+            formula=formula,
+            text=surface_text,
+            slot_prefix="fallback_surface_text",
+            spans=spans,
+        )
+    )
     return phrases
 
 
@@ -2199,6 +2472,7 @@ def _typed_ir_reconstruction_phrases(
     """Emit bounded structural text from typed slots, not copied source spans."""
     spans = [[formula.provenance.start_char, formula.provenance.end_char]]
     predicate_text = _predicate_phrase(formula)
+    argument_values = _phrase_values(formula.predicate.arguments)
     condition_values = _phrase_values(formula.conditions)
     if not condition_values:
         condition_values = _inferred_condition_values_from_source_span(
@@ -2228,12 +2502,15 @@ def _typed_ir_reconstruction_phrases(
             for value in (
                 predicate_text,
                 source_span_text,
+                " ".join(argument_values),
                 " ".join(condition_values),
                 " ".join(exception_values),
             )
             if _clean_text(value)
         )
     )
+    for role, value in _semantic_role_values_from_arguments(argument_values).items():
+        roles.setdefault(role, value)
     semantic_atoms = _legal_semantic_atoms_from_text(
         " ".join(
             value
@@ -2379,8 +2656,29 @@ def _typed_ir_reconstruction_phrases(
         *support_values[:max_values],
     ]
     summary = _bounded_reconstruction_text(summary_parts, max_tokens=max_tokens)
+    semantic_surface = _typed_ir_semantic_surface_reconstruction_text(
+        predicate_text=predicate_text,
+        roles=roles,
+        force=force,
+        polarity=polarity,
+        cue_values=_formula_cues(formula),
+        condition_values=condition_values,
+        exception_values=exception_values,
+        semantic_atoms=semantic_atoms,
+        targets=ordered_targets,
+        max_tokens=max_tokens,
+    )
 
     phrases: List[DecodedModalPhrase] = []
+    if semantic_surface:
+        phrases.append(
+            DecodedModalPhrase(
+                text=semantic_surface,
+                slot="typed_ir_semantic_surface_reconstruction",
+                spans=spans,
+                provenance_only=provenance_only,
+            )
+        )
     if summary:
         phrases.append(
             DecodedModalPhrase(
@@ -2427,6 +2725,15 @@ def _typed_ir_reconstruction_phrases(
                 provenance_only=provenance_only,
             )
         )
+        if "transferred" in semantic_atoms:
+            phrases.append(
+                DecodedModalPhrase(
+                    text="Transferred",
+                    slot="typed_ir_compact_semantic_support",
+                    spans=spans,
+                    provenance_only=provenance_only,
+                )
+            )
     for value in legal_ir_view_support:
         phrases.append(
             DecodedModalPhrase(
@@ -2436,6 +2743,20 @@ def _typed_ir_reconstruction_phrases(
                 provenance_only=True,
             )
         )
+    phrases.extend(
+        _typed_ir_semantic_bridge_phrases(
+            family=family,
+            targets=ordered_targets,
+            force=force,
+            polarity=polarity,
+            predicate_text=predicate_text,
+            roles=roles,
+            semantic_atoms=semantic_atoms,
+            legal_ir_view_support=legal_ir_view_support,
+            spans=spans,
+            provenance_only=provenance_only,
+        )
+    )
     if family and targets:
         for target in targets:
             pair = f"{family}->{target}"
@@ -2465,8 +2786,163 @@ def _typed_ir_reconstruction_phrases(
                         spans=spans,
                         provenance_only=True,
                     )
+                )
+            reconstruction_text = _typed_ir_family_pair_semantic_reconstruction_text(
+                source_family=family,
+                target_family=target,
+                support_values=support_values,
+                semantic_atoms=semantic_atoms,
+                max_tokens=32,
+            )
+            if reconstruction_text:
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=reconstruction_text,
+                        slot="typed_ir_family_pair_semantic_reconstruction",
+                        spans=spans,
+                        provenance_only=provenance_only,
+                    )
+                )
+    return phrases
+
+
+def _typed_ir_semantic_bridge_phrases(
+    *,
+    family: str,
+    targets: Sequence[str],
+    force: str,
+    polarity: str,
+    predicate_text: str,
+    roles: Mapping[str, str],
+    semantic_atoms: Sequence[str],
+    legal_ir_view_support: Sequence[str],
+    spans: List[List[int]],
+    provenance_only: bool,
+    max_tokens: int = 44,
+) -> List[DecodedModalPhrase]:
+    """Emit compact non-provenance bridge text for deontic/frame residuals."""
+    normalized_family = _clean_text(family).lower()
+    if not normalized_family or not targets:
+        return []
+    normalized_targets = [
+        _clean_text(target).lower()
+        for target in targets
+        if _clean_text(target).lower()
+    ]
+    if not normalized_targets:
+        return []
+    if normalized_family not in {"deontic", "frame"} and not any(
+        target in {"deontic", "frame"} for target in normalized_targets
+    ):
+        return []
+
+    phrases: List[DecodedModalPhrase] = []
+    predicate_head = _typed_decompiler_predicate_head_text(predicate_text)
+    bridge_atoms = [
+        atom
+        for atom in semantic_atoms
+        if atom
+        not in {
+            "exception_or_condition",
+            "obligation",
+            "permission",
+            "prohibition",
+            "temporal_condition",
+        }
+    ]
+    role_values = [
+        roles.get(role, "")
+        for role in ("subject", "action", "object", "temporal")
+        if roles.get(role, "")
+    ]
+    view_values = [
+        value
+        for value in legal_ir_view_support
+        if value
+        and (
+            "deontic" in value
+            or "prover" in value
+            or "event calculus" in value
+            or "knowledge graph" in value
+        )
+    ]
+
+    for target in normalized_targets:
+        pair = f"{normalized_family}->{target}"
+        if normalized_family == target and target not in {"deontic", "frame"}:
+            continue
+        parts = [
+            _typed_ir_family_pair_reconstruction_label(normalized_family, target),
+            f"{force} force" if force else "",
+            polarity.replace("_", " ") if polarity else "",
+            predicate_head,
+            *(_humanize_typed_ir_value(atom) for atom in bridge_atoms[:6]),
+            *role_values[:4],
+            *view_values[:3],
+        ]
+        text = _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+        if not text:
+            continue
+        phrases.append(
+            DecodedModalPhrase(
+                text=text,
+                slot="typed_ir_semantic_bridge_reconstruction",
+                spans=spans,
+                provenance_only=provenance_only,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=f"{pair}:{force}:{polarity}",
+                slot="typed_ir_semantic_bridge_signature",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        for atom in bridge_atoms[:8]:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=f"{atom}:{pair}",
+                    slot="typed_ir_semantic_bridge_atom_pair",
+                    spans=spans,
+                    provenance_only=True,
+                )
             )
     return phrases
+
+
+def _typed_decompiler_predicate_head_text(predicate_text: str) -> str:
+    normalized = _clean_text(predicate_text).replace("_", " ")
+    tokens = _tokenize_for_similarity(normalized)
+    if not tokens:
+        return ""
+    return " ".join(tokens[:4])
+def _typed_ir_family_pair_semantic_reconstruction_text(
+    *,
+    source_family: str,
+    target_family: str,
+    support_values: Sequence[str],
+    semantic_atoms: Sequence[str],
+    max_tokens: int,
+) -> str:
+    pair_label = _typed_ir_family_pair_reconstruction_label(
+        source_family,
+        target_family,
+    )
+    if not pair_label:
+        return ""
+    support_text = [
+        value
+        for value in (
+            *(_humanize_typed_ir_value(atom) for atom in semantic_atoms),
+            *support_values,
+        )
+        if _clean_text(value)
+    ]
+    return _bounded_reconstruction_text(
+        (pair_label, *support_text),
+        max_tokens=max_tokens,
+    )
 
 
 def _typed_ir_reconstruction_cue_support_values(
@@ -2539,6 +3015,73 @@ def _typed_ir_clause_role_support_text(
         for atom in semantic_atoms[:6]:
             add(atom)
     return _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+
+
+def _typed_ir_semantic_surface_reconstruction_text(
+    *,
+    predicate_text: str,
+    roles: Mapping[str, str],
+    force: str,
+    polarity: str,
+    cue_values: Sequence[str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    semantic_atoms: Sequence[str],
+    targets: Sequence[str],
+    max_tokens: int = 56,
+) -> str:
+    """Render typed IR roles as a source-like clause without copying spans."""
+    parts: List[str] = []
+
+    def add(value: str) -> None:
+        cleaned = _clean_text(value).replace("_", " ")
+        if cleaned:
+            parts.append(cleaned)
+
+    subject = roles.get("subject", "")
+    action = roles.get("action", "")
+    object_value = roles.get("object", "")
+    temporal = roles.get("temporal", "")
+    has_deontic_target = any(
+        _clean_text(target).lower() == "deontic" for target in targets
+    )
+    has_conditional_target = any(
+        _clean_text(target).lower() == "conditional_normative" for target in targets
+    )
+    has_temporal_target = any(
+        _clean_text(target).lower() == "temporal" for target in targets
+    )
+    normalized_cues = {
+        _clean_text(cue).lower().replace(" ", "_") for cue in cue_values
+    }
+
+    if has_conditional_target and condition_values:
+        add("conditioned on")
+    for condition in condition_values[:3]:
+        add(condition)
+    add(subject)
+    if has_deontic_target:
+        if force == "permission" or normalized_cues & {"may", "authorized", "permit"}:
+            add("may")
+        elif force == "prohibition":
+            add("must not")
+        elif force == "obligation":
+            add("shall")
+        elif polarity == "negative_scope":
+            add("must not")
+    add(action)
+    add(object_value)
+    if not (subject or action or object_value):
+        add(predicate_text)
+    if has_temporal_target and temporal:
+        add("during")
+        add(temporal)
+    for exception in exception_values[:2]:
+        add("except")
+        add(exception)
+    for atom in semantic_atoms[:4]:
+        add(atom)
+    return _bounded_surface_text(parts, max_tokens=max_tokens)
 
 
 def _typed_ir_legal_view_support_values(document: ModalIRDocument) -> List[str]:
@@ -2661,6 +3204,22 @@ def _bounded_reconstruction_text(
     return _clean_text(" ".join(tokens))
 
 
+def _bounded_surface_text(
+    values: Iterable[str],
+    *,
+    max_tokens: int,
+) -> str:
+    tokens: List[str] = []
+    for value in values:
+        cleaned = _clean_text(value).replace("_", " ")
+        if not cleaned:
+            continue
+        tokens.extend(cleaned.split())
+        if len(tokens) >= max_tokens:
+            return _clean_text(" ".join(tokens[:max_tokens]))
+    return _clean_text(" ".join(tokens))
+
+
 def _legal_semantic_atom_phrases(
     *,
     text: str,
@@ -2712,6 +3271,11 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("office_establishment")
+    if re.search(
+        r"\b(?:authorized\s+to\s+)?conclude\b.{0,80}\b(?:officials?|government)\b",
+        normalized,
+    ):
+        add("international_agreement_authority")
     for phrase, atom in _LEGAL_SEMANTIC_ATOM_PHRASES:
         phrase_tokens = _CUE_TOKEN_RE.findall(phrase)
         if phrase in normalized or (
@@ -2728,16 +3292,44 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("prohibition")
     if re.search(
+        r"\b(?:lie\s+detector|polygraph)\b.{0,80}"
+        r"\b(?:test|tests|examination|examinations|use)\b|"
+        r"\b(?:test|tests|examination|examinations|use)\b.{0,80}"
+        r"\b(?:lie\s+detector|polygraph)\b",
+        normalized,
+    ):
+        add("lie_detector_test")
+        if re.search(
+            r"\b(?:prohibit(?:ed|s|ion|ions)?|may\s+not|shall\s+not|must\s+not)\b",
+            normalized,
+        ):
+            add("lie_detector_use_prohibition")
+    if re.search(
         r"\b(?:except|unless|notwithstanding|subject\s+to|provided\s+that)\b",
         normalized,
     ):
         add("exception_or_condition")
     if re.search(
-        r"\b(?:exempt(?:ed|ion|ions)?|shall\s+not\s+apply|"
+        r"\b(?:exempt(?:ed|ion|ions)?|(?:shall|does|do|did)\s+not\s+apply|"
         r"provisions?\s+of\s+this\s+\w+\s+shall\s+not\s+apply)\b",
         normalized,
     ):
         add("exemption")
+    if re.search(
+        r"\bperishable\s+agricultural\s+commodit(?:y|ies)\b",
+        normalized,
+    ):
+        add("perishable_agricultural_commodity")
+    if re.search(
+        r"\b(?:container|trailer)\b.{0,120}"
+        r"\bperishable\s+agricultural\s+commodit(?:y|ies)\b",
+        normalized,
+    ) or re.search(
+        r"\bperishable\s+agricultural\s+commodit(?:y|ies)\b.{0,120}"
+        r"\b(?:container|trailer)\b",
+        normalized,
+    ):
+        add("perishable_commodity_container_exemption")
     if re.search(r"\btest\s+platforms?\b", normalized):
         add("test_platform")
     if re.search(
@@ -2772,6 +3364,33 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("submit_or_file")
+    if re.search(
+        r"\brequisitions?\b.{0,120}\b(?:advance|payment)\b.{0,80}\bmoney\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:advance|payment)\b.{0,80}\bmoney\b.{0,120}\brequisitions?\b",
+        normalized,
+    ):
+        add("treasury_requisition_payment")
+    if re.search(r"\bout\s+of\s+the\s+treasury\b", normalized):
+        add("treasury_payment_source")
+    if re.search(
+        r"\bestimates?\b.{0,60}\baccounts?\b.{0,80}\bexpenditures?\b",
+        normalized,
+    ) or re.search(
+        r"\baccounts?\b.{0,60}\bexpenditures?\b",
+        normalized,
+    ):
+        add("expenditure_account_estimate")
+    if re.search(
+        r"\bexpenditures?\b.{0,120}\bbusiness\b.{0,80}\bassigned\s+by\s+law\b",
+        normalized,
+    ) or re.search(
+        r"\bbusiness\b.{0,80}\bassigned\s+by\s+law\b.{0,80}\bdepartment\b",
+        normalized,
+    ):
+        add("department_expenditure_authorization")
+        add("department_business_assignment")
     if re.search(r"\bannual\s+budget\s+program\b", normalized):
         add("budget_program_submission")
     if re.search(r"\bbuying\s+power\b.{0,50}\bmaint(?:ain|enance)\b", normalized):
@@ -2786,6 +3405,25 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("departmental_record_custody")
+    if re.search(
+        r"\bcustody\b.{0,80}\b(?:collections?|museum|cultural\s+items?|objects?)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:museum|collections?|cultural\s+items?|objects?)\b.{0,80}"
+        r"\b(?:custody|care|control|administ(?:er|ration))\b",
+        normalized,
+    ):
+        add("museum_collection_custody")
+    if re.search(
+        r"\bnational\s+museum\s+of\s+the\s+american\s+indian\b|"
+        r"\bmuseum\s+of\s+the\s+american\s+indian\b",
+        normalized,
+    ):
+        add("national_museum_american_indian")
+    if re.search(r"\bboard\s+of\s+trustees\b", normalized):
+        add("museum_board_trustees")
+    if re.search(r"\bboard\s+of\s+regents\b", normalized):
+        add("museum_board_regents")
     if re.search(
         r"\baccountab(?:ility|le)\b.{0,60}\bresponsib(?:ility|le)\b",
         normalized,
@@ -2807,6 +3445,13 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("report_contents")
     if re.search(
+        r"\b(?:discussion|actions?\s+taken|implement(?:ation|ed)?)\b.{0,80}"
+        r"\breports?\b|\breports?\b.{0,80}"
+        r"\b(?:discussion|actions?\s+taken|implement(?:ation|ed)?)\b",
+        normalized,
+    ):
+        add("implementation_action_report")
+    if re.search(
         r"\b(?:study|review|assessment)\b.{0,40}\b(?:and\s+)?reports?\b",
         normalized,
     ):
@@ -2816,6 +3461,24 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("fund_transfer_authority")
+    if re.search(
+        r"\bhealth\s+professionals?\b.{0,80}\beducational\s+assistance\b",
+        normalized,
+    ) or re.search(
+        r"\beducational\s+assistance\b.{0,80}\bprogram\b",
+        normalized,
+    ):
+        add("health_professional_education_assistance")
+        add("education_assistance_benefit")
+    if re.search(
+        r"\b(?:repay(?:ment)?|pay)\b.{0,120}\b(?:united\s+states|amounts?|scholarship|assistance)\b",
+        normalized,
+    ) or re.search(
+        r"\bamounts?\b.{0,120}\b(?:paid|repay(?:ment)?|united\s+states)\b",
+        normalized,
+    ):
+        add("education_assistance_repayment")
+        add("federal_repayment_obligation")
     if re.search(r"\bterminat(?:e|es|ed|ion)\b.{0,60}\bauthorit(?:y|ies)\b", normalized):
         add("termination_authority")
     if re.search(r"\b(?:consultation|cooperation)\b", normalized):
@@ -2902,6 +3565,31 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("government_publication_depository_access")
     if re.search(
+        r"\b(?:congressional\s+)?allotments?\s+of\s+public\s+documents?\b",
+        normalized,
+    ) or re.search(
+        r"\bpublic\s+documents?\b.{0,80}\b(?:printed\s+after|expiration\s+of\s+terms)\b",
+        normalized,
+    ):
+        add("public_document_allotment")
+    if re.search(
+        r"\bretiring\s+members?\b.{0,80}\b(?:documents?|rights?)\b",
+        normalized,
+    ) or re.search(
+        r"\bright(?:s)?\s+of\s+retiring\s+members?\b",
+        normalized,
+    ):
+        add("retiring_member_document_right")
+    if re.search(
+        r"\b(?:after|following)\s+expiration\s+of\s+terms?\b",
+        normalized,
+    ) or re.search(
+        r"\bexpiration\s+of\s+terms?\s+of\s+members?\s+of\s+congress\b",
+        normalized,
+    ):
+        add("post_term_member_right")
+        add("temporal_condition")
+    if re.search(
         r"\b(?:dispose|disposal)\b.{0,80}\b(?:publications?|depositor(?:y|ies))\b",
         normalized,
     ):
@@ -2914,6 +3602,17 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("homestead_entry_confirmation")
+    if re.search(r"\badvisory\s+committees?\b", normalized):
+        add("advisory_committee")
+    if re.search(
+        r"\b(?:appoint(?:ment|ed|s)?|authoriz(?:e|ed|es|ation))\b.{0,80}"
+        r"\badvisory\s+committees?\b|"
+        r"\badvisory\s+committees?\b.{0,80}"
+        r"\b(?:appoint(?:ment|ed|s)?|authoriz(?:e|ed|es|ation))\b",
+        normalized,
+    ):
+        add("advisory_committee_appointment")
+        add("appointment_authority")
     if re.search(r"\brailroad\s+lands?\b", normalized):
         add("railroad_land_status")
     if re.search(
@@ -2937,6 +3636,56 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("agency_certification_determination")
     if re.search(r"\b(?:official\s+)?seal\b", normalized):
         add("official_seal")
+    if re.search(r"\bcapitol\s+visitor\s+center\b", normalized):
+        add("capitol_visitor_center")
+    if re.search(
+        r"\bassistant\b.{0,80}\bchief\s+executive\s+officer\b|"
+        r"\bchief\s+executive\s+officer\b.{0,80}\bassistant\b",
+        normalized,
+    ):
+        add("visitor_center_assistant")
+        add("chief_executive_officer")
+    if re.search(
+        r"\babsent\s+uniformed\s+services?\s+voters?\b|"
+        r"\buniformed\s+services?\s+voters?\b",
+        normalized,
+    ):
+        add("absent_uniformed_services_voter")
+    if re.search(r"\boverseas\s+voters?\b", normalized):
+        add("overseas_voter")
+    if re.search(
+        r"\b(?:management|manage|disposition|dispose)\b.{0,100}"
+        r"\b(?:vessels?|property)\b.{0,100}\bfishery\s+loans?\b|"
+        r"\bfishery\s+loans?\b.{0,100}\b(?:vessels?|property|disposition)\b",
+        normalized,
+    ):
+        add("fishery_vessel_property_disposition")
+        add("fishery_loan_property")
+    if re.search(
+        r"\bborder\s+infrastructure\b|"
+        r"\btechnology\s+modernization\b",
+        normalized,
+    ):
+        add("border_infrastructure_modernization")
+    if re.search(
+        r"\btrust\s+territory\b.{0,80}\bpacific\s+islands\b|"
+        r"\bpacific\s+islands\b.{0,80}\btrust\s+territory\b",
+        normalized,
+    ):
+        add("trust_territory_purchasing_authority")
+    if re.search(
+        r"\b(?:make|makes|made)\s+purchases?\b.{0,80}"
+        r"\bgeneral\s+services\s+administration\b|"
+        r"\bgeneral\s+services\s+administration\b.{0,80}\bpurchases?\b",
+        normalized,
+    ):
+        add("government_purchasing_authority")
+    if re.search(
+        r"\bfederal\s+alcohol\s+laws?\b|"
+        r"\bequal\s+treatment\b.{0,80}\balcohol\s+laws?\b",
+        normalized,
+    ):
+        add("federal_alcohol_law_equal_treatment")
     if re.search(r"\bplant\s+variety\s+protection\s+office\b", normalized):
         add("plant_variety_protection_office")
     elif re.search(r"\bplant\s+variety\s+protection\b", normalized):
@@ -7111,6 +7860,7 @@ def _typed_decompiler_role_slots(
         return []
 
     role_values = _semantic_role_values_from_text(normalized_text)
+    semantic_atoms = _legal_semantic_atoms_from_text(normalized_text)
     temporal_values = _temporal_transition_context_cues_from_text(normalized_text)
     if not temporal_values:
         temporal_values = [
@@ -7123,7 +7873,7 @@ def _typed_decompiler_role_slots(
         ]
     if temporal_values:
         role_values["temporal"] = "+".join(temporal_values)
-    if not role_values:
+    if not role_values and not semantic_atoms:
         return []
 
     slots: List[Tuple[str, str]] = []
@@ -7138,6 +7888,38 @@ def _typed_decompiler_role_slots(
                 slot_prefix=f"{normalized_slot_prefix}_typed_decompiler_{role}",
             )
         )
+    if semantic_atoms:
+        semantic_value = "+".join(semantic_atoms[:6])
+        slots.extend(
+            (
+                (
+                    f"{normalized_slot_prefix}_typed_decompiler_semantic",
+                    semantic_value,
+                ),
+                ("typed_decompiler_semantic", semantic_value),
+            )
+        )
+        slots.extend(
+            _typed_identifier_slots(
+                semantic_value,
+                slot_prefix=f"{normalized_slot_prefix}_typed_decompiler_semantic",
+            )
+        )
+        for atom in semantic_atoms:
+            slots.extend(
+                (
+                    (
+                        f"{normalized_slot_prefix}_typed_decompiler_semantic_atom",
+                        atom,
+                    ),
+                    ("typed_decompiler_semantic_atom", atom),
+                    (
+                        f"{normalized_slot_prefix}_typed_decompiler_family_semantic_atom",
+                        f"{family}:{atom}",
+                    ),
+                    ("typed_decompiler_family_semantic_atom", f"{family}:{atom}"),
+                )
+            )
 
     role_signature = "+".join(
         role
@@ -7162,11 +7944,17 @@ def _typed_decompiler_role_slots(
                 ),
             )
         )
-    for bridge_family in _typed_decompiler_bridge_target_families(
+    bridge_targets = _typed_decompiler_bridge_target_families(
         formula=formula,
         text=normalized_text,
         roles=role_values,
+    )
+    for semantic_target in _typed_decompiler_semantic_atom_target_families(
+        semantic_atoms
     ):
+        if semantic_target not in bridge_targets:
+            bridge_targets.append(semantic_target)
+    for bridge_family in bridge_targets:
         pair = f"{family}->{bridge_family}"
         slots.extend(
             (
@@ -7198,6 +7986,16 @@ def _typed_decompiler_role_slots(
                         bridge_signature,
                     ),
                     ("typed_decompiler_family_pair_bridge", bridge_signature),
+                )
+            )
+        for atom in semantic_atoms:
+            slots.extend(
+                (
+                    (
+                        f"{normalized_slot_prefix}_typed_decompiler_family_pair_semantic_atom",
+                        f"{atom}:{pair}",
+                    ),
+                    ("typed_decompiler_family_pair_semantic_atom", f"{atom}:{pair}"),
                 )
             )
     return _unique_slot_values(slots)
@@ -7265,10 +8063,15 @@ def _typed_decompiler_target_reconstruction_slots(
         return []
 
     roles = _semantic_role_values_from_text(reconstruction_text)
+    for role, value in _semantic_role_values_from_arguments(
+        _phrase_values(formula.predicate.arguments)
+    ).items():
+        roles.setdefault(role, value)
     temporal_cues = _temporal_transition_context_cues_from_text(reconstruction_text)
     if temporal_cues:
         roles["temporal"] = "+".join(temporal_cues)
     semantic_atoms = _legal_semantic_atoms_from_text(reconstruction_text)
+    status_detail_slots = _typed_decompiler_status_detail_slots(reconstruction_text)
     targets = _typed_decompiler_bridge_target_families(
         formula=formula,
         text=reconstruction_text,
@@ -7318,6 +8121,11 @@ def _typed_decompiler_target_reconstruction_slots(
         ):
             if status_target not in targets:
                 targets.append(status_target)
+    for status_target in _typed_decompiler_status_detail_target_families(
+        status_detail_slots
+    ):
+        if status_target not in targets:
+            targets.append(status_target)
     for directional_target in _typed_decompiler_directional_target_families(
         source_family
     ):
@@ -7334,6 +8142,20 @@ def _typed_decompiler_target_reconstruction_slots(
         return []
 
     scope_signature = "+".join(scope_parts) if scope_parts else "unconditioned"
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    predicate_key = _slot_safe_family_pair_key(predicate_text)
+    source_predicate = _source_predicate_family_pair_value(
+        family=source_family,
+        predicate_text=predicate_text,
+        force=force,
+        polarity=polarity,
+    )
     for target in targets:
         pair = f"{source_family}->{target}"
         slots.extend(
@@ -7341,6 +8163,47 @@ def _typed_decompiler_target_reconstruction_slots(
                 ("typed-decompiler-target-reconstruction-pair", pair),
                 ("typed-decompiler-target-reconstruction-family", target),
                 ("typed-decompiler-source-target-family", pair),
+            )
+        )
+        if predicate_key:
+            slots.extend(
+                (
+                    (
+                        "typed-decompiler-source-predicate-family-pair",
+                        f"{source_family}:{predicate_key}->{target}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target}||slot:typed-decompiler-source-predicate-family-pair:"
+                            f"{source_family}:{predicate_key}->{target}||CEC.native"
+                        ),
+                    ),
+                )
+            )
+        if source_predicate:
+            slots.extend(
+                (
+                    (
+                        "typed-decompiler-source-predicate-force-pair",
+                        source_predicate,
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target}||slot:typed-decompiler-source-predicate-force-pair:"
+                            f"{source_predicate}|typed-decompiler-force-polarity:"
+                            f"{force}:{polarity}||CEC.native"
+                        ),
+                    ),
+                )
+            )
+        slots.extend(
+            _typed_decompiler_force_polarity_family_pair_slots(
+                source_family=source_family,
+                target_family=target,
+                force=force,
+                polarity=polarity,
             )
         )
         slots.append(
@@ -7354,11 +8217,39 @@ def _typed_decompiler_target_reconstruction_slots(
             for cue in _formula_cues(formula)
             if _clean_text(cue)
         ]
+        family_pair_cues = _typed_decompiler_family_pair_cues(
+            formula=formula,
+            text=reconstruction_text,
+            target_family=target,
+        )
         source_surface_cues = _bridge_cues_from_text(reconstruction_text)
+        semantic_target_cues = [
+            atom
+            for atom in semantic_atoms
+            if _typed_decompiler_semantic_atom_supports_target(
+                atom,
+                target_family=target,
+                source_family=source_family,
+            )
+        ]
         reconstruction_cues = _unique_text_values(
-            (*heading_cues, *condition_cues, *formula_cues, *source_surface_cues)
+            (
+                *heading_cues,
+                *condition_cues,
+                *formula_cues,
+                *source_surface_cues,
+                *semantic_target_cues,
+                *family_pair_cues,
+                *source_surface_cues,
+            )
         )
         for cue in reconstruction_cues:
+            slots.append(
+                (
+                    "typed_decompiler_target_reconstruction_cue",
+                    f"{pair}:{cue}",
+                )
+            )
             slots.append(
                 (
                     "typed-decompiler-target-reconstruction-cue",
@@ -7395,9 +8286,109 @@ def _typed_decompiler_target_reconstruction_slots(
                             "family_semantic_slot_legal_ir_view_prototype",
                             f"{target}||slot:cue-family:{cue}:{target}||{view}",
                         ),
-                    )
                 )
+            )
         for condition_index, _condition in enumerate(condition_values):
+            typed_condition = _typed_clause_slot(
+                _condition,
+                slot="condition",
+            )
+            condition_role_text = (
+                typed_condition[2]
+                if typed_condition is not None and typed_condition[2]
+                else _condition
+            )
+            condition_role_values = _semantic_role_values_from_text(
+                _clean_text(condition_role_text).replace("_", " ").lower()
+            )
+            temporal_condition_cues = _temporal_transition_context_cues_from_text(
+                _condition
+            )
+            if temporal_condition_cues:
+                condition_role_values["temporal"] = "+".join(
+                    temporal_condition_cues
+                )
+            if condition_role_values:
+                role_names = [
+                    role_name
+                    for role_name in ("subject", "action", "object", "temporal")
+                    if role_name in condition_role_values
+                ]
+                if role_names:
+                    condition_role_signature = "+".join(role_names)
+                    condition_role_slot = (
+                        f"slot-pair:conditions:{condition_index}|"
+                        f"predicate-role:{condition_role_signature}"
+                    )
+                    slots.extend(
+                        (
+                            ("semantic_slot_prototype", condition_role_slot),
+                            (
+                                "family_semantic_slot_prototype",
+                                f"{source_family}||{condition_role_slot}",
+                            ),
+                            (
+                                "family_semantic_slot_prototype",
+                                f"{target}||{condition_role_slot}",
+                            ),
+                            (
+                                "semantic_slot_legal_ir_view_prototype",
+                                f"{condition_role_slot}||deontic.ir",
+                            ),
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                f"{source_family}||{condition_role_slot}||deontic.ir",
+                            ),
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                f"{target}||{condition_role_slot}||deontic.ir",
+                            ),
+                        )
+                    )
+                    if target in {"deontic", "temporal"}:
+                        slots.extend(
+                            (
+                                (
+                                    "family_semantic_slot_legal_ir_view_prototype",
+                                    f"{target}||{condition_role_slot}||TDFOL.prover",
+                                ),
+                                (
+                                    "family_semantic_slot_legal_ir_view_prototype",
+                                    f"{target}||{condition_role_slot}||CEC.native",
+                                ),
+                            )
+                        )
+                for role_name, role_value in condition_role_values.items():
+                    role_slot = (
+                        f"slot-pair:conditions:{condition_index}|"
+                        f"predicate-role:{role_name}"
+                    )
+                    role_value_slot = (
+                        f"slot-pair:conditions:{condition_index}|"
+                        f"predicate-role:{role_name}:{role_value}"
+                    )
+                    slots.extend(
+                        (
+                            ("semantic_slot_prototype", role_slot),
+                            ("semantic_slot_prototype", role_value_slot),
+                            (
+                                "family_semantic_slot_prototype",
+                                f"{source_family}||{role_slot}",
+                            ),
+                            (
+                                "family_semantic_slot_prototype",
+                                f"{target}||{role_slot}",
+                            ),
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                f"{source_family}||{role_value_slot}||deontic.ir",
+                            ),
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                f"{target}||{role_value_slot}||deontic.ir",
+                            ),
+                        )
+                    )
             slots.extend(
                 (
                     (
@@ -7442,12 +8433,36 @@ def _typed_decompiler_target_reconstruction_slots(
                 (
                     ("legal_ir_view_prototype", view),
                     (
+                        "typed-decompiler-target-reconstruction-view",
+                        f"{pair}||{view}",
+                    ),
+                    (
+                        "semantic_slot_legal_ir_view_prototype",
+                        f"slot:typed-decompiler-target-reconstruction-pair:{pair}||{view}",
+                    ),
+                    (
+                        "semantic_slot_legal_ir_view_prototype",
+                        f"slot:typed-decompiler-target-reconstruction-family:{target}||{view}",
+                    ),
+                    (
                         "family_semantic_slot_legal_ir_view_prototype",
                         f"{source_family}||slot:typed-decompiler-family-pair:{pair}||{view}",
                     ),
                     (
                         "family_semantic_slot_legal_ir_view_prototype",
                         f"{target}||slot:typed-decompiler-family-pair:{pair}||{view}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{source_family}||slot:typed-decompiler-target-reconstruction-pair:{pair}||{view}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{target}||slot:typed-decompiler-target-reconstruction-pair:{pair}||{view}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{target}||slot:typed-decompiler-target-reconstruction-family:{target}||{view}",
                     ),
                 )
             )
@@ -7459,11 +8474,71 @@ def _typed_decompiler_target_reconstruction_slots(
                 semantic_atoms=semantic_atoms,
             )
         )
+        slots.extend(
+            _typed_decompiler_family_pair_role_topology_slots(
+                source_family=source_family,
+                target_family=target,
+                roles=roles,
+                temporal_cues=temporal_cues,
+                condition_cues=condition_cues,
+                has_temporal_scope=has_temporal_scope,
+            )
+        )
         for cue in condition_cues:
             slots.append(
                 (
                     "typed-decompiler-target-reconstruction-surface-cue",
                     f"{cue}:{pair}",
+                )
+            )
+        for cue in reconstruction_cues:
+            for view in _source_scope_cue_legal_ir_views(cue):
+                slots.extend(
+                    (
+                        (
+                            "semantic_slot_legal_ir_view_prototype",
+                            f"slot:typed-decompiler-target-reconstruction-cue:{pair}:{cue}||{view}",
+                        ),
+                        (
+                            "semantic_slot_legal_ir_view_prototype",
+                            (
+                                f"slot-pair:semantic-reconstruction-cue:{cue}|"
+                                f"typed-decompiler-family-pair:{pair}||{view}"
+                            ),
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            f"{source_family}||slot:typed-decompiler-target-reconstruction-cue:{pair}:{cue}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            f"{target}||slot:typed-decompiler-target-reconstruction-cue:{pair}:{cue}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            (
+                                f"{target}||slot-pair:semantic-reconstruction-cue:{cue}|"
+                                f"typed-decompiler-family-pair:{pair}||{view}"
+                            ),
+                        ),
+                    )
+                )
+        source_scope_cues = _source_scope_reconstruction_cues(reconstruction_text)
+        for cue in source_scope_cues:
+            slots.extend(
+                (
+                    (
+                        "typed-decompiler-surface-cue-family-pair",
+                        f"{cue}:{pair}",
+                    ),
+                    (
+                        "semantic_slot_legal_ir_view_prototype",
+                        f"slot:typed-decompiler-surface-cue-family-pair:{cue}:{pair}||TDFOL.prover",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{target}||slot:typed-decompiler-surface-cue-family-pair:{cue}:{pair}||TDFOL.prover",
+                    ),
                 )
             )
         for atom in semantic_atoms:
@@ -7476,6 +8551,57 @@ def _typed_decompiler_target_reconstruction_slots(
                     ),
                 )
             )
+            for view in _legal_semantic_atom_legal_ir_views(atom):
+                slots.extend(
+                    (
+                        ("legal_ir_view_prototype", view),
+                        (
+                            "semantic_slot_legal_ir_view_prototype",
+                            f"slot:typed-decompiler-target-semantic-atom:{atom}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            f"{target}||slot:target-semantic-atom:{atom}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            (
+                                f"{target}||slot-pair:target-semantic-atom:{atom}|"
+                                f"typed-decompiler-family-pair:{pair}||{view}"
+                            ),
+                        ),
+                    )
+                )
+        for status_slot, status_value in status_detail_slots:
+            slots.extend(
+                (
+                    (status_slot, status_value),
+                    (
+                        "typed-decompiler-target-status-family-pair",
+                        f"{status_slot}:{status_value}:{pair}",
+                    ),
+                )
+            )
+            for view in _typed_decompiler_status_detail_legal_ir_views(
+                status_slot,
+                status_value,
+            ):
+                slots.extend(
+                    (
+                        ("legal_ir_view_prototype", view),
+                        (
+                            "semantic_slot_legal_ir_view_prototype",
+                            f"slot:{status_slot}:{status_value}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            (
+                                f"{target}||slot-pair:{status_slot}:{status_value}|"
+                                f"typed-decompiler-family-pair:{pair}||{view}"
+                            ),
+                        ),
+                    )
+                )
         if target == "temporal" and has_temporal_scope:
             temporal_symbol = (
                 source_symbol if source_family == "temporal" and source_symbol else "f"
@@ -7508,6 +8634,17 @@ def _typed_decompiler_target_reconstruction_slots(
         exception_values=exception_values,
         document=document,
     )
+    slots.extend(
+        _typed_decompiler_force_polarity_reconstruction_slots(
+            formula=formula,
+            source_family=source_family,
+            targets=targets,
+            reconstruction_text=reconstruction_text,
+            condition_values=condition_values,
+            exception_values=exception_values,
+            document=document,
+        )
+    )
     if source_family == "deontic" and force == "permission" and polarity == "positive_scope":
         for target in (
             "conditional_normative",
@@ -7522,6 +8659,114 @@ def _typed_decompiler_target_reconstruction_slots(
                     f"force-polarity-family-pair:permission:enabling:deontic->{target}",
                 )
             )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_force_polarity_reconstruction_slots(
+    *,
+    formula: ModalIRFormula,
+    source_family: str,
+    targets: Sequence[str],
+    reconstruction_text: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    document: ModalIRDocument,
+) -> List[Tuple[str, str]]:
+    """Bind deontic force/polarity to target-family reconstruction slots."""
+    normalized_source = _clean_text(source_family).lower()
+    if not normalized_source or not targets:
+        return []
+
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    cues = _typed_decompiler_source_force_cues(
+        formula=formula,
+        reconstruction_text=reconstruction_text,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    )
+    force_values = [force]
+    polarity_values = [polarity]
+    for cue in cues:
+        cue_force = _typed_decompiler_force_for_cue(cue)
+        if cue_force and cue_force not in force_values:
+            force_values.append(cue_force)
+        for cue_polarity in _typed_decompiler_polarities_for_cue(
+            cue,
+            condition_values=condition_values,
+            exception_values=exception_values,
+            text=reconstruction_text,
+        ):
+            if cue_polarity and cue_polarity not in polarity_values:
+                polarity_values.append(cue_polarity)
+
+    slots: List[Tuple[str, str]] = []
+    for target in targets:
+        normalized_target = _clean_text(target).lower()
+        if not normalized_target:
+            continue
+        pair = f"{normalized_source}->{normalized_target}"
+        for force_value in force_values:
+            for polarity_value in polarity_values:
+                signature = f"{force_value}:{polarity_value}:{normalized_target}"
+                family_pair_signature = (
+                    f"{force_value}:{polarity_value}:{pair}"
+                )
+                slots.extend(
+                    (
+                        ("typed-decompiler-force-polarity", signature),
+                        (
+                            "typed-decompiler-force-polarity-family-pair",
+                            family_pair_signature,
+                        ),
+                        (
+                            "decompiler-plan",
+                            f"force-polarity-family-pair:{family_pair_signature}",
+                        ),
+                    )
+                )
+                for view in _typed_decompiler_family_pair_legal_ir_views(
+                    normalized_source,
+                    normalized_target,
+                ):
+                    slot_value = (
+                        "slot:typed-decompiler-force-polarity:"
+                        f"{signature}||{view}"
+                    )
+                    pair_slot_value = (
+                        "slot:typed-decompiler-force-polarity-family-pair:"
+                        f"{family_pair_signature}||{view}"
+                    )
+                    slots.extend(
+                        (
+                            ("semantic_slot_legal_ir_view_prototype", slot_value),
+                            (
+                                "semantic_slot_legal_ir_view_prototype",
+                                pair_slot_value,
+                            ),
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                f"{normalized_source}||{slot_value}",
+                            ),
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                f"{normalized_target}||{slot_value}",
+                            ),
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                f"{normalized_source}||{pair_slot_value}",
+                            ),
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                f"{normalized_target}||{pair_slot_value}",
+                            ),
+                        )
+                    )
     return _unique_slot_values(slots)
 
 
@@ -7551,6 +8796,10 @@ def _typed_decompiler_source_reconstruction_slots(
         return []
 
     roles = _semantic_role_values_from_text(reconstruction_text)
+    for role, value in _semantic_role_values_from_arguments(
+        _phrase_values(formula.predicate.arguments)
+    ).items():
+        roles.setdefault(role, value)
     temporal_cues = _temporal_transition_context_cues_from_text(reconstruction_text)
     if temporal_cues:
         roles["temporal"] = "+".join(temporal_cues)
@@ -7569,7 +8818,8 @@ def _typed_decompiler_source_reconstruction_slots(
     )
     source_scope_cues = _source_scope_reconstruction_cues(reconstruction_text)
     semantic_atoms = _legal_semantic_atoms_from_text(reconstruction_text)
-    if not source_scope_cues and not semantic_atoms:
+    status_detail_slots = _typed_decompiler_status_detail_slots(reconstruction_text)
+    if not source_scope_cues and not semantic_atoms and not status_detail_slots:
         return []
     semantic_topology_atoms = [
         atom
@@ -7612,6 +8862,11 @@ def _typed_decompiler_source_reconstruction_slots(
         ):
             if status_target not in targets:
                 targets.append(status_target)
+    for status_target in _typed_decompiler_status_detail_target_families(
+        status_detail_slots
+    ):
+        if status_target not in targets:
+            targets.append(status_target)
     for directional_target in _typed_decompiler_directional_target_families(
         source_family
     ):
@@ -7651,6 +8906,12 @@ def _typed_decompiler_source_reconstruction_slots(
             f"{topology}:{source_family}:{source_symbol or 'none'}",
         ),
     ]
+    source_predicate = _source_predicate_family_pair_value(
+        family=source_family,
+        predicate_text=predicate_text,
+        force=force,
+        polarity=polarity,
+    )
     for cue in _typed_decompiler_source_force_cues(
         formula=formula,
         reconstruction_text=reconstruction_text,
@@ -7725,10 +8986,31 @@ def _typed_decompiler_source_reconstruction_slots(
         )
     for target in targets:
         pair = f"{source_family}->{target}"
-        slots.append(
+        slots.extend(
             (
-                "typed-decompiler-source-clause-topology-family-pair",
-                f"{topology}:{source_family}|typed-decompiler-family-pair:{pair}",
+                (
+                    "typed-decompiler-source-clause-topology-family-pair",
+                    f"{topology}:{source_family}|typed-decompiler-family-pair:{pair}",
+                ),
+                (
+                    "typed-decompiler-source-predicate-family-pair",
+                    f"{source_family}:{predicate_head}->{target}",
+                ),
+            )
+        )
+        if source_predicate:
+            slots.append(
+                (
+                    "typed-decompiler-source-predicate-force-pair",
+                    source_predicate,
+                )
+            )
+        slots.extend(
+            _typed_decompiler_force_polarity_family_pair_slots(
+                source_family=source_family,
+                target_family=target,
+                force=force,
+                polarity=polarity,
             )
         )
         for view in _typed_decompiler_family_pair_legal_ir_views(
@@ -7756,16 +9038,37 @@ def _typed_decompiler_source_reconstruction_slots(
                 semantic_atoms=semantic_atoms,
             )
         )
+        slots.extend(
+            _typed_decompiler_family_pair_role_topology_slots(
+                source_family=source_family,
+                target_family=target,
+                roles=roles,
+                temporal_cues=temporal_cues,
+                condition_cues=condition_cues,
+                has_temporal_scope="temporal" in topology_parts,
+            )
+        )
     for cue in source_scope_cues:
         slots.extend(
             (
                 ("typed-decompiler-source-scope-cue", cue),
+                (
+                    "typed-decompiler-surface-cue-family-pair",
+                    f"{cue}:{source_family}->{source_family}",
+                ),
                 (
                     "typed-decompiler-source-scope-signature",
                     f"{source_family}:{source_symbol or 'none'}:{topology}:{cue}",
                 ),
             )
         )
+        for target in targets:
+            slots.append(
+                (
+                    "typed-decompiler-surface-cue-family-pair",
+                    f"{cue}:{source_family}->{target}",
+                )
+            )
         for view in _source_scope_cue_legal_ir_views(cue):
             slots.extend(
                 (
@@ -7819,6 +9122,44 @@ def _typed_decompiler_source_reconstruction_slots(
                         ),
                     )
                 )
+    for status_slot, status_value in status_detail_slots:
+        slots.extend(
+            (
+                (status_slot, status_value),
+                (
+                    "typed-decompiler-source-status-signature",
+                    f"{source_family}:{source_symbol or 'none'}:{status_slot}:{status_value}",
+                ),
+            )
+        )
+        for target in targets:
+            pair = f"{source_family}->{target}"
+            slots.append(
+                (
+                    "typed-decompiler-source-status-family-pair",
+                    f"{status_slot}:{status_value}:{pair}",
+                )
+            )
+            for view in _typed_decompiler_status_detail_legal_ir_views(
+                status_slot,
+                status_value,
+            ):
+                slots.extend(
+                    (
+                        ("legal_ir_view_prototype", view),
+                        (
+                            "semantic_slot_legal_ir_view_prototype",
+                            f"slot:{status_slot}:{status_value}||{view}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            (
+                                f"{source_family}||slot-pair:{status_slot}:{status_value}|"
+                                f"typed-decompiler-family-pair:{pair}||{view}"
+                            ),
+                        ),
+                    )
+                )
     return _unique_slot_values(slots)
 
 
@@ -7862,10 +9203,14 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
     if normalized_atom in {
         "administration_enforcement",
         "admission_fee_collection",
+        "appropriated_amount",
+        "appropriated_amount_availability",
         "audit_requirement",
         "award_program",
         "board_of_directors",
         "boundary_division_fence",
+        "biological_product_interstate_traffic",
+        "biological_product_regulation",
         "budget_program_submission",
         "buying_power_account_maintenance",
         "accountability_responsibility",
@@ -7884,18 +9229,30 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "consular_officer_duty_liability",
         "consular_officer_powers_duties_liabilities",
         "competitive_award_program",
+        "cost_sharing",
+        "cost_sharing_credit_treatment",
         "crime_control_law_enforcement",
         "cybersecurity_information_sharing",
         "development_advice_assistance",
         "deceased_veterans_property_disposition",
+        "department_business_assignment",
+        "department_expenditure_authorization",
         "departmental_property_custody",
         "departmental_record_custody",
+        "education_assistance_repayment",
+        "expenditure_account_estimate",
+        "federal_repayment_obligation",
         "export_promotion",
         "fee_collection_authority",
+        "fiscal_year_allotment",
         "forest_resource_reservation",
+        "formula_grant",
         "fund_transfer_authority",
         "funding_eligibility",
+        "exchange_program",
         "foreign_commercial_service",
+        "foreign_relations_exchange_program",
+        "foreign_service_building",
         "foreign_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
@@ -7909,31 +9266,53 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "game_preserve",
         "government_claim",
         "government_publication_depository_access",
+        "government_publication_purchase_authority",
+        "government_property_marking",
+        "government_shipment_loss_prevention",
         "governing_body",
         "health_professional_education_assistance",
+        "congregate_services_program",
         "historic_area",
         "historic_area_access_road",
+        "illegal_sexual_activity",
+        "illegal_sexual_activity_transport",
         "information_sharing",
         "agency_certification_determination",
+        "eligibility_determination",
         "homestead_entry_confirmation",
         "housing_transfer_authority",
         "interagency_coordination",
         "interinstitutional_discussion",
         "irrigation_project",
+        "international_agreement_authority",
+        "international_boundary_water_commission",
+        "international_storage_dam_authorization",
         "judicial_sale_execution",
         "jurisdiction_authority",
         "law_enforcement",
         "legal_relationship_override",
         "liability_protection",
+        "lie_detector_test",
+        "lie_detector_use_prohibition",
+        "employee_polygraph_protection",
         "livestock_commerce",
+        "air_carrier_service_duty",
+        "air_transportation_service_duty",
         "monitoring_enforcement",
+        "monument_memorial_administration",
+        "management_position_assignment",
+        "naval_officer_management_assignment",
         "officer_promotion",
         "officer_election",
         "officer_promotion_retention",
         "officer_retention",
         "prize_proceeds_charge",
         "priority_state",
+        "professional_assessment_committee",
         "per_capita_ranking",
+        "postal_mailbox",
+        "postal_mailbox_destruction",
+        "postal_service",
         "marshal_incapacity",
         "military_commission_procedure",
         "military_defense_counsel_duty",
@@ -7952,17 +9331,24 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "technology_transfer_assessment",
         "technology_transition_assessment",
         "natural_resource_use",
+        "national_park_resource",
+        "non_federal_cost_share",
         "enforcement_remedy",
         "officer_election",
         "prize_proceeds_charge",
         "remedy",
         "report_contents",
+        "research_development_grant_program",
+        "research_development_program",
         "public_access_requirement",
         "publication_disposal_authority",
+        "congressional_precedents_distribution",
+        "official_use_restriction",
         "congressional_committee_report",
         "deadline_report_duty",
         "reserve_active_status_list",
         "resource_availability",
+        "related_crime",
         "settler_resource_use",
         "sovereign_debt_conversion",
         "active_status_list",
@@ -7977,18 +9363,34 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
         "state_conveyance_authority",
+        "state_allotment_amount",
+        "state_allotment_duty",
+        "state_formula_grant",
+        "substance_abuse_treatment_program",
+        "perishable_agricultural_commodity",
         "human_welfare_resource_program",
         "sustainable_chemistry_research",
         "telemedicine_distance_learning",
+        "university_research_grant_program",
+        "university_research_program",
+        "interstate_air_transportation",
         "national_forest_resource",
+        "national_seashore_recreation_area",
+        "recreation_area",
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
         "treasury_deposit",
+        "treasury_payment_source",
+        "treasury_requisition_payment",
         "unknown_party_deposit",
         "veterans_personal_property",
         "white_horse_hill_game_preserve",
         "surplus_housing_transfer",
+        "workforce_development_program",
+        "workforce_performance_accountability",
+        "workforce_performance_reporting",
+        "perishable_commodity_container_exemption",
     }:
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
@@ -8008,6 +9410,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("modal.frame_logic")
     if normalized_atom in {
         "admission_fee_collection",
+        "appropriated_amount",
+        "appropriated_amount_availability",
         "appropriations_committee_duty",
         "civil_action",
         "civil_action_jurisdiction",
@@ -8015,11 +9419,17 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "congressional_budget_process",
         "consular_officer_duty_liability",
         "consular_officer_powers_duties_liabilities",
+        "biological_product_interstate_traffic",
+        "biological_product_regulation",
+        "exchange_program",
         "export_promotion",
         "fee_collection_authority",
+        "fiscal_year_allotment",
         "fund_transfer_authority",
         "funding_eligibility",
         "foreign_commercial_service",
+        "foreign_relations_exchange_program",
+        "foreign_service_building",
         "foreign_service",
         "false_claim_knowledge",
         "false_fraudulent_claim",
@@ -8030,57 +9440,96 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "child_abduction_remedy",
         "commodity_set_aside",
         "commodity_value_determination",
+        "cost_sharing",
+        "cost_sharing_credit_treatment",
         "deceased_veterans_property_disposition",
+        "department_business_assignment",
+        "department_expenditure_authorization",
         "departmental_property_custody",
         "departmental_record_custody",
+        "education_assistance_repayment",
+        "expenditure_account_estimate",
+        "federal_repayment_obligation",
         "forest_resource_reservation",
+        "government_publication_purchase_authority",
         "government_claim",
         "government_publication_depository_access",
+        "government_property_marking",
+        "government_shipment_loss_prevention",
         "agency_certification_determination",
+        "eligibility_determination",
         "homestead_entry_confirmation",
         "housing_transfer_authority",
+        "air_carrier_service_duty",
+        "air_transportation_service_duty",
         "health_professional_education_assistance",
         "human_welfare_resource_program",
         "interagency_coordination",
+        "illegal_sexual_activity",
+        "illegal_sexual_activity_transport",
         "marine_science_development",
         "interinstitutional_discussion",
         "irrigation_project",
+        "international_agreement_authority",
+        "international_boundary_water_commission",
+        "international_storage_dam_authorization",
+        "management_position_assignment",
         "legal_relationship_override",
         "liability_protection",
+        "lie_detector_test",
+        "lie_detector_use_prohibition",
+        "employee_polygraph_protection",
         "mineral_land_status",
         "mineral_leasing_law",
         "mining_law_application",
         "mining_claim",
+        "perishable_agricultural_commodity",
         "territorial_jurisdiction",
         "hydraulic_mining",
         "california_debris_commission",
         "clearing_bank_resolution",
         "federal_reserve_board_oversight",
         "technology_transfer_assessment",
+        "alternative_fuel_vehicle_program",
+        "benefit_cost_information",
+        "consumer_information_package",
+        "environmental_performance_disclosure",
+        "public_information_program",
         "military_commission_procedure",
         "military_defense_counsel_duty",
         "military_trial_counsel_duty",
         "natural_resource_use",
         "national_forest_resource",
+        "national_park_resource",
+        "non_federal_cost_share",
+        "national_seashore_recreation_area",
         "nonirrigable_land_status",
         "permanent_nonirrigable_land_status",
         "jurisdiction_authority",
         "livestock_commerce",
+        "naval_officer_management_assignment",
         "prize_proceeds_charge",
         "priority_state",
         "per_capita_ranking",
+        "postal_mailbox_destruction",
         "road_conveyance",
         "reserve_active_status_list",
         "resource_availability",
+        "research_development_grant_program",
+        "research_development_program",
+        "related_crime",
         "public_access_requirement",
         "publication_disposal_authority",
         "sea_grant_college",
         "sea_grant_college_program",
         "secretary_availability",
+        "service_eligibility",
         "sovereign_debt_conversion",
         "statutory_applicability",
         "statutory_chapter_applicability",
         "settler_resource_use",
+        "university_research_grant_program",
+        "university_research_program",
         "sustainable_chemistry_research",
         "state_court_civil_jurisdiction",
         "state_court_jurisdiction",
@@ -8088,18 +9537,48 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_ranking",
         "statutory_short_title",
         "state_conveyance_authority",
+        "state_allotment_amount",
+        "state_allotment_duty",
+        "state_formula_grant",
+        "substance_abuse_treatment_program",
         "surplus_housing_transfer",
+        "workforce_development_program",
+        "workforce_performance_accountability",
+        "workforce_performance_reporting",
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
         "treasury_deposit",
+        "treasury_payment_source",
+        "treasury_requisition_payment",
         "unknown_party_deposit",
+        "joint_infrastructure_operation",
+        "loss_damage_risk_mitigation",
+        "mexico_bilateral_agreement",
+        "regulation_prescription_authority",
+        "regulatory_compliance_duty",
+        "rio_grande_water_project",
+        "valuable_shipment_regulation",
         "veterans_personal_property",
+        "perishable_commodity_container_exemption",
     }:
         add("CEC.native")
     if normalized_atom in {
         "office_seal",
         "official_seal",
+        "absent_uniformed_services_voter",
+        "border_infrastructure_modernization",
+        "capitol_visitor_center",
+        "chief_executive_officer",
+        "federal_alcohol_law_equal_treatment",
+        "fishery_loan_property",
+        "fishery_vessel_property_disposition",
+        "government_purchasing_authority",
+        "overseas_voter",
+        "technology_modernization",
+        "trust_territory_purchasing_authority",
+        "uniformed_services_voter",
+        "visitor_center_assistant",
         "plant_variety_protection",
         "plant_variety_protection_office",
     }:
@@ -8116,46 +9595,106 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "congressional_budget_allocation",
         "congressional_budget_process",
         "congressional_findings_declaration",
+        "china_relations_oversight",
+        "conservation_area_management",
         "cost_expense_charge",
         "cybersecurity_information_sharing",
+        "construction_no_effect",
         "deceased_veterans_property_disposition",
         "development_advice_assistance",
+        "examination_cost_payment",
         "departmental_property_custody",
         "departmental_record_custody",
+        "department_expenditure_authorization",
         "education_assistance_benefit",
+        "education_assistance_repayment",
+        "federal_repayment_obligation",
+        "faculty_development",
         "false_claim_knowledge",
+        "fund_use_authority",
+        "former_jeopardy_protection",
         "funding_eligibility",
+        "grant_contract_award",
+        "grant_contract_fund_use",
+        "eligibility_determination",
+        "professional_assessment_committee",
+        "service_eligibility",
         "health_professional_education_assistance",
+        "biological_product_regulation",
+        "foreign_relations_exchange_program",
+        "foreign_service_building",
         "foreign_service",
         "internal_service_fee",
+        "documentation_certificate_requirement",
         "interagency_coordination",
         "interinstitutional_discussion",
+        "air_carrier_service_duty",
+        "air_transportation_service_duty",
+        "illegal_sexual_activity",
+        "illegal_sexual_activity_transport",
         "legal_relationship_override",
         "liability_protection",
+        "land_acquisition_authority",
+        "land_donation_acceptance",
+        "lie_detector_test",
+        "lie_detector_use_prohibition",
+        "employee_polygraph_protection",
         "monitoring_enforcement",
+        "proposal_examination_payment",
+        "proposal_submission",
+        "armed_forces_retirement_home",
+        "retirement_home_payment",
+        "management_position_assignment",
         "military_commission_procedure",
         "military_defense_counsel_duty",
         "military_trial_counsel_duty",
         "natural_resource_use",
+        "natural_area_establishment",
+        "national_seashore_recreation_area",
         "nonirrigable_land_status",
         "office_seal",
         "official_seal",
+        "absent_uniformed_services_voter",
+        "border_infrastructure_modernization",
+        "capitol_visitor_center",
+        "chief_executive_officer",
+        "federal_alcohol_law_equal_treatment",
+        "fishery_loan_property",
+        "fishery_vessel_property_disposition",
+        "government_purchasing_authority",
+        "overseas_voter",
+        "technology_modernization",
+        "trust_territory_purchasing_authority",
+        "uniformed_services_voter",
+        "visitor_center_assistant",
         "permanent_nonirrigable_land_status",
+        "perishable_agricultural_commodity",
         "plant_variety_protection",
         "plant_variety_protection_office",
         "prize_proceeds_charge",
         "priority_state",
         "per_capita_ranking",
+        "related_crime",
         "settler_resource_use",
         "state_energy_program",
         "state_ranking",
+        "participation_eligibility",
         "sovereign_debt_conversion",
+        "trade_rule_of_law_compliance",
+        "statutory_construction",
+        "statutory_force_effect",
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
         "treasury_deposit",
+        "treasury_requisition_payment",
         "unknown_party_deposit",
         "veterans_personal_property",
+        "naval_officer_management_assignment",
+        "workforce_development_program",
+        "workforce_performance_accountability",
+        "workforce_performance_reporting",
+        "perishable_commodity_container_exemption",
     }:
         add("deontic.ir")
         add("TDFOL.prover")
@@ -8165,53 +9704,83 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "admission_fee_collection",
         "agricultural_commodity_set_aside",
         "appropriation_authorization",
+        "appropriated_amount_availability",
         "appropriations_committee_duty",
         "audit_requirement",
         "award_program",
+        "biological_product_interstate_traffic",
+        "biological_product_regulation",
         "build_maintain_duty",
         "budget_program_submission",
         "accountability_responsibility",
         "congressional_report_duty",
         "congressional_budget_allocation",
         "congressional_budget_process",
+        "china_relations_oversight",
         "classified_information_procedure",
+        "conservation_area_management",
         "congressional_findings_declaration",
         "congressional_committee_report",
         "commodity_set_aside",
         "commodity_value_determination",
+        "cost_sharing_credit_treatment",
+        "construction_no_effect",
         "deadline_report_duty",
         "competitive_award_program",
         "cybersecurity_information_sharing",
         "definition",
+        "documentation_certificate_requirement",
         "deceased_veterans_property_disposition",
+        "examination_cost_payment",
         "departmental_property_custody",
         "departmental_record_custody",
         "exception_or_condition",
         "exempt_operation",
+        "exchange_program",
         "exemption",
         "expenditure_requirement",
         "facility_operation",
+        "faculty_development",
         "fee_collection_authority",
+        "fiscal_year_allotment",
+        "formula_grant",
         "fund_transfer_authority",
+        "fund_use_authority",
         "funding_eligibility",
         "forest_resource_reservation",
+        "land_acquisition_authority",
+        "land_donation_acceptance",
         "false_claim_knowledge",
         "false_fraudulent_claim",
+        "foreign_relations_exchange_program",
+        "grant_contract_award",
+        "grant_contract_fund_use",
+        "former_jeopardy_protection",
         "government_claim",
         "government_publication_depository_access",
+        "government_publication_purchase_authority",
+        "government_property_marking",
+        "government_shipment_loss_prevention",
         "human_welfare_resource_program",
+        "model_demonstration",
         "account_maintenance",
         "development_advice_assistance",
         "active_status_list",
         "legal_relationship_override",
         "liability_protection",
+        "lie_detector_test",
+        "lie_detector_use_prohibition",
+        "employee_polygraph_protection",
         "judicial_sale_execution",
         "marshal_incapacity",
         "military_commission_procedure",
         "military_defense_counsel_duty",
         "military_trial_counsel_duty",
         "natural_resource_use",
+        "natural_area_establishment",
+        "national_seashore_recreation_area",
         "national_forest_resource",
+        "national_park_resource",
         "homestead_entry_confirmation",
         "housing_transfer_authority",
         "interinstitutional_discussion",
@@ -8223,21 +9792,47 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "federal_reserve_board_oversight",
         "nonirrigable_land_status",
         "office_establishment",
+        "office_of_womens_health",
+        "absent_uniformed_services_voter",
+        "border_infrastructure_modernization",
+        "capitol_visitor_center",
+        "chief_executive_officer",
+        "federal_alcohol_law_equal_treatment",
+        "fishery_loan_property",
+        "fishery_vessel_property_disposition",
+        "government_purchasing_authority",
+        "overseas_voter",
+        "technology_modernization",
+        "trust_territory_purchasing_authority",
+        "uniformed_services_voter",
+        "visitor_center_assistant",
         "officer_promotion",
         "officer_promotion_retention",
         "officer_retention",
         "obligation",
         "patent_prohibition",
         "payment_authorization",
+        "armed_forces_retirement_home",
+        "proposal_examination_payment",
+        "proposal_submission",
+        "public_health_agency",
         "permanent_nonirrigable_land_status",
+        "perishable_agricultural_commodity",
         "permission",
+        "post_term_member_right",
+        "post_term_public_document_allotment",
         "priority_state",
         "per_capita_ranking",
+        "postal_mailbox_destruction",
         "prohibition",
         "public_access_requirement",
+        "public_document_allotment",
         "publication_disposal_authority",
+        "congressional_precedents_distribution",
+        "official_use_restriction",
         "public_report_duty",
         "promotion_retention",
+        "retiring_member_document_right",
         "enforcement_remedy",
         "remedy",
         "report_contents",
@@ -8246,9 +9841,14 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "reserve_active_status_list",
         "resource_availability",
         "research_activity",
+        "research_development_grant_program",
+        "research_development_program",
         "research_grant",
         "report_duty",
+        "retirement_home_payment",
         "road_conveyance",
+        "state_allotment_duty",
+        "state_formula_grant",
         "secretary_availability",
         "sovereign_debt_conversion",
         "sea_grant_college_program",
@@ -8260,11 +9860,26 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "submit_or_file",
         "technology_transfer_assessment",
         "technology_transition_assessment",
+        "trade_rule_of_law_compliance",
+        "alternative_fuel_vehicle_program",
+        "benefit_cost_information",
+        "consumer_information_package",
+        "environmental_performance_disclosure",
+        "public_information_program",
         "test_platform",
+        "university_research_grant_program",
+        "university_research_program",
+        "undocumented_trading_penalty",
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
         "surplus_housing_transfer",
+        "joint_infrastructure_operation",
+        "loss_damage_risk_mitigation",
+        "regulation_prescription_authority",
+        "regulatory_compliance_duty",
+        "valuable_shipment_regulation",
+        "perishable_commodity_container_exemption",
         "veterans_personal_property",
     }:
         add("deontic.ir")
@@ -8273,7 +9888,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "exempt_operation",
         "exemption",
         "facility_operation",
+        "perishable_agricultural_commodity",
         "test_platform",
+        "perishable_commodity_container_exemption",
     }:
         add("CEC.native")
         add("modal.frame_logic")
@@ -8283,9 +9900,13 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "congressional_findings_declaration",
         "definition",
         "development_advice_assistance",
+        "eligibility_determination",
         "deceased_veterans_property_disposition",
         "departmental_property_custody",
         "departmental_record_custody",
+        "china_relations_oversight",
+        "conservation_area_management",
+        "former_jeopardy_protection",
         "monitoring_enforcement",
         "military_commission_procedure",
         "military_defense_counsel_duty",
@@ -8294,18 +9915,45 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "nonirrigable_land_status",
         "office_establishment",
         "office_of_womens_health",
+        "public_health_agency",
         "priority_state",
         "homestead_entry_confirmation",
+        "land_acquisition_authority",
+        "land_donation_acceptance",
         "land_withdrawal_restoration_scope",
+        "natural_area_establishment",
+        "national_seashore_recreation_area",
         "permanent_nonirrigable_land_status",
         "railroad_land_status",
         "state_energy_program",
         "state_ranking",
         "sovereign_debt_conversion",
+        "trade_rule_of_law_compliance",
+        "statutory_construction",
+        "statutory_force_effect",
+        "trainee_support",
+        "training_program_support",
         "technology_transfer_assessment",
         "technology_transition_assessment",
         "federal_reserve_board_oversight",
         "interagency_coordination",
+        "alternative_fuel_vehicle_program",
+        "consumer_information_package",
+        "environmental_performance_disclosure",
+        "international_agreement_authority",
+        "international_boundary_water_commission",
+        "international_storage_dam_authorization",
+        "joint_infrastructure_operation",
+        "mexico_bilateral_agreement",
+        "public_information_program",
+        "rio_grande_water_project",
+        "armed_forces_retirement_home",
+        "proposal_submission",
+        "proposal_examination_payment",
+        "public_health_agency",
+        "retirement_home_payment",
+        "professional_assessment_committee",
+        "service_eligibility",
     }:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
@@ -8322,35 +9970,92 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "commodity_set_aside",
         "commodity_value_determination",
         "deadline_report_duty",
+        "fiscal_year_allotment",
         "mineral_development_technology",
         "date_range_temporal_scope",
         "fund_transfer_authority",
+        "conservation_area_management",
         "funding_eligibility",
+        "land_acquisition_authority",
+        "land_donation_acceptance",
         "marine_science_development",
         "mineral_land_status",
         "mineral_leasing_law",
         "mining_claim",
         "natural_resource_use",
+        "natural_area_establishment",
+        "national_seashore_recreation_area",
         "national_forest_resource",
         "sea_grant_college",
         "sea_grant_college_program",
         "no_year_funding_availability",
+        "post_term_member_right",
+        "post_term_public_document_allotment",
+        "public_document_allotment",
         "reserve_active_status_list",
+        "retiring_member_document_right",
         "resource_availability",
         "per_capita_ranking",
         "research_activity",
         "research_grant",
+        "state_allotment_amount",
         "settler_resource_use",
         "study_report_duty",
         "technology_transfer_assessment",
         "technology_transition_assessment",
+        "trade_rule_of_law_compliance",
         "termination_authority",
         "temporal_condition",
         "state_ranking",
+        "alternative_fuel_vehicle_program",
+        "consumer_information_package",
+        "government_shipment_loss_prevention",
+        "international_storage_dam_authorization",
+        "joint_infrastructure_operation",
+        "public_information_program",
+        "regulation_prescription_authority",
+        "regulatory_compliance_duty",
         "timber_cutting",
         "timber_cutting_forest_scope",
         "timber_stone_use",
+        "valuable_shipment_regulation",
     }:
+        add("TDFOL.prover")
+    if normalized_atom in {
+        "appeal_bail_rule",
+        "education_assistance_program",
+        "naval_facility_expansion",
+        "public_health_surveillance",
+        "science_engineering_education_program",
+        "seaman_discharge",
+        "smart_manufacturing_report",
+        "wage_account_discharge",
+    }:
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in {
+        "advisory_committee",
+        "advisory_committee_appointment",
+        "appointment_authority",
+        "implementation_action_report",
+        "museum_board_regents",
+        "museum_board_trustees",
+        "museum_collection_custody",
+        "national_museum_american_indian",
+    }:
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in {
+        "advisory_committee_appointment",
+        "appointment_authority",
+        "implementation_action_report",
+        "museum_collection_custody",
+    }:
+        add("deontic.ir")
         add("TDFOL.prover")
     return views
 
@@ -8376,36 +10081,74 @@ def _typed_decompiler_semantic_atom_target_families(
             "accountability_responsibility",
             "audit_requirement",
             "award_program",
+            "appropriated_amount",
+            "appropriated_amount_availability",
+            "biological_product_regulation",
             "build_maintain_duty",
             "budget_program_submission",
+            "carbon_capture_research",
             "child_abduction_remedy",
+            "china_relations_oversight",
             "classified_information_procedure",
             "commodity_set_aside",
             "commodity_value_determination",
+            "conservation_area_management",
+            "congregate_services_program",
             "congressional_budget_allocation",
             "congressional_budget_process",
+            "congressional_precedents_distribution",
             "congressional_report_duty",
             "consular_officer_duty_liability",
             "consular_officer_powers_duties_liabilities",
             "cybersecurity_information_sharing",
             "definition",
+            "documentation_certificate_requirement",
             "deceased_veterans_property_disposition",
+            "examination_cost_payment",
             "development_advice_assistance",
+            "department_business_assignment",
+            "department_expenditure_authorization",
             "departmental_property_custody",
             "departmental_record_custody",
+            "education_assistance_repayment",
             "exempt_operation",
+            "exchange_program",
             "exemption",
+            "expenditure_account_estimate",
             "expenditure_requirement",
+            "federal_repayment_obligation",
             "facility_operation",
             "fee_collection_authority",
+            "faculty_development",
+            "fiscal_year_allotment",
             "forest_resource_reservation",
+            "formula_grant",
             "false_claim_knowledge",
             "false_fraudulent_claim",
             "false_statement_penalty",
+            "foreign_commercial_service",
+            "foreign_service",
+            "foreign_relations_exchange_program",
+            "fund_use_authority",
+            "grant_contract_award",
+            "grant_contract_fund_use",
+            "former_jeopardy_protection",
             "government_claim",
             "government_publication_depository_access",
+            "government_publication_purchase_authority",
+            "government_property_marking",
+            "government_shipment_loss_prevention",
             "funding_eligibility",
+            "service_eligibility",
+            "state_allotment_amount",
+            "state_allotment_duty",
+            "state_formula_grant",
+            "substance_abuse_treatment_program",
             "human_welfare_resource_program",
+            "air_carrier_service_duty",
+            "air_transportation_service_duty",
+            "illegal_sexual_activity",
+            "illegal_sexual_activity_transport",
             "predictive_analytics",
             "predictive_analytics_disclosure",
             "waste_fraud_abuse_prevention",
@@ -8415,64 +10158,135 @@ def _typed_decompiler_semantic_atom_target_families(
             "interagency_coordination",
             "agency_certification_determination",
             "agency_determination",
+            "land_acquisition_authority",
+            "land_donation_acceptance",
             "legal_relationship_override",
             "liability_protection",
+            "lie_detector_test",
+            "lie_detector_use_prohibition",
+            "employee_polygraph_protection",
             "military_commission_procedure",
             "military_defense_counsel_duty",
             "military_trial_counsel_duty",
             "mining_law_application",
+            "management_position_assignment",
             "clearing_bank_resolution",
             "congressional_committee_report",
             "deadline_report_duty",
             "federal_reserve_board_oversight",
             "material_fact_representation",
             "natural_resource_use",
+            "natural_area_establishment",
+            "national_seashore_recreation_area",
             "national_forest_resource",
+            "national_park_resource",
             "office_establishment",
+            "office_of_womens_health",
+            "absent_uniformed_services_voter",
+            "border_infrastructure_modernization",
+            "capitol_visitor_center",
+            "chief_executive_officer",
+            "federal_alcohol_law_equal_treatment",
+            "fishery_loan_property",
+            "fishery_vessel_property_disposition",
+            "government_purchasing_authority",
+            "overseas_voter",
+            "technology_modernization",
+            "trust_territory_purchasing_authority",
+            "uniformed_services_voter",
+            "visitor_center_assistant",
             "officer_promotion",
             "officer_promotion_retention",
             "officer_retention",
+            "naval_officer_management_assignment",
             "obligation",
             "permanent_nonirrigable_land_status",
             "patent_prohibition",
+            "perishable_agricultural_commodity",
             "payment_authorization",
+            "armed_forces_retirement_home",
+            "proposal_examination_payment",
+            "proposal_submission",
+            "public_health_agency",
             "priority_state",
+            "open_market_paper_purchase",
+            "postal_mailbox_destruction",
             "public_access_requirement",
+            "public_information_program",
             "publication_disposal_authority",
+            "official_use_restriction",
             "permission",
+            "post_term_member_right",
+            "post_term_public_document_allotment",
             "per_capita_ranking",
             "interinstitutional_discussion",
             "partnership_adjustment_notice",
             "prohibition",
             "promotion_retention",
+            "public_document_allotment",
             "public_report_duty",
             "reserve_active_status_list",
             "resource_availability",
+            "related_crime",
             "research_activity",
+            "research_development_grant_program",
+            "research_development_program",
             "research_grant",
+            "report_contents",
+            "retiring_member_document_right",
             "report_duty",
+            "retirement_home_payment",
             "road_conveyance",
+            "participation_eligibility",
             "scienter_requirement",
             "sea_grant_college_program",
             "secretary_availability",
+            "statutory_force_effect",
             "state_energy_program",
             "state_ranking",
             "statutory_short_title",
+            "statutory_construction",
             "statutory_applicability",
             "statutory_chapter_applicability",
             "homestead_entry_confirmation",
+            "irrigation_project",
             "settler_resource_use",
             "study_report_duty",
             "submit_or_file",
             "state_conveyance_authority",
+            "congregate_services_program",
             "sovereign_debt_conversion",
+            "cost_sharing",
+            "cost_sharing_credit_treatment",
             "technology_transfer_assessment",
+            "trade_rule_of_law_compliance",
+            "alternative_fuel_vehicle_program",
+            "benefit_cost_information",
+            "consumer_information_package",
+            "environmental_performance_disclosure",
+            "treasury_payment_source",
+            "treasury_requisition_payment",
             "test_platform",
+            "undocumented_trading_penalty",
+            "trainee_support",
+            "test_platform",
+            "training_program_support",
+            "perishable_commodity_container_exemption",
             "surplus_housing_transfer",
             "timber_cutting",
             "timber_cutting_forest_scope",
             "timber_stone_use",
+            "international_agreement_authority",
+            "international_storage_dam_authorization",
+            "joint_infrastructure_operation",
+            "loss_damage_risk_mitigation",
+            "regulation_prescription_authority",
+            "regulatory_compliance_duty",
+            "valuable_shipment_regulation",
             "veterans_personal_property",
+            "workforce_development_program",
+            "workforce_performance_accountability",
+            "workforce_performance_reporting",
             "predictive_analytics",
             "predictive_analytics_disclosure",
             "waste_fraud_abuse_prevention",
@@ -8484,34 +10298,76 @@ def _typed_decompiler_semantic_atom_target_families(
             "active_status_list",
             "agricultural_commodity_set_aside",
             "appropriation_authorization",
+            "appropriated_amount_availability",
             "affordable_housing_supply",
+            "biological_product_interstate_traffic",
             "budget_program_submission",
+            "carbon_capture_research",
             "congressional_budget_allocation",
             "congressional_committee_report",
             "commodity_set_aside",
             "commodity_value_determination",
+            "conservation_area_management",
             "deadline_report_duty",
+            "examination_cost_payment",
+            "proposal_examination_payment",
+            "fiscal_year_allotment",
             "housing_family_service_investment",
             "homestead_entry_confirmation",
+            "irrigation_project",
             "land_withdrawal_restoration_scope",
             "long_term_housing_supply",
+            "exchange_program",
+            "foreign_relations_exchange_program",
             "marine_science_development",
             "mineral_development_technology",
+            "land_donation_acceptance",
+            "land_acquisition_authority",
+            "monument_memorial_administration",
             "natural_resource_use",
+            "natural_area_establishment",
+            "national_seashore_recreation_area",
             "national_forest_resource",
+            "national_park_resource",
+            "national_seashore_recreation_area",
             "no_year_funding_availability",
+            "open_market_paper_purchase",
+            "post_term_member_right",
+            "post_term_public_document_allotment",
+            "public_document_allotment",
+            "border_infrastructure_modernization",
+            "fishery_loan_property",
+            "fishery_vessel_property_disposition",
+            "government_purchasing_authority",
+            "technology_modernization",
+            "trust_territory_purchasing_authority",
             "reserve_active_status_list",
+            "retiring_member_document_right",
             "resource_availability",
+            "retirement_home_payment",
             "research_activity",
+            "research_development_grant_program",
+            "research_development_program",
             "research_grant",
+            "state_allotment_amount",
             "sea_grant_college",
             "sea_grant_college_program",
             "sovereign_debt_conversion",
             "study_report_duty",
             "technology_transfer_assessment",
             "technology_transition_assessment",
+            "trade_rule_of_law_compliance",
+            "alternative_fuel_vehicle_program",
+            "consumer_information_package",
+            "international_storage_dam_authorization",
+            "joint_infrastructure_operation",
+            "public_information_program",
+            "regulation_prescription_authority",
+            "regulatory_compliance_duty",
             "termination_authority",
             "temporal_condition",
+            "workforce_performance_accountability",
+            "workforce_performance_reporting",
             "statutory_short_title",
             "timber_cutting",
             "timber_cutting_forest_scope",
@@ -8526,6 +10382,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "award_program",
             "board_of_directors",
             "boundary_division_fence",
+            "biological_product_interstate_traffic",
+            "biological_product_regulation",
             "budget_program_submission",
             "buying_power_account_maintenance",
             "accountability_responsibility",
@@ -8533,6 +10391,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "civil_action_jurisdiction",
             "civil_enforcement",
             "child_abduction_remedy",
+            "china_relations_oversight",
             "classified_information_procedure",
             "commodity_set_aside",
             "commodity_value_determination",
@@ -8546,44 +10405,75 @@ def _typed_decompiler_semantic_atom_target_families(
             "consular_officer_duty_liability",
             "consular_officer_powers_duties_liabilities",
             "competitive_award_program",
+            "conservation_area_management",
             "crime_control_law_enforcement",
             "cybersecurity_information_sharing",
             "definition",
+            "documentation_certificate_requirement",
             "deceased_veterans_property_disposition",
+            "armed_forces_retirement_home",
             "development_advice_assistance",
+            "department_business_assignment",
+            "department_expenditure_authorization",
             "departmental_property_custody",
             "departmental_record_custody",
+            "education_assistance_repayment",
             "export_promotion",
             "exempt_operation",
+            "expenditure_account_estimate",
+            "exchange_program",
             "facility_operation",
+            "faculty_development",
             "fee_collection_authority",
+            "federal_repayment_obligation",
+            "proposal_submission",
             "forest_resource_reservation",
+            "formula_grant",
             "fund_transfer_authority",
+            "fund_use_authority",
             "foreign_commercial_service",
+            "foreign_relations_exchange_program",
+            "foreign_service_building",
             "foreign_service",
             "false_claim_knowledge",
             "false_fraudulent_claim",
             "false_statement_penalty",
             "game_bird_preserve_protection",
             "game_preserve",
+            "grant_contract_award",
+            "grant_contract_fund_use",
             "government_claim",
             "government_publication_depository_access",
+            "government_property_marking",
+            "government_shipment_loss_prevention",
+            "office_of_womens_health",
+            "public_health_agency",
             "governing_body",
             "housing_family_service_investment",
             "housing_investment_authority",
             "housing_transfer_authority",
             "health_professional_education_assistance",
             "human_welfare_resource_program",
+            "illegal_sexual_activity",
+            "illegal_sexual_activity_transport",
             "education_assistance_benefit",
             "historic_area",
             "historic_area_access_road",
+            "interstate_air_transportation",
             "agency_determination",
             "agency_certification_determination",
+            "eligibility_determination",
             "internal_service_fee",
             "interinstitutional_discussion",
             "interagency_coordination",
             "irrigation_project",
+            "international_agreement_authority",
+            "international_boundary_water_commission",
+            "international_storage_dam_authorization",
+            "joint_infrastructure_operation",
             "judicial_sale_execution",
+            "land_acquisition_authority",
+            "land_donation_acceptance",
             "marshal_incapacity",
             "military_commission_procedure",
             "military_defense_counsel_duty",
@@ -8591,7 +10481,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "mineral_land_status",
             "mineral_leasing_law",
             "mining_claim",
+            "management_position_assignment",
             "natural_resource_use",
+            "natural_area_establishment",
+            "national_seashore_recreation_area",
             "nonirrigable_land_status",
             "homestead_entry_confirmation",
             "land_withdrawal_restoration_scope",
@@ -8601,6 +10494,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "law_enforcement",
             "legal_relationship_override",
             "liability_protection",
+            "lie_detector_test",
+            "lie_detector_use_prohibition",
+            "employee_polygraph_protection",
             "livestock_commerce",
             "marine_science_development",
             "mineral_development_technology",
@@ -8612,13 +10508,28 @@ def _typed_decompiler_semantic_atom_target_families(
             "federal_reserve_board_oversight",
             "monitoring_enforcement",
             "national_forest_resource",
+            "national_seashore_recreation_area",
             "office_establishment",
             "office_of_womens_health",
             "office_seal",
+            "absent_uniformed_services_voter",
+            "border_infrastructure_modernization",
+            "capitol_visitor_center",
+            "chief_executive_officer",
+            "federal_alcohol_law_equal_treatment",
+            "fishery_loan_property",
+            "fishery_vessel_property_disposition",
+            "government_purchasing_authority",
+            "overseas_voter",
+            "technology_modernization",
+            "trust_territory_purchasing_authority",
+            "uniformed_services_voter",
+            "visitor_center_assistant",
             "officer_election",
             "officer_promotion",
             "officer_promotion_retention",
             "officer_retention",
+            "naval_officer_management_assignment",
             "participating_jurisdiction",
             "partnership_adjustment",
             "partnership_adjustment_notice",
@@ -8626,25 +10537,37 @@ def _typed_decompiler_semantic_atom_target_families(
             "partnership_notice_proceeding",
             "partnership_proceeding",
             "official_seal",
+            "perishable_agricultural_commodity",
             "plant_variety_protection",
             "plant_variety_protection_office",
             "prize_proceeds_charge",
+            "model_demonstration",
             "promotion_retention",
+            "professional_assessment_committee",
             "priority_state",
             "funding_eligibility",
+            "participation_eligibility",
             "per_capita_ranking",
             "remedy",
             "report_contents",
+            "related_crime",
             "deadline_report_duty",
             "reserve_active_status_list",
             "resource_availability",
             "public_access_requirement",
+            "post_term_member_right",
+            "post_term_public_document_allotment",
             "publication_disposal_authority",
+            "congressional_precedents_distribution",
+            "official_use_restriction",
+            "public_document_allotment",
             "road_conveyance",
             "sea_grant_college",
             "sea_grant_college_program",
             "secretary_availability",
             "sovereign_debt_conversion",
+            "statutory_construction",
+            "statutory_force_effect",
             "statutory_applicability",
             "statutory_chapter_applicability",
             "statutory_short_title",
@@ -8653,21 +10576,48 @@ def _typed_decompiler_semantic_atom_target_families(
             "technology_transfer",
             "technology_transfer_assessment",
             "technology_transition_assessment",
+            "trade_rule_of_law_compliance",
+            "alternative_fuel_vehicle_program",
+            "benefit_cost_information",
+            "consumer_information_package",
+            "environmental_performance_disclosure",
+            "public_information_program",
+            "trainee_support",
             "test_platform",
+            "training_program_support",
             "state_court_civil_jurisdiction",
             "state_court_jurisdiction",
             "state_energy_program",
             "state_ranking",
             "state_conveyance_authority",
+            "air_carrier_service_duty",
+            "air_transportation_service_duty",
+            "state_allotment_amount",
+            "state_allotment_duty",
+            "state_formula_grant",
+            "substance_abuse_treatment_program",
             "timber_cutting",
             "timber_cutting_forest_scope",
             "timber_stone_use",
             "treasury_deposit",
+            "treasury_payment_source",
+            "treasury_requisition_payment",
             "unknown_party_deposit",
+            "loss_damage_risk_mitigation",
+            "mexico_bilateral_agreement",
+            "regulation_prescription_authority",
+            "regulatory_compliance_duty",
+            "rio_grande_water_project",
+            "valuable_shipment_regulation",
             "veterans_personal_property",
             "white_horse_hill_game_preserve",
             "material_fact_representation",
             "surplus_housing_transfer",
+            "workforce_development_program",
+            "workforce_performance_accountability",
+            "workforce_performance_reporting",
+            "retiring_member_document_right",
+            "perishable_commodity_container_exemption",
         }:
             add("frame")
         if normalized_atom in {
@@ -8675,14 +10625,17 @@ def _typed_decompiler_semantic_atom_target_families(
             "agency_certification_determination",
             "accountability_responsibility",
             "child_abduction_remedy",
+            "china_relations_oversight",
             "commodity_value_determination",
             "congressional_findings_declaration",
             "consular_officer_duty_liability",
             "consular_officer_powers_duties_liabilities",
             "development_advice_assistance",
+            "eligibility_determination",
             "deceased_veterans_property_disposition",
             "departmental_property_custody",
             "departmental_record_custody",
+            "foreign_service_building",
             "false_claim_knowledge",
             "false_statement_penalty",
             "material_fact_representation",
@@ -8692,32 +10645,70 @@ def _typed_decompiler_semantic_atom_target_families(
             "interinstitutional_discussion",
             "interagency_coordination",
             "homestead_entry_confirmation",
+            "illegal_sexual_activity",
+            "illegal_sexual_activity_transport",
             "nonirrigable_land_status",
+            "natural_area_establishment",
             "partnership_adjustment",
             "partnership_adjustment_notice",
             "partnership_item",
             "partnership_notice_proceeding",
             "partnership_proceeding",
+            "absent_uniformed_services_voter",
+            "chief_executive_officer",
+            "federal_alcohol_law_equal_treatment",
+            "fishery_loan_property",
+            "fishery_vessel_property_disposition",
+            "government_purchasing_authority",
+            "overseas_voter",
+            "technology_modernization",
+            "trust_territory_purchasing_authority",
+            "uniformed_services_voter",
+            "visitor_center_assistant",
             "permanent_nonirrigable_land_status",
             "land_withdrawal_restoration_scope",
             "sovereign_debt_conversion",
+            "trade_rule_of_law_compliance",
             "technology_transfer_assessment",
             "technology_transition_assessment",
+            "benefit_cost_information",
+            "consumer_information_package",
+            "environmental_performance_disclosure",
             "federal_reserve_board_oversight",
+            "foreign_relations_exchange_program",
             "foreign_service",
+            "international_agreement_authority",
+            "mexico_bilateral_agreement",
+            "public_information_program",
+            "professional_assessment_committee",
+            "service_eligibility",
+            "related_crime",
         }:
             add("epistemic")
+        if normalized_atom in {
+            "false_claim_knowledge",
+            "false_fraudulent_claim",
+            "illegal_sexual_activity",
+            "illegal_sexual_activity_transport",
+            "related_crime",
+            "scienter_requirement",
+        }:
+            add("doxastic")
         if normalized_atom in {
             "affordable_housing_supply",
             "agency_certification_determination",
             "cost_expense_charge",
             "education_assistance_benefit",
+            "education_assistance_repayment",
+            "federal_repayment_obligation",
             "health_professional_education_assistance",
             "housing_family_service_investment",
             "housing_investment_authority",
             "homestead_entry_confirmation",
             "housing_transfer_authority",
             "internal_service_fee",
+            "land_acquisition_authority",
+            "land_donation_acceptance",
             "award_program",
             "officer_promotion",
             "officer_promotion_retention",
@@ -8730,21 +10721,27 @@ def _typed_decompiler_semantic_atom_target_families(
             "prize_proceeds_charge",
             "fund_transfer_authority",
             "competitive_award_program",
+            "formula_grant",
             "partnership_adjustment_notice",
             "partnership_notice_proceeding",
             "research_grant",
             "sea_grant_college_program",
+            "state_formula_grant",
             "settler_resource_use",
             "state_conveyance_authority",
             "timber_stone_use",
             "treasury_deposit",
+            "treasury_payment_source",
+            "treasury_requisition_payment",
             "unknown_party_deposit",
             "permanent_nonirrigable_land_status",
+            "perishable_agricultural_commodity",
             "promotion_retention",
             "reserve_active_status_list",
             "resource_availability",
             "secretary_availability",
             "surplus_housing_transfer",
+            "perishable_commodity_container_exemption",
         }:
             add("deontic")
         if normalized_atom in {
@@ -8758,39 +10755,159 @@ def _typed_decompiler_semantic_atom_target_families(
             "terminated",
             "transferred",
             "vacant",
+            "editorial_transfer_status",
         }:
             add("frame")
         if normalized_atom in {
+            "china_relations_oversight",
+            "conservation_area_management",
             "definition",
             "exception_or_condition",
             "funding_eligibility",
+            "construction_no_effect",
+            "eligibility_determination",
             "child_abduction_remedy",
+            "grant_contract_fund_use",
             "legal_relationship_override",
             "liability_protection",
+            "lie_detector_test",
+            "lie_detector_use_prohibition",
+            "employee_polygraph_protection",
             "military_commission_procedure",
             "livestock_commerce",
             "monitoring_enforcement",
             "interinstitutional_discussion",
+            "land_acquisition_authority",
+            "land_donation_acceptance",
+            "natural_area_establishment",
+            "national_seashore_recreation_area",
             "territorial_jurisdiction",
             "hydraulic_mining",
             "false_statement_penalty",
             "scienter_requirement",
             "material_fact_representation",
+            "absent_uniformed_services_voter",
+            "federal_alcohol_law_equal_treatment",
+            "government_purchasing_authority",
+            "overseas_voter",
+            "technology_modernization",
+            "trust_territory_purchasing_authority",
+            "uniformed_services_voter",
             "partnership_adjustment",
             "partnership_notice_proceeding",
             "partnership_proceeding",
             "priority_state",
+            "post_term_member_right",
+            "post_term_public_document_allotment",
+            "public_document_allotment",
+            "retiring_member_document_right",
             "per_capita_ranking",
+            "statutory_construction",
+            "statutory_force_effect",
+            "perishable_agricultural_commodity",
             "statutory_applicability",
             "statutory_chapter_applicability",
             "state_energy_program",
             "state_ranking",
+            "service_eligibility",
             "sovereign_debt_conversion",
+            "trade_rule_of_law_compliance",
+            "benefit_cost_information",
+            "consumer_information_package",
+            "government_property_marking",
+            "international_agreement_authority",
+            "mexico_bilateral_agreement",
+            "official_use_restriction",
             "clearing_bank_resolution",
             "federal_reserve_board_oversight",
+            "perishable_commodity_container_exemption",
+        }:
+            add("conditional_normative")
+        if normalized_atom in {
+            "education_assistance_program",
+            "public_health_surveillance",
+            "science_engineering_education_program",
+            "seaman_discharge",
+            "smart_manufacturing_report",
+            "wage_account_discharge",
+        }:
+            add("deontic")
+        if normalized_atom in {
+            "appeal_bail_rule",
+            "naval_facility_expansion",
+            "public_health_surveillance",
+            "smart_manufacturing_report",
+        }:
+            add("frame")
+        if normalized_atom in {
+            "appeal_bail_rule",
+            "naval_facility_expansion",
+            "seaman_discharge",
+            "smart_manufacturing_report",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "appeal_bail_rule",
+            "education_assistance_program",
+            "public_health_surveillance",
+            "advisory_committee_appointment",
+            "appointment_authority",
+            "implementation_action_report",
+            "museum_collection_custody",
+        }:
+            add("deontic")
+        if normalized_atom in {
+            "advisory_committee",
+            "advisory_committee_appointment",
+            "appointment_authority",
+            "implementation_action_report",
+            "museum_board_regents",
+            "museum_board_trustees",
+            "museum_collection_custody",
+            "national_museum_american_indian",
+        }:
+            add("frame")
+        if normalized_atom in {
+            "implementation_action_report",
+            "museum_collection_custody",
+            "museum_board_regents",
+            "museum_board_trustees",
+        }:
+            add("epistemic")
+        if normalized_atom in {
+            "advisory_committee_appointment",
+            "implementation_action_report",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "implementation_action_report",
+            "museum_collection_custody",
         }:
             add("conditional_normative")
     return targets
+
+
+def _typed_decompiler_semantic_atom_supports_target(
+    atom: str,
+    *,
+    target_family: str,
+    source_family: str,
+) -> bool:
+    normalized_atom = _clean_text(atom).lower()
+    normalized_target = _clean_text(target_family).lower()
+    normalized_source = _clean_text(source_family).lower()
+    if not normalized_atom or not normalized_target:
+        return False
+    target_families = _typed_decompiler_semantic_atom_target_families(
+        [normalized_atom]
+    )
+    if normalized_source == "frame":
+        for status_target in _typed_decompiler_status_atom_target_families(
+            [normalized_atom]
+        ):
+            if status_target not in target_families:
+                target_families.append(status_target)
+    return normalized_target in target_families
 
 
 def _typed_decompiler_status_atom_target_families(
@@ -8807,6 +10924,7 @@ def _typed_decompiler_status_atom_target_families(
         normalized_atom = _clean_text(atom).lower()
         if normalized_atom not in {
             "codification",
+            "editorial_transfer_status",
             "omitted",
             "reclassified",
             "renumbered",
@@ -8819,11 +10937,136 @@ def _typed_decompiler_status_atom_target_families(
             continue
         add("frame")
         add("conditional_normative")
-        if normalized_atom in {"repealed", "terminated", "omitted", "vacant"}:
+        if normalized_atom in {
+            "reclassified",
+            "renumbered",
+            "repealed",
+            "terminated",
+            "transferred",
+            "omitted",
+            "vacant",
+        }:
             add("deontic")
-        if normalized_atom in {"reclassified", "renumbered", "transferred"}:
+        if normalized_atom in {"omitted", "reclassified", "renumbered", "transferred"}:
+            add("temporal")
+        if normalized_atom == "editorial_transfer_status":
             add("temporal")
     return targets
+
+
+def _typed_decompiler_status_detail_slots(text: str) -> List[Tuple[str, str]]:
+    """Return normalized status transition details for typed reconstruction."""
+    slots: List[Tuple[str, str]] = []
+    normalized_text = _clean_text(text)
+    for slot, value in _uscode_editorial_status_detail_slots(
+        normalized_text,
+        slot_prefix="typed_decompiler_status",
+    ):
+        if not slot.startswith("uscode_editorial_status_"):
+            continue
+        normalized_slot = slot.replace("uscode_editorial_status_", "")
+        normalized_value = _clean_text(value)
+        if not normalized_slot or not normalized_value:
+            continue
+        slots.append((f"typed-decompiler-status-{normalized_slot}", normalized_value))
+    explicit_target = re.search(
+        rf"\b(?:renumbered|reclassified|transferred)"
+        rf"(?:"
+        rf"(?:\s+(?:as|to|from))?\s+(?:§{{1,2}}\s*|secs?\.?\s*|sections?\s+)"
+        rf"|\s+(?:as|to|from)\s+"
+        rf")"
+        rf"(?P<section>{_USCODE_SECTION_LIST_PATTERN})"
+        rf"(?:\s+of\s+(?:(?:this|such)\s+title|Title\s+(?P<title>\d+[A-Za-z]*)))?",
+        normalized_text,
+        flags=re.IGNORECASE,
+    )
+    if explicit_target is not None:
+        target_section = _clean_text(explicit_target.group("section"))
+        target_title = _clean_text(explicit_target.group("title") or "")
+        slots = [
+            (slot, value)
+            for slot, value in slots
+            if slot
+            not in {
+                "typed-decompiler-status-target_section",
+                "typed-decompiler-status-target_title",
+                "typed-decompiler-status-target_citation",
+            }
+        ]
+        if target_section:
+            slots.append(
+                ("typed-decompiler-status-target_section", target_section)
+            )
+            if target_title:
+                slots.append(("typed-decompiler-status-target_title", target_title))
+                slots.append(
+                    (
+                        "typed-decompiler-status-target_citation",
+                        f"{target_title} U.S.C. {target_section}",
+                    )
+                )
+            else:
+                slots.append(
+                    (
+                        "typed-decompiler-status-target_citation",
+                        f"this title section {target_section}",
+                    )
+                )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_status_detail_target_families(
+    status_detail_slots: Sequence[Tuple[str, str]],
+) -> List[str]:
+    """Route extracted U.S.C. transition details to modal target families."""
+    targets: List[str] = []
+
+    def add(target: str) -> None:
+        if target and target not in targets:
+            targets.append(target)
+
+    keywords = {
+        _clean_text(value).lower()
+        for slot, value in status_detail_slots
+        if slot == "typed-decompiler-status-keyword"
+    }
+    if status_detail_slots:
+        add("frame")
+        add("conditional_normative")
+    if keywords.intersection({"reclassified", "renumbered", "transferred"}):
+        add("temporal")
+    if keywords.intersection({"omitted", "repealed", "terminated", "vacant"}):
+        add("deontic")
+    return targets
+
+
+def _typed_decompiler_status_detail_legal_ir_views(
+    status_slot: str,
+    status_value: str,
+) -> List[str]:
+    """Map U.S.C. status transition slots to LegalIR views."""
+    slot = _clean_text(status_slot).lower()
+    value = _clean_text(status_value).lower()
+    if not slot or not value:
+        return []
+    views: List[str] = []
+
+    def add(view: str) -> None:
+        if view and view not in views:
+            views.append(view)
+
+    add("CEC.native")
+    add("knowledge_graphs.neo4j_compat")
+    add("modal.frame_logic")
+    if slot in {
+        "typed-decompiler-status-target_citation",
+        "typed-decompiler-status-target_section",
+        "typed-decompiler-status-target_title",
+    }:
+        add("TDFOL.prover")
+    if value in {"omitted", "repealed", "terminated", "vacant"}:
+        add("deontic.ir")
+    return views
 
 
 def _source_scope_reconstruction_cues(text: str) -> List[str]:
@@ -8846,6 +11089,9 @@ def _source_scope_reconstruction_cues(text: str) -> List[str]:
     for phrase, cue in (
         ("no later than", "no_later_than"),
         ("not later than", "not_later_than"),
+        ("does not apply", "does_not_apply"),
+        ("do not apply", "does_not_apply"),
+        ("did not apply", "does_not_apply"),
         ("shall not apply", "shall_not_apply"),
         ("will not operate", "will_not_operate"),
         ("testing period", "testing_period"),
@@ -8904,6 +11150,7 @@ def _source_scope_cue_legal_ir_views(cue: str) -> List[str]:
         add("deontic.ir")
         add("TDFOL.prover")
     if normalized_cue in {
+        "does_not_apply",
         "shall_not_apply",
         "exempt",
         "exemption",
@@ -8926,6 +11173,7 @@ def _source_scope_cue_legal_ir_views(cue: str) -> List[str]:
     }:
         add("TDFOL.prover")
     if normalized_cue in {
+        "does_not_apply",
         "exempt",
         "exemption",
         "shall_not_apply",
@@ -8965,6 +11213,12 @@ def _typed_decompiler_family_pair_legal_ir_views(
     if target == "temporal" or source == "temporal":
         add("TDFOL.prover")
         add("CEC.native")
+    if target == "epistemic" or source == "epistemic":
+        add("deontic.ir")
+        add("TDFOL.prover")
+    if target == "doxastic" or source == "doxastic":
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
     if source == "frame" or target == "frame":
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
@@ -8978,6 +11232,130 @@ def _typed_decompiler_family_pair_legal_ir_views(
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
     return views
+
+
+def _typed_decompiler_family_pair_role_topology_slots(
+    *,
+    source_family: str,
+    target_family: str,
+    roles: Mapping[str, str],
+    temporal_cues: Sequence[str],
+    condition_cues: Sequence[str],
+    has_temporal_scope: bool,
+) -> List[Tuple[str, str]]:
+    """Emit pair-specific role topology preserved by the typed decompiler."""
+    source = _clean_text(source_family).lower()
+    target = _clean_text(target_family).lower()
+    if not source or not target:
+        return []
+
+    role_parts = [
+        role
+        for role in ("subject", "action", "object")
+        if _clean_text(roles.get(role, ""))
+    ]
+    normalized_temporal_cues = _unique_text_values(
+        _clean_text(cue).lower().replace(" ", "_")
+        for cue in (*temporal_cues, *condition_cues)
+        if _clean_text(cue)
+    )
+    temporal_scope_cues = [
+        cue
+        for cue in normalized_temporal_cues
+        if cue in _TEMPORAL_BRIDGE_CONTEXT_TOKENS
+        or _temporal_clause_prefix_relation(cue)
+        or cue in {
+            "calendar_year",
+            "effective_date",
+            "fiscal_year",
+            "no_later_than",
+            "not_later_than",
+            "on_and_after",
+            "on_or_after",
+        }
+    ]
+    if (
+        has_temporal_scope
+        or _clean_text(roles.get("temporal", ""))
+        or temporal_scope_cues
+    ) and "temporal" not in role_parts:
+        role_parts.append("temporal")
+    if not role_parts:
+        return []
+
+    pair = f"{source}->{target}"
+    role_signature = "+".join(role_parts)
+    bridge_value = f"{pair}:{role_signature}"
+    slots: List[Tuple[str, str]] = [
+        ("typed-decompiler-family-pair-role-topology", bridge_value),
+        ("typed-decompiler-family-pair-bridge", bridge_value),
+        (
+            "typed-decompiler-family-pair-role-count",
+            f"{pair}:{len(role_parts)}",
+        ),
+        (
+            "family_semantic_slot_prototype",
+            f"{source}||slot:typed-decompiler-family-pair-bridge:{bridge_value}",
+        ),
+        (
+            "family_semantic_slot_prototype",
+            f"{target}||slot:typed-decompiler-family-pair-bridge:{bridge_value}",
+        ),
+    ]
+    for role in role_parts:
+        role_value = _clean_text(roles.get(role, ""))
+        slots.append(("typed-decompiler-family-pair-role", f"{pair}:{role}"))
+        if role_value:
+            slots.append(
+                (
+                    "typed-decompiler-family-pair-role-value",
+                    f"{pair}:{role}:{role_value}",
+                )
+            )
+
+    for cue in temporal_scope_cues:
+        slots.extend(
+            (
+                ("typed-decompiler-family-pair-temporal-cue", f"{pair}:{cue}"),
+                (
+                    "family_semantic_slot_prototype",
+                    f"{target}||slot:typed-decompiler-family-pair-temporal-cue:{pair}:{cue}",
+                ),
+            )
+        )
+
+    for view in _typed_decompiler_family_pair_legal_ir_views(source, target):
+        slots.extend(
+            (
+                ("legal_ir_view_prototype", view),
+                (
+                    "semantic_slot_legal_ir_view_prototype",
+                    f"slot:typed-decompiler-family-pair-bridge:{bridge_value}||{view}",
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    f"{source}||slot:typed-decompiler-family-pair-bridge:{bridge_value}||{view}",
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    f"{target}||slot:typed-decompiler-family-pair-bridge:{bridge_value}||{view}",
+                ),
+            )
+        )
+        for cue in temporal_scope_cues:
+            slots.extend(
+                (
+                    (
+                        "semantic_slot_legal_ir_view_prototype",
+                        f"slot:typed-decompiler-family-pair-temporal-cue:{pair}:{cue}||{view}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{target}||slot:typed-decompiler-family-pair-temporal-cue:{pair}:{cue}||{view}",
+                    ),
+                )
+            )
+    return _unique_slot_values(slots)
 
 
 def _typed_decompiler_family_pair_predicate_slots(
@@ -9072,11 +11450,17 @@ def _typed_decompiler_predicate_classes(
             "exemption",
             "exempt_operation",
             "liability_protection",
+            "lie_detector_test",
+            "lie_detector_use_prohibition",
+            "employee_polygraph_protection",
             "patent_prohibition",
+            "perishable_commodity_container_exemption",
             "prohibition",
             "remedy",
             "enforcement_remedy",
             "false_statement_penalty",
+            "undocumented_trading_penalty",
+            "former_jeopardy_protection",
         }
     ):
         add("remedy")
@@ -9088,28 +11472,47 @@ def _typed_decompiler_predicate_classes(
             "commodity_set_aside",
             "commodity_value_determination",
             "cybersecurity_information_sharing",
+            "conservation_area_management",
             "departmental_property_custody",
             "departmental_record_custody",
+            "documentation_certificate_requirement",
             "fee_collection_authority",
             "forest_resource_reservation",
             "fund_transfer_authority",
             "funding_eligibility",
+            "fiscal_year_allotment",
+            "formula_grant",
             "government_publication_depository_access",
             "housing_transfer_authority",
             "information_sharing",
+            "land_acquisition_authority",
+            "land_donation_acceptance",
+            "natural_area_establishment",
+            "air_carrier_service_duty",
+            "air_transportation_service_duty",
             "national_forest_resource",
+            "national_seashore_recreation_area",
             "payment_authorization",
+            "examination_cost_payment",
+            "proposal_examination_payment",
+            "perishable_agricultural_commodity",
             "priority_state",
             "permission",
             "clearing_bank_resolution",
             "federal_reserve_board_oversight",
             "technology_transfer",
             "technology_transfer_assessment",
+            "trade_rule_of_law_compliance",
             "state_energy_program",
             "resource_availability",
             "secretary_availability",
+            "retirement_home_payment",
+            "state_allotment_amount",
+            "state_formula_grant",
             "state_conveyance_authority",
             "surplus_housing_transfer",
+            "workforce_development_program",
+            "perishable_commodity_container_exemption",
         }
     ):
         add("authorization")
@@ -9118,35 +11521,67 @@ def _typed_decompiler_predicate_classes(
             "annual_report_duty",
             "accountability_responsibility",
             "budget_program_submission",
+            "china_relations_oversight",
             "child_abduction_remedy",
             "consular_officer_duty_liability",
             "consular_officer_powers_duties_liabilities",
             "congressional_report_duty",
             "congressional_committee_report",
             "deadline_report_duty",
+            "proposal_submission",
+            "state_allotment_duty",
             "public_access_requirement",
             "publication_disposal_authority",
+            "report_contents",
             "report_duty",
             "study_report_duty",
             "submit_or_file",
             "interagency_coordination",
+            "trade_rule_of_law_compliance",
+            "office_establishment",
+            "management_position_assignment",
+            "naval_officer_management_assignment",
+            "workforce_performance_accountability",
+            "workforce_performance_reporting",
         }
     ):
         add("duty")
     if normalized_atoms.intersection(
         {
+            "annual_report",
+            "annual_report_duty",
+            "congressional_report_duty",
+            "congressional_committee_report",
+            "deadline_report_duty",
+            "public_report_duty",
+            "report_contents",
+            "report_duty",
+            "study_report_duty",
+        }
+    ):
+        add("reporting")
+    if normalized_atoms.intersection(
+        {
             "definition",
             "agency_certification_determination",
             "child_abduction_remedy",
+            "public_health_agency",
+            "office_of_womens_health",
             "commodity_set_aside",
             "commodity_value_determination",
             "funding_eligibility",
+            "eligibility_determination",
             "forest_resource_reservation",
             "homestead_entry_confirmation",
+            "land_acquisition_authority",
+            "land_donation_acceptance",
             "land_withdrawal_restoration_scope",
+            "natural_area_establishment",
+            "national_seashore_recreation_area",
             "national_forest_resource",
             "priority_state",
             "per_capita_ranking",
+            "perishable_agricultural_commodity",
             "territorial_jurisdiction",
             "hydraulic_mining",
             "california_debris_commission",
@@ -9157,10 +11592,41 @@ def _typed_decompiler_predicate_classes(
             "statutory_applicability",
             "statutory_chapter_applicability",
             "statutory_short_title",
+            "trade_rule_of_law_compliance",
             "railroad_land_status",
+            "interstate_air_transportation",
+            "national_seashore_recreation_area",
+            "recreation_area",
+            "service_eligibility",
+            "perishable_commodity_container_exemption",
         }
     ):
         add("statutory")
+    if normalized_atoms.intersection(
+        {
+            "appeal_bail_rule",
+            "education_assistance_program",
+            "public_health_surveillance",
+            "science_engineering_education_program",
+            "seaman_discharge",
+            "smart_manufacturing_report",
+            "wage_account_discharge",
+        }
+    ):
+        add("duty")
+    if normalized_atoms.intersection(
+        {
+            "naval_facility_expansion",
+        }
+    ):
+        add("authorization")
+    if normalized_atoms.intersection(
+        {
+            "appeal_bail_rule",
+            "seaman_discharge",
+        }
+    ):
+        add("remedy")
     return classes
 
 
@@ -9360,6 +11826,33 @@ def _semantic_role_values_from_text(text: str) -> Dict[str, str]:
     return values
 
 
+def _semantic_role_values_from_arguments(arguments: Sequence[str]) -> Dict[str, str]:
+    values: Dict[str, str] = {}
+    role_keys = {
+        "actor": "subject",
+        "agent": "subject",
+        "subject": "subject",
+        "action": "action",
+        "verb": "action",
+        "object": "object",
+        "target": "object",
+        "temporal": "temporal",
+        "time": "temporal",
+        "deadline": "temporal",
+    }
+    for argument in arguments:
+        parsed = _typed_argument_slot(argument)
+        if parsed is None:
+            continue
+        slot, value = parsed
+        key = slot.removeprefix("argument_")
+        role = role_keys.get(key)
+        normalized_value = _clean_text(value).replace(" ", "_").lower()
+        if role and normalized_value and role not in values:
+            values[role] = normalized_value
+    return values
+
+
 def _typed_decompiler_bridge_target_families(
     *,
     formula: ModalIRFormula,
@@ -9374,13 +11867,18 @@ def _typed_decompiler_bridge_target_families(
         if normalized_target and normalized_target not in targets:
             targets.append(normalized_target)
 
-    if family == "deontic":
+    if family in {"conditional_normative", "deontic"}:
         add("deontic")
-    if "temporal" in roles:
+    if family == "conditional_normative":
+        add("conditional_normative")
+    temporal_cues = _temporal_transition_context_cues_from_text(text)
+    if "temporal" in roles or temporal_cues:
         add("temporal")
     if "subject" in roles or "object" in roles:
         add("deontic")
     text_tokens = set(_CUE_TOKEN_RE.findall(text))
+    if _has_deontic_reconstruction_cue(formula, text):
+        add("deontic")
     if _alethic_scope_cues_from_text(text):
         add("alethic")
     if _statutory_scope_slots(text) or text_tokens.intersection(_STRUCTURAL_FRAME_CUE_TOKENS):
@@ -9388,13 +11886,73 @@ def _typed_decompiler_bridge_target_families(
     for cue in _bridge_cues_from_text(text):
         for bridge_family, _bridge_symbol in _cue_bridge_operator_pairs(cue):
             add(bridge_family)
-    if family == "frame":
-        for bridge_family in _doxastic_bridge_families_from_text(text):
-            add(bridge_family)
+    for bridge_family in _doxastic_bridge_families_from_text(text):
+        add(bridge_family)
     if family == "frame" and _uscode_residual_fallback_decompiler_cues(formula):
         add("conditional_normative")
         add("epistemic")
     return targets
+
+
+def _source_predicate_family_pair_value(
+    *,
+    family: str,
+    predicate_text: str,
+    force: str,
+    polarity: str,
+) -> str:
+    normalized_family = _clean_text(family).lower()
+    predicate_key = _slot_safe_family_pair_key(predicate_text)
+    force_key = _slot_safe_family_pair_key(force)
+    polarity_key = _slot_safe_family_pair_key(polarity)
+    if not normalized_family or not predicate_key:
+        return ""
+    if force_key and polarity_key:
+        return f"{normalized_family}:{predicate_key}|{force_key}:{polarity_key}"
+    return f"{normalized_family}:{predicate_key}"
+
+
+def _typed_decompiler_force_polarity_family_pair_slots(
+    *,
+    source_family: str,
+    target_family: str,
+    force: str,
+    polarity: str,
+) -> List[Tuple[str, str]]:
+    normalized_source = _clean_text(source_family).lower()
+    normalized_target = _clean_text(target_family).lower()
+    force_key = _slot_safe_family_pair_key(force)
+    polarity_key = _slot_safe_family_pair_key(polarity)
+    if (
+        not normalized_source
+        or not normalized_target
+        or not force_key
+        or not polarity_key
+    ):
+        return []
+    pair = f"{normalized_source}->{normalized_target}"
+    force_polarity = f"{force_key}:{polarity_key}"
+    return [
+        ("typed-decompiler-force-polarity-family-pair", f"{force_polarity}:{pair}"),
+        (
+            "family_semantic_slot_legal_ir_view_prototype",
+            (
+                f"{normalized_source}||slot:typed-decompiler-force-polarity-family-pair:"
+                f"{force_polarity}:{pair}||TDFOL.prover"
+            ),
+        ),
+        (
+            "family_semantic_slot_legal_ir_view_prototype",
+            (
+                f"{normalized_target}||slot:typed-decompiler-force-polarity-family-pair:"
+                f"{force_polarity}:{pair}||TDFOL.prover"
+            ),
+        ),
+        (
+            "semantic_slot_legal_ir_view_prototype",
+            f"slot:typed-decompiler-force-polarity:{force_polarity}:{normalized_source}||TDFOL.prover",
+        ),
+    ]
 
 
 def _typed_decompiler_directional_target_families(source_family: str) -> List[str]:

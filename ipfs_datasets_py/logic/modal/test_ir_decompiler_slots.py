@@ -7225,6 +7225,58 @@ def test_decode_modal_ir_document_routes_publication_depository_atoms_to_deontic
     assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
 
 
+def _frame_reporting_contents_sample_document() -> ModalIRDocument:
+    source_id = "us-code-7-4207-reporting-7841fcb215fbf21c"
+    source_text = (
+        "Reporting requirement. Not later than June 30 of each year, the "
+        "Secretary shall submit to Congress a report to Congress; contents "
+        "shall include actions taken under this chapter."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-reporting-contents",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="report_contents", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="7 U.S.C. 4207",
+        ),
+        conditions=["not later than June 30 of each year"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_reporting_contents_frame_to_duty_targets() -> None:
+    decoded = decode_modal_ir_document(_frame_reporting_contents_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "report_contents" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "frame->deontic:reporting"
+        in slot_map["typed-decompiler-family-pair-predicate"]
+    )
+    assert (
+        "frame->deontic:duty"
+        in slot_map["typed-decompiler-family-pair-predicate"]
+    )
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
 def _homestead_temporal_deontic_sample_document() -> ModalIRDocument:
     source_id = "us-code-43-890-homestead-f2c18b546ee3f4aa"
     source_text = (
@@ -7321,3 +7373,150 @@ def test_decode_modal_ir_document_surfaces_housing_transfer_certification_target
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+
+
+def _repealed_naval_management_frame_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-7156a.-naval-management-2a04b5b7c42f2880"
+    source_text = (
+        "§7156a. Repealed. Pub. L. 105-85, div. C, title XXXIV, "
+        "§3403, Nov. 18, 1997, 111 Stat. 2059. Section related to "
+        "assignment of naval officers to key management positions."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-repealed-naval-management",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="repealed_naval_management_assignment"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 7156a",
+        ),
+        metadata={"status_keyword": "repealed"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_repealed_naval_management_slots() -> None:
+    decoded = decode_modal_ir_document(_repealed_naval_management_frame_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "repealed" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert (
+        "naval_officer_management_assignment"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_map["legal_ir_view_prototype"]
+
+
+def _national_seashore_deontic_frame_sample_document() -> ModalIRDocument:
+    source_id = "us-code-16-459i-1-seashore-441224bf1e72b168"
+    source_text = (
+        "National seashore recreational areas shall be administered for "
+        "public outdoor recreation under this subchapter."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-national-seashore",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="administer_national_seashore"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="16 U.S.C. 459i-1",
+        ),
+        conditions=["under this subchapter"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_seashore_surface_to_frame_views() -> None:
+    decoded = decode_modal_ir_document(_national_seashore_deontic_frame_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert (
+        "national_seashore_recreation_area"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->conditional_normative" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _air_transportation_workforce_frame_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-41702.-air-transport-fba028d6ff1426eb"
+    source_text = (
+        "An air carrier shall provide safe and adequate interstate air "
+        "transportation except as provided by the Secretary."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-air-transportation-duty",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="air_carrier_service_duty"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="49 U.S.C. 41702",
+        ),
+        exceptions=["except as provided by the Secretary"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_air_transportation_frame_to_deontic() -> None:
+    decoded = decode_modal_ir_document(_air_transportation_workforce_frame_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "air_carrier_service_duty" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "air_transportation_service_duty" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]

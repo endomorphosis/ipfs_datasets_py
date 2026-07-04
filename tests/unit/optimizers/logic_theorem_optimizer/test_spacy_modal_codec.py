@@ -5,12 +5,21 @@ from __future__ import annotations
 import pytest
 
 from ipfs_datasets_py.logic.modal.decompiler import decode_modal_ir_document
+from ipfs_datasets_py.logic.modal.compiler import (
+    DeterministicModalCompiler,
+    ModalCompilationAmbiguity,
+    ModalCompilerConfig,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_REFINED_PACKET_000122_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000205_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000124_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     compiler_refined_modal_family_cue_margin_buffer,
     compiler_weak_typed_self_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
@@ -24,6 +33,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
     _apply_frame_competing_scope_soft_cap,
     _apply_refined_modal_family_cue_pair_balance,
     _apply_temporal_competing_scope_soft_cap,
+    _weighted_modal_family_counts,
     _frame_logit_bonus,
     _scope_signal_family_logit_boosts,
     SpaCyLegalEncoder,
@@ -289,6 +299,73 @@ _USCODE_16_590R_PACKET_2400_TEXT = (
 _USCODE_2_453_PACKET_39_TEXT = "The oath of office."
 _USCODE_9_6_PACKET_39_TEXT = "The application heard as motion."
 _USCODE_43_1656_PACKET_39_TEXT = "The withdrawal and reservation of lands."
+
+
+def test_modal_registry_packet_000124_refines_family_cue_policy_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+        ("temporal", "deontic"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_000124_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+
+
+def test_refined_pair_balance_promotes_study_report_duty_over_deadline() -> None:
+    counts = {
+        "deontic": 1.2,
+        "temporal": 1.6,
+        "frame": 0.3,
+    }
+    signals = {
+        "has_deontic_study_report_duty_scope_phrase": True,
+        "has_deontic_cue": True,
+        "has_temporal_deadline_cue": True,
+        "has_temporal_scope": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] > counts["temporal"]
+
+
+def test_refined_pair_balance_promotes_implementation_budget_conditions() -> None:
+    counts = {
+        "conditional_normative": 0.8,
+        "deontic": 1.3,
+        "frame": 0.7,
+    }
+    signals = {
+        "has_deontic_implementation_budget_scope_phrase": True,
+        "has_condition_or_exception_scope": True,
+        "has_conditional_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] > counts["deontic"]
+
+
+def test_refined_pair_balance_promotes_opinion_findings_over_frame() -> None:
+    counts = {
+        "epistemic": 0.65,
+        "frame": 1.1,
+    }
+    signals = {
+        "has_epistemic_scope": True,
+        "has_epistemic_scope_phrase": True,
+        "has_frame_context": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["epistemic"] > counts["frame"]
 
 
 def _coarse_uscode_heading_noise_text(section: str, heading: str) -> str:
@@ -834,6 +911,29 @@ def test_refined_pair_balance_promotes_statutory_conditional_over_generic_frame(
     assert counts["conditional_normative"] > counts["frame"]
 
 
+def test_spacy_encoder_promotes_failure_heading_as_conditional_normative_scope() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "26 U.S.C. 4980G - Failure of employer to make comparable Archer "
+            "MSAs available. This chapter applies to qualified pension plans "
+            "under this title."
+        ),
+        document_id="packet-002481-failure-heading-conditional-scope",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+    counts = _weighted_modal_family_counts(encoding, signals=signals)
+
+    assert signals["has_conditional_scope_phrase"] is True
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "failure of"
+        for cue in encoding.cues
+    )
+    assert counts["conditional_normative"] > counts["frame"]
+
+
 def test_refined_pair_balance_promotes_statutory_deontic_over_generic_frame() -> None:
     counts = {
         "frame": 2.2,
@@ -880,6 +980,79 @@ def test_refined_pair_balance_promotes_explicit_deontic_over_frame_scaffold() ->
     assert counts["deontic"] > counts["frame"]
 
 
+def test_packet_005575_refined_balance_promotes_doxastic_intent_over_frame() -> None:
+    counts = {
+        "frame": 2.2,
+        "doxastic": 0.4,
+        "deontic": 0.8,
+        "conditional_normative": 0.35,
+    }
+    signals = {
+        "has_doxastic_scope": True,
+        "has_doxastic_cue": True,
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_cue": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_definition_scope": False,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["doxastic"] > counts["frame"]
+
+
+def test_packet_005575_refined_balance_promotes_temporal_status_over_frame() -> None:
+    counts = {
+        "frame": 2.4,
+        "temporal": 0.6,
+        "deontic": 0.35,
+        "conditional_normative": 0.25,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_cue": True,
+        "has_temporal_status_scope": True,
+        "has_calendar_date_scope": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_cue": True,
+        "has_frame_editorial_scope_phrase": False,
+        "has_definition_scope": False,
+        "has_frame_structural_authority_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["temporal"] > counts["frame"]
+
+
+def test_packet_005575_refined_balance_promotes_deontic_over_conditional_scaffold() -> None:
+    counts = {
+        "conditional_normative": 2.1,
+        "deontic": 1.0,
+        "frame": 0.6,
+        "temporal": 0.35,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_deontic_scope_phrase": True,
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_editorial_scope_phrase": False,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["deontic"] > counts["conditional_normative"]
+
+
 def test_packet_004071_registry_refines_frame_deontic_and_dynamic_self_buffers() -> None:
     assert set(COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS) == {
         ("dynamic", "dynamic"),
@@ -910,6 +1083,66 @@ def test_packet_004348_registry_refines_modal_family_cue_pairs() -> None:
             )
             > 0.0
         )
+
+
+def test_packet_000122_registry_refines_current_family_cue_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+        ("temporal", "frame"),
+    }
+
+    assert expected_pairs.issubset(set(COMPILER_REFINED_PACKET_000122_FAMILY_PAIRS))
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
+def test_packet_000205_registry_exposes_compiler_ambiguity_pairs() -> None:
+    assert ("frame", "temporal") in COMPILER_AMBIGUITY_PACKET_000205_FAMILY_PAIRS
+    assert ("temporal", "deontic") in COMPILER_AMBIGUITY_PACKET_000205_FAMILY_PAIRS
+    assert is_compiler_ambiguity_policy_pair("frame", "temporal")
+    assert is_compiler_ambiguity_policy_pair("temporal", "deontic")
+
+
+def test_temporal_deontic_ambiguity_marks_packet_000205_policy_bundle() -> None:
+    encoder = SpaCyLegalEncoder(model_name="blank")
+    encoding = encoder.encode(
+        "The Secretary shall act within 30 days.",
+        document_id="packet-000205-temporal-deontic-policy",
+    )
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    ambiguity = compiler._temporal_deontic_scope_family_ambiguities(
+        encoding,
+        ranking=[
+            {"family": "temporal", "share": 0.62, "share_raw": 0.62},
+            {"family": "deontic", "share": 0.38, "share_raw": 0.38},
+        ],
+        family_shares={"temporal": 0.62, "deontic": 0.38},
+    )
+
+    assert len(ambiguity) == 1
+    assert isinstance(ambiguity[0], ModalCompilationAmbiguity)
+    assert ambiguity[0].metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+    assert ambiguity[0].metadata["compiler_ambiguity_policy_pair"] == "temporal->deontic"
+    assert ambiguity[0].metadata["is_compiler_ambiguity_bundle_pair"] is True
+def test_packet_004828_registry_exposes_modal_ambiguity_pairs() -> None:
+    assert set(COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS) == {
+        ("deontic", "temporal"),
+        ("dynamic", "dynamic"),
+        ("frame", "deontic"),
+    }
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
 
 
 def test_refined_pair_balance_promotes_temporal_for_dated_status_history_tail() -> None:
@@ -1244,6 +1477,32 @@ def test_spacy_encoder_marks_vacant_sections_as_frame_status_scope() -> None:
     assert signals["has_frame_context"] is True
     assert signals["has_statutory_status_frame_scope"] is True
     assert ranking[0]["family"] == "frame"
+
+
+def test_spacy_encoder_keeps_editorial_effective_date_status_temporal() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="25",
+        section="1300m-5",
+        text=(
+            "Sec. 1300m-5 - Omitted From the U.S. Government Publishing Office. "
+            "Editorial Notes Codification Section omitted effective date of repeal "
+            "after enactment."
+        ),
+    )
+
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    rank_by_family = {item["family"]: item["share_raw"] for item in ranking}
+
+    assert signals["has_frame_editorial_scope_phrase"] is True
+    assert signals["has_temporal_status_scope"] is True
+    assert ranking[0]["family"] == "temporal"
+    assert rank_by_family["temporal"] > rank_by_family["frame"]
 
 
 def test_spacy_encoder_treats_editorial_required_as_non_deontic_scope() -> None:
@@ -8785,6 +9044,26 @@ def test_spacy_codec_refines_packet_000709_notification_deadline_family_evidence
     assert signals["has_temporal_notification_deadline_scope_phrase"] is True
     assert signals["has_temporal_deadline_cue"] is True
     assert shares["temporal"] > shares["deontic"]
+
+
+def test_spacy_codec_refines_active_measures_after_notification_timing() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The congressional committees shall receive notification of an "
+            "active measures campaign after the Director determines that such "
+            "campaign is occurring."
+        ),
+        document_id="packet-000603-active-measures-after-notification",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert signals["has_temporal_notification_deadline_scope_phrase"] is True
+    assert shares["temporal"] > shares["deontic"]
+    assert ranking[0]["family"] == "temporal"
 
 
 def test_spacy_codec_refines_packet_000709_exempt_operations_remain_deontic() -> None:

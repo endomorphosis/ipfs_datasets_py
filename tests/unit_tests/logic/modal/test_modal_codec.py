@@ -57,6 +57,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000127_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000130_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000134_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000135_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000498_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000157_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000720_FAMILY_PAIRS,
@@ -84,10 +85,14 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000522_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000534_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000535_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000496_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000165_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000587_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000580_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001068_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001392_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001692_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003238_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002315_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002602_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000154_FAMILY_PAIRS,
@@ -98,11 +103,16 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_001514_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002300_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002680_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003819_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003624_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_004656_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004672_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004674_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005115_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005157_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_006116_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_007716_FAMILY_PAIRS,
     COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
     COMPILER_REFINED_PACKET_000593_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000001_RESCUE_FAMILY_PAIRS,
@@ -240,6 +250,45 @@ def test_modal_registry_packet_000160_exposes_adaptive_ambiguity_pairs() -> None
         )
 
 
+def test_modal_registry_packet_007716_exposes_adaptive_ambiguity_pairs() -> None:
+    """Packet 007716 pairs surface explicit low-margin ambiguity policy."""
+    expected_pairs = (
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "deontic"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_007716_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
 def test_modal_registry_packet_000120_exposes_low_margin_ambiguity_pairs() -> None:
     """Packet 000120 family pairs stay visible to compiler ambiguity policy."""
     expected_pairs = (
@@ -282,6 +331,43 @@ def test_modal_registry_packet_000207_exposes_deontic_frame_ambiguity_policy() -
     )
 
     assert COMPILER_AMBIGUITY_PACKET_000207_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_modal_registry_packet_006116_exposes_same_family_ambiguity_policy() -> None:
+    expected_pairs = (
+        ("deontic", "deontic"),
+        ("temporal", "temporal"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_006116_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
@@ -382,6 +468,46 @@ def test_modal_registry_packet_000535_exposes_modal_ambiguity_policy() -> None:
     )
 
     assert COMPILER_AMBIGUITY_PACKET_000535_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_modal_registry_packet_000496_exposes_modal_ambiguity_policy() -> None:
+    expected_pairs = (
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_000496_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
@@ -1977,8 +2103,18 @@ def test_modal_decompiler_reconstructs_semantic_text_from_typed_slots_without_so
 
     assert "conditional obligation" in decoded.text
     assert "deontic legal obligations" in decoded.text
+    assert (
+        "conditioned on subject to section 314 not later than 2027 agency may provide grants"
+        in decoded.text
+    )
+    assert "agency shall submit report" in decoded.text
     assert "may permission" in decoded.text
     assert "not later than obligation" in decoded.text
+    assert any(
+        "conditioned on subject to section 314 not later than 2027 agency may provide grants"
+        in value
+        for value in slot_texts["typed_ir_semantic_surface_reconstruction"]
+    )
     assert "frame->conditional_normative" in slot_texts[
         "typed_ir_cross_family_semantic_support"
     ]
@@ -5746,6 +5882,31 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001095_pair
             )
             < 1e-12
         )
+
+
+def test_modal_registry_packet_003819_exposes_family_margin_ambiguity_policy() -> None:
+    packet_pairs = (
+        ("deontic", "frame"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_003819_FAMILY_PAIRS) == packet_pairs
+    for predicted_family, target_family in packet_pairs:
+        assert (
+            supports_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert (
+            is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
+            is True
+        )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
 
 
 def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_003624_pairs() -> None:
@@ -9794,7 +9955,7 @@ def test_modal_compiler_treats_zero_margin_frame_epistemic_priority_pair_as_outv
     )
 
 
-def test_modal_compiler_exposes_frame_temporal_epistemic_policy_target_outvotes(
+def test_modal_compiler_exposes_frame_temporal_epistemic_doxastic_policy_target_outvotes(
     monkeypatch,
 ) -> None:
     compiler = DeterministicModalCompiler(
@@ -9821,11 +9982,13 @@ def test_modal_compiler_exposes_frame_temporal_epistemic_policy_target_outvotes(
             {"family": "frame", "count": 4, "share": 0.55},
             {"family": "temporal", "count": 2, "share": 0.17},
             {"family": "epistemic", "count": 2, "share": 0.20},
+            {"family": "doxastic", "count": 1, "share": 0.13},
         ],
         family_shares={
             "frame": 0.55,
             "temporal": 0.17,
             "epistemic": 0.20,
+            "doxastic": 0.13,
         },
     )
 
@@ -9833,10 +9996,12 @@ def test_modal_compiler_exposes_frame_temporal_epistemic_policy_target_outvotes(
     assert set(by_type) == {
         "frame_temporal_family_outvoted",
         "frame_epistemic_family_outvoted",
+        "frame_doxastic_family_outvoted",
     }
     for target_family, ambiguity_type in (
         ("temporal", "frame_temporal_family_outvoted"),
         ("epistemic", "frame_epistemic_family_outvoted"),
+        ("doxastic", "frame_doxastic_family_outvoted"),
     ):
         ambiguity = by_type[ambiguity_type]
         assert ambiguity.candidate_ids == ["frame", target_family]
@@ -18656,6 +18821,58 @@ def test_modal_codec_frame_ontology_audit_reports_high_signal_terms() -> None:
     assert result.modal_ir.metadata["frame_ontology_high_signal_term_audit_count"] == len(
         high_signal_terms
     )
+
+
+def test_modal_codec_frame_logic_target_guidance_infers_audit_route() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="33",
+        section="3803",
+        text=(
+            "Sec. 3803. Administration and enforcement. The Secretary may "
+            "enforce this chapter and shall issue regulations."
+        ),
+    )
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance={
+            "target_component": "modal.frame_logic",
+            "evidence": {
+                "frame_features": [
+                    "legal-ir-view:deontic.ir",
+                    "legal-ir-view:modal.frame_logic",
+                    "quality:bias",
+                    "quality:symbolic:has-formula",
+                    "legal-ir-view:modal.autoencoder",
+                    "legal-ir-view:TDFOL.prover",
+                    "quality:frame:rank-top",
+                ],
+                "pipeline_stage_focus": [
+                    "modal_family_registry",
+                    "legal_ir_multiview",
+                ],
+            },
+        },
+    )
+
+    assert "audit_frame_logic_terms" in result.modal_ir.metadata[
+        "compiler_guidance_synthesis_focus"
+    ]
+    selected_terms = {
+        triple["object"]
+        for triple in result.kg_triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+    assert "modal_frame_logic" in selected_terms
+    assert "deontic_ir" in selected_terms
+    assert "quality_symbolic_has_formula" in selected_terms
+    assert "audit_frame_logic_terms" in selected_terms
 
 
 def test_frame_ontology_audit_terms_contextualize_low_signal_frame_features() -> None:
@@ -27745,74 +27962,53 @@ def test_modal_compiler_surfaces_packet_000125_compiler_ambiguity_policy_pairs(
     )
     scenarios = (
         {
-            "sample_id": "us-code-33-2213a-a015499eddb1f5f6",
-            "predicted_family": "frame",
-            "target_family": "conditional_normative",
-            "family_margin": -0.999995481117,
-            "priority": 1.149995481117,
-        },
-        {
-            "sample_id": "us-code-10-2491a-3e9212b2e10205f6",
-            "predicted_family": "frame",
-            "target_family": "conditional_normative",
-            "family_margin": -0.701174619046,
-            "priority": 0.851174619046,
-        },
-        {
-            "sample_id": "us-code-16-799-ed4b744b4bed77ee",
-            "predicted_family": "frame",
-            "target_family": "deontic",
-            "family_margin": -0.47508163427,
-            "priority": 0.62508163427,
-        },
-        {
-            "sample_id": "us-code-18-1705-828a5b629d033e04",
-            "predicted_family": "frame",
-            "target_family": "doxastic",
-            "family_margin": -0.513596890079,
-            "priority": 0.663596890079,
-        },
-        {
-            "sample_id": "us-code-51-40305.-5f23b53ad79a36d5",
-            "predicted_family": "frame",
-            "target_family": "frame",
-            "family_margin": 0.095426451185,
-            "priority": 0.054573548815,
-        },
-        {
-            "sample_id": "us-code-42-300a-e57ccd658257dc26",
-            "predicted_family": "frame",
-            "target_family": "temporal",
-            "family_margin": -0.996752403131,
-            "priority": 1.146752403131,
-        },
-        {
-            "sample_id": "us-code-20-1703-d96d239b54afbdf8",
-            "predicted_family": "conditional_normative",
-            "target_family": "deontic",
-            "family_margin": -0.211685206409,
-            "priority": 0.361685206409,
-        },
-        {
-            "sample_id": "us-code-31-1532-d8780c8260270f6c",
+            "sample_id": "us-code-42-1437h.-cabcbab29b5aa356",
             "predicted_family": "deontic",
-            "target_family": "dynamic",
-            "family_margin": -0.489728789977,
-            "priority": 0.639728789977,
+            "target_family": "conditional_normative",
+            "family_margin": -0.093182426176,
+            "priority": 0.243182426176,
         },
         {
-            "sample_id": "us-code-16-1111-b5fe24687ebb5578",
+            "sample_id": "us-code-46-10310.-4748e5ab4483791a",
+            "predicted_family": "deontic",
+            "target_family": "deontic",
+            "family_margin": 0.100233111829,
+            "priority": 0.049766888171,
+        },
+        {
+            "sample_id": "us-code-36-220314-f81a9efb8f36f101",
+            "predicted_family": "deontic",
+            "target_family": "frame",
+            "family_margin": -0.025373459807,
+            "priority": 0.175373459807,
+        },
+        {
+            "sample_id": "us-code-45-916.-bab48ead3b1dd179",
+            "predicted_family": "frame",
+            "target_family": "conditional_normative",
+            "family_margin": -0.996597384986,
+            "priority": 1.146597384986,
+        },
+        {
+            "sample_id": "us-code-20-7291-bf8ffbef55c6755e",
+            "predicted_family": "frame",
+            "target_family": "deontic",
+            "family_margin": -0.013762980024,
+            "priority": 0.163762980024,
+        },
+        {
+            "sample_id": "us-code-16-478a-64b1d31b47a6ea82",
+            "predicted_family": "frame",
+            "target_family": "epistemic",
+            "family_margin": -0.999988711256,
+            "priority": 1.149988711256,
+        },
+        {
+            "sample_id": "us-code-15-7609-a6c624371927ff8b",
             "predicted_family": "temporal",
             "target_family": "deontic",
-            "family_margin": -0.125837888844,
-            "priority": 0.275837888844,
-        },
-        {
-            "sample_id": "us-code-20-1103c-536981ebcd983068",
-            "predicted_family": "temporal",
-            "target_family": "frame",
-            "family_margin": -0.224223155574,
-            "priority": 0.374223155574,
+            "family_margin": -0.430676912623,
+            "priority": 0.580676912623,
         },
     )
     expected_pairs = {
@@ -27820,6 +28016,31 @@ def test_modal_compiler_surfaces_packet_000125_compiler_ambiguity_policy_pairs(
         for scenario in scenarios
     }
     assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_000125_FAMILY_PAIRS)
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
 
     for index, scenario in enumerate(scenarios, start=1):
         predicted_family = str(scenario["predicted_family"])
@@ -28606,21 +28827,21 @@ def test_modal_compiler_refines_packet_000126_family_cue_pairs(
     )
     scenarios = (
         {
-            "sample_id": "us-code-42-300a-e57ccd658257dc26",
+            "sample_id": "us-code-10-2491a-3e9212b2e10205f6",
             "predicted_family": "frame",
-            "target_family": "temporal",
-            "family_margin": -0.996706139774,
+            "target_family": "conditional_normative",
+            "family_margin": -0.721189632999,
             "predicted_system": "FRAME_BM25",
             "predicted_symbol": "Frame",
             "predicted_label": "frame",
-            "expected_pair_buffer": 0.002,
-            "expected_threshold": 0.152,
+            "expected_pair_buffer": 0.0015,
+            "expected_threshold": 0.1515,
         },
         {
-            "sample_id": "us-code-16-799-ed4b744b4bed77ee",
+            "sample_id": "us-code-16-1111-b5fe24687ebb5578",
             "predicted_family": "temporal",
             "target_family": "deontic",
-            "family_margin": -0.537789246889,
+            "family_margin": -0.110140050843,
             "predicted_system": "LTL",
             "predicted_symbol": "F",
             "predicted_label": "eventually",
@@ -30396,52 +30617,46 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
     )
     scenarios = (
         (
-            "us-code-18-1705-828a5b629d033e04",
-            "frame",
-            "doxastic",
-            -0.511343388633,
+            "us-code-20-1703-d96d239b54afbdf8",
+            "conditional_normative",
+            "deontic",
+            -0.202342750604,
         ),
         (
-            "us-code-42-17256.-53095ca157393209",
+            "us-code-31-1532-d8780c8260270f6c",
+            "deontic",
+            "dynamic",
+            -0.498691919752,
+        ),
+        (
+            "us-code-16-450o-7b2010797fa9993d",
+            "deontic",
+            "frame",
+            -0.653450318262,
+        ),
+        (
+            "us-code-54-312506.-665e20456c544890",
             "frame",
             "deontic",
-            -0.104926223005,
+            -0.481883845937,
         ),
         (
-            "us-code-33-2213a-a015499eddb1f5f6",
+            "us-code-42-300e-bcefb5a88cf6ea53",
             "frame",
-            "conditional_normative",
-            -0.999995435821,
+            "frame",
+            0.088426024729,
         ),
         (
-            "us-code-33-579f-1eafb0dbc84f748e",
-            "frame",
+            "us-code-20-1103c-536981ebcd983068",
             "temporal",
-            -0.604402806232,
-        ),
-        (
-            "us-code-51-40305.-5f23b53ad79a36d5",
             "frame",
-            "frame",
-            0.090044947089,
+            -0.207300869798,
         ),
         (
-            "us-code-30-501-3c448e13ffc98255",
-            "conditional_normative",
-            "conditional_normative",
-            0.058817163597,
-        ),
-        (
-            "us-code-28-2003-9fcb722493144b69",
-            "deontic",
+            "us-code-42-2459a.-9b6320e3a58a8a05",
             "temporal",
-            -0.101026476056,
-        ),
-        (
-            "us-code-42-7195.-122e167c4369367c",
             "temporal",
-            "epistemic",
-            -0.161220066487,
+            0.014284918666,
         ),
     )
     expected_pairs = {
@@ -30503,6 +30718,7 @@ def test_modal_compiler_surfaces_packet_000130_ambiguity_policy_pairs(
         operator_by_family = {
             "conditional_normative": ("KD", "O|", "conditional_obligation"),
             "deontic": ("D", "O", "obligation"),
+            "dynamic": ("PDL", "<act>", "action"),
             "frame": ("FRAME_BM25", "Frame", "frame"),
             "temporal": ("LTL", "F", "eventually"),
         }
@@ -31225,6 +31441,35 @@ def test_modal_compiler_surfaces_packet_000134_ambiguity_policy_pairs(
             and ambiguity.metadata["adaptive_base_ambiguity_type"]
             == "adaptive_family_margin_low"
             for ambiguity in ambiguities
+        )
+
+
+def test_modal_registry_packet_000135_refines_family_cue_policy_pairs() -> None:
+    expected_pairs = {
+        ("conditional_normative", "deontic"),
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_000135_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
         )
 
 
@@ -33275,20 +33520,50 @@ def test_modal_compiler_surfaces_packet_000214_deontic_frame_cue_policy(
     )
     scenarios = (
         {
+            "sample_id": "us-code-16-556i-32e4432ee41bc5bb",
+            "predicted_family": "conditional_normative",
+            "target_family": "conditional_normative",
+            "family_margin": 0.049804374934,
+            "expected_direction": "contested",
+            "expected_threshold": 0.2865,
+            "expected_pair_buffer": 0.1365,
+            "expected_weak_buffer": 0.135,
+        },
+        {
             "sample_id": "us-code-34-10512-f1eb1d96fb4b565b",
             "predicted_family": "deontic",
             "target_family": "deontic",
             "family_margin": -0.010626732257,
             "expected_direction": "outvoted",
-            "expected_threshold": 0.2865,
-            "expected_pair_buffer": 0.1365,
+            "expected_threshold": 0.361,
+            "expected_pair_buffer": 0.211,
             "expected_weak_buffer": 0.135,
+        },
+        {
+            "sample_id": "us-code-15-3711b-aef14a7692917860",
+            "predicted_family": "deontic",
+            "target_family": "temporal",
+            "family_margin": -0.106640978007,
+            "expected_direction": "outvoted",
+            "expected_threshold": 0.1515,
+            "expected_pair_buffer": 0.0015,
+            "expected_weak_buffer": 0.0,
         },
         {
             "sample_id": "us-code-25-233-da029ae8d3664392",
             "predicted_family": "deontic",
             "target_family": "frame",
             "family_margin": -0.706402527601,
+            "expected_direction": "outvoted",
+            "expected_threshold": 0.1515,
+            "expected_pair_buffer": 0.0015,
+            "expected_weak_buffer": 0.0,
+        },
+        {
+            "sample_id": "us-code-42-19059.-91665c522bc27130",
+            "predicted_family": "frame",
+            "target_family": "conditional_normative",
+            "family_margin": -0.647901934363,
             "expected_direction": "outvoted",
             "expected_threshold": 0.1515,
             "expected_pair_buffer": 0.0015,
@@ -33305,13 +33580,33 @@ def test_modal_compiler_surfaces_packet_000214_deontic_frame_cue_policy(
             "expected_weak_buffer": 0.0,
         },
         {
+            "sample_id": "us-code-20-1132-3-80f3f53cc302786f",
+            "predicted_family": "frame",
+            "target_family": "epistemic",
+            "family_margin": -0.364025940562,
+            "expected_direction": "outvoted",
+            "expected_threshold": 0.152,
+            "expected_pair_buffer": 0.002,
+            "expected_weak_buffer": 0.0,
+        },
+        {
+            "sample_id": "us-code-21-96-e9962af483e8c8a4",
+            "predicted_family": "frame",
+            "target_family": "temporal",
+            "family_margin": -0.997356872835,
+            "expected_direction": "outvoted",
+            "expected_threshold": 0.152,
+            "expected_pair_buffer": 0.002,
+            "expected_weak_buffer": 0.0,
+        },
+        {
             "sample_id": "us-code-7-2322-8a47b18df0989404",
             "predicted_family": "deontic",
             "target_family": "deontic",
             "family_margin": 0.012897650959,
             "expected_direction": "contested",
-            "expected_threshold": 0.2865,
-            "expected_pair_buffer": 0.1365,
+            "expected_threshold": 0.361,
+            "expected_pair_buffer": 0.211,
             "expected_weak_buffer": 0.135,
         },
     )
@@ -34114,6 +34409,192 @@ def test_modal_compiler_surfaces_packet_004672_adaptive_ambiguity_policy(
         )
 
 
+def test_modal_compiler_surfaces_packet_004828_adaptive_ambiguity_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        ("us-code-50-2922.-841a5bfadbf73fca", "deontic", "temporal", -0.333830102367),
+        ("us-code-12-5585-b06ff10c6ed38c32", "dynamic", "dynamic", 0.057282184106),
+        ("us-code-2-6131-ab6242eedbe6fa8b", "frame", "deontic", -0.999997216251),
+    )
+    assert {
+        (predicted_family, target_family)
+        for _, predicted_family, target_family, _ in scenarios
+    } == set(COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS)
+
+    family_operator = {
+        "deontic": ("D", "O", "obligation"),
+        "dynamic": ("PDL", "[a]", "after_action"),
+        "frame": ("FRAME_BM25", "Frame", "frame"),
+        "temporal": ("LTL", "G", "temporal"),
+    }
+    for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
+        scenarios,
+        start=1,
+    ):
+        predicted_system, predicted_symbol, predicted_label = family_operator[
+            predicted_family
+        ]
+        predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.001))
+        if predicted_family == target_family:
+            runner_up_family = "temporal"
+            runner_up_share = predicted_share - family_margin
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": runner_up_family,
+                    "count": 0,
+                    "share_raw": runner_up_share,
+                    "share": runner_up_share,
+                },
+            ]
+            expected_direction = "contested"
+            expected_candidate_ids = [predicted_family]
+        else:
+            target_share = predicted_share + family_margin
+            ranking = [
+                {
+                    "family": predicted_family,
+                    "count": 0,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                },
+                {
+                    "family": target_family,
+                    "count": 0,
+                    "share_raw": target_share,
+                    "share": target_share,
+                },
+            ]
+            expected_direction = "outvoted"
+            expected_candidate_ids = [predicted_family, target_family]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        text = f"Synthetic packet 004828 {predicted_family} ambiguity evidence."
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-004828-adaptive-evidence-{index}",
+            text=text,
+            normalized_text=text,
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system=predicted_system,
+                    symbol=predicted_symbol,
+                    label=predicted_label,
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-004828-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=predicted_system,
+                        symbol=predicted_symbol,
+                        label=predicted_label,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role=predicted_label,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(text),
+                        citation="packet-004828",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        expected_type = (
+            f"adaptive_{predicted_family}_{target_family}_"
+            f"{expected_direction}_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == expected_candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_type
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert any(
+            ambiguity.ambiguity_type == expected_type
+            and ambiguity.candidate_ids == expected_candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
 def test_modal_compiler_surfaces_packet_005115_temporal_ambiguity_policy(
     monkeypatch,
 ) -> None:
@@ -34471,6 +34952,181 @@ def test_modal_compiler_surfaces_packet_004674_adaptive_ambiguity_policy(
         assert any(
             ambiguity.ambiguity_type == expected_type
             and ambiguity.candidate_ids == expected_candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
+def test_modal_compiler_surfaces_packet_004656_adaptive_ambiguity_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        (
+            "us-code-34-10704-267c713d8e4430e7",
+            "frame",
+            "deontic",
+            -0.511418075905,
+        ),
+        (
+            "us-code-16-5610-67470a5d616a4e1a",
+            "frame",
+            "temporal",
+            -0.561602364109,
+        ),
+        (
+            "us-code-43-153.-09579a64c6f785ff",
+            "deontic",
+            "frame",
+            -0.575650933706,
+        ),
+    )
+    expected_pairs = {
+        ("deontic", "frame"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+    assert set(COMPILER_AMBIGUITY_PACKET_004656_FAMILY_PAIRS) == expected_pairs
+
+    for index, (
+        sample_id,
+        predicted_family,
+        target_family,
+        family_margin,
+    ) in enumerate(scenarios, start=1):
+        predicted_system = "FRAME_BM25" if predicted_family == "frame" else "D"
+        predicted_symbol = "Frame" if predicted_family == "frame" else "O"
+        predicted_label = "frame" if predicted_family == "frame" else "obligation"
+        predicted_share = min(0.99, abs(family_margin) + 0.05)
+        target_share = predicted_share + family_margin
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-004656-adaptive-evidence-{index}",
+            text=f"Synthetic {predicted_family} ambiguity evidence.",
+            normalized_text=f"Synthetic {predicted_family} ambiguity evidence.",
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system=predicted_system,
+                    symbol=predicted_symbol,
+                    label=predicted_label,
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-004656-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=predicted_system,
+                        symbol=predicted_symbol,
+                        label=predicted_label,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role=predicted_label,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-004656",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             and ambiguity.metadata["adaptive_base_ambiguity_type"]
             == "adaptive_family_margin_low"
@@ -34910,6 +35566,166 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
         )
 
 
+def test_modal_compiler_surfaces_packet_000580_adaptive_ambiguity_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        ("us-code-47-1430.-4922d100440a3155", "frame", "epistemic", -0.543114987064),
+        ("us-code-43-617u.-ccc23533fe0bd328", "frame", "deontic", -0.999998250869),
+        ("us-code-18-287-285c98993acf7426", "frame", "deontic", -0.190311129226),
+        ("us-code-16-407d-ffe85671d5c04484", "frame", "deontic", -0.176494356326),
+        ("us-code-22-6842-524e5e95de406104", "frame", "temporal", -0.687784101853),
+        ("us-code-22-6726-8ca5f00028082d2e", "frame", "deontic", -0.0777528062),
+    )
+    assert set(COMPILER_AMBIGUITY_PACKET_000580_FAMILY_PAIRS) == {
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+        ("frame", "temporal"),
+    }
+
+    for index, (
+        sample_id,
+        predicted_family,
+        target_family,
+        family_margin,
+    ) in enumerate(scenarios, start=1):
+        predicted_share = abs(family_margin) + 0.05
+        target_share = predicted_share + family_margin
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-000580-adaptive-evidence-{index}",
+            text="Synthetic packet 000580 frame ambiguity evidence.",
+            normalized_text="Synthetic packet 000580 frame ambiguity evidence.",
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-000580-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system="FRAME_BM25",
+                        symbol="Frame",
+                        label="frame",
+                    ),
+                    predicate=ModalIRPredicate(
+                        name="frame_predicate",
+                        arguments=["actor:agency"],
+                        role="frame",
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-000580",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        expected_explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert base_ambiguity.severity == "requires_rule"
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert any(
+            ambiguity.ambiguity_type == expected_explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
 def test_modal_compiler_surfaces_packet_001692_adaptive_ambiguity_policy(
     monkeypatch,
 ) -> None:
@@ -35107,6 +35923,361 @@ def test_modal_compiler_surfaces_packet_001692_adaptive_ambiguity_policy(
         assert any(
             ambiguity.ambiguity_type == expected_explicit_type
             and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
+def test_modal_compiler_surfaces_packet_001392_adaptive_ambiguity_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        (
+            "us-code-18-647-dff85016d0ab1ea6",
+            "frame",
+            "epistemic",
+            -0.611281595407,
+        ),
+        (
+            "us-code-54-100731.-f2538f9f458f2982",
+            "frame",
+            "epistemic",
+            -0.063688004931,
+        ),
+        (
+            "us-code-18-13-711ddfdf37e87d3c",
+            "deontic",
+            "deontic",
+            0.149623306296,
+        ),
+        (
+            "us-code-31-735-5e38334daee34d4d",
+            "frame",
+            "conditional_normative",
+            -0.308230185734,
+        ),
+    )
+    expected_pairs = {
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "epistemic"),
+    }
+    assert set(COMPILER_AMBIGUITY_PACKET_001392_FAMILY_PAIRS) == expected_pairs
+
+    for index, (
+        sample_id,
+        predicted_family,
+        target_family,
+        family_margin,
+    ) in enumerate(scenarios, start=1):
+        predicted_system = "FRAME_BM25" if predicted_family == "frame" else "D"
+        predicted_symbol = "Frame" if predicted_family == "frame" else "O"
+        predicted_label = "frame" if predicted_family == "frame" else "obligation"
+        predicted_share = (
+            0.5
+            if predicted_family == target_family
+            else min(0.99, abs(family_margin) + 0.05)
+        )
+        competing_family = (
+            "frame" if predicted_family == target_family else target_family
+        )
+        competing_share = (
+            predicted_share - family_margin
+            if predicted_family == target_family
+            else predicted_share + family_margin
+        )
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": competing_family,
+                "count": 0,
+                "share_raw": competing_share,
+                "share": competing_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-001392-adaptive-evidence-{index}",
+            text=f"Synthetic packet 001392 {predicted_family} ambiguity evidence.",
+            normalized_text=(
+                f"Synthetic packet 001392 {predicted_family} ambiguity evidence."
+            ),
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system=predicted_system,
+                    symbol=predicted_symbol,
+                    label=predicted_label,
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-001392-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=predicted_system,
+                        symbol=predicted_symbol,
+                        label=predicted_label,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role=predicted_label,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-001392",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        candidate_ids = (
+            [predicted_family]
+            if predicted_family == target_family
+            else [predicted_family, target_family]
+        )
+        expected_direction = "outvoted" if family_margin < 0.0 else "contested"
+        expected_explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_"
+            f"{expected_direction}_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert base_ambiguity.severity == (
+            "review" if expected_direction == "contested" else "requires_rule"
+        )
+        assert any(
+            ambiguity.ambiguity_type == expected_explicit_type
+            and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
+def test_modal_compiler_surfaces_packet_003238_frame_conditional_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    predicted_family = "frame"
+    target_family = "conditional_normative"
+    scenarios = (
+        ("us-code-26-4980G-d931ba8a12827695", -0.292103193385),
+        ("us-code-27-1-9ebf30fa61982249", -0.321262233225),
+    )
+    assert set(COMPILER_AMBIGUITY_PACKET_003238_FAMILY_PAIRS) == {
+        (predicted_family, target_family)
+    }
+
+    for index, (sample_id, family_margin) in enumerate(scenarios, start=1):
+        predicted_share = abs(family_margin) + 0.05
+        target_share = predicted_share + family_margin
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-003238-adaptive-evidence-{index}",
+            text="Synthetic packet 003238 frame ambiguity evidence.",
+            normalized_text="Synthetic packet 003238 frame ambiguity evidence.",
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-003238-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system="FRAME_BM25",
+                        symbol="Frame",
+                        label="frame",
+                    ),
+                    predicate=ModalIRPredicate(
+                        name="frame_predicate",
+                        arguments=["actor:agency"],
+                        role="frame",
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-003238",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert base_ambiguity.severity == "requires_rule"
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             and ambiguity.metadata["adaptive_base_ambiguity_type"]
             == "adaptive_family_margin_low"
@@ -35408,6 +36579,108 @@ def test_decompiler_emits_provided_that_target_reconstruction_surface_cues() -> 
     ]
 
 
+def test_decompiler_reconstructs_packet_199_payment_and_assistance_atoms() -> None:
+    interior_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Expenditures of department. The Secretary of the Interior shall "
+            "sign all requisitions for the advance or payment of money, out "
+            "of the Treasury, upon estimates or accounts for expenditures "
+            "upon business assigned by law to his department."
+        ),
+        predicate="secretary_sign_requisitions",
+        conditions=["upon estimates or accounts for expenditures"],
+    )
+    assistance_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Health Professionals Educational Assistance Program. An individual "
+            "shall pay to the United States the repayment amount for amounts "
+            "paid under this subchapter."
+        ),
+        predicate="health_professional_assistance_repayment",
+    )
+    funding_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Appropriations are authorized to be made available to the "
+            "Secretary, provided that the amounts remain available until "
+            "expended."
+        ),
+        predicate="appropriation_amounts_available",
+        conditions=["provided that the amounts remain available until expended"],
+    )
+
+    interior_decoded = decode_modal_ir_document(interior_document)
+    assistance_decoded = decode_modal_ir_document(assistance_document)
+    funding_decoded = decode_modal_ir_document(funding_document)
+    interior_slots = decoded_modal_phrase_slot_text_map(interior_decoded)
+    assistance_slots = decoded_modal_phrase_slot_text_map(assistance_decoded)
+    funding_slots = decoded_modal_phrase_slot_text_map(funding_decoded)
+    interior_structural = _structural_decoded_text(
+        interior_decoded,
+        modal_ir=interior_document,
+        selected_frame=None,
+    )
+    assistance_structural = _structural_decoded_text(
+        assistance_decoded,
+        modal_ir=assistance_document,
+        selected_frame=None,
+    )
+    funding_structural = _structural_decoded_text(
+        funding_decoded,
+        modal_ir=funding_document,
+        selected_frame=None,
+    )
+
+    assert "treasury_requisition_payment" in interior_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "department_expenditure_authorization" in interior_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "deontic->conditional_normative" in interior_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "treasury requisition payment" in interior_structural
+    assert "department expenditure authorization" in interior_structural
+    assert "CEC.native" in interior_slots["legal_ir_view_prototype"]
+
+    assert "health_professional_education_assistance" in assistance_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "education_assistance_repayment" in assistance_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in assistance_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "health professional education assistance" in assistance_structural
+    assert "assistance benefit repayment" in assistance_structural
+    assert "deontic.ir" in assistance_slots["legal_ir_view_prototype"]
+
+    assert "appropriation_authorization" in funding_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "no_year_funding_availability" in funding_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->conditional_normative" in funding_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->temporal" in funding_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "appropriation authorization" in funding_structural
+    assert "no year funding availability" in funding_structural
+
+
 def test_decompiler_emits_direct_target_reconstruction_pair_and_family_slots() -> None:
     document = _single_formula_document(
         family="frame",
@@ -35458,6 +36731,98 @@ def test_decompiler_emits_direct_target_reconstruction_pair_and_family_slots() -
     )
 
 
+def test_decompiler_reconstructs_deontic_frame_bridge_semantics_from_typed_slots() -> None:
+    deontic_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Use of funds. Amounts provided under a grant or contract awarded "
+            "under this subchapter may be used for training program development "
+            "and support, faculty development, model demonstrations, and trainee "
+            "support."
+        ),
+        predicate="amounts_used_for_training_support",
+    )
+    deontic_document.metadata["hint_evidence"] = [
+        {
+            "predicted_family": "frame",
+            "target_family": "deontic",
+            "target_view": "deontic.ir",
+            "legal_ir_underrepresented_components": [
+                "TDFOL.prover",
+                "CEC.native",
+                "deontic.ir",
+            ],
+        }
+    ]
+    frame_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Construction. Nothing in this section shall be construed to alter "
+            "the remedies under this chapter or the force and effect of this "
+            "title."
+        ),
+        predicate="statutory_construction_remedy_effect",
+    )
+    frame_document.metadata["hint_evidence"] = [
+        {
+            "predicted_family": "deontic",
+            "target_family": "frame",
+            "target_view": "deontic.ir",
+            "legal_ir_underrepresented_components": [
+                "knowledge_graphs.neo4j_compat",
+                "CEC.native",
+                "deontic.ir",
+            ],
+        }
+    ]
+
+    deontic_decoded = decode_modal_ir_document(deontic_document)
+    frame_decoded = decode_modal_ir_document(frame_document)
+    deontic_slots = decoded_modal_phrase_slot_text_map(deontic_decoded)
+    frame_slots = decoded_modal_phrase_slot_text_map(frame_decoded)
+    deontic_structural_text = _structural_decoded_text(
+        deontic_decoded,
+        modal_ir=deontic_document,
+        selected_frame=None,
+    )
+    frame_structural_text = _structural_decoded_text(
+        frame_decoded,
+        modal_ir=frame_document,
+        selected_frame=None,
+    )
+
+    assert "fund_use_authority" in deontic_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "training_program_support:deontic->frame" in deontic_slots[
+        "typed_ir_semantic_bridge_atom_pair"
+    ]
+    assert "deontic->frame:obligation:positive_scope" in deontic_slots[
+        "typed_ir_semantic_bridge_signature"
+    ]
+    assert "typed first order prover obligations" in deontic_structural_text
+    assert "fund use authority" in deontic_structural_text
+
+    assert "statutory_construction" in frame_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "statutory_force_effect" in frame_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "construction_no_effect:frame->deontic" in frame_slots[
+        "typed_ir_semantic_bridge_atom_pair"
+    ]
+    assert "frame->deontic:frame:positive_scope" in frame_slots[
+        "typed_ir_semantic_bridge_signature"
+    ]
+    assert "knowledge graph legal relations" in frame_structural_text
+    assert "statutory construction" in frame_structural_text
+
+
 def test_decompiler_uses_autoencoder_target_family_in_typed_reconstruction() -> None:
     document = _single_formula_document(
         family="epistemic",
@@ -35490,6 +36855,46 @@ def test_decompiler_uses_autoencoder_target_family_in_typed_reconstruction() -> 
         for value in slot_texts["typed_ir_reconstruction"]
     )
     assert "temporal deadline period" in structural_text
+
+
+def test_decompiler_infers_within_condition_for_deontic_conditional_reconstruction() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Within 30 days after receipt, the Secretary shall submit a report "
+            "to the appropriate committees of Congress."
+        ),
+        predicate="secretary_submit_report",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "within" in slot_texts["condition_prefix_key"]
+    assert "deadline" in slot_texts["condition_prefix_temporal_relation"]
+    assert "conditional_normative:O|:within" in slot_texts[
+        "condition_modal_bridge_signature"
+    ]
+    assert "deontic->conditional_normative" in slot_texts[
+        "condition_modal_bridge_family_pair"
+    ]
+    assert any(
+        "conditional obligation" in value and "temporal deadline period" in value
+        for value in slot_texts["typed_ir_reconstruction"]
+    )
+    assert any(
+        "condition" in value and "within 30 days" in value
+        for value in slot_texts["typed_ir_clause_role_support"]
+    )
+    assert "conditional obligation" in structural_text
+    assert "within 30 days" in structural_text
 
 
 def test_decompiler_uses_heading_semantics_for_deontic_temporal_reconstruction() -> None:
@@ -35603,6 +37008,83 @@ def test_decompiler_uses_heading_semantics_for_frame_deontic_reconstruction() ->
     assert "predictive analytics disclosure" in structural_text
 
 
+def test_decompiler_reconstructs_packet_000124_irrigation_frame_targets() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Irrigation projects under Reclamation Act. The Secretary is "
+            "authorized to classify permanently nonirrigable lands and adjust "
+            "charges for the irrigation project."
+        ),
+        predicate="irrigation_project_reclamation_act",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "irrigation_project" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "irrigation_project:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "irrigation_project:frame->temporal" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "irrigation project" in structural_text
+    assert "temporal deadline period" in structural_text
+
+
+def test_decompiler_reconstructs_packet_000124_foreign_service_deontic_targets() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "United States and Foreign Commercial Service Pacific Island "
+            "posts. The Secretary shall maintain the Foreign Commercial "
+            "Service and assign consular officer duties."
+        ),
+        predicate="secretary_maintain_foreign_commercial_service",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "foreign_commercial_service" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "foreign_commercial_service:deontic->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "foreign_service:deontic->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "deontic->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "foreign commercial service" in structural_text
+    assert "obligation permission prohibition" in structural_text
+
+
 def test_decompiler_routes_office_seal_atoms_to_deontic_frame_and_legal_views() -> None:
     document = _single_formula_document(
         family="deontic",
@@ -35692,6 +37174,32 @@ def test_decompiler_emits_heading_typed_ir_reconstruction_for_frame_residuals() 
     assert "federal needs" in structural_text
 
 
+def test_decompiler_emits_source_predicate_force_and_surface_family_slots() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text="The Secretary shall make awards under section 5.",
+        predicate="secretary_shall_make_awards",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "deontic:secretary_shall_make_awards|obligation:positive_scope" in slot_texts[
+        "typed-decompiler-source-predicate-force-pair"
+    ]
+    assert "obligation:positive_scope:deontic->deontic" in slot_texts[
+        "typed-decompiler-force-polarity-family-pair"
+    ]
+    assert "under:deontic->frame" in slot_texts[
+        "typed-decompiler-surface-cue-family-pair"
+    ]
+    assert "deontic:secretary_shall_make_awards->frame" in slot_texts[
+        "typed-decompiler-source-predicate-family-pair"
+    ]
+
+
 def test_decompiler_typed_ir_reconstruction_preserves_epistemic_frame_cues() -> None:
     document = _single_formula_document(
         family="frame",
@@ -35727,6 +37235,54 @@ def test_decompiler_typed_ir_reconstruction_preserves_epistemic_frame_cues() -> 
     )
     assert "knowledge determination finding" in structural_text
     assert "administrative offset" in structural_text
+
+
+def test_decompiler_emits_direct_frame_target_reconstruction_view_anchors() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Sec. 3807 - Right to administrative offset. If the authority "
+            "determines that a person is liable, the authority may collect "
+            "the claim by administrative offset."
+        ),
+        predicate="administrative_offset_determination",
+        conditions=["If the authority determines that a person is liable"],
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "predicted_family": "frame",
+            "target_family": "epistemic",
+            "target_view": "deontic.ir",
+        }
+    ]
+    document.formulas[0].metadata["fallback_rule"] = "uscode_section_heading_v1"
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->epistemic",
+    }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-pair"]))
+    assert {
+        "frame->conditional_normative||deontic.ir",
+        "frame->deontic||deontic.ir",
+        "frame->epistemic||deontic.ir",
+    }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-view"]))
+    assert (
+        "frame||slot:typed-decompiler-target-reconstruction-cue:"
+        "frame->conditional_normative:heading||modal.frame_logic"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+    assert (
+        "epistemic||slot:typed-decompiler-target-reconstruction-family:"
+        "epistemic||deontic.ir"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
 
 
 def test_decompiler_reconstructs_housing_investment_authority_from_frame_slots() -> None:
@@ -35810,6 +37366,104 @@ def test_decompiler_reconstructs_partnership_notice_epistemic_slots() -> None:
     assert "knowledge determination finding" in structural_text
     assert "partnership notice proceeding" in structural_text
     assert "partnership adjustment notice" in structural_text
+
+
+def test_decompiler_reconstructs_packet_1588_frame_semantic_atoms() -> None:
+    visitor_center_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Office of the Capitol Visitor Center. The Chief Executive Officer "
+            "may appoint an Assistant to the Chief Executive Officer."
+        ),
+        predicate="capitol_visitor_center_assistant",
+    )
+    voter_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Absent uniformed services voters and overseas voters. No person "
+            "may deny a qualified absent uniformed services voter the right "
+            "to vote."
+        ),
+        predicate="absent_uniformed_services_voter_rights",
+    )
+    fishery_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Management and disposition of vessels and other property acquired "
+            "and arising out of fishery loans. The Secretary may dispose of "
+            "such vessels and property."
+        ),
+        predicate="fishery_vessel_property_disposition",
+    )
+    purchasing_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Omitted. Codification. Section authorized the government of the "
+            "Trust Territory of the Pacific Islands to make purchases through "
+            "the General Services Administration."
+        ),
+        predicate="trust_territory_purchasing_authority",
+    )
+
+    visitor_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(visitor_center_document)
+    )
+    voter_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(voter_document)
+    )
+    fishery_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(fishery_document)
+    )
+    purchasing_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(purchasing_document)
+    )
+    visitor_structural_text = _structural_decoded_text(
+        decode_modal_ir_document(visitor_center_document),
+        modal_ir=visitor_center_document,
+        selected_frame=None,
+    )
+
+    assert "capitol_visitor_center" in visitor_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "visitor_center_assistant:frame->epistemic" in visitor_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "visitor center assistant" in visitor_structural_text
+
+    assert "absent_uniformed_services_voter" in voter_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "absent_uniformed_services_voter:frame->conditional_normative" in voter_slots[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "deontic.ir" in voter_slots["legal_ir_view_prototype"]
+
+    assert "fishery_vessel_property_disposition" in fishery_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "fishery_vessel_property_disposition:frame->temporal" in fishery_slots[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "TDFOL.prover" in fishery_slots["legal_ir_view_prototype"]
+
+    assert "omitted:frame->temporal" in purchasing_slots[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "government_purchasing_authority:frame->temporal" in purchasing_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "knowledge_graphs.neo4j_compat" in purchasing_slots[
+        "legal_ir_view_prototype"
+    ]
 
 
 def test_decompiler_routes_temporal_irrigation_status_to_epistemic_slots() -> None:
@@ -35939,6 +37593,61 @@ def test_decompiler_emits_permission_enabling_and_temporal_to_deontic_slots() ->
     )
 
 
+def test_decompiler_reconstructs_force_temporal_and_conditional_family_pairs() -> None:
+    deontic_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "There are authorized to be appropriated funds for fiscal years "
+            "2026 through 2028, and the Secretary shall submit a report."
+        ),
+        predicate="authorized_appropriations_report",
+    )
+    conditional_document = _single_formula_document(
+        family="conditional_normative",
+        symbol="O|",
+        label="conditional obligation",
+        text=(
+            "The Secretary may transfer funds made available for the fiscal "
+            "year, and the funds shall remain available until expended."
+        ),
+        predicate="secretary_transfer_available_funds",
+    )
+
+    deontic_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(deontic_document)
+    )
+    conditional_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(conditional_document)
+    )
+
+    assert "deontic->temporal" in deontic_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "temporal:deontic->temporal" in deontic_slots[
+        "typed-decompiler-target-reconstruction-scope"
+    ]
+    assert any(
+        value.endswith("typed-decompiler-family-pair:deontic->temporal")
+        for value in deontic_slots[
+            "typed-decompiler-source-predicate-force-family-pair"
+        ]
+    )
+    assert "conditional_normative->conditional_normative" in conditional_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert any(
+        value.endswith(
+            "typed-decompiler-family-pair:"
+            "conditional_normative->conditional_normative"
+        )
+        for value in conditional_slots[
+            "typed-decompiler-source-predicate-force-family-pair"
+        ]
+    )
+
+
 def test_decompiler_emits_source_scope_slots_for_within_and_deadline_cues() -> None:
     document = _single_formula_document(
         family="deontic",
@@ -35968,6 +37677,82 @@ def test_decompiler_emits_source_scope_slots_for_within_and_deadline_cues() -> N
             "typed-decompiler-source-clause-topology-family-pair"
         ]
     )
+
+
+def test_decompiler_preserves_temporal_self_pair_role_topology_slots() -> None:
+    document = _single_formula_document(
+        family="temporal",
+        symbol="F",
+        label="eventuality",
+        text=(
+            "During fiscal year 2026, the Secretary shall submit a report "
+            "to Congress on independent living services."
+        ),
+        predicate="secretary_submit_report",
+        conditions=["during fiscal year 2026"],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    bridge_value = "temporal->temporal:subject+action+object+temporal"
+    assert bridge_value in slot_texts[
+        "typed-decompiler-family-pair-role-topology"
+    ]
+    assert bridge_value in slot_texts[
+        "typed-decompiler-family-pair-bridge"
+    ]
+    assert "temporal->temporal:fiscal_year" in slot_texts[
+        "typed-decompiler-family-pair-temporal-cue"
+    ]
+    assert (
+        "temporal||slot:typed-decompiler-family-pair-bridge:"
+        f"{bridge_value}||TDFOL.prover"
+    ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+
+
+def test_decompiler_preserves_frame_normative_pair_role_topology_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "The Secretary shall file returns not later than fiscal year 2026 "
+            "if the return is required under this section."
+        ),
+        predicate="secretary_file_returns",
+        conditions=[
+            "not later than fiscal year 2026",
+            "if the return is required under this section",
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    bridge_value = "frame->deontic:subject+action+object+temporal"
+    conditional_bridge = (
+        "frame->conditional_normative:subject+action+object+temporal"
+    )
+    assert bridge_value in slot_texts[
+        "typed-decompiler-family-pair-role-topology"
+    ]
+    assert conditional_bridge in slot_texts[
+        "typed-decompiler-family-pair-role-topology"
+    ]
+    assert "frame->deontic:not_later_than" in slot_texts[
+        "typed-decompiler-family-pair-temporal-cue"
+    ]
+    assert (
+        "deontic||slot:typed-decompiler-family-pair-bridge:"
+        f"{bridge_value}||deontic.ir"
+    ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    assert (
+        "conditional_normative||slot:typed-decompiler-family-pair-bridge:"
+        f"{conditional_bridge}||TDFOL.prover"
+    ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
 
 
 def test_decompiler_emits_cue_derived_source_force_slots_for_frame_shall() -> None:
@@ -36003,6 +37788,50 @@ def test_decompiler_emits_cue_derived_source_force_slots_for_frame_shall() -> No
         "deontic||slot:typed-decompiler-source-predicate-force-pair:"
         f"{force_value}||deontic.ir"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+
+
+def test_decompiler_emits_force_polarity_family_slots_for_frame_conditional_normative() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Except as provided in this chapter, the Secretary shall not "
+            "designate a facility unless the facility is listed in section 15801."
+        ),
+        predicate="secretary_facility_designation",
+        conditions=["unless the facility is listed in section 15801"],
+    )
+    document.formulas[0].exceptions.append("Except as provided in this chapter")
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "obligation:negative_scope:conditional_normative" in slot_texts[
+        "typed-decompiler-force-polarity"
+    ]
+    assert (
+        "obligation:negative_scope:frame->conditional_normative"
+        in slot_texts["typed-decompiler-force-polarity-family-pair"]
+    )
+    assert (
+        "force-polarity-family-pair:"
+        "obligation:negative_scope:frame->conditional_normative"
+        in slot_texts["decompiler-plan"]
+    )
+    assert (
+        "slot:typed-decompiler-force-polarity:"
+        "obligation:negative_scope:conditional_normative||"
+        "knowledge_graphs.neo4j_compat"
+        in slot_texts["semantic_slot_legal_ir_view_prototype"]
+    )
+    assert (
+        "frame||slot:typed-decompiler-force-polarity:"
+        "obligation:negative_scope:conditional_normative||"
+        "knowledge_graphs.neo4j_compat"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
 
 
 def test_decompiler_preserves_budget_submission_and_audit_semantic_slots() -> None:
@@ -36303,6 +38132,110 @@ def test_decompiler_routes_packer_definition_to_conditional_normative_slots() ->
     assert "livestock commerce" in structural_text
 
 
+def test_decompiler_reconstructs_proposal_examination_payment_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Proposals; submission; payment for cost of examination. Any "
+            "organization desiring benefits shall submit a proposal therefor "
+            "to the Secretary and pay the cost of examination."
+        ),
+        predicate="proposal_submission_payment_examination",
+        conditions=["Any organization desiring benefits"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "proposal_submission" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "proposal_examination_payment" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "proposal_examination_payment:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "proposal examination payment" in structural_text
+
+
+def test_decompiler_reconstructs_office_and_certificate_penalty_slots() -> None:
+    office = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Centers for Disease Control and Prevention Office of Women's "
+            "Health. There is established within the Office of the Director "
+            "an office to be known as the Office of Women's Health."
+        ),
+        predicate="cdc_office_womens_health_establishment",
+    )
+    penalty = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Civil penalties for trading without required certificate of "
+            "documentation. A person trading without required certificate of "
+            "documentation is liable for a civil penalty."
+        ),
+        predicate="trading_certificate_documentation_penalty",
+    )
+
+    office_decoded = decode_modal_ir_document(office)
+    office_slots = decoded_modal_phrase_slot_text_map(office_decoded)
+    office_structural_text = _structural_decoded_text(
+        office_decoded,
+        modal_ir=office,
+        selected_frame=None,
+    )
+    penalty_decoded = decode_modal_ir_document(penalty)
+    penalty_slots = decoded_modal_phrase_slot_text_map(penalty_decoded)
+    penalty_structural_text = _structural_decoded_text(
+        penalty_decoded,
+        modal_ir=penalty,
+        selected_frame=None,
+    )
+
+    assert "office_of_womens_health" in office_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "public_health_agency" in office_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "public_health_agency:frame->deontic" in office_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "knowledge_graphs.neo4j_compat" in office_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "public health agency" in office_structural_text
+
+    assert "documentation_certificate_requirement" in penalty_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "undocumented_trading_penalty" in penalty_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "undocumented_trading_penalty:deontic->deontic" in penalty_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "deontic.ir" in penalty_slots["legal_ir_view_prototype"]
+    assert "undocumented trading penalty" in penalty_structural_text
+
+
 def test_decompiler_routes_priority_state_definition_to_typed_legal_views() -> None:
     document = _single_formula_document(
         family="frame",
@@ -36475,6 +38408,45 @@ def test_decompiler_emits_reclassification_target_slots_for_uscode_status_clause
     assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_decompiler_emits_typed_status_detail_legal_ir_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "42 U.S.C. 3789: Section 3789l was editorially reclassified as "
+            "section 10235 of Title 34, Crime Control and Law Enforcement."
+        ),
+        predicate="section_reclassified",
+    )
+    document.formulas[0].metadata["fallback_rule"] = (
+        "uscode_editorial_status_heading_v1"
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "34 U.S.C. 10235" in slot_texts[
+        "typed-decompiler-status-target_citation"
+    ]
+    assert (
+        "typed-decompiler-status-target_citation:34 U.S.C. 10235:frame->temporal"
+        in slot_texts["typed-decompiler-target-status-family-pair"]
+    )
+    assert (
+        "slot:typed-decompiler-status-target_citation:34 U.S.C. 10235||"
+        "TDFOL.prover"
+        in slot_texts["semantic_slot_legal_ir_view_prototype"]
+    )
+    assert (
+        "temporal||slot-pair:typed-decompiler-status-target_citation:"
+        "34 U.S.C. 10235|typed-decompiler-family-pair:frame->temporal||"
+        "CEC.native"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+
+
 def test_codec_source_copy_loss_ignores_structurally_excluded_source_spans() -> None:
     codec = DeterministicModalLogicCodec(ModalLogicCodecConfig(embedding_dimensions=8))
     result = codec.encode(
@@ -36607,6 +38579,47 @@ def test_decompiler_reconstructs_mining_claim_date_range_from_typed_slots() -> N
     assert "date range temporal scope" in structural_text
 
 
+def test_decompiler_reconstructs_repealed_advisory_committee_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Sections 2415 to 2421. Repealed. Section 2415 authorized "
+            "appointment of an advisory committee."
+        ),
+        predicate="section_repealed_advisory_committee_appointment",
+    )
+    document.formulas[0].metadata[
+        "fallback_rule"
+    ] = "uscode_editorial_status_heading_v1"
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "repealed" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "advisory_committee_appointment" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "appointment_authority" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "advisory_committee_appointment:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "advisory_committee_appointment:frame->temporal" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "advisory committee appointment" in structural_text
+
+
 def test_decompiler_reconstructs_findings_reports_and_law_override_slots() -> None:
     findings = _single_formula_document(
         family="frame",
@@ -36696,6 +38709,49 @@ def test_decompiler_reconstructs_findings_reports_and_law_override_slots() -> No
     assert "legal relationship override" in override_structural_text
 
 
+def test_decompiler_reconstructs_report_contents_implementation_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Report to Congress; contents. Within one year after October 1, "
+            "1977, the Secretary shall submit a report to Congress concerning "
+            "the actions taken to implement section 7191. The report shall "
+            "include a discussion of the actions taken."
+        ),
+        predicate="secretary_submit_implementation_report_contents",
+        conditions=["Within one year after October 1, 1977"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "report_contents" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "implementation_action_report" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "implementation_action_report:frame->epistemic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "implementation_action_report:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "implementation action" in structural_text
+
+
 def test_decompiler_reconstructs_award_program_and_fund_transfer_atoms() -> None:
     awards = _single_formula_document(
         family="frame",
@@ -36757,6 +38813,90 @@ def test_decompiler_reconstructs_award_program_and_fund_transfer_atoms() -> None
     ]
     assert "fund transfer authority" in transfer_structural_text
     assert "no year funding availability" in transfer_structural_text
+
+
+def test_decompiler_reconstructs_packet_000128_legal_program_atoms() -> None:
+    research = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "University based research and development grant program. The "
+            "Secretary shall establish a program to study carbon capture."
+        ),
+        predicate="secretary_establish_research_grant_program",
+    )
+    purchase = _single_formula_document(
+        family="deontic",
+        symbol="P",
+        label="permission",
+        text=(
+            "Purchase of paper in open market. The Director of the Government "
+            "Publishing Office may purchase paper in open market."
+        ),
+        predicate="director_purchase_paper_open_market",
+    )
+    cost_share = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Treatment of certain credit between Federal and non-Federal cost "
+            "sharing requirements."
+        ),
+        predicate="cost_sharing_credit_treatment",
+    )
+
+    research_decoded = decode_modal_ir_document(research)
+    research_slots = decoded_modal_phrase_slot_text_map(research_decoded)
+    research_structural_text = _structural_decoded_text(
+        research_decoded,
+        modal_ir=research,
+        selected_frame=None,
+    )
+    purchase_decoded = decode_modal_ir_document(purchase)
+    purchase_slots = decoded_modal_phrase_slot_text_map(purchase_decoded)
+    purchase_structural_text = _structural_decoded_text(
+        purchase_decoded,
+        modal_ir=purchase,
+        selected_frame=None,
+    )
+    cost_share_decoded = decode_modal_ir_document(cost_share)
+    cost_share_slots = decoded_modal_phrase_slot_text_map(cost_share_decoded)
+    cost_share_structural_text = _structural_decoded_text(
+        cost_share_decoded,
+        modal_ir=cost_share,
+        selected_frame=None,
+    )
+
+    assert "university_research_grant_program" in research_slots[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "carbon_capture_research:frame->temporal" in research_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "knowledge_graphs.neo4j_compat" in research_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "university research grant program" in research_structural_text
+    assert "carbon capture" in research_structural_text
+
+    assert "open_market_paper_purchase" in purchase_slots[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "government_publication_purchase_authority" in purchase_slots[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "deontic.ir" in purchase_slots["legal_ir_view_prototype"]
+    assert "open market paper purchase" in purchase_structural_text
+
+    assert "cost_sharing_credit_treatment" in cost_share_slots[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "non_federal_cost_share" in cost_share_slots[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "cost sharing credit treatment" in cost_share_structural_text
 
 
 def test_decompiler_reconstructs_renumbered_status_transition_from_typed_slots() -> None:
@@ -37001,6 +39141,50 @@ def test_decompiler_reconstructs_jurisdiction_and_false_statement_frame_atoms() 
     assert "false statement penalty" in false_statement_structural_text
 
 
+def test_decompiler_reconstructs_perishable_commodity_nonapplication_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Perishable agricultural commodities. Section 5905 of this title "
+            "does not apply to a container or trailer the contents of which "
+            "are perishable agricultural commodities as defined in the "
+            "Perishable Agricultural Commodities Act, 1930."
+        ),
+        predicate="perishable_agricultural_commodity_container_exemption",
+        conditions=["as defined in the Perishable Agricultural Commodities Act, 1930"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "exemption" in slot_texts["typed-decompiler-source-semantic-atom"]
+    assert "perishable_agricultural_commodity" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "perishable_commodity_container_exemption" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "does_not_apply" in slot_texts["typed-decompiler-source-scope-cue"]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert (
+        "perishable_commodity_container_exemption:frame->conditional_normative"
+        in slot_texts["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts["legal_ir_view_prototype"]
+    assert "perishable agricultural commodity" in structural_text
+    assert "commodity exemption container" in structural_text
+
+
 def test_decompiler_emits_exemption_source_slots_for_test_platform_clauses() -> None:
     document = _single_formula_document(
         family="deontic",
@@ -37093,6 +39277,94 @@ def test_decompiler_reconstructs_monitoring_enforcement_epistemic_frame_slots() 
         "legal_ir_view_prototype"
     ]
     assert "monitoring enforcement" in structural_text
+
+
+def test_decompiler_reconstructs_packet_1586_grant_and_eligibility_slots() -> None:
+    grants = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Formula grants to States. For the purpose described in subsection "
+            "(b), the Secretary, acting through the Center for Substance Abuse "
+            "Treatment, shall make an allotment each fiscal year for each "
+            "State in an amount determined in accordance with this section."
+        ),
+        predicate="secretary_make_state_formula_allotments",
+        conditions=["in accordance with this section"],
+    )
+    eligibility = _single_formula_document(
+        family="epistemic",
+        symbol="K",
+        label="knows",
+        text=(
+            "Eligibility for services. The identification of project residents "
+            "eligible to participate in a congregate services program shall be "
+            "made by a professional assessment committee for determination of "
+            "eligibility."
+        ),
+        predicate="professional_assessment_committee_determines_eligibility",
+    )
+
+    grants_decoded = decode_modal_ir_document(grants)
+    grants_slots = decoded_modal_phrase_slot_text_map(grants_decoded)
+    grants_structural_text = _structural_decoded_text(
+        grants_decoded,
+        modal_ir=grants,
+        selected_frame=None,
+    )
+    eligibility_decoded = decode_modal_ir_document(eligibility)
+    eligibility_slots = decoded_modal_phrase_slot_text_map(eligibility_decoded)
+    eligibility_structural_text = _structural_decoded_text(
+        eligibility_decoded,
+        modal_ir=eligibility,
+        selected_frame=None,
+    )
+
+    assert "state_formula_grant" in grants_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "state_allotment_duty" in grants_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "substance_abuse_treatment_program" in grants_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "state_formula_grant:deontic->deontic" in grants_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "fiscal_year_allotment:deontic->temporal" in grants_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "deontic.ir" in grants_slots["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in grants_slots["legal_ir_view_prototype"]
+    assert "state formula grant" in grants_structural_text
+    assert "substance abuse treatment program" in grants_structural_text
+
+    assert "service_eligibility" in eligibility_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "eligibility_determination" in eligibility_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "professional_assessment_committee" in eligibility_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "congregate_services_program" in eligibility_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "eligibility_determination:epistemic->epistemic" in eligibility_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "service_eligibility:epistemic->conditional_normative" in eligibility_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "CEC.native" in eligibility_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in eligibility_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "professional assessment committee" in eligibility_structural_text
+    assert "congregate services program" in eligibility_structural_text
 
 
 def test_decompiler_reconstructs_sovereign_debt_discussion_epistemic_slots() -> None:
@@ -37226,6 +39498,47 @@ def test_decompiler_reconstructs_custody_accountability_slots() -> None:
     assert "departmental record custody" in structural_text
 
 
+def test_decompiler_reconstructs_museum_collection_custody_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "National Museum of the American Indian. The Board of Trustees "
+            "shall have custody and control of the collections and shall "
+            "administer the museum collection."
+        ),
+        predicate="board_custody_control_museum_collections",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "museum_collection_custody" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "national_museum_american_indian" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "museum_board_trustees" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "museum_collection_custody:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "museum_collection_custody:frame->epistemic" in slot_texts[
+        "typed-decompiler-source-semantic-family-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "museum collection custody" in structural_text
+
+
 def test_decompiler_reconstructs_cyber_liability_information_sharing_slots() -> None:
     document = _single_formula_document(
         family="deontic",
@@ -37263,6 +39576,52 @@ def test_decompiler_reconstructs_cyber_liability_information_sharing_slots() -> 
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
     assert "liability protection" in structural_text
+
+
+def test_decompiler_reconstructs_lie_detector_prohibition_frame_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Prohibitions on lie detector use. Except as provided in this "
+            "chapter, an employer may not require, request, suggest, or cause "
+            "any employee to take or submit to any lie detector test."
+        ),
+        predicate="employer_lie_detector_test_use",
+        conditions=["Except as provided in this chapter"],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "lie_detector_use_prohibition" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "lie_detector_test" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "lie_detector_use_prohibition:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "lie_detector_use_prohibition:frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts[
+        "legal_ir_view_prototype"
+    ]
+    assert "lie detector use prohibition" in structural_text
 
 
 def test_decompiler_reconstructs_timber_cutting_forest_temporal_slots() -> None:
@@ -37304,6 +39663,16 @@ def test_decompiler_reconstructs_timber_cutting_forest_temporal_slots() -> None:
 
 
 def test_decompiler_reconstructs_packet_2014_frame_to_deontic_temporal_atoms() -> None:
+    former_jeopardy_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Former jeopardy. No person may, without the person's consent, "
+            "be tried by a military commission a second time for the same offense."
+        ),
+        predicate="former_jeopardy_military_commission_protection",
+    )
     appropriation_document = _single_formula_document(
         family="frame",
         symbol="Frame",
@@ -37358,7 +39727,29 @@ def test_decompiler_reconstructs_packet_2014_frame_to_deontic_temporal_atoms() -
     budget_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(budget_document)
     )
+    former_jeopardy_decoded = decode_modal_ir_document(former_jeopardy_document)
+    former_jeopardy_slots = decoded_modal_phrase_slot_text_map(
+        former_jeopardy_decoded
+    )
+    former_jeopardy_structural_text = _structural_decoded_text(
+        former_jeopardy_decoded,
+        modal_ir=former_jeopardy_document,
+        selected_frame=None,
+    )
 
+    assert "former_jeopardy_protection" in former_jeopardy_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in former_jeopardy_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "CEC.native" in former_jeopardy_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in former_jeopardy_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "former jeopardy protection" in former_jeopardy_structural_text
+    assert "permission" in former_jeopardy_structural_text
+    assert "prohibition" in former_jeopardy_structural_text
     assert "appropriation_authorization" in appropriation_slots[
         "typed-decompiler-source-semantic-atom"
     ]
@@ -37506,6 +39897,338 @@ def test_decompiler_reconstructs_packet_2578_commodity_and_interagency_slots() -
     ]
     assert "deontic.ir" in interagency_slots["legal_ir_view_prototype"]
     assert "TDFOL.prover" in interagency_slots["legal_ir_view_prototype"]
+
+
+def test_decompiler_reconstructs_packet_126_conservation_transfer_slots() -> None:
+    natural_area_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Establishment of the Rio Grande Natural Area. The Secretary "
+            "shall prepare a management plan for the natural area."
+        ),
+        predicate="secretary_establish_rio_grande_natural_area",
+    )
+    donation_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "National seashore recreational areas. The Secretary may accept "
+            "donations of lands and acquire land for administration of the "
+            "national seashore."
+        ),
+        predicate="secretary_accept_donations_acquire_seashore_land",
+    )
+
+    natural_area_decoded = decode_modal_ir_document(natural_area_document)
+    natural_area_slots = decoded_modal_phrase_slot_text_map(natural_area_decoded)
+    natural_area_structural_text = _structural_decoded_text(
+        natural_area_decoded,
+        modal_ir=natural_area_document,
+        selected_frame=None,
+    )
+    donation_decoded = decode_modal_ir_document(donation_document)
+    donation_slots = decoded_modal_phrase_slot_text_map(donation_decoded)
+    donation_structural_text = _structural_decoded_text(
+        donation_decoded,
+        modal_ir=donation_document,
+        selected_frame=None,
+    )
+
+    assert "natural_area_establishment" in natural_area_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "conservation_area_management" in natural_area_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "natural_area_establishment:frame->conditional_normative" in (
+        natural_area_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "CEC.native" in natural_area_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in natural_area_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "natural area establishment" in natural_area_structural_text
+    assert "conservation area management" in natural_area_structural_text
+
+    assert "national_seashore_recreation_area" in donation_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "land_donation_acceptance" in donation_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "land_acquisition_authority" in donation_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "land_donation_acceptance:frame->deontic" in donation_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "frame->temporal" in donation_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in donation_slots["legal_ir_view_prototype"]
+    assert "land donation acceptance" in donation_structural_text
+    assert "national seashore recreation area" in donation_structural_text
+
+
+def test_decompiler_reconstructs_packet_126_editorial_and_china_oversight_slots() -> None:
+    transfer_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "2 U.S.C. 130l: Sec. 130l - Transferred From the U.S. "
+            "Government Publishing Office."
+        ),
+        predicate="section_transferred_from_gpo",
+    )
+    transfer_document.formulas[0].metadata[
+        "fallback_rule"
+    ] = "uscode_editorial_status_heading_v1"
+    china_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "United States-China relations. Trade and rule of law issues "
+            "shall be monitored and reported to Congress."
+        ),
+        predicate="monitor_china_trade_rule_of_law_issues",
+    )
+
+    transfer_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(transfer_document)
+    )
+    china_decoded = decode_modal_ir_document(china_document)
+    china_slots = decoded_modal_phrase_slot_text_map(china_decoded)
+    china_structural_text = _structural_decoded_text(
+        china_decoded,
+        modal_ir=china_document,
+        selected_frame=None,
+    )
+
+    assert "editorial_transfer_status" in transfer_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "transferred" in transfer_slots["typed-decompiler-source-semantic-atom"]
+    assert "frame->temporal" in transfer_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+
+    assert "china_relations_oversight" in china_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "trade_rule_of_law_compliance" in china_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "trade_rule_of_law_compliance:frame->conditional_normative" in (
+        china_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "deontic.ir" in china_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in china_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "china relations oversight" in china_structural_text
+    assert "trade rule of law compliance" in china_structural_text
+def test_decompiler_reconstructs_packet_130_uscode_domain_atoms() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "Government losses in shipment. The Secretary and the "
+                    "United States Postal Service shall prescribe regulations "
+                    "governing the shipment of valuables to minimize the risk "
+                    "of loss and destruction of valuables in shipment. Each "
+                    "agency must comply with the regulations."
+                ),
+                predicate="valuable_shipment_compliance",
+            ),
+            {
+                "government_shipment_loss_prevention",
+                "valuable_shipment_regulation",
+                "regulatory_compliance_duty",
+            },
+            "government shipment loss prevention",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "Distribution of Precedents by Director of the Government "
+                    "Publishing Office for official use. The Director shall "
+                    "make distribution of sets of the Precedents, and each set "
+                    "shall be stamped Property of the United States Government."
+                ),
+                predicate="government_publishing_office_precedents_distribution",
+            ),
+            {
+                "congressional_precedents_distribution",
+                "government_property_marking",
+                "official_use_restriction",
+            },
+            "congressional precedents distribution",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "Public information program. The Secretary shall establish "
+                    "a public information program and shall make available an "
+                    "information package for consumers on alternative fuels and "
+                    "alternative fueled vehicles, including benefits and costs "
+                    "and environmental performance."
+                ),
+                predicate="alternative_fuels_public_information_program",
+            ),
+            {
+                "alternative_fuel_vehicle_program",
+                "consumer_information_package",
+                "public_information_program",
+            },
+            "alternative fuel vehicle",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "Authorization for international storage dam on the Rio "
+                    "Grande. The Secretary of State is authorized to conclude "
+                    "with officials of the Government of Mexico an agreement "
+                    "for joint construction, operation, and maintenance by the "
+                    "United States and Mexico of an international storage dam."
+                ),
+                predicate="rio_grande_international_storage_dam_authorization",
+            ),
+            {
+                "international_agreement_authority",
+                "international_storage_dam_authorization",
+                "mexico_bilateral_agreement",
+            },
+            "international storage dam authorization",
+        ),
+    ]
+
+    for document, expected_atoms, structural_fragment in samples:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert any(
+            value.endswith("->deontic")
+            for value in slot_texts["typed-decompiler-target-reconstruction-pair"]
+        )
+        assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+        assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+        assert structural_fragment in structural_text
+def test_decompiler_routes_deontic_intent_transport_to_doxastic_slots() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Transportation for illegal sexual activity and related crimes. "
+            "A person shall not use a facility with intent to promote or "
+            "facilitate illegal sexual activity."
+        ),
+        predicate="facility_transport_illegal_sexual_activity",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "deontic->doxastic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "illegal_sexual_activity_transport" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "illegal_sexual_activity_transport:deontic->doxastic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "knowledge_graphs.neo4j_compat" in slot_texts[
+        "legal_ir_view_prototype"
+    ]
+    assert "belief intent state" in structural_text
+    assert "illegal sexual activity transport" in structural_text
+
+
+def test_decompiler_routes_reclassified_status_to_frame_deontic_slots() -> None:
+    text = (
+        "§3796gg-5. Transferred Editorial Notes Codification Section "
+        "3796gg-5 was editorially reclassified as section 10450 of Title 34, "
+        "Crime Control and Law Enforcement."
+    )
+    formula = ModalIRFormula(
+        formula_id="f1",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="editorial_reclassification_status"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-42-3796gg-packet-002961",
+            start_char=0,
+            end_char=len(text),
+            citation="42 U.S.C. 3796gg-5",
+        ),
+        metadata={
+            "cue": "__uscode_status_fallback__",
+            "fallback_rule": "uscode_editorial_status_v1",
+        },
+    )
+    document = ModalIRDocument(
+        document_id="us-code-42-3796gg-packet-002961",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+        metadata={"citation": "42 U.S.C. 3796gg-5"},
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "reclassified:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "crime_control_law_enforcement" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "obligation permission prohibition" in structural_text
+    assert "crime control law enforcement" in structural_text
 
 
 def _token_overlap_ratio(left: str, right: str) -> float:

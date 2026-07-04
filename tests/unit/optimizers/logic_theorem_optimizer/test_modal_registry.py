@@ -10,6 +10,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000521_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000394_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000495_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_005849_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000102_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001444_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001807_FAMILY_PAIRS,
@@ -1410,6 +1411,45 @@ def test_packet_000394_frame_family_pairs_are_explicit_ambiguity_policy() -> Non
     )
 
     assert COMPILER_AMBIGUITY_PACKET_000394_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_005849_family_pairs_are_explicit_ambiguity_policy() -> None:
+    """Expose packet-005849 small margins as compiler ambiguity policy."""
+    expected_pairs = (
+        ("conditional_normative", "conditional_normative"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_005849_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
