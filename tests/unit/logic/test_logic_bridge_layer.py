@@ -2272,6 +2272,48 @@ def test_bridge_contract_promotes_packet_json_bundle_guidance() -> None:
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
 
 
+def test_bridge_contract_promotes_packet_todo_guidance_fields() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH,
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "program_synthesis_scope": "bridge",
+            "route": "repair_multiview_legal_ir_loss",
+            "samples": "compiler-guidance:repair_multiview_legal_ir_loss",
+            "source": "compiler_guidance_distillation_v1",
+            "support": 1,
+            "target_component": "bridge.contracts",
+            "target_metrics": (
+                "cross_entropy_loss, cosine_similarity, "
+                "compiler_ir_cross_entropy_loss, compiler_ir_cosine_similarity, "
+                "source_copy_reward_hack_penalty, legal_ir_view_cross_entropy_loss, "
+                "legal_ir_multiview_total_loss"
+            ),
+            "vector_bundle": "score",
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 0
+    assert set(target_distribution) == {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
+    }
+    assert metadata["compiler_guidance_bridge_contract_projection_strength"] > (
+        _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH
+    )
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
+
+
 def test_bridge_contract_guidance_keeps_packet_120_primary_lanes() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _compiler_guidance_bridge_contract_metadata,

@@ -1317,6 +1317,9 @@ def _compiler_guidance_bridge_contract_metadata(
             )
             if component_gap > 0.0:
                 diagnostic_component_gap_max.append(component_gap)
+        support = _float_or_zero(mapping.get("support"))
+        if support > 0.0 and _mapping_is_compiler_guidance_evidence(mapping):
+            diagnostic_probability_gaps.append(min(0.50, 0.10 * support))
 
     collect(compiler_guidance)
     for mapping in _compiler_guidance_nested_mappings(compiler_guidance):
@@ -1422,6 +1425,12 @@ def _compiler_guidance_routes(
                 routes.update(str(route) for route in raw_routes if str(route).strip())
             else:
                 routes.update(str(route) for route in _guidance_sequence(raw_routes))
+        for sample in _guidance_sequence(mapping.get("samples")):
+            sample_text = str(sample or "").strip()
+            if sample_text.startswith("compiler-guidance:"):
+                _prefix, _separator, route = sample_text.partition(":")
+                if route.strip():
+                    routes.add(route.strip())
     return routes
 
 
@@ -1502,6 +1511,17 @@ def _evidence_row_targets_bridge_contracts(row: Mapping[str, Any]) -> bool:
     return target == "bridge.contracts" or failure.startswith("legal_ir_")
 
 
+def _mapping_is_compiler_guidance_evidence(mapping: Mapping[str, Any]) -> bool:
+    source = str(mapping.get("source") or "").strip()
+    vector_bundle = str(mapping.get("vector_bundle") or "").strip()
+    if source == "compiler_guidance_distillation_v1" or vector_bundle == "score":
+        return True
+    for sample in _guidance_sequence(mapping.get("samples")):
+        if str(sample or "").strip().startswith("compiler-guidance:"):
+            return True
+    return False
+
+
 def _guidance_sequence(value: Any) -> tuple[Any, ...]:
     if isinstance(value, (str, bytes)) or value is None:
         return () if value is None else (value,)
@@ -1556,6 +1576,11 @@ _BRIDGE_CONTRACT_GENERIC_LOSS_TARGET_DISTRIBUTION: Mapping[str, float] = {
     "deontic.ir": 0.30,
     "knowledge_graphs.neo4j_compat": 0.25,
     "modal.frame_logic": 0.15,
+    "CEC.native": 0.16,
+    "TDFOL.prover": 0.26,
+    "deontic.ir": 0.26,
+    "knowledge_graphs.neo4j_compat": 0.20,
+    "modal.frame_logic": 0.12,
 }
 
 

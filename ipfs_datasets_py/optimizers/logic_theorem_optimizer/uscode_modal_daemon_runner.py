@@ -6588,7 +6588,7 @@ def build_paired_daemon_commands(
             getattr(
                 args,
                 "autoencoder_canonical_warm_start",
-                _default_canonical_warm_start_mode(),
+                "auto",
             )
         ),
     ]
