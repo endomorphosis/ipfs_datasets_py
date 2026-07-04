@@ -4730,6 +4730,8 @@ def test_tdfol_bridge_evaluates_proof_obligations_and_graph() -> None:
     assert report.round_trip.cross_entropy_loss >= 0.0
     assert {
         "cosine_similarity",
+        "compiler_ir_cross_entropy_loss",
+        "compiler_ir_cosine_similarity",
         "cross_entropy_loss",
         "legal_ir_view_cross_entropy_loss",
         "source_copy_reward_hack_penalty",
@@ -4738,6 +4740,8 @@ def test_tdfol_bridge_evaluates_proof_obligations_and_graph() -> None:
     } <= set(logic_bridge_spec("fol_tdfol").loss_names)
     assert "legal_ir_view_cross_entropy_loss" in report.round_trip.extra_losses
     assert "source_copy_reward_hack_penalty" in report.round_trip.extra_losses
+    assert "compiler_ir_cross_entropy_loss" in report.round_trip.extra_losses
+    assert "compiler_ir_cosine_similarity" in report.round_trip.extra_losses
 
 
 def test_tdfol_bridge_keeps_shall_clause_before_permit_as_obligation() -> None:
@@ -5680,6 +5684,13 @@ def test_tdfol_bridge_accepts_packet_shaped_compiler_guidance_route() -> None:
 
     assert records[0]["source_id"] == "tdfol:compiler_guidance:repair_tdfol_bridge_parse"
     assert records[0]["parse_ok"] is True
+    assert report.metadata["compiler_guidance_routes"] == [
+        "repair_tdfol_bridge_parse"
+    ]
+    assert report.metadata["compiler_ir_cross_entropy_loss"] == 0.0
+    assert report.metadata["compiler_ir_cosine_similarity"] == 1.0
+    assert report.round_trip.extra_losses["compiler_ir_cross_entropy_loss"] == 0.0
+    assert report.round_trip.extra_losses["compiler_ir_cosine_similarity"] == 1.0
     assert report.metadata["compiler_guidance_applied"] is True
     assert report.ir_document.metadata["compiler_guidance_applied"] is True
     assert report.proof_gate.compiles is True

@@ -131,6 +131,8 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
             "neo4j_graph_data",
         ),
         loss_names=(
+            "compiler_ir_cross_entropy_loss",
+            "compiler_ir_cosine_similarity",
             "cosine_similarity",
             "cross_entropy_loss",
             "legal_ir_view_cross_entropy_loss",

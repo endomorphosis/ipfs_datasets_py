@@ -265,6 +265,11 @@ class FolTdfolBridgeAdapter:
         attempted = max(1, len(formula_records))
         failed = max(0, attempted - proof_gate.valid_count)
         parse_failure_ratio = failed / attempted
+        compiler_ir_cross_entropy_loss = parse_failure_ratio
+        compiler_ir_cosine_similarity = max(
+            0.0,
+            1.0 - compiler_ir_cross_entropy_loss,
+        )
         no_formula_loss = 0.0 if formula_records else 1.0
         legal_ir_view_cross_entropy_loss = max(
             0.0,
@@ -276,6 +281,8 @@ class FolTdfolBridgeAdapter:
             cross_entropy_loss=legal_ir_view_cross_entropy_loss,
             symbolic_validity_penalty=parse_failure_ratio,
             extra_losses={
+                "compiler_ir_cross_entropy_loss": compiler_ir_cross_entropy_loss,
+                "compiler_ir_cosine_similarity": compiler_ir_cosine_similarity,
                 "tdfol_no_formula_loss": no_formula_loss,
                 "tdfol_parse_failure_ratio": parse_failure_ratio,
                 "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
@@ -302,6 +309,15 @@ class FolTdfolBridgeAdapter:
                 "compiler_guidance_applied": bool(
                     context["compiler_guidance_records"]
                 ),
+                "compiler_guidance_routes": sorted(
+                    {
+                        str(record.get("compiler_guidance_route") or "")
+                        for record in context["compiler_guidance_records"]
+                        if record.get("compiler_guidance_route")
+                    }
+                ),
+                "compiler_ir_cross_entropy_loss": compiler_ir_cross_entropy_loss,
+                "compiler_ir_cosine_similarity": compiler_ir_cosine_similarity,
             },
         )
 
