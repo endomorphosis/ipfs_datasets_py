@@ -1775,6 +1775,11 @@ def _compiler_guidance_frame_logic_target_routes(
             normalized = normalized.split(":", 1)[1].strip()
         if normalized in _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
             routes.append(normalized)
+    if (
+        not routes
+        and _compiler_guidance_has_frame_logic_view_signal(compiler_guidance)
+    ):
+        routes.append("audit_frame_logic_terms")
     return _unique_preserve_order(routes)
 
 
@@ -1791,6 +1796,53 @@ def _compiler_guidance_implies_frame_logic_target(
     if not target_component and isinstance(raw_bundle, Mapping):
         target_component = str(raw_bundle.get("target_component") or "").strip()
     return target_component == _MODAL_FRAME_LOGIC_TARGET_COMPONENT
+
+
+def _compiler_guidance_has_frame_logic_view_signal(
+    compiler_guidance: Mapping[str, Any],
+) -> bool:
+    """Return true for packet evidence that targets the modal frame-logic view."""
+    if not isinstance(compiler_guidance, Mapping):
+        return False
+    target_component = str(compiler_guidance.get("target_component") or "").strip()
+    raw_bundle = compiler_guidance.get("bundle")
+    if not isinstance(raw_bundle, Mapping):
+        raw_bundle = compiler_guidance.get("semantic_bundle")
+    if not target_component and isinstance(raw_bundle, Mapping):
+        target_component = str(raw_bundle.get("target_component") or "").strip()
+    if target_component == _MODAL_FRAME_LOGIC_TARGET_COMPONENT:
+        return True
+    for distribution_key in (
+        "compiler_guidance_legal_ir_target_view_distribution",
+        "compiler_guidance_legal_ir_view_gap_distribution",
+        "legal_ir_target_view_distribution",
+        "legal_ir_view_gap_distribution",
+    ):
+        raw_distribution = compiler_guidance.get(distribution_key)
+        if isinstance(raw_distribution, Mapping):
+            for key in raw_distribution:
+                if str(key or "").strip() == _MODAL_FRAME_LOGIC_TARGET_COMPONENT:
+                    return True
+    for feature in _compiler_guidance_nested_feature_strings(
+        [
+            compiler_guidance.get("compiler_guidance_feature_groups"),
+            compiler_guidance.get("compiler_guidance_ranked_features"),
+            compiler_guidance.get("evidence"),
+            compiler_guidance.get("evidences"),
+            compiler_guidance.get("feature_groups"),
+            compiler_guidance.get("frame_features"),
+            compiler_guidance.get("top_family_features"),
+        ]
+    ):
+        normalized = _clean_non_empty_string(feature).lower()
+        if normalized in {
+            _MODAL_FRAME_LOGIC_TARGET_COMPONENT,
+            f"legal-ir-view:{_MODAL_FRAME_LOGIC_TARGET_COMPONENT}",
+            f"legal_ir_view:{_MODAL_FRAME_LOGIC_TARGET_COMPONENT}",
+            f"target-component:{_MODAL_FRAME_LOGIC_TARGET_COMPONENT}",
+        }:
+            return True
+    return False
 
 
 def _compiler_guidance_summary(
@@ -12739,6 +12791,11 @@ def _compiler_guidance_frame_logic_routes(metadata: Mapping[str, Any]) -> set[st
             normalized = normalized.split(":", 1)[1].strip()
         if normalized in _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
             routes.add(normalized)
+    if (
+        not routes
+        and _compiler_guidance_has_frame_logic_view_signal(metadata)
+    ):
+        routes.add("audit_frame_logic_terms")
     return routes
 
 
@@ -12878,6 +12935,7 @@ def _frame_ontology_audit_triples(
         kg_triples=triples,
         frame_high_signal_audit_terms=frame_high_signal_audit_terms,
     )
+    selected_term_candidates = list(selected_term_candidates)
     for predicate, terms in (
         ("selected_ontology_term", selected_term_candidates),
         ("audited_ontology_term", frame_audit_terms),
@@ -12898,6 +12956,37 @@ def _frame_ontology_audit_triples(
                     "object": normalized,
                 }
             )
+    if selected_term_candidates:
+        selected_frames = {
+            _clean_non_empty_string(triple.get("object"))
+            for triple in triples
+            if _clean_non_empty_string(triple.get("predicate"))
+            == "selected_ontology_frame"
+        }
+        interpreted_subjects = [
+            _clean_non_empty_string(triple.get("subject"))
+            for triple in triples
+            if _clean_non_empty_string(triple.get("predicate"))
+            == "interpreted_in_frame"
+            and _clean_non_empty_string(triple.get("object")) in selected_frames
+            and _clean_non_empty_string(triple.get("subject"))
+        ]
+        for subject in _unique_preserve_order(interpreted_subjects):
+            for term in selected_term_candidates[:_FRAME_ONTOLOGY_AUDIT_MAX_TERMS]:
+                normalized = _normalize_frame_ontology_audit_term(str(term))
+                if not normalized:
+                    continue
+                triple_key = (subject, "interpreted_in_frame_term", normalized)
+                if triple_key in seen:
+                    continue
+                seen.add(triple_key)
+                triples.append(
+                    {
+                        "subject": subject,
+                        "predicate": "interpreted_in_frame_term",
+                        "object": normalized,
+                    }
+                )
     return triples
 
 

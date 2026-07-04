@@ -454,6 +454,11 @@ def test_modal_frame_logic_bridge_projects_frame_alignment_guidance_routes_to_te
             modal_metadata["frame_ontology_high_signal_term_audit_terms"]
         )
         frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
+        interpreted_terms = {
+            triple["object"]
+            for triple in frame_triples
+            if triple["predicate"] == "interpreted_in_frame_term"
+        }
 
         assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
         assert route in audit_terms
@@ -475,6 +480,8 @@ def test_modal_frame_logic_bridge_projects_frame_alignment_guidance_routes_to_te
             and triple["object"] == "tdfol_prover"
             for triple in frame_triples
         )
+        assert "deontic_ir" in interpreted_terms
+        assert "tdfol_prover" in interpreted_terms
 
 
 def test_modal_frame_logic_bridge_audits_packet_frame_feature_evidence() -> None:
