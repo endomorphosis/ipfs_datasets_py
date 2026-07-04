@@ -1551,6 +1551,11 @@ _BRIDGE_CONTRACT_GENERIC_LOSS_TARGET_DISTRIBUTION: Mapping[str, float] = {
     "CEC.native": 0.18,
     "knowledge_graphs.neo4j_compat": 0.18,
     "modal.frame_logic": 0.12,
+    "CEC.native": 0.15,
+    "TDFOL.prover": 0.30,
+    "deontic.ir": 0.30,
+    "knowledge_graphs.neo4j_compat": 0.25,
+    "modal.frame_logic": 0.15,
 }
 
 

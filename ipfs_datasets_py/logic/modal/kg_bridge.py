@@ -1063,7 +1063,16 @@ def _metadata_implies_neo4j_projection_guidance(metadata: Mapping[str, Any]) -> 
     has_neo4j_target = any(
         _NEO4J_COMPAT_TARGET_COMPONENT in feature for feature in features
     )
-    return has_graph_route or has_neo4j_target
+    feature_text = "\n".join(features)
+    has_graph_failure_metric = (
+        "legal_ir_multiview_graph_failure_penalty" in feature_text
+    )
+    has_knowledge_graph_scope = "knowledge_graphs" in feature_text
+    return (
+        has_graph_route
+        or has_neo4j_target
+        or (has_graph_failure_metric and has_knowledge_graph_scope)
+    )
 
 
 def _compiler_guidance_metadata_features(metadata: Mapping[str, Any]) -> List[str]:
@@ -1110,6 +1119,17 @@ def _extend_guidance_mapping_features(
             features.append(route)
             features.append(f"compiler-guidance-route:{route}")
     for key in (
+        "program_synthesis_scope",
+        "scope",
+        "target_file_lane",
+        "target_lane",
+        "target_metrics",
+    ):
+        value = mapping.get(key)
+        for feature in _feature_values(value):
+            features.append(feature)
+            features.append(f"{key}:{feature}")
+    for key in (
         "target_component",
         "target_view",
         "predicted_component",
@@ -1146,7 +1166,17 @@ def _extend_guidance_mapping_features(
         "compiler_guidance_bundle",
         "vector_bundle",
     ):
-        _extend_guidance_mapping_features(mapping.get(bundle_key), features)
+        bundle_value = mapping.get(bundle_key)
+        features.extend(_feature_values(bundle_value))
+        _extend_guidance_mapping_features(bundle_value, features)
+    for nested_key in (
+        "attribution",
+        "compiler_guidance",
+        "compiler_guidance_attribution",
+        "guidance",
+        "metadata",
+    ):
+        _extend_guidance_mapping_features(mapping.get(nested_key), features)
     for evidence in _guidance_records(
         mapping.get("evidence")
         if "evidence" in mapping
