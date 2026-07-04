@@ -215,6 +215,24 @@ def test_external_prover_router_promotes_nested_distillation_bundle() -> None:
     assert report.proof_gate.compiles is True
 
 
+def test_external_prover_router_promotes_compiler_guidance_sample_route() -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        _router_guidance_signal,
+    )
+
+    signal = _router_guidance_signal(
+        {
+            "program_synthesis_scope": "external_provers",
+            "samples": "compiler-guidance:repair_external_prover_router",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "external_provers.router",
+        }
+    )
+
+    assert signal["prover_gate_hint"] is True
+    assert "repair_external_prover_router" in signal["routes"]
+
+
 def test_fol_tdfol_bridge_promotes_json_string_parse_repair_evidence() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 

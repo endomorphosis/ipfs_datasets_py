@@ -539,7 +539,7 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
     routes: set[str] = set()
 
     def add_route(value: Any) -> None:
-        route = str(value or "").strip().lower()
+        route = _router_guidance_route_name(value)
         if route:
             routes.add(route)
 
@@ -548,6 +548,11 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         "action",
         "original_action",
         "compiler_guidance_route",
+    )
+    sample_route_keys = (
+        "sample_id",
+        "sample_ids",
+        "samples",
     )
 
     def collect(value: Any) -> None:
@@ -558,7 +563,7 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             for route in value:
                 if isinstance(route, Mapping):
-                    for nested_key in route_keys:
+                    for nested_key in route_keys + sample_route_keys:
                         add_route(route.get(nested_key))
                 else:
                     add_route(route)
@@ -576,6 +581,8 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
 
     for key in route_keys:
         add_route(compiler_guidance.get(key))
+    for key in sample_route_keys:
+        collect(compiler_guidance.get(key))
 
     for key in (
         "bundle",
@@ -586,6 +593,8 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         if bundle:
             for nested_key in route_keys:
                 add_route(bundle.get(nested_key))
+            for nested_key in sample_route_keys:
+                collect(bundle.get(nested_key))
             for nested_routes_key in (
                 "compiler_guidance_todo_routes",
                 "top_todo_routes",
@@ -597,6 +606,8 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
     attribution = compiler_guidance.get("compiler_guidance_attribution")
     if isinstance(attribution, Mapping):
         collect(attribution.get("todo_routes"))
+        for nested_key in sample_route_keys:
+            collect(attribution.get(nested_key))
 
     for key in ("evidence", "hint_evidence"):
         evidence_items = compiler_guidance.get(key)
@@ -608,13 +619,30 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         for item in evidence_items:
             if not isinstance(item, Mapping):
                 continue
-            for nested_key in route_keys:
+            for nested_key in route_keys + sample_route_keys:
                 add_route(item.get(nested_key))
 
     if _router_guidance_has_passing_external_prover_evidence(compiler_guidance):
         add_route("repair_external_prover_router")
 
     return routes
+
+
+def _router_guidance_route_name(value: Any) -> str:
+    route = str(value or "").strip().lower()
+    if not route:
+        return ""
+    route = route.replace("-", "_").replace(" ", "_")
+    for prefix in (
+        "compiler_guidance_activation:",
+        "compiler_guidance_activation_",
+        "compiler_guidance:",
+        "compiler_guidance_",
+    ):
+        if route.startswith(prefix):
+            route = route[len(prefix) :]
+            break
+    return route.strip("_")
 
 
 def _router_guidance_mapping(value: Any) -> dict[str, Any]:
