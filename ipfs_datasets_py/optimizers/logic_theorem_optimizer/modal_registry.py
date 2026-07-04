@@ -8851,7 +8851,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DEONTIC.value,
-    ): 0.0015,
+    ): 0.076,
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.TEMPORAL.value,

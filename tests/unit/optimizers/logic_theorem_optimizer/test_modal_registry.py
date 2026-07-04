@@ -236,11 +236,14 @@ def test_packet_003441_refined_cue_pairs_cover_weak_family_evidence() -> None:
 
 def test_packet_000116_refined_cue_pairs_cover_compiler_registry_evidence() -> None:
     packet_pairs = (
-        ("deontic", "conditional_normative"),
+        ("conditional_normative", "deontic"),
         ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
         ("frame", "deontic"),
-        ("frame", "frame"),
+        ("frame", "epistemic"),
         ("frame", "temporal"),
+        ("temporal", "deontic"),
     )
     assert COMPILER_REFINED_PACKET_000116_FAMILY_PAIRS == packet_pairs
     refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
@@ -534,10 +537,9 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
 
 def test_compiler_required_adaptive_ambiguity_pairs_are_covered_by_both_policies() -> None:
     required_non_priority_pairs = {
-        ("dynamic", "dynamic"),
+        ("deontic", "alethic"),
         ("epistemic", "epistemic"),
-        ("epistemic", "temporal"),
-        ("frame", "alethic"),
+        ("frame", "dynamic"),
     }
     for predicted_family, target_family in (
         COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
@@ -663,10 +665,12 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     )
     assert compiler_required_adaptive_ambiguity_targets("conditional_normative") == (
         "deontic",
+        "alethic",
         "temporal",
         "conditional_normative",
-        "epistemic",
+        "dynamic",
         "frame",
+        "epistemic",
     )
     assert compiler_required_adaptive_ambiguity_targets("deontic") == (
         "conditional_normative",
@@ -675,6 +679,8 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "deontic",
         "temporal",
         "frame",
+        "doxastic",
+        "alethic",
     )
     assert compiler_required_adaptive_ambiguity_targets("dynamic") == (
         "dynamic",
@@ -685,6 +691,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "conditional_normative",
         "epistemic",
         "temporal",
+        "frame",
     )
     assert compiler_required_adaptive_ambiguity_targets("frame") == (
         "conditional_normative",
@@ -694,16 +701,17 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "temporal",
         "frame",
         "doxastic",
+        "dynamic",
     )
     assert compiler_required_adaptive_ambiguity_targets("temporal") == (
         "deontic",
+        "alethic",
         "epistemic",
         "doxastic",
         "conditional_normative",
         "frame",
         "dynamic",
         "temporal",
-        "alethic",
     )
 
 
@@ -777,21 +785,28 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("alethic", "frame"),
         ("conditional_normative", "conditional_normative"),
         ("conditional_normative", "deontic"),
+        ("conditional_normative", "dynamic"),
         ("conditional_normative", "epistemic"),
         ("conditional_normative", "temporal"),
         ("conditional_normative", "frame"),
         ("conditional_normative", "alethic"),
         ("deontic", "conditional_normative"),
         ("deontic", "deontic"),
+        ("deontic", "doxastic"),
         ("deontic", "dynamic"),
         ("deontic", "epistemic"),
         ("deontic", "alethic"),
         ("deontic", "temporal"),
         ("deontic", "frame"),
+        ("doxastic", "conditional_normative"),
         ("doxastic", "doxastic"),
+        ("doxastic", "epistemic"),
+        ("dynamic", "dynamic"),
         ("dynamic", "temporal"),
         ("epistemic", "conditional_normative"),
         ("epistemic", "deontic"),
+        ("epistemic", "frame"),
+        ("epistemic", "temporal"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
         ("frame", "frame"),
@@ -937,12 +952,20 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "deontic",
         "temporal",
         "frame",
+        "doxastic",
     )
     assert compiler_ambiguity_policy_targets("epistemic") == (
         "conditional_normative",
         "deontic",
+        "temporal",
+        "frame",
     )
-    assert compiler_ambiguity_policy_targets("dynamic") == ("temporal",)
+    assert compiler_ambiguity_policy_targets("dynamic") == ("temporal", "dynamic")
+    assert compiler_ambiguity_policy_targets("doxastic") == (
+        "epistemic",
+        "doxastic",
+        "conditional_normative",
+    )
     assert compiler_ambiguity_policy_targets("frame") == (
         "conditional_normative",
         "deontic",
@@ -955,6 +978,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
     )
     assert compiler_ambiguity_policy_targets("dynamic") == (
         "temporal",
+        "dynamic",
     )
     assert compiler_ambiguity_policy_targets("temporal") == (
         "deontic",
@@ -983,6 +1007,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "epistemic",
         "frame",
         "alethic",
+        "dynamic",
     )
     assert compiler_ambiguity_policy_targets("temporal") == (
         "deontic",
@@ -1016,12 +1041,14 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "temporal",
     )
     assert signal_free_adaptive_ambiguity_targets("deontic") == (
+        "alethic",
         "deontic",
         "conditional_normative",
         "frame",
         "temporal",
         "epistemic",
         "dynamic",
+        "doxastic",
     )
     assert signal_free_adaptive_ambiguity_targets("dynamic") == (
         "temporal",
@@ -1030,6 +1057,7 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
     assert signal_free_adaptive_ambiguity_targets("conditional_normative") == (
         "deontic",
         "conditional_normative",
+        "alethic",
         "temporal",
         "epistemic",
         "dynamic",
@@ -1039,7 +1067,13 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "deontic",
         "conditional_normative",
         "epistemic",
+        "frame",
         "temporal",
+    )
+    assert signal_free_adaptive_ambiguity_targets("doxastic") == (
+        "epistemic",
+        "doxastic",
+        "conditional_normative",
     )
     assert signal_free_adaptive_ambiguity_targets("frame") == (
         "conditional_normative",
@@ -1082,12 +1116,20 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
         ("deontic", "temporal"),
         ("deontic", "dynamic"),
         ("deontic", "deontic"),
+        ("deontic", "doxastic"),
         ("conditional_normative", "deontic"),
+        ("conditional_normative", "alethic"),
         ("conditional_normative", "epistemic"),
         ("conditional_normative", "conditional_normative"),
         ("conditional_normative", "temporal"),
-        ("conditional_normative", "conditional_normative"),
+        ("conditional_normative", "dynamic"),
         ("conditional_normative", "frame"),
+        ("dynamic", "dynamic"),
+        ("doxastic", "conditional_normative"),
+        ("doxastic", "doxastic"),
+        ("doxastic", "epistemic"),
+        ("epistemic", "frame"),
+        ("epistemic", "temporal"),
         ("temporal", "conditional_normative"),
         ("temporal", "deontic"),
         ("temporal", "alethic"),
@@ -1111,8 +1153,8 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
             predicted_family,
             target_family,
         )
-    assert not is_priority_signal_free_adaptive_ambiguity_pair("frame", "alethic")
-    assert not is_priority_signal_free_adaptive_ambiguity_pair("epistemic", "temporal")
+    assert is_priority_signal_free_adaptive_ambiguity_pair("frame", "alethic")
+    assert is_priority_signal_free_adaptive_ambiguity_pair("epistemic", "temporal")
     assert is_priority_signal_free_adaptive_ambiguity_pair(
         "alethic",
         "deontic",
@@ -1180,7 +1222,7 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
         "conditional_normative",
     )
     assert is_priority_signal_free_adaptive_ambiguity_pair("frame", "deontic")
-    assert is_priority_signal_free_adaptive_ambiguity_pair("frame", "alethic") is False
+    assert is_priority_signal_free_adaptive_ambiguity_pair("frame", "alethic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("frame", "epistemic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("frame", "temporal")
     assert is_priority_signal_free_adaptive_ambiguity_pair("epistemic", "deontic")
@@ -1191,7 +1233,7 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
     assert is_priority_signal_free_adaptive_ambiguity_pair(
         "epistemic",
         "temporal",
-    ) is False
+    )
 
 
 def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets() -> None:
@@ -1206,8 +1248,10 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "deontic",
         "temporal",
         "frame",
-        "epistemic",
         "conditional_normative",
+        "alethic",
+        "dynamic",
+        "epistemic",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("temporal") == (
         "conditional_normative",
@@ -1226,6 +1270,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "temporal",
         "doxastic",
         "frame",
+        "alethic",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("deontic") == (
         "conditional_normative",
@@ -1233,14 +1278,23 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "frame",
         "temporal",
         "dynamic",
+        "doxastic",
         "deontic",
+    )
+    assert priority_signal_free_adaptive_ambiguity_targets("doxastic") == (
+        "epistemic",
+        "doxastic",
+        "conditional_normative",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("dynamic") == (
         "temporal",
+        "dynamic",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("epistemic") == (
         "deontic",
         "conditional_normative",
+        "frame",
+        "temporal",
     )
 
 
