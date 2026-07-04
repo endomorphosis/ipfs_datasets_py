@@ -330,6 +330,14 @@ class CecDcecBridgeAdapter:
         legal_ir_view_cross_entropy_loss = _cec_legal_ir_view_cross_entropy_loss(
             ir_document
         )
+        compiler_ir_cross_entropy_loss = max(
+            failure_ratio,
+            event_formula_invalid_ratio,
+        )
+        compiler_ir_cosine_similarity = max(
+            0.0,
+            1.0 - compiler_ir_cross_entropy_loss,
+        )
         cross_entropy_loss = max(
             no_formula_loss,
             failure_ratio,
@@ -351,6 +359,8 @@ class CecDcecBridgeAdapter:
         target_metrics = {
             "cec_dcec_event_formula_invalid_ratio": event_formula_invalid_ratio,
             "cec_dcec_validation_failure_ratio": failure_ratio,
+            "compiler_ir_cross_entropy_loss": compiler_ir_cross_entropy_loss,
+            "compiler_ir_cosine_similarity": compiler_ir_cosine_similarity,
             "cross_entropy_loss": cross_entropy_loss,
             "cosine_similarity": cosine_similarity,
             "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
@@ -369,6 +379,8 @@ class CecDcecBridgeAdapter:
                 "cec_dcec_no_formula_loss": no_formula_loss,
                 "cec_dcec_validation_failure_ratio": failure_ratio,
                 "cec_dcec_event_formula_invalid_ratio": event_formula_invalid_ratio,
+                "compiler_ir_cross_entropy_loss": compiler_ir_cross_entropy_loss,
+                "compiler_ir_cosine_similarity": compiler_ir_cosine_similarity,
                 "legal_ir_view_cross_entropy_loss": legal_ir_view_cross_entropy_loss,
                 "source_decompiled_text_embedding_cosine_loss": no_formula_loss,
                 "source_copy_reward_hack_penalty": source_copy_reward_hack_penalty,
@@ -379,6 +391,11 @@ class CecDcecBridgeAdapter:
             status = "partial"
         if graph_result.graph_failure_penalty:
             status = "partial"
+        guidance_signal = _cec_compiler_guidance_signal(compiler_guidance)
+        compiler_guidance_applied = any(
+            str(record.get("compiler_guidance_source") or "")
+            for record in records
+        )
         return BridgeEvaluationReport(
             adapter_name=self.name,
             target_component=self.target_component,
@@ -397,9 +414,16 @@ class CecDcecBridgeAdapter:
             status=status,
             metadata={
                 "adapter": "cec_dcec_bridge_v1",
-                "compiler_guidance_applied": any(
-                    str(record.get("compiler_guidance_source") or "")
-                    for record in records
+                "compiler_guidance_applied": compiler_guidance_applied,
+                "compiler_guidance_quality_gate": guidance_signal.get("quality_gate", ""),
+                "compiler_guidance_routes": guidance_signal.get("routes", []),
+                "compiler_guidance_target_metrics": guidance_signal.get(
+                    "target_metrics",
+                    [],
+                ),
+                "compiler_guidance_target_component": guidance_signal.get(
+                    "target_component",
+                    "",
                 ),
                 "target_metrics": target_metrics,
             },
@@ -2655,6 +2679,87 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
             if token in route_tokens:
                 return True
     return False
+
+
+def _cec_compiler_guidance_signal(
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> dict[str, Any]:
+    guidance = _mapping(compiler_guidance)
+    if not guidance:
+        return {
+            "quality_gate": "",
+            "routes": [],
+            "target_component": "",
+            "target_metrics": [],
+        }
+
+    bundle = _mapping(
+        guidance.get("bundle")
+        or guidance.get("compiler_guidance_bundle")
+        or guidance.get("semantic_bundle")
+    )
+    routes: list[str] = []
+    for value in (
+        guidance.get("route"),
+        guidance.get("compiler_guidance_route"),
+        bundle.get("route"),
+        bundle.get("compiler_guidance_route"),
+    ):
+        route = str(value or "").strip()
+        if route and route not in routes:
+            routes.append(route)
+    for key in ("compiler_guidance_todo_routes", "todo_routes", "routes"):
+        value = guidance.get(key)
+        if isinstance(value, Mapping):
+            route_values = value.keys()
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            route_values = value
+        else:
+            route_values = ()
+        for value in route_values:
+            route = str(value or "").strip()
+            if route and route not in routes:
+                routes.append(route)
+
+    target_component = _first_text_value(
+        guidance.get("target_component"),
+        guidance.get("target"),
+        bundle.get("target_component"),
+        bundle.get("target"),
+    )
+    quality_gate = _first_text_value(
+        guidance.get("compiler_guidance_quality_gate"),
+        guidance.get("quality_gate"),
+        bundle.get("compiler_guidance_quality_gate"),
+        bundle.get("quality_gate"),
+    )
+    metric_values: list[Any] = []
+    for value in (
+        guidance.get("target_metrics"),
+        guidance.get("compiler_guidance_target_metrics"),
+        bundle.get("target_metrics"),
+        bundle.get("compiler_guidance_target_metrics"),
+    ):
+        if isinstance(value, str):
+            metric_values.extend(
+                metric.strip()
+                for metric in value.split(",")
+                if metric.strip()
+            )
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            metric_values.extend(value)
+    target_metrics: list[str] = []
+    for metric in metric_values:
+        metric_name = str(metric or "").strip()
+        if metric_name and metric_name not in target_metrics:
+            target_metrics.append(metric_name)
+
+    return {
+        "quality_gate": quality_gate,
+        "routes": routes,
+        "target_component": target_component,
+        "target_metrics": target_metrics,
+    }
 
 
 def _compiler_guidance_frame_candidates(

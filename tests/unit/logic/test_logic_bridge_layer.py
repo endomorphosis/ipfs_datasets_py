@@ -5583,6 +5583,8 @@ def test_cec_dcec_bridge_exposes_rescue_target_metrics() -> None:
     target_metric_names = {
         "cec_dcec_event_formula_invalid_ratio",
         "cec_dcec_validation_failure_ratio",
+        "compiler_ir_cross_entropy_loss",
+        "compiler_ir_cosine_similarity",
         "cross_entropy_loss",
         "cosine_similarity",
         "legal_ir_view_cross_entropy_loss",
@@ -5607,6 +5609,65 @@ def test_cec_dcec_bridge_exposes_rescue_target_metrics() -> None:
     )
     assert report.round_trip.extra_losses["source_copy_reward_hack_penalty"] == 0.0
     assert report.metadata["target_metrics"]["cosine_similarity"] == 1.0
+
+
+def test_cec_dcec_bridge_promotes_packet_shaped_compiler_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    guidance = {
+        "bundle": (
+            '{"program_synthesis_scope":"cec",'
+            '"route":"repair_cec_dcec_bridge",'
+            '"source":"compiler_guidance_distillation_v1",'
+            '"target_component":"CEC.native"}'
+        ),
+        "target_metrics": (
+            "cross_entropy_loss, cosine_similarity, "
+            "compiler_ir_cross_entropy_loss, compiler_ir_cosine_similarity, "
+            "source_copy_reward_hack_penalty, cec_dcec_validation_failure_ratio, "
+            "legal_ir_view_cross_entropy_loss"
+        ),
+        "compiler_guidance_quality_gate": "pass",
+    }
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        (
+            "The agency shall publish notice before the permit takes effect."
+        ),
+        document_id="cec-bridge-packet-guidance",
+        citation="CEC Bridge Packet Guidance",
+        compiler_guidance=guidance,
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.ir_document.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_routes"] == [
+        "repair_cec_dcec_bridge"
+    ]
+    assert report.metadata["compiler_guidance_target_component"] == "CEC.native"
+    assert report.metadata["compiler_guidance_quality_gate"] == "pass"
+    assert {
+        "compiler_ir_cross_entropy_loss",
+        "compiler_ir_cosine_similarity",
+        "cec_dcec_validation_failure_ratio",
+    } <= set(report.metadata["compiler_guidance_target_metrics"])
+    assert event_record["event_formula_source"] == (
+        "compiler_guidance.top_level.materialized_event_formula"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_quality_gate"][
+            "compiler_guidance_materialized"
+        ]
+        is True
+    )
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["compiler_ir_cross_entropy_loss"] == 0.0
+    assert report.round_trip.extra_losses["compiler_ir_cosine_similarity"] == 1.0
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
 
 
 def test_cec_dcec_bridge_synthesizes_fallback_formula_when_norm_extraction_is_empty() -> None:

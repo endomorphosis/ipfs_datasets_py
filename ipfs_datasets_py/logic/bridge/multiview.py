@@ -1541,10 +1541,16 @@ def _guidance_metric_names(value: Any) -> tuple[Any, ...]:
 
 
 _BRIDGE_CONTRACT_GENERIC_LOSS_TARGET_DISTRIBUTION: Mapping[str, float] = {
-    "TDFOL.prover": 0.30,
-    "deontic.ir": 0.30,
-    "knowledge_graphs.neo4j_compat": 0.25,
-    "modal.frame_logic": 0.15,
+    "CEC.native": 0.24,
+    "TDFOL.prover": 0.28,
+    "deontic.ir": 0.28,
+    "knowledge_graphs.neo4j_compat": 0.16,
+    "modal.frame_logic": 0.04,
+    "TDFOL.prover": 0.26,
+    "deontic.ir": 0.26,
+    "CEC.native": 0.18,
+    "knowledge_graphs.neo4j_compat": 0.18,
+    "modal.frame_logic": 0.12,
 }
 
 
@@ -1572,7 +1578,6 @@ def _add_metric_target_lanes(
     if (
         "source_copy" in normalized
         or "cosine" in normalized
-        or "cross_entropy" in normalized
     ):
         add_lane("modal.frame_logic", 0.75)
     if normalized in {
