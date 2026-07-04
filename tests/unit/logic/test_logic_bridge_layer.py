@@ -2196,14 +2196,91 @@ def test_bridge_contract_promotes_packet_json_bundle_guidance() -> None:
 
     assert metadata["compiler_guidance_bridge_contract_target_lanes"]
     assert set(target_distribution) == {
+        "CEC.native",
         "TDFOL.prover",
         "deontic.ir",
         "knowledge_graphs.neo4j_compat",
         "modal.frame_logic",
     }
+    assert target_distribution["CEC.native"] > 0.0
     assert target_distribution["TDFOL.prover"] > 0.0
     assert target_distribution["knowledge_graphs.neo4j_compat"] > 0.0
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
+
+
+def test_bridge_contract_guidance_keeps_packet_120_primary_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "action": "repair_multiview_legal_ir_loss",
+            "target_component": "bridge.contracts",
+            "target_metrics": (
+                "legal_ir_view_cross_entropy_loss, "
+                "legal_ir_multiview_cross_entropy_loss, "
+                "legal_ir_multiview_total_loss"
+            ),
+            "evidence": [
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_underrepresented_components": [
+                        "deontic.ir",
+                        "CEC.native",
+                        "TDFOL.prover",
+                    ],
+                    "legal_ir_component_gaps": {
+                        "CEC.native": 0.079236331356,
+                        "TDFOL.prover": 0.020231776812,
+                        "deontic.ir": 0.172374264327,
+                        "knowledge_graphs.neo4j_compat": -0.051654209669,
+                        "modal.frame_logic": -0.091066231133,
+                    },
+                    "pipeline_stage_diagnostics": {
+                        "modal_family_target_probability_gap": 0.295535745503,
+                        "legal_ir_component_gap_max": 0.172374264327,
+                    },
+                    "predicted_view": "deontic.ir",
+                    "target_component": "bridge.contracts",
+                    "target_view": "deontic.ir",
+                },
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_underrepresented_components": ["CEC.native"],
+                    "legal_ir_component_gaps": {
+                        "CEC.native": 0.353279505188,
+                        "TDFOL.prover": -0.080527661937,
+                        "deontic.ir": -0.012025083173,
+                        "knowledge_graphs.neo4j_compat": -0.040480938633,
+                        "modal.frame_logic": -0.09114411508,
+                    },
+                    "pipeline_stage_diagnostics": {
+                        "modal_family_target_probability_gap": 0.212526850531,
+                        "legal_ir_component_gap_max": 0.353279505188,
+                    },
+                    "predicted_view": "CEC.native",
+                    "target_component": "bridge.contracts",
+                    "target_view": "CEC.native",
+                },
+            ],
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+    } <= set(target_distribution)
+    assert target_distribution["CEC.native"] > target_distribution["modal.frame_logic"]
+    assert target_distribution["deontic.ir"] > target_distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert metadata["compiler_guidance_bridge_contract_projection_strength"] > 0.32
 
 
 def test_modal_frame_logic_bridge_exports_graph_projection_signal_for_uscode_scaffolds() -> None:
@@ -10097,6 +10174,29 @@ def test_fol_tdfol_coerce_formula_accepts_tdfol_prover_proof_labels() -> None:
 
     assert parsed is not None
     assert parsed.to_string() == "O(collect_fees(internal_services))"
+
+
+def test_fol_tdfol_coerce_formula_accepts_plural_tdfol_prover_proof_labels() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    cases = {
+        (
+            "TDFOL.prover proof obligations: 1. "
+            "O(collect_fees(chief_administrative_officer)); "
+            "2. P(accept_payment(chief_administrative_officer))"
+        ): "O(collect_fees(chief_administrative_officer))",
+        (
+            "TDFOL.prover proof obligations view: "
+            "[O(collect_fees(chief_administrative_officer)), "
+            "P(accept_payment(chief_administrative_officer))]"
+        ): "O(collect_fees(chief_administrative_officer))",
+    }
+
+    for formula, expected in cases.items():
+        parsed = coerce_tdfol_formula(formula)
+
+        assert parsed is not None
+        assert parsed.to_string() == expected
 
 
 def test_fol_tdfol_coerce_formula_accepts_targeted_prover_wrappers() -> None:

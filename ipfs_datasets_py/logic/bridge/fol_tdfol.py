@@ -1254,8 +1254,8 @@ def _unwrap_tdfol_targeted_export(text: str) -> str:
     patterns = (
         r"(?is)^\s*TDFOL(?:[\s.]prover)?\s*(?:=>|->|:)\s*(.+)$",
         r"(?is)^\s*TDFOL(?:[\s.]prover)?\s+"
-        r"(?:proof_obligation|proof\s+obligation|tdfol_formula|"
-        r"tdfol\s+formula|obligation|goal|claim)(?:\s+view)?\s*[:=]\s*(.+)$",
+        r"(?:proof_obligations?|proof\s+obligations?|tdfol_formulas?|"
+        r"tdfol\s+formulas?|obligations?|goals?|claims?)(?:\s+view)?\s*[:=]\s*(.+)$",
         r"(?is)^\s*(?:target_logic|target_component|target_view|"
         r"predicted_view)\s*[:=]\s*TDFOL(?:[\s.]prover)?\s*(?:[,;]|=>|->)\s*(.+)$",
     )
@@ -1330,8 +1330,8 @@ def _tdfol_export_line_candidate(line: str) -> str:
     candidate = re.sub(r"^\s*(?:[-*]|\d+[.)])\s*", "", candidate).strip()
     candidate = re.sub(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
-        r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
-        r"proof\s+obligation|obligation)\s*[:=]\s*",
+        r"tdfol\s+formula|proof_input|proof\s+input|proof_obligations?|"
+        r"proof\s+obligations?|obligations?)\s*[:=]\s*",
         "",
         candidate,
         flags=re.IGNORECASE,
@@ -1341,12 +1341,14 @@ def _tdfol_export_line_candidate(line: str) -> str:
 
 def _extract_balanced_tdfol_formula(text: str) -> str:
     candidate = str(text or "").strip().strip("`\"'").strip()
-    if not _looks_like_tdfol_formula(candidate):
-        return ""
     start = _tdfol_formula_start_index(candidate)
     if start < 0:
         return ""
+    if start > 0 and re.search(r"[A-Za-z_]", candidate[:start]):
+        return ""
     candidate = candidate[start:].strip()
+    if not _looks_like_tdfol_formula(candidate):
+        return ""
     if candidate.startswith(("forall", "exists", "∀", "∃")):
         return candidate.rstrip(".").strip()
     open_index = candidate.find("(")
