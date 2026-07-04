@@ -11091,6 +11091,46 @@ def test_zkp_guidance_ref_normalizes_json_encoded_packet_bundle() -> None:
     )
 
 
+def test_zkp_attestation_completion_promotes_record_level_packet_guidance() -> None:
+    from ipfs_datasets_py.logic.zkp import (
+        ZKPProver,
+        compiler_guidance_ref_from_metadata,
+        complete_zkp_attestation_record,
+    )
+
+    guidance = {
+        "program_synthesis_scope": "zkp",
+        "route": "repair_zkp_attestation_bridge",
+        "source": "compiler_guidance_distillation_v1",
+        "target_component": "zkp.circuits",
+    }
+    prover = ZKPProver(backend="simulated", enable_caching=False)
+    proof = prover.generate_proof(
+        "O(publish_notice(agency))",
+        ["O(publish_notice(agency))", "uses_predicate(publish_notice)"],
+        metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+    )
+    proof_dict = proof.to_dict()
+    proof_dict["public_inputs"] = {
+        key: value
+        for key, value in proof_dict["public_inputs"].items()
+        if not key.startswith("compiler_guidance_")
+    }
+
+    record = complete_zkp_attestation_record(
+        {
+            "proof": proof_dict,
+            "source_id": "tdfol:norm:notice",
+            **guidance,
+        }
+    )
+
+    expected_ref = compiler_guidance_ref_from_metadata(guidance)
+    assert record["compiler_guidance_ref"] == expected_ref
+    assert record["public_inputs"]["compiler_guidance_ref"] == expected_ref
+    assert record["attestation_view"]["compiler_guidance_ref"] == expected_ref
+
+
 def test_zkp_verifier_rejects_stale_attestation_view() -> None:
     from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 

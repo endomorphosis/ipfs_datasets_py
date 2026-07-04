@@ -769,6 +769,28 @@ def _proofless_source_attestation_record(
     return completed
 
 
+def _metadata_with_record_guidance(
+    metadata: Mapping[str, Any],
+    record: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Merge root-level compiler guidance into proof metadata deterministically."""
+    merged = dict(metadata)
+    if compiler_guidance_ref_from_metadata(merged):
+        return merged
+
+    contract = compiler_guidance_contract_from_metadata(record)
+    if contract not in ({}, [], ""):
+        merged["compiler_guidance_contract"] = contract
+
+    explicit_ref = str(record.get("compiler_guidance_ref") or "").strip()
+    if explicit_ref:
+        merged["compiler_guidance_ref"] = explicit_ref
+    if record.get("compiler_guidance_version") not in (None, ""):
+        merged["compiler_guidance_version"] = record.get("compiler_guidance_version")
+
+    return merged
+
+
 def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]:
     """Return a LegalIR ZKP attestation record with deterministic bridge fields.
 
@@ -795,7 +817,10 @@ def complete_zkp_attestation_record(record: Mapping[str, Any]) -> Dict[str, Any]
         }
 
     proof_data = proof.get("proof_data", completed.get("proof_data", b""))
-    metadata = _mapping_dict(proof.get("metadata") or completed.get("metadata"))
+    metadata = _metadata_with_record_guidance(
+        _mapping_dict(proof.get("metadata") or completed.get("metadata")),
+        completed,
+    )
     public_inputs = _mapping_dict(
         proof.get("public_inputs") or completed.get("public_inputs")
     )
