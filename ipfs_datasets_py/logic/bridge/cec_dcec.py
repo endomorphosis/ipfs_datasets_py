@@ -19,15 +19,20 @@ from .types import (
 
 _EVENT_PREDICATE_CANONICAL_BY_LOWER = {
     "happens": "Happens",
+    "happens_at": "Happens",
     "holdsat": "HoldsAt",
+    "holds_at": "HoldsAt",
     "initiates": "Initiates",
     "terminates": "Terminates",
     "releasedat": "ReleasedAt",
+    "released_at": "ReleasedAt",
     "clipped": "Clipped",
     "trajectory": "Trajectory",
     "initially": "Initially",
     "initiallyp": "InitiallyP",
+    "initially_p": "InitiallyP",
     "initiallyn": "InitiallyN",
+    "initially_n": "InitiallyN",
 }
 _EVENT_PREDICATE_SET = set(_EVENT_PREDICATE_CANONICAL_BY_LOWER.values())
 _EVENT_FORMULA_WRAPPER_CANONICAL_BY_LOWER = {

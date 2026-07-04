@@ -7935,6 +7935,70 @@ def test_cec_dcec_bridge_accepts_case_variant_event_formula_predicates(
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_accepts_snake_case_event_formula_predicates(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "bridge:snake-case:1",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "bridge:snake-case:1": [
+                {
+                    "event_calculus_formula": (
+                        "happens_at(legal_norm(bridge_snake_case_1), t) => "
+                        "holds_at(O(happens_at(agency,publish_notice,t0)), t)."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": False,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-snake-case-event-formula",
+        citation="CEC Bridge Snake Case Event Formula",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+    parse_profile = event_record["event_formula_target_parse_profile"]
+
+    assert event_record["event_calculus_formula"] == (
+        "Happens(legal_norm(bridge_snake_case_1), t) => "
+        "HoldsAt(O(Happens(agency,publish_notice,t0)), t)"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
+    assert parse_profile["event_predicates"] == ["Happens", "HoldsAt"]
+    assert parse_profile["event_predicate_slot_complete"] is True
+    assert parse_profile["target_parse_profile_complete"] is True
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_repairs_export_component_slot_alignment_metadata(
     monkeypatch,
 ) -> None:
