@@ -229,12 +229,19 @@ def test_compiler_exposes_packet_000128_explicit_adaptive_ambiguities() -> None:
             ModalLogicFamily.FRAME.value,
             ModalLogicFamily.FRAME.value,
             0.130008991424,
+            "adaptive_frame_frame_contested_margin_low",
+            (
+                "The rule of construction and definitions apply for purposes "
+                "of this chapter."
+            ),
         ),
         (
             "us-code-42-10903.-09391d245061f7cb",
             ModalLogicFamily.TEMPORAL.value,
             ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
             -0.455105159192,
+            "adaptive_temporal_conditional_normative_outvoted_margin_low",
+            "The Secretary shall transfer funds subject to this section.",
         ),
     )
 

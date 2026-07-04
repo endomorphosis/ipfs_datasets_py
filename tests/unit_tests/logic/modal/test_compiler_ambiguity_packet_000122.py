@@ -23,11 +23,23 @@ def test_packet_000122_family_cue_pairs_are_registered() -> None:
         ),
         (
             ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ),
+        (
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+        (
+            ModalLogicFamily.DEONTIC.value,
             ModalLogicFamily.DYNAMIC.value,
         ),
         (
             ModalLogicFamily.DEONTIC.value,
             ModalLogicFamily.FRAME.value,
+        ),
+        (
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.TEMPORAL.value,
         ),
         (
             ModalLogicFamily.FRAME.value,
@@ -43,7 +55,15 @@ def test_packet_000122_family_cue_pairs_are_registered() -> None:
         ),
         (
             ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.TEMPORAL.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
             ModalLogicFamily.DOXASTIC.value,
+        ),
+        (
+            ModalLogicFamily.TEMPORAL.value,
+            ModalLogicFamily.DEONTIC.value,
         ),
         (
             ModalLogicFamily.TEMPORAL.value,
