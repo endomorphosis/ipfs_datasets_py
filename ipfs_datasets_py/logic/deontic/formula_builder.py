@@ -3569,6 +3569,8 @@ def _source_grounded_reconstruction_warning_formula_resolution(
     }
     if not blocker_set.issubset(allowed_blockers):
         return {}
+    if _has_unresolved_reference_exception_blocker(norm, blocker_set):
+        return {}
 
     required_slots = _reconstruction_warning_core_slots(norm)
     if not required_slots:
@@ -3597,6 +3599,39 @@ def _source_grounded_reconstruction_warning_formula_resolution(
             "remaining parser warnings are reconstruction-neutral"
         ),
     }
+
+
+def _has_unresolved_reference_exception_blocker(
+    norm: LegalNormIR,
+    blocker_set: set[str],
+) -> bool:
+    """Return whether a reference-only exception still needs resolution.
+
+    Generic source-grounded formula construction is enough for syntax export,
+    but it must not clear proof validation for clauses such as ``except as
+    provided in section 552`` unless a narrower same-document resolution has
+    already handled them.
+    """
+
+    if not {
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    }.issubset(blocker_set):
+        return False
+    if not norm.exceptions or not norm.cross_references:
+        return False
+
+    exception_texts = [
+        _slot_primary_text(item)
+        for item in norm.exceptions
+        if isinstance(item, dict)
+    ]
+    if not exception_texts:
+        return False
+    if not any(_exception_text_needs_external_resolution(text) for text in exception_texts):
+        return False
+
+    return not _same_document_reference_records(norm)
 
 
 def _reconstruction_warning_core_slots(norm: LegalNormIR) -> tuple[str, ...]:

@@ -974,7 +974,10 @@ def _reconstruction_token_profile(
         or reconstruction_neutral_warning_bundle
     )
     if use_slot_basis:
-        basis_tokens = slot_basis_tokens
+        basis_tokens = _source_ordered_token_basis(
+            source_tokens,
+            slot_basis_tokens + fixed_connector_tokens,
+        )
         source_text_basis = "decoded_slot_basis"
     else:
         basis_tokens = support_tokens if use_support_basis else source_tokens
@@ -1041,6 +1044,29 @@ def _reconstruction_token_profile(
         "reconstruction_token_profile_complete": complete,
         "reconstruction_token_profile_fingerprint": fingerprint,
     }
+
+
+def _source_ordered_token_basis(
+    source_tokens: Sequence[str],
+    basis_tokens: Sequence[str],
+) -> List[str]:
+    """Return basis tokens in source order while preserving fallback extras."""
+
+    basis_set = {
+        str(token or "").strip()
+        for token in basis_tokens
+        if str(token or "").strip()
+    }
+    ordered = [
+        token
+        for token in source_tokens
+        if token in basis_set
+    ]
+    for token in basis_tokens:
+        value = str(token or "").strip()
+        if value and value not in ordered:
+            ordered.append(value)
+    return ordered
 
 
 def _decoded_slot_basis_tokens(decoded: Any) -> List[str]:
