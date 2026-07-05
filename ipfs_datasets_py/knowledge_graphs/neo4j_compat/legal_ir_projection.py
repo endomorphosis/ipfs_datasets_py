@@ -302,6 +302,11 @@ def augment_legal_ir_projection_triples(
         predicates_by_subject=predicates_by_subject,
         seen=seen,
     )
+    _append_structural_graph_view_alignment_triples(
+        augmented,
+        predicates_by_subject=predicates_by_subject,
+        seen=seen,
+    )
     _append_legal_ir_guidance_alignment_triples(
         augmented,
         predicates_by_subject=predicates_by_subject,
@@ -1102,6 +1107,68 @@ def _json_guidance_value(text: str) -> Any:
 
 def _graph_repair_text_match(text: str) -> bool:
     return "repair_multiview_legal_ir_graph_projection" in text
+
+
+def _append_structural_graph_view_alignment_triples(
+    triples: List[Dict[str, str]],
+    *,
+    predicates_by_subject: Dict[str, set[str]],
+    seen: set[Tuple[str, str, str]],
+) -> None:
+    component_maps: Dict[str, Dict[str, str]] = {}
+    for triple in triples:
+        component_maps.setdefault(triple["subject"], {})[
+            triple["predicate"]
+        ] = triple["object"]
+
+    for subject, components in sorted(component_maps.items()):
+        if not _components_imply_neo4j_projection_view(components):
+            continue
+        _append_component_triples(
+            triples,
+            subject=subject,
+            components=[
+                (
+                    "learned_legal_ir_target_view",
+                    "knowledge_graphs.neo4j_compat",
+                ),
+                (
+                    "learned_legal_ir_target_view_weight",
+                    "knowledge_graphs.neo4j_compat:1.000000",
+                ),
+                (
+                    "learned_legal_ir_view_rank",
+                    "1:knowledge_graphs.neo4j_compat",
+                ),
+                (
+                    "learned_legal_ir_view_gap",
+                    "knowledge_graphs.neo4j_compat:1.000000",
+                ),
+            ],
+            predicates_by_subject=predicates_by_subject,
+            seen=seen,
+        )
+
+
+def _components_imply_neo4j_projection_view(components: Mapping[str, str]) -> bool:
+    if components.get("learned_legal_ir_target_view") or components.get(
+        "learned_legal_ir_predicted_view"
+    ):
+        return False
+    has_canonical_citation = bool(
+        components.get("citation_canonical")
+        or components.get("source_id_citation_canonical")
+    )
+    has_section_structure = bool(
+        components.get("section_marker_normalized")
+        or components.get("source_id_section_normalized")
+        or components.get("citation_section_normalized")
+    )
+    has_graph_structure = bool(
+        components.get("usc_hierarchy_projection") == "true"
+        or components.get("status_keyword")
+    )
+    return has_canonical_citation and has_section_structure and has_graph_structure
 
 
 def _append_component_triples(

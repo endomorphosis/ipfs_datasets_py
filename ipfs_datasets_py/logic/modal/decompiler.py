@@ -645,6 +645,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("united states-china relations", "china_relations_oversight"),
     ("united states china relations", "china_relations_oversight"),
     ("fees for internal services", "internal_service_fee"),
+    ("fees for internal delivery", "internal_delivery_fee_collection"),
+    (
+        "internal delivery in house of representatives",
+        "internal_delivery_fee_collection",
+    ),
+    ("internal delivery of nonpostage mail", "internal_delivery_fee_collection"),
     ("full and true account", "wage_account_discharge"),
     ("paying off or discharging", "seaman_discharge"),
     ("discharging the seaman", "seaman_discharge"),
@@ -680,6 +686,17 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("there is established", "office_establishment"),
     ("is established within", "office_establishment"),
     ("office to be known as", "office_establishment"),
+    (
+        "assistance to the republic of the philippines",
+        "philippines_medical_assistance_authority",
+    ),
+    (
+        "assist the republic of the philippines",
+        "philippines_medical_assistance_authority",
+    ),
+    ("providing medical care and treatment", "veterans_medical_care"),
+    ("commonwealth army veterans", "veterans_medical_care"),
+    ("new philippine scouts", "veterans_medical_care"),
     ("admission and other fees", "admission_fee_collection"),
     ("fees for admission", "admission_fee_collection"),
     ("collect fees", "fee_collection_authority"),
@@ -688,6 +705,21 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("false, fictitious, or fraudulent", "false_fraudulent_claim"),
     ("knowing such claim to be false", "false_claim_knowledge"),
     ("claim upon or against the united states", "government_claim"),
+    ("clean hulls", "clean_hull_administration_enforcement"),
+    ("administer and enforce the convention", "clean_hull_administration_enforcement"),
+    ("prescribe and enforce regulations", "regulatory_compliance_duty"),
+    ("common-funded budgets of nato", "nato_common_funded_budget_contribution"),
+    ("common funded budgets of nato", "nato_common_funded_budget_contribution"),
+    (
+        "north atlantic treaty organization common-funded budgets",
+        "nato_common_funded_budget_contribution",
+    ),
+    (
+        "north atlantic treaty organization common funded budgets",
+        "nato_common_funded_budget_contribution",
+    ),
+    ("fiscal year 1998 baseline limitation", "fiscal_year_budget_limitation"),
+    ("baseline limitation", "fiscal_year_budget_limitation"),
     ("trading without required certificate of documentation", "undocumented_trading_penalty"),
     ("production of certificate on entry", "certificate_production_on_entry"),
     ("produce the certificate of documentation", "certificate_production_on_entry"),
@@ -951,6 +983,25 @@ _LOW_INFORMATION_SCOPE_LEADING_TOKENS = frozenset(
         "this",
         "that",
         "such",
+    }
+)
+_LOW_INFORMATION_PREDICATE_HEAD_TOKENS = frozenset(
+    {
+        "administration",
+        "codification",
+        "contents",
+        "editorial",
+        "heading",
+        "note",
+        "notes",
+        "one",
+        "report",
+        "section",
+        "sec",
+        "sections",
+        "title",
+        "usc",
+        "uscode",
     }
 )
 _STRUCTURAL_FRAME_CUE_TOKENS = frozenset(
@@ -8359,6 +8410,12 @@ def _typed_decompiler_target_reconstruction_slots(
         document=document,
     )
     predicate_key = _slot_safe_family_pair_key(predicate_text)
+    semantic_predicate_head = _typed_decompiler_semantic_predicate_head(
+        formula=formula,
+        reconstruction_text=reconstruction_text,
+        semantic_atoms=semantic_atoms,
+    )
+    semantic_predicate_key = _slot_safe_family_pair_key(semantic_predicate_head)
     source_predicate = _source_predicate_family_pair_value(
         family=source_family,
         predicate_text=predicate_text,
@@ -8403,6 +8460,34 @@ def _typed_decompiler_target_reconstruction_slots(
                             f"{target}||slot:typed-decompiler-source-predicate-force-pair:"
                             f"{source_predicate}|typed-decompiler-force-polarity:"
                             f"{force}:{polarity}||CEC.native"
+                        ),
+                    ),
+                )
+            )
+        if semantic_predicate_key and semantic_predicate_key != predicate_key:
+            slots.extend(
+                (
+                    (
+                        "typed-decompiler-semantic-predicate-head",
+                        semantic_predicate_key,
+                    ),
+                    (
+                        "typed-decompiler-semantic-predicate-family-pair",
+                        f"{source_family}:{semantic_predicate_key}->{target}",
+                    ),
+                    (
+                        "typed-decompiler-source-predicate-force-family-pair",
+                        (
+                            f"{source_family}:{semantic_predicate_key}|"
+                            f"typed-decompiler-force-polarity:{force}:{polarity}|"
+                            f"typed-decompiler-family-pair:{pair}"
+                        ),
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target}||slot:typed-decompiler-semantic-predicate-head:"
+                            f"{semantic_predicate_key}||CEC.native"
                         ),
                     ),
                 )
@@ -9211,7 +9296,12 @@ def _typed_decompiler_source_reconstruction_slots(
         exception_values=exception_values,
         document=document,
     )
-    predicate_head = _typed_decompiler_predicate_head(formula)
+    raw_predicate_head = _typed_decompiler_predicate_head(formula)
+    predicate_head = _typed_decompiler_semantic_predicate_head(
+        formula=formula,
+        reconstruction_text=reconstruction_text,
+        semantic_atoms=semantic_atoms,
+    ) or raw_predicate_head
     topology_parts = [
         part
         for part, present in (
@@ -9228,6 +9318,14 @@ def _typed_decompiler_source_reconstruction_slots(
     topology = "+".join(topology_parts) if topology_parts else "unscoped"
 
     slots: List[Tuple[str, str]] = [
+        (
+            "typed-decompiler-raw-predicate-head",
+            raw_predicate_head,
+        ),
+        (
+            "typed-decompiler-semantic-predicate-head",
+            predicate_head,
+        ),
         (
             "typed-decompiler-source-predicate-force-pair",
             f"{source_family}:{predicate_head}|typed-decompiler-force-polarity:{force}:{polarity}",
@@ -9582,6 +9680,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
 
     if normalized_atom in {
         "administration_enforcement",
+        "clean_hull_administration_enforcement",
         "admission_fee_collection",
         "appropriated_amount",
         "appropriated_amount_availability",
@@ -9624,6 +9723,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "federal_repayment_obligation",
         "export_promotion",
         "fee_collection_authority",
+        "fiscal_year_budget_limitation",
         "fiscal_year_allotment",
         "forest_resource_reservation",
         "formula_grant",
@@ -9661,6 +9761,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "eligibility_determination",
         "homestead_entry_confirmation",
         "housing_transfer_authority",
+        "internal_delivery_fee_collection",
         "interagency_coordination",
         "interinstitutional_discussion",
         "irrigation_project",
@@ -9679,6 +9780,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "air_carrier_service_duty",
         "air_transportation_service_duty",
         "monitoring_enforcement",
+        "nato_common_funded_budget_contribution",
         "monument_memorial_administration",
         "management_position_assignment",
         "naval_officer_management_assignment",
@@ -9688,6 +9790,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "officer_retention",
         "prize_proceeds_charge",
         "priority_state",
+        "philippines_medical_assistance_authority",
         "professional_assessment_committee",
         "per_capita_ranking",
         "postal_mailbox",
@@ -9765,6 +9868,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "treasury_requisition_payment",
         "unknown_party_deposit",
         "veterans_personal_property",
+        "veterans_medical_care",
         "white_horse_hill_game_preserve",
         "surplus_housing_transfer",
         "workforce_development_program",
@@ -10511,6 +10615,19 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "securities_trust_indenture_procedure",
     }:
         add("TDFOL.prover")
+    if normalized_atom in {
+        "clean_hull_administration_enforcement",
+        "fiscal_year_budget_limitation",
+        "internal_delivery_fee_collection",
+        "nato_common_funded_budget_contribution",
+        "philippines_medical_assistance_authority",
+        "veterans_medical_care",
+    }:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     return views
 
 
@@ -10579,6 +10696,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "customs_entry_documentation",
             "documentation_certificate_requirement",
             "deceased_veterans_property_disposition",
+            "clean_hull_administration_enforcement",
             "examination_cost_payment",
             "development_advice_assistance",
             "department_business_assignment",
@@ -10595,6 +10713,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "federal_repayment_obligation",
             "facility_operation",
             "fee_collection_authority",
+            "fiscal_year_budget_limitation",
             "faculty_development",
             "fiscal_year_allotment",
             "forest_resource_reservation",
@@ -10634,6 +10753,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "housing_family_service_investment",
             "housing_investment_authority",
             "housing_transfer_authority",
+            "internal_delivery_fee_collection",
             "interagency_coordination",
             "agency_certification_determination",
             "agency_determination",
@@ -10678,11 +10798,13 @@ def _typed_decompiler_semantic_atom_target_families(
             "officer_promotion_retention",
             "officer_retention",
             "naval_officer_management_assignment",
+            "nato_common_funded_budget_contribution",
             "obligation",
             "permanent_nonirrigable_land_status",
             "patent_prohibition",
             "perishable_agricultural_commodity",
             "payment_authorization",
+            "philippines_medical_assistance_authority",
             "armed_forces_retirement_home",
             "proposal_examination_payment",
             "proposal_submission",
@@ -10763,6 +10885,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "regulation_prescription_authority",
             "regulatory_compliance_duty",
             "valuable_shipment_regulation",
+            "veterans_medical_care",
             "veterans_personal_property",
             "veterans_medical_care",
             "special_adapted_housing_assistance",
@@ -10798,6 +10921,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "deadline_report_duty",
             "examination_cost_payment",
             "proposal_examination_payment",
+            "fiscal_year_budget_limitation",
             "fiscal_year_allotment",
             "housing_family_service_investment",
             "homestead_entry_confirmation",
@@ -10820,6 +10944,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "no_year_funding_availability",
             "nato_common_funded_budget",
             "nato_contribution_authority",
+            "nato_common_funded_budget_contribution",
             "open_market_paper_purchase",
             "peacetime_death_compensation",
             "post_term_member_right",
@@ -10867,6 +10992,7 @@ def _typed_decompiler_semantic_atom_target_families(
         if normalized_atom in {
             "account_maintenance",
             "administration_enforcement",
+            "clean_hull_administration_enforcement",
             "admission_fee_collection",
             "agricultural_commodity_set_aside",
             "audit_requirement",
@@ -10958,6 +11084,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "agency_certification_determination",
             "eligibility_determination",
             "internal_service_fee",
+            "internal_delivery_fee_collection",
             "interinstitutional_discussion",
             "interagency_coordination",
             "irrigation_project",
@@ -11001,6 +11128,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "clearing_bank_resolution",
             "federal_reserve_board_oversight",
             "monitoring_enforcement",
+            "nato_common_funded_budget_contribution",
             "national_forest_resource",
             "national_seashore_recreation_area",
             "office_establishment",
@@ -11025,6 +11153,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "officer_retention",
             "naval_officer_management_assignment",
             "participating_jurisdiction",
+            "philippines_medical_assistance_authority",
             "partnership_adjustment",
             "partnership_adjustment_notice",
             "partnership_item",
@@ -11482,6 +11611,23 @@ def _typed_decompiler_semantic_atom_target_families(
             "rail_employee_trust_fund",
         }:
             add("temporal")
+        if normalized_atom in {
+            "clean_hull_administration_enforcement",
+            "internal_delivery_fee_collection",
+            "philippines_medical_assistance_authority",
+            "veterans_medical_care",
+        }:
+            add("deontic")
+            add("frame")
+            add("conditional_normative")
+        if normalized_atom in {
+            "fiscal_year_budget_limitation",
+            "nato_common_funded_budget_contribution",
+        }:
+            add("deontic")
+            add("temporal")
+            add("frame")
+            add("conditional_normative")
     return targets
 
 
@@ -12263,6 +12409,32 @@ def _typed_decompiler_predicate_classes(
         }
     ):
         add("remedy")
+    if normalized_atoms.intersection(
+        {
+            "clean_hull_administration_enforcement",
+            "internal_delivery_fee_collection",
+            "nato_common_funded_budget_contribution",
+            "philippines_medical_assistance_authority",
+        }
+    ):
+        add("authorization")
+    if normalized_atoms.intersection(
+        {
+            "clean_hull_administration_enforcement",
+            "veterans_medical_care",
+        }
+    ):
+        add("duty")
+    if normalized_atoms.intersection(
+        {
+            "fiscal_year_budget_limitation",
+            "internal_delivery_fee_collection",
+            "nato_common_funded_budget_contribution",
+            "philippines_medical_assistance_authority",
+            "veterans_medical_care",
+        }
+    ):
+        add("statutory")
     return classes
 
 
@@ -12546,6 +12718,37 @@ def _source_predicate_family_pair_value(
     if force_key and polarity_key:
         return f"{normalized_family}:{predicate_key}|{force_key}:{polarity_key}"
     return f"{normalized_family}:{predicate_key}"
+
+
+def _typed_decompiler_semantic_predicate_head(
+    *,
+    formula: ModalIRFormula,
+    reconstruction_text: str,
+    semantic_atoms: Sequence[str],
+) -> str:
+    """Return a high-signal predicate anchor for typed decompiler slots."""
+    raw_head = _typed_decompiler_predicate_head(formula)
+    normalized_raw = _slot_safe_family_pair_key(raw_head)
+    if normalized_raw and normalized_raw not in _LOW_INFORMATION_PREDICATE_HEAD_TOKENS:
+        return normalized_raw
+
+    normalized_text = _clean_text(reconstruction_text).replace("_", " ").lower()
+    candidate_atoms = [
+        _slot_safe_family_pair_key(atom)
+        for atom in semantic_atoms
+        if _slot_safe_family_pair_key(atom)
+    ]
+    for atom in candidate_atoms:
+        if atom not in _LOW_INFORMATION_PREDICATE_HEAD_TOKENS:
+            return atom
+
+    role_values = _semantic_role_values_from_text(normalized_text)
+    for role in ("action", "object", "subject"):
+        role_value = _slot_safe_family_pair_key(role_values.get(role, ""))
+        if role_value and role_value not in _LOW_INFORMATION_PREDICATE_HEAD_TOKENS:
+            return role_value
+
+    return normalized_raw
 
 
 def _typed_decompiler_force_polarity_family_pair_slots(

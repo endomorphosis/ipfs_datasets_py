@@ -7520,3 +7520,105 @@ def test_decode_modal_ir_document_routes_air_transportation_frame_to_deontic() -
     )
     assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
+def _packet_000158_document(
+    *,
+    source_id: str,
+    citation: str,
+    source_text: str,
+    family: str,
+    symbol: str,
+    predicate: str,
+    cue: str,
+) -> ModalIRDocument:
+    formula = ModalIRFormula(
+        formula_id=f"f-{predicate}",
+        operator=ModalIROperator(
+            family=family,
+            system=family,
+            symbol=symbol,
+            label=family,
+        ),
+        predicate=ModalIRPredicate(name=predicate, role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation=citation,
+        ),
+        metadata={"cue": cue},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_packet_000158_veterans_assistance_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_000158_document(
+            source_id="us-code-38-1731-7736f9e2e50472ec",
+            citation="38 U.S.C. 1731",
+            source_text=(
+                "The President is authorized to assist the Republic of the "
+                "Philippines in fulfilling its responsibility in providing "
+                "medical care and treatment for Commonwealth Army veterans "
+                "and new Philippine Scouts in need of such care and treatment."
+            ),
+            family="frame",
+            symbol="Frame",
+            predicate="assist_republic_philippines_medical_care",
+            cue="authorized",
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "philippines_medical_assistance_authority" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "veterans_medical_care" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "CEC.native" in slot_map["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
+def test_decode_modal_ir_document_reconstructs_packet_000158_temporal_budget_frame_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_000158_document(
+            source_id="us-code-10-2263-571407a5044f94b2",
+            citation="10 U.S.C. 2263",
+            source_text=(
+                "The total amount contributed by the Secretary of Defense in "
+                "any fiscal year for the common-funded budgets of NATO may "
+                "be an amount in excess of the maximum amount that would "
+                "otherwise be applicable to those contributions in such "
+                "fiscal year under the fiscal year 1998 baseline limitation."
+            ),
+            family="temporal",
+            symbol="F",
+            predicate="nato_common_funded_budget_contribution",
+            cue="may",
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "nato_common_funded_budget_contribution" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "fiscal_year_budget_limitation" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "temporal->frame" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "temporal->frame" in slot_map["typed_ir_cross_family_semantic_support"]
+    assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]

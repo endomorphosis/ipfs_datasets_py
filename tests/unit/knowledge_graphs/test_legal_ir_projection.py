@@ -130,3 +130,45 @@ def test_legal_ir_projection_graph_repair_action_adds_neo4j_target_view() -> Non
         "learned_legal_ir_view_gap",
         "knowledge_graphs.neo4j_compat:1.000000",
     ) in values
+
+
+def test_legal_ir_projection_structural_us_code_facts_add_neo4j_target_view() -> None:
+    samples = [
+        (
+            "us-code-10-2515-cb1304b3980adf2a",
+            "10 U.S.C. 2515: U.S.C. Title 10 - ARMED FORCES 10 U.S.C. "
+            "United States Code, 2024 Edition Title 10 - ARMED FORCES "
+            "Subtitle A - General Military Law PART IV - SERVICE, SUPPLY, "
+            "AND PROPERTY CHAPTER 148 - REPEALED SUBCHAPTER III - REPEALED "
+            "Sec. 2515 - Repealed.",
+        ),
+        (
+            "us-code-22-290k-5-2914184e2690e597",
+            "22 U.S.C. 290k-5: U.S.C. Title 22 - FOREIGN RELATIONS AND "
+            "INTERCOURSE 22 U.S.C. United States Code, 2024 Edition Title "
+            "22 - FOREIGN RELATIONS AND INTERCOURSE CHAPTER 7 - "
+            "INTERNATIONAL BUREAUS, CONGRESSES, ETC. SUBCHAPTER XXVI - "
+            "MULTILATERAL INVESTMENT GUARANTEE AGENCY Sec. 290k-5 - "
+            "Repealed.",
+        ),
+    ]
+
+    for subject, text in samples:
+        triples = augment_legal_ir_projection_triples(
+            [{"subject": subject, "predicate": "sample_text", "object": text}]
+        )
+        values = {
+            (triple["predicate"], triple["object"])
+            for triple in triples
+        }
+
+        assert ("usc_hierarchy_projection", "true") in values
+        assert ("status_keyword", "repealed") in values
+        assert (
+            "learned_legal_ir_target_view",
+            "knowledge_graphs.neo4j_compat",
+        ) in values
+        assert (
+            "learned_legal_ir_view_gap",
+            "knowledge_graphs.neo4j_compat:1.000000",
+        ) in values
