@@ -8406,6 +8406,15 @@ def _typed_decompiler_target_reconstruction_slots(
                 polarity=polarity,
             )
         )
+        slots.extend(
+            _typed_decompiler_force_view_family_pair_slots(
+                document=document,
+                source_family=source_family,
+                target_family=target,
+                force=force,
+                polarity=polarity,
+            )
+        )
         slots.append(
             (
                 "typed-decompiler-target-reconstruction-scope",
@@ -12546,6 +12555,127 @@ def _typed_decompiler_force_polarity_family_pair_slots(
             f"slot:typed-decompiler-force-polarity:{force_polarity}:{normalized_source}||TDFOL.prover",
         ),
     ]
+
+
+def _typed_decompiler_force_view_family_pair_slots(
+    *,
+    document: ModalIRDocument,
+    source_family: str,
+    target_family: str,
+    force: str,
+    polarity: str,
+) -> List[Tuple[str, str]]:
+    """Bind force/family-pair slots to legal IR view guidance."""
+    normalized_source = _clean_text(source_family).lower()
+    normalized_target = _clean_text(target_family).lower()
+    force_key = _slot_safe_family_pair_key(force)
+    polarity_key = _slot_safe_family_pair_key(polarity)
+    if not normalized_source or not normalized_target or not force_key:
+        return []
+
+    pair = f"{normalized_source}->{normalized_target}"
+    views = _typed_decompiler_force_view_family_pair_views(document)
+    if not views:
+        views = _default_force_view_family_pair_views(
+            source_family=normalized_source,
+            target_family=normalized_target,
+        )
+    if not views:
+        return []
+
+    slots: List[Tuple[str, str]] = []
+    force_polarity = (
+        f"{force_key}:{polarity_key}" if polarity_key else force_key
+    )
+    for view in views:
+        slots.extend(
+            (
+                ("legal_ir_view_prototype", view),
+                (
+                    "typed-decompiler-force-view-family-pair",
+                    f"{force_key}:{view}:{pair}",
+                ),
+                (
+                    "typed-decompiler-force-polarity-view-family-pair",
+                    f"{force_polarity}:{view}:{pair}",
+                ),
+                (
+                    "semantic_slot_legal_ir_view_prototype",
+                    (
+                        "slot:typed-decompiler-force-view-family-pair:"
+                        f"{force_key}:{pair}||{view}"
+                    ),
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{normalized_source}||slot:typed-decompiler-force-view-family-pair:"
+                        f"{force_key}:{pair}||{view}"
+                    ),
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{normalized_target}||slot:typed-decompiler-force-view-family-pair:"
+                        f"{force_key}:{pair}||{view}"
+                    ),
+                ),
+            )
+        )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_force_view_family_pair_views(
+    document: ModalIRDocument,
+) -> List[str]:
+    views: List[str] = []
+
+    def add(view: str) -> None:
+        normalized = _clean_text(view)
+        if normalized and normalized not in views:
+            views.append(normalized)
+
+    for entry in _autoencoder_guidance_entries(document):
+        for field in ("target_view", "predicted_view", "selected_view"):
+            add(str(entry.get(field) or ""))
+        for view in _legal_ir_view_guidance_features(entry):
+            add(view)
+        for value in _string_list(entry.get("legal_ir_underrepresented_components")):
+            add(value)
+        component_gaps = entry.get("legal_ir_component_gaps")
+        if isinstance(component_gaps, Mapping):
+            ranked_gaps: List[Tuple[float, str]] = []
+            for view, gap in component_gaps.items():
+                try:
+                    gap_value = float(gap)
+                except (TypeError, ValueError):
+                    continue
+                if gap_value > 0:
+                    ranked_gaps.append((gap_value, _clean_text(str(view))))
+            for _gap, view in sorted(ranked_gaps, reverse=True):
+                add(view)
+    return views
+
+
+def _default_force_view_family_pair_views(
+    *,
+    source_family: str,
+    target_family: str,
+) -> List[str]:
+    families = {source_family, target_family}
+    views: List[str] = []
+
+    def add(view: str) -> None:
+        if view not in views:
+            views.append(view)
+
+    if "deontic" in families:
+        add("deontic.ir")
+        add("TDFOL.prover")
+    if "frame" in families:
+        add("knowledge_graphs.neo4j_compat")
+        add("CEC.native")
+    return views
 
 
 def _typed_decompiler_directional_target_families(source_family: str) -> List[str]:

@@ -39130,6 +39130,80 @@ def test_decompiler_reconstructs_repealed_advisory_committee_slots() -> None:
     assert "advisory committee appointment" in structural_text
 
 
+def test_decompiler_binds_packet_365_self_family_pairs_to_force_and_views() -> None:
+    deontic_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "National sea grant college program. The Secretary shall make "
+            "grants for marine science development."
+        ),
+        predicate="secretary_make_sea_grant_awards",
+    )
+    deontic_document.metadata["hint_evidence"] = [
+        {
+            "target_family": "deontic",
+            "target_view": "CEC.native",
+            "predicted_view": "deontic.ir",
+            "legal_ir_underrepresented_components": [
+                "knowledge_graphs.neo4j_compat",
+                "CEC.native",
+            ],
+        }
+    ]
+    frame_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Conveyance to States of roads leading to certain historical areas. "
+            "The Secretary may convey roads subject to such terms and conditions."
+        ),
+        predicate="state_conveyance_authority",
+        conditions=["subject to such terms and conditions"],
+    )
+    frame_document.metadata["hint_evidence"] = [
+        {
+            "target_family": "frame",
+            "target_view": "knowledge_graphs.neo4j_compat",
+            "predicted_view": "deontic.ir",
+            "legal_ir_underrepresented_components": [
+                "knowledge_graphs.neo4j_compat",
+                "CEC.native",
+            ],
+        }
+    ]
+
+    deontic_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(deontic_document)
+    )
+    frame_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(frame_document)
+    )
+
+    assert "deontic->deontic" in deontic_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "obligation:CEC.native:deontic->deontic" in deontic_slots[
+        "typed-decompiler-force-view-family-pair"
+    ]
+    assert (
+        "deontic||slot:typed-decompiler-force-view-family-pair:"
+        "obligation:deontic->deontic||knowledge_graphs.neo4j_compat"
+    ) in deontic_slots["family_semantic_slot_legal_ir_view_prototype"]
+    assert "frame->frame" in frame_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame:knowledge_graphs.neo4j_compat:frame->frame" in frame_slots[
+        "typed-decompiler-force-view-family-pair"
+    ]
+    assert (
+        "frame||slot:typed-decompiler-force-view-family-pair:"
+        "frame:frame->frame||CEC.native"
+    ) in frame_slots["family_semantic_slot_legal_ir_view_prototype"]
+
+
 def test_decompiler_reconstructs_findings_reports_and_law_override_slots() -> None:
     findings = _single_formula_document(
         family="frame",
