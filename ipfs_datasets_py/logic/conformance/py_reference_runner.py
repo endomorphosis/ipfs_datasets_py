@@ -1389,7 +1389,15 @@ def validate_vector(vector: Dict[str, Any], source: str) -> None:
 
 
 def discover_engine_versions() -> Dict[str, str]:
-    versions = {"runner": "py_reference_runner", "mode": "module-backed-policy-runner"}
+    versions = {
+        "runner": "py_reference_runner",
+        "mode": "module-backed-policy-runner",
+        "zkp_runtime_mode": (
+            "simulated-runtime-enabled"
+            if conformance_enable_simulated_zkp_runtime()
+            else "policy-proxy-default"
+        ),
+    }
     imports = {
         "z3_bridge": "ipfs_datasets_py.logic.external_provers.smt.z3_prover_bridge",
         "tdfol_core": "ipfs_datasets_py.logic.TDFOL.tdfol_core",
