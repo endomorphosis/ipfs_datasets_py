@@ -15006,6 +15006,60 @@ def test_modal_decompiler_jurisdiction_atoms_support_frame_and_deontic_views() -
     assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_modal_decompiler_routes_definition_proposal_and_capacity_atoms() -> None:
+    source = (
+        "Grants to States for reduction of excess hospital capacity. "
+        '"Excess hospital capacity" defined; particular activities. '
+        "For the purpose of demonstrating the effectiveness of various means "
+        "for reducing excesses in resources, the Secretary may make grants. "
+        "A complaint as used in this subchapter is a writing or document. "
+        "Any organization shall submit a proposal therefor to the Secretary "
+        "in such form and manner as the Secretary shall prescribe. "
+        "Amendments apply to the program."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000340-definition-proposal-capacity",
+        source="us_code",
+        normalized_text=source,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000340-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(name="proposal_capacity_definition"),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000340-definition-proposal-capacity",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="42 U.S.C. 300t",
+                ),
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert decoded.text == source
+    assert "excess_hospital_capacity" in slot_texts["legal_semantic_atom"]
+    assert "excess_hospital_capacity_reduction" in slot_texts["legal_semantic_atom"]
+    assert "complaint" in slot_texts["legal_semantic_atom"]
+    assert "proposal_prescription_duty" in slot_texts["legal_semantic_atom"]
+    assert "statutory_amendment" in slot_texts["legal_semantic_atom"]
+    assert "frame->deontic" in slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+
+
 def test_modal_decompiler_surfaces_source_span_modal_transition_slots() -> None:
     source_id = "us-code-5-552-source-span-transitions"
     source_text = (

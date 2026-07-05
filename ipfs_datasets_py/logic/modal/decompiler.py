@@ -479,6 +479,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("research program and plan", "research_program_plan"),
     ("formula grants to states", "state_formula_grant"),
     ("formula grants", "formula_grant"),
+    (
+        "grants to states for reduction of excess hospital capacity",
+        "excess_hospital_capacity_reduction",
+    ),
+    ("reduction of excess hospital capacity", "excess_hospital_capacity_reduction"),
+    ("excess hospital capacity", "excess_hospital_capacity"),
+    ("excesses in resources", "excess_resource_reduction"),
+    ("reducing excesses in resources", "excess_resource_reduction"),
     ("shall make an allotment", "state_allotment_duty"),
     ("make an allotment", "state_allotment_duty"),
     ("allotment each fiscal year", "fiscal_year_allotment"),
@@ -659,6 +667,8 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("submit a proposal", "proposal_submission"),
     ("submission of proposal", "proposal_submission"),
     ("proposal therefor to the secretary", "proposal_submission"),
+    ("in such form and manner as he shall prescribe", "proposal_prescription_duty"),
+    ("in such form and manner as the secretary shall prescribe", "proposal_prescription_duty"),
     ("armed forces retirement home", "armed_forces_retirement_home"),
     ("payments to retirement home", "retirement_home_payment"),
     ("payment to retirement home", "retirement_home_payment"),
@@ -774,6 +784,8 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("non federal share", "non_federal_cost_share"),
     ("non-federal cost sharing", "non_federal_cost_share"),
     ("non federal cost sharing", "non_federal_cost_share"),
+    ("amendments", "statutory_amendment"),
+    ("amendment", "statutory_amendment"),
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
@@ -9389,6 +9401,29 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
             views.append(view)
 
     if normalized_atom in {
+        "excess_hospital_capacity",
+        "excess_hospital_capacity_reduction",
+        "excess_resource_reduction",
+        "complaint",
+        "proposal_prescription_duty",
+        "statutory_amendment",
+    } or (
+        normalized_atom.endswith("_defined")
+        or normalized_atom.endswith("_definition")
+    ):
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in {
+        "excess_hospital_capacity_reduction",
+        "excess_resource_reduction",
+        "proposal_prescription_duty",
+        "statutory_amendment",
+    }:
+        add("deontic.ir")
+        add("TDFOL.prover")
+
+    if normalized_atom in {
         "compact_free_association",
         "credit_authority",
         "director_government_actor",
@@ -10345,6 +10380,25 @@ def _typed_decompiler_semantic_atom_target_families(
 
     for atom in semantic_atoms:
         normalized_atom = _clean_text(atom).lower()
+        if normalized_atom in {
+            "excess_hospital_capacity_reduction",
+            "excess_resource_reduction",
+            "proposal_prescription_duty",
+            "statutory_amendment",
+        }:
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in {
+            "excess_hospital_capacity",
+            "excess_hospital_capacity_reduction",
+            "excess_resource_reduction",
+            "complaint",
+            "statutory_amendment",
+        } or (
+            normalized_atom.endswith("_defined")
+            or normalized_atom.endswith("_definition")
+        ):
+            add("frame")
         if normalized_atom in {
             "active_status_list",
             "affordable_housing_supply",
@@ -11837,6 +11891,34 @@ def _typed_decompiler_predicate_classes(
     def add(value: str) -> None:
         if value and value not in classes:
             classes.append(value)
+
+    if normalized_atoms.intersection(
+        {
+            "excess_hospital_capacity",
+            "excess_hospital_capacity_reduction",
+            "excess_resource_reduction",
+            "complaint",
+        }
+    ) or any(
+        atom.endswith("_defined") or atom.endswith("_definition")
+        for atom in normalized_atoms
+    ):
+        add("statutory")
+    if normalized_atoms.intersection(
+        {
+            "excess_hospital_capacity_reduction",
+            "excess_resource_reduction",
+            "statutory_amendment",
+        }
+    ):
+        add("authorization")
+    if normalized_atoms.intersection(
+        {
+            "proposal_prescription_duty",
+            "statutory_amendment",
+        }
+    ):
+        add("duty")
 
     if _statutory_scope_slots(normalized) or re.search(
         r"(?<!\w)(?:section|chapter|subchapter|paragraph|subsection|title)s?(?!\w)",
