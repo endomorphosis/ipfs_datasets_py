@@ -1,4 +1,5 @@
 from copy import deepcopy
+from pathlib import Path
 
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
 from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import main
@@ -52,3 +53,36 @@ def test_forbid_simulated_zkp_rejects_simulated_dependency(monkeypatch) -> None:
         lambda args: model,
     )
     assert main(['--example', '--forbid-simulated-zkp']) == 2
+
+
+def test_source_path_autoformalizes_code_before_proving(tmp_path: Path, monkeypatch) -> None:
+    """GIVEN a supported source path WHEN passed to the CLI THEN it proves against the autoformalized model."""
+
+    source_path = tmp_path / 'withdrawals.py'
+    source_path.write_text(
+        '''
+def approve_withdrawal(authorized):
+    """Every withdrawal must be authorized before broadcast."""
+    if not authorized:
+        raise PermissionError("authorization required")
+    return True
+''',
+        encoding='utf-8',
+    )
+
+    seen = {}
+
+    def _stub_prove_claims(model, provers):
+        seen['model'] = model
+        seen['provers'] = list(provers)
+        return []
+
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        _stub_prove_claims,
+    )
+
+    assert main(['--source-path', str(source_path), '--source-model-id', 'source-proof-model', '--provers', 'z3']) == 0
+    assert seen['model'].model_id == 'source-proof-model'
+    assert any(policy['name'] == 'authorization_required' for policy in seen['model'].policies)
+    assert seen['provers'] == ['z3']

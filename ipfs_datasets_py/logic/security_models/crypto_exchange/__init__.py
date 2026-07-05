@@ -1,6 +1,7 @@
 """Crypto exchange security verification framework."""
 
 from .claims import default_claims
+from .extractors import SecurityIRFeatureLoopProjector
 from .ir.canonicalize import canonicalize_ir, canonicalize_ir_json
 from .ir.cid import calculate_model_cid
 from .ir.examples import example_minimal_exchange_model
@@ -15,6 +16,7 @@ __all__ = [
     'ProofReceipt',
     'ProofReport',
     'RuntimeMTLMonitor',
+    'SecurityIRFeatureLoopProjector',
     'SecurityModelIR',
     'Z3Runner',
     'calculate_model_cid',

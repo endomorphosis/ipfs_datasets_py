@@ -10,6 +10,7 @@ from typing import Iterable
 
 from .claims.base import SecurityClaim
 from .claims import default_claims
+from .extractors import SourceCodeExtractor
 from .ir.examples import example_minimal_exchange_model
 from .ir.schema import SecurityModelIR, validate_ir
 from .reports.proof_report import ProofReport
@@ -65,6 +66,14 @@ def _normalize_fail_policies(values: Iterable[str]) -> set[str]:
 
 
 def _load_model(args: argparse.Namespace) -> SecurityModelIR:
+    if args.source_path:
+        extractor = SourceCodeExtractor()
+        return validate_ir(
+            extractor.extract_ir_from_path(
+                args.source_path,
+                model_id=args.source_model_id,
+            )
+        )
     if args.example or not args.model:
         return example_minimal_exchange_model()
     payload = json.loads(Path(args.model).read_text(encoding='utf-8'))
@@ -148,6 +157,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Run crypto exchange security claims.')
     parser.add_argument('--example', action='store_true', help='Use the built-in example security model')
     parser.add_argument('--model', help='Path to a canonical security model JSON file')
+    parser.add_argument('--source-path', help='Autoformalize a supported source file or directory into a seed security model before proving')
+    parser.add_argument('--source-model-id', help='Optional model_id to use when autoformalizing --source-path inputs')
     parser.add_argument('--out', help='Path to write proof reports as JSON')
     parser.add_argument('--strict', action='store_true', help='Backward-compatible alias for --fail-on disproof')
     parser.add_argument('--fail-on-unknown-critical', action='store_true', help='Legacy companion to --strict that also fails on blocking UNKNOWN results')
@@ -156,6 +167,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--forbid-simulated-zkp', action='store_true', help='Reject models that depend on simulated ZKP execution')
     parser.add_argument('--provers', default=','.join(DEFAULT_PROVERS), help='Comma-separated prover list')
     args = parser.parse_args(argv)
+    if sum(bool(value) for value in (args.example, args.model, args.source_path)) > 1:
+        parser.error('choose only one model input: --example, --model, or --source-path')
     model = _load_model(args)
     try:
         provers = _normalize_provers(args.provers.split(','))

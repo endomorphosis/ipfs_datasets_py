@@ -10,6 +10,7 @@ on:
       - 'ipfs_datasets_py/logic/security_models/**'
       - 'tests/logic/security_models/crypto_exchange/**'
       - 'docs/security_verification/**'
+      - 'scripts/ops/security_verification/**'
       - '.github/workflows/security-logic-ci.yml'
   push:
     branches: [main, develop]
@@ -17,6 +18,7 @@ on:
       - 'ipfs_datasets_py/logic/security_models/**'
       - 'tests/logic/security_models/crypto_exchange/**'
       - 'docs/security_verification/**'
+      - 'scripts/ops/security_verification/**'
       - '.github/workflows/security-logic-ci.yml'
   workflow_dispatch:
     inputs:
