@@ -37,11 +37,17 @@ jobs:
       - name: Run focused security model tests
         env:
           PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
           pytest tests/logic/security_models/crypto_exchange -v --tb=short
       - name: Run proof CLI in focused mode
         env:
           PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
           args=(--example --strict --out proof_report.json)
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.strict_unknown }}" = "true" ]; then

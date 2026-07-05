@@ -15,6 +15,7 @@ from .runners.coq_runner import CoqRunner
 from .runners.datalog_runner import DatalogRunner
 from .runners.hyperltl_runner import HyperLTLRunner
 from .runners.lean_runner import LeanRunner
+from .runners.proverif_runner import ProVerifRunner
 from .runners.tamarin_runner import TamarinRunner
 from .runners.tla_runner import TLARunner
 from .runners.z3_runner import Z3Runner
@@ -25,6 +26,7 @@ RUNNER_FACTORIES = {
     'tla': TLARunner,
     'datalog': DatalogRunner,
     'tamarin': TamarinRunner,
+    'proverif': ProVerifRunner,
     'hyperltl': HyperLTLRunner,
     'lean': LeanRunner,
     'coq': CoqRunner,

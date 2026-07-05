@@ -6,7 +6,6 @@ from .ir.cid import calculate_model_cid
 from .ir.examples import example_minimal_exchange_model
 from .ir.schema import DEFAULT_THREAT_MODEL_ASSUMPTIONS, SecurityModelIR, validate_ir
 from .monitors.runtime_mtl import RuntimeMTLMonitor, check_runtime_properties
-from .prove_all import prove_claims
 from .reports.proof_receipt import ProofReceipt
 from .reports.proof_report import ProofReport
 from .runners.z3_runner import Z3Runner
@@ -24,6 +23,5 @@ __all__ = [
     'check_runtime_properties',
     'default_claims',
     'example_minimal_exchange_model',
-    'prove_claims',
     'validate_ir',
 ]

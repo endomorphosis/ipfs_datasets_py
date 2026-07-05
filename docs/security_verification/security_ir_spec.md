@@ -26,7 +26,7 @@ Canonicalization uses stable JSON with sorted keys and compact separators so the
 
 - heavy NLP and GraphRAG-assisted model extraction
 - prover orchestration and counterexample discovery
-- external prover runners and proof report generation
+- external prover runners (TLA+, Z3, Tamarin, ProVerif, HyperLTL, Lean, Coq) and proof report generation
 - runtime monitor prototyping
 
 ## TypeScript/WASM side
