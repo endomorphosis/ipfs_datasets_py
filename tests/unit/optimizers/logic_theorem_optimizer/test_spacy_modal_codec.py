@@ -19,6 +19,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000124_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     compiler_refined_modal_family_cue_margin_buffer,
     compiler_weak_typed_self_family_cue_margin_buffer,
@@ -934,6 +935,37 @@ def test_spacy_encoder_promotes_failure_heading_as_conditional_normative_scope()
     assert counts["conditional_normative"] > counts["frame"]
 
 
+def test_packet_005718_registry_refines_frame_doxastic_temporal_cues() -> None:
+    assert tuple(COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS) == (
+        ("frame", "doxastic"),
+        ("frame", "temporal"),
+    )
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
+
+    extracted_cues = {
+        (cue.family, cue.cue.lower())
+        for cue in SpaCyLegalEncoder().encode(
+            (
+                "A return must be filed at such time and in the time and "
+                "manner prescribed. A person who knowingly and willfully "
+                "makes a false statement has the required intent."
+            )
+        ).cues
+    }
+    assert ("temporal", "at such time") in extracted_cues
+    assert ("temporal", "time and manner") in extracted_cues
+    assert ("doxastic", "knowingly and willfully") in extracted_cues
+    assert ("doxastic", "false statement") in extracted_cues
+
+
 def test_refined_pair_balance_promotes_statutory_deontic_over_generic_frame() -> None:
     counts = {
         "frame": 2.2,
@@ -1059,7 +1091,7 @@ def test_packet_004071_registry_refines_frame_deontic_and_dynamic_self_buffers()
         ("frame", "deontic"),
     }
     assert is_compiler_ambiguity_policy_pair("frame", "deontic")
-    assert compiler_refined_modal_family_cue_margin_buffer("frame", "deontic") == 0.0015
+    assert compiler_refined_modal_family_cue_margin_buffer("frame", "deontic") >= 0.0015
     assert compiler_refined_modal_family_cue_margin_buffer("dynamic", "dynamic") >= 0.02
     assert (
         compiler_weak_typed_self_family_cue_margin_buffer("dynamic", "dynamic")

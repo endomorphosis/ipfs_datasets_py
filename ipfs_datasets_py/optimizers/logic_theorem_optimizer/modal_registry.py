@@ -2871,6 +2871,17 @@ COMPILER_REFINED_PACKET_003186_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DOXASTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.ALETHIC.value,
@@ -7951,6 +7962,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_PACKET_001095_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_001753_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_003186_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000162_FAMILY_PAIRS,
 )
 
@@ -10866,6 +10878,11 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "no later than",
                     "not earlier than",
                     "not later than",
+                    "at such time",
+                    "time prescribed",
+                    "time and manner",
+                    "due date",
+                    "filing date",
                 ),
                 (ModalSystem.LTL, ModalSystem.CTL),
             ),
@@ -10940,6 +10957,12 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "with intent to",
                     "intent to defraud",
                     "with the intent to",
+                    "willful",
+                    "willfully",
+                    "knowingly and willfully",
+                    "false statement",
+                    "misrepresentation",
+                    "fraudulent",
                     "reasonably believes",
                     "suspect",
                     "suspected",
@@ -11784,6 +11807,7 @@ __all__ = [
     "COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_001095_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_003186_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000138_FAMILY_PAIRS",
