@@ -54,6 +54,7 @@ def run_python_reference(
     out_path: Optional[str | pathlib.Path] = None,
     subsystems: Optional[Iterable[str]] = None,
     limit: Optional[int] = None,
+    require_engines: Optional[Iterable[str]] = None,
 ) -> Dict[str, Any]:
     vectors = load_vectors(vectors_dir)
     if subsystems:
@@ -62,13 +63,16 @@ def run_python_reference(
     if limit is not None:
         vectors = vectors[:limit]
 
+    engine_versions = discover_engine_versions()
+    assert_required_engines(engine_versions, require_engines)
+
     results = [run_vector(vector) for vector in vectors]
     envelope = {
         "schemaVersion": RESULT_SCHEMA_VERSION,
         "runner": "python-reference",
         "generatedAt": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "submoduleCommit": git_commit(pathlib.Path(__file__).resolve().parents[4]),
-        "engineVersions": discover_engine_versions(),
+        "engineVersions": engine_versions,
         "results": results,
     }
 
@@ -159,7 +163,9 @@ def evaluate_policy(policy: Dict[str, Any], vector: Optional[Dict[str, Any]] = N
     prover_checks = run_python_prover_checks(policy, subsystem)
     z3_check = next((check for check in prover_checks if check.get("engine") == "z3"), None)
     z3_status = z3_check.get("status") if z3_check else None
-    is_refuted = z3_status == "unsat" or (z3_status != "sat" and conflict is not None)
+    # Preserve policy-level contradiction semantics: explicit conflicts remain
+    # refutations even when a permissive SAT encoding returns sat.
+    is_refuted = z3_status == "unsat" or conflict is not None
     metadata = {
         "conflict": conflict,
         "pythonModuleMode": "module-backed-policy-runner",
@@ -200,6 +206,14 @@ def evaluate_policy(policy: Dict[str, Any], vector: Optional[Dict[str, Any]] = N
 
 
 def evaluate_smt2(smt2: str) -> Dict[str, Any]:
+    if "(assert" not in str(smt2 or ""):
+        return {
+            "status": "unknown",
+            "reason": "unknown",
+            "proverId": "python-z3-reference",
+            "metadata": {"pythonModuleMode": "smt2-runner", "route": "no-assertions"},
+        }
+
     z3_result = run_z3_smt2_check(smt2)
     if z3_result.get("status") == "sat":
         return {
@@ -1089,11 +1103,19 @@ def preferred_policy_prover_id(subsystem: str, checks: List[Dict[str, Any]]) -> 
 
 def backend_mode(vector: Dict[str, Any], outcome: Optional[Dict[str, Any]]) -> str:
     expected_mode = vector.get("expected", {}).get("backendMode")
+    metadata = outcome.get("metadata") if isinstance(outcome, dict) else None
+    if isinstance(metadata, dict):
+        if metadata.get("simulated") is True:
+            return "simulated"
+        if metadata.get("hostDependent") is True:
+            return "host-dependent"
+
+    if outcome and outcome.get("reason") not in {"unknown", "error"}:
+        return "real"
+
     if expected_mode == "simulated":
         return "simulated"
     if expected_mode == "real":
-        return "real"
-    if outcome and outcome.get("reason") not in {"unknown", "error"}:
         return "real"
     return expected_mode or "host-dependent"
 
@@ -1161,6 +1183,21 @@ def discover_engine_versions() -> Dict[str, str]:
     return versions
 
 
+def assert_required_engines(engine_versions: Dict[str, str], require_engines: Optional[Iterable[str]]) -> None:
+    if not require_engines:
+        return
+
+    missing: List[str] = []
+    for label in require_engines:
+        value = str(engine_versions.get(label, "missing")).strip()
+        if not value or value == "missing" or value.startswith("unavailable"):
+            missing.append(f"{label}={value}")
+
+    if missing:
+        details = ", ".join(missing)
+        raise RuntimeError(f"Required conformance engines unavailable: {details}")
+
+
 def git_commit(repo_root: pathlib.Path) -> Optional[str]:
     try:
         completed = subprocess.run(
@@ -1191,13 +1228,24 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument("--out", help="Output result JSON path")
     parser.add_argument("--subsystems", help="Comma-separated subsystem filter")
     parser.add_argument("--limit", type=int, help="Limit vector count after filtering")
+    parser.add_argument(
+        "--require-engines",
+        help="Comma-separated engine labels that must be available (e.g. z3_runtime,tdfol_core,dcec_prover)",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
     args = parse_args(argv)
     subsystems = args.subsystems.split(",") if args.subsystems else None
-    envelope = run_python_reference(args.vectors, out_path=args.out, subsystems=subsystems, limit=args.limit)
+    required = [item.strip() for item in str(args.require_engines or "").split(",") if item.strip()]
+    envelope = run_python_reference(
+        args.vectors,
+        out_path=args.out,
+        subsystems=subsystems,
+        limit=args.limit,
+        require_engines=required,
+    )
     if not args.out:
         print(json.dumps(envelope, indent=2))
     return 0
