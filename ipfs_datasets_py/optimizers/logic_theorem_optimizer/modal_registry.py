@@ -257,6 +257,25 @@ COMPILER_AMBIGUITY_PACKET_000224_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_000225_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_AMBIGUITY_PACKET_000538_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
@@ -5955,6 +5974,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_PACKET_002430_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000042_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_000225_FAMILY_PAIRS,
 )
 
 COMPILER_AMBIGUITY_PACKET_004147_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
@@ -9215,6 +9235,7 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     *COMPILER_AMBIGUITY_PACKET_000536_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000629_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000224_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_000225_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000538_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_006116_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000521_FAMILY_PAIRS,
@@ -9815,7 +9836,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-    ): 0.0015,
+    ): 0.02,
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         ModalLogicFamily.ALETHIC.value,
@@ -9835,7 +9856,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-    ): 0.0015,
+    ): 0.095,
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DEONTIC.value,
@@ -9855,7 +9876,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DEONTIC.value,
-    ): 0.015,
+    ): 0.08,
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.EPISTEMIC.value,
@@ -9863,7 +9884,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.TEMPORAL.value,
-    ): 0.015,
+    ): 0.08,
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.EPISTEMIC.value,
@@ -12025,6 +12046,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_PACKET_000536_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000629_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000224_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_000225_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000538_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_006116_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000521_FAMILY_PAIRS",
