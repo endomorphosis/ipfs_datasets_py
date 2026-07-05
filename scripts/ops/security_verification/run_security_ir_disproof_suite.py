@@ -283,11 +283,10 @@ def _fuzzed_mutator_names(seed: int, rounds: int) -> list[list[str]]:
     available = sorted(SCENARIO_REGISTRY)
     fuzzed: list[list[str]] = []
     for _ in range(rounds):
-        width = (
-            1
-            if len(available) == 1
-            else rng.randint(1, min(2, len(available)))
-        )
+        if len(available) == 1:
+            width = 1
+        else:
+            width = rng.randint(1, min(2, len(available)))
         fuzzed.append(sorted(rng.sample(available, k=width)))
     return fuzzed
 
@@ -345,10 +344,7 @@ def main(argv: list[str] | None = None) -> int:
         args.model,
         args.source_path,
     )
-    if (
-        sum(bool(value) for value in selected_inputs)
-        > 1
-    ):
+    if sum(bool(value) for value in selected_inputs) > 1:
         parser.error(
             'choose only one input: --example, --model, or --source-path'
         )
