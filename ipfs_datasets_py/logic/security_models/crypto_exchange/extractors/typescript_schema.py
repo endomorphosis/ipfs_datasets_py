@@ -262,6 +262,8 @@ class TypeScriptSchemaEmitter:
             '  if (!validateProofReceiptStrict(receipt) || !validateProofReportStrict(report)) {',
             '    return false;',
             '  }',
+            '  // Fail closed until this runtime can recompute canonical CIDs byte-for-byte or',
+            '  // verify a trusted signature over the report payload.',
             '  return false;',
             '}',
             '',

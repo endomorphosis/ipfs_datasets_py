@@ -9,7 +9,7 @@ from ..compilers.to_z3 import Z3Compilation, claim_not_modeled, z3_import
 from ..ir.schema import SecurityModelIR
 
 
-def _identity(event: dict[str, Any]) -> str | None:
+def _get_deposit_identity(event: dict[str, Any]) -> str | None:
     value = event.get('deposit_id') or event.get('txid')
     return str(value) if value is not None else None
 
@@ -40,10 +40,10 @@ class NoDepositCreditedBeforeFinalityClaim(SecurityClaim):
         violations: list[dict[str, Any]] = []
         reorg_events = self.find_events(model, 'chain_reorg_detected')
         for index, credited in enumerate(credited_events):
-            deposit_id = _identity(dict(credited))
+            deposit_id = _get_deposit_identity(dict(credited))
             event_id = str(credited.get('id', f'credit:{index}'))
-            observed = [event for event in observed_events if _identity(dict(event)) == deposit_id]
-            finalized = [event for event in finalized_events if _identity(dict(event)) == deposit_id]
+            observed = [event for event in observed_events if _get_deposit_identity(dict(event)) == deposit_id]
+            finalized = [event for event in finalized_events if _get_deposit_identity(dict(event)) == deposit_id]
             observed_ok = bool(observed)
             finalized_ok = bool(finalized)
             confirmation_ok = any(
@@ -63,7 +63,7 @@ class NoDepositCreditedBeforeFinalityClaim(SecurityClaim):
                 for event in observed
             ) if observed else True
             reorg_ok = not any(
-                _identity(dict(event)) == deposit_id
+                _get_deposit_identity(dict(event)) == deposit_id
                 and (event.get('timestamp') is None or credited.get('timestamp') is None or event.get('timestamp') <= credited.get('timestamp'))
                 for event in reorg_events
             )

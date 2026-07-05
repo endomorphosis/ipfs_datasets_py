@@ -9,7 +9,7 @@ from ..compilers.to_z3 import Z3Compilation, claim_not_modeled, z3_import
 from ..ir.schema import SecurityModelIR
 
 
-def _identity(event: dict[str, Any]) -> str | None:
+def _get_withdrawal_identity(event: dict[str, Any]) -> str | None:
     value = event.get('withdrawal_id') or event.get('txid')
     return str(value) if value is not None else None
 
@@ -42,11 +42,11 @@ class NoUnauthorizedWithdrawalClaim(SecurityClaim):
         unfrozen_events = self.find_events(model, 'wallet_unfrozen')
         for index, broadcast in enumerate(broadcasts):
             broadcast_id = str(broadcast.get('id', f'broadcast:{index}'))
-            withdrawal_id = _identity(dict(broadcast))
+            withdrawal_id = _get_withdrawal_identity(dict(broadcast))
             wallet_id = broadcast.get('wallet_id')
             timestamp = broadcast.get('timestamp')
-            matching_requests = [event for event in requests if _identity(dict(event)) == withdrawal_id]
-            matching_approvals = [event for event in approvals if _identity(dict(event)) == withdrawal_id]
+            matching_requests = [event for event in requests if _get_withdrawal_identity(dict(event)) == withdrawal_id]
+            matching_approvals = [event for event in approvals if _get_withdrawal_identity(dict(event)) == withdrawal_id]
             has_request = bool(matching_requests)
             has_approval = bool(matching_approvals)
             approval_before_broadcast = any(
@@ -74,7 +74,7 @@ class NoUnauthorizedWithdrawalClaim(SecurityClaim):
             nonce = broadcast.get('nonce')
             if nonce is not None and model.events:
                 nonce_ok = any(
-                    event.get('event') == 'nonce_reserved' and event.get('nonce') == nonce and _identity(dict(event)) == withdrawal_id
+                    event.get('event') == 'nonce_reserved' and event.get('nonce') == nonce and _get_withdrawal_identity(dict(event)) == withdrawal_id
                     for event in model.events
                 )
             reservation_ok = True
@@ -83,7 +83,7 @@ class NoUnauthorizedWithdrawalClaim(SecurityClaim):
             if amount is not None or asset_id is not None:
                 reservation_ok = any(
                     event.get('event') == 'balance_reserved'
-                    and _identity(dict(event)) == withdrawal_id
+                    and _get_withdrawal_identity(dict(event)) == withdrawal_id
                     and (amount is None or event.get('amount') == amount)
                     and (asset_id is None or event.get('asset_id', event.get('asset')) == asset_id)
                     for event in model.events
