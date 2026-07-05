@@ -5115,6 +5115,19 @@ def test_tdfol_bridge_coerce_parses_prefixed_proof_obligation_text() -> None:
     assert coerced.to_string() == "O(disclose_records(agency))"
 
 
+def test_tdfol_bridge_coerce_synthesizes_labeled_raw_proof_obligation_text() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    coerced = coerce_tdfol_formula(
+        "proof_obligation: The Secretary shall administer and enforce this chapter."
+    )
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.OBLIGATION
+    assert coerced.to_string() == "O(administer_and_enforce_this_chapter(secretary))"
+
+
 def test_tdfol_bridge_coerce_extracts_json_formula_export_text() -> None:
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
@@ -5240,6 +5253,42 @@ def test_tdfol_bridge_canonicalizes_prefixed_proof_obligation_rows() -> None:
     assert record["proof_input"] == "O(disclose_records(agency))"
     assert record["parse_ok"] is True
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
+def test_tdfol_bridge_canonicalizes_labeled_raw_proof_obligation_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _ProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": [
+                {
+                    "formula": (
+                        "proof_obligation: The Secretary shall administer "
+                        "and enforce this chapter."
+                    ),
+                    "source_id": "tdfol:guidance:raw-label",
+                }
+            ],
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _ProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _ProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_ProofObligationConverter())
+
+    report = adapter.evaluate("The Secretary shall administer and enforce this chapter.")
+    record = report.ir_document.views["tdfol_formula"].payload["records"][0]
+
+    assert record["formula"] == "O(administer_and_enforce_this_chapter(secretary))"
+    assert record["parse_ok"] is True
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["tdfol_no_formula_loss"] == 0.0
 
 
 def test_tdfol_bridge_canonicalizes_assignment_proof_obligation_rows() -> None:

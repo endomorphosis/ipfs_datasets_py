@@ -1217,7 +1217,7 @@ def _normalize_tdfol_export_formula(text: str) -> str:
     normalized = _normalize_deontic_operator_aliases(normalized)
     normalized = _normalize_deontic_label_export(normalized)
     normalized = _normalize_deontic_agent_annotation_export(normalized)
-    normalized = re.sub(
+    normalized, proof_label_count = re.subn(
         r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
         r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
         r"proof\s+obligation|obligation)\s*[:=]\s*",
@@ -1225,6 +1225,13 @@ def _normalize_tdfol_export_formula(text: str) -> str:
         normalized,
         flags=re.IGNORECASE,
     )
+    raw_obligation_formula = (
+        _formula_from_labeled_raw_proof_obligation(normalized)
+        if proof_label_count
+        else ""
+    )
+    if raw_obligation_formula:
+        normalized = raw_obligation_formula
     normalized = re.sub(
         r"^\s*(?:TDFOL(?:[\s.]prover)?|target_component\s*[:=]\s*TDFOL(?:[\s.]prover)?)\s*[:=]\s*",
         "",
@@ -1296,7 +1303,11 @@ def _unwrap_tdfol_assignment_export(text: str) -> str:
     for key in _TDFOL_FORMULA_EXPORT_KEYS:
         value = _extract_tdfol_key_value(normalized, key)
         if value:
-            return _normalize_tdfol_export_value(value)
+            normalized_value = _normalize_tdfol_export_value(value)
+            raw_obligation_formula = _formula_from_labeled_raw_proof_obligation(
+                normalized_value
+            )
+            return raw_obligation_formula or normalized_value
     for key in _TDFOL_CONTAINER_EXPORT_KEYS:
         value = _extract_tdfol_key_value(normalized, key)
         if value:
@@ -1671,6 +1682,21 @@ def _normalize_raw_deontic_text_export(text: str) -> str:
         result.append(char)
         index += 1
     return "".join(result)
+
+
+def _formula_from_labeled_raw_proof_obligation(text: str) -> str:
+    """Synthesize TDFOL from raw prose after proof-obligation labels."""
+
+    candidate = str(text or "").strip().strip("`\"'").strip()
+    if not candidate or _looks_like_tdfol_formula(candidate):
+        return ""
+    if not _looks_like_legal_text_export(candidate):
+        return ""
+    norm = _synthesized_norm_from_text(candidate, prefer_modal_clause=True)
+    if norm is None:
+        return ""
+    formula = _tdfol_formula_from_norm(norm)
+    return formula.to_string() if hasattr(formula, "to_string") else ""
 
 
 def _formula_from_raw_deontic_text_argument(
