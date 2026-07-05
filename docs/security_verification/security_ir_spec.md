@@ -30,7 +30,7 @@ The default exchange model ships with a bounded assumption registry (`A1`-`A10`)
 - seed autoformalization of Python, JavaScript, TypeScript, Go, Java, and Rust codebases into reviewable security IR facts
 - deterministic feature-loop projection so auto-ingested codebases, proof generation, and proof-regression tests share the same extracted security facts
 - prover orchestration and counterexample discovery
-- external prover runners (TLA+, Z3, Tamarin, ProVerif, HyperLTL, Lean, Coq) and proof report generation
+- implemented Z3 runner plus proof report generation
 - runtime monitor prototyping
 
 ## TypeScript/WASM side

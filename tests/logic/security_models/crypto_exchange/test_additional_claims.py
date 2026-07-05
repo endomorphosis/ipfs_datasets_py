@@ -2,20 +2,16 @@ import pytest
 from copy import deepcopy
 
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.capability import CapabilityDelegationMonotonicityClaim
-from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.base import SecurityClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims import default_claims
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.deposit import NoDepositCreditedBeforeFinalityClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.hsm import NoSigningAfterWalletFreezeClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.ledger import AuditEventExistsForCriticalTransitionClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
-from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import SecurityModelIR
 from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import (
     DEFAULT_PROVERS,
     _normalize_provers,
     prove_claims,
 )
-from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.proof_report import ProofReport
-from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.proverif_runner import ProVerifRunner
 from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.z3_runner import Z3Runner
 
 
@@ -75,42 +71,29 @@ def test_prove_claims_proves_complete_default_z3_claim_set() -> None:
     assert all(report.status == 'PROVED' for report in reports)
 
 
-def test_default_prover_list_includes_proverif_stub() -> None:
-    assert 'proverif' in DEFAULT_PROVERS
-    assert 'proverif' in example_minimal_exchange_model().prover_targets
+def test_default_prover_list_is_limited_to_implemented_runners() -> None:
+    assert DEFAULT_PROVERS == ('z3',)
+    assert example_minimal_exchange_model().prover_targets == ['z3']
 
 
-def test_prove_claims_falls_through_when_z3_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
-    attempted_claims: list[str] = []
-
-    def _stub_proverif_run(self, claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
-        attempted_claims.append(claim.claim_id)
-        return self.unknown_report(claim, model, 'stubbed proverif fallback')
-
+def test_prove_claims_returns_unknown_reports_when_z3_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Z3Runner, 'is_available', staticmethod(lambda: False))
-    monkeypatch.setattr(ProVerifRunner, 'run_claim', _stub_proverif_run)
-    reports = prove_claims(example_minimal_exchange_model(), ['z3', 'proverif'])
-    assert attempted_claims == [claim.claim_id for claim in default_claims()]
-    assert all(report.prover == ProVerifRunner.prover_name for report in reports)
+    reports = prove_claims(example_minimal_exchange_model(), ['z3'])
+    assert [report.claim_id for report in reports] == [claim.claim_id for claim in default_claims()]
+    assert all(report.prover == Z3Runner.prover_name for report in reports)
+    assert all(report.status == 'UNKNOWN' for report in reports)
 
 
-def test_prove_claims_falls_through_when_z3_returns_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
-    attempted_provers: list[tuple[str, str]] = []
-
-    def _stub_z3_run(self, claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
-        attempted_provers.append((self.prover_name, claim.claim_id))
-        return self.unknown_report(claim, model, 'stubbed z3 unknown')
-
-    def _stub_proverif_run(self, claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
-        attempted_provers.append((self.prover_name, claim.claim_id))
-        return self.unknown_report(claim, model, 'stubbed proverif fallback')
-
-    monkeypatch.setattr(Z3Runner, 'run_claim', _stub_z3_run)
-    monkeypatch.setattr(ProVerifRunner, 'run_claim', _stub_proverif_run)
-    reports = prove_claims(example_minimal_exchange_model(), ['z3', 'proverif'])
-    expected_claims = [claim.claim_id for claim in default_claims()]
-    assert attempted_provers == [(prover, claim_id) for claim_id in expected_claims for prover in ('z3', 'proverif')]
-    assert all(report.prover == ProVerifRunner.prover_name for report in reports)
+def test_prove_claims_preserves_unknown_when_z3_returns_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        Z3Runner,
+        'run_claim',
+        lambda self, claim, model: self.unknown_report(claim, model, 'forced z3 unknown'),
+    )
+    reports = prove_claims(example_minimal_exchange_model(), ['z3'])
+    assert [report.claim_id for report in reports] == [claim.claim_id for claim in default_claims()]
+    assert all(report.prover == Z3Runner.prover_name for report in reports)
+    assert all(report.status == 'UNKNOWN' for report in reports)
 
 
 def test_normalize_provers_rejects_unknown_names() -> None:

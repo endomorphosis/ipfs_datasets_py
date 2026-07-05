@@ -14,28 +14,14 @@ from .extractors import SourceCodeExtractor
 from .ir.examples import example_minimal_exchange_model
 from .ir.schema import SecurityModelIR, validate_ir
 from .reports.proof_report import ProofReport
-from .runners.coq_runner import CoqRunner
-from .runners.datalog_runner import DatalogRunner
-from .runners.hyperltl_runner import HyperLTLRunner
-from .runners.lean_runner import LeanRunner
-from .runners.proverif_runner import ProVerifRunner
-from .runners.tamarin_runner import TamarinRunner
-from .runners.tla_runner import TLARunner
 from .runners.z3_runner import Z3Runner
 
 
 RUNNER_FACTORIES = {
     'z3': Z3Runner,
-    'tla': TLARunner,
-    'datalog': DatalogRunner,
-    'tamarin': TamarinRunner,
-    'proverif': ProVerifRunner,
-    'hyperltl': HyperLTLRunner,
-    'lean': LeanRunner,
-    'coq': CoqRunner,
 }
 
-DEFAULT_PROVERS = ('z3', 'tla', 'datalog', 'tamarin', 'proverif', 'hyperltl', 'lean', 'coq')
+DEFAULT_PROVERS = ('z3',)
 # Supported failure policies for the fail-closed CLI gate.
 FAIL_POLICIES = {'disproof', 'unknown-critical'}
 

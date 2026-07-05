@@ -286,7 +286,7 @@ class PythonASTExtractor:
                 enable_monitoring=False,
             ).to_fol(sentence)
         except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
-            logger.warning('Falling back to minimal FOL placeholder for autoformalized sentence: %s', sentence[:100])
+            logger.warning('Falling back to minimal FOL abstraction for autoformalized sentence: %s', sentence[:100])
             return f'Statement({sentence.replace(" ", "_")})'
 
     def _extract_natural_language_features(self, sentence: str) -> tuple[dict[str, list[str]], list[dict[str, Any]]]:

@@ -23,12 +23,6 @@ class SecurityClaim(ABC):
     def compile_to_z3(self, model: SecurityModelIR) -> Z3Compilation:
         """Compile the claim into a Z3-checkable artifact."""
 
-    def compile_to_tla(self, model: SecurityModelIR) -> str:
-        raise NotImplementedError(f'{self.claim_id} does not yet compile to TLA+')
-
-    def compile_to_datalog(self, model: SecurityModelIR) -> str:
-        raise NotImplementedError(f'{self.claim_id} does not yet compile to Datalog')
-
     @staticmethod
     def policy_enabled(model: SecurityModelIR, name: str) -> bool:
         for policy in model.policies:

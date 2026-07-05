@@ -9,7 +9,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.proof_report
 def test_fail_on_disproof_returns_nonzero(monkeypatch) -> None:
     """GIVEN a blocking DISPROVED report WHEN fail-on disproof is requested THEN the CLI returns nonzero."""
 
-    def _stub_prove_claims(model, provers):
+    def _prove_claims_override(model, provers):
         return [
             ProofReport(
                 claim_id='claim:test',
@@ -26,7 +26,7 @@ def test_fail_on_disproof_returns_nonzero(monkeypatch) -> None:
 
     monkeypatch.setattr(
         'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
-        _stub_prove_claims,
+        _prove_claims_override,
     )
     assert main(['--example', '--fail-on', 'disproof']) == 1
 
@@ -72,14 +72,14 @@ def approve_withdrawal(authorized):
 
     seen = {}
 
-    def _stub_prove_claims(model, provers):
+    def _prove_claims_override(model, provers):
         seen['model'] = model
         seen['provers'] = list(provers)
         return []
 
     monkeypatch.setattr(
         'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
-        _stub_prove_claims,
+        _prove_claims_override,
     )
 
     assert main(['--source-path', str(source_path), '--source-model-id', 'source-proof-model', '--provers', 'z3']) == 0
