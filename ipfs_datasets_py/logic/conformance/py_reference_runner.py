@@ -13,6 +13,7 @@ import argparse
 import datetime as _dt
 import hashlib
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -31,6 +32,11 @@ SUBSYSTEMS = {
     "legal-norm",
     "zkp-statement",
 }
+
+
+def conformance_enable_simulated_zkp_runtime() -> bool:
+    raw = str(os.getenv("CONFORMANCE_ENABLE_SIMULATED_ZKP_RUNTIME") or "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
 
 
 def load_vectors(vectors_dir: str | pathlib.Path) -> List[Dict[str, Any]]:
@@ -946,6 +952,18 @@ def evaluate_zkp_statement_native(payload: Dict[str, Any], policy_fallback: Dict
     claims = [str(item or "").strip() for item in payload.get("claims", []) if str(item or "").strip()]
     theorem = claims[0] if claims else "zkp_statement"
     proof_state = str(payload.get("proofState") or "").strip().lower()
+
+    if not conformance_enable_simulated_zkp_runtime():
+        proxied = evaluate_policy(policy_fallback, {"subsystem": "zkp-statement"})
+        metadata = dict(proxied.get("metadata") or {})
+        metadata.update(
+            {
+                "nativeAttemptKind": "policy-proxy",
+                "zkpNativeSkipped": True,
+            }
+        )
+        proxied["metadata"] = metadata
+        return proxied
 
     try:
         from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
