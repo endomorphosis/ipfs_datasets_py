@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
@@ -145,6 +146,25 @@ _LEGAL_IR_VIEW_GUIDANCE_PREDICATES = {
 }
 _LEGAL_IR_GRAPH_REPAIR_ACTIONS = {
     "repair_multiview_legal_ir_graph_projection",
+}
+_NEO4J_COMPAT_TARGET_COMPONENT = "knowledge_graphs.neo4j_compat"
+_RAW_LEGAL_IR_GUIDANCE_PAYLOAD_PREDICATES = {
+    "attribution",
+    "bridge_failure_name",
+    "bundle",
+    "compiler_guidance",
+    "compiler_guidance_attribution",
+    "compiler_guidance_bundle",
+    "compiler_guidance_evidence",
+    "compiler_guidance_legal_ir_view_gaps",
+    "evidence",
+    "guidance",
+    "legal_ir_view_gaps",
+    "metadata",
+    "semantic_bundle",
+    "semantic_bundle_key",
+    "target_metrics",
+    "vector_bundle",
 }
 _LEGAL_IR_VIEW_ALIASES = {
     "knowledge_graph": "knowledge_graphs.neo4j_compat",
@@ -908,7 +928,7 @@ def _append_legal_ir_guidance_alignment_triples(
         obj = triple["object"]
         guidance = guidance_by_subject.setdefault(
             subject,
-            {"predicted": set(), "target": set(), "actions": set()},
+            {"predicted": set(), "target": set(), "actions": set(), "features": set()},
         )
         normalized_predicate = predicate.strip().lower()
         normalized_view = _canonical_legal_ir_view_name(obj)
@@ -925,12 +945,32 @@ def _append_legal_ir_guidance_alignment_triples(
             "route",
         }:
             guidance["actions"].add(obj.strip())
+        if normalized_predicate in _RAW_LEGAL_IR_GUIDANCE_PAYLOAD_PREDICATES:
+            _collect_legal_ir_guidance_features(
+                obj,
+                guidance=guidance,
+                predicate_hint=normalized_predicate,
+            )
 
     for subject, guidance in sorted(guidance_by_subject.items()):
         target_views = set(guidance["target"])
         predicted_views = set(guidance["predicted"])
-        if guidance["actions"] & _LEGAL_IR_GRAPH_REPAIR_ACTIONS:
-            target_views.add("knowledge_graphs.neo4j_compat")
+        feature_text = "\n".join(sorted(guidance["features"] | guidance["actions"]))
+        has_graph_route = any(
+            action in feature_text for action in _LEGAL_IR_GRAPH_REPAIR_ACTIONS
+        )
+        has_neo4j_target = _NEO4J_COMPAT_TARGET_COMPONENT in feature_text
+        has_graph_failure_metric = (
+            "legal_ir_multiview_graph_failure_penalty" in feature_text
+        )
+        has_knowledge_graph_scope = "knowledge_graphs" in feature_text
+        if (
+            guidance["actions"] & _LEGAL_IR_GRAPH_REPAIR_ACTIONS
+            or has_graph_route
+            or has_neo4j_target
+            or (has_graph_failure_metric and has_knowledge_graph_scope)
+        ):
+            target_views.add(_NEO4J_COMPAT_TARGET_COMPONENT)
         if not target_views and not predicted_views:
             continue
         facts: List[Tuple[str, str]] = []
@@ -958,6 +998,110 @@ def _append_legal_ir_guidance_alignment_triples(
             predicates_by_subject=predicates_by_subject,
             seen=seen,
         )
+
+
+def _collect_legal_ir_guidance_features(
+    value: Any,
+    *,
+    guidance: Dict[str, set[str]],
+    predicate_hint: str = "",
+) -> None:
+    """Extract graph-view guidance from raw packet-shaped triple values."""
+
+    if isinstance(value, Mapping):
+        for raw_key, raw_value in value.items():
+            key = str(raw_key or "").strip().lower()
+            guidance["features"].add(key)
+            if key in _LEGAL_IR_VIEW_GUIDANCE_PREDICATES:
+                view = _canonical_legal_ir_view_name(str(raw_value or ""))
+                if view:
+                    bucket = "predicted" if "predicted" in key else "target"
+                    guidance[bucket].add(view)
+            elif key in {
+                "action",
+                "compiler_guidance_action",
+                "compiler_guidance_route",
+                "route",
+                "semantic_bundle_key",
+            }:
+                text = str(raw_value or "").strip()
+                if text:
+                    guidance["actions"].add(text)
+            elif key in {
+                "compiler_guidance_legal_ir_view_gaps",
+                "legal_ir_view_gaps",
+            } and isinstance(raw_value, Mapping):
+                _collect_legal_ir_view_gap_features(raw_value, guidance=guidance)
+            _collect_legal_ir_guidance_features(
+                raw_value,
+                guidance=guidance,
+                predicate_hint=key,
+            )
+        return
+
+    if isinstance(value, (list, tuple, set)):
+        for item in value:
+            _collect_legal_ir_guidance_features(
+                item,
+                guidance=guidance,
+                predicate_hint=predicate_hint,
+            )
+        return
+
+    text = str(value or "").strip()
+    if not text:
+        return
+    guidance["features"].add(text)
+    if _graph_repair_text_match(text):
+        guidance["actions"].add("repair_multiview_legal_ir_graph_projection")
+    if _NEO4J_COMPAT_TARGET_COMPONENT in text:
+        if "predicted" in predicate_hint:
+            guidance["predicted"].add(_NEO4J_COMPAT_TARGET_COMPONENT)
+        else:
+            guidance["target"].add(_NEO4J_COMPAT_TARGET_COMPONENT)
+    if "knowledge_graphs_neo4j_compat:underrepresented" in text.lower():
+        guidance["target"].add(_NEO4J_COMPAT_TARGET_COMPONENT)
+
+    parsed = _json_guidance_value(text)
+    if parsed is not None:
+        _collect_legal_ir_guidance_features(
+            parsed,
+            guidance=guidance,
+            predicate_hint=predicate_hint,
+        )
+
+
+def _collect_legal_ir_view_gap_features(
+    gaps: Mapping[Any, Any],
+    *,
+    guidance: Dict[str, set[str]],
+) -> None:
+    for raw_key, raw_value in gaps.items():
+        key = str(raw_key or "").strip()
+        value = str(raw_value or "").strip()
+        guidance["features"].add(key)
+        if value:
+            guidance["features"].add(value)
+        view_key, _, bucket = key.partition(":")
+        view = _canonical_legal_ir_view_name(view_key)
+        if view == _NEO4J_COMPAT_TARGET_COMPONENT and bucket.lower() in {
+            "missing",
+            "underrepresented",
+        }:
+            guidance["target"].add(_NEO4J_COMPAT_TARGET_COMPONENT)
+
+
+def _json_guidance_value(text: str) -> Any:
+    if not text or text[0] not in "{[":
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
+
+
+def _graph_repair_text_match(text: str) -> bool:
+    return "repair_multiview_legal_ir_graph_projection" in text
 
 
 def _append_component_triples(
