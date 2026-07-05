@@ -46,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     if args.out:
-        Path(args.out).write_text(rendered, encoding='utf-8')
+        Path(args.out).write_text(rendered if rendered.endswith('\n') else rendered + '\n', encoding='utf-8')
     else:
         print(rendered, end='')
     return 0
