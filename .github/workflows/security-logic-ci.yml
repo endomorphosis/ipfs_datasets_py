@@ -38,10 +38,13 @@ jobs:
       - name: Install focused test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest z3-solver multiformats
+          python -m pip install pytest pyyaml z3-solver multiformats
       - name: Check hidden Unicode and newline normalization
         run: |
           python scripts/ops/security_verification/check_no_hidden_unicode.py
+      - name: Compile focused security verification sources
+        run: |
+          python -m compileall ipfs_datasets_py/logic/security_models scripts/ops/security_verification tests/logic/security_models/crypto_exchange
       - name: Run focused security model tests
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -61,6 +64,18 @@ jobs:
             --example \
             --strict-validation \
             --out proof_report_strict.json
+      - name: Run proof CLI with reviewed evidence policy on trusted fixture
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all \
+            --example \
+            --strict-validation \
+            --require-reviewed-evidence \
+            --out proof_report_reviewed.json
       - name: Run proof CLI in fail-closed mode
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -68,7 +83,7 @@ jobs:
           IPFS_DATASETS_AUTO_INSTALL: '0'
           IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
-          args=(--example --strict-validation --fail-on disproof --require-real-ergoai --forbid-simulated-zkp --out proof_report.json)
+          args=(--example --strict-validation --fail-on disproof --require-real-ergoai --forbid-simulated-zkp --emit-counterexamples-dir counterexamples --out proof_report.json)
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.strict_unknown }}" = "true" ]; then
             args+=(--fail-on unknown-critical)
           fi
@@ -90,5 +105,7 @@ jobs:
         with:
           name: security-logic-proof-reports
           path: |
+            counterexamples
             proof_report.json
+            proof_report_reviewed.json
             proof_report_strict.json

@@ -12,7 +12,7 @@ This framework positions Python as the proof-producing plane for exchange securi
 ## Soundness boundary
 
 - The Python proof-producing plane validates only the claims that are explicitly modeled and compiled to the implemented Z3 backend.
+- `PROVED` means the current backend established a bounded property of this IR under the listed assumptions; it does not mean the whole production system is secure in the absolute.
 - Autoformalized code facts now carry evidence references and review status so heuristic extraction cannot silently become a blocking proof.
-- Proof consumers must treat `UNKNOWN`, `NOT_MODELED`, and heuristic-only blocking proofs as non-secure until reviewed.
-- Additional prover families stay future work until an end-to-end compiler and runner is added.
-
+- Proof consumers must explicitly accept report assumptions and must treat `UNKNOWN`, `NOT_MODELED`, and blocking proofs backed only by unreviewed evidence as non-secure.
+- Additional prover families stay future work until an end-to-end compiler and runner is added; disabled families are planning targets only.

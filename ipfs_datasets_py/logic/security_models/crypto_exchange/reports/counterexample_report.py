@@ -14,6 +14,10 @@ class CounterexampleReport:
     message: str
     witness: dict[str, Any] = field(default_factory=dict)
     trace: list[dict[str, Any]] = field(default_factory=list)
+    source_facts: list[dict[str, Any]] = field(default_factory=list)
+    evidence_refs: list[dict[str, Any]] = field(default_factory=list)
+    soundness_notes: list[str] = field(default_factory=list)
+    compiler_artifact: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

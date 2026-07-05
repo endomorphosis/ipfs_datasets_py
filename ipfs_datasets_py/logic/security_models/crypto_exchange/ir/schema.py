@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
+from datetime import datetime
 from typing import Any, Mapping, NotRequired, Required, TypedDict
 
 
@@ -90,6 +91,7 @@ EVIDENCE_REVIEW_STATUSES = {
     'human_reviewed',
     'trusted_fixture',
 }
+WALLET_STATUSES = {'active', 'frozen', 'disabled', 'rotating', 'retired'}
 NON_NEGATIVE_INTEGER_FIELDS = {
     'amount',
     'balance',
@@ -147,6 +149,7 @@ _ID_FIELDS = {
     'assets': 'asset',
     'wallets': 'wallet',
     'accounts': 'account',
+    'policies': 'policy',
     'roles': 'role',
     'principals': 'principal',
     'capabilities': 'capability',
@@ -279,6 +282,11 @@ def _validate_non_negative_int(name: str, value: Any) -> None:
         raise ValueError(f'{name} must be a non-negative integer')
 
 
+def _validate_positive_int(name: str, value: Any) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError(f'{name} must be a positive integer')
+
+
 
 def _validate_numeric_fields(entries: list[dict[str, Any]], collection_name: str) -> None:
     for entry in entries:
@@ -306,7 +314,7 @@ def _validate_evidence_ref(reference: Mapping[str, Any]) -> None:
         raise ValueError(f"Unsupported evidence review status: {reference.get('review_status')}")
     for key in ('line_start', 'line_end'):
         if key in reference:
-            _validate_non_negative_int(f'evidence_refs.{key}', reference[key])
+            _validate_positive_int(f'evidence_refs.{key}', reference[key])
     if 'line_start' in reference and 'line_end' in reference and reference['line_end'] < reference['line_start']:
         raise ValueError('evidence ref line_end must be >= line_start')
     if 'sha256' in reference and (not isinstance(reference['sha256'], str) or not reference['sha256'].strip()):
@@ -344,13 +352,55 @@ def _validate_metadata(metadata: Mapping[str, Any]) -> None:
         _validate_evidence_ref(reference)
 
 
+def _validate_policy_records(policies: list[dict[str, Any]]) -> None:
+    seen_names: set[str] = set()
+    for policy in policies:
+        policy_id = policy.get('id', '<unknown>')
+        name = policy.get('name')
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f'policy {policy_id} must include a non-empty name')
+        if name in seen_names:
+            raise ValueError(f'Duplicate policy name: {name}')
+        seen_names.add(name)
+        if 'enabled' in policy and not isinstance(policy['enabled'], bool):
+            raise ValueError(f'policy {policy_id}.enabled must be a bool')
+
+
+
+def _validate_timestamp(value: Any) -> None:
+    if isinstance(value, bool):
+        raise ValueError('event timestamp must be int, float, or ISO string when present')
+    if isinstance(value, (int, float)):
+        return
+    if isinstance(value, str):
+        try:
+            float(value)
+            return
+        except ValueError:
+            try:
+                datetime.fromisoformat(value.replace('Z', '+00:00'))
+                return
+            except ValueError as exc:
+                raise ValueError('event timestamp must be int, float, or ISO string when present') from exc
+    raise ValueError('event timestamp must be int, float, or ISO string when present')
+
+
 
 def _validate_references(normalized: SecurityModelIR) -> None:
     asset_ids = {item['id'] for item in normalized.assets if isinstance(item.get('id'), str)}
     wallet_ids = {item['id'] for item in normalized.wallets if isinstance(item.get('id'), str)}
+    role_ids = {item['id'] for item in normalized.roles if isinstance(item.get('id'), str)}
     principal_ids = {item['id'] for item in normalized.principals if isinstance(item.get('id'), str)}
-    resource_ids = asset_ids | wallet_ids | {item['id'] for item in normalized.accounts if isinstance(item.get('id'), str)}
+    account_ids = {item['id'] for item in normalized.accounts if isinstance(item.get('id'), str)}
+    capability_ids = {item['id'] for item in normalized.capabilities if isinstance(item.get('id'), str)}
+    resource_ids = asset_ids | wallet_ids | account_ids
     resource_ids |= {item['id'] for item in normalized.entities if isinstance(item.get('id'), str)}
+
+    for principal in normalized.principals:
+        principal_id = principal.get('id', '<unknown>')
+        role_id = principal.get('role')
+        if role_id is not None and role_id not in role_ids:
+            raise ValueError(f'principal {principal_id} references unknown role: {role_id}')
 
     for account in normalized.accounts:
         account_id = account.get('id', '<unknown>')
@@ -366,6 +416,11 @@ def _validate_references(normalized: SecurityModelIR) -> None:
 
     for wallet in normalized.wallets:
         wallet_id = wallet.get('id', '<unknown>')
+        asset_id = wallet.get('asset_id', wallet.get('asset'))
+        if asset_id is not None and asset_id not in asset_ids:
+            raise ValueError(f'wallet {wallet_id} references unknown asset: {asset_id}')
+        if 'status' in wallet and wallet['status'] not in WALLET_STATUSES:
+            raise ValueError(f'wallet {wallet_id} has unsupported status: {wallet["status"]}')
         for principal_field in ('owner', 'principal', 'principal_id'):
             principal_id = wallet.get(principal_field)
             if principal_id is not None and principal_id not in principal_ids:
@@ -380,6 +435,29 @@ def _validate_references(normalized: SecurityModelIR) -> None:
         if resource_id is not None and resource_id not in resource_ids:
             raise ValueError(f'capability {capability_id} references unknown resource: {resource_id}')
 
+    for event in normalized.events:
+        event_id = event.get('id', '<unknown>')
+        if 'timestamp' in event:
+            _validate_timestamp(event['timestamp'])
+        for field_name, known_ids, label in (
+            ('principal', principal_ids, 'principal'),
+            ('wallet_id', wallet_ids, 'wallet'),
+            ('account_id', account_ids, 'account'),
+            ('capability_id', capability_ids, 'capability'),
+        ):
+            reference = event.get(field_name)
+            if reference is not None and reference not in known_ids:
+                raise ValueError(f'event {event_id} references unknown {label}: {reference}')
+
+    for state_machine in normalized.state_machines:
+        state_machine_id = state_machine.get('id', '<unknown>')
+        states = state_machine.get('states')
+        if not isinstance(states, list):
+            raise ValueError(f'state_machine {state_machine_id}.states must be a list')
+        current = state_machine.get('current')
+        if current is not None and current not in states:
+            raise ValueError(f'state_machine {state_machine_id}.current must be present in state_machine.states')
+
 
 
 def _event_identity(event: Mapping[str, Any], *keys: str) -> Any:
@@ -393,6 +471,7 @@ def _event_identity(event: Mapping[str, Any], *keys: str) -> Any:
 
 def _validate_event_requirements(events: list[dict[str, Any]]) -> None:
     seen_event_ids: set[str] = set()
+    terminal_events: dict[Any, set[str]] = {}
     for event in events:
         event_id = event.get('id')
         if isinstance(event_id, str):
@@ -410,6 +489,17 @@ def _validate_event_requirements(events: list[dict[str, Any]]) -> None:
             raise ValueError('signing_request events require wallet_id')
         if event_name in {'capability_revoked', 'privileged_action'} and event.get('capability_id') is None:
             raise ValueError(f'{event_name} events require capability_id')
+        if event_name in {'withdrawal_broadcast', 'withdrawal_cancelled'}:
+            withdrawal_id = _event_identity(event, 'withdrawal_id', 'txid')
+            if withdrawal_id is None:
+                continue
+            seen_terminal_events = terminal_events.setdefault(withdrawal_id, set())
+            seen_terminal_events.add(str(event_name))
+            if (
+                seen_terminal_events == {'withdrawal_broadcast', 'withdrawal_cancelled'}
+                and not bool(event.get('allow_terminal_conflict', False))
+            ):
+                raise ValueError(f'withdrawal {withdrawal_id} has contradictory terminal events without explicit modeling')
 
 
 
@@ -436,6 +526,7 @@ def validate_ir(model: SecurityModelIR | Mapping[str, Any]) -> SecurityModelIR:
     unsupported_targets = sorted({target for target in normalized.prover_targets if target not in ALLOWED_PROVER_TARGETS})
     if unsupported_targets:
         raise ValueError(f'Unsupported prover targets: {", ".join(unsupported_targets)}')
+    _validate_policy_records(normalized.policies)
     _validate_references(normalized)
     _validate_event_requirements(normalized.events)
     _validate_metadata(normalized.metadata)

@@ -114,6 +114,54 @@ def test_cli_fails_on_heuristic_only_blocking_claim_when_requested(monkeypatch) 
 
 
 
+def test_cli_fails_on_missing_blocking_evidence_when_requested(monkeypatch) -> None:
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: [_report(evidence_refs=[])],
+    )
+    assert main(['--example', '--require-reviewed-evidence']) == 1
+
+
+
+def test_cli_fails_on_machine_extracted_only_blocking_evidence_when_requested(monkeypatch) -> None:
+    machine_report = _report(
+        evidence_refs=[{'kind': 'source_code', 'path': 'x.py', 'review_status': 'machine_extracted'}],
+        soundness_notes=['machine extracted only'],
+    )
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: [machine_report],
+    )
+    assert main(['--example', '--require-reviewed-evidence']) == 1
+
+
+
+def test_cli_allows_trusted_fixture_blocking_evidence_when_requested(monkeypatch) -> None:
+    trusted_report = _report(
+        evidence_refs=[{'kind': 'test_fixture', 'path': 'fixture.py', 'review_status': 'trusted_fixture'}],
+    )
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: [trusted_report],
+    )
+    assert main(['--example', '--require-reviewed-evidence']) == 0
+
+
+
+def test_cli_does_not_fail_non_blocking_claim_under_reviewed_evidence_policy(monkeypatch) -> None:
+    non_blocking_report = _report(
+        risk='medium',
+        evidence_refs=[],
+        soundness_notes=['no evidence attached'],
+    )
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: [non_blocking_report],
+    )
+    assert main(['--example', '--require-reviewed-evidence']) == 0
+
+
+
 def test_cli_emits_proof_receipts_and_counterexamples(tmp_path: Path, monkeypatch) -> None:
     report_path = tmp_path / 'proof_report.json'
     counterexamples_dir = tmp_path / 'counterexamples'

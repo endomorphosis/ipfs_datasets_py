@@ -4,11 +4,37 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from ..ir.cid import calculate_artifact_cid
 
 PROOF_REPORT_SCHEMA_VERSION = 'proof-report/v1'
+PROOF_STATUS_PROVED = 'PROVED'
+PROOF_STATUS_DISPROVED = 'DISPROVED'
+PROOF_STATUS_UNKNOWN = 'UNKNOWN'
+PROOF_STATUS_NOT_MODELED = 'NOT_MODELED'
+PROOF_STATUSES = frozenset(
+    {
+        PROOF_STATUS_PROVED,
+        PROOF_STATUS_DISPROVED,
+        PROOF_STATUS_UNKNOWN,
+        PROOF_STATUS_NOT_MODELED,
+    }
+)
+PROOF_RISK_BLOCKING = 'blocking'
+PROOF_RISK_HIGH = 'high'
+PROOF_RISK_MEDIUM = 'medium'
+PROOF_RISK_LOW = 'low'
+PROOF_RISKS = frozenset(
+    {
+        PROOF_RISK_BLOCKING,
+        PROOF_RISK_HIGH,
+        PROOF_RISK_MEDIUM,
+        PROOF_RISK_LOW,
+    }
+)
+ProofStatus = Literal['PROVED', 'DISPROVED', 'UNKNOWN', 'NOT_MODELED']
+ProofRisk = Literal['blocking', 'high', 'medium', 'low']
 
 
 
@@ -20,14 +46,14 @@ def _utc_now() -> str:
 class ProofReport:
     claim_id: str
     model_cid: str
-    status: str
+    status: ProofStatus
     prover: str
     proof_or_trace_cid: str
     assumptions: list[str]
     compiler_cid: str
     created_at: str | None = None
     counterexample: dict[str, Any] | None = None
-    risk: str = 'medium'
+    risk: ProofRisk = 'medium'
     signatures: list[dict[str, Any]] = field(default_factory=list)
     schema_version: str = PROOF_REPORT_SCHEMA_VERSION
     claim_version: str = '1.0'
@@ -55,6 +81,7 @@ class ProofReport:
             self.deterministic_payload_cid = self.content_cid(self.deterministic_payload())
         if not self.nondeterministic_report_cid:
             self.nondeterministic_report_cid = self.content_cid(self.nondeterministic_payload())
+        _validate_proof_report_instance(self)
 
     def deterministic_payload(self) -> dict[str, Any]:
         payload = {
@@ -114,3 +141,53 @@ class ProofReport:
     @property
     def cid(self) -> str:
         return self.nondeterministic_report_cid
+
+
+def _require_non_empty_string(field_name: str, value: Any) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f'{field_name} must be a non-empty string')
+
+
+def _require_string_list(field_name: str, value: Any) -> None:
+    if not isinstance(value, list) or any(not isinstance(item, str) or not item.strip() for item in value):
+        raise ValueError(f'{field_name} must be a list of non-empty strings')
+
+
+def _validate_proof_report_instance(report: ProofReport) -> None:
+    _require_non_empty_string('schema_version', report.schema_version)
+    _require_non_empty_string('claim_id', report.claim_id)
+    _require_non_empty_string('claim_version', report.claim_version)
+    _require_non_empty_string('model_cid', report.model_cid)
+    _require_non_empty_string('model_schema_version', report.model_schema_version)
+    _require_non_empty_string('prover', report.prover)
+    _require_non_empty_string('solver_name', report.solver_name)
+    _require_non_empty_string('solver_result', report.solver_result)
+    _require_non_empty_string('deterministic_payload_cid', report.deterministic_payload_cid)
+    _require_non_empty_string('nondeterministic_report_cid', report.nondeterministic_report_cid)
+    if report.status not in PROOF_STATUSES:
+        raise ValueError(f'unsupported proof status: {report.status}')
+    if report.risk not in PROOF_RISKS:
+        raise ValueError(f'unsupported proof risk: {report.risk}')
+    _require_string_list('assumptions', report.assumptions)
+    if not isinstance(report.signatures, list):
+        raise ValueError('signatures must be a list')
+    if not isinstance(report.evidence_refs, list):
+        raise ValueError('evidence_refs must be a list')
+    if not isinstance(report.soundness_notes, list) or any(not isinstance(item, str) for item in report.soundness_notes):
+        raise ValueError('soundness_notes must be a list of strings')
+    if report.unsat_core is not None:
+        _require_string_list('unsat_core', report.unsat_core)
+    if report.counterexample is not None and not isinstance(report.counterexample, dict):
+        raise ValueError('counterexample must be a mapping when present')
+    if report.timeout_ms is not None and (isinstance(report.timeout_ms, bool) or not isinstance(report.timeout_ms, int) or report.timeout_ms < 0):
+        raise ValueError('timeout_ms must be a non-negative integer when present')
+    if report.assertion_count is not None and (isinstance(report.assertion_count, bool) or not isinstance(report.assertion_count, int) or report.assertion_count < 0):
+        raise ValueError('assertion_count must be a non-negative integer when present')
+
+
+def validate_proof_report(report: ProofReport | Mapping[str, Any]) -> ProofReport:
+    """Validate *report* and return a normalized :class:`ProofReport`."""
+
+    normalized = report if isinstance(report, ProofReport) else ProofReport.from_dict(report)
+    _validate_proof_report_instance(normalized)
+    return normalized

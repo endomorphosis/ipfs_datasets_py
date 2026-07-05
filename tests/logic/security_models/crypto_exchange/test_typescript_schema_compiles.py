@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -8,8 +9,11 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.extractors import Ty
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
 
 
+REPO_ROOT = Path(__file__).resolve().parents[4]
+TEST_VECTOR_DIR = REPO_ROOT / 'docs' / 'security_verification' / 'test_vectors'
 
-def test_typescript_schema_compiles_when_tsc_is_available(tmp_path: Path) -> None:
+
+def _compile_typescript_schema(tmp_path: Path) -> tuple[str, str, Path]:
     node = shutil.which('node')
     tsc = shutil.which('tsc') or shutil.which('npx')
     if not node or not tsc:
@@ -17,11 +21,72 @@ def test_typescript_schema_compiles_when_tsc_is_available(tmp_path: Path) -> Non
     schema_path = tmp_path / 'security_schema.ts'
     schema_path.write_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()), encoding='utf-8')
     (tmp_path / 'tsconfig.json').write_text(
-        '{"compilerOptions":{"strict":true,"target":"ES2020","module":"CommonJS","noEmit":true},"files":["security_schema.ts"]}',
+        json.dumps(
+            {
+                'compilerOptions': {
+                    'strict': True,
+                    'target': 'ES2020',
+                    'module': 'CommonJS',
+                    'outDir': 'dist',
+                },
+                'files': ['security_schema.ts'],
+            }
+        ),
         encoding='utf-8',
     )
-    if tsc.endswith('npx'):
-        command = [tsc, 'tsc', '--noEmit', '--project', str(tmp_path / 'tsconfig.json')]
-    else:
-        command = [tsc, '--noEmit', '--project', str(tmp_path / 'tsconfig.json')]
+    command = [tsc, 'tsc', '--project', str(tmp_path / 'tsconfig.json')] if tsc.endswith('npx') else [tsc, '--project', str(tmp_path / 'tsconfig.json')]
     subprocess.run(command, cwd=tmp_path, check=True, capture_output=True, text=True)
+    return node, tsc, tmp_path / 'dist' / 'security_schema.js'
+
+
+def test_typescript_schema_compiles_when_tsc_is_available(tmp_path: Path) -> None:
+    _, _, compiled = _compile_typescript_schema(tmp_path)
+    assert compiled.exists()
+
+
+def test_typescript_runtime_verifier_rejects_bad_receipts_and_accepts_valid_fixture(tmp_path: Path) -> None:
+    node, _, compiled = _compile_typescript_schema(tmp_path)
+    report_payload = json.loads((TEST_VECTOR_DIR / 'proof_report_minimal.json').read_text(encoding='utf-8'))
+    receipt_payload = {
+        'schema_version': 'proof-receipt/v1',
+        'report_schema_version': report_payload['schema_version'],
+        'claim_id': report_payload['claim_id'],
+        'model_cid': report_payload['model_cid'],
+        'proof_report_cid': report_payload['nondeterministic_report_cid'],
+        'accepted_assumptions': list(report_payload['assumptions']),
+        'verifier': 'ts-wasm-kernel',
+        'verifier_version': '0.1.0',
+        'valid': True,
+        'metadata': {},
+    }
+    script_path = tmp_path / 'verify.js'
+    script_path.write_text(
+        f"""
+const schema = require({json.dumps(str(compiled))});
+const report = {json.dumps(report_payload)};
+const validReceipt = {json.dumps(receipt_payload)};
+const unknownReport = {{ ...report, status: "UNKNOWN" }};
+const missingAssumptionReceipt = {{ ...validReceipt, accepted_assumptions: [] }};
+const mismatchedModelReceipt = {{ ...validReceipt, model_cid: "sha256:wrong" }};
+if (!schema.validateProofReportStrict(report)) {{
+  throw new Error("expected strict report validation to pass");
+}}
+if (!schema.validateProofReceiptStrict(validReceipt)) {{
+  throw new Error("expected strict receipt validation to pass");
+}}
+if (schema.verifyProofReceipt(validReceipt, unknownReport)) {{
+  throw new Error("expected UNKNOWN report rejection");
+}}
+if (schema.verifyProofReceipt(missingAssumptionReceipt, report)) {{
+  throw new Error("expected missing assumption rejection");
+}}
+if (schema.verifyProofReceipt(mismatchedModelReceipt, report)) {{
+  throw new Error("expected mismatched model rejection");
+}}
+if (!schema.verifyProofReceipt(validReceipt, report, {{ expectedModelCid: report.model_cid, expectedClaimId: report.claim_id }})) {{
+  throw new Error("expected valid receipt acceptance");
+}}
+""",
+        encoding='utf-8',
+    )
+    subprocess.run([node, str(script_path)], cwd=tmp_path, check=True, capture_output=True, text=True)

@@ -1,6 +1,12 @@
+from pathlib import Path
+
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.canonicalize import canonicalize_ir
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import SecurityModelIR
+
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
+TEST_VECTOR_DIR = REPO_ROOT / 'docs' / 'security_verification' / 'test_vectors'
 
 
 def test_canonicalization_is_stable() -> None:
@@ -8,3 +14,10 @@ def test_canonicalization_is_stable() -> None:
     original = canonicalize_ir(model)
     shuffled = SecurityModelIR.from_dict(model.to_dict())
     assert canonicalize_ir(shuffled) == original
+
+
+def test_canonicalization_matches_committed_test_vector() -> None:
+    model = example_minimal_exchange_model()
+    assert canonicalize_ir(model).decode('utf-8') == (
+        TEST_VECTOR_DIR / 'security_model_minimal.canonical.json'
+    ).read_text(encoding='utf-8')

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Iterable, Mapping
 
-from .proof_report import PROOF_REPORT_SCHEMA_VERSION, ProofReport
+from .proof_report import PROOF_REPORT_SCHEMA_VERSION, PROOF_STATUSES, ProofReport, validate_proof_report
 
 PROOF_RECEIPT_SCHEMA_VERSION = 'proof-receipt/v1'
 
@@ -22,6 +22,9 @@ class ProofReceipt:
     schema_version: str = PROOF_RECEIPT_SCHEMA_VERSION
     report_schema_version: str = PROOF_REPORT_SCHEMA_VERSION
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        validate_proof_receipt(self)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -42,11 +45,15 @@ class ProofReceipt:
         verifier: str,
         verifier_version: str,
     ) -> None:
+        validate_proof_report(report)
         accepted = set(accepted_assumptions)
         allowed = set(allowed_statuses)
         supported = set(supported_schema_versions)
         if not verifier or not verifier_version:
             raise ValueError('verifier name and version are required')
+        unsupported_statuses = sorted(status for status in allowed if status not in PROOF_STATUSES)
+        if unsupported_statuses:
+            raise ValueError(f'unsupported accepted proof statuses: {", ".join(unsupported_statuses)}')
         if expected_model_cid is not None and report.model_cid != expected_model_cid:
             raise ValueError('model_cid does not match report.model_cid')
         if expected_claim_id is not None and report.claim_id != expected_claim_id:
@@ -66,10 +73,18 @@ class ProofReceipt:
         verifier: str,
         verifier_version: str,
         accepted_assumptions: Iterable[str] | None = None,
+        allow_report_assumptions: bool = False,
         allowed_statuses: Iterable[str] = ('PROVED',),
         supported_schema_versions: Iterable[str] = (PROOF_REPORT_SCHEMA_VERSION,),
     ) -> 'ProofReceipt':
-        accepted = list(accepted_assumptions if accepted_assumptions is not None else report.assumptions)
+        if accepted_assumptions is None:
+            if not allow_report_assumptions:
+                raise ValueError('accepted_assumptions must be provided explicitly unless allow_report_assumptions=True (unsafe/test-only)')
+            accepted = list(report.assumptions)
+            metadata = {'unsafe_assumption_source': 'report'}
+        else:
+            accepted = list(accepted_assumptions)
+            metadata = {}
         cls.validate_report(
             report,
             accepted_assumptions=accepted,
@@ -89,4 +104,35 @@ class ProofReceipt:
             verifier_version=verifier_version,
             valid=True,
             report_schema_version=report.schema_version,
+            metadata=metadata,
         )
+
+
+def _require_non_empty_string(field_name: str, value: Any) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f'{field_name} must be a non-empty string')
+
+
+def validate_proof_receipt(receipt: ProofReceipt | Mapping[str, Any]) -> ProofReceipt:
+    """Validate *receipt* and return a normalized :class:`ProofReceipt`."""
+
+    normalized = receipt if isinstance(receipt, ProofReceipt) else ProofReceipt.from_dict(receipt)
+    _require_non_empty_string('schema_version', normalized.schema_version)
+    _require_non_empty_string('report_schema_version', normalized.report_schema_version)
+    _require_non_empty_string('claim_id', normalized.claim_id)
+    _require_non_empty_string('model_cid', normalized.model_cid)
+    _require_non_empty_string('proof_report_cid', normalized.proof_report_cid)
+    _require_non_empty_string('verifier', normalized.verifier)
+    _require_non_empty_string('verifier_version', normalized.verifier_version)
+    if normalized.schema_version != PROOF_RECEIPT_SCHEMA_VERSION:
+        raise ValueError(f'unsupported proof receipt schema version: {normalized.schema_version}')
+    if not isinstance(normalized.accepted_assumptions, list) or any(
+        not isinstance(item, str) or not item.strip()
+        for item in normalized.accepted_assumptions
+    ):
+        raise ValueError('accepted_assumptions must be a list of non-empty strings')
+    if not isinstance(normalized.valid, bool):
+        raise ValueError('valid must be a boolean')
+    if not isinstance(normalized.metadata, dict):
+        raise ValueError('metadata must be a mapping')
+    return normalized

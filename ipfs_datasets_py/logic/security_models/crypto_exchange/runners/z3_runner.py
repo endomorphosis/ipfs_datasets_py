@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from typing import Any
 
 from ..claims.base import SecurityClaim
@@ -33,7 +34,76 @@ class Z3Runner(BaseSecurityRunner):
         solver.set('timeout', self.timeout_ms)
         return solver
 
-    def _counterexample(self, claim: SecurityClaim, solver_model: Any) -> CounterexampleReport:
+    @staticmethod
+    def _matching_records(
+        records: list[dict[str, Any]],
+        *,
+        key_names: tuple[str, ...],
+        values: list[str],
+    ) -> list[dict[str, Any]]:
+        wanted = {value for value in values if value}
+        if not wanted:
+            return []
+        matches: list[dict[str, Any]] = []
+        for record in records:
+            for key_name in key_names:
+                candidate = record.get(key_name)
+                if candidate is not None and str(candidate) in wanted:
+                    matches.append(dict(record))
+                    break
+        return matches
+
+    def _source_facts(self, model: SecurityModelIR, compilation: Z3Compilation) -> list[dict[str, Any]]:
+        artifact = compilation.compiler_artifact
+        source_facts: list[dict[str, Any]] = []
+        source_facts.extend(
+            self._matching_records(
+                model.events,
+                key_names=('withdrawal_id', 'deposit_id', 'txid', 'capability_id', 'wallet_id', 'id'),
+                values=[
+                    *[str(item) for item in artifact.get('violating_withdrawals', [])],
+                    *[str(item) for item in artifact.get('offending_ids', [])],
+                    *[str(item) for item in artifact.get('violations', [])],
+                ],
+            )
+        )
+        source_facts.extend(
+            self._matching_records(
+                model.capabilities,
+                key_names=('id',),
+                values=[str(item) for item in artifact.get('violations', [])],
+            )
+        )
+        source_facts.extend(
+            self._matching_records(
+                model.accounts,
+                key_names=('id',),
+                values=[str(item) for item in artifact.get('overdrawn_accounts', [])],
+            )
+        )
+        for violation in artifact.get('violations', []):
+            if isinstance(violation, dict):
+                source_facts.append(dict(violation))
+                event = violation.get('event')
+                if isinstance(event, dict):
+                    source_facts.append(dict(event))
+        deduped: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for fact in source_facts:
+            key = json.dumps(fact, sort_keys=True, default=str)
+            if key in seen:
+                continue
+            deduped.append(fact)
+            seen.add(key)
+        return deduped
+
+    def _counterexample(
+        self,
+        claim: SecurityClaim,
+        model: SecurityModelIR,
+        compilation: Z3Compilation,
+        solver_model: Any,
+    ) -> CounterexampleReport:
         if solver_model is None:
             raise ValueError(f'Z3 did not return a model for claim {claim.claim_id}')
         witness = {
@@ -44,6 +114,10 @@ class Z3Runner(BaseSecurityRunner):
             claim_id=claim.claim_id,
             message='Z3 found a satisfying violation trace.',
             witness=witness,
+            source_facts=self._source_facts(model, compilation),
+            evidence_refs=list(compilation.evidence_refs),
+            soundness_notes=list(compilation.soundness_notes),
+            compiler_artifact=dict(compilation.compiler_artifact),
         )
 
     def _report(
@@ -118,7 +192,7 @@ class Z3Runner(BaseSecurityRunner):
         violation_result = violation_solver.check()
         compiler_cid = ProofReport.content_cid(compilation.compiler_artifact)
         if violation_result == z3.sat:
-            counterexample = self._counterexample(claim, violation_solver.model())
+            counterexample = self._counterexample(claim, model, compilation, violation_solver.model())
             return self._report(
                 claim,
                 model,
@@ -162,7 +236,7 @@ class Z3Runner(BaseSecurityRunner):
                 compilation=compilation,
             )
         if proof_result == z3.sat:
-            counterexample = self._counterexample(claim, proof_solver.model())
+            counterexample = self._counterexample(claim, model, compilation, proof_solver.model())
             return self._report(
                 claim,
                 model,

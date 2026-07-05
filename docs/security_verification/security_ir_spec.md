@@ -44,8 +44,9 @@ The default exchange model ships with a bounded assumption registry (`A1`-`A10`)
 
 ## Soundness boundary
 
-- The current Z3 backend proves only bounded properties of the modeled `SecurityModelIR`.
-- Heuristic autoformalization remains non-authoritative until its `evidence_refs` have been reviewed.
+- The current Z3 backend proves only bounded properties of the modeled `SecurityModelIR`; it is not an absolute proof that a deployed exchange is secure.
+- `PROVED` means the implemented backend checked this specific IR under the listed assumptions and did not find a violation within that model boundary.
+- Heuristic or machine-extracted autoformalization remains non-authoritative until its `evidence_refs` have been reviewed and a proof consumer explicitly accepts the assumptions used by the report.
 - `UNKNOWN` and `NOT_MODELED` are never secure outcomes.
-- TypeScript/WASM artifacts emitted from this package are validation scaffolding only; proof checking remains future work.
-
+- Disabled or unimplemented prover families remain planning targets only until this package ships end-to-end compiler and runner support for them.
+- TypeScript/WASM artifacts emitted from this package are strict proof-consumer validation helpers; they must verify schema versions, report/receipt identity, and explicit assumption acceptance before treating a proof as consumable.

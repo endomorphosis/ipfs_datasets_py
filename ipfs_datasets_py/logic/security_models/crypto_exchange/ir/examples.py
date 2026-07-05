@@ -213,6 +213,7 @@ def example_minimal_exchange_model() -> SecurityModelIR:
                 'event': 'withdrawal_cancelled',
                 'withdrawal_id': 'withdrawal:1',
                 'wallet_id': 'wallet:user_alice',
+                'allow_terminal_conflict': True,
                 'timestamp': 8,
                 'evidence_refs': [_fixture_ref(66, 77, 'Fixture withdrawal cancellation trace.')],
             },

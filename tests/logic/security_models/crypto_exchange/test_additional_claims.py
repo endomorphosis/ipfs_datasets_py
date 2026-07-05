@@ -6,6 +6,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.capability im
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.deposit import NoDepositCreditedBeforeFinalityClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.hsm import NoSigningAfterWalletFreezeClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.ledger import AuditEventExistsForCriticalTransitionClaim
+from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.withdrawal import NoUnauthorizedWithdrawalClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
 from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import DEFAULT_PROVERS, _normalize_provers, prove_claims
 from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.z3_runner import Z3Runner
@@ -67,10 +68,31 @@ def test_bad_model_finds_missing_audit_for_critical_transition() -> None:
 
 
 
+def test_bad_withdrawal_counterexample_names_violating_withdrawal_id() -> None:
+    model = deepcopy(example_minimal_exchange_model())
+    broadcast = next(event for event in model.events if event.get('event') == 'withdrawal_broadcast')
+    broadcast['authorized'] = False
+    report = Z3Runner().run_claim(NoUnauthorizedWithdrawalClaim(), model)
+    assert report.status == 'DISPROVED'
+    assert report.counterexample is not None
+    assert report.counterexample['compiler_artifact']['violating_withdrawals'] == ['withdrawal:1']
+    assert any(fact.get('withdrawal_id') == 'withdrawal:1' for fact in report.counterexample['source_facts'])
+
+
+
 def test_prove_claims_proves_complete_default_z3_claim_set() -> None:
     reports = prove_claims(example_minimal_exchange_model(), ['z3'])
     assert [report.claim_id for report in reports] == [claim.claim_id for claim in default_claims()]
     assert all(report.status == 'PROVED' for report in reports)
+
+
+
+def test_proved_or_disproved_reports_always_include_evidence_or_soundness_note() -> None:
+    reports = prove_claims(example_minimal_exchange_model(), ['z3'])
+    for report in reports:
+        if report.status not in {'PROVED', 'DISPROVED'}:
+            continue
+        assert report.evidence_refs or report.soundness_notes
 
 
 

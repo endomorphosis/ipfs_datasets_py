@@ -11,10 +11,11 @@ from typing import Iterable
 from .claims.base import SecurityClaim
 from .claims import default_claims
 from .extractors import SourceCodeExtractor
+from .ir.cid import calculate_model_cid
 from .ir.examples import example_minimal_exchange_model
 from .ir.schema import SecurityModelIR, evidence_review_statuses, validate_ir
 from .reports.proof_receipt import ProofReceipt
-from .reports.proof_report import ProofReport
+from .reports.proof_report import PROOF_RISK_BLOCKING, PROOF_RISK_HIGH, PROOF_STATUS_DISPROVED, PROOF_STATUS_PROVED, PROOF_STATUS_UNKNOWN, ProofReport
 from .runners.z3_runner import Z3Runner
 
 RUNNER_FACTORIES = {
@@ -71,9 +72,9 @@ def _no_prover_report(claim: SecurityClaim, model: SecurityModelIR) -> ProofRepo
     return ProofReport(
         claim_id=claim.claim_id,
         claim_version=claim.claim_version,
-        model_cid='',
+        model_cid=calculate_model_cid(model),
         model_schema_version=model.schema_version,
-        status='UNKNOWN',
+        status=PROOF_STATUS_UNKNOWN,
         prover='none',
         solver_name='none',
         solver_result='unknown',
@@ -98,7 +99,7 @@ def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofRe
             runner = runner_factory()
             report = runner.run_claim(claim, model)
             last_report = report
-            if report.status in {'PROVED', 'DISPROVED', 'NOT_MODELED'}:
+            if report.status in {PROOF_STATUS_PROVED, PROOF_STATUS_DISPROVED, 'NOT_MODELED'}:
                 break
         reports.append(last_report)
     return reports
@@ -138,12 +139,17 @@ def _execution_policy_violations(
 
 
 def _should_fail(report: ProofReport, *, fail_policies: set[str], require_reviewed_evidence: bool) -> bool:
-    if 'disproof' in fail_policies and report.status == 'DISPROVED' and report.risk in {'blocking', 'high'}:
+    if 'disproof' in fail_policies and report.status == PROOF_STATUS_DISPROVED and report.risk in {PROOF_RISK_BLOCKING, PROOF_RISK_HIGH}:
         return True
-    if 'unknown-critical' in fail_policies and report.status == 'UNKNOWN' and report.risk == 'blocking':
+    if 'unknown-critical' in fail_policies and report.status == PROOF_STATUS_UNKNOWN and report.risk == PROOF_RISK_BLOCKING:
         return True
     review_statuses = evidence_review_statuses(report.evidence_refs)
-    if require_reviewed_evidence and report.status == 'PROVED' and report.risk == 'blocking' and review_statuses == {'heuristic'}:
+    if (
+        require_reviewed_evidence
+        and report.status == PROOF_STATUS_PROVED
+        and report.risk == PROOF_RISK_BLOCKING
+        and not review_statuses.intersection({'human_reviewed', 'trusted_fixture'})
+    ):
         return True
     return False
 
