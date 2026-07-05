@@ -40042,6 +40042,97 @@ def test_decompiler_emits_exemption_source_slots_for_test_platform_clauses() -> 
     assert "modal.frame_logic" in slot_texts["legal_ir_view_prototype"]
 
 
+def test_decompiler_recovers_certificate_entry_duty_semantics() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Production of certificate on entry. On entry of a vessel documented "
+            "under chapter 121 of this title, the master shall produce the "
+            "certificate of documentation to the customs officer."
+        ),
+        predicate="produce_certificate_on_entry",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "certificate_production_on_entry" in slot_texts[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "customs_entry_documentation" in slot_texts[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "vessel_entry_documentation" in slot_texts[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+
+
+def test_decompiler_recovers_ethics_financial_disclosure_semantics() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Ethics in Government. Financial disclosure reports shall be filed "
+            "under the ethics requirements of this chapter."
+        ),
+        predicate="file_financial_disclosure_report",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "financial_disclosure_requirement" in slot_texts[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "ethics_government_requirement" in slot_texts[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+
+
+def test_decompiler_recovers_peacetime_death_compensation_semantics() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Peacetime death compensation. Benefits for service-connected death "
+            "shall be paid as provided in this subchapter."
+        ),
+        predicate="pay_peacetime_death_compensation",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "peacetime_death_compensation" in slot_texts[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+
+
 def test_decompiler_emits_document_semantic_atoms_for_formula_free_frame_text() -> None:
     document = ModalIRDocument(
         document_id="us-code-16-674c-0521fc631368c550",
