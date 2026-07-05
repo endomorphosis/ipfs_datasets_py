@@ -143,7 +143,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--model', help='Path to a canonical security model JSON file')
     parser.add_argument('--out', help='Path to write proof reports as JSON')
     parser.add_argument('--strict', action='store_true', help='Backward-compatible alias for --fail-on disproof')
-    parser.add_argument('--fail-on-unknown-critical', action='store_true', help='Backward-compatible strict-mode alias for --fail-on unknown-critical')
+    parser.add_argument('--fail-on-unknown-critical', action='store_true', help='Legacy companion to --strict that also fails on blocking UNKNOWN results')
     parser.add_argument('--fail-on', action='append', default=[], help='Repeatable failure policy; takes precedence over legacy strict flags: disproof, unknown-critical')
     parser.add_argument('--require-real-ergoai', action='store_true', help='Reject models that depend on simulated or unavailable ErgoAI/F-logic execution')
     parser.add_argument('--forbid-simulated-zkp', action='store_true', help='Reject models that depend on simulated ZKP execution')

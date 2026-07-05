@@ -26,7 +26,10 @@ DEFAULT_ASSUMPTION_REGISTRY = {
 
 DEFAULT_THREAT_MODEL_ASSUMPTIONS: list[AssumptionEntry] = [
     {'id': assumption_id, 'description': description}
-    for assumption_id, description in DEFAULT_ASSUMPTION_REGISTRY.items()
+    for assumption_id, description in sorted(
+        DEFAULT_ASSUMPTION_REGISTRY.items(),
+        key=lambda item: int(item[0][1:]),
+    )
 ]
 
 REQUIRED_SEQUENCE_FIELDS = (
