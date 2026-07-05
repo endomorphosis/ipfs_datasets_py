@@ -219,7 +219,7 @@ SCENARIO_REGISTRY: dict[str, dict[str, object]] = {
         'mutator': _mutate_unauthorized_withdrawal,
     },
     'double_spend_reservation_gap': {
-        'expected_claims': ['no_double_spend_internal_balance'],
+        'expected_claims': ['no_over_reserved_internal_account'],
         'mutator': _mutate_double_spend,
     },
     'deposit_before_finality_gap': {

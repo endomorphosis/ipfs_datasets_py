@@ -141,7 +141,7 @@ class SourceCodeExtractor:
                 functions.append(symbol)
             elif symbol.kind == 'class':
                 classes.append(symbol)
-        events = self._collect_events(functions, source_name, source_digest)
+        events = self._collect_events(functions, source_name, source_digest, normalized_language)
         return SecurityModelIR(
             schema_version='security-model-ir/v1',
             model_id=model_id,
@@ -159,7 +159,7 @@ class SourceCodeExtractor:
             events=events,
             state_machines=[
                 {
-                    'id': f'sm:{event["event"]}',
+                    'id': f'sm:{normalized_language}:{source_digest[:12]}:{event["event"]}:{event["evidence_refs"][0]["line_start"]}',
                     'states': ['defined', 'reachable'],
                     'current': 'reachable',
                     'source_function': event['event'],
@@ -167,7 +167,7 @@ class SourceCodeExtractor:
                 for event in events
                 if event.get('critical')
             ],
-            invariants=self._collect_invariants(symbols, source_name, source_digest),
+            invariants=self._collect_invariants(symbols, source_name, source_digest, normalized_language),
             assumptions=[],
             prover_targets=['z3'],
             metadata={'autoformalization': autoformalization},
@@ -401,15 +401,16 @@ class SourceCodeExtractor:
                         policy['evidence_refs'].append(reference)
         return sorted(policies.values(), key=lambda item: item['id'])
 
-    def _collect_invariants(self, symbols: list[_CodeSymbol], path: str, source_digest: str) -> list[dict[str, Any]]:
+    def _collect_invariants(self, symbols: list[_CodeSymbol], path: str, source_digest: str, language: str) -> list[dict[str, Any]]:
         invariants: list[dict[str, Any]] = []
+        path_hash = source_digest[:12]
         for symbol in symbols:
             if not symbol.comment:
                 continue
             for index, sentence in enumerate(self._python._extract_security_sentences(symbol.comment), start=1):
                 predicates, relations = self._python._extract_natural_language_features(sentence)
                 entry: dict[str, Any] = {
-                    'id': f'inv:{symbol.name}:{index}',
+                    'id': f'inv:{language}:{path_hash}:{symbol.name}:{symbol.line_start}:{index}',
                     'description': sentence,
                     'formalization': {
                         'fol': self._python._to_fol(sentence),
@@ -424,12 +425,15 @@ class SourceCodeExtractor:
                 invariants.append(entry)
         return invariants
 
-    def _collect_events(self, functions: list[_CodeSymbol], path: str, source_digest: str) -> list[dict[str, Any]]:
+    def _collect_events(self, functions: list[_CodeSymbol], path: str, source_digest: str, language: str) -> list[dict[str, Any]]:
+        path_hash = source_digest[:12]
         return [
             {
-                'id': f'event:{function.name}',
+                'id': f'event:{language}:{path_hash}:{function.name}:{function.line_start}',
                 'event': function.name,
                 'kind': 'code_path',
+                'custom': True,
+                'description': f'Autoformalized code-path event for {function.name}.',
                 'critical': any(pattern.search(function.name.lower()) for pattern in _CRITICAL_ACTION_PATTERNS),
                 'evidence_refs': [
                     self._evidence_ref(path=path, source_digest=source_digest, symbol=function, notes=f'Code-path event harvested from {function.name}.')

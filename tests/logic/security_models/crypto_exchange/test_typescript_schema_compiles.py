@@ -73,8 +73,12 @@ const schema = require({json.dumps(str(compiled))});
 const report = {json.dumps(report_payload)};
 const validReceipt = {json.dumps(receipt_payload)};
 const unknownReport = {{ ...report, status: "UNKNOWN" }};
+const disprovedReport = {{ ...report, status: "DISPROVED" }};
+const notModeledReport = {{ ...report, status: "NOT_MODELED" }};
 const missingAssumptionReceipt = {{ ...validReceipt, accepted_assumptions: [] }};
 const mismatchedModelReceipt = {{ ...validReceipt, model_cid: "sha256:wrong" }};
+const mismatchedClaimReceipt = {{ ...validReceipt, claim_id: "claim:wrong" }};
+const mismatchedCidReceipt = {{ ...validReceipt, proof_report_cid: "sha256:wrong" }};
 if (!schema.validateProofReportStrict(report)) {{
   throw new Error("expected strict report validation to pass");
 }}
@@ -84,14 +88,29 @@ if (!schema.validateProofReceiptStrict(validReceipt)) {{
 if (schema.verifyProofReceipt(validReceipt, unknownReport)) {{
   throw new Error("expected UNKNOWN report rejection");
 }}
+if (schema.verifyProofReceipt(validReceipt, disprovedReport)) {{
+  throw new Error("expected DISPROVED report rejection");
+}}
+if (schema.verifyProofReceipt(validReceipt, notModeledReport)) {{
+  throw new Error("expected NOT_MODELED report rejection");
+}}
 if (schema.verifyProofReceipt(missingAssumptionReceipt, report)) {{
   throw new Error("expected missing assumption rejection");
 }}
 if (schema.verifyProofReceipt(mismatchedModelReceipt, report)) {{
   throw new Error("expected mismatched model rejection");
 }}
+if (schema.verifyProofReceipt(mismatchedClaimReceipt, report)) {{
+  throw new Error("expected mismatched claim rejection");
+}}
+if (schema.verifyProofReceipt(mismatchedCidReceipt, report)) {{
+  throw new Error("expected mismatched cid rejection");
+}}
 if (!schema.verifyProofReceipt(validReceipt, report, {{ expectedModelCid: report.model_cid, expectedClaimId: report.claim_id }})) {{
   throw new Error("expected valid receipt acceptance");
+}}
+if (schema.verifyProofReceipt(validReceipt, report, {{ mode: "proof_critical" }})) {{
+  throw new Error("expected proof critical verification to fail closed");
 }}
 """,
         encoding='utf-8',

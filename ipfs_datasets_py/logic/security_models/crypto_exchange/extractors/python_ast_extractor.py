@@ -110,6 +110,7 @@ class PythonASTExtractor:
         source_name = module_path or '<memory>'
         summary = self.extract_from_source(source, module_path=source_name)
         source_digest = hashlib.sha256(source.encode('utf-8')).hexdigest()
+        path_hash = source_digest[:12]
         autoformalization = {
             'kind': 'python_ast',
             'language': 'python',
@@ -149,7 +150,7 @@ class PythonASTExtractor:
             events=summary['events'],
             state_machines=[
                 {
-                    'id': f'sm:{event["event"]}',
+                    'id': f'sm:python:{path_hash}:{event["event"]}:{event["evidence_refs"][0]["line_start"]}',
                     'states': ['defined', 'reachable'],
                     'current': 'reachable',
                     'source_function': event['event'],
@@ -276,7 +277,7 @@ class PythonASTExtractor:
                 predicates, relations = self._extract_natural_language_features(sentence)
                 invariants.append(
                     {
-                        'id': f'inv:{function.name}:{index}',
+                        'id': f'inv:python:{source_digest[:12]}:{function.name}:{function.lineno}:{index}',
                         'description': sentence,
                         'source_function': function.name,
                         'formalization': {
@@ -301,7 +302,7 @@ class PythonASTExtractor:
                 predicates, relations = self._extract_natural_language_features(sentence)
                 invariants.append(
                     {
-                        'id': f'inv:{class_node.name}:{index}',
+                        'id': f'inv:python:{source_digest[:12]}:{class_node.name}:{class_node.lineno}:{index}',
                         'description': sentence,
                         'source_class': class_node.name,
                         'formalization': {
@@ -328,9 +329,11 @@ class PythonASTExtractor:
         for function in self._iter_functions(tree):
             events.append(
                 {
-                    'id': f'event:{function.name}',
+                    'id': f'event:python:{source_digest[:12]}:{function.name}:{function.lineno}',
                     'event': function.name,
                     'kind': 'code_path',
+                    'custom': True,
+                    'description': f'Autoformalized code-path event for function {function.name}.',
                     'critical': any(pattern.search(function.name.lower()) for pattern in _compile_keyword_patterns(_CRITICAL_ACTION_KEYWORDS)),
                     'evidence_refs': [
                         self._evidence_ref(

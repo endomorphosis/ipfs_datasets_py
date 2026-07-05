@@ -124,6 +124,8 @@
   ],
   "events": [
     {
+      "amount": 2,
+      "asset_id": "asset:btc",
       "authorized": true,
       "event": "withdrawal_requested",
       "evidence_refs": [
@@ -137,6 +139,7 @@
         }
       ],
       "id": "event:withdrawal_requested:1",
+      "nonce": "nonce:1",
       "nonce_fresh": true,
       "principal": "principal:alice",
       "sufficient_balance": true,
@@ -146,6 +149,8 @@
       "withdrawal_id": "withdrawal:1"
     },
     {
+      "amount": 2,
+      "asset_id": "asset:btc",
       "event": "withdrawal_approved",
       "evidence_refs": [
         {
@@ -159,12 +164,51 @@
       ],
       "id": "event:withdrawal_approved:1",
       "max_seconds": 30,
+      "nonce": "nonce:1",
       "principal": "principal:exchange_signer",
       "timestamp": 2,
       "wallet_id": "wallet:user_alice",
       "withdrawal_id": "withdrawal:1"
     },
     {
+      "event": "nonce_reserved",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture nonce reservation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:nonce_reserved:1",
+      "nonce": "nonce:1",
+      "timestamp": 2.5,
+      "withdrawal_id": "withdrawal:1"
+    },
+    {
+      "amount": 2,
+      "asset_id": "asset:btc",
+      "event": "balance_reserved",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture balance reservation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:balance_reserved:1",
+      "timestamp": 2.6,
+      "wallet_id": "wallet:user_alice",
+      "withdrawal_id": "withdrawal:1"
+    },
+    {
+      "amount": 2,
+      "asset_id": "asset:btc",
       "authorized": true,
       "critical": true,
       "event": "withdrawal_broadcast",
@@ -179,6 +223,7 @@
         }
       ],
       "id": "event:withdrawal_broadcast:1",
+      "nonce": "nonce:1",
       "nonce_fresh": true,
       "principal": "principal:exchange_signer",
       "sufficient_balance": true,
@@ -188,6 +233,10 @@
       "withdrawal_id": "withdrawal:1"
     },
     {
+      "account_id": "account:alice_btc",
+      "asset_id": "asset:btc",
+      "block_height": 100,
+      "chain_id": "chain:btc",
       "confirmations": 0,
       "deposit_id": "deposit:1",
       "event": "deposit_observed",
@@ -206,6 +255,10 @@
       "txid": "tx:1"
     },
     {
+      "account_id": "account:alice_btc",
+      "asset_id": "asset:btc",
+      "block_height": 106,
+      "chain_id": "chain:btc",
       "confirmations": 6,
       "deposit_id": "deposit:1",
       "event": "deposit_finalized",
@@ -225,7 +278,11 @@
       "txid": "tx:1"
     },
     {
+      "account_id": "account:alice_btc",
       "after_finality": true,
+      "asset_id": "asset:btc",
+      "block_height": 106,
+      "chain_id": "chain:btc",
       "confirmations": 6,
       "deposit_id": "deposit:1",
       "event": "deposit_credited",
@@ -245,6 +302,24 @@
       "txid": "tx:1"
     },
     {
+      "approved_tx_bytes": "0xdeadbeef",
+      "event": "signing_request",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture signing request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "event:signing_request:pre_freeze",
+      "timestamp": 6.5,
+      "txid": "tx:withdrawal:1",
+      "wallet_id": "wallet:user_alice"
+    },
+    {
       "event": "wallet_frozen",
       "evidence_refs": [
         {
@@ -261,22 +336,20 @@
       "wallet_id": "wallet:user_alice"
     },
     {
-      "allow_terminal_conflict": true,
-      "event": "withdrawal_cancelled",
+      "capability_id": "cap:withdraw:user_alice",
+      "event": "privileged_action",
       "evidence_refs": [
         {
           "kind": "test_fixture",
           "line_end": 77,
           "line_start": 66,
-          "notes": "Fixture withdrawal cancellation trace.",
+          "notes": "Fixture privileged action trace.",
           "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
           "review_status": "trusted_fixture"
         }
       ],
-      "id": "event:withdrawal_cancelled:1",
-      "timestamp": 8,
-      "wallet_id": "wallet:user_alice",
-      "withdrawal_id": "withdrawal:1"
+      "id": "event:privileged_action:pre_revoke",
+      "timestamp": 8
     },
     {
       "capability_id": "cap:withdraw:user_alice",
@@ -307,8 +380,10 @@
         }
       ],
       "id": "event:audit_logged:1",
-      "timestamp": 10,
-      "transition": "withdrawal_broadcast"
+      "target_event_id": "event:withdrawal_broadcast:1",
+      "target_txid": "tx:withdrawal:1",
+      "target_withdrawal_id": "withdrawal:1",
+      "timestamp": 10
     }
   ],
   "invariants": [
@@ -370,6 +445,16 @@
         "asset:btc": 0
       }
     },
+    "ledger_totals_evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 150,
+        "line_start": 132,
+        "notes": "Fixture ledger totals for global conservation.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
     "proof_dependency_modes": {
       "flogic": "not-used",
       "zkp": "not-used"
@@ -385,9 +470,8 @@
         "wallet_id": "wallet:user_alice"
       },
       {
-        "event": "withdrawal_cancelled",
-        "wallet_id": "wallet:user_alice",
-        "withdrawal_id": "withdrawal:1"
+        "event": "wallet_unfrozen",
+        "wallet_id": "wallet:user_alice"
       }
     ],
     "threat_model": [

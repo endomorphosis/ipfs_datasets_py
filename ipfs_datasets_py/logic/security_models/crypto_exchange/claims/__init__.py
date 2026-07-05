@@ -4,7 +4,11 @@ from .base import SecurityClaim
 from .capability import CapabilityDelegationMonotonicityClaim, RevokedCapabilityClaim
 from .deposit import NoDepositCreditedBeforeFinalityClaim
 from .hsm import NoSigningAfterWalletFreezeClaim
-from .ledger import AuditEventExistsForCriticalTransitionClaim, NoDoubleSpendInternalBalanceClaim
+from .ledger import (
+    AuditEventExistsForCriticalTransitionClaim,
+    GlobalAssetConservationClaim,
+    NoOverReservedInternalAccountClaim,
+)
 from .withdrawal import NoUnauthorizedWithdrawalClaim
 
 
@@ -13,7 +17,8 @@ def default_claims() -> list[SecurityClaim]:
 
     return [
         NoUnauthorizedWithdrawalClaim(),
-        NoDoubleSpendInternalBalanceClaim(),
+        NoOverReservedInternalAccountClaim(),
+        GlobalAssetConservationClaim(),
         NoDepositCreditedBeforeFinalityClaim(),
         NoSigningAfterWalletFreezeClaim(),
         CapabilityDelegationMonotonicityClaim(),
@@ -26,7 +31,8 @@ __all__ = [
     'AuditEventExistsForCriticalTransitionClaim',
     'CapabilityDelegationMonotonicityClaim',
     'NoDepositCreditedBeforeFinalityClaim',
-    'NoDoubleSpendInternalBalanceClaim',
+    'GlobalAssetConservationClaim',
+    'NoOverReservedInternalAccountClaim',
     'NoSigningAfterWalletFreezeClaim',
     'NoUnauthorizedWithdrawalClaim',
     'RevokedCapabilityClaim',

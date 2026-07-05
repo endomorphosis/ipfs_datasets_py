@@ -18,6 +18,7 @@ BIDI_CONTROLS = {*range(0x202A, 0x202F), *range(0x2066, 0x206A)}
 ZERO_WIDTH_CONTROLS = {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF}
 NONSTANDARD_LINE_SEPARATORS = {0x2028, 0x2029}
 ALLOWED_CONTROLS = {0x09, 0x0A, 0x0D}
+TEXT_SUFFIXES = {'.py', '.yml', '.yaml', '.md', '.json', '.txt', '.ts', '.sh'}
 
 
 
@@ -42,6 +43,8 @@ def scan_file(path: Path) -> list[str]:
         return [f'{path}: invalid UTF-8 ({exc})']
     if b'\r\n' in raw:
         errors.append(f'{path}: CRLF newlines are not allowed')
+    if path.suffix in TEXT_SUFFIXES and raw and b'\n' not in raw:
+        errors.append(f'{path}: expected LF newlines in text file')
     for index, character in enumerate(text, start=1):
         codepoint = ord(character)
         if codepoint in BIDI_CONTROLS:

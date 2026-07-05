@@ -45,6 +45,14 @@ jobs:
       - name: Compile focused security verification sources
         run: |
           python -m compileall ipfs_datasets_py/logic/security_models scripts/ops/security_verification tests/logic/security_models/crypto_exchange
+      - name: Parse workflow YAML
+        run: |
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+          yaml.safe_load(Path(".github/workflows/security-logic-ci.yml").read_text(encoding="utf-8"))
+          print("yaml ok")
+          PY
       - name: Run focused security model tests
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -75,6 +83,8 @@ jobs:
             --example \
             --strict-validation \
             --require-reviewed-evidence \
+            --emit-proof-receipts \
+            --accepted-assumptions A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 \
             --out proof_report_reviewed.json
       - name: Run proof CLI in fail-closed mode
         env:

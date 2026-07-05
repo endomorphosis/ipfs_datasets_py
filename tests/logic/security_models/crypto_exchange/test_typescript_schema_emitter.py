@@ -15,5 +15,7 @@ def test_typescript_schema_emitter_outputs_runtime_guard_and_metadata() -> None:
     assert 'export function validateProofReceipt' in rendered
     assert 'export function validateProofReportStrict' in rendered
     assert 'export function validateProofReceiptStrict' in rendered
+    assert 'export function verifyProofReceiptSchemaOnly' in rendered
+    assert 'export function verifyProofReceiptProofCritical' in rendered
     assert 'export function verifyProofReceipt' in rendered
     assert 'canonicalizeJson' in rendered

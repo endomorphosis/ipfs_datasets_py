@@ -7,8 +7,6 @@
   "claim_version": "1.0",
   "compiler_cid": "cid:compiler",
   "counterexample": null,
-  "created_at": "2026-07-05T00:00:00+00:00",
-  "deterministic_payload_cid": "bafkreiccsrguibs6lfqq2zhhysip6jrhxyyx5l7dwpwdaji5cpnoqepw2u",
   "evidence_refs": [
     {
       "kind": "test_fixture",
@@ -18,10 +16,8 @@
       "review_status": "trusted_fixture"
     }
   ],
-  "generated_at": "2026-07-05T00:00:00+00:00",
   "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
   "model_schema_version": "security-model-ir/v1",
-  "nondeterministic_report_cid": "bafkreiflqcnor26f5llozsts3eeho3s7bbtqchuob7ppil2aamgxj6qndm",
   "proof_or_trace_cid": "cid:proof",
   "prover": "z3",
   "reason_unknown": null,

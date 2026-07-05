@@ -46,6 +46,14 @@ def test_fail_on_disproof_returns_nonzero(monkeypatch) -> None:
     assert main(['--example', '--fail-on', 'disproof']) == 1
 
 
+def test_fail_on_not_modeled_critical_returns_nonzero(monkeypatch) -> None:
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: [_report(status='NOT_MODELED', solver_result='not-modeled')],
+    )
+    assert main(['--example', '--fail-on', 'not-modeled-critical']) == 1
+
+
 
 def test_require_real_ergoai_rejects_simulated_dependency(monkeypatch) -> None:
     model = deepcopy(example_minimal_exchange_model())
@@ -174,6 +182,8 @@ def test_cli_emits_proof_receipts_and_counterexamples(tmp_path: Path, monkeypatc
     assert main([
         '--example',
         '--emit-proof-receipts',
+        '--accepted-assumptions',
+        'A4',
         '--emit-counterexamples-dir',
         str(counterexamples_dir),
         '--out',
@@ -181,7 +191,27 @@ def test_cli_emits_proof_receipts_and_counterexamples(tmp_path: Path, monkeypatc
     ]) == 0
     payload = json.loads(report_path.read_text(encoding='utf-8'))
     assert 'proof_receipts' in payload
+    assert payload['coverage']['total_claims'] == 2
     assert (counterexamples_dir / 'claim:test.json').exists()
+
+
+def test_cli_rejects_receipt_emission_without_explicit_or_unsafe_assumptions(tmp_path: Path) -> None:
+    report_path = tmp_path / 'proof_report.json'
+    with pytest.raises(SystemExit):
+        main(['--example', '--emit-proof-receipts', '--out', str(report_path)])
+
+
+def test_cli_coverage_thresholds_fail_when_modeled_or_proved_counts_are_too_low(monkeypatch) -> None:
+    reports = [
+        _report(claim_id='no_unauthorized_withdrawal'),
+        _report(claim_id='global_asset_conservation', status='NOT_MODELED', solver_result='not-modeled'),
+    ]
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: reports,
+    )
+    assert main(['--example', '--min-modeled-blocking-claims', '2']) == 1
+    assert main(['--example', '--min-proved-blocking-claims', '2']) == 1
 
 
 

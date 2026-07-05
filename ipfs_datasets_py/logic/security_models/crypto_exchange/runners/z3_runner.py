@@ -114,14 +114,22 @@ class Z3Runner(BaseSecurityRunner):
             declaration.name(): str(solver_model[declaration])
             for declaration in solver_model.decls()
         }
+        artifact = compilation.compiler_artifact
         return CounterexampleReport(
             claim_id=claim.claim_id,
             message='Z3 found a satisfying violation trace.',
             witness=witness,
+            violating_event_ids=[str(item) for item in artifact.get('violating_event_ids', [])],
+            withdrawal_ids=[str(item) for item in artifact.get('withdrawal_ids', artifact.get('violating_withdrawals', []))],
+            deposit_ids=[str(item) for item in artifact.get('deposit_ids', [])],
+            txids=[str(item) for item in artifact.get('txids', [])],
+            capability_ids=[str(item) for item in artifact.get('capability_ids', artifact.get('violations', [])) if item is not None],
+            wallet_ids=[str(item) for item in artifact.get('wallet_ids', [])],
+            account_ids=[str(item) for item in artifact.get('account_ids', artifact.get('overdrawn_accounts', []))],
             source_facts=self._source_facts(model, compilation),
             evidence_refs=list(compilation.evidence_refs),
             soundness_notes=list(compilation.soundness_notes),
-            compiler_artifact=dict(compilation.compiler_artifact),
+            compiler_artifact=dict(artifact),
         )
 
     def _report(

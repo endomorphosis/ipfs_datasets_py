@@ -65,7 +65,7 @@ def test_disproof_suite_finds_expected_counterexamples_and_fuzzed_mutations(
     assert (
         scenarios['double_spend_reservation_gap']['matched_claims']
         == [
-            'no_double_spend_internal_balance'
+            'no_over_reserved_internal_account'
         ]
     )
     assert scenarios['deposit_before_finality_gap']['matched_claims'] == [

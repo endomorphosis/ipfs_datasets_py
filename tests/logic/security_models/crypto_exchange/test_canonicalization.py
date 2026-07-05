@@ -27,4 +27,4 @@ def test_canonicalization_matches_committed_test_vector() -> None:
     model = example_minimal_exchange_model()
     assert canonicalize_ir(model).decode('utf-8') == (
         TEST_VECTOR_DIR / 'security_model_minimal.canonical.json'
-    ).read_text(encoding='utf-8')
+    ).read_text(encoding='utf-8').rstrip('\n')

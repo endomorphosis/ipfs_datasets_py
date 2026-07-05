@@ -146,6 +146,10 @@ class ProofReport:
         return report
 
     @classmethod
+    def from_untrusted_dict(cls, data: Mapping[str, Any]) -> 'ProofReport':
+        return cls.from_dict(_validate_untrusted_report_payload(data))
+
+    @classmethod
     def content_cid(cls, payload: Mapping[str, Any]) -> str:
         return calculate_artifact_cid(dict(payload))
 
@@ -168,6 +172,48 @@ def _require_non_negative_int(field_name: str, value: Any) -> None:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError(f'{field_name} must be a non-negative integer when present')
 
+
+def _validate_untrusted_report_payload(data: Mapping[str, Any]) -> dict[str, Any]:
+    if not isinstance(data, Mapping):
+        raise ValueError('proof report payload must be a mapping')
+    payload = dict(data)
+    required = {
+        'schema_version',
+        'claim_id',
+        'claim_version',
+        'model_cid',
+        'model_schema_version',
+        'status',
+        'prover',
+        'solver_name',
+        'solver_result',
+        'proof_or_trace_cid',
+        'assumptions',
+        'compiler_cid',
+        'risk',
+        'signatures',
+        'evidence_refs',
+        'soundness_notes',
+        'generated_at',
+    }
+    allowed = {field_name for field_name in ProofReport.__dataclass_fields__}
+    unknown = sorted(set(payload) - allowed)
+    if unknown:
+        raise ValueError(f'Unknown proof report field(s): {", ".join(unknown)}')
+    missing = sorted(field_name for field_name in required if field_name not in payload)
+    if missing:
+        raise ValueError(f'Missing required proof report field(s): {", ".join(missing)}')
+    if not isinstance(payload.get('assumptions'), list):
+        raise ValueError('assumptions must be a list')
+    if not isinstance(payload.get('signatures'), list):
+        raise ValueError('signatures must be a list')
+    if not isinstance(payload.get('evidence_refs'), list):
+        raise ValueError('evidence_refs must be a list')
+    if not isinstance(payload.get('soundness_notes'), list):
+        raise ValueError('soundness_notes must be a list')
+    if payload.get('counterexample') is not None and not isinstance(payload.get('counterexample'), Mapping):
+        raise ValueError('counterexample must be a mapping when present')
+    return payload
 
 
 def _validate_proof_report_instance(report: ProofReport) -> None:
@@ -205,6 +251,6 @@ def _validate_proof_report_instance(report: ProofReport) -> None:
 def validate_proof_report(report: ProofReport | Mapping[str, Any]) -> ProofReport:
     """Validate *report* and return a normalized :class:`ProofReport`."""
 
-    normalized = report if isinstance(report, ProofReport) else ProofReport.from_dict(report)
+    normalized = report if isinstance(report, ProofReport) else ProofReport.from_untrusted_dict(report)
     _validate_proof_report_instance(normalized)
     return normalized

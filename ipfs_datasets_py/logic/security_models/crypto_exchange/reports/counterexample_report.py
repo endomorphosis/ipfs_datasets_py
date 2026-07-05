@@ -14,6 +14,13 @@ class CounterexampleReport:
     message: str
     witness: dict[str, Any] = field(default_factory=dict)
     trace: list[dict[str, Any]] = field(default_factory=list)
+    violating_event_ids: list[str] = field(default_factory=list)
+    withdrawal_ids: list[str] = field(default_factory=list)
+    deposit_ids: list[str] = field(default_factory=list)
+    txids: list[str] = field(default_factory=list)
+    capability_ids: list[str] = field(default_factory=list)
+    wallet_ids: list[str] = field(default_factory=list)
+    account_ids: list[str] = field(default_factory=list)
     source_facts: list[dict[str, Any]] = field(default_factory=list)
     evidence_refs: list[dict[str, Any]] = field(default_factory=list)
     soundness_notes: list[str] = field(default_factory=list)

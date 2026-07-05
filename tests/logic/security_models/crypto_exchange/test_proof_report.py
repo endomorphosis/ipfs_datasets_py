@@ -42,7 +42,7 @@ def _report(**overrides) -> ProofReport:
 def test_proof_report_round_trip_and_deterministic_payload_cid() -> None:
     report = _report(generated_at='2026-07-05T00:00:00+00:00')
     same_payload_other_timestamp = _report(generated_at='2026-07-05T00:00:30+00:00')
-    restored = ProofReport.from_dict(report.to_dict())
+    restored = ProofReport.from_untrusted_dict(report.to_dict())
     assert restored.to_dict() == report.to_dict()
     assert validate_proof_report(restored) is restored
     assert report.deterministic_payload_cid == same_payload_other_timestamp.deterministic_payload_cid
@@ -60,7 +60,14 @@ def test_proof_report_from_dict_rejects_tampered_cids(field: str, value: str, me
     payload = _report(generated_at='2026-07-05T00:00:00+00:00').to_dict()
     payload[field] = value
     with pytest.raises(ValueError, match=message):
-        ProofReport.from_dict(payload)
+        ProofReport.from_untrusted_dict(payload)
+
+
+def test_proof_report_from_untrusted_dict_rejects_unknown_fields() -> None:
+    payload = _report().to_dict()
+    payload['unknown_field'] = True
+    with pytest.raises(ValueError, match='Unknown proof report field'):
+        ProofReport.from_untrusted_dict(payload)
 
 
 @pytest.mark.parametrize(

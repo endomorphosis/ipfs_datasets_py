@@ -70,12 +70,11 @@ def test_bad_model_finds_missing_audit_for_critical_transition() -> None:
 
 def test_bad_withdrawal_counterexample_names_violating_withdrawal_id() -> None:
     model = deepcopy(example_minimal_exchange_model())
-    broadcast = next(event for event in model.events if event.get('event') == 'withdrawal_broadcast')
-    broadcast['authorized'] = False
+    model.events = [event for event in model.events if event.get('event') != 'withdrawal_approved']
     report = Z3Runner().run_claim(NoUnauthorizedWithdrawalClaim(), model)
     assert report.status == 'DISPROVED'
     assert report.counterexample is not None
-    assert report.counterexample['compiler_artifact']['violating_withdrawals'] == ['withdrawal:1']
+    assert report.counterexample['compiler_artifact']['withdrawal_ids'] == ['withdrawal:1']
     assert any(fact.get('withdrawal_id') == 'withdrawal:1' for fact in report.counterexample['source_facts'])
 
 
@@ -129,9 +128,11 @@ def test_default_claims_return_not_modeled_when_required_domains_are_missing() -
     model.events = []
     model.capabilities = []
     model.accounts = []
+    model.metadata.pop('ledger_totals', None)
     reports = prove_claims(model, ['z3'])
     status_by_claim = {report.claim_id: report.status for report in reports}
-    assert status_by_claim['no_double_spend_internal_balance'] == 'NOT_MODELED'
+    assert status_by_claim['no_over_reserved_internal_account'] == 'NOT_MODELED'
+    assert status_by_claim['global_asset_conservation'] == 'NOT_MODELED'
     assert status_by_claim['no_deposit_before_finality'] == 'NOT_MODELED'
     assert status_by_claim['no_signing_request_after_wallet_freeze'] == 'NOT_MODELED'
     assert status_by_claim['capability_delegation_no_authority_increase'] == 'NOT_MODELED'

@@ -62,5 +62,12 @@ def test_model_cid_is_stable_with_cid_utility_present(monkeypatch) -> None:
 def test_proof_report_deterministic_cid_matches_committed_test_vector() -> None:
     payload = json.loads((TEST_VECTOR_DIR / 'proof_report_minimal.json').read_text(encoding='utf-8'))
     expected_cid = (TEST_VECTOR_DIR / 'proof_report_minimal.deterministic_cid.txt').read_text(encoding='utf-8').strip()
-    report = ProofReport.from_dict(payload)
+    report = ProofReport.from_untrusted_dict(payload)
     assert report.deterministic_payload_cid == expected_cid
+
+
+def test_proof_report_nondeterministic_cid_matches_committed_test_vector() -> None:
+    payload = json.loads((TEST_VECTOR_DIR / 'proof_report_minimal.json').read_text(encoding='utf-8'))
+    expected_cid = (TEST_VECTOR_DIR / 'proof_report_minimal.nondeterministic_cid.txt').read_text(encoding='utf-8').strip()
+    report = ProofReport.from_untrusted_dict(payload)
+    assert report.nondeterministic_report_cid == expected_cid

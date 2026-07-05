@@ -77,6 +77,27 @@ KNOWN_DISABLED_PROVER_TARGETS = {
     'tla',
 }
 ALLOWED_PROVER_TARGETS = IMPLEMENTED_PROVER_TARGETS | KNOWN_DISABLED_PROVER_TARGETS
+KNOWN_EVENT_TYPES = {
+    'withdrawal_requested',
+    'withdrawal_approved',
+    'withdrawal_broadcast',
+    'withdrawal_cancelled',
+    'deposit_observed',
+    'deposit_finalized',
+    'deposit_credited',
+    'wallet_frozen',
+    'wallet_unfrozen',
+    'signing_request',
+    'capability_revoked',
+    'capability_reinstated',
+    'privileged_action',
+    'audit_logged',
+    'balance_reserved',
+    'balance_released',
+    'nonce_reserved',
+    'nonce_consumed',
+    'chain_reorg_detected',
+}
 EVIDENCE_KINDS = {
     'source_code',
     'openapi',
@@ -141,6 +162,13 @@ class SecurityModelIR:
     def from_dict(cls, data: Mapping[str, Any]) -> 'SecurityModelIR':
         allowed = {item.name for item in fields(cls)}
         validated = validate_ir_payload(data, strict=False)
+        payload = {name: validated[name] for name in allowed if name in validated}
+        return cls(**payload)
+
+    @classmethod
+    def from_untrusted_dict(cls, data: Mapping[str, Any], *, strict: bool = True) -> 'SecurityModelIR':
+        allowed = {item.name for item in fields(cls)}
+        validated = validate_ir_payload(data, strict=strict)
         payload = {name: validated[name] for name in allowed if name in validated}
         return cls(**payload)
 
@@ -402,6 +430,18 @@ def _validate_record_evidence(records: list[dict[str, Any]], collection_name: st
 
 
 def _validate_metadata(metadata: Mapping[str, Any]) -> None:
+    ledger_totals = metadata.get('ledger_totals')
+    if ledger_totals is not None:
+        if not isinstance(ledger_totals, Mapping):
+            raise ValueError('metadata.ledger_totals must be a mapping')
+        for bucket_name in ('customer_liabilities', 'custody_assets', 'pending_settlements', 'known_losses'):
+            bucket = ledger_totals.get(bucket_name, {})
+            if not isinstance(bucket, Mapping):
+                raise ValueError(f'metadata.ledger_totals.{bucket_name} must be a mapping')
+            for asset_id, value in bucket.items():
+                if not isinstance(asset_id, str) or not asset_id.strip():
+                    raise ValueError(f'metadata.ledger_totals.{bucket_name} keys must be non-empty asset ids')
+                _validate_non_negative_int(f'metadata.ledger_totals.{bucket_name}.{asset_id}', value)
     autoformalization = metadata.get('autoformalization')
     if not isinstance(autoformalization, Mapping):
         return
@@ -525,6 +565,16 @@ def _validate_references(normalized: SecurityModelIR) -> None:
         current = state_machine.get('current')
         if current is not None and current not in states:
             raise ValueError(f'state_machine {state_machine_id}.current must be present in state_machine.states')
+        transitions = state_machine.get('transitions', [])
+        if transitions:
+            if not isinstance(transitions, list):
+                raise ValueError(f'state_machine {state_machine_id}.transitions must be a list')
+            for index, transition in enumerate(transitions):
+                if not isinstance(transition, Mapping):
+                    raise ValueError(f'state_machine {state_machine_id}.transitions[{index}] must be a mapping')
+                event_name = transition.get('event')
+                if event_name not in KNOWN_EVENT_TYPES:
+                    raise ValueError(f'state_machine {state_machine_id}.transitions[{index}] references unsupported event: {event_name}')
 
 
 
@@ -547,6 +597,11 @@ def _validate_event_requirements(events: list[dict[str, Any]]) -> None:
                 raise ValueError(f'Duplicate event id: {event_id}')
             seen_event_ids.add(event_id)
         event_name = event.get('event')
+        if not isinstance(event_name, str) or not event_name.strip():
+            raise ValueError(f'event {event_id} must include a non-empty event name')
+        if event_name not in KNOWN_EVENT_TYPES:
+            if not bool(event.get('custom', False)) or not isinstance(event.get('description'), str) or not event['description'].strip():
+                raise ValueError(f'event {event_id} uses unknown event type {event_name!r} without custom modeling metadata')
         if event_name in {'withdrawal_requested', 'withdrawal_approved', 'withdrawal_broadcast', 'withdrawal_cancelled'}:
             if _event_identity(event, 'withdrawal_id', 'txid') is None:
                 raise ValueError(f'{event_name} events require withdrawal_id or txid')

@@ -33,6 +33,32 @@ class ProofReceipt:
     def from_dict(cls, data: Mapping[str, Any]) -> 'ProofReceipt':
         return cls(**dict(data))
 
+    @classmethod
+    def from_untrusted_dict(cls, data: Mapping[str, Any]) -> 'ProofReceipt':
+        if not isinstance(data, Mapping):
+            raise ValueError('proof receipt payload must be a mapping')
+        payload = dict(data)
+        required = {
+            'schema_version',
+            'report_schema_version',
+            'claim_id',
+            'model_cid',
+            'proof_report_cid',
+            'accepted_assumptions',
+            'verifier',
+            'verifier_version',
+            'valid',
+            'metadata',
+        }
+        allowed = {field_name for field_name in cls.__dataclass_fields__}
+        unknown = sorted(set(payload) - allowed)
+        if unknown:
+            raise ValueError(f'Unknown proof receipt field(s): {", ".join(unknown)}')
+        missing = sorted(field_name for field_name in required if field_name not in payload)
+        if missing:
+            raise ValueError(f'Missing required proof receipt field(s): {", ".join(missing)}')
+        return cls(**payload)
+
     @staticmethod
     def validate_report(
         report: ProofReport,
@@ -122,7 +148,7 @@ def _require_string_list(field_name: str, value: Any) -> None:
 def validate_proof_receipt(receipt: ProofReceipt | Mapping[str, Any]) -> ProofReceipt:
     """Validate *receipt* and return a normalized :class:`ProofReceipt`."""
 
-    normalized = receipt if isinstance(receipt, ProofReceipt) else ProofReceipt.from_dict(receipt)
+    normalized = receipt if isinstance(receipt, ProofReceipt) else ProofReceipt.from_untrusted_dict(receipt)
     _require_non_empty_string('schema_version', normalized.schema_version)
     _require_non_empty_string('report_schema_version', normalized.report_schema_version)
     _require_non_empty_string('claim_id', normalized.claim_id)

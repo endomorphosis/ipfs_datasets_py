@@ -21,8 +21,15 @@ def _remove_withdrawal_identity(model):
 
 
 def _remove_terminal_conflict_marker(model):
-    event = next(item for item in model.events if item['event'] == 'withdrawal_cancelled')
-    event.pop('allow_terminal_conflict', None)
+    model.events.append(
+        {
+            'id': 'event:withdrawal_cancelled:conflict',
+            'event': 'withdrawal_cancelled',
+            'withdrawal_id': 'withdrawal:1',
+            'wallet_id': 'wallet:user_alice',
+            'timestamp': 11,
+        }
+    )
 
 
 @pytest.mark.parametrize(

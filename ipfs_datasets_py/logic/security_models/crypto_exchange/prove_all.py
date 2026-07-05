@@ -13,9 +13,17 @@ from .claims import default_claims
 from .extractors import SourceCodeExtractor
 from .ir.cid import calculate_model_cid
 from .ir.examples import example_minimal_exchange_model
-from .ir.schema import SecurityModelIR, evidence_review_statuses, validate_ir, validate_ir_payload
+from .ir.schema import DEFAULT_ASSUMPTION_REGISTRY, SecurityModelIR, evidence_review_statuses, validate_ir
 from .reports.proof_receipt import ProofReceipt
-from .reports.proof_report import PROOF_RISK_BLOCKING, PROOF_RISK_HIGH, PROOF_STATUS_DISPROVED, PROOF_STATUS_PROVED, PROOF_STATUS_UNKNOWN, ProofReport
+from .reports.proof_report import (
+    PROOF_RISK_BLOCKING,
+    PROOF_RISK_HIGH,
+    PROOF_STATUS_DISPROVED,
+    PROOF_STATUS_NOT_MODELED,
+    PROOF_STATUS_PROVED,
+    PROOF_STATUS_UNKNOWN,
+    ProofReport,
+)
 from .runners.z3_runner import Z3Runner
 
 RUNNER_FACTORIES = {
@@ -23,7 +31,17 @@ RUNNER_FACTORIES = {
 }
 
 DEFAULT_PROVERS = ('z3',)
-FAIL_POLICIES = {'disproof', 'unknown-critical'}
+FAIL_POLICIES = {'disproof', 'unknown-critical', 'not-modeled-critical'}
+CLAIM_DOMAINS = {
+    'no_unauthorized_withdrawal': 'withdrawals',
+    'no_over_reserved_internal_account': 'ledger',
+    'global_asset_conservation': 'ledger',
+    'no_deposit_before_finality': 'deposits',
+    'no_signing_request_after_wallet_freeze': 'hsm',
+    'capability_delegation_no_authority_increase': 'capabilities',
+    'revoked_capability_no_future_authorization': 'capabilities',
+    'audit_event_exists_for_critical_transition': 'audit',
+}
 
 
 
@@ -64,8 +82,9 @@ def _load_model(args: argparse.Namespace) -> SecurityModelIR:
     else:
         payload = json.loads(Path(args.model).read_text(encoding='utf-8'))
         if getattr(args, 'strict_validation', False):
-            validate_ir_payload(payload, strict=True)
-        model = SecurityModelIR.from_dict(payload)
+            model = SecurityModelIR.from_untrusted_dict(payload, strict=True)
+        else:
+            model = SecurityModelIR.from_dict(payload)
     return validate_ir(model)
 
 
@@ -145,6 +164,8 @@ def _should_fail(report: ProofReport, *, fail_policies: set[str], require_review
         return True
     if 'unknown-critical' in fail_policies and report.status == PROOF_STATUS_UNKNOWN and report.risk == PROOF_RISK_BLOCKING:
         return True
+    if 'not-modeled-critical' in fail_policies and report.status == PROOF_STATUS_NOT_MODELED and report.risk == PROOF_RISK_BLOCKING:
+        return True
     review_statuses = evidence_review_statuses(report.evidence_refs)
     if (
         require_reviewed_evidence
@@ -168,7 +189,12 @@ def _emit_counterexamples(reports: list[ProofReport], target_dir: str) -> None:
 
 
 
-def _build_proof_receipts(reports: list[ProofReport]) -> list[ProofReceipt]:
+def _build_proof_receipts(
+    reports: list[ProofReport],
+    *,
+    accepted_assumptions: list[str] | None,
+    unsafe_accept_report_assumptions: bool,
+) -> list[ProofReceipt]:
     receipts: list[ProofReceipt] = []
     for report in reports:
         try:
@@ -177,16 +203,18 @@ def _build_proof_receipts(reports: list[ProofReport]) -> list[ProofReceipt]:
                     report,
                     verifier='python-proof-consumer-seed',
                     verifier_version='0.1.0',
-                    accepted_assumptions=report.assumptions,
+                    accepted_assumptions=accepted_assumptions,
+                    allow_report_assumptions=unsafe_accept_report_assumptions,
                 )
             )
         except ValueError as exc:
+            fallback_assumptions = accepted_assumptions or list(report.assumptions)
             receipts.append(
                 ProofReceipt(
                     claim_id=report.claim_id,
                     model_cid=report.model_cid,
                     proof_report_cid=report.cid,
-                    accepted_assumptions=list(report.assumptions),
+                    accepted_assumptions=fallback_assumptions,
                     verifier='python-proof-consumer-seed',
                     verifier_version='0.1.0',
                     valid=False,
@@ -195,6 +223,49 @@ def _build_proof_receipts(reports: list[ProofReport]) -> list[ProofReceipt]:
                 )
             )
     return receipts
+
+
+def _load_accepted_assumptions(args: argparse.Namespace) -> list[str] | None:
+    if args.accepted_assumptions and args.accepted_assumptions_file:
+        raise ValueError('choose only one accepted-assumptions source')
+    if args.accepted_assumptions:
+        assumptions = [item.strip() for item in args.accepted_assumptions.split(',') if item.strip()]
+    elif args.accepted_assumptions_file:
+        payload = json.loads(Path(args.accepted_assumptions_file).read_text(encoding='utf-8'))
+        if not isinstance(payload, list):
+            raise ValueError('accepted assumptions file must contain a JSON list')
+        assumptions = []
+        for item in payload:
+            if not isinstance(item, str) or not item.strip():
+                raise ValueError('accepted assumptions file entries must be non-empty strings')
+            assumptions.append(item.strip())
+    else:
+        return None
+    unknown = sorted(item for item in assumptions if item not in DEFAULT_ASSUMPTION_REGISTRY)
+    if unknown:
+        raise ValueError(f'unknown accepted assumptions: {", ".join(unknown)}')
+    return assumptions
+
+
+def _coverage_summary(reports: list[ProofReport]) -> dict[str, object]:
+    blocking_reports = [report for report in reports if report.risk == PROOF_RISK_BLOCKING]
+    domains_modeled = {domain: False for domain in sorted(set(CLAIM_DOMAINS.values()))}
+    for report in reports:
+        domain = CLAIM_DOMAINS.get(report.claim_id)
+        if domain and report.status != PROOF_STATUS_NOT_MODELED:
+            domains_modeled[domain] = True
+    return {
+        'total_claims': len(reports),
+        'proved': sum(report.status == PROOF_STATUS_PROVED for report in reports),
+        'disproved': sum(report.status == PROOF_STATUS_DISPROVED for report in reports),
+        'unknown': sum(report.status == PROOF_STATUS_UNKNOWN for report in reports),
+        'not_modeled': sum(report.status == PROOF_STATUS_NOT_MODELED for report in reports),
+        'blocking_claims': len(blocking_reports),
+        'blocking_modeled': sum(report.status != PROOF_STATUS_NOT_MODELED for report in blocking_reports),
+        'blocking_proved': sum(report.status == PROOF_STATUS_PROVED for report in blocking_reports),
+        'blocking_not_modeled': sum(report.status == PROOF_STATUS_NOT_MODELED for report in blocking_reports),
+        'domains_modeled': domains_modeled,
+    }
 
 
 
@@ -224,8 +295,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--require-reviewed-evidence', action='store_true', help='Fail blocking PROVED claims backed only by heuristic evidence')
     parser.add_argument('--emit-counterexamples-dir', help='Directory to emit report counterexamples as JSON files')
     parser.add_argument('--emit-proof-receipts', action='store_true', help='Emit proof-receipt validation artifacts alongside reports')
+    parser.add_argument('--accepted-assumptions', help='Comma-separated assumption ids accepted by the proof consumer')
+    parser.add_argument('--accepted-assumptions-file', help='Path to a JSON list of accepted assumption ids')
+    parser.add_argument('--unsafe-accept-report-assumptions', action='store_true', help='Unsafe/test-only fallback: derive accepted assumptions from each report')
     parser.add_argument('--strict-validation', action='store_true', help='Fail fast if deep security IR validation fails before proving')
     parser.add_argument('--explain-soundness', action='store_true', help='Include assumptions, evidence status, and soundness notes in output')
+    parser.add_argument('--min-modeled-blocking-claims', type=int, default=0, help='Require at least N blocking claims to be modeled')
+    parser.add_argument('--min-proved-blocking-claims', type=int, default=0, help='Require at least N blocking claims to be proved')
     parser.add_argument('--provers', default=','.join(DEFAULT_PROVERS), help='Comma-separated prover list')
     args = parser.parse_args(argv)
     if sum(bool(value) for value in (args.example, args.model, args.source_path)) > 1:
@@ -234,6 +310,7 @@ def main(argv: list[str] | None = None) -> int:
         model = _load_model(args)
         provers = _normalize_provers(args.provers.split(','))
         fail_policies = _normalize_fail_policies(args.fail_on)
+        accepted_assumptions = _load_accepted_assumptions(args)
     except ValueError as exc:
         parser.error(str(exc))
     if args.strict_validation:
@@ -252,14 +329,25 @@ def main(argv: list[str] | None = None) -> int:
             print(f'error: {violation}', file=sys.stderr)
         return 2
     reports = prove_claims(model, provers)
+    coverage = _coverage_summary(reports)
     if args.emit_counterexamples_dir:
         _emit_counterexamples(reports, args.emit_counterexamples_dir)
     payload: dict[str, object] = {
         'model_id': model.model_id,
         'reports': [report.to_dict() for report in reports],
+        'coverage': coverage,
     }
     if args.emit_proof_receipts:
-        payload['proof_receipts'] = [receipt.to_dict() for receipt in _build_proof_receipts(reports)]
+        if accepted_assumptions is None and not args.unsafe_accept_report_assumptions:
+            parser.error('--emit-proof-receipts requires --accepted-assumptions, --accepted-assumptions-file, or --unsafe-accept-report-assumptions')
+        payload['proof_receipts'] = [
+            receipt.to_dict()
+            for receipt in _build_proof_receipts(
+                reports,
+                accepted_assumptions=accepted_assumptions,
+                unsafe_accept_report_assumptions=args.unsafe_accept_report_assumptions,
+            )
+        ]
     if args.explain_soundness:
         payload['soundness_summary'] = [_soundness_summary(report) for report in reports]
     rendered = json.dumps(payload, indent=2, sort_keys=True)
@@ -275,6 +363,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         for report in reports
     )
+    has_failures = has_failures or coverage['blocking_modeled'] < args.min_modeled_blocking_claims
+    has_failures = has_failures or coverage['blocking_proved'] < args.min_proved_blocking_claims
     return 1 if has_failures else 0
 
 

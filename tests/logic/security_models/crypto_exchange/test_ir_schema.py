@@ -5,6 +5,7 @@ import pytest
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import (
     DEFAULT_THREAT_MODEL_ASSUMPTIONS,
+    SecurityModelIR,
     validate_ir_payload,
     validate_ir,
 )
@@ -41,3 +42,10 @@ def test_validate_ir_payload_strict_rejects_invalid_top_level_payloads(mutator, 
     mutator(payload)
     with pytest.raises(ValueError, match=message):
         validate_ir_payload(payload, strict=True)
+
+
+def test_from_untrusted_dict_uses_strict_payload_validation() -> None:
+    payload = deepcopy(example_minimal_exchange_model().to_dict())
+    payload['proover_targets'] = ['z3']
+    with pytest.raises(ValueError, match='Unknown top-level SecurityModelIR field'):
+        SecurityModelIR.from_untrusted_dict(payload, strict=True)
