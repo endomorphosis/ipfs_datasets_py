@@ -2459,6 +2459,54 @@ def test_bridge_contract_promotes_packet_todo_guidance_fields() -> None:
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
 
 
+def test_bridge_contract_promotes_semantic_bundle_feature_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "compiler_guidance_feature_groups": {
+                "legal_ir_views": [
+                    "legal-ir-view:deontic.ir",
+                    "legal-ir-view:TDFOL.prover",
+                ],
+            },
+            "ranked_guidance_features": [
+                {
+                    "feature": "legal-ir-view:knowledge_graphs.neo4j_compat",
+                    "score": 2.0,
+                },
+                {
+                    "feature": "legal-ir-view-gap:underrepresented:CEC.native",
+                    "legal_ir_view_logit_magnitude": 1.5,
+                },
+            ],
+            "semantic_bundle_key": (
+                "compiler-guidance:repair_multiview_legal_ir_loss"
+            ),
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "bridge.contracts",
+            "vector_bundle": "score",
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+    } <= set(metadata["compiler_guidance_bridge_contract_target_lanes"])
+    assert target_distribution["knowledge_graphs.neo4j_compat"] > (
+        target_distribution["deontic.ir"]
+    )
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
+
+
 def test_bridge_contract_guidance_keeps_packet_120_primary_lanes() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _compiler_guidance_bridge_contract_metadata,

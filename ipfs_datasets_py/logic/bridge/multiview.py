@@ -1283,6 +1283,8 @@ def _compiler_guidance_bridge_contract_metadata(
             add_lane(mapping.get(key))
         for metric_name in _guidance_metric_names(mapping.get("target_metrics")):
             _add_metric_target_lanes(metric_name, add_lane=add_lane)
+        for lane, score in _guidance_feature_lane_items(mapping):
+            add_lane(lane, score)
         for key in (
             "legal_ir_underrepresented_components",
             "underrepresented_components",
@@ -1417,6 +1419,7 @@ def _compiler_guidance_routes(
         "compiler_guidance_route",
         "loss_name",
         "bridge_failure_name",
+        "semantic_bundle_key",
     )
     for mapping in (
         compiler_guidance,
@@ -1439,6 +1442,11 @@ def _compiler_guidance_routes(
                 _prefix, _separator, route = sample_text.partition(":")
                 if route.strip():
                     routes.add(route.strip())
+        bundle_key = str(mapping.get("semantic_bundle_key") or "").strip()
+        if bundle_key.startswith("compiler-guidance:"):
+            _prefix, _separator, route = bundle_key.partition(":")
+            if route.strip():
+                routes.add(route.strip())
     return routes
 
 
@@ -1538,6 +1546,80 @@ def _guidance_sequence(value: Any) -> tuple[Any, ...]:
     if isinstance(value, Sequence):
         return tuple(value)
     return (value,)
+
+
+def _guidance_feature_lane_items(
+    mapping: Mapping[str, Any],
+) -> tuple[tuple[str, float], ...]:
+    """Return legal-IR view lanes carried by compiler-guidance features."""
+
+    items: list[tuple[str, float]] = []
+    for key in (
+        "compiler_guidance_feature_groups",
+        "compiler_guidance_ranked_features",
+        "feature_groups",
+        "frame_features",
+        "ranked_guidance_features",
+        "top_family_features",
+    ):
+        items.extend(_guidance_feature_value_lane_items(mapping.get(key)))
+    return tuple(items)
+
+
+def _guidance_feature_value_lane_items(value: Any) -> tuple[tuple[str, float], ...]:
+    items: list[tuple[str, float]] = []
+    if isinstance(value, Mapping):
+        feature = value.get("feature")
+        if feature is not None:
+            lane = _lane_from_guidance_feature(feature)
+            if lane:
+                score = max(
+                    0.0,
+                    _float_or_zero(value.get("score")),
+                    _float_or_zero(value.get("legal_ir_view_logit_magnitude")),
+                    _float_or_zero(value.get("family_logit_magnitude")),
+                    _float_or_zero(value.get("embedding_weight_norm")),
+                )
+                items.append((lane, score or 1.0))
+            return tuple(items)
+        for nested in value.values():
+            items.extend(_guidance_feature_value_lane_items(nested))
+        return tuple(items)
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for nested in value:
+            items.extend(_guidance_feature_value_lane_items(nested))
+        return tuple(items)
+    lane = _lane_from_guidance_feature(value)
+    if lane:
+        items.append((lane, 1.0))
+    return tuple(items)
+
+
+def _lane_from_guidance_feature(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    normalized = text.lower()
+    if normalized.startswith("legal-ir-view-gap:"):
+        _prefix, _separator, remainder = text.partition(":")
+        direction, _separator, lane_text = remainder.partition(":")
+        if direction.strip().lower() != "underrepresented":
+            return ""
+        return _bridge_contract_lane_component(
+            _canonical_bridge_component_name(lane_text)
+        )
+    for prefix in (
+        "legal-ir-view:",
+        "legal_ir_view:",
+        "target-component:",
+        "target_component:",
+    ):
+        if normalized.startswith(prefix):
+            _prefix, _separator, lane_text = text.partition(":")
+            return _bridge_contract_lane_component(
+                _canonical_bridge_component_name(lane_text)
+            )
+    return _bridge_contract_lane_component(_canonical_bridge_component_name(text))
 
 
 def _guidance_distribution_items(value: Any) -> tuple[tuple[str, float], ...]:

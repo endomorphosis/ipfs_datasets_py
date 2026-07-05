@@ -172,6 +172,9 @@ class ModalFrameLogicBridgeAdapter:
         modal_ir = codec_result.modal_ir
         graph_data = codec_result.neo4j_graph_data
         graph_payload = graph_data.to_dict() if hasattr(graph_data, "to_dict") else {}
+        frame_audit_metadata = _frame_ontology_audit_metadata(modal_ir)
+        modal_payload = modal_ir.to_dict()
+        modal_metadata = dict(modal_payload.get("metadata") or {})
         triples = tuple(
             {
                 "object": str(triple.get("object", "")),
@@ -187,7 +190,7 @@ class ModalFrameLogicBridgeAdapter:
                 source_component="modal.compiler",
                 payload={
                     "decoded_text": codec_result.decoded_text,
-                    "modal_ir": modal_ir.to_dict(),
+                    "modal_ir": modal_payload,
                 },
                 metadata={
                     "canonical_hash": modal_ir.canonical_hash(),
@@ -200,6 +203,8 @@ class ModalFrameLogicBridgeAdapter:
                 source_component="modal.frame_logic",
                 payload={"triples": [dict(triple) for triple in triples]},
                 metadata={
+                    **frame_audit_metadata,
+                    **_frame_ontology_audit_metadata(modal_metadata),
                     "graph_id": modal_ir.frame_logic.graph_id or "",
                     "selected_frame": modal_ir.frame_logic.selected_frame or "",
                     "triple_count": len(triples),
@@ -292,6 +297,24 @@ class ModalFrameLogicBridgeAdapter:
         return proof_gate
 
 
+def _frame_ontology_audit_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
+    """Expose modal frame-ontology audit fields on the frame-logic view."""
+
+    allowed = {
+        "frame_ontology_audit_projected",
+        "frame_ontology_high_signal_term_audit_count",
+        "frame_ontology_high_signal_term_audit_terms",
+        "frame_ontology_term_audit_count",
+        "frame_ontology_term_audit_terms",
+        "frame_ontology_terms",
+    }
+    return {
+        str(key): value
+        for key, value in dict(metadata or {}).items()
+        if str(key) in allowed
+    }
+
+
 def _citation_from_modal_ir(modal_ir: Any) -> str:
     if getattr(modal_ir, "formulas", None):
         provenance = getattr(modal_ir.formulas[0], "provenance", None)
@@ -333,6 +356,26 @@ def _graph_view_alignment_metadata(metadata: Mapping[str, Any]) -> dict[str, Any
     return {
         str(key): value
         for key, value in dict(metadata or {}).items()
+        if str(key) in allowed
+    }
+
+
+def _frame_ontology_audit_metadata(modal_ir: Any) -> dict[str, Any]:
+    """Expose compact ontology-term audit summaries on the frame-logic view."""
+
+    metadata = getattr(modal_ir, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return {}
+    allowed = {
+        "frame_ontology_audit_projected",
+        "frame_ontology_high_signal_term_audit_count",
+        "frame_ontology_high_signal_term_audit_terms",
+        "frame_ontology_term_audit_count",
+        "frame_ontology_term_audit_terms",
+    }
+    return {
+        str(key): value
+        for key, value in metadata.items()
         if str(key) in allowed
     }
 
