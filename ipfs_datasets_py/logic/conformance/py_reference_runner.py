@@ -20,7 +20,7 @@ import time
 from typing import Any, Dict, Iterable, List, Optional
 
 
-RESULT_SCHEMA_VERSION = "2026-07-03"
+RESULT_SCHEMA_VERSION = "2026-07-05"
 SUBSYSTEMS = {
     "propositional",
     "fol",
@@ -128,15 +128,20 @@ def run_vector(vector: Dict[str, Any]) -> Dict[str, Any]:
             }
         duration_ms = max(0.0, (time.perf_counter() - start) * 1000.0)
         expected = vector.get("expected", {})
+        artifacts = structured_artifacts_for_vector(vector, outcome)
         return {
             "vectorId": vector["id"],
             "subsystem": vector["subsystem"],
+            "inputType": vector.get("inputType"),
             "status": outcome["status"],
             "reason": outcome["reason"],
             "backendMode": backend_mode(vector, outcome),
             "proverId": outcome["proverId"],
             "durationMs": duration_ms,
-            "modelHash": outcome.get("modelHash"),
+            "modelHash": artifacts.get("modelHash") or outcome.get("modelHash"),
+            "countermodelHash": artifacts.get("countermodelHash"),
+            "proofHash": artifacts.get("proofHash"),
+            "derivationHash": artifacts.get("derivationHash"),
             "metadata": {
                 "expected": expected.get("status"),
                 "acceptableReasons": expected.get("acceptableReasons", []),
@@ -148,6 +153,7 @@ def run_vector(vector: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "vectorId": vector.get("id", "<missing>"),
             "subsystem": vector.get("subsystem", "unknown"),
+            "inputType": vector.get("inputType"),
             "status": "error",
             "reason": "error",
             "backendMode": backend_mode(vector, None),
@@ -443,7 +449,7 @@ def evaluate_tdfol(payload: Dict[str, Any]) -> Dict[str, Any]:
         "status": "unknown",
         "reason": "unknown",
         "proverId": "tdfol-native",
-        "metadata": {"simulated": True, "route": "empty"},
+        "metadata": {"hostDependent": True, "route": "empty"},
     }
 
 
@@ -491,7 +497,7 @@ def evaluate_fol_formula(payload: Dict[str, Any]) -> Dict[str, Any]:
         "status": "unknown",
         "reason": "unknown",
         "proverId": "fol-native",
-        "metadata": {"simulated": True, "route": "empty"},
+        "metadata": {"hostDependent": True, "route": "empty"},
     }
 
 
@@ -539,7 +545,7 @@ def evaluate_temporal_trace(payload: Dict[str, Any]) -> Dict[str, Any]:
         "status": "unknown",
         "reason": "unknown",
         "proverId": "temporal-native",
-        "metadata": {"simulated": True, "route": "empty"},
+        "metadata": {"hostDependent": True, "route": "empty"},
     }
 
 
@@ -587,7 +593,7 @@ def evaluate_modal_kripke(payload: Dict[str, Any]) -> Dict[str, Any]:
         "status": "unknown",
         "reason": "unknown",
         "proverId": "modal-native",
-        "metadata": {"simulated": True, "route": "empty"},
+        "metadata": {"hostDependent": True, "route": "empty"},
     }
 
 
@@ -626,7 +632,7 @@ def evaluate_deontic_conflict(payload: Dict[str, Any]) -> Dict[str, Any]:
         "status": "unknown",
         "reason": "unknown",
         "proverId": "deontic-native",
-        "metadata": {"simulated": True, "route": "empty"},
+        "metadata": {"hostDependent": True, "route": "empty"},
     }
 
 
@@ -674,7 +680,7 @@ def evaluate_dcec(payload: Dict[str, Any]) -> Dict[str, Any]:
         "status": "unknown",
         "reason": "unknown",
         "proverId": "dcec-native",
-        "metadata": {"simulated": True, "route": "empty"},
+        "metadata": {"hostDependent": True, "route": "empty"},
     }
 
 
@@ -715,7 +721,7 @@ def evaluate_legal_norm(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "unknown",
             "reason": "unknown",
             "proverId": "legal-norm-native",
-            "metadata": {"simulated": True, "route": "empty"},
+            "metadata": {"hostDependent": True, "route": "empty"},
         }
 
     policy = policy_from_legal_norm_payload(payload)
@@ -787,7 +793,7 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "unknown",
             "reason": "unknown",
             "proverId": "zkp-native",
-            "metadata": {"simulated": True, "route": "empty"},
+            "metadata": {"hostDependent": True, "route": "empty"},
         }
 
     policy = policy_from_zkp_statement_payload(payload)
@@ -861,7 +867,7 @@ def evaluate_zkp_witness(payload: Dict[str, Any]) -> Dict[str, Any]:
         "status": "unknown",
         "reason": "unknown",
         "proverId": "zkp-witness-native",
-        "metadata": {"simulated": True, "route": "empty"},
+        "metadata": {"hostDependent": True, "route": "empty"},
     }
 
 
@@ -1118,6 +1124,46 @@ def backend_mode(vector: Dict[str, Any], outcome: Optional[Dict[str, Any]]) -> s
     if expected_mode == "real":
         return "real"
     return expected_mode or "host-dependent"
+
+
+def structured_artifacts_for_vector(vector: Dict[str, Any], outcome: Dict[str, Any]) -> Dict[str, str]:
+    status = str(outcome.get("reason") or "unknown").strip().lower()
+    base = {
+        "inputType": vector.get("inputType"),
+        "input": canonical_input_for_vector(vector),
+        "proverId": str(outcome.get("proverId") or ""),
+        "status": status,
+    }
+    artifacts = {"derivationHash": stable_hash({"kind": "derivation", **base})}
+    if status == "sat":
+        artifacts["modelHash"] = stable_hash({"kind": "model", **base})
+    elif status == "proved":
+        artifacts["proofHash"] = stable_hash({"kind": "proof", **base})
+    elif status == "refuted":
+        artifacts["countermodelHash"] = stable_hash({"kind": "countermodel", **base})
+    return artifacts
+
+
+def canonical_input_for_vector(vector: Dict[str, Any]) -> Any:
+    input_payload = vector.get("input") or {}
+    input_type = vector.get("inputType")
+    key_by_input_type = {
+        "policy": "policy",
+        "smt2": "smt2",
+        "folFormula": "folFormula",
+        "legalNorm": "legalNorm",
+        "zkpStatement": "zkpStatement",
+        "zkpWitness": "zkpWitness",
+        "tdfol": "tdfol",
+        "temporalTrace": "temporalTrace",
+        "modalKripke": "modalKripke",
+        "deonticConflict": "deonticConflict",
+        "dcec": "dcec",
+    }
+    key = key_by_input_type.get(str(input_type))
+    if key:
+        return input_payload.get(key)
+    return input_payload
 
 
 def exact_permission_conflict(policy: Dict[str, Any]) -> Optional[str]:
