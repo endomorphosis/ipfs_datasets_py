@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import sys
 from types import SimpleNamespace
 
@@ -369,6 +370,51 @@ def test_modal_frame_logic_bridge_promotes_bundle_only_flogic_guidance() -> None
         and triple["object"] == "selected_ontology_term:required:satisfied"
         for triple in frame_triples
     )
+
+
+def test_modal_frame_logic_bridge_promotes_json_bundle_packet_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="bridge-layer-json-bundle-guided-flogic",
+        citation="Bridge Layer JSON Bundle Guided FLogic",
+        compiler_guidance={
+            "action": "repair_flogic_ontology_constraints",
+            "target": "modal.frame_logic",
+            "scope": "frame_logic",
+            "bundle": json.dumps(
+                {
+                    "program_synthesis_scope": "frame_logic",
+                    "route": "repair_flogic_ontology_constraints",
+                    "source": "compiler_guidance_distillation_v1",
+                    "target_component": "modal.frame_logic",
+                },
+                sort_keys=True,
+            ),
+        },
+        evaluate_provers=False,
+    )
+
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
+        "metadata"
+    ]
+    selected_terms = {
+        triple["object"]
+        for triple in report.ir_document.views["frame_logic"].payload["triples"]
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert modal_metadata["compiler_guidance_synthesis_focus"] == [
+        "repair_flogic_ontology_constraints"
+    ]
+    assert modal_metadata["compiler_guidance_legal_ir_target_view_distribution"] == {
+        "modal.frame_logic": 1.0
+    }
+    assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
+    assert "repair_flogic_ontology_constraints" in selected_terms
+    assert "modal_frame_logic" in selected_terms
 
 
 def test_modal_frame_logic_bridge_infers_flogic_route_from_passing_gap_evidence() -> None:
@@ -8548,6 +8594,48 @@ def test_external_prover_router_syntactic_fallback_accepts_legacy_record_payload
     assert router.get_available_provers() == ["native_syntactic"]
     assert result.is_proved is False
     assert result.is_compiled() is True
+    assert result.prover_used == "native_syntactic"
+    assert result.all_results["native_syntactic"].is_valid is True
+
+
+def test_external_prover_router_guidance_promotes_syntactic_backup() -> None:
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    class _FailingConfiguredProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            raise RuntimeError("configured prover unavailable")
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=False,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    router.provers = {"z3": _FailingConfiguredProver()}
+
+    result = router.route(
+        {"proof_formula": "O(register_notice(secretary))"},
+        strategy="sequential",
+        compiler_guidance={
+            "compiler_guidance_quality_gate": "pass",
+            "semantic_bundle_key": (
+                '{"program_synthesis_scope":"external_provers",'
+                '"route":"repair_external_prover_router",'
+                '"source":"compiler_guidance_distillation_v1",'
+                '"target_component":"external_provers.router"}'
+            ),
+            "target_component": "external_provers.router",
+        },
+    )
+
+    assert router.get_available_provers() == ["z3", "native_syntactic"]
+    assert result.is_proved is False
+    assert result.is_compiled() is True
+    assert "Error: configured prover unavailable" in result.all_results["z3"]
     assert result.prover_used == "native_syntactic"
     assert result.all_results["native_syntactic"].is_valid is True
 

@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 from enum import Enum
 import concurrent.futures
 import inspect
+import json
 import time
 import logging
 
@@ -86,6 +87,140 @@ def _result_is_compiled_result(result: Any) -> bool:
         if compiled not in (None, ""):
             return bool(compiled)
     return True
+
+
+def _guidance_targets_external_prover_router(value: Any) -> bool:
+    """Return True for packet/compiler guidance aimed at router repair."""
+
+    mappings = _guidance_mappings(value)
+    if not mappings:
+        return False
+
+    for mapping in mappings:
+        route_values = (
+            mapping.get("route"),
+            mapping.get("action"),
+            mapping.get("original_action"),
+            mapping.get("compiler_guidance_route"),
+        )
+        if any(
+            str(route or "").strip().lower()
+            == "repair_external_prover_router"
+            for route in route_values
+        ):
+            return True
+
+    for mapping in mappings:
+        source = str(mapping.get("source") or "").strip().lower()
+        if source not in {
+            "compiler_guidance_distillation_v1",
+            "compiler_guidance_activation_v1",
+            "failed_validation_rescue_v1",
+        }:
+            continue
+        if not any(
+            _guidance_target_key_is_router(mapping.get(key))
+            for key in (
+                "target_component",
+                "target",
+                "program_synthesis_scope",
+                "scope",
+            )
+        ):
+            continue
+        if _guidance_quality_gate_passes(
+            mapping.get("compiler_guidance_quality_gate")
+        ) or _guidance_quality_gate_passes(mapping.get("quality_gate")):
+            return True
+        if _guidance_positive_support(_guidance_support_value(mapping)):
+            return True
+
+    return False
+
+
+def _guidance_mappings(value: Any) -> tuple[Mapping[str, Any], ...]:
+    """Flatten nested packet-guidance mappings, including JSON bundle strings."""
+
+    mappings: list[Mapping[str, Any]] = []
+    seen: set[int] = set()
+
+    def visit(candidate: Any) -> None:
+        if isinstance(candidate, str):
+            candidate = _guidance_json_mapping(candidate)
+        if isinstance(candidate, Mapping):
+            object_id = id(candidate)
+            if object_id in seen:
+                return
+            seen.add(object_id)
+            mappings.append(candidate)
+            for key in (
+                "bundle",
+                "semantic_bundle_key",
+                "compiler_guidance_bundle",
+                "metadata",
+                "compiler_guidance_attribution",
+                "attribution",
+                "evidence",
+                "hint_evidence",
+            ):
+                if key in candidate:
+                    visit(candidate.get(key))
+            return
+        if isinstance(candidate, (list, tuple)):
+            for item in candidate:
+                visit(item)
+
+    visit(value)
+    return tuple(mappings)
+
+
+def _guidance_json_mapping(value: str) -> Mapping[str, Any]:
+    text = str(value or "").strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    if isinstance(parsed, Mapping):
+        return parsed
+    return {}
+
+
+def _guidance_target_key_is_router(value: Any) -> bool:
+    text = (
+        str(value or "")
+        .strip()
+        .lower()
+        .split(":", 1)[0]
+        .replace("-", "_")
+        .replace(".", "_")
+        .replace(" ", "_")
+    )
+    return text in {
+        "external_provers",
+        "external_provers_router",
+        "external_prover_router",
+        "prover",
+    }
+
+
+def _guidance_quality_gate_passes(value: Any) -> bool:
+    return str(value or "").strip().lower() in {"pass", "passed", "ok", "true", "1"}
+
+
+def _guidance_support_value(value: Mapping[str, Any]) -> Any:
+    for key in ("support", "support_count", "matched_sample_count", "applied_count"):
+        if key in value:
+            return value.get(key)
+    return 0
+
+
+def _guidance_positive_support(value: Any) -> bool:
+    try:
+        return float(value or 0.0) > 0.0
+    except (TypeError, ValueError):
+        return bool(value)
 
 
 @dataclass(frozen=True)
@@ -323,6 +458,10 @@ class ProverRouter:
                 timeout = None
 
         axioms = kwargs.pop("axioms", None)
+        compiler_guidance = kwargs.pop("compiler_guidance", None)
+        if compiler_guidance is None:
+            compiler_guidance = kwargs.pop("guidance", None)
+        self._apply_compiler_guidance(compiler_guidance)
         if kwargs:
             logger.debug(
                 "Ignoring unsupported prover router kwargs: %s",
@@ -335,6 +474,16 @@ class ProverRouter:
             strategy=strategy,
             timeout=timeout,
         )
+
+    def _apply_compiler_guidance(self, compiler_guidance: Any) -> None:
+        """Promote passed router-repair guidance into deterministic backup rules."""
+
+        if (
+            self.enable_syntactic_fallback
+            and "native_syntactic" not in self.provers
+            and _guidance_targets_external_prover_router(compiler_guidance)
+        ):
+            self.provers["native_syntactic"] = SyntacticNativeFallbackProver()
 
     @staticmethod
     def _coerce_strategy(strategy: Any) -> ProverStrategy:

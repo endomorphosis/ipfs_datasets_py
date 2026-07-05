@@ -9,6 +9,7 @@ F-logic is used as a consistency check over the intermediate representation.
 
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import asdict, dataclass, field, replace
@@ -1544,6 +1545,24 @@ _NEO4J_COMPAT_TARGET_COMPONENT = "knowledge_graphs.neo4j_compat"
 _MODAL_FRAME_LOGIC_TARGET_COMPONENT = "modal.frame_logic"
 
 
+def _compiler_guidance_bundle_mapping(
+    compiler_guidance: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    """Return compact bundle metadata from parsed or JSON-string guidance."""
+    for key in ("bundle", "semantic_bundle", "vector_bundle"):
+        raw_bundle = compiler_guidance.get(key)
+        if isinstance(raw_bundle, Mapping):
+            return raw_bundle
+        if isinstance(raw_bundle, str) and raw_bundle.strip():
+            try:
+                decoded = json.loads(raw_bundle)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(decoded, Mapping):
+                return decoded
+    return {}
+
+
 def _compiler_guidance_route_features(
     compiler_guidance: Mapping[str, Any],
 ) -> List[str]:
@@ -1570,11 +1589,13 @@ def _compiler_guidance_route_features(
     routes.extend(_compiler_guidance_routes_from_view_gaps(compiler_guidance))
 
     features = [f"compiler-guidance-route:{route}" for route in routes]
-    target_component = str(compiler_guidance.get("target_component") or "").strip()
-    raw_bundle = compiler_guidance.get("bundle")
-    if not isinstance(raw_bundle, Mapping):
-        raw_bundle = compiler_guidance.get("semantic_bundle")
-    if isinstance(raw_bundle, Mapping):
+    target_component = str(
+        compiler_guidance.get("target_component")
+        or compiler_guidance.get("target")
+        or ""
+    ).strip()
+    raw_bundle = _compiler_guidance_bundle_mapping(compiler_guidance)
+    if raw_bundle:
         bundle_route = str(
             raw_bundle.get("route")
             or raw_bundle.get("action")
@@ -1586,7 +1607,9 @@ def _compiler_guidance_route_features(
         if bundle_route:
             features.append(f"compiler-guidance-route:{bundle_route}")
         if not target_component:
-            target_component = str(raw_bundle.get("target_component") or "").strip()
+            target_component = str(
+                raw_bundle.get("target_component") or raw_bundle.get("target") or ""
+            ).strip()
     if target_component:
         features.append(f"target-component:{target_component}")
 
@@ -1753,12 +1776,16 @@ def _compiler_guidance_implies_neo4j_projection_target(
     )
     if not has_graph_projection_route:
         return False
-    target_component = str(compiler_guidance.get("target_component") or "").strip()
-    raw_bundle = compiler_guidance.get("bundle")
-    if not isinstance(raw_bundle, Mapping):
-        raw_bundle = compiler_guidance.get("semantic_bundle")
-    if not target_component and isinstance(raw_bundle, Mapping):
-        target_component = str(raw_bundle.get("target_component") or "").strip()
+    target_component = str(
+        compiler_guidance.get("target_component")
+        or compiler_guidance.get("target")
+        or ""
+    ).strip()
+    raw_bundle = _compiler_guidance_bundle_mapping(compiler_guidance)
+    if not target_component and raw_bundle:
+        target_component = str(
+            raw_bundle.get("target_component") or raw_bundle.get("target") or ""
+        ).strip()
     return not target_component or target_component == _NEO4J_COMPAT_TARGET_COMPONENT
 
 
@@ -1789,12 +1816,16 @@ def _compiler_guidance_implies_frame_logic_target(
     """Return true when compact guidance targets the modal frame-logic view."""
     if _compiler_guidance_frame_logic_target_routes(compiler_guidance):
         return True
-    target_component = str(compiler_guidance.get("target_component") or "").strip()
-    raw_bundle = compiler_guidance.get("bundle")
-    if not isinstance(raw_bundle, Mapping):
-        raw_bundle = compiler_guidance.get("semantic_bundle")
-    if not target_component and isinstance(raw_bundle, Mapping):
-        target_component = str(raw_bundle.get("target_component") or "").strip()
+    target_component = str(
+        compiler_guidance.get("target_component")
+        or compiler_guidance.get("target")
+        or ""
+    ).strip()
+    raw_bundle = _compiler_guidance_bundle_mapping(compiler_guidance)
+    if not target_component and raw_bundle:
+        target_component = str(
+            raw_bundle.get("target_component") or raw_bundle.get("target") or ""
+        ).strip()
     return target_component == _MODAL_FRAME_LOGIC_TARGET_COMPONENT
 
 
