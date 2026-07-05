@@ -245,7 +245,23 @@ def _ensure_sequence_field(model_dict: Mapping[str, Any], field_name: str) -> No
 
 
 def validate_ir_payload(payload: Mapping[str, Any], *, strict: bool = True) -> dict[str, Any]:
-    """Validate raw JSON-like IR payloads before dataclass construction."""
+    """Validate a raw JSON-like SecurityModelIR payload before dataclass construction.
+
+    Args:
+        payload: JSON-decoded security-model data to validate.
+        strict: When ``True``, require every top-level IR field to be present and
+            reject unknown top-level keys. When ``False``, preserve compatibility
+            with internal fixtures by allowing omitted defaulted fields while still
+            validating payload shape for present fields.
+
+    Returns:
+        A shallow ``dict`` copy of *payload* suitable for ``SecurityModelIR.from_dict``.
+
+    Raises:
+        ValueError: If *payload* is not a mapping, required fields are missing,
+            unknown top-level fields are present in strict mode, or any validated
+            top-level collection/metadata entry has the wrong shape.
+    """
 
     if not isinstance(payload, Mapping):
         raise ValueError('SecurityModelIR payload must be a mapping')
