@@ -368,6 +368,8 @@ def _validate_policy_records(policies: list[dict[str, Any]]) -> None:
 
 
 def _validate_timestamp(value: Any) -> None:
+    """Accept integer, float, numeric-string, or ISO-8601 event timestamps."""
+
     if isinstance(value, bool):
         raise ValueError('event timestamp must be int, float, or ISO string when present')
     if isinstance(value, (int, float)):

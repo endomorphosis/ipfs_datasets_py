@@ -9,7 +9,14 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.extractors import Ty
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
 
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
+def _repo_root() -> Path:
+    for candidate in Path(__file__).resolve().parents:
+        if (candidate / 'pytest.ini').exists():
+            return candidate
+    raise RuntimeError('repository root not found')
+
+
+REPO_ROOT = _repo_root()
 TEST_VECTOR_DIR = REPO_ROOT / 'docs' / 'security_verification' / 'test_vectors'
 
 

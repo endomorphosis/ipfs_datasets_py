@@ -41,6 +41,8 @@ class Z3Runner(BaseSecurityRunner):
         key_names: tuple[str, ...],
         values: list[str],
     ) -> list[dict[str, Any]]:
+        """Return model records whose identifying keys match violation-scope values."""
+
         wanted = {value for value in values if value}
         if not wanted:
             return []
@@ -54,6 +56,8 @@ class Z3Runner(BaseSecurityRunner):
         return matches
 
     def _source_facts(self, model: SecurityModelIR, compilation: Z3Compilation) -> list[dict[str, Any]]:
+        """Extract concrete IR records that explain the violating counterexample scope."""
+
         artifact = compilation.compiler_artifact
         source_facts: list[dict[str, Any]] = []
         source_facts.extend(

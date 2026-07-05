@@ -153,6 +153,12 @@ def _require_string_list(field_name: str, value: Any) -> None:
         raise ValueError(f'{field_name} must be a list of non-empty strings')
 
 
+def _require_non_negative_int(field_name: str, value: Any) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f'{field_name} must be a non-negative integer when present')
+
+
+
 def _validate_proof_report_instance(report: ProofReport) -> None:
     _require_non_empty_string('schema_version', report.schema_version)
     _require_non_empty_string('claim_id', report.claim_id)
@@ -179,10 +185,10 @@ def _validate_proof_report_instance(report: ProofReport) -> None:
         _require_string_list('unsat_core', report.unsat_core)
     if report.counterexample is not None and not isinstance(report.counterexample, dict):
         raise ValueError('counterexample must be a mapping when present')
-    if report.timeout_ms is not None and (isinstance(report.timeout_ms, bool) or not isinstance(report.timeout_ms, int) or report.timeout_ms < 0):
-        raise ValueError('timeout_ms must be a non-negative integer when present')
-    if report.assertion_count is not None and (isinstance(report.assertion_count, bool) or not isinstance(report.assertion_count, int) or report.assertion_count < 0):
-        raise ValueError('assertion_count must be a non-negative integer when present')
+    if report.timeout_ms is not None:
+        _require_non_negative_int('timeout_ms', report.timeout_ms)
+    if report.assertion_count is not None:
+        _require_non_negative_int('assertion_count', report.assertion_count)
 
 
 def validate_proof_report(report: ProofReport | Mapping[str, Any]) -> ProofReport:

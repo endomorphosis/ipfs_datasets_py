@@ -113,6 +113,12 @@ def _require_non_empty_string(field_name: str, value: Any) -> None:
         raise ValueError(f'{field_name} must be a non-empty string')
 
 
+def _require_string_list(field_name: str, value: Any) -> None:
+    if not isinstance(value, list) or any(not isinstance(item, str) or not item.strip() for item in value):
+        raise ValueError(f'{field_name} must be a list of non-empty strings')
+
+
+
 def validate_proof_receipt(receipt: ProofReceipt | Mapping[str, Any]) -> ProofReceipt:
     """Validate *receipt* and return a normalized :class:`ProofReceipt`."""
 
@@ -126,11 +132,7 @@ def validate_proof_receipt(receipt: ProofReceipt | Mapping[str, Any]) -> ProofRe
     _require_non_empty_string('verifier_version', normalized.verifier_version)
     if normalized.schema_version != PROOF_RECEIPT_SCHEMA_VERSION:
         raise ValueError(f'unsupported proof receipt schema version: {normalized.schema_version}')
-    if not isinstance(normalized.accepted_assumptions, list) or any(
-        not isinstance(item, str) or not item.strip()
-        for item in normalized.accepted_assumptions
-    ):
-        raise ValueError('accepted_assumptions must be a list of non-empty strings')
+    _require_string_list('accepted_assumptions', normalized.accepted_assumptions)
     if not isinstance(normalized.valid, bool):
         raise ValueError('valid must be a boolean')
     if not isinstance(normalized.metadata, dict):
