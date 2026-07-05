@@ -193,3 +193,22 @@ def test_cli_strict_validation_rejects_invalid_model(tmp_path: Path) -> None:
     with pytest.raises(SystemExit) as exc_info:
         main(['--model', str(model_path), '--strict-validation'])
     assert exc_info.value.code != 0
+
+
+@pytest.mark.parametrize(
+    'mutator',
+    [
+        lambda payload: payload.pop('events'),
+        lambda payload: payload.__setitem__('metadata', 'not-a-dict'),
+        lambda payload: payload['events'].__setitem__(0, 'not-a-dict'),
+        lambda payload: payload.__setitem__('proover_targets', ['z3']),
+    ],
+)
+def test_cli_strict_validation_rejects_invalid_raw_payloads(tmp_path: Path, mutator) -> None:
+    model_path = tmp_path / 'invalid-raw.json'
+    payload = example_minimal_exchange_model().to_dict()
+    mutator(payload)
+    model_path.write_text(json.dumps(payload), encoding='utf-8')
+    with pytest.raises(SystemExit) as exc_info:
+        main(['--model', str(model_path), '--strict-validation'])
+    assert exc_info.value.code != 0

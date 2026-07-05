@@ -52,6 +52,20 @@ def test_proof_report_round_trip_and_deterministic_payload_cid() -> None:
 @pytest.mark.parametrize(
     ('field', 'value', 'message'),
     [
+        ('deterministic_payload_cid', 'cid:tampered', 'deterministic_payload_cid does not match'),
+        ('nondeterministic_report_cid', 'cid:tampered', 'nondeterministic_report_cid does not match'),
+    ],
+)
+def test_proof_report_from_dict_rejects_tampered_cids(field: str, value: str, message: str) -> None:
+    payload = _report(generated_at='2026-07-05T00:00:00+00:00').to_dict()
+    payload[field] = value
+    with pytest.raises(ValueError, match=message):
+        ProofReport.from_dict(payload)
+
+
+@pytest.mark.parametrize(
+    ('field', 'value', 'message'),
+    [
         ('status', 'MAYBE', 'unsupported proof status'),
         ('risk', 'critical', 'unsupported proof risk'),
     ],

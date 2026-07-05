@@ -140,8 +140,15 @@ class SecurityModelIR:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> 'SecurityModelIR':
         allowed = {item.name for item in fields(cls)}
-        payload = {name: data[name] for name in allowed if name in data}
+        validated = validate_ir_payload(data, strict=False)
+        payload = {name: validated[name] for name in allowed if name in validated}
         return cls(**payload)
+
+
+REQUIRED_TOP_LEVEL_FIELDS = tuple(item.name for item in fields(SecurityModelIR))
+RECORD_COLLECTION_FIELDS = tuple(
+    field_name for field_name in REQUIRED_SEQUENCE_FIELDS if field_name not in {'assumptions', 'prover_targets'}
+)
 
 
 _ID_FIELDS = {
@@ -235,6 +242,49 @@ def _ensure_sequence_field(model_dict: Mapping[str, Any], field_name: str) -> No
     value = model_dict.get(field_name)
     if not isinstance(value, list):
         raise ValueError(f'{field_name} must be a list in SecurityModelIR')
+
+
+def validate_ir_payload(payload: Mapping[str, Any], *, strict: bool = True) -> dict[str, Any]:
+    """Validate raw JSON-like IR payloads before dataclass construction."""
+
+    if not isinstance(payload, Mapping):
+        raise ValueError('SecurityModelIR payload must be a mapping')
+
+    normalized = dict(payload)
+    allowed = {item.name for item in fields(SecurityModelIR)}
+    required = set(REQUIRED_TOP_LEVEL_FIELDS if strict else ('schema_version', 'model_id'))
+    unknown = sorted(set(normalized) - allowed)
+    if strict and unknown:
+        raise ValueError(f'Unknown top-level SecurityModelIR field(s): {", ".join(unknown)}')
+    missing = sorted(field_name for field_name in required if field_name not in normalized)
+    if missing:
+        raise ValueError(f'Missing required top-level SecurityModelIR field(s): {", ".join(missing)}')
+    for field_name in ('schema_version', 'model_id'):
+        value = normalized.get(field_name)
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError(f'{field_name} must be a non-empty string')
+    metadata = normalized.get('metadata', {} if not strict else None)
+    if metadata is not None and not isinstance(metadata, Mapping):
+        raise ValueError('metadata must be a dict in SecurityModelIR payload')
+    for field_name in REQUIRED_SEQUENCE_FIELDS:
+        if field_name not in normalized:
+            continue
+        value = normalized[field_name]
+        if not isinstance(value, list):
+            raise ValueError(f'{field_name} must be a list in SecurityModelIR payload')
+        if field_name in RECORD_COLLECTION_FIELDS:
+            for index, item in enumerate(value):
+                if not isinstance(item, Mapping):
+                    raise ValueError(f'{field_name}[{index}] must be a dict in SecurityModelIR payload')
+        elif field_name == 'assumptions':
+            for index, item in enumerate(value):
+                if not isinstance(item, (str, Mapping)):
+                    raise ValueError(f'assumptions[{index}] must be a string or dict in SecurityModelIR payload')
+        elif field_name == 'prover_targets':
+            for index, item in enumerate(value):
+                if not isinstance(item, str) or not item.strip():
+                    raise ValueError(f'prover_targets[{index}] must be a non-empty string in SecurityModelIR payload')
+    return normalized
 
 
 

@@ -132,7 +132,18 @@ class ProofReport:
         payload = dict(data)
         if 'generated_at' not in payload and 'created_at' in payload:
             payload['generated_at'] = payload['created_at']
-        return cls(**payload)
+        expected_deterministic_payload_cid = payload.pop('deterministic_payload_cid', None)
+        expected_nondeterministic_report_cid = payload.pop('nondeterministic_report_cid', None)
+        report = cls(**payload)
+        if expected_deterministic_payload_cid is not None:
+            _require_non_empty_string('deterministic_payload_cid', expected_deterministic_payload_cid)
+            if expected_deterministic_payload_cid != report.deterministic_payload_cid:
+                raise ValueError('deterministic_payload_cid does not match the report payload')
+        if expected_nondeterministic_report_cid is not None:
+            _require_non_empty_string('nondeterministic_report_cid', expected_nondeterministic_report_cid)
+            if expected_nondeterministic_report_cid != report.nondeterministic_report_cid:
+                raise ValueError('nondeterministic_report_cid does not match the report payload')
+        return report
 
     @classmethod
     def content_cid(cls, payload: Mapping[str, Any]) -> str:

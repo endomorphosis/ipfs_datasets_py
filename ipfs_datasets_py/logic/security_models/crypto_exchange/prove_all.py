@@ -13,7 +13,7 @@ from .claims import default_claims
 from .extractors import SourceCodeExtractor
 from .ir.cid import calculate_model_cid
 from .ir.examples import example_minimal_exchange_model
-from .ir.schema import SecurityModelIR, evidence_review_statuses, validate_ir
+from .ir.schema import SecurityModelIR, evidence_review_statuses, validate_ir, validate_ir_payload
 from .reports.proof_receipt import ProofReceipt
 from .reports.proof_report import PROOF_RISK_BLOCKING, PROOF_RISK_HIGH, PROOF_STATUS_DISPROVED, PROOF_STATUS_PROVED, PROOF_STATUS_UNKNOWN, ProofReport
 from .runners.z3_runner import Z3Runner
@@ -63,6 +63,8 @@ def _load_model(args: argparse.Namespace) -> SecurityModelIR:
         model = example_minimal_exchange_model()
     else:
         payload = json.loads(Path(args.model).read_text(encoding='utf-8'))
+        if getattr(args, 'strict_validation', False):
+            validate_ir_payload(payload, strict=True)
         model = SecurityModelIR.from_dict(payload)
     return validate_ir(model)
 
