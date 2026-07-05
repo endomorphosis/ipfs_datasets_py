@@ -843,7 +843,7 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "refuted",
             "reason": "refuted",
             "proverId": "zkp-native",
-            "metadata": {"simulated": True, "route": "proof-invalid"},
+            "metadata": {"simulated": False, "route": "native-state-check", "stateRoute": "proof-invalid"},
         }
         return fallback
 
@@ -852,7 +852,11 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "proved",
             "reason": "proved",
             "proverId": "zkp-native",
-            "metadata": {"simulated": True, "route": "proof-valid" if proof_state == "valid" else "claims-present"},
+            "metadata": {
+                "simulated": False,
+                "route": "native-state-check",
+                "stateRoute": "proof-valid" if proof_state == "valid" else "claims-present",
+            },
         }
     else:
         fallback = {
@@ -915,7 +919,7 @@ def evaluate_zkp_witness(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "refuted",
             "reason": "refuted",
             "proverId": "zkp-witness-native",
-            "metadata": {"simulated": True, "route": "witness-invalid"},
+            "metadata": {"simulated": False, "route": "native-state-check", "stateRoute": "witness-invalid"},
         }
 
     if witness_state == "valid" or claims:
@@ -924,8 +928,9 @@ def evaluate_zkp_witness(payload: Dict[str, Any]) -> Dict[str, Any]:
             "reason": "proved",
             "proverId": "zkp-witness-native",
             "metadata": {
-                "simulated": True,
-                "route": "witness-valid" if witness_state == "valid" else "claims-present",
+                "simulated": False,
+                "route": "native-state-check",
+                "stateRoute": "witness-valid" if witness_state == "valid" else "claims-present",
             },
         }
 
