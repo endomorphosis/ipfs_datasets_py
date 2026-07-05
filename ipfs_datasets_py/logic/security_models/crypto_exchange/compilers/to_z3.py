@@ -31,7 +31,7 @@ class Z3Compilation:
             return
         if self.violation_scope_explanation is not None:
             return
-        if not (z3.is_not(self.violation_formula) and self.violation_formula.arg(0).eq(self.property_formula)):
+        if not (z3.is_not(self.violation_formula) and z3.eq(self.violation_formula.arg(0), self.property_formula)):
             raise ValueError('custom violation_formula requires violation_scope_explanation')
 
     @property

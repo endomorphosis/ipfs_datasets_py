@@ -142,5 +142,6 @@ def test_cli_strict_validation_rejects_invalid_model(tmp_path: Path) -> None:
     payload = example_minimal_exchange_model().to_dict()
     payload['accounts'][0]['wallet_id'] = 'wallet:missing'
     model_path.write_text(json.dumps(payload), encoding='utf-8')
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as exc_info:
         main(['--model', str(model_path), '--strict-validation'])
+    assert exc_info.value.code != 0
