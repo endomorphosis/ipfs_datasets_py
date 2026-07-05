@@ -20,30 +20,34 @@ class NoDepositCreditedBeforeFinalityClaim(SecurityClaim):
         )
 
     def compile_to_z3(self, model: SecurityModelIR) -> Z3Compilation:
-        if not model.events:
-            return claim_not_modeled(self, 'deposit events are not modeled')
-        z3 = z3_import()
-        credited_events = [event for event in model.events if event.get('event') == 'deposit_credited']
+        credited_events = self.find_events(model, 'deposit_credited')
         if not credited_events:
             return claim_not_modeled(self, 'credited deposit events are not modeled')
-        policy_enabled = z3.Bool('credit_after_finality_required')
-        credited_before_finality = z3.Bool('credited_before_finality')
-        violations = RuntimeMTLMonitor(events=model.events).check_deposit_only_after_finality()
+        z3 = z3_import()
+        monitor = RuntimeMTLMonitor(events=model.events)
+        violations = monitor.check_deposit_only_after_finality()
         violation_events = [violation.get('event', {}) for violation in violations]
-        offending_txids = sorted({str(event.get('txid')) for event in violation_events if event.get('txid') is not None})
-        assertions = [
-            policy_enabled == self.policy_enabled(model, 'credit_after_finality_required'),
-            credited_before_finality == bool(violations),
-        ]
+        offending_ids = sorted(
+            {
+                str(event.get('deposit_id') or event.get('txid'))
+                for event in violation_events
+                if event.get('deposit_id') is not None or event.get('txid') is not None
+            }
+        )
+        policy_record = self.policy_record(model, 'credit_after_finality_required')
+        evidence_refs = self.evidence_refs(policy_record, *credited_events, *self.find_events(model, 'deposit_finalized'))
         return Z3Compilation(
             claim=self,
-            assertions=assertions,
-            property_formula=z3.And(policy_enabled, z3.Not(credited_before_finality)),
-            violation_formula=z3.Or(z3.Not(policy_enabled), credited_before_finality),
+            assertions=[],
+            property_formula=z3.And(
+                z3.BoolVal(self.policy_enabled(model, 'credit_after_finality_required')),
+                z3.Not(z3.BoolVal(bool(offending_ids))),
+            ),
             compiler_artifact={
                 'kind': 'deposit_policy',
                 'credited_events': len(credited_events),
-                'offending_txids': offending_txids,
-                'assertions': [str(expr) for expr in assertions],
+                'offending_ids': offending_ids,
             },
+            evidence_refs=evidence_refs,
+            soundness_notes=self.heuristic_soundness_note(evidence_refs),
         )

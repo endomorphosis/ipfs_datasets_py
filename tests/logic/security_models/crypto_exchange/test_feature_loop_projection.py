@@ -41,5 +41,5 @@ export function approveWithdrawal(authorized: boolean): boolean {
     assert payload['features']['languages'] == ['typescript']
     assert payload['features']['policy_names'] == ['authorization_required']
     assert payload['features']['source_inputs'] == [str(source_path)]
-    assert payload['codex_program_synthesis']['review_status'] == 'seed-autoformalization'
+    assert payload['codex_program_synthesis']['review_status'] == 'heuristic'
     assert payload['codex_program_synthesis']['review_gaps']

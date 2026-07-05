@@ -8,7 +8,7 @@ from typing import Any
 from ..claims.base import SecurityClaim
 from ..compilers.to_z3 import Z3Compilation
 from ..ir.cid import calculate_model_cid
-from ..ir.schema import SecurityModelIR
+from ..ir.schema import SecurityModelIR, evidence_review_statuses
 from ..reports.counterexample_report import CounterexampleReport
 from ..reports.proof_report import ProofReport
 from ..runners.base import BaseSecurityRunner
@@ -28,6 +28,7 @@ class Z3Runner(BaseSecurityRunner):
 
     def _solver(self) -> Any:
         import z3
+
         solver = z3.Solver()
         solver.set('timeout', self.timeout_ms)
         return solver
@@ -45,6 +46,47 @@ class Z3Runner(BaseSecurityRunner):
             witness=witness,
         )
 
+    def _report(
+        self,
+        claim: SecurityClaim,
+        model: SecurityModelIR,
+        *,
+        status: str,
+        solver_result: str,
+        proof_or_trace_cid: str,
+        compiler_cid: str,
+        counterexample: dict[str, Any] | None,
+        compilation: Z3Compilation,
+        reason_unknown: str | None = None,
+    ) -> ProofReport:
+        import z3
+
+        soundness_notes = list(compilation.soundness_notes)
+        if claim.severity == 'blocking' and 'heuristic' in evidence_review_statuses(compilation.evidence_refs):
+            soundness_notes.append('Blocking proof depends on heuristic evidence and should not be treated as production-grade without review.')
+        return ProofReport(
+            claim_id=claim.claim_id,
+            claim_version=claim.claim_version,
+            model_cid=calculate_model_cid(model),
+            model_schema_version=model.schema_version,
+            status=status,
+            prover=self.prover_name,
+            solver_name=self.prover_name,
+            solver_version=getattr(z3, 'get_full_version', lambda: 'unknown')(),
+            solver_result=solver_result,
+            timeout_ms=self.timeout_ms,
+            reason_unknown=reason_unknown,
+            proof_or_trace_cid=proof_or_trace_cid,
+            assumptions=list(claim.required_assumptions),
+            compiler_cid=compiler_cid,
+            counterexample=counterexample,
+            risk=claim.severity,
+            signatures=[],
+            assertion_count=len(compilation.assertions),
+            evidence_refs=list(compilation.evidence_refs),
+            soundness_notes=soundness_notes,
+        )
+
     def run_claim(self, claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
         if not self.is_available():
             return self.unknown_report(claim, model, 'Z3 is not installed')
@@ -52,17 +94,24 @@ class Z3Runner(BaseSecurityRunner):
         if not compilation.modeled:
             return ProofReport(
                 claim_id=claim.claim_id,
+                claim_version=claim.claim_version,
                 model_cid=calculate_model_cid(model),
+                model_schema_version=model.schema_version,
                 status='NOT_MODELED',
                 prover=self.prover_name,
+                solver_name=self.prover_name,
+                solver_result='not-modeled',
                 proof_or_trace_cid='',
                 assumptions=list(claim.required_assumptions),
                 compiler_cid='',
                 counterexample={'reason': compilation.not_modeled_reason},
                 risk=claim.severity,
                 signatures=[],
+                evidence_refs=list(compilation.evidence_refs),
+                soundness_notes=list(compilation.soundness_notes),
             )
         import z3
+
         violation_solver = self._solver()
         violation_solver.add(*compilation.assertions)
         violation_solver.add(compilation.violation_formula)
@@ -70,20 +119,28 @@ class Z3Runner(BaseSecurityRunner):
         compiler_cid = ProofReport.content_cid(compilation.compiler_artifact)
         if violation_result == z3.sat:
             counterexample = self._counterexample(claim, violation_solver.model())
-            return ProofReport(
-                claim_id=claim.claim_id,
-                model_cid=calculate_model_cid(model),
+            return self._report(
+                claim,
+                model,
                 status='DISPROVED',
-                prover=self.prover_name,
+                solver_result='sat',
                 proof_or_trace_cid=counterexample.cid,
-                assumptions=list(claim.required_assumptions),
                 compiler_cid=compiler_cid,
                 counterexample=counterexample.to_dict(),
-                risk=claim.severity,
-                signatures=[],
+                compilation=compilation,
             )
         if violation_result == z3.unknown:
-            return self.unknown_report(claim, model, violation_solver.reason_unknown())
+            return self._report(
+                claim,
+                model,
+                status='UNKNOWN',
+                solver_result='unknown',
+                proof_or_trace_cid='',
+                compiler_cid=compiler_cid,
+                counterexample={'reason': violation_solver.reason_unknown()},
+                compilation=compilation,
+                reason_unknown=violation_solver.reason_unknown(),
+            )
         proof_solver = self._solver()
         proof_solver.add(*compilation.assertions)
         proof_solver.add(z3.Not(compilation.property_formula))
@@ -94,30 +151,36 @@ class Z3Runner(BaseSecurityRunner):
                 'result': 'unsat-violation',
                 'prover': self.prover_name,
             }
-            return ProofReport(
-                claim_id=claim.claim_id,
-                model_cid=calculate_model_cid(model),
+            return self._report(
+                claim,
+                model,
                 status='PROVED',
-                prover=self.prover_name,
+                solver_result='unsat',
                 proof_or_trace_cid=ProofReport.content_cid(proof_payload),
-                assumptions=list(claim.required_assumptions),
                 compiler_cid=compiler_cid,
                 counterexample=None,
-                risk=claim.severity,
-                signatures=[],
+                compilation=compilation,
             )
         if proof_result == z3.sat:
             counterexample = self._counterexample(claim, proof_solver.model())
-            return ProofReport(
-                claim_id=claim.claim_id,
-                model_cid=calculate_model_cid(model),
+            return self._report(
+                claim,
+                model,
                 status='DISPROVED',
-                prover=self.prover_name,
+                solver_result='sat',
                 proof_or_trace_cid=counterexample.cid,
-                assumptions=list(claim.required_assumptions),
                 compiler_cid=compiler_cid,
                 counterexample=counterexample.to_dict(),
-                risk=claim.severity,
-                signatures=[],
+                compilation=compilation,
             )
-        return self.unknown_report(claim, model, proof_solver.reason_unknown())
+        return self._report(
+            claim,
+            model,
+            status='UNKNOWN',
+            solver_result='unknown',
+            proof_or_trace_cid='',
+            compiler_cid=compiler_cid,
+            counterexample={'reason': proof_solver.reason_unknown()},
+            compilation=compilation,
+            reason_unknown=proof_solver.reason_unknown(),
+        )

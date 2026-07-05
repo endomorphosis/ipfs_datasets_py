@@ -20,26 +20,24 @@ class NoSigningAfterWalletFreezeClaim(SecurityClaim):
         )
 
     def compile_to_z3(self, model: SecurityModelIR) -> Z3Compilation:
-        if not model.events:
-            return claim_not_modeled(self, 'freeze and signing events are not modeled')
-        z3 = z3_import()
-        if not any(event.get('event') == 'wallet_frozen' for event in model.events):
+        frozen_events = self.find_events(model, 'wallet_frozen')
+        if not frozen_events:
             return claim_not_modeled(self, 'wallet freeze events are not modeled')
-        policy_enabled = z3.Bool('wallet_not_frozen_required')
-        signing_after_freeze = z3.Bool('signing_request_after_wallet_freeze')
+        z3 = z3_import()
         violations = RuntimeMTLMonitor(events=model.events).check_no_signing_after_freeze()
-        assertions = [
-            policy_enabled == self.policy_enabled(model, 'wallet_not_frozen_required'),
-            signing_after_freeze == bool(violations),
-        ]
+        policy_record = self.policy_record(model, 'wallet_not_frozen_required')
+        evidence_refs = self.evidence_refs(policy_record, *frozen_events, *self.find_events(model, 'signing_request'))
         return Z3Compilation(
             claim=self,
-            assertions=assertions,
-            property_formula=z3.And(policy_enabled, z3.Not(signing_after_freeze)),
-            violation_formula=z3.Or(z3.Not(policy_enabled), signing_after_freeze),
+            assertions=[],
+            property_formula=z3.And(
+                z3.BoolVal(self.policy_enabled(model, 'wallet_not_frozen_required')),
+                z3.Not(z3.BoolVal(bool(violations))),
+            ),
             compiler_artifact={
                 'kind': 'hsm_freeze_policy',
                 'violations': [dict(item) for item in violations],
-                'assertions': [str(expr) for expr in assertions],
             },
+            evidence_refs=evidence_refs,
+            soundness_notes=self.heuristic_soundness_note(evidence_refs),
         )

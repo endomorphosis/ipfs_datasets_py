@@ -147,13 +147,17 @@ def _mutate_deposit_before_finality(model: SecurityModelIR) -> None:
     _ensure_event(
         model,
         'deposit_observed',
+        deposit_id='deposit:counterexample',
         txid='tx:counterexample',
         confirmations=0,
     )
     _ensure_event(
         model,
         'deposit_credited',
+        deposit_id='deposit:counterexample',
         txid='tx:counterexample',
+        confirmations=0,
+        finality_threshold=6,
         after_finality=False,
     )
 

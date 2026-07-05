@@ -19,33 +19,48 @@ class NoUnauthorizedWithdrawalClaim(SecurityClaim):
         )
 
     def compile_to_z3(self, model: SecurityModelIR) -> Z3Compilation:
-        if not model.policies:
-            return claim_not_modeled(self, 'authorization policies are not modeled')
+        broadcasts = self.find_events(model, 'withdrawal_broadcast')
+        if not broadcasts:
+            return claim_not_modeled(self, 'withdrawal broadcast events are not modeled')
+        policy_records = [
+            self.policy_record(model, 'authorization_required'),
+            self.policy_record(model, 'fresh_nonce_required'),
+            self.policy_record(model, 'sufficient_balance_required'),
+            self.policy_record(model, 'wallet_not_frozen_required'),
+        ]
         z3 = z3_import()
-        broadcast = z3.Bool('withdrawal_broadcast')
-        authorized = z3.Bool('withdrawal_authorized')
-        nonce_fresh = z3.Bool('withdrawal_nonce_fresh')
-        sufficient_balance = z3.Bool('withdrawal_sufficient_balance')
-        wallet_not_frozen = z3.Bool('withdrawal_wallet_not_frozen')
-        assertions = []
-        if self.policy_enabled(model, 'authorization_required'):
-            assertions.append(z3.Implies(broadcast, authorized))
-        if self.policy_enabled(model, 'fresh_nonce_required'):
-            assertions.append(z3.Implies(broadcast, nonce_fresh))
-        if self.policy_enabled(model, 'sufficient_balance_required'):
-            assertions.append(z3.Implies(broadcast, sufficient_balance))
-        if self.policy_enabled(model, 'wallet_not_frozen_required'):
-            assertions.append(z3.Implies(broadcast, wallet_not_frozen))
-        property_formula = z3.Implies(broadcast, z3.And(authorized, nonce_fresh, sufficient_balance, wallet_not_frozen))
-        violation_formula = z3.And(broadcast, z3.Not(authorized))
+        violating_withdrawals: list[str] = []
+        for event in broadcasts:
+            withdrawal_id = str(event.get('withdrawal_id') or event.get('txid'))
+            if self.policy_enabled(model, 'authorization_required') and not bool(event.get('authorized', False)):
+                violating_withdrawals.append(withdrawal_id)
+                continue
+            if self.policy_enabled(model, 'fresh_nonce_required') and not bool(event.get('nonce_fresh', False)):
+                violating_withdrawals.append(withdrawal_id)
+                continue
+            if self.policy_enabled(model, 'sufficient_balance_required') and not bool(event.get('sufficient_balance', False)):
+                violating_withdrawals.append(withdrawal_id)
+                continue
+            if self.policy_enabled(model, 'wallet_not_frozen_required') and not bool(event.get('wallet_not_frozen', False)):
+                violating_withdrawals.append(withdrawal_id)
+        property_formula = z3.And(
+            z3.BoolVal(self.policy_enabled(model, 'authorization_required')),
+            z3.BoolVal(self.policy_enabled(model, 'fresh_nonce_required')),
+            z3.BoolVal(self.policy_enabled(model, 'sufficient_balance_required')),
+            z3.BoolVal(self.policy_enabled(model, 'wallet_not_frozen_required')),
+            z3.Not(z3.BoolVal(bool(violating_withdrawals))),
+        )
+        evidence_refs = self.evidence_refs(*policy_records, *broadcasts)
+        soundness_notes = self.heuristic_soundness_note(evidence_refs)
         return Z3Compilation(
             claim=self,
-            assertions=assertions,
+            assertions=[],
             property_formula=property_formula,
-            violation_formula=violation_formula,
             compiler_artifact={
                 'kind': 'withdrawal_policy',
-                'policies': [policy.get('name') for policy in model.policies],
-                'assertions': [str(expr) for expr in assertions],
+                'withdrawal_ids': [event.get('withdrawal_id') or event.get('txid') for event in broadcasts],
+                'violating_withdrawals': violating_withdrawals,
             },
+            evidence_refs=evidence_refs,
+            soundness_notes=soundness_notes,
         )

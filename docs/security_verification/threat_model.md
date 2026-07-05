@@ -27,3 +27,11 @@ Prioritized attack classes carried in the example threat model metadata:
 - `T10` simulated proof mode used in production
 
 `UNKNOWN` must never be treated as secure. Unsupported or incomplete proof paths stay fail-closed.
+
+## Soundness boundary
+
+- These proofs are bounded by the assumption registry (`A1`-`A10`) and the modeled event, capability, and ledger facts in the IR.
+- Heuristic source-code autoformalization is not production-trustworthy until its evidence references move beyond `heuristic` review status.
+- `PROVED` means the implemented Z3 backend discharged the modeled claim; it does not mean an arbitrary exchange codebase is absolutely secure.
+- `UNKNOWN` and `NOT_MODELED` must remain fail-closed.
+

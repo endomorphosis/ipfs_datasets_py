@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterable
 
-from ..ir.schema import SecurityModelIR
+from ..ir.schema import SecurityModelIR, make_evidence_ref
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +49,17 @@ _CRITICAL_ACTION_KEYWORDS = (
     'credit',
     'transfer',
 )
+
+
+
 def _compile_keyword_pattern(keyword: str) -> re.Pattern[str]:
     return re.compile(r'\b' + re.escape(keyword).replace(r'\ ', r'\s+') + r'\b')
 
 
+
 def _compile_keyword_patterns(keywords: Iterable[str]) -> tuple[re.Pattern[str], ...]:
     return tuple(_compile_keyword_pattern(keyword) for keyword in keywords)
+
 
 
 def _merge_lists(left: list[Any], right: list[Any]) -> list[Any]:
@@ -70,23 +75,21 @@ _POLICY_PATTERNS = {
     for policy_name, keywords in _POLICY_KEYWORDS.items()
 }
 _SECURITY_PATTERNS = tuple(_compile_keyword_pattern(keyword) for keyword in _SECURITY_KEYWORDS)
-# Keep policy inference bounded to the first few lines of a function body so the seed
-# extractor captures common guards without drifting into unrelated long-function logic.
 _MAX_POLICY_SOURCE_LINES = 12
 
 
 class PythonASTExtractor:
     """Extract lightweight symbol metadata and seed IR facts from Python code."""
 
-    def extract_from_source(self, source: str) -> dict[str, Any]:
+    def extract_from_source(self, source: str, *, module_path: str = '<memory>') -> dict[str, Any]:
         """Extract lightweight summary facts from Python *source*."""
 
         tree = ast.parse(source)
         functions = sorted(node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
         classes = sorted(node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef))
-        policies = self._collect_policy_entries(tree, source)
-        invariants = self._collect_invariants(tree, source)
-        events = self._collect_events(tree)
+        policies = self._collect_policy_entries(tree, source, module_path)
+        invariants = self._collect_invariants(tree, source, module_path)
+        events = self._collect_events(tree, source, module_path)
         return {
             'functions': functions,
             'classes': classes,
@@ -104,14 +107,26 @@ class PythonASTExtractor:
     ) -> SecurityModelIR:
         """Autoformalize Python *source* into a seed :class:`SecurityModelIR`."""
 
-        summary = self.extract_from_source(source)
         source_name = module_path or '<memory>'
+        summary = self.extract_from_source(source, module_path=source_name)
+        source_digest = hashlib.sha256(source.encode('utf-8')).hexdigest()
         autoformalization = {
             'kind': 'python_ast',
             'language': 'python',
             'module_path': source_name,
-            'source_digest': hashlib.sha256(source.encode('utf-8')).hexdigest(),
-            'review_status': 'seed-autoformalization',
+            'source_digest': source_digest,
+            'review_status': 'heuristic',
+            'evidence_refs': [
+                make_evidence_ref(
+                    kind='source_code',
+                    path=source_name,
+                    line_start=1,
+                    line_end=max(len(source.splitlines()), 1),
+                    sha256=source_digest,
+                    review_status='heuristic',
+                    notes='Seed Python AST autoformalization requires review before blocking proofs.',
+                )
+            ],
             'gaps': [
                 'Policies are inferred from syntax and docstrings; human review is required before production proofs.',
                 'Dataflow-sensitive facts such as concrete balances, principals, and on-chain settlement remain partially modeled.',
@@ -188,7 +203,12 @@ class PythonASTExtractor:
                     'languages': ['python'],
                     'root_path': str(root),
                     'source_files': [model.metadata['autoformalization']['module_path'] for model in models],
-                    'review_status': 'seed-autoformalization',
+                    'review_status': 'heuristic',
+                    'evidence_refs': [
+                        reference
+                        for model in models
+                        for reference in model.metadata['autoformalization'].get('evidence_refs', [])
+                    ],
                     'gaps': [
                         'Directory aggregation preserves per-module facts but does not yet reconcile cross-module principal or asset aliases.',
                     ],
@@ -196,8 +216,28 @@ class PythonASTExtractor:
             },
         )
 
-    def _collect_policy_entries(self, tree: ast.AST, source: str) -> list[dict[str, Any]]:
+    def _evidence_ref(
+        self,
+        *,
+        path: str,
+        source_digest: str,
+        line_start: int,
+        line_end: int,
+        notes: str,
+    ) -> dict[str, Any]:
+        return make_evidence_ref(
+            kind='source_code',
+            path=path,
+            line_start=line_start,
+            line_end=line_end,
+            sha256=source_digest,
+            review_status='heuristic',
+            notes=notes,
+        )
+
+    def _collect_policy_entries(self, tree: ast.AST, source: str, module_path: str = '<memory>') -> list[dict[str, Any]]:
         policies: dict[str, dict[str, Any]] = {}
+        source_digest = hashlib.sha256(source.encode('utf-8')).hexdigest()
         for function in self._iter_functions(tree):
             body_excerpt = '\n'.join((ast.get_source_segment(source, function) or '').splitlines()[:_MAX_POLICY_SOURCE_LINES])
             haystack = ' '.join(filter(None, [function.name, ast.get_docstring(function) or '', body_excerpt])).lower()
@@ -211,14 +251,25 @@ class PythonASTExtractor:
                             'name': policy_name,
                             'enabled': True,
                             'sources': [],
+                            'evidence_refs': [],
                         },
                     )
                     if function.name not in policy['sources']:
                         policy['sources'].append(function.name)
+                    reference = self._evidence_ref(
+                        path=module_path,
+                        source_digest=source_digest,
+                        line_start=function.lineno,
+                        line_end=getattr(function, 'end_lineno', function.lineno),
+                        notes=f'Policy inferred from function {function.name}.',
+                    )
+                    if reference not in policy['evidence_refs']:
+                        policy['evidence_refs'].append(reference)
         return sorted(policies.values(), key=lambda item: item['id'])
 
-    def _collect_invariants(self, tree: ast.AST, source: str) -> list[dict[str, Any]]:
+    def _collect_invariants(self, tree: ast.AST, source: str, module_path: str = '<memory>') -> list[dict[str, Any]]:
         invariants: list[dict[str, Any]] = []
+        source_digest = hashlib.sha256(source.encode('utf-8')).hexdigest()
         for function in self._iter_functions(tree):
             docstring = ast.get_docstring(function) or ''
             for index, sentence in enumerate(self._extract_security_sentences(docstring), start=1):
@@ -233,6 +284,15 @@ class PythonASTExtractor:
                             'predicates': predicates,
                             'relations': relations,
                         },
+                        'evidence_refs': [
+                            self._evidence_ref(
+                                path=module_path,
+                                source_digest=source_digest,
+                                line_start=function.lineno,
+                                line_end=getattr(function, 'end_lineno', function.lineno),
+                                notes=f'Invariant inferred from docstring on function {function.name}.',
+                            )
+                        ],
                     }
                 )
         for class_node in (node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)):
@@ -249,12 +309,22 @@ class PythonASTExtractor:
                             'predicates': predicates,
                             'relations': relations,
                         },
+                        'evidence_refs': [
+                            self._evidence_ref(
+                                path=module_path,
+                                source_digest=source_digest,
+                                line_start=class_node.lineno,
+                                line_end=getattr(class_node, 'end_lineno', class_node.lineno),
+                                notes=f'Invariant inferred from docstring on class {class_node.name}.',
+                            )
+                        ],
                     }
                 )
         return invariants
 
-    def _collect_events(self, tree: ast.AST) -> list[dict[str, Any]]:
+    def _collect_events(self, tree: ast.AST, source: str, module_path: str = '<memory>') -> list[dict[str, Any]]:
         events: list[dict[str, Any]] = []
+        source_digest = hashlib.sha256(source.encode('utf-8')).hexdigest()
         for function in self._iter_functions(tree):
             events.append(
                 {
@@ -262,6 +332,15 @@ class PythonASTExtractor:
                     'event': function.name,
                     'kind': 'code_path',
                     'critical': any(pattern.search(function.name.lower()) for pattern in _compile_keyword_patterns(_CRITICAL_ACTION_KEYWORDS)),
+                    'evidence_refs': [
+                        self._evidence_ref(
+                            path=module_path,
+                            source_digest=source_digest,
+                            line_start=function.lineno,
+                            line_end=getattr(function, 'end_lineno', function.lineno),
+                            notes=f'Code-path event harvested from function {function.name}.',
+                        )
+                    ],
                 }
             )
         return events

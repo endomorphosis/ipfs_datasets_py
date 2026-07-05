@@ -41,3 +41,11 @@ The default exchange model ships with a bounded assumption registry (`A1`-`A10`)
 - proof receipt checking
 - WASM Lean/Coq proof checking
 - deterministic runtime temporal monitors and chain-adjacent predicates
+
+## Soundness boundary
+
+- The current Z3 backend proves only bounded properties of the modeled `SecurityModelIR`.
+- Heuristic autoformalization remains non-authoritative until its `evidence_refs` have been reviewed.
+- `UNKNOWN` and `NOT_MODELED` are never secure outcomes.
+- TypeScript/WASM artifacts emitted from this package are validation scaffolding only; proof checking remains future work.
+

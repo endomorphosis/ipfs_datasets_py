@@ -19,35 +19,48 @@ class NoDoubleSpendInternalBalanceClaim(SecurityClaim):
         )
 
     def compile_to_z3(self, model: SecurityModelIR) -> Z3Compilation:
-        if not model.accounts:
+        accounts = self.iter_accounts(model)
+        if not accounts:
             return claim_not_modeled(self, 'account balances are not modeled')
-        account = self.find_account(model)
-        reservation_requests = list(account.get('reservation_requests', []))
-        if len(reservation_requests) < 2:
-            return claim_not_modeled(self, 'at least two reservation requests are required')
+        overdrawn_accounts: list[str] = []
+        for account in accounts:
+            balance = int(account.get('balance', 0))
+            reservations = [int(item) for item in account.get('reservation_requests', account.get('reservations', []))]
+            if reservations and sum(reservations) > balance:
+                overdrawn_accounts.append(str(account.get('id', '<unknown>')))
+        totals = model.metadata.get('ledger_totals', {})
+        conservation_violations: list[str] = []
+        if isinstance(totals, dict):
+            liabilities = totals.get('customer_liabilities', {})
+            custody = totals.get('custody_assets', {})
+            pending = totals.get('pending_settlements', {})
+            losses = totals.get('known_losses', {})
+            if all(isinstance(item, dict) for item in (liabilities, custody, pending, losses)):
+                for asset_id, liability in liabilities.items():
+                    available = int(custody.get(asset_id, 0)) + int(pending.get(asset_id, 0)) - int(losses.get(asset_id, 0))
+                    if int(liability) > available:
+                        conservation_violations.append(str(asset_id))
         z3 = z3_import()
-        balance = z3.Int('starting_balance')
-        reservation_a = z3.Int('reservation_a')
-        reservation_b = z3.Int('reservation_b')
-        assertions = [
-            balance == int(account.get('balance', 0)),
-            reservation_a == int(reservation_requests[0]),
-            reservation_b == int(reservation_requests[1]),
-            reservation_a >= 0,
-            reservation_b >= 0,
-        ]
-        if self.policy_enabled(model, 'atomic_reservation'):
-            assertions.append(reservation_a + reservation_b <= balance)
+        policy_record = self.policy_record(model, 'atomic_reservation')
+        evidence_refs = self.evidence_refs(policy_record, *accounts)
+        soundness_notes = self.heuristic_soundness_note(evidence_refs)
+        if not totals:
+            soundness_notes.append('Global custody-versus-liability conservation is not modeled in this IR payload.')
         return Z3Compilation(
             claim=self,
-            assertions=assertions,
-            property_formula=reservation_a + reservation_b <= balance,
-            violation_formula=reservation_a + reservation_b > balance,
+            assertions=[],
+            property_formula=z3.And(
+                z3.BoolVal(self.policy_enabled(model, 'atomic_reservation')),
+                z3.Not(z3.BoolVal(bool(overdrawn_accounts))),
+                z3.Not(z3.BoolVal(bool(conservation_violations))),
+            ),
             compiler_artifact={
                 'kind': 'internal_balance_conservation',
-                'balance': int(account.get('balance', 0)),
-                'reservation_requests': reservation_requests[:2],
+                'overdrawn_accounts': overdrawn_accounts,
+                'conservation_violations': conservation_violations,
             },
+            evidence_refs=evidence_refs,
+            soundness_notes=soundness_notes,
         )
 
 
@@ -81,22 +94,21 @@ class AuditEventExistsForCriticalTransitionClaim(SecurityClaim):
         missing_audit_transitions = sorted(
             transition for transition in critical_transitions if transition not in audited_transitions
         )
-        audit_required = z3.Bool('audit_required')
-        missing_audit_event = z3.Bool('missing_audit_event')
-        assertions = [
-            audit_required == self.policy_enabled(model, 'audit_required'),
-            missing_audit_event == bool(missing_audit_transitions),
-        ]
+        policy_record = self.policy_record(model, 'audit_required')
+        evidence_refs = self.evidence_refs(policy_record, *model.events)
         return Z3Compilation(
             claim=self,
-            assertions=assertions,
-            property_formula=z3.And(audit_required, z3.Not(missing_audit_event)),
-            violation_formula=z3.Or(z3.Not(audit_required), missing_audit_event),
+            assertions=[],
+            property_formula=z3.And(
+                z3.BoolVal(self.policy_enabled(model, 'audit_required')),
+                z3.Not(z3.BoolVal(bool(missing_audit_transitions))),
+            ),
             compiler_artifact={
                 'kind': 'audit_transition_policy',
                 'critical_transitions': critical_transitions,
                 'audited_transitions': sorted(audited_transitions),
                 'missing_audit': missing_audit_transitions,
-                'assertions': [str(expr) for expr in assertions],
             },
+            evidence_refs=evidence_refs,
+            soundness_notes=self.heuristic_soundness_note(evidence_refs),
         )

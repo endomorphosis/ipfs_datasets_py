@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from ..ir.schema import SecurityModelIR
+from ..ir.schema import SecurityModelIR, make_evidence_ref
 from .python_ast_extractor import (
     PythonASTExtractor,
     _CRITICAL_ACTION_KEYWORDS,
@@ -66,6 +66,7 @@ _CRITICAL_ACTION_PATTERNS = tuple(re.compile(r'\b' + re.escape(keyword) + r'\b')
 _NON_DECLARATION_PREFIXES = ('if', 'for', 'while', 'switch', 'catch', 'return', 'throw', 'new')
 
 
+
 def _merge_lists(left: list[Any], right: list[Any]) -> list[Any]:
     merged = list(left)
     for item in right:
@@ -82,6 +83,8 @@ class _CodeSymbol:
     kind: str
     comment: str
     body_excerpt: str
+    line_start: int
+    line_end: int
 
 
 class SourceCodeExtractor:
@@ -108,12 +111,24 @@ class SourceCodeExtractor:
 
         symbols = self._collect_symbols(source, normalized_language)
         source_name = module_path or '<memory>'
+        source_digest = hashlib.sha256(source.encode('utf-8')).hexdigest()
         autoformalization = {
             'kind': 'source_code',
             'language': normalized_language,
             'module_path': source_name,
-            'source_digest': hashlib.sha256(source.encode('utf-8')).hexdigest(),
-            'review_status': 'seed-autoformalization',
+            'source_digest': source_digest,
+            'review_status': 'heuristic',
+            'evidence_refs': [
+                make_evidence_ref(
+                    kind='source_code',
+                    path=source_name,
+                    line_start=1,
+                    line_end=max(len(source.splitlines()), 1),
+                    sha256=source_digest,
+                    review_status='heuristic',
+                    notes='Seed multi-language autoformalization requires human review before blocking proofs.',
+                )
+            ],
             'gaps': [
                 'Facts are inferred from syntax and nearby comments; human review is required before production proofs.',
                 'Cross-function dataflow, concrete balances, and principal aliasing remain partially modeled.',
@@ -126,7 +141,7 @@ class SourceCodeExtractor:
                 functions.append(symbol)
             elif symbol.kind == 'class':
                 classes.append(symbol)
-        events = self._collect_events(functions)
+        events = self._collect_events(functions, source_name, source_digest)
         return SecurityModelIR(
             schema_version='security-model-ir/v1',
             model_id=model_id,
@@ -140,7 +155,7 @@ class SourceCodeExtractor:
             roles=[],
             principals=[],
             capabilities=[],
-            policies=self._collect_policy_entries(functions),
+            policies=self._collect_policy_entries(functions, source_name, source_digest),
             events=events,
             state_machines=[
                 {
@@ -152,7 +167,7 @@ class SourceCodeExtractor:
                 for event in events
                 if event.get('critical')
             ],
-            invariants=self._collect_invariants(symbols),
+            invariants=self._collect_invariants(symbols, source_name, source_digest),
             assumptions=[],
             prover_targets=['z3'],
             metadata={'autoformalization': autoformalization},
@@ -215,7 +230,12 @@ class SourceCodeExtractor:
                     'languages': languages,
                     'root_path': str(root),
                     'source_files': [model.metadata['autoformalization']['module_path'] for model in models],
-                    'review_status': 'seed-autoformalization',
+                    'review_status': 'heuristic',
+                    'evidence_refs': [
+                        reference
+                        for model in models
+                        for reference in model.metadata['autoformalization'].get('evidence_refs', [])
+                    ],
                     'gaps': [
                         'Directory aggregation preserves per-module facts but does not yet reconcile cross-language principal or asset aliases.',
                     ],
@@ -247,7 +267,7 @@ class SourceCodeExtractor:
         in_block_comment = False
         lines = source.splitlines()
 
-        for index, line in enumerate(lines):
+        for index, line in enumerate(lines, start=1):
             stripped = line.strip()
             if in_block_comment:
                 before_end, has_end, _ = stripped.partition(_BLOCK_COMMENT_END)
@@ -296,13 +316,15 @@ class SourceCodeExtractor:
                         break
 
             if matched_name:
-                body_excerpt = '\n'.join(lines[index : index + _MAX_POLICY_SOURCE_LINES])
+                body_lines = lines[index - 1 : index - 1 + _MAX_POLICY_SOURCE_LINES]
                 symbols.append(
                     _CodeSymbol(
                         name=matched_name,
                         kind=matched_kind or 'function',
                         comment=' '.join(comment_buffer).strip(),
-                        body_excerpt=body_excerpt,
+                        body_excerpt='\n'.join(body_lines),
+                        line_start=index,
+                        line_end=index + max(len(body_lines) - 1, 0),
                     )
                 )
                 comment_buffer = []
@@ -344,7 +366,18 @@ class SourceCodeExtractor:
             deduped[entry_key] = merged
         return [deduped[item_key] for item_key in sorted(deduped)]
 
-    def _collect_policy_entries(self, functions: list[_CodeSymbol]) -> list[dict[str, Any]]:
+    def _evidence_ref(self, *, path: str, source_digest: str, symbol: _CodeSymbol, notes: str) -> dict[str, Any]:
+        return make_evidence_ref(
+            kind='source_code',
+            path=path,
+            line_start=symbol.line_start,
+            line_end=symbol.line_end,
+            sha256=source_digest,
+            review_status='heuristic',
+            notes=notes,
+        )
+
+    def _collect_policy_entries(self, functions: list[_CodeSymbol], path: str, source_digest: str) -> list[dict[str, Any]]:
         policies: dict[str, dict[str, Any]] = {}
         for function in functions:
             haystack = ' '.join(filter(None, [function.name, function.comment, function.body_excerpt])).lower()
@@ -358,13 +391,17 @@ class SourceCodeExtractor:
                             'name': policy_name,
                             'enabled': True,
                             'sources': [],
+                            'evidence_refs': [],
                         },
                     )
                     if function.name not in policy['sources']:
                         policy['sources'].append(function.name)
+                    reference = self._evidence_ref(path=path, source_digest=source_digest, symbol=function, notes=f'Policy inferred from {function.name}.')
+                    if reference not in policy['evidence_refs']:
+                        policy['evidence_refs'].append(reference)
         return sorted(policies.values(), key=lambda item: item['id'])
 
-    def _collect_invariants(self, symbols: list[_CodeSymbol]) -> list[dict[str, Any]]:
+    def _collect_invariants(self, symbols: list[_CodeSymbol], path: str, source_digest: str) -> list[dict[str, Any]]:
         invariants: list[dict[str, Any]] = []
         for symbol in symbols:
             if not symbol.comment:
@@ -379,18 +416,24 @@ class SourceCodeExtractor:
                         'predicates': predicates,
                         'relations': relations,
                     },
+                    'evidence_refs': [
+                        self._evidence_ref(path=path, source_digest=source_digest, symbol=symbol, notes=f'Invariant inferred from comment near {symbol.name}.')
+                    ],
                 }
                 entry['source_function' if symbol.kind == 'function' else 'source_class'] = symbol.name
                 invariants.append(entry)
         return invariants
 
-    def _collect_events(self, functions: list[_CodeSymbol]) -> list[dict[str, Any]]:
+    def _collect_events(self, functions: list[_CodeSymbol], path: str, source_digest: str) -> list[dict[str, Any]]:
         return [
             {
                 'id': f'event:{function.name}',
                 'event': function.name,
                 'kind': 'code_path',
                 'critical': any(pattern.search(function.name.lower()) for pattern in _CRITICAL_ACTION_PATTERNS),
+                'evidence_refs': [
+                    self._evidence_ref(path=path, source_digest=source_digest, symbol=function, notes=f'Code-path event harvested from {function.name}.')
+                ],
             }
             for function in functions
         ]

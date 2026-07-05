@@ -43,6 +43,8 @@ def approve_withdrawal(wallet, authorized, balance, audit_log):
     assert any(invariant['description'].startswith('Every withdrawal must be authorized') for invariant in model.invariants)
     assert model.metadata['autoformalization']['module_path'] == 'exchange/withdrawals.py'
     assert model.metadata['autoformalization']['source_digest']
+    assert model.metadata['autoformalization']['review_status'] == 'heuristic'
+    assert model.metadata['autoformalization']['evidence_refs']
 
 
 

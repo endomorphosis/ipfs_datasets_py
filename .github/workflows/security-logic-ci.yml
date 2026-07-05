@@ -39,6 +39,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest z3-solver multiformats
+      - name: Check hidden Unicode and newline normalization
+        run: |
+          python scripts/ops/security_verification/check_no_hidden_unicode.py
       - name: Run focused security model tests
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -47,15 +50,45 @@ jobs:
           IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
           pytest tests/logic/security_models/crypto_exchange -v --tb=short
-      - name: Run proof CLI in focused mode
+      - name: Run proof CLI with strict validation
         env:
           PYTHONPATH: ${{ github.workspace }}
           IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
           IPFS_DATASETS_AUTO_INSTALL: '0'
           IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
-          args=(--example --fail-on disproof --require-real-ergoai --forbid-simulated-zkp --out proof_report.json)
+          python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all \
+            --example \
+            --strict-validation \
+            --out proof_report_strict.json
+      - name: Run proof CLI in fail-closed mode
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          args=(--example --strict-validation --fail-on disproof --require-real-ergoai --forbid-simulated-zkp --out proof_report.json)
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.strict_unknown }}" = "true" ]; then
             args+=(--fail-on unknown-critical)
           fi
           python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all "${args[@]}"
+      - name: Run emitted TypeScript schema compile test when toolchain is available
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          if command -v node >/dev/null 2>&1 && (command -v tsc >/dev/null 2>&1 || command -v npx >/dev/null 2>&1); then
+            pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py -v --tb=short
+          else
+            echo 'Skipping TypeScript compile test because node/tsc is unavailable.'
+          fi
+      - name: Upload proof report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-logic-proof-reports
+          path: |
+            proof_report.json
+            proof_report_strict.json

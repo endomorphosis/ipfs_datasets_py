@@ -1,23 +1,20 @@
 import pytest
 from copy import deepcopy
 
-from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.capability import CapabilityDelegationMonotonicityClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims import default_claims
+from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.capability import CapabilityDelegationMonotonicityClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.deposit import NoDepositCreditedBeforeFinalityClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.hsm import NoSigningAfterWalletFreezeClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.ledger import AuditEventExistsForCriticalTransitionClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
-from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import (
-    DEFAULT_PROVERS,
-    _normalize_provers,
-    prove_claims,
-)
+from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import DEFAULT_PROVERS, _normalize_provers, prove_claims
 from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.z3_runner import Z3Runner
 
 
 pytest.importorskip('z3')
 
 ESCALATED_DELEGATED_AUTHORITY = 4
+
 
 
 def test_good_model_proves_remaining_claims() -> None:
@@ -33,6 +30,7 @@ def test_good_model_proves_remaining_claims() -> None:
         assert report.status == 'PROVED'
 
 
+
 def test_bad_model_finds_deposit_before_finality_counterexample() -> None:
     model = deepcopy(example_minimal_exchange_model())
     model.events = [
@@ -44,11 +42,13 @@ def test_bad_model_finds_deposit_before_finality_counterexample() -> None:
     assert report.status == 'DISPROVED'
 
 
+
 def test_bad_model_finds_signing_after_freeze_counterexample() -> None:
     model = deepcopy(example_minimal_exchange_model())
-    model.events.append({'event': 'signing_request', 'wallet_id': 'wallet:user_alice'})
+    model.events.append({'id': 'event:sign:1', 'event': 'signing_request', 'wallet_id': 'wallet:user_alice', 'timestamp': 11})
     report = Z3Runner().run_claim(NoSigningAfterWalletFreezeClaim(), model)
     assert report.status == 'DISPROVED'
+
 
 
 def test_bad_model_finds_capability_authority_escalation() -> None:
@@ -58,11 +58,13 @@ def test_bad_model_finds_capability_authority_escalation() -> None:
     assert report.status == 'DISPROVED'
 
 
+
 def test_bad_model_finds_missing_audit_for_critical_transition() -> None:
     model = deepcopy(example_minimal_exchange_model())
     model.events = [event for event in model.events if event.get('event') != 'audit_logged']
     report = Z3Runner().run_claim(AuditEventExistsForCriticalTransitionClaim(), model)
     assert report.status == 'DISPROVED'
+
 
 
 def test_prove_claims_proves_complete_default_z3_claim_set() -> None:
@@ -71,9 +73,11 @@ def test_prove_claims_proves_complete_default_z3_claim_set() -> None:
     assert all(report.status == 'PROVED' for report in reports)
 
 
+
 def test_default_prover_list_is_limited_to_implemented_runners() -> None:
     assert DEFAULT_PROVERS == ('z3',)
     assert example_minimal_exchange_model().prover_targets == ['z3']
+
 
 
 def test_prove_claims_returns_unknown_reports_when_z3_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -82,6 +86,7 @@ def test_prove_claims_returns_unknown_reports_when_z3_is_unavailable(monkeypatch
     assert [report.claim_id for report in reports] == [claim.claim_id for claim in default_claims()]
     assert all(report.prover == Z3Runner.prover_name for report in reports)
     assert all(report.status == 'UNKNOWN' for report in reports)
+
 
 
 def test_prove_claims_preserves_unknown_when_z3_returns_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -94,6 +99,23 @@ def test_prove_claims_preserves_unknown_when_z3_returns_unknown(monkeypatch: pyt
     assert [report.claim_id for report in reports] == [claim.claim_id for claim in default_claims()]
     assert all(report.prover == Z3Runner.prover_name for report in reports)
     assert all(report.status == 'UNKNOWN' for report in reports)
+
+
+
+def test_default_claims_return_not_modeled_when_required_domains_are_missing() -> None:
+    model = deepcopy(example_minimal_exchange_model())
+    model.events = []
+    model.capabilities = []
+    model.accounts = []
+    reports = prove_claims(model, ['z3'])
+    status_by_claim = {report.claim_id: report.status for report in reports}
+    assert status_by_claim['no_double_spend_internal_balance'] == 'NOT_MODELED'
+    assert status_by_claim['no_deposit_before_finality'] == 'NOT_MODELED'
+    assert status_by_claim['no_signing_request_after_wallet_freeze'] == 'NOT_MODELED'
+    assert status_by_claim['capability_delegation_no_authority_increase'] == 'NOT_MODELED'
+    assert status_by_claim['revoked_capability_no_future_authorization'] == 'NOT_MODELED'
+    assert status_by_claim['audit_event_exists_for_critical_transition'] == 'NOT_MODELED'
+
 
 
 def test_normalize_provers_rejects_unknown_names() -> None:

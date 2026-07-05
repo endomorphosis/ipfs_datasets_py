@@ -19,29 +19,52 @@ class CapabilityDelegationMonotonicityClaim(SecurityClaim):
         )
 
     def compile_to_z3(self, model: SecurityModelIR) -> Z3Compilation:
-        if not model.capabilities:
+        capabilities = self.iter_capabilities(model)
+        if not capabilities:
             return claim_not_modeled(self, 'capabilities are not modeled')
-        capability = self.find_capability(model)
+        violations: list[str] = []
+        for capability in capabilities:
+            capability_id = str(capability.get('id', '<unknown>'))
+            delegated = int(capability.get('delegated_authority', 0))
+            parent = int(capability.get('delegator_authority', capability.get('parent_authority', 0)))
+            if delegated > parent:
+                violations.append(capability_id)
+                continue
+            parent_actions = set(capability.get('parent_actions', []))
+            delegated_actions = set(capability.get('delegated_actions', capability.get('actions', [])))
+            if parent_actions and not delegated_actions.issubset(parent_actions):
+                violations.append(capability_id)
+                continue
+            parent_resources = set(capability.get('parent_resources', []))
+            delegated_resources = set(capability.get('delegated_resources', capability.get('resources', [])))
+            if parent_resources and not delegated_resources.issubset(parent_resources):
+                violations.append(capability_id)
+                continue
+            if bool(capability.get('caveats_relax_authority', capability.get('caveats_widen_authority', False))):
+                violations.append(capability_id)
+                continue
+            if not bool(capability.get('allow_expiry_extension', False)):
+                parent_expiry = capability.get('parent_expiry')
+                expiry = capability.get('expiry')
+                if parent_expiry is not None and expiry is not None and int(expiry) > int(parent_expiry):
+                    violations.append(capability_id)
         z3 = z3_import()
-        policy_enabled = z3.Bool('delegation_monotonicity')
-        delegated = z3.Int('delegated_authority')
-        delegator = z3.Int('delegator_authority')
-        assertions = [
-            policy_enabled == self.policy_enabled(model, 'delegation_monotonicity'),
-            delegated == int(capability.get('delegated_authority', 0)),
-            delegator == int(capability.get('delegator_authority', 0)),
-        ]
+        policy_record = self.policy_record(model, 'delegation_monotonicity')
+        evidence_refs = self.evidence_refs(policy_record, *capabilities)
         return Z3Compilation(
             claim=self,
-            assertions=assertions,
-            property_formula=z3.And(policy_enabled, delegated <= delegator),
-            violation_formula=z3.Or(z3.Not(policy_enabled), delegated > delegator),
+            assertions=[],
+            property_formula=z3.And(
+                z3.BoolVal(self.policy_enabled(model, 'delegation_monotonicity')),
+                z3.Not(z3.BoolVal(bool(violations))),
+            ),
             compiler_artifact={
                 'kind': 'capability_delegation',
-                'policy_enabled': self.policy_enabled(model, 'delegation_monotonicity'),
-                'delegated_authority': int(capability.get('delegated_authority', 0)),
-                'delegator_authority': int(capability.get('delegator_authority', 0)),
+                'violations': violations,
+                'capability_ids': [capability.get('id') for capability in capabilities],
             },
+            evidence_refs=evidence_refs,
+            soundness_notes=self.heuristic_soundness_note(evidence_refs),
         )
 
 
@@ -57,33 +80,31 @@ class RevokedCapabilityClaim(SecurityClaim):
         )
 
     def compile_to_z3(self, model: SecurityModelIR) -> Z3Compilation:
-        if not model.capabilities:
+        capabilities = self.iter_capabilities(model)
+        if not capabilities:
             return claim_not_modeled(self, 'capability revocation data is not modeled')
-        capability = self.find_capability(model)
+        violations: list[str] = []
+        for capability in capabilities:
+            capability_id = str(capability.get('id', '<unknown>'))
+            privileged_action = bool(capability.get('privileged_action_attempted', False))
+            revoked = bool(capability.get('revoked_before_action', False))
+            expired = bool(capability.get('expired', False))
+            if privileged_action and (revoked or expired):
+                violations.append(capability_id)
         z3 = z3_import()
-        policy_enabled = z3.Bool('revocation_enforced')
-        revoked_before_action = z3.Bool('revoked_before_action')
-        privileged_action = z3.Bool('privileged_action_attempted')
-        assertions = [
-            policy_enabled == self.policy_enabled(model, 'revocation_enforced'),
-            revoked_before_action == bool(capability.get('revoked_before_action', False)),
-            privileged_action == bool(capability.get('privileged_action_attempted', False)),
-        ]
+        policy_record = self.policy_record(model, 'revocation_enforced')
+        evidence_refs = self.evidence_refs(policy_record, *capabilities)
         return Z3Compilation(
             claim=self,
-            assertions=assertions,
+            assertions=[],
             property_formula=z3.And(
-                policy_enabled,
-                z3.Implies(privileged_action, z3.Not(revoked_before_action)),
-            ),
-            violation_formula=z3.Or(
-                z3.Not(policy_enabled),
-                z3.And(privileged_action, revoked_before_action),
+                z3.BoolVal(self.policy_enabled(model, 'revocation_enforced')),
+                z3.Not(z3.BoolVal(bool(violations))),
             ),
             compiler_artifact={
                 'kind': 'capability_revocation',
-                'policy_enabled': self.policy_enabled(model, 'revocation_enforced'),
-                'revoked_before_action': bool(capability.get('revoked_before_action', False)),
-                'privileged_action_attempted': bool(capability.get('privileged_action_attempted', False)),
+                'violations': violations,
             },
+            evidence_refs=evidence_refs,
+            soundness_notes=self.heuristic_soundness_note(evidence_refs),
         )

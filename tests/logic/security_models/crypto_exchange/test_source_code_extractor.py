@@ -50,6 +50,8 @@ export function approveWithdrawal(authorized: boolean, balance: number, wallet: 
     assert model.metadata['autoformalization']['language'] == 'typescript'
     assert model.metadata['autoformalization']['module_path'] == 'exchange/withdrawals.ts'
     assert model.metadata['autoformalization']['source_digest']
+    assert model.metadata['autoformalization']['review_status'] == 'heuristic'
+    assert model.metadata['autoformalization']['evidence_refs']
 
 
 def test_source_code_extractor_aggregates_popular_language_directory_inputs(tmp_path: Path) -> None:
@@ -98,6 +100,7 @@ func FreezeWallet(authorized bool) bool {
     assert sum(1 for policy in model.policies if policy['name'] == 'authorization_required') == 1
     authorization_policy = next(policy for policy in model.policies if policy['name'] == 'authorization_required')
     assert sorted(authorization_policy['sources']) == ['FreezeWallet', 'approveWithdrawal']
+    assert authorization_policy['evidence_refs']
 
 
 @pytest.mark.parametrize(
@@ -196,4 +199,5 @@ def test_source_code_extractor_detects_authorization_policy_for_supported_langua
 
     authorization_policy = next(policy for policy in model.policies if policy['name'] == 'authorization_required')
     assert authorization_policy['sources'] == [expected_event]
+    assert authorization_policy['evidence_refs']
     assert any(event['event'] == expected_event for event in model.events)
