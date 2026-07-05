@@ -25,13 +25,12 @@ class Z3Compilation:
             return
         if self.property_formula is None:
             raise ValueError('modeled Z3 compilations must define a property_formula')
+        z3 = z3_import()
         if self.violation_formula is None:
-            z3 = z3_import()
             self.violation_formula = z3.Not(self.property_formula)
             return
         if self.violation_scope_explanation is not None:
             return
-        z3 = z3_import()
         if not (z3.is_not(self.violation_formula) and self.violation_formula.arg(0).eq(self.property_formula)):
             raise ValueError('custom violation_formula requires violation_scope_explanation')
 

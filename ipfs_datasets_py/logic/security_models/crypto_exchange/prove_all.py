@@ -259,14 +259,15 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.out).write_text(rendered, encoding='utf-8')
     else:
         print(rendered)
-    return 1 if any(
+    has_failures = any(
         _should_fail(
             report,
             fail_policies=fail_policies,
             require_reviewed_evidence=args.require_reviewed_evidence,
         )
         for report in reports
-    ) else 0
+    )
+    return 1 if has_failures else 0
 
 
 if __name__ == '__main__':  # pragma: no cover

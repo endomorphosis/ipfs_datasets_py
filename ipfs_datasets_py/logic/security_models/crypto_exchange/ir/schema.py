@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
-from typing import Any, Mapping, TypedDict
+from typing import Any, Mapping, NotRequired, Required, TypedDict
 
 
 class AssumptionEntry(TypedDict, total=False):
@@ -13,13 +13,15 @@ class AssumptionEntry(TypedDict, total=False):
 
 
 class EvidenceRef(TypedDict, total=False):
-    kind: str
-    path: str
-    line_start: int
-    line_end: int
-    sha256: str
-    review_status: str
-    notes: str
+    """Evidence references require kind/path/review_status; remaining fields are optional."""
+
+    kind: Required[str]
+    path: Required[str]
+    review_status: Required[str]
+    line_start: NotRequired[int]
+    line_end: NotRequired[int]
+    sha256: NotRequired[str]
+    notes: NotRequired[str]
 
 
 # Stable bounded-security assumption identifiers used by proof reports and the

@@ -1,3 +1,4 @@
+from pathlib import Path
 import shutil
 import subprocess
 
@@ -8,7 +9,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import e
 
 
 
-def test_typescript_schema_compiles_when_tsc_is_available(tmp_path) -> None:
+def test_typescript_schema_compiles_when_tsc_is_available(tmp_path: Path) -> None:
     node = shutil.which('node')
     tsc = shutil.which('tsc') or shutil.which('npx')
     if not node or not tsc:
