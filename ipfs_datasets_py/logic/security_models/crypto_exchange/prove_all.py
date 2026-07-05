@@ -117,15 +117,13 @@ def _execution_policy_violations(
     zkp_mode = _proof_dependency_mode(model, 'zkp')
     if require_real_ergoai and flogic_mode == 'simulated':
         violations.append('simulated F-logic dependencies are forbidden for this proof run')
-    ergoai_available = True
     if require_real_ergoai and flogic_mode in {'required', 'real'}:
         from ipfs_datasets_py.logic.flogic.ergoai_wrapper import ERGOAI_AVAILABLE
 
-        ergoai_available = ERGOAI_AVAILABLE
-    if require_real_ergoai and flogic_mode in {'required', 'real'} and not ergoai_available:
-        violations.append(
-            'real ErgoAI was required, but the model metadata indicates an F-logic dependency without an available ErgoAI binary'
-        )
+        if not ERGOAI_AVAILABLE:
+            violations.append(
+                'real ErgoAI was required, but the model metadata indicates an F-logic dependency without an available ErgoAI binary'
+            )
     if forbid_simulated_zkp and zkp_mode == 'simulated':
         violations.append('simulated ZKP dependencies are forbidden for this proof run')
     return violations
@@ -144,9 +142,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--example', action='store_true', help='Use the built-in example security model')
     parser.add_argument('--model', help='Path to a canonical security model JSON file')
     parser.add_argument('--out', help='Path to write proof reports as JSON')
-    parser.add_argument('--strict', action='store_true', help='Return nonzero on critical DISPROVED results')
-    parser.add_argument('--fail-on-unknown-critical', action='store_true', help='Treat blocking UNKNOWN results as failures in strict mode')
-    parser.add_argument('--fail-on', action='append', default=[], help='Repeatable failure policy: disproof, unknown-critical')
+    parser.add_argument('--strict', action='store_true', help='Backward-compatible alias for --fail-on disproof')
+    parser.add_argument('--fail-on-unknown-critical', action='store_true', help='Backward-compatible strict-mode alias for --fail-on unknown-critical')
+    parser.add_argument('--fail-on', action='append', default=[], help='Repeatable failure policy; takes precedence over legacy strict flags: disproof, unknown-critical')
     parser.add_argument('--require-real-ergoai', action='store_true', help='Reject models that depend on simulated or unavailable ErgoAI/F-logic execution')
     parser.add_argument('--forbid-simulated-zkp', action='store_true', help='Reject models that depend on simulated ZKP execution')
     parser.add_argument('--provers', default=','.join(DEFAULT_PROVERS), help='Comma-separated prover list')

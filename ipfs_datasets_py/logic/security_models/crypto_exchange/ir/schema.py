@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, TypedDict
+
+
+class AssumptionEntry(TypedDict):
+    id: str
+    description: str
 
 
 DEFAULT_ASSUMPTION_REGISTRY = {
@@ -19,7 +24,7 @@ DEFAULT_ASSUMPTION_REGISTRY = {
     'A10': 'audit logs are append-only or tamper-evident',
 }
 
-DEFAULT_THREAT_MODEL_ASSUMPTIONS = [
+DEFAULT_THREAT_MODEL_ASSUMPTIONS: list[AssumptionEntry] = [
     {'id': assumption_id, 'description': description}
     for assumption_id, description in DEFAULT_ASSUMPTION_REGISTRY.items()
 ]
@@ -62,7 +67,7 @@ class SecurityModelIR:
     events: list[dict[str, Any]] = field(default_factory=list)
     state_machines: list[dict[str, Any]] = field(default_factory=list)
     invariants: list[dict[str, Any]] = field(default_factory=list)
-    assumptions: list[dict[str, str] | str] = field(default_factory=lambda: list(DEFAULT_THREAT_MODEL_ASSUMPTIONS))
+    assumptions: list[AssumptionEntry | str] = field(default_factory=lambda: list(DEFAULT_THREAT_MODEL_ASSUMPTIONS))
     prover_targets: list[str] = field(default_factory=lambda: ['z3'])
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -92,7 +97,7 @@ def _ensure_sequence_field(model_dict: Mapping[str, Any], field_name: str) -> No
         raise ValueError(f'{field_name} must be a list in SecurityModelIR')
 
 
-def _validate_assumption_entry(assumption: dict[str, Any] | str) -> None:
+def _validate_assumption_entry(assumption: AssumptionEntry | str) -> None:
     if isinstance(assumption, str):
         if not assumption.strip():
             raise ValueError('assumption identifiers must be non-empty strings')

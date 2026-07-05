@@ -12,4 +12,8 @@ def test_ir_schema_validates_example_model() -> None:
     assert validated.assumptions
     assert validated.policies
     assert validated.assumptions == DEFAULT_THREAT_MODEL_ASSUMPTIONS
-    assert [assumption['id'] for assumption in validated.assumptions] == [f'A{index}' for index in range(1, 11)]
+    assumption_ids = [
+        assumption if isinstance(assumption, str) else assumption['id']
+        for assumption in validated.assumptions
+    ]
+    assert assumption_ids == [f'A{index}' for index in range(1, 11)]
