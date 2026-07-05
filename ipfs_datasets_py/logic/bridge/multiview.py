@@ -1295,6 +1295,14 @@ def _compiler_guidance_bridge_contract_metadata(
         ):
             for lane, score in _guidance_distribution_items(mapping.get(key)):
                 add_lane(lane, score)
+        for key in (
+            "compiler_guidance_legal_ir_view_gaps",
+            "compiler_guidance_legal_ir_view_family_gaps",
+            "legal_ir_view_gaps",
+            "legal_ir_view_family_gaps",
+        ):
+            for lane, score in _guidance_gap_items(mapping.get(key)):
+                add_lane(lane, score)
         for lane, score in _guidance_distribution_items(
             mapping.get("legal_ir_component_gaps")
         ):
@@ -1550,6 +1558,35 @@ def _guidance_distribution_items(value: Any) -> tuple[tuple[str, float], ...]:
     return tuple(items)
 
 
+def _guidance_gap_items(value: Any) -> tuple[tuple[str, float], ...]:
+    """Return underrepresented bridge lanes from compiler-guidance gap maps."""
+
+    decoded = _json_mapping(value)
+    if decoded is not None:
+        value = decoded
+    if not isinstance(value, Mapping):
+        return ()
+
+    items: list[tuple[str, float]] = []
+    for raw_gap_key, raw_gap_value in value.items():
+        lane, direction = _bridge_contract_lane_from_guidance_gap_key(raw_gap_key)
+        if not lane or direction != "underrepresented":
+            continue
+        if isinstance(raw_gap_value, Mapping):
+            score = _float_or_zero(raw_gap_value.get("count"))
+            if score <= 0.0:
+                score = max(
+                    0.0,
+                    -_float_or_zero(raw_gap_value.get("cosine_delta")),
+                    -_float_or_zero(raw_gap_value.get("ce_delta")),
+                )
+        else:
+            score = _float_or_zero(raw_gap_value)
+        if score > 0.0:
+            items.append((lane, score))
+    return tuple(items)
+
+
 def _guidance_metric_names(value: Any) -> tuple[Any, ...]:
     names: list[Any] = []
     for item in _guidance_sequence(value):
@@ -1560,22 +1597,39 @@ def _guidance_metric_names(value: Any) -> tuple[Any, ...]:
     return tuple(names)
 
 
+_BRIDGE_CONTRACT_GUIDANCE_GAP_LANE_ALIASES: Mapping[str, str] = {
+    "cec": "CEC.native",
+    "cec_native": "CEC.native",
+    "deontic": "deontic.ir",
+    "deontic_ir": "deontic.ir",
+    "external_provers_router": "external_provers.router",
+    "frame_logic": "modal.frame_logic",
+    "knowledge_graph": "knowledge_graphs.neo4j_compat",
+    "knowledge_graphs_neo4j_compat": "knowledge_graphs.neo4j_compat",
+    "modal_frame_logic": "modal.frame_logic",
+    "prover": "external_provers.router",
+    "tdfol": "TDFOL.prover",
+    "tdfol_prover": "TDFOL.prover",
+    "zkp": "zkp.circuits",
+    "zkp_circuits": "zkp.circuits",
+}
+
+
+def _bridge_contract_lane_from_guidance_gap_key(value: Any) -> tuple[str, str]:
+    raw = str(value or "").strip()
+    if not raw:
+        return "", ""
+    lane_key, _separator, direction = raw.partition(":")
+    normalized_lane_key = re.sub(r"[^a-z0-9]+", "_", lane_key.lower()).strip("_")
+    lane = _BRIDGE_CONTRACT_GUIDANCE_GAP_LANE_ALIASES.get(normalized_lane_key, "")
+    if not lane:
+        lane = _bridge_contract_lane_component(
+            _canonical_bridge_component_name(lane_key)
+        )
+    return lane, direction.strip().lower()
+
+
 _BRIDGE_CONTRACT_GENERIC_LOSS_TARGET_DISTRIBUTION: Mapping[str, float] = {
-    "CEC.native": 0.24,
-    "TDFOL.prover": 0.28,
-    "deontic.ir": 0.28,
-    "knowledge_graphs.neo4j_compat": 0.16,
-    "modal.frame_logic": 0.04,
-    "TDFOL.prover": 0.26,
-    "deontic.ir": 0.26,
-    "CEC.native": 0.18,
-    "knowledge_graphs.neo4j_compat": 0.18,
-    "modal.frame_logic": 0.12,
-    "CEC.native": 0.15,
-    "TDFOL.prover": 0.30,
-    "deontic.ir": 0.30,
-    "knowledge_graphs.neo4j_compat": 0.25,
-    "modal.frame_logic": 0.15,
     "CEC.native": 0.16,
     "TDFOL.prover": 0.26,
     "deontic.ir": 0.26,

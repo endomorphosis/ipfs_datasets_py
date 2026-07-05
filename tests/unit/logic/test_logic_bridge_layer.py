@@ -11870,6 +11870,55 @@ def test_bridge_contract_guidance_strength_uses_probability_and_component_gaps()
     assert target_distribution["CEC.native"] > target_distribution["TDFOL.prover"]
 
 
+def test_bridge_contract_guidance_promotes_packet_view_gap_metadata() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "compiler_guidance_legal_ir_view_family_gaps": {
+                "cec:underrepresented": 2,
+                "deontic:overrepresented": 2,
+                "knowledge_graph:underrepresented": 2,
+                "tdfol:underrepresented": 2,
+            },
+            "compiler_guidance_legal_ir_view_gaps": {
+                "cec_native:underrepresented": 2,
+                "deontic_ir:overrepresented": 2,
+                "knowledge_graphs_neo4j_compat:underrepresented": 2,
+                "tdfol_prover:underrepresented": 2,
+            },
+            "compiler_guidance_quality_gate": "pass",
+            "compiler_guidance_route": "repair_multiview_legal_ir_loss",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "bridge.contracts",
+            "target_metrics": [
+                "cross_entropy_loss",
+                "cosine_similarity",
+                "compiler_ir_cross_entropy_loss",
+                "compiler_ir_cosine_similarity",
+                "source_copy_reward_hack_penalty",
+                "legal_ir_view_cross_entropy_loss",
+                "legal_ir_multiview_total_loss",
+            ],
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert {
+        "CEC.native",
+        "TDFOL.prover",
+        "knowledge_graphs.neo4j_compat",
+    } <= set(metadata["compiler_guidance_bridge_contract_target_lanes"])
+    assert target_distribution["TDFOL.prover"] > target_distribution["deontic.ir"]
+    assert target_distribution["knowledge_graphs.neo4j_compat"] > 0.20
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
+
+
 def test_multiview_training_target_distribution_preserves_zkp_tail_lane() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import MultiViewLegalIRReport
     from ipfs_datasets_py.logic.bridge.types import LegalIRDocument, LogicIRView
