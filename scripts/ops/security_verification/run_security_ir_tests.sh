@@ -16,3 +16,7 @@ python scripts/ops/security_verification/run_security_ir_proof_suite.py \
   --require-real-ergoai \
   --forbid-simulated-zkp \
   --out "${1:-security_ir_proof_report.json}"
+python scripts/ops/security_verification/run_security_ir_disproof_suite.py \
+  --example \
+  --fuzz-rounds 3 \
+  --out "${2:-security_ir_disproof_report.json}"

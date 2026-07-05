@@ -20,4 +20,5 @@ Utility scripts for the PR surface live under `scripts/ops/security_verification
 - `project_security_ir_feature_loop.py` emits the projected feature-loop bundle for synthesis/testing.
 - `emit_security_typescript_stub.py` emits the deterministic TypeScript/WASM schema stub.
 - `run_security_ir_proof_suite.py` wraps the proof CLI for ops automation.
-- `run_security_ir_tests.sh` runs the focused test suite plus the fail-closed proof smoke path.
+- `run_security_ir_disproof_suite.py` applies deterministic attack tactics plus bounded mutation fuzzing to hunt for counterexamples.
+- `run_security_ir_tests.sh` runs the focused test suite plus the fail-closed proof/disproof smoke paths.
