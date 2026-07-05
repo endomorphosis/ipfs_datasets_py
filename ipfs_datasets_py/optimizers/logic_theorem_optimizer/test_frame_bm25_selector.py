@@ -434,6 +434,50 @@ def test_frame_ontology_feature_keys_from_values_parses_serialized_json_payloads
     ]
 
 
+def test_frame_ontology_feature_keys_from_values_audits_view_and_quality_family_features() -> None:
+    feature_keys = frame_ontology_feature_keys_from_values(
+        {
+            "frame_features": [
+                "legal-ir-view:deontic.ir",
+                "legal-ir-view:CEC.native",
+                "legal-ir-view:knowledge_graphs.neo4j_compat",
+                "quality:bias",
+                "quality:symbolic:has-formula",
+                "legal-ir-view:TDFOL.prover",
+            ],
+            "top_family_features": [
+                "legal-ir-view:deontic.ir",
+                "quality:symbolic:has-formula",
+            ],
+        }
+    )
+
+    assert feature_keys == [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:CEC.native",
+        "legal-ir-view:knowledge_graphs.neo4j_compat",
+        "quality:bias",
+        "quality:symbolic:has-formula",
+        "legal-ir-view:TDFOL.prover",
+    ]
+    assert frame_ontology_terms_from_feature_keys(feature_keys) == [
+        "deontic_ir",
+        "cec_native",
+        "knowledge_graphs_neo4j_compat",
+        "bias",
+        "symbolic_has_formula",
+        "tdfol_prover",
+    ]
+    assert frame_ontology_contextualized_terms(feature_keys=feature_keys) == [
+        "legal_ir_view_deontic_ir",
+        "legal_ir_view_cec_native",
+        "legal_ir_view_knowledge_graphs_neo4j_compat",
+        "quality_bias",
+        "quality_symbolic_has_formula",
+        "legal_ir_view_tdfol_prover",
+    ]
+
+
 def test_frame_ontology_contextualized_terms_keep_low_signal_frame_features() -> None:
     terms = frame_ontology_contextualized_terms(
         feature_keys=[

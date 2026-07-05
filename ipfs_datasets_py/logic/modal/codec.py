@@ -12051,6 +12051,7 @@ def _structural_decoded_text(
     )
     typed_ir_values = [
         *slot_text_map.get("typed_ir_reconstruction", ()),
+        *slot_text_map.get("typed_ir_source_semantic_sentence", ()),
         *slot_text_map.get("typed_ir_clause_role_support", ()),
         *slot_text_map.get("typed_ir_semantic_support", ()),
         *slot_text_map.get("typed_ir_compact_semantic_support", ()),

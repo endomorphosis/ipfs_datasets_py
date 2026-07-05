@@ -3063,6 +3063,16 @@ def _typed_ir_reconstruction_phrases(
         targets=ordered_targets,
         max_tokens=max_tokens,
     )
+    source_semantic_sentence = _typed_ir_source_semantic_sentence_text(
+        roles=roles,
+        force=force,
+        polarity=polarity,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        semantic_atoms=semantic_atoms,
+        targets=ordered_targets,
+        max_tokens=max_tokens,
+    )
 
     phrases: List[DecodedModalPhrase] = []
     if semantic_surface:
@@ -3070,6 +3080,15 @@ def _typed_ir_reconstruction_phrases(
             DecodedModalPhrase(
                 text=semantic_surface,
                 slot="typed_ir_semantic_surface_reconstruction",
+                spans=spans,
+                provenance_only=provenance_only,
+            )
+        )
+    if source_semantic_sentence:
+        phrases.append(
+            DecodedModalPhrase(
+                text=source_semantic_sentence,
+                slot="typed_ir_source_semantic_sentence",
                 spans=spans,
                 provenance_only=provenance_only,
             )
@@ -3494,6 +3513,57 @@ def _typed_ir_semantic_surface_reconstruction_text(
     for atom in semantic_atoms[:4]:
         add(atom)
     return _bounded_surface_text(parts, max_tokens=max_tokens)
+
+
+def _typed_ir_source_semantic_sentence_text(
+    *,
+    roles: Mapping[str, str],
+    force: str,
+    polarity: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    semantic_atoms: Sequence[str],
+    targets: Sequence[str],
+    max_tokens: int = 48,
+) -> str:
+    """Render source-like legal semantics from typed slots, not raw spans."""
+    parts: List[str] = []
+
+    def add(value: str) -> None:
+        cleaned = _humanize_typed_ir_value(value)
+        if cleaned:
+            parts.append(cleaned)
+
+    target_set = {_clean_text(target).lower() for target in targets}
+    if "deontic" in target_set:
+        add("legal duty")
+    elif "conditional_normative" in target_set:
+        add("conditional legal rule")
+    elif "temporal" in target_set:
+        add("temporal legal rule")
+    elif "frame" in target_set:
+        add("legal frame")
+
+    if force in {"obligation", "permission", "prohibition"}:
+        add(force)
+    if polarity == "negative_scope":
+        add("negative scope")
+
+    for role in ("subject", "action", "object", "temporal"):
+        value = roles.get(role, "")
+        if value:
+            add(value)
+
+    for condition in condition_values[:2]:
+        add("condition")
+        add(condition)
+    for exception in exception_values[:2]:
+        add("exception")
+        add(exception)
+    for atom in semantic_atoms[:6]:
+        add(atom)
+
+    return _bounded_reconstruction_text(parts, max_tokens=max_tokens)
 
 
 def _typed_ir_legal_view_support_values(document: ModalIRDocument) -> List[str]:

@@ -37855,6 +37855,37 @@ def test_decompiler_reconstructs_deontic_frame_bridge_semantics_from_typed_slots
     assert "statutory construction" in frame_structural_text
 
 
+def test_decompiler_emits_source_semantic_sentence_for_packet_000161_public_health_duty() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "The Secretary shall conduct local asthma surveillance activities "
+            "to collect data on the prevalence and severity of asthma."
+        ),
+        predicate="secretary_conduct_asthma_surveillance",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert slot_texts["typed_ir_source_semantic_sentence"] == [
+        "legal duty obligation secretary conduct asthma surveillance local "
+        "activities collect data prevalence severity public health"
+    ]
+    assert "public_health_surveillance" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "legal duty obligation secretary conduct asthma surveillance" in structural_text
+    assert "public health" in structural_text
+
+
 def test_decompiler_uses_autoencoder_target_family_in_typed_reconstruction() -> None:
     document = _single_formula_document(
         family="epistemic",
