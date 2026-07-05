@@ -1364,8 +1364,11 @@ def test_packet_001270_recurrent_compiler_registry_family_pairs_are_supported() 
 
 
 def test_packet_000495_adaptive_family_pairs_are_explicit_ambiguity_policy() -> None:
-    """Keep packet-000495 frame/temporal low-margin transitions reviewable."""
+    """Keep packet-000495 low-margin family transitions reviewable."""
     expected_pairs = (
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
         ("frame", "deontic"),
         ("frame", "temporal"),
         ("temporal", "frame"),
