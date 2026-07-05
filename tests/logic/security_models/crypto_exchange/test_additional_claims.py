@@ -7,7 +7,12 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.deposit impor
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.hsm import NoSigningAfterWalletFreezeClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.ledger import AuditEventExistsForCriticalTransitionClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
-from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import DEFAULT_PROVERS, prove_claims
+from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import (
+    DEFAULT_PROVERS,
+    _normalize_provers,
+    prove_claims,
+)
+from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.proverif_runner import ProVerifRunner
 from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.z3_runner import Z3Runner
 
 
@@ -70,3 +75,15 @@ def test_prove_claims_proves_complete_default_z3_claim_set() -> None:
 def test_default_prover_list_includes_proverif_stub() -> None:
     assert 'proverif' in DEFAULT_PROVERS
     assert 'proverif' in example_minimal_exchange_model().prover_targets
+
+
+def test_prove_claims_falls_through_when_z3_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(Z3Runner, 'is_available', staticmethod(lambda: False))
+    reports = prove_claims(example_minimal_exchange_model(), ['z3', 'proverif'])
+    assert all(report.status == 'UNKNOWN' for report in reports)
+    assert all(report.prover == ProVerifRunner.prover_name for report in reports)
+
+
+def test_normalize_provers_rejects_unknown_names() -> None:
+    with pytest.raises(ValueError, match='Unsupported provers: fake'):
+        _normalize_provers(['z3', 'fake'])

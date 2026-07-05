@@ -35,6 +35,16 @@ RUNNER_FACTORIES = {
 DEFAULT_PROVERS = ('z3', 'tla', 'datalog', 'tamarin', 'proverif', 'hyperltl', 'lean', 'coq')
 
 
+def _normalize_provers(provers: Iterable[str]) -> list[str]:
+    selected_provers = [item.strip() for item in provers if item.strip()]
+    if not selected_provers:
+        return ['z3']
+    unsupported = sorted({prover_name for prover_name in selected_provers if prover_name not in RUNNER_FACTORIES})
+    if unsupported:
+        raise ValueError(f"Unsupported provers: {', '.join(unsupported)}")
+    return selected_provers
+
+
 def _load_model(args: argparse.Namespace) -> SecurityModelIR:
     if args.example or not args.model:
         return example_minimal_exchange_model()
@@ -44,17 +54,19 @@ def _load_model(args: argparse.Namespace) -> SecurityModelIR:
 
 def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofReport]:
     reports: list[ProofReport] = []
-    selected_provers = list(provers) or ['z3']
+    selected_provers = _normalize_provers(provers)
     for claim in default_claims():
+        last_report: ProofReport | None = None
         for prover_name in selected_provers:
             runner_factory = RUNNER_FACTORIES[prover_name]
             runner = runner_factory()
             report = runner.run_claim(claim, model)
-            if prover_name == 'z3' or report.status in {'PROVED', 'DISPROVED', 'NOT_MODELED'}:
+            last_report = report
+            if report.status in {'PROVED', 'DISPROVED', 'NOT_MODELED'}:
                 reports.append(report)
                 break
         else:
-            reports.append(ProofReport(
+            reports.append(last_report or ProofReport(
                 claim_id=claim.claim_id,
                 model_cid='',
                 status='UNKNOWN',
@@ -89,7 +101,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--provers', default=','.join(DEFAULT_PROVERS), help='Comma-separated prover list')
     args = parser.parse_args(argv)
     model = _load_model(args)
-    provers = [item.strip() for item in args.provers.split(',') if item.strip()]
+    try:
+        provers = _normalize_provers(args.provers.split(','))
+    except ValueError as exc:
+        parser.error(str(exc))
     reports = prove_claims(model, provers)
     payload = {'model_id': model.model_id, 'reports': [report.to_dict() for report in reports]}
     if args.out:
