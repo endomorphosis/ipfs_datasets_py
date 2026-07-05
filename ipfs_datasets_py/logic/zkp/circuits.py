@@ -29,11 +29,11 @@ _COMPILER_GUIDANCE_CONTAINER_KEYS = (
     "compiler_guidance_contract",
     "compiler_guidance",
     "compiler_guidance_bundle",
-    "compiler_guidance_attribution",
     "guidance_contract",
     "guidance",
     "semantic_bundle",
     "bundle",
+    "compiler_guidance_attribution",
 )
 _COMPILER_GUIDANCE_PACKET_KEYS = frozenset(
     {
@@ -45,6 +45,9 @@ _COMPILER_GUIDANCE_PACKET_KEYS = frozenset(
         "samples",
         "scope",
         "source",
+        "support",
+        "support_count",
+        "sample_ids",
         "target",
         "target_component",
         "target_metrics",
@@ -204,6 +207,33 @@ def compiler_guidance_contract_from_metadata(
     if not metadata_dict:
         return {}
 
+    selected: Dict[str, Any] = {}
+    for key, value in sorted(metadata_dict.items(), key=lambda pair: str(pair[0])):
+        name = str(key)
+        if name.startswith("compiler_guidance_") and name not in _COMPILER_GUIDANCE_CONTAINER_KEYS:
+            selected[name] = _canonical_guidance_value(value)
+
+    packet_signal = {
+        "program_synthesis_scope",
+        "route",
+        "target_component",
+    } & {str(key) for key in metadata_dict}
+    if packet_signal:
+        for key, value in sorted(metadata_dict.items(), key=lambda pair: str(pair[0])):
+            name = str(key)
+            if name in _COMPILER_GUIDANCE_PACKET_KEYS:
+                selected.setdefault(name, _canonical_guidance_value(value))
+
+    explicit_route_signal = (
+        selected.get("compiler_guidance_route")
+        or selected.get("compiler_guidance_todo_routes")
+        or selected.get("route")
+        or selected.get("samples")
+        or selected.get("sample_ids")
+    )
+    if explicit_route_signal:
+        return selected
+
     for key in _COMPILER_GUIDANCE_CONTAINER_KEYS:
         if key not in metadata_dict:
             continue
@@ -211,11 +241,6 @@ def compiler_guidance_contract_from_metadata(
         if contract not in ({}, [], ""):
             return contract
 
-    selected: Dict[str, Any] = {}
-    for key, value in sorted(metadata_dict.items(), key=lambda pair: str(pair[0])):
-        name = str(key)
-        if name.startswith("compiler_guidance_"):
-            selected[name] = _canonical_guidance_value(value)
     if selected:
         return selected
 

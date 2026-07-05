@@ -11349,6 +11349,32 @@ def test_zkp_guidance_ref_normalizes_json_encoded_packet_bundle() -> None:
     )
 
 
+def test_zkp_guidance_contract_promotes_route_before_attribution_container() -> None:
+    from ipfs_datasets_py.logic.zkp import compiler_guidance_contract_from_metadata
+
+    contract = compiler_guidance_contract_from_metadata(
+        {
+            "compiler_guidance_attribution": {
+                "basis": "sample_records",
+                "matched_sample_count": 13,
+            },
+            "compiler_guidance_quality_gate": "pass",
+            "compiler_guidance_route": "repair_zkp_attestation_bridge",
+            "compiler_guidance_todo_routes_inferred_from_features": True,
+            "program_synthesis_scope": "zkp",
+            "sample_ids": ["compiler-guidance:repair_zkp_attestation_bridge"],
+            "source": "compiler_guidance_distillation_v1",
+            "support_count": 1,
+            "target_component": "zkp.circuits",
+        }
+    )
+
+    assert contract["compiler_guidance_route"] == "repair_zkp_attestation_bridge"
+    assert contract["program_synthesis_scope"] == "zkp"
+    assert contract["target_component"] == "zkp.circuits"
+    assert "compiler_guidance_attribution" not in contract
+
+
 def test_zkp_attestation_completion_promotes_record_level_packet_guidance() -> None:
     from ipfs_datasets_py.logic.zkp import (
         ZKPProver,
