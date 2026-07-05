@@ -8857,6 +8857,41 @@ def test_external_prover_router_guidance_promotes_syntactic_backup() -> None:
     assert result.all_results["native_syntactic"].is_valid is True
 
 
+def test_external_prover_router_guidance_promotes_sample_route_backup() -> None:
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    class _FailingConfiguredProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            raise RuntimeError("configured prover unavailable")
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=False,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    router.provers = {"z3": _FailingConfiguredProver()}
+
+    result = router.route(
+        {"proof_formula": "O(register_notice(secretary))"},
+        strategy="sequential",
+        compiler_guidance={
+            "program_synthesis_scope": "external_provers",
+            "samples": "compiler-guidance:repair_external_prover_router",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "external_provers.router",
+        },
+    )
+
+    assert router.get_available_provers() == ["z3", "native_syntactic"]
+    assert result.is_compiled() is True
+    assert result.prover_used == "native_syntactic"
+
+
 def test_external_prover_router_legacy_payload_prefers_proof_formula_over_source_text(
     monkeypatch,
 ) -> None:

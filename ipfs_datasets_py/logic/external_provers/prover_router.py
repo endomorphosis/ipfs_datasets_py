@@ -97,17 +97,7 @@ def _guidance_targets_external_prover_router(value: Any) -> bool:
         return False
 
     for mapping in mappings:
-        route_values = (
-            mapping.get("route"),
-            mapping.get("action"),
-            mapping.get("original_action"),
-            mapping.get("compiler_guidance_route"),
-        )
-        if any(
-            str(route or "").strip().lower()
-            == "repair_external_prover_router"
-            for route in route_values
-        ):
+        if "repair_external_prover_router" in _guidance_route_names(mapping):
             return True
 
     for mapping in mappings:
@@ -136,6 +126,70 @@ def _guidance_targets_external_prover_router(value: Any) -> bool:
             return True
 
     return False
+
+
+def _guidance_route_names(mapping: Mapping[str, Any]) -> set[str]:
+    """Extract router repair route names from packet/compiler metadata."""
+
+    routes: set[str] = set()
+    route_keys = (
+        "route",
+        "action",
+        "original_action",
+        "compiler_guidance_route",
+    )
+    sample_route_keys = (
+        "sample_id",
+        "sample_ids",
+        "samples",
+    )
+
+    def add_route(value: Any) -> None:
+        route = _guidance_route_name(value)
+        if route:
+            routes.add(route)
+
+    def collect(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for key in value.keys():
+                add_route(key)
+            for nested_key in route_keys + sample_route_keys:
+                add_route(value.get(nested_key))
+            return
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                collect(item)
+            return
+        add_route(value)
+
+    for key in route_keys:
+        add_route(mapping.get(key))
+    for key in sample_route_keys:
+        collect(mapping.get(key))
+    for key in (
+        "compiler_guidance_todo_routes",
+        "top_todo_routes",
+        "todo_routes",
+    ):
+        collect(mapping.get(key))
+    return routes
+
+
+def _guidance_route_name(value: Any) -> str:
+    route = str(value or "").strip().lower()
+    if not route:
+        return ""
+    route = route.replace("-", "_").replace(" ", "_")
+    for prefix in (
+        "compiler_guidance_activation:",
+        "compiler_guidance_activation_",
+        "compiler_guidance:",
+        "compiler_guidance_",
+    ):
+        if route.startswith(prefix):
+            route = route[len(prefix) :]
+            break
+    return route.strip("_")
 
 
 def _guidance_mappings(value: Any) -> tuple[Mapping[str, Any], ...]:
