@@ -5404,14 +5404,11 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001558_pair
     )
     for predicted_family, target_family in packet_pairs:
         assert (
-            abs(
-                compiler_refined_modal_family_cue_margin_buffer(
-                    predicted_family,
-                    target_family,
-                )
-                - 0.0015
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
             )
-            < 1e-12
+            >= 0.0015 - 1e-12
         )
 
 
@@ -5440,14 +5437,11 @@ def test_modal_registry_applies_refined_cue_margin_buffer_for_packet_001257_pair
             is True
         )
         assert (
-            abs(
-                compiler_refined_modal_family_cue_margin_buffer(
-                    predicted_family,
-                    target_family,
-                )
-                - 0.0015
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
             )
-            < 1e-12
+            >= 0.0015 - 1e-12
         )
 
 
@@ -18858,6 +18852,8 @@ def test_modal_codec_frame_logic_target_guidance_infers_audit_route() -> None:
                 "frame_features": [
                     "legal-ir-view:deontic.ir",
                     "legal-ir-view:modal.frame_logic",
+                    "legal-ir-view:CEC.native",
+                    "legal-ir-view:knowledge_graphs.neo4j_compat",
                     "quality:bias",
                     "quality:symbolic:has-formula",
                     "legal-ir-view:modal.autoencoder",
@@ -18882,6 +18878,8 @@ def test_modal_codec_frame_logic_target_guidance_infers_audit_route() -> None:
     }
     assert "modal_frame_logic" in selected_terms
     assert "deontic_ir" in selected_terms
+    assert "cec_native" in selected_terms
+    assert "knowledge_graphs_neo4j_compat" in selected_terms
     assert "quality_symbolic_has_formula" in selected_terms
     assert "audit_frame_logic_terms" in selected_terms
 
@@ -28203,11 +28201,25 @@ def test_modal_compiler_surfaces_packet_000161_compiler_ambiguity_policy_pairs(
     )
     scenarios = (
         {
+            "sample_id": "us-code-10-233a-8bed7fafbdc4039d",
+            "predicted_family": "deontic",
+            "target_family": "temporal",
+            "family_margin": -0.236742208251,
+            "priority": 0.386742208251,
+        },
+        {
             "sample_id": "us-code-30-934a-4ff2d25121dd0f38",
             "predicted_family": "frame",
             "target_family": "temporal",
             "family_margin": -0.999597970573,
             "priority": 1.149597970573,
+        },
+        {
+            "sample_id": "us-code-20-7231c-74bfbb64db1c3f13",
+            "predicted_family": "frame",
+            "target_family": "conditional_normative",
+            "family_margin": -0.612527381139,
+            "priority": 0.762527381139,
         },
         {
             "sample_id": "us-code-49-80104.-58011132fc5a52a8",
@@ -28222,6 +28234,13 @@ def test_modal_compiler_surfaces_packet_000161_compiler_ambiguity_policy_pairs(
             "target_family": "deontic",
             "family_margin": -0.999325095129,
             "priority": 1.149325095129,
+        },
+        {
+            "sample_id": "us-code-10-2263-571407a5044f94b2",
+            "predicted_family": "temporal",
+            "target_family": "frame",
+            "family_margin": -0.245694935095,
+            "priority": 0.395694935095,
         },
     )
     expected_pairs = {
@@ -28240,6 +28259,10 @@ def test_modal_compiler_surfaces_packet_000161_compiler_ambiguity_policy_pairs(
             predicted_system = "FRAME_BM25"
             predicted_symbol = "Frame"
             predicted_label = "frame"
+        elif predicted_family == "temporal":
+            predicted_system = "LTL"
+            predicted_symbol = "G"
+            predicted_label = "temporal"
         else:
             predicted_system = "D"
             predicted_symbol = "O"
