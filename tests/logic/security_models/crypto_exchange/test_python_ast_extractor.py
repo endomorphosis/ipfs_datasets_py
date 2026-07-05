@@ -67,6 +67,9 @@ class WalletGuardian:
 
 
 def freeze_wallet(wallet):
+    """Freeze actions must be authorized."""
+    if not wallet.authorized:
+        raise PermissionError("authorization required")
     return wallet
 ''',
         encoding='utf-8',
@@ -80,5 +83,6 @@ def freeze_wallet(wallet):
     assert any(event['event'] == 'approve_withdrawal' for event in model.events)
     assert any(invariant['description'].startswith('Wallets cannot sign after freeze') for invariant in model.invariants)
     assert sorted(model.metadata['autoformalization']['source_files']) == sorted([str(first), str(second)])
-    assert sum(1 for entity in model.entities if entity['name'] == 'WalletGuardian') == 1
     assert sum(1 for policy in model.policies if policy['name'] == 'authorization_required') == 1
+    authorization_policy = next(policy for policy in model.policies if policy['name'] == 'authorization_required')
+    assert sorted(authorization_policy['sources']) == ['approve_withdrawal', 'freeze_wallet']

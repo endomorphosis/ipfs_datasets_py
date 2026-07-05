@@ -49,6 +49,29 @@ _CRITICAL_ACTION_KEYWORDS = (
     'credit',
     'transfer',
 )
+def _compile_keyword_pattern(keyword: str) -> re.Pattern[str]:
+    return re.compile(r'\b' + re.escape(keyword).replace(r'\ ', r'\s+') + r'\b')
+
+
+def _compile_keyword_patterns(keywords: Iterable[str]) -> tuple[re.Pattern[str], ...]:
+    return tuple(_compile_keyword_pattern(keyword) for keyword in keywords)
+
+
+def _merge_lists(left: list[Any], right: list[Any]) -> list[Any]:
+    merged = list(left)
+    for item in right:
+        if item not in merged:
+            merged.append(item)
+    return merged
+
+
+_POLICY_PATTERNS = {
+    policy_name: tuple(_compile_keyword_pattern(keyword) for keyword in keywords)
+    for policy_name, keywords in _POLICY_KEYWORDS.items()
+}
+_SECURITY_PATTERNS = tuple(_compile_keyword_pattern(keyword) for keyword in _SECURITY_KEYWORDS)
+# Keep policy inference bounded to the first few lines of a function body so the seed
+# extractor captures common guards without drifting into unrelated long-function logic.
 _MAX_POLICY_SOURCE_LINES = 12
 
 
@@ -176,8 +199,8 @@ class PythonASTExtractor:
         for function in self._iter_functions(tree):
             body_excerpt = '\n'.join((ast.get_source_segment(source, function) or '').splitlines()[:_MAX_POLICY_SOURCE_LINES])
             haystack = ' '.join(filter(None, [function.name, ast.get_docstring(function) or '', body_excerpt])).lower()
-            for policy_name, keywords in _POLICY_KEYWORDS.items():
-                if any(keyword in haystack for keyword in keywords):
+            for policy_name, patterns in _POLICY_PATTERNS.items():
+                if any(pattern.search(haystack) for pattern in patterns):
                     policy_id = f'policy:{policy_name}'
                     policy = policies.setdefault(
                         policy_id,
@@ -188,7 +211,8 @@ class PythonASTExtractor:
                             'sources': [],
                         },
                     )
-                    policy['sources'].append(function.name)
+                    if function.name not in policy['sources']:
+                        policy['sources'].append(function.name)
         return sorted(policies.values(), key=lambda item: item['id'])
 
     def _collect_invariants(self, tree: ast.AST, source: str) -> list[dict[str, Any]]:
@@ -235,7 +259,7 @@ class PythonASTExtractor:
                     'id': f'event:{function.name}',
                     'event': function.name,
                     'kind': 'code_path',
-                    'critical': any(keyword in function.name.lower() for keyword in _CRITICAL_ACTION_KEYWORDS),
+                    'critical': any(pattern.search(function.name.lower()) for pattern in _compile_keyword_patterns(_CRITICAL_ACTION_KEYWORDS)),
                 }
             )
         return events
@@ -244,7 +268,7 @@ class PythonASTExtractor:
         sentences: list[str] = []
         for part in _SECURITY_SENTENCE_PATTERN.split(docstring):
             candidate = part.strip()
-            if candidate and any(keyword in candidate.lower() for keyword in _SECURITY_KEYWORDS):
+            if candidate and any(pattern.search(candidate.lower()) for pattern in _SECURITY_PATTERNS):
                 sentences.append(candidate)
         return sentences
 
@@ -259,7 +283,7 @@ class PythonASTExtractor:
                 use_nlp=False,
                 enable_monitoring=False,
             ).to_fol(sentence)
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
             logger.warning('Falling back to minimal FOL placeholder for autoformalized sentence: %s', sentence[:100])
             return f'Statement({sentence.replace(" ", "_")})'
 
@@ -271,7 +295,7 @@ class PythonASTExtractor:
             )
 
             return extract_predicates(sentence), extract_logical_relations(sentence)
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
             logger.warning('Falling back to empty natural-language features for autoformalized sentence: %s', sentence[:100])
             return ({'nouns': [], 'verbs': [], 'adjectives': [], 'relations': []}, [])
 
@@ -292,5 +316,18 @@ class PythonASTExtractor:
     def _dedupe_dicts(entries: list[dict[str, Any]], key: str) -> list[dict[str, Any]]:
         deduped: dict[str, dict[str, Any]] = {}
         for entry in entries:
-            deduped[entry[key]] = entry
+            entry_key = entry[key]
+            if entry_key not in deduped:
+                deduped[entry_key] = dict(entry)
+                continue
+            existing = deduped[entry_key]
+            merged = dict(existing)
+            for field_name, value in entry.items():
+                if field_name == key:
+                    continue
+                if isinstance(existing.get(field_name), list) and isinstance(value, list):
+                    merged[field_name] = _merge_lists(existing[field_name], value)
+                elif field_name not in merged or merged[field_name] in (None, '', []):
+                    merged[field_name] = value
+            deduped[entry_key] = merged
         return [deduped[item_key] for item_key in sorted(deduped)]
