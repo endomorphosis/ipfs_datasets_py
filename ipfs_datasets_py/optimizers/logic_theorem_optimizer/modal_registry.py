@@ -2833,6 +2833,25 @@ COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DOXASTIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_REFINED_PACKET_000138_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
@@ -7962,6 +7981,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_PACKET_001095_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_001753_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_003186_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS,
     *COMPILER_AMBIGUITY_PACKET_000162_FAMILY_PAIRS,
 )
@@ -9592,7 +9612,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.TEMPORAL.value,
-    ): 0.0015,
+    ): 0.006,
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.FRAME.value,
@@ -9604,7 +9624,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DOXASTIC.value,
-    ): 0.0015,
+    ): 0.006,
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DYNAMIC.value,
@@ -9664,7 +9684,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DEONTIC.value,
-    ): 0.003,
+    ): 0.006,
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.EPISTEMIC.value,
@@ -11810,6 +11830,7 @@ __all__ = [
     "COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000138_FAMILY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",

@@ -1633,6 +1633,12 @@ def test_failed_validation_rescue_packet_family_pairs_are_registered() -> None:
             ("frame", "deontic"),
             ("temporal", "epistemic"),
         ),
+        "004762": (
+            ("deontic", "doxastic"),
+            ("deontic", "temporal"),
+            ("frame", "deontic"),
+            ("frame", "temporal"),
+        ),
     }
 
     for packet_id, expected_pairs in refined_packets.items():

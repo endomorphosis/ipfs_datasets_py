@@ -19,6 +19,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000124_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     compiler_refined_modal_family_cue_margin_buffer,
@@ -964,6 +965,24 @@ def test_packet_005718_registry_refines_frame_doxastic_temporal_cues() -> None:
     assert ("temporal", "time and manner") in extracted_cues
     assert ("doxastic", "knowingly and willfully") in extracted_cues
     assert ("doxastic", "false statement") in extracted_cues
+
+
+def test_packet_004762_registry_refines_modal_family_cue_pairs() -> None:
+    assert tuple(COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS) == (
+        ("deontic", "doxastic"),
+        ("deontic", "temporal"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    )
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.006
+        )
 
 
 def test_refined_pair_balance_promotes_statutory_deontic_over_generic_frame() -> None:
