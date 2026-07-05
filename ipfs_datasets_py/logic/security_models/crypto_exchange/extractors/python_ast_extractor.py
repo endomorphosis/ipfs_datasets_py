@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import logging
 import re
 from pathlib import Path
 from typing import Any, Iterable
 
 from ..ir.schema import SecurityModelIR
+
+logger = logging.getLogger(__name__)
 
 _SECURITY_SENTENCE_PATTERN = re.compile(r'(?<=[.!?])\s+|\n+')
 _POLICY_KEYWORDS: dict[str, tuple[str, ...]] = {
@@ -77,7 +80,6 @@ class PythonASTExtractor:
     ) -> SecurityModelIR:
         """Autoformalize Python *source* into a seed :class:`SecurityModelIR`."""
 
-        tree = ast.parse(source)
         summary = self.extract_from_source(source)
         source_name = module_path or '<memory>'
         autoformalization = {
@@ -200,7 +202,7 @@ class PythonASTExtractor:
         invariants: list[dict[str, Any]] = []
         for function in self._iter_functions(tree):
             docstring = ast.get_docstring(function) or ''
-            for index, sentence in enumerate(self._iter_security_sentences(docstring), start=1):
+            for index, sentence in enumerate(self._extract_security_sentences(docstring), start=1):
                 predicates, relations = self._extract_natural_language_features(sentence)
                 invariants.append(
                     {
@@ -216,7 +218,7 @@ class PythonASTExtractor:
                 )
         for class_node in (node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)):
             class_docstring = ast.get_docstring(class_node) or ''
-            for index, sentence in enumerate(self._iter_security_sentences(class_docstring), start=1):
+            for index, sentence in enumerate(self._extract_security_sentences(class_docstring), start=1):
                 predicates, relations = self._extract_natural_language_features(sentence)
                 invariants.append(
                     {
@@ -245,10 +247,10 @@ class PythonASTExtractor:
             )
         return events
 
-    def _iter_security_sentences(self, docstring: str) -> list[str]:
+    def _extract_security_sentences(self, docstring: str) -> list[str]:
         sentences: list[str] = []
         for part in _SECURITY_SENTENCE_PATTERN.split(docstring):
-            candidate = part.strip().replace('"', '')
+            candidate = part.strip()
             if candidate and any(keyword in candidate.lower() for keyword in _SECURITY_KEYWORDS):
                 sentences.append(candidate)
         return sentences
@@ -265,6 +267,7 @@ class PythonASTExtractor:
                 enable_monitoring=False,
             ).to_fol(sentence)
         except Exception:
+            logger.warning('Falling back to minimal FOL placeholder for autoformalized sentence', exc_info=True)
             return f'Statement({sentence.replace(" ", "_")})'
 
     def _extract_natural_language_features(self, sentence: str) -> tuple[dict[str, list[str]], list[dict[str, Any]]]:
@@ -276,6 +279,7 @@ class PythonASTExtractor:
 
             return extract_predicates(sentence), extract_logical_relations(sentence)
         except Exception:
+            logger.warning('Falling back to empty natural-language features for autoformalized sentence', exc_info=True)
             return ({'nouns': [], 'verbs': [], 'adjectives': [], 'relations': []}, [])
 
     @staticmethod
