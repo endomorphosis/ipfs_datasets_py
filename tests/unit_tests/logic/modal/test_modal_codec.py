@@ -40044,6 +40044,79 @@ def test_decompiler_reconstructs_packet_2577_deontic_frame_temporal_atoms() -> N
     assert "TDFOL.prover" in land_slots["legal_ir_view_prototype"]
 
 
+def test_decompiler_reconstructs_packet_000160_veterans_and_nato_budget_slots() -> None:
+    veterans_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Assistance to the Republic of the Philippines. The President is "
+            "authorized to assist the Republic of the Philippines in fulfilling "
+            "its responsibility in providing medical care and treatment for "
+            "Commonwealth Army veterans."
+        ),
+        predicate="president_assist_philippines_veterans_medical_care",
+    )
+    nato_document = _single_formula_document(
+        family="temporal",
+        symbol="F",
+        label="eventually",
+        text=(
+            "United States contributions to the North Atlantic Treaty "
+            "Organization common-funded budgets. In any fiscal year, the "
+            "Secretary of Defense may contribute amounts for the common-funded "
+            "budgets of NATO."
+        ),
+        predicate="secretary_contribute_nato_common_funded_budgets",
+        conditions=["In any fiscal year"],
+    )
+
+    veterans_decoded = decode_modal_ir_document(veterans_document)
+    veterans_slots = decoded_modal_phrase_slot_text_map(veterans_decoded)
+    veterans_structural_text = _structural_decoded_text(
+        veterans_decoded,
+        modal_ir=veterans_document,
+        selected_frame=None,
+    )
+    nato_decoded = decode_modal_ir_document(nato_document)
+    nato_slots = decoded_modal_phrase_slot_text_map(nato_decoded)
+    nato_structural_text = _structural_decoded_text(
+        nato_decoded,
+        modal_ir=nato_document,
+        selected_frame=None,
+    )
+
+    assert "veterans_medical_care" in veterans_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "philippines_veteran_assistance" in veterans_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in veterans_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "CEC.native" in veterans_slots["legal_ir_view_prototype"]
+    assert "deontic.ir" in veterans_slots["legal_ir_view_prototype"]
+    assert "veterans medical care" in veterans_structural_text
+    assert "philippines assistance" in veterans_structural_text
+
+    assert "nato_common_funded_budget" in nato_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "nato_contribution_authority" in nato_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "temporal->frame" in nato_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "temporal->deontic" in nato_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in nato_slots["legal_ir_view_prototype"]
+    assert "nato common funded budget" in nato_structural_text
+    assert "contribution authority" in nato_structural_text
+
+
 def test_decompiler_reconstructs_packet_2578_commodity_and_interagency_slots() -> None:
     commodity_document = _single_formula_document(
         family="frame",
