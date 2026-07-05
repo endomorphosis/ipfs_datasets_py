@@ -125,6 +125,15 @@ def test_modal_frame_logic_bridge_evaluates_ir_graph_and_proof_gate() -> None:
     assert report.ir_document.has_frame_logic is True
     assert report.ir_document.views["modal_ir"].metadata["formula_count"] >= 1
     assert report.ir_document.views["frame_logic"].metadata["triple_count"] > 0
+    assert (
+        report.ir_document.views["frame_logic"].metadata[
+            "frame_ontology_term_audit_count"
+        ]
+        > 0
+    )
+    assert report.ir_document.views["frame_logic"].metadata[
+        "frame_ontology_high_signal_term_audit_terms"
+    ]
     frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
     assert any(
         triple["predicate"] == "audited_ontology_term"
@@ -5995,6 +6004,55 @@ def test_cec_dcec_bridge_promotes_packet_shaped_compiler_guidance() -> None:
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["compiler_ir_cross_entropy_loss"] == 0.0
     assert report.round_trip.extra_losses["compiler_ir_cosine_similarity"] == 1.0
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_activates_from_target_metric_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _PlainNormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "cec-target-metric-guided",
+                    "actor": "Agency",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                    "support_text": "The agency shall publish notice.",
+                }
+            ]
+        }
+
+    class _PlainNormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _PlainNormResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_PlainNormConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-target-metric-guided",
+        citation="CEC Target Metric Guided",
+        compiler_guidance={
+            "compiler_guidance_quality_gate": "pass",
+            "evidence": [
+                {
+                    "target_metrics": ["cec_dcec_validation_failure_ratio"],
+                }
+            ],
+        },
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_routes"] == ["repair_cec_dcec_bridge"]
+    assert report.metadata["compiler_guidance_target_component"] == "CEC.native"
+    assert event_record["event_formula_source"] == (
+        "compiler_guidance.evidence.materialized_event_formula"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
 
 

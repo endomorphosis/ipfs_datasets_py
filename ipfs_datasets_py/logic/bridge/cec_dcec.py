@@ -76,6 +76,13 @@ _DCEC_STATE_PREDICATE_CANONICAL_BY_LOWER = {
     for predicate in _DCEC_STATE_PREDICATE_BY_KIND.values()
 }
 _DCEC_STATE_PREDICATE_SET = set(_DCEC_STATE_PREDICATE_BY_KIND.values())
+_CEC_GUIDANCE_ROUTE_TOKENS = {
+    "repair_cec_dcec_bridge",
+    "cec_dcec",
+    "cec.native",
+    "cec_native",
+    "deontic_cec",
+}
 
 
 @dataclass
@@ -1646,6 +1653,8 @@ def _compiler_guidance_row_supports_cec_materialization(
         "cec_dcec_event_formula_invalid_ratio",
     }:
         return True
+    if any(metric.startswith("cec_dcec_") for metric in _guidance_metric_names(row)):
+        return True
     if _boolish(row.get("spacy_parser_missing_formula")) is False and (
         row.get("spacy_modal_formula_count") is not None
     ):
@@ -1669,7 +1678,14 @@ def _compiler_guidance_top_level_supports_cec_materialization(
     target = str(
         guidance.get("target_component") or bundle.get("target_component") or ""
     ).strip().lower()
-    return scope == "cec" or target == "cec.native"
+    return (
+        scope == "cec"
+        or target == "cec.native"
+        or any(
+            metric.startswith("cec_dcec_")
+            for metric in _guidance_metric_names(guidance)
+        )
+    )
 
 
 def _compiler_guidance_event_formula_candidates(
@@ -2632,12 +2648,6 @@ def _selected_frame_from_compiler_guidance(
 
 
 def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool:
-    route_tokens = {
-        "repair_cec_dcec_bridge",
-        "cec_dcec",
-        "cec.native",
-        "deontic_cec",
-    }
     for key in (
         "route",
         "compiler_guidance_route",
@@ -2645,7 +2655,7 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
         "target",
     ):
         token = str(guidance.get(key) or "").strip().lower()
-        if token in route_tokens:
+        if token in _CEC_GUIDANCE_ROUTE_TOKENS:
             return True
 
     for key in (
@@ -2655,10 +2665,16 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
     ):
         value = guidance.get(key)
         if isinstance(value, Mapping):
-            if any(str(route).strip().lower() in route_tokens for route in value):
+            if any(
+                str(route).strip().lower() in _CEC_GUIDANCE_ROUTE_TOKENS
+                for route in value
+            ):
                 return True
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            if any(str(route).strip().lower() in route_tokens for route in value):
+            if any(
+                str(route).strip().lower() in _CEC_GUIDANCE_ROUTE_TOKENS
+                for route in value
+            ):
                 return True
     for key in (
         "bundle",
@@ -2676,8 +2692,13 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
             "target",
         ):
             token = str(bundle.get(bundle_key) or "").strip().lower()
-            if token in route_tokens:
+            if token in _CEC_GUIDANCE_ROUTE_TOKENS:
                 return True
+    if _cec_guidance_record_targets_cec(guidance):
+        return True
+    for _, row in _compiler_guidance_evidence_rows(guidance):
+        if _cec_guidance_record_targets_cec(row):
+            return True
     return False
 
 
@@ -2720,6 +2741,8 @@ def _cec_compiler_guidance_signal(
             route = str(value or "").strip()
             if route and route not in routes:
                 routes.append(route)
+    if not routes and _compiler_guidance_has_cec_bridge_route(guidance):
+        routes.append("repair_cec_dcec_bridge")
 
     target_component = _first_text_value(
         guidance.get("target_component"),
@@ -2727,6 +2750,8 @@ def _cec_compiler_guidance_signal(
         bundle.get("target_component"),
         bundle.get("target"),
     )
+    if not target_component and _compiler_guidance_has_cec_bridge_route(guidance):
+        target_component = "CEC.native"
     quality_gate = _first_text_value(
         guidance.get("compiler_guidance_quality_gate"),
         guidance.get("quality_gate"),
@@ -2753,6 +2778,11 @@ def _cec_compiler_guidance_signal(
         metric_name = str(metric or "").strip()
         if metric_name and metric_name not in target_metrics:
             target_metrics.append(metric_name)
+    if not target_metrics:
+        for _, row in _compiler_guidance_evidence_rows(guidance):
+            for metric in _guidance_metric_names(row):
+                if metric and metric not in target_metrics:
+                    target_metrics.append(metric)
 
     return {
         "quality_gate": quality_gate,
@@ -2846,6 +2876,106 @@ def _compiler_guidance_evidence_rows(
         ):
             rows.append((collection_key, row))
     return rows
+
+
+def _cec_guidance_record_targets_cec(row: Mapping[str, Any]) -> bool:
+    """Infer CEC bridge relevance from compiler-guidance evidence fields."""
+
+    if not isinstance(row, Mapping):
+        return False
+    for key in (
+        "target_component",
+        "target_view",
+        "predicted_view",
+        "target",
+    ):
+        if _cec_guidance_token_targets_cec(row.get(key)):
+            return True
+    for key in (
+        "legal_ir_underrepresented_components",
+        "compiler_guidance_legal_ir_underrepresented_components",
+    ):
+        if any(
+            _cec_guidance_token_targets_cec(item)
+            for item in _sequence_values(row.get(key))
+        ):
+            return True
+    if any(metric.startswith("cec_dcec_") for metric in _guidance_metric_names(row)):
+        return True
+    for gap_key, gap_value in _cec_guidance_gap_items(row):
+        if (
+            _cec_guidance_gap_quality_gate_passes(gap_value)
+            and _cec_guidance_token_targets_cec(str(gap_key).split(":", 1)[0])
+        ):
+            return True
+    return False
+
+
+def _cec_guidance_token_targets_cec(value: Any) -> bool:
+    token = str(value or "").strip().lower()
+    if not token:
+        return False
+    normalized = token.replace("_", ".")
+    return (
+        token in _CEC_GUIDANCE_ROUTE_TOKENS
+        or normalized in _CEC_GUIDANCE_ROUTE_TOKENS
+    )
+
+
+def _guidance_metric_names(row: Mapping[str, Any]) -> list[str]:
+    values: list[Any] = []
+    for key in ("target_metrics", "compiler_guidance_target_metrics"):
+        value = row.get(key)
+        if isinstance(value, str):
+            values.extend(metric.strip() for metric in value.split(",") if metric.strip())
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            values.extend(value)
+    return [
+        str(value or "").strip().lower()
+        for value in values
+        if str(value or "").strip()
+    ]
+
+
+def _cec_guidance_gap_items(row: Mapping[str, Any]) -> list[tuple[str, Any]]:
+    items: list[tuple[str, Any]] = []
+    for key in (
+        "legal_ir_view_gaps",
+        "compiler_guidance_legal_ir_view_gaps",
+        "legal_ir_view_family_gaps",
+        "compiler_guidance_legal_ir_view_family_gaps",
+    ):
+        value = row.get(key)
+        if isinstance(value, Mapping):
+            items.extend(
+                (str(gap_key), gap_value)
+                for gap_key, gap_value in value.items()
+            )
+    attribution = row.get("compiler_guidance_attribution")
+    if isinstance(attribution, Mapping):
+        for key in ("legal_ir_view_gaps", "legal_ir_view_family_gaps"):
+            value = attribution.get(key)
+            if isinstance(value, Mapping):
+                items.extend(
+                    (str(gap_key), gap_value)
+                    for gap_key, gap_value in value.items()
+                )
+    return items
+
+
+def _cec_guidance_gap_quality_gate_passes(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return True
+    gate = str(value.get("quality_gate") or "").strip().lower()
+    return gate in {"", "pass", "passed", "ok", "true", "1"}
+
+
+def _sequence_values(value: Any) -> list[Any]:
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return list(value)
+    if str(value or "").strip():
+        return [value]
+    return []
 
 
 def _compiler_guidance_row_matches_norm(
