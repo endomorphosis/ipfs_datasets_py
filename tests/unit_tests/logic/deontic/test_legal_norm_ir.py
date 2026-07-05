@@ -182,6 +182,28 @@ def test_legal_norm_ir_preserves_full_institutional_actor_with_internal_the_phra
     )
 
 
+def test_legal_norm_ir_recovers_clipped_passive_contribution_actor() -> None:
+    elements = extract_normative_elements(
+        "The total amount contributed by the Secretary of Defense in any fiscal "
+        "year for the common-funded budgets of NATO may be an amount in excess "
+        "of the maximum amount that would otherwise be applicable to those "
+        "contributions in such fiscal year under the fiscal year 1998 baseline "
+        "limitation."
+    )
+
+    ir = LegalNormIR.from_parser_element(elements[0])
+    provenance = legal_norm_ir_slot_provenance(ir, ("actor", "modality", "action"))
+
+    assert elements[0]["subject"] == [
+        "Defense in any fiscal year for the common-funded budgets of NATO"
+    ]
+    assert ir.actor == "Secretary of Defense"
+    assert ir.field_spans["subject"] == [36, 56]
+    assert provenance["missing_slots"] == []
+    assert provenance["ungrounded_slots"] == []
+    assert provenance["slot_grounding"][0]["value"] == "Secretary of Defense"
+
+
 def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_warning_classes() -> None:
     cross_reference_only = extract_normative_elements(
         "This section applies to food carts."

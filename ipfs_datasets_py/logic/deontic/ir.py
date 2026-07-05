@@ -268,6 +268,13 @@ def _actor_text(element: Dict[str, Any]) -> str:
     ):
         return modal_clause_actor
 
+    passive_contribution_actor = _passive_contribution_actor_text(element)
+    if flat_value and passive_contribution_actor and _is_clipped_passive_actor(
+        flat_value,
+        passive_contribution_actor,
+    ):
+        return passive_contribution_actor
+
     section_application_actor = _section_application_actor_text(element)
     if flat_value and _is_generic_section_application_actor(flat_value):
         if section_application_actor:
@@ -1049,6 +1056,12 @@ _MODAL_CLAUSE_ACTOR_RE = re.compile(
     r"is\s+directed\s+to|are\s+directed\s+to|is\s+required\s+to|"
     r"are\s+required\s+to))\b",
 )
+_PASSIVE_CONTRIBUTION_MODAL_ACTOR_RE = re.compile(
+    r"\bcontributed\s+by\s+(?:the\s+)?"
+    r"(?P<actor>[A-Z][A-Za-z]*(?:\s+(?:of|for|and|or|the|[A-Z][A-Za-z]*)){0,8})"
+    r"\s+.+?\s+(?P<modal>(?i:shall|must|may|is\s+authorized\s+to|"
+    r"are\s+authorized\s+to|is\s+required\s+to|are\s+required\s+to))\b",
+)
 
 
 def _is_generic_section_application_actor(value: str) -> bool:
@@ -1083,6 +1096,14 @@ def _modal_clause_actor_text(element: Mapping[str, Any]) -> str:
     return actor
 
 
+def _passive_contribution_actor_text(element: Mapping[str, Any]) -> str:
+    match_info = _passive_contribution_actor_match(element)
+    if not match_info:
+        return ""
+    match, _key = match_info
+    return _clean_source_label(match.group("actor"))
+
+
 def _modal_clause_actor_field_spans(element: Mapping[str, Any]) -> Dict[str, List[int]]:
     match_info = _modal_clause_actor_match(element)
     if not match_info:
@@ -1097,6 +1118,26 @@ def _modal_clause_actor_field_spans(element: Mapping[str, Any]) -> Dict[str, Lis
         "subject": [
             base_offset + actor_start,
             base_offset + actor_end,
+        ],
+    }
+
+
+def _passive_contribution_actor_field_spans(
+    element: Mapping[str, Any],
+) -> Dict[str, List[int]]:
+    match_info = _passive_contribution_actor_match(element)
+    if not match_info:
+        return {}
+    match, key = match_info
+    actor_text = _clean_source_label(match.group("actor"))
+    flat_value = _first_text(element.get("subject")).strip()
+    if not _is_clipped_passive_actor(flat_value, actor_text):
+        return {}
+    base_offset = _modal_clause_match_base_offset(element, key)
+    return {
+        "subject": [
+            base_offset + match.start("actor"),
+            base_offset + match.end("actor"),
         ],
     }
 
@@ -1129,6 +1170,18 @@ def _modal_clause_actor_match(
 
     for key, text in _modal_clause_source_text_candidates(element):
         matches = list(_MODAL_CLAUSE_ACTOR_RE.finditer(text))
+        if matches:
+            return matches[-1], key
+    return None
+
+
+def _passive_contribution_actor_match(
+    element: Mapping[str, Any],
+) -> Optional[tuple[re.Match[str], str]]:
+    """Return source-grounded actor for clipped contribution permission rows."""
+
+    for key, text in _modal_clause_source_text_candidates(element):
+        matches = list(_PASSIVE_CONTRIBUTION_MODAL_ACTOR_RE.finditer(text))
         if matches:
             return matches[-1], key
     return None
@@ -1216,6 +1269,15 @@ def _is_heading_polluted_actor(flat_value: str, modal_clause_actor: str) -> bool
     if not actor.startswith("the "):
         return False
     return flat.endswith(actor) and len(flat.split()) > len(actor.split())
+
+
+def _is_clipped_passive_actor(flat_value: str, recovered_actor: str) -> bool:
+    flat = _clean_source_label(flat_value).lower()
+    actor = _clean_source_label(recovered_actor).lower()
+    if not flat or not actor or flat == actor:
+        return False
+    actor_tail = actor.split()[-1]
+    return flat.startswith(f"{actor_tail} ") and len(actor.split()) > 1
 
 
 def _section_application_actor_match(element: Mapping[str, Any]) -> Optional[re.Match[str]]:
@@ -1370,6 +1432,9 @@ def _field_spans_with_source_fallback(element: Mapping[str, Any]) -> Dict[str, A
     modal_clause_actor_spans = _modal_clause_actor_field_spans(element)
     if modal_clause_actor_spans:
         field_spans.update(modal_clause_actor_spans)
+    passive_contribution_spans = _passive_contribution_actor_field_spans(element)
+    if passive_contribution_spans:
+        field_spans.update(passive_contribution_spans)
     modal_clause_modality_spans = _modal_clause_modality_field_spans(element)
     for slot_name, span in modal_clause_modality_spans.items():
         field_spans.setdefault(slot_name, span)
