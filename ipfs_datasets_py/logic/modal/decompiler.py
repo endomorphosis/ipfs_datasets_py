@@ -11790,6 +11790,8 @@ def _typed_decompiler_family_pair_legal_ir_views(
     if target == "epistemic" or source == "epistemic":
         add("deontic.ir")
         add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if target == "doxastic" or source == "doxastic":
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")

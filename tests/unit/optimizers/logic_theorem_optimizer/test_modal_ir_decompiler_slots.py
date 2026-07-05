@@ -2436,3 +2436,48 @@ def test_modal_decompiler_reconstructs_repealed_range_status_semantics() -> None
         slot_texts["typed-decompiler-target-reconstruction-pair"]
     )
     assert "repealed" in set(slot_texts["source_status_clause_legal_semantic_atom"])
+
+
+def test_modal_decompiler_anchors_frame_epistemic_residuals_to_knowledge_graph_view() -> None:
+    source_text = "Elimination to permanently nonirrigable lands."
+    document = ModalIRDocument(
+        document_id="packet-000368-frame-epistemic-residual",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000368-frame-epistemic-residual-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="framed as",
+                ),
+                predicate=ModalIRPredicate(
+                    name="elimination_to_permanently_nonirrigable_lands",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-25-389b-2d50dabb4faf7ea6",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="25 U.S.C. 389b",
+                ),
+                metadata={
+                    "cue": "__uscode_residual_span_fallback__",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert "frame->epistemic" in set(
+        slot_texts["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in set(slot_texts["legal_ir_view_prototype"])
+    assert (
+        "frame->epistemic||knowledge_graphs.neo4j_compat"
+        in set(slot_texts["typed-decompiler-target-reconstruction-view"])
+    )
