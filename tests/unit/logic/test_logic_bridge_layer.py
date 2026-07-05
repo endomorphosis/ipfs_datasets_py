@@ -5949,6 +5949,44 @@ def test_cec_dcec_bridge_promotes_packet_shaped_compiler_guidance() -> None:
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_falls_back_from_slot_incomplete_guided_event_formula() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    guidance = {
+        "bundle": '{"route":"repair_cec_dcec_bridge","target_component":"CEC.native"}',
+        "event_calculus_formula": (
+            "Happens(legal_norm(slot_incomplete)) => "
+            "HoldsAt(O(happens(agency,publish_notice,t0)))"
+        ),
+        "event_formula_syntax_valid": True,
+    }
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="cec-bridge-slot-incomplete-guidance",
+        citation="CEC Bridge Slot Incomplete Guidance",
+        compiler_guidance=guidance,
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert event_record["event_formula_source"].endswith(":bridge_fallback")
+    assert event_record["event_calculus_formula"].startswith(
+        "Happens(legal_norm("
+    )
+    assert "slot_incomplete" not in event_record["event_calculus_formula"]
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_parse_profile"][
+            "event_predicate_slot_complete"
+        ]
+        is True
+    )
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_synthesizes_fallback_formula_when_norm_extraction_is_empty() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -8157,7 +8195,7 @@ def test_cec_dcec_bridge_accepts_capitalized_function_style_quantifier_formulas(
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
-def test_cec_dcec_bridge_validates_event_formula_slots_after_normalization(
+def test_cec_dcec_bridge_repairs_event_formula_slots_after_normalization(
     monkeypatch,
 ) -> None:
     from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
@@ -8210,14 +8248,21 @@ def test_cec_dcec_bridge_validates_event_formula_slots_after_normalization(
     event_record = report.ir_document.views["event_calculus"].payload["records"][0]
     parse_profile = event_record["event_formula_target_parse_profile"]
 
-    assert event_record["event_formula_syntax_valid"] is False
-    assert parse_profile["event_predicate_slot_complete"] is False
-    assert parse_profile["target_parse_profile_complete"] is False
+    assert event_record["event_formula_source"] == "deontic.prover_syntax:bridge_fallback"
+    assert event_record["event_formula_syntax_valid"] is True
+    assert "legal_norm(bridge_empty_slot_1), )" not in event_record[
+        "event_calculus_formula"
+    ]
+    assert "legal_norm(bridge_empty_slot_1), t)" in event_record[
+        "event_calculus_formula"
+    ]
+    assert parse_profile["event_predicate_slot_complete"] is True
+    assert parse_profile["target_parse_profile_complete"] is True
     assert (
         event_record["event_formula_target_quality_gate"]["requires_validation"]
-        is True
+        is False
     )
-    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 1.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
 def test_cec_dcec_bridge_falls_back_from_unstructured_event_formula_export(

@@ -1920,7 +1920,7 @@ def _event_formula_export_needs_bridge_fallback(formula: str) -> bool:
     if parse_profile.get("target_parse_profile_complete") is True:
         return False
     if parse_profile.get("event_predicates"):
-        return False
+        return parse_profile.get("event_predicate_slot_complete") is not True
     top_level_symbol = str(parse_profile.get("top_level_symbol") or "")
     return top_level_symbol not in (
         _DCEC_STATE_PREDICATE_SET
