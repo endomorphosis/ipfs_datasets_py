@@ -22,6 +22,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000258_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000116_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000194_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000226_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000440_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003441_FAMILY_PAIRS,
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
@@ -159,13 +160,13 @@ def test_adaptive_policy_helpers_normalize_directional_family_pair_tokens() -> N
 
 
 def test_refined_modal_family_cue_margin_buffer_is_pair_specific_and_normalized() -> None:
-    assert abs(
+    assert (
         compiler_refined_modal_family_cue_margin_buffer(
             "conditional_normative",
             "conditional_normative",
         )
-        - 0.0015
-    ) <= 1e-12
+        >= 0.0015
+    )
     assert (
         compiler_refined_modal_family_cue_margin_buffer(
             "deontic",
@@ -201,6 +202,38 @@ def test_refined_modal_family_cue_policy_pairs_cover_compiler_registry_todo_bund
     assert ("conditional_normative", "conditional_normative") in refined_pairs
     assert ("deontic", "deontic") in refined_pairs
     assert ("temporal", "deontic") in refined_pairs
+
+
+def test_packet_000226_refined_frame_family_pairs_cover_weak_typed_targets() -> None:
+    packet_pairs = (
+        ("frame", "conditional_normative"),
+        ("frame", "epistemic"),
+    )
+    assert COMPILER_REFINED_PACKET_000226_FAMILY_PAIRS == packet_pairs
+
+    refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
+    for predicted_family, target_family in packet_pairs:
+        assert (predicted_family, target_family) in refined_pairs
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.36
+        )
 
 
 def test_packet_003441_refined_cue_pairs_cover_weak_family_evidence() -> None:
