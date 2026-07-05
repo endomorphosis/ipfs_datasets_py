@@ -41175,6 +41175,84 @@ def test_decompiler_reconstructs_packet_338_semantic_residual_slots() -> None:
         assert fragment in structural_text
 
 
+def test_decompiler_reconstructs_packet_341_scoped_family_pair_slots() -> None:
+    admission = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Admission and other fees. The Secretary shall not collect "
+            "admission and other fees before the fee schedule is published "
+            "and not later than the beginning of the fiscal year."
+        ),
+        predicate="secretary_admission_fee_collection",
+    )
+    false_claim = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "False, fictitious or fraudulent claims. Whoever knowingly "
+            "presents a false, fictitious, or fraudulent claim upon or "
+            "against the United States, knowing such claim to be false, "
+            "shall be punished."
+        ),
+        predicate="false_fraudulent_government_claim",
+    )
+    determination = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Export credit authority. The Board may determine whether the "
+            "Federal Financing Bank shall extend credit for export promotion."
+        ),
+        predicate="federal_financing_bank_export_credit_authority",
+    )
+
+    admission_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(admission)
+    )
+    false_claim_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(false_claim)
+    )
+    determination_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(determination)
+    )
+
+    assert (
+        "obligation:negative_scope:temporal:frame->deontic"
+        in admission_slots["typed-decompiler-force-polarity-scope-family-pair"]
+    )
+    assert (
+        "obligation:negative_scope:temporal:frame->epistemic"
+        in admission_slots["typed-decompiler-force-polarity-scope-family-pair"]
+    )
+    assert "admission_fee_collection" in admission_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert (
+        "obligation:positive_scope:mental_state:deontic->doxastic"
+        in false_claim_slots["typed-decompiler-force-polarity-scope-family-pair"]
+    )
+    assert "deontic->doxastic" in false_claim_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "false_claim_knowledge" in false_claim_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "knowledge_graphs.neo4j_compat" in false_claim_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert (
+        "permission:positive_scope:mental_state:frame->doxastic"
+        in determination_slots["typed-decompiler-force-polarity-scope-family-pair"]
+    )
+    assert "frame->epistemic" in determination_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

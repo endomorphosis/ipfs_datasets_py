@@ -8911,6 +8911,13 @@ def _typed_decompiler_force_polarity_reconstruction_slots(
         if not normalized_target:
             continue
         pair = f"{normalized_source}->{normalized_target}"
+        scope_values = _typed_decompiler_force_polarity_scope_values(
+            source_family=normalized_source,
+            target_family=normalized_target,
+            reconstruction_text=reconstruction_text,
+            condition_values=condition_values,
+            exception_values=exception_values,
+        )
         for force_value in force_values:
             for polarity_value in polarity_values:
                 signature = f"{force_value}:{polarity_value}:{normalized_target}"
@@ -8967,7 +8974,113 @@ def _typed_decompiler_force_polarity_reconstruction_slots(
                             ),
                         )
                     )
+                for scope_value in scope_values:
+                    scoped_family_pair_signature = (
+                        f"{force_value}:{polarity_value}:{scope_value}:{pair}"
+                    )
+                    slots.extend(
+                        (
+                            (
+                                "typed-decompiler-force-polarity-scope-family-pair",
+                                scoped_family_pair_signature,
+                            ),
+                            (
+                                "decompiler-plan",
+                                (
+                                    "force-polarity-scope-family-pair:"
+                                    f"{scoped_family_pair_signature}"
+                                ),
+                            ),
+                        )
+                    )
+                    for view in _typed_decompiler_family_pair_legal_ir_views(
+                        normalized_source,
+                        normalized_target,
+                    ):
+                        scoped_slot_value = (
+                            "slot:typed-decompiler-force-polarity-scope-family-pair:"
+                            f"{scoped_family_pair_signature}||{view}"
+                        )
+                        slots.extend(
+                            (
+                                (
+                                    "semantic_slot_legal_ir_view_prototype",
+                                    scoped_slot_value,
+                                ),
+                                (
+                                    "family_semantic_slot_legal_ir_view_prototype",
+                                    f"{normalized_source}||{scoped_slot_value}",
+                                ),
+                                (
+                                    "family_semantic_slot_legal_ir_view_prototype",
+                                    f"{normalized_target}||{scoped_slot_value}",
+                                ),
+                            )
+                        )
     return _unique_slot_values(slots)
+
+
+def _typed_decompiler_force_polarity_scope_values(
+    *,
+    source_family: str,
+    target_family: str,
+    reconstruction_text: str,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[str]:
+    """Return semantic scopes that refine force/polarity family-pair slots."""
+    normalized_text = _clean_text(reconstruction_text).replace("_", " ").lower()
+    source = _clean_text(source_family).lower()
+    target = _clean_text(target_family).lower()
+    condition_cues = _typed_decompiler_condition_cues(
+        condition_values=condition_values,
+        exception_values=exception_values,
+        text=normalized_text,
+    )
+    source_scope_cues = _source_scope_reconstruction_cues(normalized_text)
+    scope_cues = _unique_text_values((*condition_cues, *source_scope_cues))
+    scopes: List[str] = []
+
+    def add(scope: str) -> None:
+        normalized_scope = _clean_text(scope).lower().replace(" ", "_")
+        if normalized_scope and normalized_scope not in scopes:
+            scopes.append(normalized_scope)
+
+    if any(
+        cue in _TEMPORAL_BRIDGE_CONTEXT_TOKENS
+        or _temporal_clause_prefix_relation(cue)
+        or cue
+        in {
+            "after_conclusion",
+            "calendar_year",
+            "effective_date",
+            "fiscal_year",
+            "no_later_than",
+            "not_later_than",
+            "on_and_after",
+            "on_or_after",
+            "testing_period",
+            "within",
+        }
+        for cue in scope_cues
+    ) or _temporal_transition_context_cues_from_text(normalized_text):
+        add("temporal")
+    if condition_values or exception_values or any(
+        cue in _CLAUSE_PREFIX_BRIDGE_CUES
+        or cue.startswith("except")
+        or cue in {"provided", "provided_that", "unless"}
+        for cue in scope_cues
+    ):
+        add("conditional")
+    if _statutory_scope_slots(normalized_text):
+        add("statutory")
+    if (
+        source == "doxastic"
+        or target == "doxastic"
+        or _doxastic_bridge_families_from_text(normalized_text)
+    ):
+        add("mental_state")
+    return scopes
 
 
 def _typed_decompiler_source_reconstruction_slots(
@@ -12464,6 +12577,7 @@ def _doxastic_bridge_families_from_text(text: str) -> List[str]:
 
     if re.search(
         r"(?<!\w)(?:believe|believes|believed|believing|"
+        r"knowingly|knowing(?:ly)?|"
         r"reason(?:s)?\s+to\s+believe|reasonably\s+believes|"
         r"intent\s+to|with\s+intent\s+to)(?!\w)",
         normalized_text,
