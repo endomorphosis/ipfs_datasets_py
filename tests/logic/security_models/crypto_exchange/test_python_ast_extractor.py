@@ -80,3 +80,5 @@ def freeze_wallet(wallet):
     assert any(event['event'] == 'approve_withdrawal' for event in model.events)
     assert any(invariant['description'].startswith('Wallets cannot sign after freeze') for invariant in model.invariants)
     assert sorted(model.metadata['autoformalization']['source_files']) == sorted([str(first), str(second)])
+    assert sum(1 for entity in model.entities if entity['name'] == 'WalletGuardian') == 1
+    assert sum(1 for policy in model.policies if policy['name'] == 'authorization_required') == 1

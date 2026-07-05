@@ -49,6 +49,7 @@ _CRITICAL_ACTION_KEYWORDS = (
     'credit',
     'transfer',
 )
+_MAX_POLICY_SOURCE_LINES = 12
 
 
 class PythonASTExtractor:
@@ -173,16 +174,8 @@ class PythonASTExtractor:
     def _collect_policy_entries(self, tree: ast.AST, source: str) -> list[dict[str, Any]]:
         policies: dict[str, dict[str, Any]] = {}
         for function in self._iter_functions(tree):
-            haystack = ' '.join(
-                filter(
-                    None,
-                    [
-                        function.name,
-                        (ast.get_docstring(function) or ''),
-                        ast.get_source_segment(source, function) or '',
-                    ],
-                )
-            ).lower()
+            body_excerpt = '\n'.join((ast.get_source_segment(source, function) or '').splitlines()[:_MAX_POLICY_SOURCE_LINES])
+            haystack = ' '.join(filter(None, [function.name, ast.get_docstring(function) or '', body_excerpt])).lower()
             for policy_name, keywords in _POLICY_KEYWORDS.items():
                 if any(keyword in haystack for keyword in keywords):
                     policy_id = f'policy:{policy_name}'
@@ -267,7 +260,7 @@ class PythonASTExtractor:
                 enable_monitoring=False,
             ).to_fol(sentence)
         except Exception:
-            logger.warning('Falling back to minimal FOL placeholder for autoformalized sentence')
+            logger.warning('Falling back to minimal FOL placeholder for autoformalized sentence: %s', sentence[:100])
             return f'Statement({sentence.replace(" ", "_")})'
 
     def _extract_natural_language_features(self, sentence: str) -> tuple[dict[str, list[str]], list[dict[str, Any]]]:
@@ -279,7 +272,7 @@ class PythonASTExtractor:
 
             return extract_predicates(sentence), extract_logical_relations(sentence)
         except Exception:
-            logger.warning('Falling back to empty natural-language features for autoformalized sentence')
+            logger.warning('Falling back to empty natural-language features for autoformalized sentence: %s', sentence[:100])
             return ({'nouns': [], 'verbs': [], 'adjectives': [], 'relations': []}, [])
 
     @staticmethod
