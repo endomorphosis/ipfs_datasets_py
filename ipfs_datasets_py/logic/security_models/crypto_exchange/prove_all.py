@@ -208,7 +208,7 @@ def _build_proof_receipts(
                 )
             )
         except ValueError as exc:
-            fallback_assumptions = accepted_assumptions or list(report.assumptions)
+            fallback_assumptions = list(report.assumptions) if accepted_assumptions is None else list(accepted_assumptions)
             receipts.append(
                 ProofReceipt(
                     claim_id=report.claim_id,
@@ -339,7 +339,11 @@ def main(argv: list[str] | None = None) -> int:
     }
     if args.emit_proof_receipts:
         if accepted_assumptions is None and not args.unsafe_accept_report_assumptions:
-            parser.error('--emit-proof-receipts requires --accepted-assumptions, --accepted-assumptions-file, or --unsafe-accept-report-assumptions')
+            parser.error(
+                '--emit-proof-receipts requires explicit assumption management: '
+                'provide --accepted-assumptions, --accepted-assumptions-file, '
+                'or --unsafe-accept-report-assumptions (test only)'
+            )
         payload['proof_receipts'] = [
             receipt.to_dict()
             for receipt in _build_proof_receipts(
