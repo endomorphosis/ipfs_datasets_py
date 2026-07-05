@@ -63,6 +63,7 @@ _COMMENT_PREFIXES = ('//', '///', '//!')
 _BLOCK_COMMENT_START = ('/*', '/**')
 _BLOCK_COMMENT_END = '*/'
 _CRITICAL_ACTION_PATTERNS = tuple(re.compile(r'\b' + re.escape(keyword) + r'\b') for keyword in _CRITICAL_ACTION_KEYWORDS)
+_NON_DECLARATION_PREFIXES = ('if', 'for', 'while', 'switch', 'catch', 'return', 'throw', 'new')
 
 
 @dataclass(frozen=True)
@@ -178,27 +179,21 @@ class SourceCodeExtractor:
             )
             for file_path in file_paths
         ]
-        languages = sorted(
-            {
-                model.metadata.get('autoformalization', {}).get('language', _SUPPORTED_LANGUAGE_EXTENSIONS[Path(module_path).suffix.lower()])
-                for model in models
-                for module_path in [model.metadata['autoformalization']['module_path']]
-            }
-        )
+        languages = sorted({self._get_model_language(model) for model in models})
         return SecurityModelIR(
             schema_version='security-model-ir/v1',
             model_id=model_id,
-            entities=self._python._dedupe_dicts(self._python._flatten(model.entities for model in models), 'id'),
+            entities=self._merge_model_field(models, 'entities'),
             assets=[],
             wallets=[],
             accounts=[],
             roles=[],
             principals=[],
             capabilities=[],
-            policies=self._python._dedupe_dicts(self._python._flatten(model.policies for model in models), 'id'),
-            events=self._python._dedupe_dicts(self._python._flatten(model.events for model in models), 'id'),
-            state_machines=self._python._dedupe_dicts(self._python._flatten(model.state_machines for model in models), 'id'),
-            invariants=self._python._dedupe_dicts(self._python._flatten(model.invariants for model in models), 'id'),
+            policies=self._merge_model_field(models, 'policies'),
+            events=self._merge_model_field(models, 'events'),
+            state_machines=self._merge_model_field(models, 'state_machines'),
+            invariants=self._merge_model_field(models, 'invariants'),
             assumptions=[],
             prover_targets=['z3'],
             metadata={
@@ -221,6 +216,19 @@ class SourceCodeExtractor:
             return _SUPPORTED_LANGUAGE_EXTENSIONS[path.suffix.lower()]
         except KeyError as exc:
             raise ValueError(f'Unsupported source file for autoformalization: {path}') from exc
+
+    def _get_model_language(self, model: SecurityModelIR) -> str:
+        autoformalization = model.metadata.get('autoformalization', {})
+        language = autoformalization.get('language')
+        if language:
+            return language
+        return self._detect_language(Path(autoformalization['module_path']))
+
+    def _merge_model_field(self, models: list[SecurityModelIR], field_name: str) -> list[dict[str, Any]]:
+        return self._python._dedupe_dicts(
+            self._python._flatten(getattr(model, field_name) for model in models),
+            'id',
+        )
 
     def _collect_symbols(self, source: str, language: str) -> list[_CodeSymbol]:
         symbols: list[_CodeSymbol] = []
@@ -261,6 +269,9 @@ class SourceCodeExtractor:
 
             matched_kind: str | None = None
             matched_name: str | None = None
+            if self._looks_like_non_declaration(stripped):
+                comment_buffer = []
+                continue
             for pattern in _CLASS_PATTERNS[language]:
                 match = pattern.match(line)
                 if match:
@@ -292,6 +303,10 @@ class SourceCodeExtractor:
                 comment_buffer = []
 
         return symbols
+
+    @staticmethod
+    def _looks_like_non_declaration(line: str) -> bool:
+        return any(line.startswith(f'{prefix} ') or line.startswith(f'{prefix}(') for prefix in _NON_DECLARATION_PREFIXES)
 
     def _collect_policy_entries(self, functions: list[_CodeSymbol]) -> list[dict[str, Any]]:
         policies: dict[str, dict[str, Any]] = {}

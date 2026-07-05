@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from ipfs_datasets_py.logic.security_models.crypto_exchange.extractors import SourceCodeExtractor
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import validate_ir
 
@@ -96,3 +98,102 @@ func FreezeWallet(authorized bool) bool {
     assert sum(1 for policy in model.policies if policy['name'] == 'authorization_required') == 1
     authorization_policy = next(policy for policy in model.policies if policy['name'] == 'authorization_required')
     assert sorted(authorization_policy['sources']) == ['FreezeWallet', 'approveWithdrawal']
+
+
+@pytest.mark.parametrize(
+    ('language', 'module_path', 'source', 'expected_event'),
+    [
+        (
+            'javascript',
+            'exchange/withdrawals.js',
+            '''
+/** Every withdrawal must be authorized before broadcast. */
+export function approveWithdrawal(authorized) {
+  if (!authorized) {
+    throw new Error("authorization required");
+  }
+}
+''',
+            'approveWithdrawal',
+        ),
+        (
+            'typescript',
+            'exchange/withdrawals.ts',
+            '''
+/** Every withdrawal must be authorized before broadcast. */
+export function approveWithdrawal(authorized: boolean): boolean {
+  if (!authorized) {
+    throw new Error("authorization required");
+  }
+  return true;
+}
+''',
+            'approveWithdrawal',
+        ),
+        (
+            'go',
+            'exchange/withdrawals.go',
+            '''
+// Every withdrawal must be authorized before broadcast.
+func ApproveWithdrawal(authorized bool) bool {
+    if !authorized {
+        panic("authorization required")
+    }
+    return true
+}
+''',
+            'ApproveWithdrawal',
+        ),
+        (
+            'java',
+            'exchange/Withdrawals.java',
+            '''
+/** Every withdrawal must be authorized before broadcast. */
+public class Withdrawals {
+    public boolean approveWithdrawal(boolean authorized) {
+        if (!authorized) {
+            throw new IllegalStateException("authorization required");
+        }
+        return true;
+    }
+}
+''',
+            'approveWithdrawal',
+        ),
+        (
+            'rust',
+            'exchange/withdrawals.rs',
+            '''
+/// Every withdrawal must be authorized before broadcast.
+pub fn approve_withdrawal(authorized: bool) -> bool {
+    if !authorized {
+        panic!("authorization required");
+    }
+    true
+}
+''',
+            'approve_withdrawal',
+        ),
+    ],
+)
+def test_source_code_extractor_detects_authorization_policy_for_supported_languages(
+    language: str,
+    module_path: str,
+    source: str,
+    expected_event: str,
+) -> None:
+    """GIVEN a supported source language WHEN autoformalized THEN policy inference remains active."""
+
+    extractor = SourceCodeExtractor()
+    model = validate_ir(
+        extractor.extract_ir_from_source(
+            source,
+            language=language,
+            model_id=f'{language}-policy-test-model',
+            module_path=module_path,
+        )
+    )
+
+    authorization_policy = next(policy for policy in model.policies if policy['name'] == 'authorization_required')
+    assert authorization_policy['sources'] == [expected_event]
+    assert any(event['event'] == expected_event for event in model.events)
