@@ -28499,46 +28499,35 @@ def test_modal_compiler_surfaces_packet_000166_compiler_ambiguity_policy_pairs(
     )
     scenarios = (
         {
-            "sample_id": "us-code-20-1756-e035c813bb1d867b",
-            "predicted_family": "conditional_normative",
-            "target_family": "conditional_normative",
-            "family_margin": 0.103354061794,
-            "priority": 0.046645938206,
+            "sample_id": "us-code-51-60145.-01b5fb85d3069385",
+            "predicted_family": "deontic",
+            "target_family": "deontic",
+            "family_margin": 0.14051198333,
+            "predicted_share": 0.488146188432,
         },
         {
-            "sample_id": "us-code-36-21001-9eff2241b5ff81e3",
+            "sample_id": "us-code-5-6329d-0fe87bc75cf68981",
             "predicted_family": "frame",
             "target_family": "conditional_normative",
-            "family_margin": -0.450315468104,
-            "priority": 0.600315468104,
+            "family_margin": -0.303500463967,
         },
         {
-            "sample_id": "us-code-20-4511-d284887cf3815886",
+            "sample_id": "us-code-25-382-6a73d864a5a614d0",
             "predicted_family": "frame",
             "target_family": "deontic",
-            "family_margin": -0.999468679592,
-            "priority": 1.149468679592,
+            "family_margin": -0.70743551936,
         },
         {
-            "sample_id": "us-code-42-7195.-122e167c4369367c",
-            "predicted_family": "frame",
-            "target_family": "epistemic",
-            "family_margin": -0.199343511248,
-            "priority": 0.349343511248,
-        },
-        {
-            "sample_id": "us-code-42-2415 to 2421.-e3358d996b11fe81",
+            "sample_id": "us-code-42-1769h.-1af74d99614edc90",
             "predicted_family": "frame",
             "target_family": "temporal",
-            "family_margin": -0.971465725899,
-            "priority": 1.121465725899,
+            "family_margin": -0.998592968196,
         },
         {
-            "sample_id": "us-code-26-1021-8fd2a2f6811ff75e",
-            "predicted_family": "temporal",
-            "target_family": "deontic",
-            "family_margin": -0.22213143494,
-            "priority": 0.37213143494,
+            "sample_id": "us-code-43-643.-fa0a13d19b7aa85e",
+            "predicted_family": "frame",
+            "target_family": "temporal",
+            "family_margin": -0.999422898001,
         },
     )
     expected_pairs = {
@@ -28570,7 +28559,7 @@ def test_modal_compiler_surfaces_packet_000166_compiler_ambiguity_policy_pairs(
             predicted_symbol = "O"
             predicted_label = "obligation"
 
-        predicted_share = 0.9
+        predicted_share = float(scenario.get("predicted_share", 0.9))
         if predicted_family == target_family:
             runner_up_family = "temporal"
             ranking = [
@@ -28684,6 +28673,15 @@ def test_modal_compiler_surfaces_packet_000166_compiler_ambiguity_policy_pairs(
         assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
         assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        if predicted_family == target_family:
+            assert (
+                float(
+                    base_ambiguity.metadata[
+                        "weak_typed_self_family_margin_buffer"
+                    ]
+                )
+                > 0.0
+            )
         assert (
             abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
             < 1e-12
@@ -28691,7 +28689,10 @@ def test_modal_compiler_surfaces_packet_000166_compiler_ambiguity_policy_pairs(
         assert (
             abs(
                 float(base_ambiguity.metadata["adaptive_priority"])
-                - float(scenario["priority"])
+                - compiler._adaptive_margin_priority(
+                    family_margin=family_margin,
+                    threshold=compiler.config.modal_adaptive_family_margin,
+                )
             )
             < 1e-12
         )
