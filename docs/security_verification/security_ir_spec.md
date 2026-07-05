@@ -27,6 +27,7 @@ The default exchange model ships with a bounded assumption registry (`A1`-`A10`)
 ## Python side
 
 - heavy NLP and GraphRAG-assisted model extraction
+- seed autoformalization of Python, JavaScript, TypeScript, Go, Java, and Rust codebases into reviewable security IR facts
 - prover orchestration and counterexample discovery
 - external prover runners (TLA+, Z3, Tamarin, ProVerif, HyperLTL, Lean, Coq) and proof report generation
 - runtime monitor prototyping

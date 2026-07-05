@@ -10,4 +10,4 @@ The initial vertical slice centers on a minimal exchange model, Z3-backed claims
 
 Default proof artifacts record bounded assumption IDs (`A1`-`A10`), and the CLI can fail closed when a model declares simulated F-logic/ZKP dependencies.
 
-The Python extractor surface now also supports seed autoformalization of Python modules/directories into `SecurityModelIR`, reusing lightweight natural-language-to-FOL helpers to capture security-relevant docstring obligations as reviewable invariants.
+The extractor surface now supports seed autoformalization of Python plus popular source languages (JavaScript, TypeScript, Go, Java, and Rust) into `SecurityModelIR`, reusing lightweight natural-language-to-FOL helpers to capture security-relevant comments and docstring obligations as reviewable invariants.

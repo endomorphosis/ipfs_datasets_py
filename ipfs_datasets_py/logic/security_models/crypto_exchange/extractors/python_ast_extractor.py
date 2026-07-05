@@ -108,6 +108,7 @@ class PythonASTExtractor:
         source_name = module_path or '<memory>'
         autoformalization = {
             'kind': 'python_ast',
+            'language': 'python',
             'module_path': source_name,
             'source_digest': hashlib.sha256(source.encode('utf-8')).hexdigest(),
             'review_status': 'seed-autoformalization',
@@ -184,6 +185,7 @@ class PythonASTExtractor:
             metadata={
                 'autoformalization': {
                     'kind': 'python_ast_directory',
+                    'languages': ['python'],
                     'root_path': str(root),
                     'source_files': [model.metadata['autoformalization']['module_path'] for model in models],
                     'review_status': 'seed-autoformalization',
