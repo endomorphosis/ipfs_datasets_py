@@ -20,9 +20,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
 
 
 _PACKET_000162_FAMILY_PAIRS = (
-    ("conditional_normative", "deontic"),
-    ("deontic", "frame"),
+    ("deontic", "deontic"),
+    ("deontic", "temporal"),
+    ("frame", "conditional_normative"),
     ("frame", "deontic"),
+    ("frame", "temporal"),
 )
 
 

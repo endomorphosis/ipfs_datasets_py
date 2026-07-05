@@ -2211,6 +2211,21 @@ def _split_top_level_arguments(text: str) -> list[str]:
     return arguments
 
 
+def _top_level_formula_arguments_complete(text: str) -> bool:
+    """Return True when the outer formula wrapper has at least one value."""
+
+    value = str(text or "").strip()
+    match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*\(", value)
+    if not match:
+        return False
+    open_index = value.find("(", match.start())
+    close_index = _matching_close_paren_index(value, open_index)
+    if close_index < 0:
+        return False
+    arguments = _split_top_level_arguments(value[open_index + 1:close_index])
+    return bool(arguments) and not any(not argument for argument in arguments)
+
+
 def _strip_event_formula_clause_terminator(text: str) -> str:
     value = str(text or "").strip()
     while value.endswith(".") or value.endswith(";"):
@@ -2463,7 +2478,7 @@ def _event_calculus_state_formula_from_export(
         )
     if parse_profile.get("top_level_symbol") not in {"O", "P", "F"}:
         return text
-    if "Happens" not in set(parse_profile.get("event_predicates") or []):
+    if not _top_level_formula_arguments_complete(text):
         return text
     return _event_calculus_formula_text(
         source_id=source_id,

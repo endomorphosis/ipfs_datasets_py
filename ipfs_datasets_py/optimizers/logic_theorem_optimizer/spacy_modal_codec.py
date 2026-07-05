@@ -1234,6 +1234,7 @@ class SpaCyLegalEncoder:
     ) -> None:
         self.model_name = model_name
         self.registry = registry
+        self._fallback_parser = LegalModalParser(registry)
         self.nlp, self.used_fallback_model = self._load_nlp(model_name)
 
     def encode(
@@ -1277,7 +1278,11 @@ class SpaCyLegalEncoder:
             normalized_text=normalized,
             tokens=tokens,
             sentences=sentences,
-            cues=self._extract_cues(normalized, tokens),
+            cues=self._extract_cues(
+                normalized,
+                tokens,
+                citation=citation,
+            ),
             citation=citation,
             source=source,
             model_name=self.model_name,
@@ -1288,6 +1293,8 @@ class SpaCyLegalEncoder:
         self,
         normalized: str,
         tokens: Sequence[SpaCyTokenFeature],
+        *,
+        citation: Optional[str] = None,
     ) -> List[SpaCyModalCueFeature]:
         found: Dict[tuple[int, int, str, str], SpaCyModalCueFeature] = {}
         token_spans = [(index, token.start_char, token.end_char) for index, token in enumerate(tokens)]
@@ -1345,6 +1352,19 @@ class SpaCyLegalEncoder:
                         ):
                             continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
+                            if self._fallback_parser._is_non_temporal_editorial_status_heading_cue(
+                                normalized_text=normalized,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                                citation=citation,
+                            ):
+                                continue
+                            if self._fallback_parser._is_non_temporal_editorial_note_heading_cue(
+                                normalized_text=normalized,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            ):
+                                continue
                             if lowered_cue in _NON_TEMPORAL_PROCEDURAL_AFTER_CUES:
                                 continue
                             if (
@@ -1833,6 +1853,21 @@ class SpaCyModalIRCompiler:
                     ],
                 )
 
+            def _subsection_heading_formulas(start_index: int) -> List[ModalIRFormula]:
+                return self._fallback_parser.uscode_subsection_heading_coverage_formulas(
+                    document_id=encoding.document_id,
+                    text=encoding.normalized_text,
+                    citation=encoding.citation,
+                    start_index=start_index,
+                    covered_spans=[
+                        (
+                            int(formula.provenance.start_char),
+                            int(formula.provenance.end_char),
+                        )
+                        for formula in formulas
+                    ],
+                )
+
             if not formulas:
                 fallback_allow_modal_cues = False
                 fallback_formula = self._fallback_parser.fallback_formula(
@@ -1881,6 +1916,7 @@ class SpaCyModalIRCompiler:
                         if reindexed_fallback is not None:
                             fallback_formula = reindexed_fallback
                     formulas.extend(_prefix_formulas(len(formulas) + 2))
+                    formulas.extend(_subsection_heading_formulas(len(formulas) + 2))
                     formulas.extend(_catchline_formulas(len(formulas) + 2))
                     formulas.append(fallback_formula)
                 else:
@@ -1934,6 +1970,7 @@ class SpaCyModalIRCompiler:
                         )
                     )
                     formulas.extend(_prefix_formulas(len(formulas) + 2))
+                    formulas.extend(_subsection_heading_formulas(len(formulas) + 2))
                     formulas.extend(_catchline_formulas(len(formulas) + 2))
                     formulas.append(residual_fallback_formula)
                 else:
@@ -1947,6 +1984,7 @@ class SpaCyModalIRCompiler:
                         )
                     )
                     formulas.extend(_prefix_formulas(len(formulas) + 1))
+                    formulas.extend(_subsection_heading_formulas(len(formulas) + 1))
                     formulas.extend(_catchline_formulas(len(formulas) + 1))
         return ModalIRDocument(
             document_id=encoding.document_id,

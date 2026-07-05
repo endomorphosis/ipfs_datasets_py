@@ -1394,6 +1394,8 @@ _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES = frozenset(
 _FLOGIC_ONTOLOGY_GUIDANCE_FEATURES = (
     "legal-ir-view:modal.frame_logic",
     "legal-ir-view:deontic.ir",
+    "legal-ir-view:CEC.native",
+    "legal-ir-view:knowledge_graphs.neo4j_compat",
     "legal-ir-view:TDFOL.prover",
     "flogic:statement_hint:audit_frame_logic_terms",
     "flogic:statement_hint:improve_flogic_frame_alignment",
@@ -1586,6 +1588,14 @@ def _compiler_guidance_route_features(
         route = str(compiler_guidance.get(route_key) or "").strip()
         if route:
             routes.append(route)
+    for sample_key in ("sample", "samples", "sample_id", "sample_ids"):
+        for sample in _guidance_feature_list(
+            compiler_guidance.get(sample_key),
+            limit=0,
+        ):
+            route = _compiler_guidance_route_name(sample)
+            if route:
+                routes.append(route)
     routes.extend(_compiler_guidance_routes_from_view_gaps(compiler_guidance))
 
     features = [f"compiler-guidance-route:{route}" for route in routes]
@@ -1642,6 +1652,16 @@ def _compiler_guidance_route_features(
         if route:
             features.append(f"compiler-guidance-route:{route}")
     return _unique_preserve_order(features)
+
+
+def _compiler_guidance_route_name(value: Any) -> str:
+    """Normalize compact compiler-guidance route markers to route names."""
+    normalized = _clean_non_empty_string(value).lower()
+    for prefix in ("compiler-guidance-route:", "compiler-guidance:"):
+        if normalized.startswith(prefix):
+            normalized = normalized[len(prefix) :].strip()
+            break
+    return normalized
 
 
 def _compiler_guidance_routes_from_view_gaps(
@@ -1797,9 +1817,7 @@ def _compiler_guidance_frame_logic_target_routes(
         return []
     routes: List[str] = []
     for feature in _compiler_guidance_route_features(compiler_guidance):
-        normalized = _clean_non_empty_string(feature).lower()
-        if normalized.startswith("compiler-guidance-route:"):
-            normalized = normalized.split(":", 1)[1].strip()
+        normalized = _compiler_guidance_route_name(feature)
         if normalized in _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
             routes.append(normalized)
     if (
@@ -4865,7 +4883,8 @@ def _append_legal_projection_constraint_triples(
             for triple in triples
             for view in [
                 _frame_logic_projection_view_for_predicate(
-                    triple.get("predicate", "")
+                    triple.get("predicate", ""),
+                    triple.get("object", ""),
                 )
             ]
             if view
@@ -4977,8 +4996,12 @@ def _required_frame_logic_projection_views(
         for predicate in predicates
     )
     has_editorial_status = any(
-        predicate == "status_keyword" or predicate.startswith("status_keyword_")
-        for predicate in predicates
+        _frame_logic_projection_view_for_predicate(
+            triple.get("predicate", ""),
+            triple.get("object", ""),
+        )
+        == "editorial_status"
+        for triple in triples
     )
     has_view_alignment = any(
         predicate.startswith("learned_legal_ir_")
@@ -4998,13 +5021,22 @@ def _required_frame_logic_projection_views(
     return sorted(set(required))
 
 
-def _frame_logic_projection_view_for_predicate(predicate: Any) -> str:
+def _frame_logic_projection_view_for_predicate(
+    predicate: Any,
+    obj: Any = "",
+) -> str:
     normalized = _clean_non_empty_string(predicate).lower()
+    normalized_object = _clean_non_empty_string(obj).lower()
     if not normalized:
         return ""
     if normalized == "type":
         return "type_assertion"
     if normalized == "status_keyword" or normalized.startswith("status_keyword_"):
+        return "editorial_status"
+    if (
+        normalized.startswith("source_status_clause")
+        and normalized_object in {"omitted", "repealed", "transferred"}
+    ):
         return "editorial_status"
     if normalized.startswith("learned_legal_ir_") or normalized.startswith(
         "compiler_guidance_legal_ir_"
@@ -12819,9 +12851,7 @@ def _compiler_guidance_frame_logic_routes(metadata: Mapping[str, Any]) -> set[st
     features = _compiler_guidance_nested_feature_strings(candidates)
     routes: set[str] = set()
     for feature in features:
-        normalized = _clean_non_empty_string(feature).lower()
-        if normalized.startswith("compiler-guidance-route:"):
-            normalized = normalized.split(":", 1)[1].strip()
+        normalized = _compiler_guidance_route_name(feature)
         if normalized in _FLOGIC_ONTOLOGY_GUIDANCE_ROUTES:
             routes.add(normalized)
     if (

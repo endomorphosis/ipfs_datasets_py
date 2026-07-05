@@ -208,6 +208,7 @@ class ModalFrameLogicBridgeAdapter:
                     "graph_id": modal_ir.frame_logic.graph_id or "",
                     "selected_frame": modal_ir.frame_logic.selected_frame or "",
                     "triple_count": len(triples),
+                    **_frame_ontology_audit_metadata(modal_ir.metadata),
                 },
             ),
             "neo4j_graph_data": LogicIRView(
@@ -360,10 +361,13 @@ def _graph_view_alignment_metadata(metadata: Mapping[str, Any]) -> dict[str, Any
     }
 
 
-def _frame_ontology_audit_metadata(modal_ir: Any) -> dict[str, Any]:
+def _frame_ontology_audit_metadata(subject: Any) -> dict[str, Any]:
     """Expose compact ontology-term audit summaries on the frame-logic view."""
 
-    metadata = getattr(modal_ir, "metadata", {}) or {}
+    if isinstance(subject, Mapping):
+        metadata = subject
+    else:
+        metadata = getattr(subject, "metadata", {}) or {}
     if not isinstance(metadata, Mapping):
         return {}
     allowed = {

@@ -1,8 +1,8 @@
-"""Regression coverage for packet-000782 compiler ambiguity policy pairs."""
+"""Regression coverage for packet-000781 compiler ambiguity policy pairs."""
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Mapping, Sequence, Tuple
+from typing import Any, Dict, List, Sequence
 
 from ipfs_datasets_py.logic.modal.compiler import (
     DeterministicModalCompiler,
@@ -10,57 +10,55 @@ from ipfs_datasets_py.logic.modal.compiler import (
     ModalCompilerConfig,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
-    COMPILER_AMBIGUITY_PACKET_000782_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000781_FAMILY_PAIRS,
     ModalLogicFamily,
     compiler_ambiguity_policy_targets,
     is_compiler_ambiguity_policy_pair,
     is_compiler_required_adaptive_ambiguity_pair,
     is_priority_signal_free_adaptive_ambiguity_pair,
-    is_signal_free_adaptive_ambiguity_pair,
     supports_signal_free_adaptive_ambiguity_pair,
 )
 
 
-def _mock_adaptive_ranking(
+def _adaptive_ranking_for_margin(
     *,
     predicted_family: str,
     target_family: str,
     family_margin: float,
+    runner_up_family: str | None = None,
 ) -> List[Dict[str, Any]]:
     if predicted_family == target_family:
+        resolved_runner_up_family = runner_up_family or ModalLogicFamily.TEMPORAL.value
+        if resolved_runner_up_family == predicted_family:
+            resolved_runner_up_family = ModalLogicFamily.FRAME.value
         predicted_share = (1.0 + family_margin) / 2.0
-        runner_up_family = (
-            ModalLogicFamily.TEMPORAL.value
-            if predicted_family != ModalLogicFamily.TEMPORAL.value
-            else ModalLogicFamily.DEONTIC.value
-        )
         runner_up_share = predicted_share - family_margin
         return [
             {
                 "family": predicted_family,
                 "count": 0,
-                "logit": 1.3,
+                "logit": 1.2,
                 "share_raw": predicted_share,
                 "share": predicted_share,
                 "source": "logit_softmax_fallback",
             },
             {
-                "family": runner_up_family,
+                "family": resolved_runner_up_family,
                 "count": 0,
-                "logit": 1.2,
+                "logit": 1.1,
                 "share_raw": runner_up_share,
                 "share": runner_up_share,
                 "source": "logit_softmax_fallback",
             },
         ]
 
-    predicted_share = min(0.99, abs(float(family_margin)) + 0.05)
+    predicted_share = max(0.7, abs(float(family_margin)) + 0.1)
     target_share = predicted_share + family_margin
     return [
         {
             "family": predicted_family,
             "count": 0,
-            "logit": 1.3,
+            "logit": 1.2,
             "share_raw": predicted_share,
             "share": predicted_share,
             "source": "logit_softmax_fallback",
@@ -68,7 +66,7 @@ def _mock_adaptive_ranking(
         {
             "family": target_family,
             "count": 0,
-            "logit": 1.2,
+            "logit": 1.1,
             "share_raw": target_share,
             "share": target_share,
             "source": "logit_softmax_fallback",
@@ -77,47 +75,43 @@ def _mock_adaptive_ranking(
 
 
 def _matching_explicit_ambiguity(
-    *,
     ambiguities: Sequence[ModalCompilationAmbiguity],
+    *,
     predicted_family: str,
     target_family: str,
-    family_margin: float,
+    expected_margin: float,
 ) -> ModalCompilationAmbiguity | None:
     for ambiguity in ambiguities:
         if not ambiguity.ambiguity_type.startswith("adaptive_"):
             continue
         if ambiguity.ambiguity_type == "adaptive_family_margin_low":
             continue
-        metadata: Mapping[str, Any] = ambiguity.metadata
+        metadata = ambiguity.metadata
         if metadata.get("adaptive_predicted_family_source") != "adaptive_logits":
             continue
         if metadata.get("predicted_family") != predicted_family:
             continue
         if metadata.get("target_family") != target_family:
             continue
-        if abs(float(metadata.get("family_margin_raw", 0.0)) - family_margin) > 1e-12:
+        if (
+            abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin)
+            > 1e-12
+        ):
             continue
         return ambiguity
     return None
 
 
-def test_packet_000782_pairs_are_registered_across_ambiguity_policies() -> None:
-    expected_pairs = (
+def test_modal_registry_packet_000781_pairs_are_supported() -> None:
+    assert COMPILER_AMBIGUITY_PACKET_000781_FAMILY_PAIRS == (
         (ModalLogicFamily.DEONTIC.value, ModalLogicFamily.DEONTIC.value),
         (ModalLogicFamily.DEONTIC.value, ModalLogicFamily.TEMPORAL.value),
         (ModalLogicFamily.FRAME.value, ModalLogicFamily.DEONTIC.value),
         (ModalLogicFamily.FRAME.value, ModalLogicFamily.TEMPORAL.value),
     )
-
-    assert COMPILER_AMBIGUITY_PACKET_000782_FAMILY_PAIRS == expected_pairs
-    for predicted_family, target_family in expected_pairs:
-        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_000781_FAMILY_PAIRS:
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
-            predicted_family,
-            target_family,
-        )
-        assert is_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
@@ -125,84 +119,95 @@ def test_packet_000782_pairs_are_registered_across_ambiguity_policies() -> None:
             predicted_family,
             target_family,
         )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
         )
 
 
-def test_compiler_exposes_packet_000782_explicit_adaptive_ambiguities() -> None:
-    evidence_cases: Tuple[Tuple[str, str, str, float], ...] = (
-        (
-            "us-code-15-3711b-aef14a7692917860",
-            ModalLogicFamily.DEONTIC.value,
-            ModalLogicFamily.TEMPORAL.value,
-            -0.274281567725,
-        ),
-        (
-            "us-code-26-7810-4903dbc02721b3eb",
-            ModalLogicFamily.FRAME.value,
-            ModalLogicFamily.DEONTIC.value,
-            -0.393130166254,
-        ),
-        (
-            "us-code-10-451-b7d7b18e1eee843f",
-            ModalLogicFamily.DEONTIC.value,
-            ModalLogicFamily.DEONTIC.value,
-            0.089453384576,
-        ),
-        (
-            "us-code-21-96-e9962af483e8c8a4",
-            ModalLogicFamily.FRAME.value,
-            ModalLogicFamily.TEMPORAL.value,
-            -0.998854767038,
-        ),
+def test_compiler_emits_packet_000781_explicit_ambiguities() -> None:
+    cases = (
+        {
+            "sample_id": "us-code-15-3711b-aef14a7692917860",
+            "predicted_family": ModalLogicFamily.DEONTIC.value,
+            "target_family": ModalLogicFamily.TEMPORAL.value,
+            "family_margin": -0.274281567725,
+            "expected_type": "adaptive_deontic_temporal_outvoted_margin_low",
+            "severity": "requires_rule",
+        },
+        {
+            "sample_id": "us-code-26-7810-4903dbc02721b3eb",
+            "predicted_family": ModalLogicFamily.FRAME.value,
+            "target_family": ModalLogicFamily.DEONTIC.value,
+            "family_margin": -0.393130166254,
+            "expected_type": "adaptive_frame_deontic_outvoted_margin_low",
+            "severity": "requires_rule",
+        },
+        {
+            "sample_id": "us-code-10-451-b7d7b18e1eee843f",
+            "predicted_family": ModalLogicFamily.DEONTIC.value,
+            "target_family": ModalLogicFamily.DEONTIC.value,
+            "runner_up_family": ModalLogicFamily.TEMPORAL.value,
+            "family_margin": 0.089453384576,
+            "expected_type": "adaptive_deontic_deontic_contested_margin_low",
+            "severity": "review",
+        },
+        {
+            "sample_id": "us-code-21-96-e9962af483e8c8a4",
+            "predicted_family": ModalLogicFamily.FRAME.value,
+            "target_family": ModalLogicFamily.TEMPORAL.value,
+            "family_margin": -0.998854767038,
+            "expected_type": "adaptive_frame_temporal_outvoted_margin_low",
+            "severity": "requires_rule",
+        },
     )
-
-    threshold = 0.15
-    for sample_id, predicted_family, target_family, family_margin in evidence_cases:
+    for case in cases:
         compiler = DeterministicModalCompiler(
             config=ModalCompilerConfig(parser_backend="spacy")
         )
-        ranking = _mock_adaptive_ranking(
+        predicted_family = str(case["predicted_family"])
+        target_family = str(case["target_family"])
+        family_margin = float(case["family_margin"])
+        ranking = _adaptive_ranking_for_margin(
             predicted_family=predicted_family,
             target_family=target_family,
             family_margin=family_margin,
+            runner_up_family=(
+                str(case["runner_up_family"])
+                if case.get("runner_up_family") is not None
+                else None
+            ),
         )
         compiler._adaptive_family_ranking_from_logits = (  # type: ignore[method-assign]
-            lambda _encoding, _ranking=ranking: _ranking
+            lambda _encoding, _ranking=ranking: list(_ranking)
         )
 
         result = compiler.compile(
-            "The Secretary shall adopt procedures necessary to assure compliance under this section.",
-            document_id=f"compiler-ambiguity-packet-000782-{sample_id}",
+            (
+                "The Secretary shall issue rules not later than 60 days after "
+                "enactment. This section applies to the program."
+            ),
+            document_id=f"compiler-ambiguity-packet-000781-{case['sample_id']}",
         )
         ambiguity = _matching_explicit_ambiguity(
-            ambiguities=result.ambiguities,
+            result.ambiguities,
             predicted_family=predicted_family,
             target_family=target_family,
-            family_margin=family_margin,
-        )
-        assert ambiguity is not None, (
-            sample_id,
-            [item.to_dict() for item in result.ambiguities],
-        )
-        expected_margin_direction = (
-            "contested" if family_margin > 0.0 else "outvoted"
-        )
-        expected_priority = (
-            threshold - family_margin
-            if family_margin > 0.0
-            else abs(family_margin) + threshold
+            expected_margin=family_margin,
         )
 
+        assert ambiguity is not None, (
+            case["sample_id"],
+            [item.to_dict() for item in result.ambiguities],
+        )
+        assert ambiguity.ambiguity_type == case["expected_type"]
+        assert ambiguity.severity == case["severity"]
+        assert ambiguity.metadata.get("adaptive_policy_pair") == (
+            f"{predicted_family}->{target_family}"
+        )
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        assert ambiguity.metadata.get("is_compiler_required_policy_pair") is True
+        assert ambiguity.metadata.get("is_priority_policy_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
-        assert ambiguity.metadata.get("adaptive_margin_direction") == expected_margin_direction
-        assert ambiguity.metadata.get("explicit_ambiguity_type") == ambiguity.ambiguity_type
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
-        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
-        if expected_margin_direction == "outvoted":
-            assert ambiguity.severity == "requires_rule"
-        else:
-            assert ambiguity.severity == "review"

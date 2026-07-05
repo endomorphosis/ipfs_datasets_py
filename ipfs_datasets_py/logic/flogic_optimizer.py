@@ -339,6 +339,11 @@ class FLogicSemanticOptimizer:
             selected_terms = {
                 obj for pred, obj in facts if pred == "selected_ontology_term"
             }
+            selected_frame_constraints = {
+                obj
+                for pred, obj in facts
+                if pred == "modal_frame_logic_ontology_constraint"
+            }
             if selected_frames:
                 unique_frames = sorted(set(selected_frames))
                 if len(unique_frames) > 1:
@@ -365,6 +370,23 @@ class FLogicSemanticOptimizer:
                             ),
                         )
                     )
+                violations.extend(
+                    _selected_frame_constraint_violations(
+                        frame_id=subj,
+                        selected_frames=unique_frames,
+                        selected_terms=selected_terms,
+                        constraints=selected_frame_constraints,
+                    )
+                )
+            elif selected_frame_constraints:
+                violations.extend(
+                    _selected_frame_constraint_violations(
+                        frame_id=subj,
+                        selected_frames=[],
+                        selected_terms=selected_terms,
+                        constraints=selected_frame_constraints,
+                    )
+                )
 
         if not document_selected_frames:
             return violations
@@ -430,6 +452,70 @@ class FLogicSemanticOptimizer:
 # ---------------------------------------------------------------------------
 
 
+def _selected_frame_constraint_violations(
+    *,
+    frame_id: str,
+    selected_frames: Sequence[str],
+    selected_terms: set[str],
+    constraints: set[str],
+) -> List[OntologyViolation]:
+    """Validate explicit modal.frame_logic selected-frame constraint facts."""
+    violations: List[OntologyViolation] = []
+    if not constraints:
+        return violations
+
+    frame_satisfied = "selected_ontology_frame:required:satisfied" in constraints
+    frame_missing = "selected_ontology_frame:required:missing" in constraints
+    term_satisfied = "selected_ontology_term:required:satisfied" in constraints
+    term_missing = "selected_ontology_term:required:missing" in constraints
+
+    if frame_missing and selected_frames:
+        violations.append(
+            OntologyViolation(
+                frame_id=frame_id,
+                constraint="selected_frame_constraint_status_matches_facts",
+                details=(
+                    "modal.frame_logic constraint marks selected_ontology_frame "
+                    "missing despite selected_ontology_frame facts"
+                ),
+            )
+        )
+    if frame_satisfied and not selected_frames:
+        violations.append(
+            OntologyViolation(
+                frame_id=frame_id,
+                constraint="selected_frame_constraint_status_matches_facts",
+                details=(
+                    "modal.frame_logic constraint marks selected_ontology_frame "
+                    "satisfied without selected_ontology_frame facts"
+                ),
+            )
+        )
+    if term_missing and selected_terms:
+        violations.append(
+            OntologyViolation(
+                frame_id=frame_id,
+                constraint="selected_term_constraint_status_matches_facts",
+                details=(
+                    "modal.frame_logic constraint marks selected_ontology_term "
+                    "missing despite selected_ontology_term facts"
+                ),
+            )
+        )
+    if term_satisfied and not selected_terms:
+        violations.append(
+            OntologyViolation(
+                frame_id=frame_id,
+                constraint="selected_term_constraint_status_matches_facts",
+                details=(
+                    "modal.frame_logic constraint marks selected_ontology_term "
+                    "satisfied without selected_ontology_term facts"
+                ),
+            )
+        )
+    return violations
+
+
 def _cosine_similarity(a: List[float], b: List[float]) -> float:
     """Compute cosine similarity between two vectors."""
     if len(a) != len(b):
@@ -468,11 +554,17 @@ def _frame_ontology_metadata(
             triples=kg_triples,
         )
     )
+    promoted_contextualized_terms = [
+        term
+        for term in contextualized_terms
+        if _should_promote_contextualized_frame_ontology_term(term)
+    ]
     # Contextualized terms preserve low-signal structural values by attaching
-    # their frame predicate context (for example parity/count positioned
-    # features), so include them in the canonical audit union as ontology terms.
+    # their frame predicate context. Only promote terms that add semantic
+    # LegalIR/structural signal; broader aliases stay available in the
+    # contextualized diagnostics without polluting the canonical term metric.
     ontology_terms = sorted(
-        set(feature_terms) | set(triple_terms) | set(contextualized_terms)
+        set(feature_terms) | set(triple_terms) | set(promoted_contextualized_terms)
     )
     feature_high_signal_terms = frame_ontology_high_signal_terms(feature_terms)
     triple_high_signal_terms = frame_ontology_high_signal_terms(triple_terms)
@@ -509,6 +601,48 @@ def _frame_ontology_metadata(
         "frame_ontology_high_signal_term_count": len(high_signal_terms),
         "frame_ontology_high_signal_terms": high_signal_terms,
     }
+
+
+def _should_promote_contextualized_frame_ontology_term(term: str) -> bool:
+    normalized = str(term or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized.startswith(
+        (
+            "condition_consequence_",
+            "legal_ir_view_",
+            "quality_",
+            "quality_frame_",
+            "signature_frame_",
+        )
+    ):
+        return True
+    if normalized.startswith(
+        (
+            "condition_modal_family_",
+            "condition_modal_operator_",
+            "exception_modal_family_",
+            "exception_modal_operator_",
+        )
+    ):
+        return True
+    return any(
+        fragment in normalized
+        for fragment in (
+            "_distance_profile_",
+            "_magnitude_bucket_",
+            "_parity",
+            "_thousands_block_",
+            "citation_section_number_trailing_zero_count_positioned_",
+            "citation_section_primary_number_trailing_zero_count_",
+            "citation_title_section_primary_number_span_has_zero_digit_",
+            "citation_title_section_primary_number_span_zero_digit_count_",
+            "citation_title_section_terminal_number_span_has_zero_digit_",
+            "predicate_alnum_segment_",
+            "predicate_token_",
+            "suffix_consonant_count",
+        )
+    )
 
 
 def _normalized_frame_feature_keys(values: Sequence[Any]) -> List[str]:

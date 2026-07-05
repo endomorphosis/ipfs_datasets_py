@@ -14,7 +14,11 @@ from ipfs_datasets_py.logic.modal.compiler import (
     ModalCompilerConfig,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_AMBIGUITY_PACKET_000164_FAMILY_PAIRS,
     ModalLogicFamily,
+    compiler_ambiguity_policy_targets,
+    is_compiler_ambiguity_policy_pair,
+    supports_signal_free_adaptive_ambiguity_pair,
 )
 
 
@@ -91,6 +95,86 @@ def _ranking_for_margin(
             "source": "logit_softmax_fallback",
         },
     ]
+
+
+def test_packet_000164_pairs_are_explicit_compiler_ambiguity_policy_entries() -> None:
+    expected_pairs = {
+        (ModalLogicFamily.DEONTIC.value, ModalLogicFamily.DEONTIC.value),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ),
+        (ModalLogicFamily.FRAME.value, ModalLogicFamily.DEONTIC.value),
+        (ModalLogicFamily.FRAME.value, ModalLogicFamily.EPISTEMIC.value),
+        (ModalLogicFamily.FRAME.value, ModalLogicFamily.TEMPORAL.value),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_000164_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_frame_policy_ambiguity_canonicalizes_namespaced_family_tokens(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="regex")
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "ranked_modal_families",
+        lambda _encoding: [
+            {
+                "family": "modal.registry:frame",
+                "count": 0,
+                "logit": 1.3,
+                "share_raw": 0.7,
+                "share": 0.7,
+                "source": "test",
+            },
+            {
+                "family": "cue/deontic",
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.69,
+                "share": 0.69,
+                "source": "test",
+            },
+        ],
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "modal_ambiguity_signals",
+        lambda _encoding: {"has_deontic_scope": True},
+    )
+
+    result = compiler.compile(
+        "If a vessel is operated in violation of this chapter, the owner is liable.",
+        document_id="packet-000164-frame-policy-canonical-family",
+    )
+
+    ambiguity = next(
+        (
+            item
+            for item in result.ambiguities
+            if item.ambiguity_type == "frame_deontic_family_outvoted"
+        ),
+        None,
+    )
+    assert ambiguity is not None
+    assert ambiguity.candidate_ids == [
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ]
+    assert ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+    assert ambiguity.metadata["compiler_ambiguity_policy_pair"] == "frame->deontic"
+    assert ambiguity.metadata["family_margin"] == -0.01
 
 
 @pytest.mark.parametrize(

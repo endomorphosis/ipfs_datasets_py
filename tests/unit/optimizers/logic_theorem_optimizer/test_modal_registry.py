@@ -24,6 +24,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000194_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000226_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000440_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000518_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003441_FAMILY_PAIRS,
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
@@ -330,6 +331,45 @@ def test_packet_000440_family_pairs_are_refined_required_priority_policy() -> No
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
+        )
+
+
+def test_packet_000518_refined_frame_cue_pairs_cover_weak_typed_targets() -> None:
+    expected_pairs = (
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    )
+    observed_family_margins = {
+        ("frame", "conditional_normative"): -0.987665742173,
+        ("frame", "deontic"): -0.590164753436,
+        ("frame", "temporal"): -0.588712842986,
+    }
+
+    assert COMPILER_REFINED_PACKET_000518_FAMILY_PAIRS == expected_pairs
+    refined_pairs = set(COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS)
+    for predicted_family, target_family in expected_pairs:
+        assert (predicted_family, target_family) in refined_pairs
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+        effective_threshold = 0.15 + compiler_refined_modal_family_cue_margin_buffer(
+            predicted_family,
+            target_family,
+        )
+        assert observed_family_margins[(predicted_family, target_family)] <= (
+            effective_threshold
         )
 
 

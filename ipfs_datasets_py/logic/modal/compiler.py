@@ -2909,11 +2909,23 @@ class DeterministicModalCompiler:
         """Expose frame wins over policy target families as explicit ambiguity."""
         if not ranking:
             return []
-        predicted_family = str(ranking[0]["family"])
+        predicted_family = (
+            self._canonical_modal_family_name(ranking[0].get("family"))
+            or str(ranking[0]["family"])
+        )
         if predicted_family != ModalLogicFamily.FRAME.value:
             return []
 
-        predicted_share = self._ranking_share(ranking[0])
+        canonical_family_shares = self._canonicalized_family_shares(
+            ranking=ranking,
+            family_shares=family_shares,
+        )
+        predicted_share = float(
+            canonical_family_shares.get(
+                predicted_family,
+                self._ranking_share(ranking[0]),
+            )
+        )
         signals = _modal_ambiguity_signals(encoding)
         target_specs = (
             (
@@ -2985,7 +2997,7 @@ class DeterministicModalCompiler:
             message,
             outvote_margin_threshold,
         ) in target_specs:
-            target_share = float(family_shares.get(target_family, 0.0))
+            target_share = float(canonical_family_shares.get(target_family, 0.0))
             is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
                 predicted_family,
                 target_family,

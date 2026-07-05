@@ -1305,6 +1305,11 @@ def _compiler_guidance_bridge_contract_metadata(
         ):
             for lane, score in _guidance_gap_items(mapping.get(key)):
                 add_lane(lane, score)
+            for lane, confidence in _guidance_gap_confidence_items(mapping.get(key)):
+                component_gaps[lane] = max(
+                    component_gaps.get(lane, 0.0),
+                    confidence,
+                )
         for lane, score in _guidance_distribution_items(
             mapping.get("legal_ir_component_gaps")
         ):
@@ -1312,7 +1317,10 @@ def _compiler_guidance_bridge_contract_metadata(
                 _canonical_bridge_component_name(lane)
             )
             if canonical_lane:
-                component_gaps[canonical_lane] = float(score)
+                component_gaps[canonical_lane] = _merge_guidance_component_gap(
+                    component_gaps.get(canonical_lane),
+                    float(score),
+                )
                 if score > 0.0:
                     add_lane(lane, score)
         diagnostics = mapping.get("pipeline_stage_diagnostics")
@@ -1327,7 +1335,11 @@ def _compiler_guidance_bridge_contract_metadata(
             )
             if component_gap > 0.0:
                 diagnostic_component_gap_max.append(component_gap)
-        support = _float_or_zero(mapping.get("support"))
+        support = max(
+            _float_or_zero(mapping.get("support")),
+            _float_or_zero(mapping.get("support_count")),
+            _float_or_zero(mapping.get("compiler_guidance_distillation_count")),
+        )
         if support > 0.0 and _mapping_is_compiler_guidance_evidence(mapping):
             diagnostic_probability_gaps.append(min(0.50, 0.10 * support))
 
@@ -1407,6 +1419,25 @@ def _compiler_guidance_projection_strength(
     )
 
 
+def _merge_guidance_component_gap(
+    current: Optional[float],
+    candidate: float,
+) -> float:
+    """Keep the strongest positive component gap across evidence rows."""
+
+    value = float(candidate)
+    if current is None:
+        return value
+    existing = float(current)
+    if value > 0.0 and existing <= 0.0:
+        return value
+    if value <= 0.0 and existing > 0.0:
+        return existing
+    if value > 0.0 and existing > 0.0:
+        return max(existing, value)
+    return value if abs(value) > abs(existing) else existing
+
+
 def _compiler_guidance_routes(
     compiler_guidance: Mapping[str, Any],
     *,
@@ -1477,7 +1508,9 @@ def _compiler_guidance_nested_mappings(
         "bundle",
         "compiler_guidance_bundle",
         "semantic_bundle",
+        "semantic_bundle_key",
         "compiler_guidance_attribution",
+        "metadata",
     ):
         value = compiler_guidance.get(key)
         if isinstance(value, Mapping):
@@ -1666,6 +1699,36 @@ def _guidance_gap_items(value: Any) -> tuple[tuple[str, float], ...]:
             score = _float_or_zero(raw_gap_value)
         if score > 0.0:
             items.append((lane, score))
+    return tuple(items)
+
+
+def _guidance_gap_confidence_items(value: Any) -> tuple[tuple[str, float], ...]:
+    """Return bounded confidence values from compiler-guidance gap maps."""
+
+    decoded = _json_mapping(value)
+    if decoded is not None:
+        value = decoded
+    if not isinstance(value, Mapping):
+        return ()
+
+    items: list[tuple[str, float]] = []
+    for raw_gap_key, raw_gap_value in value.items():
+        lane, direction = _bridge_contract_lane_from_guidance_gap_key(raw_gap_key)
+        if not lane or direction != "underrepresented":
+            continue
+        if isinstance(raw_gap_value, Mapping):
+            count = _float_or_zero(raw_gap_value.get("count"))
+            delta_confidence = max(
+                0.0,
+                -_float_or_zero(raw_gap_value.get("cosine_delta")),
+                -_float_or_zero(raw_gap_value.get("ce_delta")),
+            )
+            confidence = max(min(0.32, 0.08 * count), min(0.32, delta_confidence))
+        else:
+            score = _float_or_zero(raw_gap_value)
+            confidence = min(0.32, 0.08 * score) if score > 1.0 else score
+        if confidence > 0.0:
+            items.append((lane, confidence))
     return tuple(items)
 
 
@@ -4053,20 +4116,20 @@ def _project_official_usc_primary_contract_distribution(
         strength = 0.55
     elif has_benefit_medical_assistance:
         target_mix = (
-            ("CEC.native", 0.55),
-            ("deontic.ir", 0.25),
+            ("CEC.native", 0.62),
+            ("deontic.ir", 0.18),
             ("TDFOL.prover", 0.12),
             ("knowledge_graphs.neo4j_compat", 0.08),
         )
-        strength = 0.64
+        strength = 0.70
     elif has_contribution_budget_limit:
         target_mix = (
-            ("deontic.ir", 0.50),
-            ("TDFOL.prover", 0.26),
-            ("CEC.native", 0.16),
-            ("knowledge_graphs.neo4j_compat", 0.08),
+            ("deontic.ir", 0.56),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.10),
+            ("knowledge_graphs.neo4j_compat", 0.06),
         )
-        strength = 0.50
+        strength = 0.58
     elif has_payment_installment_schedule:
         target_mix = (
             ("TDFOL.prover", 0.36),
@@ -4166,11 +4229,11 @@ def _project_official_usc_primary_contract_distribution(
     elif has_admin_enforcement_regulation and deontic_cue_count > 0:
         target_mix = (
             ("CEC.native", 0.56),
-            ("TDFOL.prover", 0.20),
-            ("deontic.ir", 0.18),
-            ("knowledge_graphs.neo4j_compat", 0.06),
+            ("TDFOL.prover", 0.22),
+            ("knowledge_graphs.neo4j_compat", 0.12),
+            ("deontic.ir", 0.10),
         )
-        strength = 0.62
+        strength = 0.68
     elif has_safety_regulatory_procedure and deontic_cue_count > 0:
         target_mix = (
             ("TDFOL.prover", 0.46),
@@ -4237,12 +4300,12 @@ def _project_official_usc_primary_contract_distribution(
         strength = 0.38
     elif has_fiscal_fee_deposit_rule and deontic_cue_count > 0:
         target_mix = (
-            ("deontic.ir", 0.54),
-            ("TDFOL.prover", 0.22),
-            ("CEC.native", 0.16),
-            ("knowledge_graphs.neo4j_compat", 0.08),
+            ("deontic.ir", 0.60),
+            ("TDFOL.prover", 0.28),
+            ("CEC.native", 0.08),
+            ("knowledge_graphs.neo4j_compat", 0.04),
         )
-        strength = 0.50
+        strength = 0.58
     elif has_fiscal_availability_norm and deontic_cue_count > 0:
         target_mix = (
             ("deontic.ir", 0.50),

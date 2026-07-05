@@ -73,6 +73,10 @@ class DeonticNormsBridgeAdapter:
             guidance_context,
         )
         norms = _apply_deontic_compiler_guidance_to_rows(norms, guidance_context)
+        if not parser_elements and not norms:
+            parser_elements = _parser_rows_from_deontic_compiler_guidance(
+                guidance_context,
+            )
         parser_elements = _merge_legal_norm_rows_into_parser_elements(
             parser_elements,
             norms,
@@ -663,15 +667,20 @@ def _merge_legal_norm_rows_into_parser_elements(
     normalized_parser_rows = [
         dict(row) for row in parser_elements or [] if isinstance(row, Mapping)
     ]
-    if not normalized_parser_rows or not norm_rows:
+    normalized_norm_rows = [
+        dict(row) for row in norm_rows or [] if isinstance(row, Mapping)
+    ]
+    if not normalized_norm_rows:
         return normalized_parser_rows
+    if not normalized_parser_rows:
+        return [
+            _fill_parser_row_from_legal_norm_row({}, norm_row)
+            for norm_row in normalized_norm_rows
+        ]
 
     norm_by_source: dict[str, dict[str, Any]] = {}
     ordered_norms: list[dict[str, Any]] = []
-    for row in norm_rows or []:
-        if not isinstance(row, Mapping):
-            continue
-        norm = dict(row)
+    for norm in normalized_norm_rows:
         ordered_norms.append(norm)
         source_id = str(norm.get("source_id") or "").strip()
         if source_id and source_id not in norm_by_source:
@@ -706,11 +715,18 @@ def _fill_parser_row_from_legal_norm_row(
         "source_span",
         "support_span",
         "support_text",
+        "text",
+        "source_text",
         "field_spans",
         "formal_terms",
         "legal_frame",
         "section_context",
         "definition_scope",
+        "subject",
+        "actor",
+        "action",
+        "deontic_operator",
+        "modality",
         "actor_type",
         "mental_state",
         "action_verb",
@@ -735,7 +751,18 @@ def _fill_parser_row_from_legal_norm_row(
     for slot in direct_slots:
         _fill_empty_field(row, norm_row, slot)
 
+    if not _value_is_present(row.get("text")):
+        row["text"] = (
+            norm_row.get("text")
+            or norm_row.get("source_text")
+            or norm_row.get("support_text")
+            or ""
+        )
+    if not _value_is_present(row.get("source_text")) and _value_is_present(row.get("text")):
+        row["source_text"] = _copy_slot_value(row["text"])
+
     _fill_scalar_alias_from_norm(row, norm_row, "subject", "actor", as_list=True)
+    _fill_scalar_alias_from_norm(row, norm_row, "actor", "subject")
     _fill_scalar_alias_from_norm(row, norm_row, "action", "action", as_list=True)
     _fill_scalar_alias_from_norm(row, norm_row, "deontic_operator", "modality")
     _fill_scalar_alias_from_norm(row, norm_row, "modality", "modality")
@@ -761,9 +788,162 @@ def _fill_scalar_alias_from_norm(
     target[target_key] = [_copy_slot_value(value)] if as_list else _copy_slot_value(value)
 
 
+def _parser_rows_from_deontic_compiler_guidance(
+    context: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Create parser-compatible rows from pass-gated deontic IR evidence.
+
+    Some compiler-guidance packets are emitted before the converter has produced
+    parser rows, but still carry a source-grounded LegalNormIR sample for the
+    deontic target view.  This path keeps that evidence deterministic by
+    accepting only pass-gated deontic rows with typed IR slots, then letting the
+    normal LegalNormIR builder canonicalize modality, provenance, and quality.
+    """
+
+    guidance = _mapping(context.get("guidance"))
+    if not guidance:
+        return []
+
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    candidates = list(_deontic_guidance_evidence_rows(guidance))
+    candidates.append(("top_level", guidance))
+    for collection_key, candidate in candidates:
+        quality_gate = str(
+            candidate.get("compiler_guidance_quality_gate")
+            or candidate.get("quality_gate")
+            or guidance.get("compiler_guidance_quality_gate")
+            or guidance.get("quality_gate")
+            or ""
+        ).strip().lower()
+        if quality_gate not in {"pass", "passed", "ok"}:
+            continue
+        evidence = _deontic_bridge_evidence_from_guidance_row(
+            candidate,
+            source=f"compiler_guidance.{collection_key}",
+            route=str(context.get("route") or "repair_deontic_bridge_quality_gate"),
+        )
+        promoted_ir = evidence.get("compiler_guidance_legal_norm_ir")
+        if not isinstance(promoted_ir, Mapping):
+            continue
+        row = _parser_row_from_deontic_guidance_ir(
+            promoted_ir,
+            evidence,
+            candidate,
+            context,
+        )
+        if not row:
+            continue
+        signature = json.dumps(
+            {
+                "source_id": row.get("source_id"),
+                "subject": row.get("subject"),
+                "action": row.get("action"),
+                "deontic_operator": row.get("deontic_operator"),
+            },
+            sort_keys=True,
+            default=str,
+        )
+        if signature in seen:
+            continue
+        seen.add(signature)
+        rows.append(row)
+
+    if rows and isinstance(context, dict):
+        context["applied"] = True
+    return rows
+
+
+def _parser_row_from_deontic_guidance_ir(
+    promoted_ir: Mapping[str, Any],
+    evidence: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+    context: Mapping[str, Any],
+) -> dict[str, Any]:
+    actor = _first_present_mapping_value(promoted_ir, ("actor", "subject"))
+    action = promoted_ir.get("action")
+    modality = _first_present_mapping_value(
+        promoted_ir,
+        ("modality", "deontic_operator"),
+    )
+    norm_type = promoted_ir.get("norm_type")
+    if not (
+        _value_is_present(actor)
+        and _value_is_present(action)
+        and (_value_is_present(modality) or _value_is_present(norm_type))
+    ):
+        return {}
+
+    source_text = str(
+        promoted_ir.get("source_text")
+        or promoted_ir.get("text")
+        or context.get("source_text")
+        or ""
+    )
+    support_text = str(promoted_ir.get("support_text") or source_text)
+    support_span = promoted_ir.get("support_span")
+    if not _value_is_present(support_span) and support_text and source_text:
+        start = source_text.find(support_text)
+        support_span = (
+            [start, start + len(support_text)]
+            if start >= 0
+            else [0, len(support_text)]
+        )
+
+    source_id = str(
+        promoted_ir.get("source_id")
+        or candidate.get("source_id")
+        or candidate.get("sample_id")
+        or context.get("document_id")
+        or ""
+    ).strip()
+    row: dict[str, Any] = {
+        "schema_version": str(promoted_ir.get("schema_version") or "legal_norm_ir-v1"),
+        "source_id": source_id,
+        "canonical_citation": str(
+            promoted_ir.get("canonical_citation")
+            or promoted_ir.get("citation")
+            or context.get("citation")
+            or ""
+        ),
+        "norm_type": (
+            _copy_slot_value(norm_type) if _value_is_present(norm_type) else ""
+        ),
+        "deontic_operator": (
+            _copy_slot_value(modality) if _value_is_present(modality) else ""
+        ),
+        "modality": _copy_slot_value(modality) if _value_is_present(modality) else "",
+        "subject": _list_value(actor),
+        "action": _list_value(action),
+        "text": source_text,
+        "source_text": source_text,
+        "support_text": support_text,
+        "support_span": support_span,
+        "field_spans": _copy_slot_value(promoted_ir.get("field_spans") or {}),
+        "formal_terms": _copy_slot_value(promoted_ir.get("formal_terms") or {}),
+        "promotable_to_theorem": True,
+        "export_readiness": {"blockers": []},
+    }
+    legal_frame = {
+        key: _copy_slot_value(value)
+        for key, value in evidence.items()
+        if _value_is_present(value)
+    }
+    legal_frame.setdefault("compiler_guidance_legal_norm_ir", dict(promoted_ir))
+    row["legal_frame"] = legal_frame
+    return row
+
+
+def _list_value(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return list(value)
+    return [_copy_slot_value(value)]
+
+
 def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
     route_tokens = {
         "deontic.ir",
+        "deontic_ir",
         "deontic_norms",
         "repair_deontic_bridge_quality_gate",
     }
@@ -773,25 +953,45 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
         "action",
         "target_component",
         "target",
+        "sample_id",
+        "source_id",
     ):
         token = str(guidance.get(key) or "").strip().lower()
-        if token in route_tokens:
+        if token in route_tokens or "repair_deontic_bridge_quality_gate" in token:
             return True
 
-    for key in ("compiler_guidance_todo_routes", "todo_routes", "routes"):
+    for key in ("compiler_guidance_todo_routes", "todo_routes", "routes", "samples"):
         value = guidance.get(key)
         if isinstance(value, Mapping):
-            if any(str(route).strip().lower() in route_tokens for route in value):
+            if any(
+                _compiler_guidance_token_is_deontic(route, route_tokens)
+                for route in value
+            ):
                 return True
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            if any(str(route).strip().lower() in route_tokens for route in value):
+            if any(
+                _compiler_guidance_token_is_deontic(route, route_tokens)
+                for route in value
+            ):
                 return True
+        elif _compiler_guidance_token_is_deontic(value, route_tokens):
+            return True
 
     for key in ("bundle", "compiler_guidance_bundle", "semantic_bundle"):
-        bundle = guidance.get(key)
-        if isinstance(bundle, Mapping) and _compiler_guidance_has_deontic_route(bundle):
+        bundle = _mapping(guidance.get(key))
+        if bundle and _compiler_guidance_has_deontic_route(bundle):
             return True
     return False
+
+
+def _compiler_guidance_token_is_deontic(
+    value: Any,
+    route_tokens: set[str],
+) -> bool:
+    token = str(value or "").strip().lower()
+    if not token:
+        return False
+    return token in route_tokens or "repair_deontic_bridge_quality_gate" in token
 
 
 def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
@@ -811,6 +1011,12 @@ def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
             route_text = str(route or "").strip()
             if route_text:
                 return route_text
+    for key in ("bundle", "compiler_guidance_bundle", "semantic_bundle"):
+        bundle = _mapping(guidance.get(key))
+        if bundle:
+            route = _deontic_guidance_route(bundle)
+            if route:
+                return route
     return "repair_deontic_bridge_quality_gate"
 
 
@@ -868,7 +1074,8 @@ def _deontic_bridge_evidence_from_guidance_row(
     ).strip().lower()
     component_gaps = _deontic_guidance_component_gaps(row)
     underrepresented = _deontic_guidance_underrepresented_components(row)
-    if not target_view and not component_gaps and not underrepresented:
+    promoted_ir = _deontic_guidance_legal_norm_ir_slots(row)
+    if not target_view and not component_gaps and not underrepresented and not promoted_ir:
         return {}
     if target_view and _canonical_deontic_target_view(target_view) != "deontic.ir":
         return {}
@@ -895,7 +1102,6 @@ def _deontic_bridge_evidence_from_guidance_row(
             _canonical_deontic_gap_key(key): value
             for key, value in dict(component_gaps).items()
         }
-    promoted_ir = _deontic_guidance_legal_norm_ir_slots(row)
     if promoted_ir:
         evidence["compiler_guidance_legal_norm_ir"] = promoted_ir
     return evidence
@@ -938,6 +1144,8 @@ def _deontic_guidance_ir_slots_from_candidate(
 ) -> dict[str, Any]:
     slots: dict[str, Any] = {}
     for output_key, aliases in (
+        ("source_id", ("source_id", "sample_id", "id")),
+        ("schema_version", ("schema_version",)),
         ("actor", ("actor", "legal_actor", "regulated_entity", "subject")),
         ("action", ("action", "action_text", "required_action", "conduct")),
         ("modality", ("modality", "deontic_operator", "modal")),
@@ -984,12 +1192,22 @@ def _fill_deontic_row_from_compiler_guidance_ir(
         return
 
     _fill_scalar_alias_from_norm(row, promoted_ir, "subject", "actor", as_list=True)
+    _fill_scalar_alias_from_norm(row, promoted_ir, "actor", "subject")
     _fill_scalar_alias_from_norm(row, promoted_ir, "action", "action", as_list=True)
     _fill_scalar_alias_from_norm(row, promoted_ir, "deontic_operator", "modality")
     _fill_scalar_alias_from_norm(row, promoted_ir, "modality", "modality")
     _fill_scalar_alias_from_norm(row, promoted_ir, "norm_type", "norm_type")
     _fill_scalar_alias_from_norm(row, promoted_ir, "text", "source_text")
     _fill_scalar_alias_from_norm(row, promoted_ir, "source_text", "source_text")
+    if not _value_is_present(row.get("text")):
+        row["text"] = (
+            promoted_ir.get("text")
+            or promoted_ir.get("source_text")
+            or promoted_ir.get("support_text")
+            or ""
+        )
+    if not _value_is_present(row.get("source_text")) and _value_is_present(row.get("text")):
+        row["source_text"] = _copy_slot_value(row["text"])
     for key in (
         "support_text",
         "canonical_citation",
@@ -1007,7 +1225,8 @@ def _deontic_guidance_target_view(row: Mapping[str, Any]) -> str:
         if value:
             return _canonical_deontic_target_view(value)
     bundle = row.get("bundle") or row.get("semantic_bundle")
-    if isinstance(bundle, Mapping):
+    bundle = _mapping(bundle)
+    if bundle:
         return _deontic_guidance_target_view(bundle)
     return ""
 

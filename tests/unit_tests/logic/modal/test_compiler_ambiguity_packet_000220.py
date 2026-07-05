@@ -13,6 +13,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000220_FAMILY_PAIRS,
     ModalLogicFamily,
     compiler_ambiguity_policy_targets,
+    compiler_refined_modal_family_cue_margin_buffer,
     is_compiler_ambiguity_policy_pair,
     is_compiler_required_adaptive_ambiguity_pair,
     is_priority_signal_free_adaptive_ambiguity_pair,
@@ -79,11 +80,11 @@ def test_packet_000220_pairs_are_registered_across_ambiguity_policies() -> None:
     expected_pairs = (
         (
             ModalLogicFamily.DEONTIC.value,
-            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.FRAME.value,
         ),
         (
-            ModalLogicFamily.DEONTIC.value,
             ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
         ),
     )
 
@@ -107,22 +108,36 @@ def test_packet_000220_pairs_are_registered_across_ambiguity_policies() -> None:
             predicted_family,
             target_family,
         )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.28
+        )
 
 
 def test_compiler_exposes_packet_000220_explicit_adaptive_ambiguities() -> None:
     evidence_cases: Tuple[Tuple[str, str, str, float, str], ...] = (
         (
-            "us-code-42-13431.-84ac79e2afc504da",
-            ModalLogicFamily.DEONTIC.value,
-            ModalLogicFamily.DEONTIC.value,
-            0.074601315648,
-            "contested",
-        ),
-        (
-            "us-code-38-2108-955affeffdfda19c",
+            "us-code-31-5115-7ce43b3c36ceb277",
             ModalLogicFamily.DEONTIC.value,
             ModalLogicFamily.FRAME.value,
-            -0.257162611568,
+            -0.581676923152,
+            "outvoted",
+        ),
+        (
+            "us-code-30-24-ca9fb7a95ddb4f73",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
+            -0.508411708074,
+            "outvoted",
+        ),
+        (
+            "us-code-15-1199-768607b95c168102",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
+            -0.040877165257,
             "outvoted",
         ),
     )

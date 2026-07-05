@@ -660,6 +660,64 @@ def test_parser_preserves_uscode_definition_residual_tail() -> None:
     )
 
 
+def test_parser_covers_compact_editorial_note_residual_headings() -> None:
+    parser = LegalModalParser()
+    text = (
+        "2 U.S.C. 5541: Sec. 5541 - Fees for internal services. "
+        "The Chief Administrative Officer is authorized to collect fees. "
+        "Editorial Notes Codification."
+    )
+
+    document = parser.parse(
+        text,
+        document_id="us-code-2-5541-editorial-note-heading",
+        source="us_code",
+        citation="2 U.S.C. 5541",
+    )
+
+    covered_spans = [
+        document.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ]
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert " Editorial Notes Codification." in covered_spans
+
+
+def test_parser_routes_prior_provisions_editorial_heading_to_frame_not_temporal() -> None:
+    parser = LegalModalParser()
+    text = (
+        "38 U.S.C. 1731: Sec. 1731 - Assistance to the Republic of the "
+        "Philippines. The President is authorized to assist. Editorial Notes "
+        "Prior Provisions Amendments Statutory Notes and Related Subsidiaries "
+        "Effective Date."
+    )
+
+    document = parser.parse(
+        text,
+        document_id="us-code-38-1731-editorial-note-heading",
+        source="us_code",
+        citation="38 U.S.C. 1731",
+    )
+
+    editorial_note_formulas = [
+        formula
+        for formula in document.formulas
+        if "Editorial Notes Prior Provisions" in document.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ]
+    ]
+    assert editorial_note_formulas
+    assert all(
+        formula.operator.family == "frame" for formula in editorial_note_formulas
+    )
+    assert all(
+        formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+        for formula in editorial_note_formulas
+    )
+
+
 def test_parser_extracts_condition_and_exception_slots() -> None:
     parser = LegalModalParser()
 

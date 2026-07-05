@@ -905,7 +905,7 @@ def _collect_frame_family_feature_list_candidates(
             )
         return
     text = str(values or "").strip()
-    if not text or _is_generic_quality_audit_feature(text):
+    if not text:
         return
     parsed = _parsed_frame_ontology_feature_value(text)
     if parsed is not None:
@@ -918,16 +918,6 @@ def _collect_frame_family_feature_list_candidates(
         )
         return
     extracted.append(text)
-
-
-def _is_generic_quality_audit_feature(feature: str) -> bool:
-    lowered = str(feature or "").strip().lower()
-    if not lowered.startswith("quality:"):
-        return False
-    return not any(
-        lowered.startswith(prefix)
-        for prefix in _FRAME_ONTOLOGY_QUALITY_FRAME_PREFIXES
-    )
 
 
 def _synthetic_frame_feature_candidates_from_key_value(
@@ -981,9 +971,7 @@ def _frame_ontology_hint_id_audit_value(value: str) -> str:
     match = _FRAME_ONTOLOGY_HINT_ID_PREFIX_RE.match(text)
     if match:
         return str(match.group("prefix") or "").strip()
-    if re.fullmatch(r"[0-9a-f]{12,}", text, re.IGNORECASE):
-        return ""
-    return text
+    return ""
 
 
 def _parsed_frame_ontology_feature_value(text: str) -> Any | None:

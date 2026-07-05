@@ -139,9 +139,15 @@ _EDITORIAL_STATUS_PREDICATE_PREFIXES = (
     "status_keyword_",
 )
 _EDITORIAL_STATUS_TOKENS = (
+    "omitted",
     "repeal",
     "repealed",
     "status_bridge",
+    "transferred",
+)
+_EDITORIAL_STATUS_VALUE_TOKENS = (
+    "omitted",
+    "repealed",
     "transferred",
 )
 _SECTION_STRUCTURE_PREDICATE_PREFIXES = (
@@ -837,6 +843,7 @@ def _selected_frame_from_triples(triples: Sequence[Mapping[str, str]]) -> str:
 
 def _projection_view_for_triple(predicate: str, obj: str = "") -> str:
     normalized = str(predicate or "").strip().lower()
+    normalized_object = str(obj or "").strip().lower()
     if not normalized:
         return "fact"
     if normalized == "type":
@@ -846,6 +853,11 @@ def _projection_view_for_triple(predicate: str, obj: str = "") -> str:
     ):
         return "editorial_status"
     if any(token in normalized for token in _EDITORIAL_STATUS_TOKENS):
+        return "editorial_status"
+    if (
+        normalized.startswith("source_status_clause")
+        and normalized_object in _EDITORIAL_STATUS_VALUE_TOKENS
+    ):
         return "editorial_status"
     if normalized in _FRAME_PREDICATES or normalized.startswith(_FRAME_PREDICATE_PREFIXES):
         return "frame_link"
@@ -946,13 +958,13 @@ def _guided_legal_ir_projection_triples(
     if not isinstance(metadata, Mapping):
         return []
 
-    predicted = _numeric_distribution(
+    predicted = _canonical_numeric_distribution(
         metadata.get("compiler_guidance_legal_ir_predicted_view_distribution")
     )
-    target = _numeric_distribution(
+    target = _canonical_numeric_distribution(
         metadata.get("compiler_guidance_legal_ir_target_view_distribution")
     )
-    gaps = _numeric_signed_mapping(
+    gaps = _canonical_numeric_signed_mapping(
         metadata.get("compiler_guidance_legal_ir_view_gap_distribution")
     )
     packet_gap_targets, packet_gap_values = _packet_legal_ir_view_gap_evidence(
@@ -963,21 +975,20 @@ def _guided_legal_ir_projection_triples(
     if packet_gap_values:
         gaps = {**gaps, **packet_gap_values}
     if _metadata_implies_neo4j_projection_guidance(metadata):
-        target = {
-            **target,
-            _NEO4J_COMPAT_TARGET_COMPONENT: max(
-                1.0,
-                target.get(_NEO4J_COMPAT_TARGET_COMPONENT, 0.0),
-            ),
-        }
-        gaps = {
-            **gaps,
-            _NEO4J_COMPAT_TARGET_COMPONENT: round(
-                target[_NEO4J_COMPAT_TARGET_COMPONENT]
-                - predicted.get(_NEO4J_COMPAT_TARGET_COMPONENT, 0.0),
-                12,
-            ),
-        }
+        if _NEO4J_COMPAT_TARGET_COMPONENT not in target:
+            target = {
+                **target,
+                _NEO4J_COMPAT_TARGET_COMPONENT: 1.0,
+            }
+        if _NEO4J_COMPAT_TARGET_COMPONENT not in gaps:
+            gaps = {
+                **gaps,
+                _NEO4J_COMPAT_TARGET_COMPONENT: round(
+                    target[_NEO4J_COMPAT_TARGET_COMPONENT]
+                    - predicted.get(_NEO4J_COMPAT_TARGET_COMPONENT, 0.0),
+                    12,
+                ),
+            }
     if not predicted and not target and not gaps:
         return []
 
@@ -1046,7 +1057,7 @@ def _guided_legal_ir_projection_triples(
 
 
 def _metadata_implies_neo4j_projection_guidance(metadata: Mapping[str, Any]) -> bool:
-    target_distribution = _numeric_distribution(
+    target_distribution = _canonical_numeric_distribution(
         metadata.get("compiler_guidance_legal_ir_target_view_distribution")
     )
     if _NEO4J_COMPAT_TARGET_COMPONENT in target_distribution:
@@ -1273,34 +1284,102 @@ def _packet_legal_ir_view_gap_evidence(
     Neo4j view, while overrepresented buckets remain negative gap evidence.
     """
 
-    raw_gaps = metadata.get("compiler_guidance_legal_ir_view_gaps")
-    if raw_gaps is None:
-        raw_gaps = metadata.get("legal_ir_view_gaps")
-    if not isinstance(raw_gaps, Mapping):
-        return {}, {}
-
     target: Dict[str, float] = {}
     gaps: Dict[str, float] = {}
-    for raw_key, raw_value in raw_gaps.items():
-        key = str(raw_key or "").strip()
-        if not key:
+
+    for raw_gaps in (
+        metadata.get("compiler_guidance_legal_ir_view_gaps"),
+        metadata.get("legal_ir_view_gaps"),
+    ):
+        if not isinstance(raw_gaps, Mapping):
             continue
-        raw_view, _separator, raw_direction = key.partition(":")
-        view = _canonical_legal_ir_view_name(raw_view)
+        for raw_key, raw_value in raw_gaps.items():
+            key = str(raw_key or "").strip()
+            if not key:
+                continue
+            raw_view, _separator, raw_direction = key.partition(":")
+            view = _canonical_legal_ir_view_name(raw_view)
+            if not view:
+                continue
+            weight = _packet_gap_weight(raw_value)
+            direction = raw_direction.strip().lower()
+            if direction == "underrepresented":
+                target[view] = max(target.get(view, 0.0), weight)
+                gaps[view] = max(gaps.get(view, 0.0), weight)
+            elif direction == "overrepresented":
+                gaps[view] = min(gaps.get(view, 0.0), -weight)
+            else:
+                gaps[view] = gaps.get(view, 0.0) + weight
+                if weight > 0.0:
+                    target[view] = max(target.get(view, 0.0), weight)
+
+    underrepresented = {
+        _canonical_legal_ir_view_name(value)
+        for value in _feature_values(metadata.get("legal_ir_underrepresented_components"))
+    }
+    underrepresented.discard("")
+    raw_component_gaps = metadata.get("legal_ir_component_gaps")
+    if isinstance(raw_component_gaps, Mapping):
+        for raw_key, raw_value in raw_component_gaps.items():
+            view = _canonical_legal_ir_view_name(str(raw_key or ""))
+            if not view:
+                continue
+            number = _finite_float(raw_value)
+            if number is None:
+                continue
+            gaps[view] = gaps.get(view, 0.0) + number
+            if number > 0.0 or view in underrepresented:
+                target[view] = max(target.get(view, 0.0), abs(number) or 1.0)
+
+    for view in underrepresented:
+        target[view] = max(target.get(view, 0.0), abs(gaps.get(view, 0.0)) or 1.0)
+        gaps[view] = max(gaps.get(view, 0.0), target[view])
+
+    for evidence in _guidance_records(metadata.get("evidence")):
+        if not isinstance(evidence, Mapping):
+            continue
+        nested_target, nested_gaps = _packet_legal_ir_view_gap_evidence(evidence)
+        for view, weight in nested_target.items():
+            target[view] = max(target.get(view, 0.0), weight)
+        for view, value in nested_gaps.items():
+            gaps[view] = gaps.get(view, 0.0) + value
+
+    for evidence in _guidance_records(metadata.get("compiler_guidance_evidence")):
+        if not isinstance(evidence, Mapping):
+            continue
+        nested_target, nested_gaps = _packet_legal_ir_view_gap_evidence(evidence)
+        for view, weight in nested_target.items():
+            target[view] = max(target.get(view, 0.0), weight)
+        for view, value in nested_gaps.items():
+            gaps[view] = gaps.get(view, 0.0) + value
+    return target, gaps
+
+
+def _canonical_numeric_distribution(value: Any) -> Dict[str, float]:
+    distribution: Dict[str, float] = {}
+    for key, score in _numeric_distribution(value).items():
+        view = _canonical_legal_ir_view_name(key)
         if not view:
             continue
-        weight = _packet_gap_weight(raw_value)
-        direction = raw_direction.strip().lower()
-        if direction == "underrepresented":
-            target[view] = max(target.get(view, 0.0), weight)
-            gaps[view] = max(gaps.get(view, 0.0), weight)
-        elif direction == "overrepresented":
-            gaps[view] = min(gaps.get(view, 0.0), -weight)
-        else:
-            gaps[view] = gaps.get(view, 0.0) + weight
-            if weight > 0.0:
-                target[view] = max(target.get(view, 0.0), weight)
-    return target, gaps
+        distribution[view] = distribution.get(view, 0.0) + score
+    total = sum(distribution.values())
+    if total <= 0.0:
+        return {}
+    return {
+        key: score / total
+        for key, score in sorted(distribution.items())
+        if score > 0.0
+    }
+
+
+def _canonical_numeric_signed_mapping(value: Any) -> Dict[str, float]:
+    mapping: Dict[str, float] = {}
+    for key, score in _numeric_signed_mapping(value).items():
+        view = _canonical_legal_ir_view_name(key)
+        if not view:
+            continue
+        mapping[view] = mapping.get(view, 0.0) + score
+    return dict(sorted(mapping.items()))
 
 
 def _canonical_legal_ir_view_name(value: str) -> str:

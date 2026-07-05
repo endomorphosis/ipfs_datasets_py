@@ -8136,6 +8136,39 @@ def test_spacy_compiler_preserves_coalesced_semicolon_uscode_catchline_coverage(
     assert any("surveys, research, etc.; projects" in span for span in residual_spans)
 
 
+def test_spacy_compiler_covers_packet_000161_subsection_heading_spans() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "10 U.S.C. 2263: Sec. 2263 - United States contributions to the "
+        "North Atlantic Treaty Organization common-funded budgets §2263. "
+        "United States contributions to the North Atlantic Treaty Organization "
+        "common-funded budgets (a) In General .-The total amount contributed "
+        "by the Secretary of Defense in any fiscal year for the common-funded "
+        "budgets of NATO may be an amount in excess of the maximum amount "
+        "that would otherwise be applicable to those contributions in such "
+        "fiscal year under the fiscal year 1998 baseline limitation."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-10-2263-571407a5044f94b2",
+        citation="10 U.S.C. 2263",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    subsection_heading_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_subsection_heading_coverage_v1"
+    }
+
+    assert "(a) In General ." in subsection_heading_spans
+
+
 def test_spacy_compiler_adds_packet_000004_short_structural_heading_spans() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

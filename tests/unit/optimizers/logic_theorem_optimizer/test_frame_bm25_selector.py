@@ -2068,10 +2068,15 @@ def test_frame_ontology_feature_keys_from_values_audits_packet_view_family_featu
         "legal-ir-view:CEC.native",
         "flogic:fallback_surface_text_alnum_segment_kind_positioned:4:numeric",
         "slot:fallback_surface_text_alnum_segment_kind_positioned:4_numeric",
+        "quality:bias",
+        "quality:symbolic:has-formula",
         "quality:frame:rank-top",
         "signature:operator:frame:frame_bm25:frame",
     ]
-    assert frame_ontology_terms_from_feature_keys(keys)[-2:] == [
+    terms = frame_ontology_terms_from_feature_keys(keys)
+    assert "bias" in terms
+    assert "symbolic_has_formula" in terms
+    assert terms[-2:] == [
         "rank_top",
         "frame_bm25_frame",
     ]
@@ -2082,6 +2087,8 @@ def test_frame_ontology_feature_keys_from_values_audits_packet_view_family_featu
         "legal_ir_view_knowledge_graphs_neo4j_compat",
         "legal_ir_view_cec_native",
         "fallback_surface_text_alnum_segment_kind_positioned_numeric",
+        "quality_bias",
+        "quality_symbolic_has_formula",
         "quality_frame_rank_top",
         "signature_frame_frame_bm25_frame",
     ]

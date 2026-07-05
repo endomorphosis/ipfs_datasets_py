@@ -692,12 +692,8 @@ def _tdfol_compiler_guidance_signal(
     routes = _tdfol_guidance_routes(compiler_guidance)
     target_components = _tdfol_guidance_target_components(compiler_guidance)
 
-    semantic_terms = _guidance_tokens(
-        compiler_guidance.get("compiler_guidance_semantic_overlay_terms")
-    )
-    surface_features = _guidance_tokens(
-        compiler_guidance.get("compiler_guidance_surface_features")
-    )
+    semantic_terms = _tdfol_guidance_semantic_terms(compiler_guidance)
+    surface_features = _tdfol_guidance_surface_features(compiler_guidance)
     route = "repair_tdfol_bridge_parse"
     has_route = route in routes or _has_tdfol_parse_repair_evidence(
         compiler_guidance
@@ -793,6 +789,9 @@ def _tdfol_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
     for evidence in _tdfol_guidance_evidence_records(compiler_guidance):
         collect(evidence)
 
+    if _has_passing_tdfol_guidance_evidence(compiler_guidance):
+        add_route("repair_tdfol_bridge_parse")
+
     return routes
 
 
@@ -840,11 +839,199 @@ def _has_packet_tdfol_guidance_evidence(
         return True
     if _has_tdfol_parse_repair_evidence(compiler_guidance):
         return True
+    if _has_passing_tdfol_guidance_evidence(compiler_guidance):
+        return True
     return any(
         str(bundle.get("program_synthesis_scope") or "").strip().lower()
         == "tdfol"
         for bundle in _tdfol_guidance_bundles(compiler_guidance)
     )
+
+
+def _has_passing_tdfol_guidance_evidence(
+    compiler_guidance: Mapping[str, Any],
+) -> bool:
+    """Infer the TDFOL repair route from passing autoencoder gap evidence."""
+
+    for evidence in _tdfol_guidance_nested_mappings(compiler_guidance):
+        if evidence is compiler_guidance:
+            continue
+        if _has_passing_tdfol_guidance_evidence(evidence):
+            return True
+
+    if _tdfol_guidance_targets_tdfol(compiler_guidance) and (
+        _tdfol_guidance_quality_gate_passes(
+            compiler_guidance.get("compiler_guidance_quality_gate")
+        )
+        or _tdfol_guidance_quality_gate_passes(compiler_guidance.get("quality_gate"))
+        or (
+            _tdfol_guidance_source_is_passing_distillation(compiler_guidance)
+            and _tdfol_guidance_positive_support(
+                _tdfol_guidance_support_value(compiler_guidance)
+            )
+        )
+    ):
+        return True
+
+    for key in (
+        "compiler_guidance_legal_ir_view_gaps",
+        "compiler_guidance_legal_ir_view_family_gaps",
+    ):
+        if _tdfol_guidance_gap_summary_targets_tdfol(
+            compiler_guidance.get(key),
+            quality_gate=compiler_guidance.get("compiler_guidance_quality_gate"),
+        ):
+            return True
+
+    attribution = compiler_guidance.get("compiler_guidance_attribution")
+    if isinstance(attribution, Mapping):
+        for key in ("legal_ir_view_gaps", "legal_ir_view_family_gaps"):
+            if _tdfol_guidance_attribution_gaps_target_tdfol(attribution.get(key)):
+                return True
+
+    return False
+
+
+def _tdfol_guidance_nested_mappings(
+    compiler_guidance: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], ...]:
+    mappings: list[Mapping[str, Any]] = []
+    seen: set[int] = set()
+
+    def visit(value: Any) -> None:
+        if isinstance(value, str):
+            value = _tdfol_guidance_mapping(value)
+        if isinstance(value, Mapping):
+            object_id = id(value)
+            if object_id in seen:
+                return
+            seen.add(object_id)
+            mappings.append(value)
+            for nested_key in (
+                "bundle",
+                "semantic_bundle_key",
+                "compiler_guidance_bundle",
+                "metadata",
+                "compiler_guidance_attribution",
+                "attribution",
+                "evidence",
+                "compiler_guidance_evidence",
+                "hint_evidence",
+                "metric_evidence",
+            ):
+                if nested_key in value:
+                    visit(value.get(nested_key))
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                visit(item)
+
+    visit(compiler_guidance)
+    return tuple(mappings)
+
+
+def _tdfol_guidance_source_is_passing_distillation(value: Mapping[str, Any]) -> bool:
+    source = str(value.get("source") or "").strip().lower()
+    if source in {
+        "compiler_guidance_distillation_v1",
+        "compiler_guidance_activation_v1",
+    }:
+        return True
+    return bool(value.get("promotion_allowed") is True)
+
+
+def _tdfol_guidance_support_value(value: Mapping[str, Any]) -> Any:
+    for key in ("support", "support_count", "matched_sample_count", "applied_count"):
+        if key in value:
+            return value.get(key)
+    return 1
+
+
+def _tdfol_guidance_targets_tdfol(value: Mapping[str, Any]) -> bool:
+    target_values = (
+        value.get("target_component"),
+        value.get("program_synthesis_scope"),
+        value.get("target"),
+        value.get("scope"),
+        value.get("target_view"),
+        value.get("predicted_view"),
+        value.get("target_file_lane"),
+        value.get("bridge_failure_name"),
+        value.get("failure_name"),
+        value.get("target_metrics"),
+        value.get("legal_ir_underrepresented_components"),
+        value.get("compiler_guidance_legal_ir_underrepresented_components"),
+    )
+    return any(_tdfol_guidance_key_targets_tdfol(item) for item in target_values)
+
+
+def _tdfol_guidance_key_targets_tdfol(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return any(
+            _tdfol_guidance_key_targets_tdfol(key)
+            or _tdfol_guidance_key_targets_tdfol(item)
+            for key, item in value.items()
+        )
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return any(_tdfol_guidance_key_targets_tdfol(item) for item in value)
+    text = str(value or "").strip().lower()
+    if not text:
+        return False
+    candidates = {text, text.split(":", 1)[0]}
+    if ":" in text:
+        candidates.add(text.split(":", 1)[1])
+    normalized = {
+        candidate.replace("-", "_").replace(".", "_").replace(" ", "_")
+        for candidate in candidates
+    }
+    return bool(
+        normalized
+        & {
+            "tdfol",
+            "tdfol_prover",
+            "tdfol_parse_failure_ratio",
+        }
+    )
+
+
+def _tdfol_guidance_quality_gate_passes(value: Any) -> bool:
+    return str(value or "").strip().lower() in {"pass", "passed", "ok", "true", "1"}
+
+
+def _tdfol_guidance_gap_summary_targets_tdfol(
+    value: Any,
+    *,
+    quality_gate: Any,
+) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    if not _tdfol_guidance_quality_gate_passes(quality_gate):
+        return False
+    return any(
+        _tdfol_guidance_key_targets_tdfol(key)
+        and _tdfol_guidance_positive_support(count)
+        for key, count in value.items()
+    )
+
+
+def _tdfol_guidance_attribution_gaps_target_tdfol(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    for key, gap in value.items():
+        if not _tdfol_guidance_key_targets_tdfol(key):
+            continue
+        if not isinstance(gap, Mapping):
+            continue
+        if _tdfol_guidance_quality_gate_passes(gap.get("quality_gate")):
+            return True
+    return False
+
+
+def _tdfol_guidance_positive_support(value: Any) -> bool:
+    try:
+        return float(value or 0.0) > 0.0
+    except (TypeError, ValueError):
+        return bool(value)
 
 
 def _has_tdfol_parse_repair_evidence(
@@ -924,6 +1111,55 @@ def _tdfol_guidance_bundles(
         if bundle:
             bundles.append(bundle)
     return bundles
+
+
+def _tdfol_guidance_semantic_terms(
+    compiler_guidance: Mapping[str, Any],
+) -> set[str]:
+    terms: set[str] = set()
+    for record in _tdfol_guidance_signal_records(compiler_guidance):
+        for key in (
+            "compiler_guidance_semantic_overlay_terms",
+            "semantic_overlay_terms",
+            "semantic_terms",
+            "pass_semantic_overlay_terms",
+            "fail_semantic_overlay_terms",
+        ):
+            terms.update(_guidance_tokens(record.get(key)))
+    return terms
+
+
+def _tdfol_guidance_surface_features(
+    compiler_guidance: Mapping[str, Any],
+) -> set[str]:
+    features: set[str] = set()
+    for record in _tdfol_guidance_signal_records(compiler_guidance):
+        for key in (
+            "compiler_guidance_surface_features",
+            "surface_features",
+            "ranked_guidance_features",
+            "compiler_guidance_ranked_features",
+        ):
+            features.update(_guidance_tokens(record.get(key)))
+    return features
+
+
+def _tdfol_guidance_signal_records(
+    compiler_guidance: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = [dict(compiler_guidance)]
+    records.extend(_tdfol_guidance_bundles(compiler_guidance))
+    records.extend(_tdfol_guidance_evidence_records(compiler_guidance))
+    for key in (
+        "compiler_guidance_attribution",
+        "compiler_guidance_attribution_summary",
+        "attribution",
+        "attribution_summary",
+    ):
+        value = compiler_guidance.get(key)
+        if isinstance(value, Mapping):
+            records.append(dict(value))
+    return records
 
 
 def _tdfol_guidance_mapping(value: Any) -> dict[str, Any]:

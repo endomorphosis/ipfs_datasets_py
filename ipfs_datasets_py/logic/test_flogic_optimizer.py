@@ -77,6 +77,76 @@ def test_frame_ontology_constraints_accept_grounded_selected_frame() -> None:
     assert result.violations == []
 
 
+def test_frame_ontology_constraints_accept_satisfied_modal_frame_logic_constraint() -> None:
+    result = _consistent_optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[
+            {
+                "subject": "doc",
+                "predicate": "selected_ontology_frame",
+                "object": "administrative_notice_hearing",
+            },
+            {
+                "subject": "doc",
+                "predicate": "selected_ontology_term",
+                "object": "repair_flogic_ontology_constraints",
+            },
+            {
+                "subject": "doc",
+                "predicate": "modal_frame_logic_ontology_constraint",
+                "object": "selected_ontology_frame:required:satisfied",
+            },
+            {
+                "subject": "doc",
+                "predicate": "modal_frame_logic_ontology_constraint",
+                "object": "selected_ontology_term:required:satisfied",
+            },
+            {
+                "subject": "f1",
+                "predicate": "interpreted_in_frame",
+                "object": "administrative_notice_hearing",
+            },
+            {
+                "subject": "f1",
+                "predicate": "interpreted_in_frame_term",
+                "object": "repair_flogic_ontology_constraints",
+            },
+        ],
+    )
+
+    assert result.ontology_consistent is True
+    assert result.violations == []
+
+
+def test_frame_ontology_constraints_reject_unsatisfied_modal_frame_logic_constraint() -> None:
+    result = _consistent_optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[
+            {
+                "subject": "doc",
+                "predicate": "selected_ontology_frame",
+                "object": "administrative_notice_hearing",
+            },
+            {
+                "subject": "doc",
+                "predicate": "modal_frame_logic_ontology_constraint",
+                "object": "selected_ontology_term:required:satisfied",
+            },
+        ],
+    )
+
+    constraints = {violation.constraint for violation in result.violations}
+    assert result.ontology_consistent is False
+    assert "selected_frame_has_terms" in constraints
+    assert "selected_term_constraint_status_matches_facts" in constraints
+
+
 def test_frame_ontology_constraints_union_terms_for_shared_selected_frame() -> None:
     result = _consistent_optimizer().evaluate(
         source_text="s",

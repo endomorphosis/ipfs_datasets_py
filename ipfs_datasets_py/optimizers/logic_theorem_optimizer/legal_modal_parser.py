@@ -101,6 +101,11 @@ _USCODE_SUBSECTION_MARKER_RE = re.compile(
     r"\s+\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+",
     re.IGNORECASE,
 )
+_USCODE_SUBSECTION_HEADING_RE = re.compile(
+    r"(?P<heading>\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+"
+    r"[A-Z][A-Za-z0-9' /,&()\-]{1,96}?\s*\.)\s*(?:-|--|[\u2012-\u2015])",
+    re.IGNORECASE,
+)
 _USCODE_SUBSECTION_HEADING_PREFIX_MAX_CHARS = 220
 _USCODE_SUBSECTION_HEADING_PREFIX_MAX_TOKENS = 24
 _USCODE_SUBSECTION_HEADING_BODY_MIN_TOKENS = 40
@@ -340,6 +345,7 @@ _USCODE_SHORT_RESIDUAL_HEADING_SIGNAL_TOKENS = frozenset(
         "declaration",
         "database",
         "definition",
+        "definitions",
         "element",
         "elements",
         "evaluation",
@@ -666,6 +672,13 @@ _USCODE_REVISION_NOTE_RESIDUAL_RE = re.compile(
     r")\b",
     re.IGNORECASE,
 )
+_USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS = 16
+_USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_RE = re.compile(
+    r"^\s*(?:editorial\s+notes|historical\s+and\s+revision\s+notes)\b"
+    r"(?=.*\b(?:amendments?|codification|effective\s+date|prior\s+provisions?|"
+    r"statutory\s+notes?|related\s+subsidiaries)\b)",
+    re.IGNORECASE,
+)
 _USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE = re.compile(
     r"(?:\b(?:pub\.?\s*l\.?|ch\.|stat\.|act\s+[a-z]+\.?)\b|§\d)"
     r"(?=[^.;:]{0,260}\b(?:"
@@ -676,6 +689,13 @@ _USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE = re.compile(
 )
 _USCODE_LEGISLATIVE_HISTORY_CONTINUATION_RE = re.compile(
     r"^\s*\d+[A-Za-z]?\s*,\s*(?:required|authorized|provided|related)\b",
+    re.IGNORECASE,
+)
+_USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS = 16
+_USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_RE = re.compile(
+    r"^\s*(?:editorial\s+notes?|historical\s+and\s+revision\s+notes?)\s+"
+    r"(?:(?:and\s+)?(?:prior\s+provisions?|amendments?|codification|effective\s+date|"
+    r"statutory\s+notes?|related\s+subsidiaries)\.?(?:\s+|$)){1,6}\s*$",
     re.IGNORECASE,
 )
 _MONTH_NAME_TOKENS = frozenset(
@@ -1367,7 +1387,7 @@ class LegalModalParser:
         normalized = self.normalize_text(text)
         resolved_document_id = document_id or self._document_id(normalized)
         segments = self.segment(normalized)
-        cues = self._parse_eligible_cues(normalized)
+        cues = self._parse_eligible_cues(normalized, citation=citation)
         formulas: List[ModalIRFormula] = []
 
         for index, cue in enumerate(cues, start=1):
@@ -1446,6 +1466,21 @@ class LegalModalParser:
                 ],
             )
 
+        def _subsection_heading_formulas(start_index: int) -> List[ModalIRFormula]:
+            return self.uscode_subsection_heading_coverage_formulas(
+                document_id=resolved_document_id,
+                text=normalized,
+                citation=citation,
+                start_index=start_index,
+                covered_spans=[
+                    (
+                        int(formula.provenance.start_char),
+                        int(formula.provenance.end_char),
+                    )
+                    for formula in formulas
+                ],
+            )
+
         fallback_formula = self.fallback_formula(
             document_id=resolved_document_id,
             text=normalized,
@@ -1482,6 +1517,7 @@ class LegalModalParser:
                 if reindexed_fallback is not None:
                     fallback_formula = reindexed_fallback
             formulas.extend(_prefix_formulas(len(formulas) + 2))
+            formulas.extend(_subsection_heading_formulas(len(formulas) + 2))
             formulas.extend(_marker_formulas(len(formulas) + 2))
             formulas.extend(_catchline_formulas(len(formulas) + 2))
             formulas.append(fallback_formula)
@@ -1524,6 +1560,7 @@ class LegalModalParser:
                     )
                 )
                 formulas.extend(_prefix_formulas(len(formulas) + 2))
+                formulas.extend(_subsection_heading_formulas(len(formulas) + 2))
                 formulas.extend(_marker_formulas(len(formulas) + 2))
                 formulas.extend(_catchline_formulas(len(formulas) + 2))
                 formulas.append(residual_fallback_formula)
@@ -1538,6 +1575,7 @@ class LegalModalParser:
                     )
                 )
                 formulas.extend(_prefix_formulas(len(formulas) + 1))
+                formulas.extend(_subsection_heading_formulas(len(formulas) + 1))
                 formulas.extend(_marker_formulas(len(formulas) + 1))
                 formulas.extend(_catchline_formulas(len(formulas) + 1))
 
@@ -1553,10 +1591,34 @@ class LegalModalParser:
             },
         )
 
-    def _parse_eligible_cues(self, normalized_text: str) -> List[ModalCueSpan]:
+    def _parse_eligible_cues(
+        self,
+        normalized_text: str,
+        *,
+        citation: Optional[str] = None,
+    ) -> List[ModalCueSpan]:
         """Return cue spans that are semantically eligible for formula emission."""
         cues: List[ModalCueSpan] = []
         for cue in self.extract_cues(normalized_text):
+            if (
+                cue.family == ModalLogicFamily.TEMPORAL
+                and self._is_non_temporal_editorial_status_heading_cue(
+                    normalized_text=normalized_text,
+                    start_char=cue.start_char,
+                    end_char=cue.end_char,
+                    citation=citation,
+                )
+            ):
+                continue
+            if (
+                cue.family == ModalLogicFamily.TEMPORAL
+                and self._is_non_temporal_editorial_note_heading_cue(
+                    normalized_text=normalized_text,
+                    start_char=cue.start_char,
+                    end_char=cue.end_char,
+                )
+            ):
+                continue
             if (
                 cue.family == ModalLogicFamily.TEMPORAL
                 and self._should_ignore_non_temporal_temporal_cue(
@@ -1569,6 +1631,71 @@ class LegalModalParser:
                 continue
             cues.append(cue)
         return cues
+
+    def _is_non_temporal_editorial_note_heading_cue(
+        self,
+        *,
+        normalized_text: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Do not type editorial-note catchlines such as `Prior Provisions` as time."""
+        segment = next(
+            (
+                candidate
+                for candidate in self.segment(normalized_text)
+                if candidate.start_char <= start_char and end_char <= candidate.end_char
+            ),
+            LegalSegment(
+                text=normalized_text[start_char:end_char],
+                start_char=start_char,
+                end_char=end_char,
+            ),
+        )
+        tokens = _TOKEN_RE.findall(segment.text.lower())
+        return self._is_uscode_editorial_note_heading_residual_candidate(
+            segment.text,
+            tokens,
+        )
+
+    def _is_non_temporal_editorial_status_heading_cue(
+        self,
+        *,
+        normalized_text: str,
+        start_char: int,
+        end_char: int,
+        citation: Optional[str] = None,
+    ) -> bool:
+        """Treat U.S.C. status headings such as `Repealed.` as frame status, not time."""
+        cue_text = normalized_text[start_char:end_char]
+        if not _USCODE_EDITORIAL_STATUS_HINT_RE.fullmatch(cue_text.strip()):
+            return False
+
+        segments = self.segment(normalized_text)
+        for index, segment in enumerate(segments):
+            if not (segment.start_char <= start_char and end_char <= segment.end_char):
+                continue
+            previous_text = segments[index - 1].text if index > 0 else ""
+            citation_section = self._citation_section_token(citation)
+            if citation_section and self._looks_like_editorial_status_heading(
+                segment.text,
+                citation_section=citation_section,
+                previous_segment_text=previous_text,
+            ):
+                return True
+
+            normalized_segment = self.normalize_text(segment.text).lower()
+            normalized_previous = self.normalize_text(previous_text).lower()
+            if not normalized_segment.startswith(
+                ("repealed", "omitted", "reserved", "renumbered", "terminated", "vacant")
+            ):
+                return False
+            if normalized_previous.startswith(("§", "§§")):
+                return True
+            if re.match(rf"^{_USCODE_SECTION_REF_PREFIX_RE}", normalized_previous, re.IGNORECASE):
+                return True
+            return False
+        return False
 
     def fallback_formula(
         self,
@@ -1820,6 +1947,47 @@ class LegalModalParser:
                 break
         return formulas
 
+    def uscode_subsection_heading_coverage_formulas(
+        self,
+        *,
+        document_id: str,
+        text: str,
+        citation: Optional[str],
+        start_index: int = 1,
+        covered_spans: Sequence[tuple[int, int]] = (),
+        max_formulas: int = 4,
+    ) -> List[ModalIRFormula]:
+        """Emit frame coverage for short ``(a) Heading .-`` subsection labels."""
+        if max_formulas <= 0 or not self._is_uscode_citation(citation):
+            return []
+        normalized = self.normalize_text(text)
+        if not normalized.strip():
+            return []
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return []
+        operator = profile.operators[0]
+        formulas: List[ModalIRFormula] = []
+        next_index = max(1, int(start_index))
+        for segment in self._uscode_subsection_heading_segments(normalized):
+            if self._is_exactly_covered_span(segment, covered_spans):
+                continue
+            formulas.append(
+                self._residual_span_coverage_formula(
+                    document_id=document_id,
+                    citation=citation,
+                    segment=segment,
+                    start_index=next_index,
+                    operator=operator,
+                    profile=profile,
+                    fallback_rule="uscode_subsection_heading_coverage_v1",
+                )
+            )
+            next_index += 1
+            if len(formulas) >= max_formulas:
+                break
+        return formulas
+
     def modal_heading_prefix_coverage_formulas(
         self,
         *,
@@ -1916,11 +2084,21 @@ class LegalModalParser:
         token_count = len(tokens)
         if self._is_uscode_legislative_history_residual_candidate(normalized, tokens):
             return True
+        if self._is_uscode_editorial_note_heading_residual_candidate(
+            normalized,
+            tokens,
+        ):
+            return True
         if self._has_blocking_residual_modal_cues(normalized):
             return False
         if self._is_uscode_header_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_statutory_fragment_residual_candidate(normalized, tokens):
+            return True
+        if self._is_uscode_editorial_note_heading_residual_candidate(
+            normalized,
+            tokens,
+        ):
             return True
         if self._is_uscode_administrative_procedure_residual_candidate(
             normalized,
@@ -2122,6 +2300,50 @@ class LegalModalParser:
             seen_spans.add(span)
             deduped.append(candidate)
         return deduped
+
+    def _uscode_subsection_heading_segments(
+        self,
+        normalized_text: str,
+    ) -> List[LegalSegment]:
+        """Return compact subsection heading spans without consuming body text."""
+        candidates: List[LegalSegment] = []
+        seen_spans: set[tuple[int, int]] = set()
+        for match in _USCODE_SUBSECTION_HEADING_RE.finditer(normalized_text):
+            heading_text = match.group("heading").strip()
+            if not heading_text:
+                continue
+            heading_body = re.sub(
+                r"^\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+",
+                "",
+                heading_text,
+                flags=re.IGNORECASE,
+            ).strip(" .")
+            if not heading_body:
+                continue
+            if self._has_blocking_residual_modal_cues(heading_body):
+                continue
+            body_tokens = _TOKEN_RE.findall(heading_body.lower())
+            if not (
+                self._is_short_residual_heading_coverage_candidate(body_tokens)
+                or self._looks_like_heading_without_section_reference(heading_body)
+                or heading_body.lower() in {"in general", "general"}
+            ):
+                continue
+            start_char = match.start("heading")
+            end_char = match.end("heading")
+            span = (start_char, end_char)
+            if span in seen_spans:
+                continue
+            seen_spans.add(span)
+            candidates.append(
+                LegalSegment(
+                    text=heading_text,
+                    start_char=start_char,
+                    end_char=end_char,
+                    role="heading",
+                )
+            )
+        return candidates
 
     def _uscode_section_marker_segments(
         self,
@@ -2394,6 +2616,31 @@ class LegalModalParser:
             return True
         return bool(_USCODE_RESIDUAL_STATUTORY_FRAGMENT_HINT_RE.search(lowered))
 
+    def _is_uscode_editorial_note_heading_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover compact U.S.C. editorial-note headings without operative cues."""
+        token_count = len(tokens)
+        if (
+            token_count < 2
+            or token_count > _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS
+        ):
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+            or _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered)
+        ):
+            return False
+        return bool(
+            _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_RE.fullmatch(
+                normalized_segment_text
+            )
+        )
+
     def _is_uscode_administrative_procedure_residual_candidate(
         self,
         normalized_segment_text: str,
@@ -2611,6 +2858,26 @@ class LegalModalParser:
             return False
         return bool(_USCODE_REVISION_NOTE_RESIDUAL_RE.search(normalized_segment_text))
 
+    def _is_uscode_editorial_note_heading_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover compact editorial-note heading spans without treating them as time."""
+        token_count = len(tokens)
+        if (
+            token_count < 2
+            or token_count > _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS
+        ):
+            return False
+        if any(character.isdigit() for character in normalized_segment_text):
+            return False
+        return bool(
+            _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_RE.search(
+                normalized_segment_text
+            )
+        )
+
     def _is_uscode_legislative_history_residual_candidate(
         self,
         normalized_segment_text: str,
@@ -2794,7 +3061,10 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(
+            normalized_text,
+            citation=citation,
+        ):
             return None
 
         candidate_segment: Optional[LegalSegment] = None
@@ -3139,7 +3409,10 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(
+            normalized_text,
+            citation=citation,
+        ):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -3218,7 +3491,10 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(
+            normalized_text,
+            citation=citation,
+        ):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -3304,7 +3580,10 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(
+            normalized_text,
+            citation=citation,
+        ):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -3490,7 +3769,10 @@ class LegalModalParser:
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if not allow_modal_cues and self._parse_eligible_cues(normalized_text):
+        if not allow_modal_cues and self._parse_eligible_cues(
+            normalized_text,
+            citation=citation,
+        ):
             return None
 
         candidate_segment: Optional[LegalSegment] = None

@@ -489,24 +489,27 @@ class TDFOLParser:
     def parse_forall(self) -> Formula:
         """Parse universal quantification."""
         self.expect(TokenType.FORALL)
-        variable = self.parse_variable(allow_formula_separator_colon=True)
-        if self.current_token().type == TokenType.DOT:
-            self.advance()
-        elif (
-            not self._last_quantifier_colon_separator
-            and self.current_token().type != TokenType.LPAREN
-        ):
-            token = self.current_token()
-            raise ValueError(
-                f"Expected {TokenType.DOT} but got {token.type} at position {token.position}"
-            )
+        variables = self.parse_quantifier_variables()
         formula = self.parse_formula()
-        return QuantifiedFormula(Quantifier.FORALL, variable, formula)
+        return self._nest_quantified_formula(Quantifier.FORALL, variables, formula)
     
     def parse_exists(self) -> Formula:
         """Parse existential quantification."""
         self.expect(TokenType.EXISTS)
-        variable = self.parse_variable(allow_formula_separator_colon=True)
+        variables = self.parse_quantifier_variables()
+        formula = self.parse_formula()
+        return self._nest_quantified_formula(Quantifier.EXISTS, variables, formula)
+
+    def parse_quantifier_variables(self) -> List[Variable]:
+        """Parse one or more comma-separated quantifier variables."""
+
+        variables = [self.parse_variable(allow_formula_separator_colon=True)]
+        while (
+            not self._last_quantifier_colon_separator
+            and self.current_token().type == TokenType.COMMA
+        ):
+            self.advance()
+            variables.append(self.parse_variable(allow_formula_separator_colon=True))
         if self.current_token().type == TokenType.DOT:
             self.advance()
         elif (
@@ -517,8 +520,17 @@ class TDFOLParser:
             raise ValueError(
                 f"Expected {TokenType.DOT} but got {token.type} at position {token.position}"
             )
-        formula = self.parse_formula()
-        return QuantifiedFormula(Quantifier.EXISTS, variable, formula)
+        return variables
+
+    def _nest_quantified_formula(
+        self,
+        quantifier: Quantifier,
+        variables: List[Variable],
+        formula: Formula,
+    ) -> Formula:
+        for variable in reversed(variables):
+            formula = QuantifiedFormula(quantifier, variable, formula)
+        return formula
     
     def parse_modal(self) -> Formula:
         """Parse modal (deontic/temporal) formula."""

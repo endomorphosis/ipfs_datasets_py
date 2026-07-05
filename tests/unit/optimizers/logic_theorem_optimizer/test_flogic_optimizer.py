@@ -578,17 +578,67 @@ def test_flogic_optimizer_extracts_frame_features_from_structured_hint_evidence(
     )
 
     assert result.metadata["frame_feature_keys"] == [
+        "flogic:statement_hint:modal-synthesis",
         "selected-frame-term:26 U.S.C. 307",
         "token:agency",
         "us-code-26-307-c04b9c0813def639",
     ]
     assert result.metadata["frame_audit_feature_keys"] == [
+        "flogic:statement_hint:modal-synthesis",
         "selected-frame-term:26 U.S.C. 307",
         "us-code-26-307-c04b9c0813def639",
     ]
     assert result.metadata["frame_ontology_terms"] == [
         "26_307",
+        "modal_synthesis",
     ]
+
+
+def test_flogic_optimizer_audits_packet_view_quality_frame_features() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            {
+                "hint_id": "modal-synthesis-0597720f6c8ff3bb",
+                "frame_features": [
+                    "legal-ir-view:deontic.ir",
+                    "legal-ir-view:CEC.native",
+                    "legal-ir-view:knowledge_graphs.neo4j_compat",
+                    "quality:bias",
+                    "quality:symbolic:has-formula",
+                    "legal-ir-view:TDFOL.prover",
+                ],
+                "top_family_features": [
+                    "legal-ir-view:deontic.ir",
+                    "legal-ir-view:CEC.native",
+                    "legal-ir-view:knowledge_graphs.neo4j_compat",
+                    "quality:bias",
+                    "quality:symbolic:has-formula",
+                    "legal-ir-view:TDFOL.prover",
+                ],
+            }
+        ],
+    )
+
+    assert "quality:bias" in result.metadata["frame_audit_feature_keys"]
+    assert "quality:symbolic:has-formula" in result.metadata["frame_audit_feature_keys"]
+    assert "bias" in result.metadata["frame_ontology_terms"]
+    assert "symbolic_has_formula" in result.metadata["frame_ontology_terms"]
+    assert (
+        "quality_symbolic_has_formula"
+        in result.metadata["frame_ontology_contextualized_terms"]
+    )
 
 
 def test_flogic_optimizer_extracts_semantic_frame_fields_from_structured_features() -> None:
