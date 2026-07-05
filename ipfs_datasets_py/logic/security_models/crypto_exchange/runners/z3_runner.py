@@ -33,6 +33,8 @@ class Z3Runner(BaseSecurityRunner):
         return solver
 
     def _counterexample(self, claim: SecurityClaim, solver_model: Any) -> CounterexampleReport:
+        if solver_model is None:
+            raise ValueError(f'Z3 did not return a model for claim {claim.claim_id}')
         witness = {
             declaration.name(): str(solver_model[declaration])
             for declaration in solver_model.decls()

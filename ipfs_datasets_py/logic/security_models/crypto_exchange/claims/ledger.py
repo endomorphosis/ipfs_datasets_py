@@ -68,12 +68,12 @@ class AuditEventExistsForCriticalTransitionClaim(SecurityClaim):
         z3 = z3_import()
         critical_transition = z3.Bool('critical_transition')
         audit_event = z3.Bool('audit_event')
-        assertions = [critical_transition is not None]
+        assertions = []
         if self.policy_enabled(model, 'audit_required'):
             assertions.append(z3.Implies(critical_transition, audit_event))
         return Z3Compilation(
             claim=self,
-            assertions=[expr for expr in assertions if hasattr(expr, 'sexpr')],
+            assertions=assertions,
             property_formula=z3.Implies(critical_transition, audit_event),
             violation_formula=z3.And(critical_transition, z3.Not(audit_event)),
             compiler_artifact={

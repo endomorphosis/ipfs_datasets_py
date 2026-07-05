@@ -18,7 +18,7 @@ def calculate_artifact_cid(payload: Any) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode('utf-8')
     try:
         return cid_for_bytes(encoded)
-    except Exception:
+    except (ImportError, AttributeError, ValueError, TypeError):
         return f'sha256:{hashlib.sha256(encoded).hexdigest()}'
 
 
@@ -33,5 +33,5 @@ def calculate_model_cid(model: SecurityModelIR | Mapping[str, Any]) -> str:
     payload = canonicalize_ir(model)
     try:
         return cid_for_bytes(payload)
-    except Exception:
+    except (ImportError, AttributeError, ValueError, TypeError):
         return f'sha256:{hashlib.sha256(payload).hexdigest()}'
