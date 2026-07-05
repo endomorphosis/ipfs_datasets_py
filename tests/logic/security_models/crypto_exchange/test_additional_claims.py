@@ -94,6 +94,25 @@ def test_prove_claims_falls_through_when_z3_is_unavailable(monkeypatch: pytest.M
     assert all(report.prover == ProVerifRunner.prover_name for report in reports)
 
 
+def test_prove_claims_falls_through_when_z3_returns_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
+    attempted_provers: list[tuple[str, str]] = []
+
+    def _stub_z3_run(self, claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
+        attempted_provers.append((self.prover_name, claim.claim_id))
+        return self.unknown_report(claim, model, 'stubbed z3 unknown')
+
+    def _stub_proverif_run(self, claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
+        attempted_provers.append((self.prover_name, claim.claim_id))
+        return self.unknown_report(claim, model, 'stubbed proverif fallback')
+
+    monkeypatch.setattr(Z3Runner, 'run_claim', _stub_z3_run)
+    monkeypatch.setattr(ProVerifRunner, 'run_claim', _stub_proverif_run)
+    reports = prove_claims(example_minimal_exchange_model(), ['z3', 'proverif'])
+    expected_claims = [claim.claim_id for claim in default_claims()]
+    assert attempted_provers == [(prover, claim_id) for claim_id in expected_claims for prover in ('z3', 'proverif')]
+    assert all(report.prover == ProVerifRunner.prover_name for report in reports)
+
+
 def test_normalize_provers_rejects_unknown_names() -> None:
     with pytest.raises(ValueError, match='Unsupported provers: fake'):
         _normalize_provers(['z3', 'fake'])

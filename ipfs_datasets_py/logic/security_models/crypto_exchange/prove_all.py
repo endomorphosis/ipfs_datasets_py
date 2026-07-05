@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Iterable
 
+from .claims.base import SecurityClaim
 from .claims import default_claims
 from .ir.examples import example_minimal_exchange_model
 from .ir.schema import SecurityModelIR, validate_ir
@@ -52,27 +53,34 @@ def _load_model(args: argparse.Namespace) -> SecurityModelIR:
     return validate_ir(SecurityModelIR.from_dict(payload))
 
 
+def _no_prover_report(claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
+    return ProofReport(
+        claim_id=claim.claim_id,
+        model_cid='',
+        status='UNKNOWN',
+        prover='none',
+        proof_or_trace_cid='',
+        assumptions=list(claim.required_assumptions),
+        compiler_cid='',
+        counterexample={'reason': 'no prover selected'},
+        risk=claim.severity,
+        signatures=[],
+    )
+
+
 def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofReport]:
     reports: list[ProofReport] = []
     selected_provers = _normalize_provers(provers)
     for claim in default_claims():
-        prover_iter = iter(selected_provers)
-        first_prover_name = next(prover_iter)
-        first_runner = RUNNER_FACTORIES[first_prover_name]()
-        last_report = first_runner.run_claim(claim, model)
-        if last_report.status in {'PROVED', 'DISPROVED', 'NOT_MODELED'}:
-            reports.append(last_report)
-            continue
-        for prover_name in prover_iter:
+        last_report = _no_prover_report(claim, model)
+        for prover_name in selected_provers:
             runner_factory = RUNNER_FACTORIES[prover_name]
             runner = runner_factory()
             report = runner.run_claim(claim, model)
             last_report = report
             if report.status in {'PROVED', 'DISPROVED', 'NOT_MODELED'}:
-                reports.append(report)
                 break
-        else:
-            reports.append(last_report)
+        reports.append(last_report)
     return reports
 
 
