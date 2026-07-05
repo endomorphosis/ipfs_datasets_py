@@ -40552,6 +40552,92 @@ def test_decompiler_routes_reclassified_status_to_frame_deontic_slots() -> None:
     assert "crime control law enforcement" in structural_text
 
 
+def test_decompiler_reconstructs_packet_331_typed_domain_atoms() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "Integration of procedure with Securities and Exchange "
+                    "Commission. Trust indentures shall be processed under "
+                    "the integrated procedure."
+                ),
+                predicate="trust_indenture_procedure_integration",
+            ),
+            {
+                "securities_trust_indenture",
+                "securities_trust_indenture_procedure",
+                "securities_exchange_commission",
+            },
+            {"frame->deontic", "frame->temporal"},
+            "securities trust indenture procedure",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "Claims for Benefits After December 31, 1973. Black lung "
+                    "benefits claims under the Mine Safety and Health program "
+                    "shall be adjudicated after filing."
+                ),
+                predicate="black_lung_benefit_claims_after_filing",
+            ),
+            {
+                "black_lung_benefits",
+                "black_lung_benefit_claim",
+                "mine_safety_health",
+            },
+            {"frame->deontic", "frame->temporal"},
+            "black lung benefit claim",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="P",
+                label="permission",
+                text=(
+                    "Form and requirements for negotiation. A negotiable bill "
+                    "of lading may be negotiated by indorsement, and an "
+                    "indorsement may be made in blank or to a specified person."
+                ),
+                predicate="bill_lading_negotiation_by_indorsement",
+            ),
+            {
+                "negotiable_bill_of_lading",
+                "bill_of_lading",
+                "bill_lading_indorsement_negotiation",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "negotiable bill of lading indorsement negotiation",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, structural_fragment in samples:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert "CEC.native" in slot_texts["legal_ir_view_prototype"]
+        assert "knowledge_graphs.neo4j_compat" in slot_texts[
+            "legal_ir_view_prototype"
+        ]
+        assert structural_fragment in structural_text
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

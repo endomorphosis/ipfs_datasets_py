@@ -200,6 +200,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("government losses in shipment", "government_shipment_loss_prevention"),
     ("shipment of valuables", "valuable_shipment_regulation"),
     ("valuables in shipment", "valuable_shipment_regulation"),
+    ("negotiable bill of lading", "negotiable_bill_of_lading"),
+    ("bill of lading", "bill_of_lading"),
+    ("may be negotiated by indorsement", "bill_lading_indorsement_negotiation"),
+    ("negotiated by indorsement", "bill_lading_indorsement_negotiation"),
+    ("indorsement may be made", "bill_lading_indorsement_negotiation"),
+    ("deliverable to the order", "order_document_delivery"),
     ("comply with the regulations", "regulatory_compliance_duty"),
     ("prescribe regulations governing", "regulation_prescription_authority"),
     ("risk of loss and destruction", "loss_damage_risk_mitigation"),
@@ -326,6 +332,7 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("irrigation reclamation and cultivation", "irrigation_reclamation_cultivation"),
     ("reclamation, and cultivation", "irrigation_reclamation_cultivation"),
     ("international boundary and water commission", "international_boundary_water_commission"),
+    ("international boundary and water commission, united states and mexico", "international_boundary_water_commission"),
     ("international storage dam", "international_storage_dam_authorization"),
     ("rio grande", "rio_grande_water_project"),
     ("joint construction, operation, and maintenance", "joint_infrastructure_operation"),
@@ -426,6 +433,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("mineral leasing laws", "mineral_leasing_law"),
     ("mineral exploration and development", "mineral_development_technology"),
     ("mining laws of the united states", "mining_law_application"),
+    ("mine safety and health", "mine_safety_health"),
+    ("black lung benefits", "black_lung_benefits"),
+    ("claims for benefits after", "black_lung_benefit_claim"),
+    ("claims for benefits", "benefit_claim_adjudication"),
     ("located between", "date_range_temporal_scope"),
     ("findings and declaration", "congressional_findings_declaration"),
     ("congress finds and declares", "congressional_findings_declaration"),
@@ -497,6 +508,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("reclassified as section", "editorial_reclassification"),
     ("crime control and law enforcement", "crime_control_law_enforcement"),
     ("law enforcement", "law_enforcement"),
+    ("transferred editorial notes codification", "editorial_transfer_status"),
+    ("transferred editorial notes", "editorial_transfer_status"),
+    ("was editorially reclassified as section", "editorial_reclassification"),
+    ("section was editorially reclassified", "editorial_reclassification"),
     ("plant variety protection office", "plant_variety_protection_office"),
     ("plant variety protection", "plant_variety_protection"),
     ("seal from the plant variety protection office", "office_seal"),
@@ -553,6 +568,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("same force and effect", "statutory_force_effect"),
     ("relationship to other law", "legal_relationship_override"),
     ("payment authorization", "payment_authorization"),
+    ("securities and trust indentures", "securities_trust_indenture"),
+    ("trust indentures", "securities_trust_indenture"),
+    ("trust indenture", "securities_trust_indenture"),
+    ("integration of procedure with securities and exchange commission", "securities_trust_indenture_procedure"),
+    ("integration of procedure", "integrated_agency_procedure"),
+    ("securities and exchange commission", "securities_exchange_commission"),
     ("establishment of the rio grande natural area", "natural_area_establishment"),
     ("rio grande natural area", "natural_area_establishment"),
     ("natural area", "conservation_area_management"),
@@ -10136,6 +10157,43 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
     }:
         add("deontic.ir")
         add("TDFOL.prover")
+    if normalized_atom in {
+        "benefit_claim_adjudication",
+        "bill_lading_indorsement_negotiation",
+        "bill_of_lading",
+        "black_lung_benefit_claim",
+        "black_lung_benefits",
+        "integrated_agency_procedure",
+        "mine_safety_health",
+        "negotiable_bill_of_lading",
+        "order_document_delivery",
+        "securities_exchange_commission",
+        "securities_trust_indenture",
+        "securities_trust_indenture_procedure",
+    }:
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in {
+        "benefit_claim_adjudication",
+        "bill_lading_indorsement_negotiation",
+        "black_lung_benefit_claim",
+        "black_lung_benefits",
+        "integrated_agency_procedure",
+        "negotiable_bill_of_lading",
+        "order_document_delivery",
+        "securities_trust_indenture_procedure",
+    }:
+        add("deontic.ir")
+        add("TDFOL.prover")
+    if normalized_atom in {
+        "benefit_claim_adjudication",
+        "black_lung_benefit_claim",
+        "black_lung_benefits",
+        "integrated_agency_procedure",
+        "securities_trust_indenture_procedure",
+    }:
+        add("TDFOL.prover")
     return views
 
 
@@ -10979,6 +11037,45 @@ def _typed_decompiler_semantic_atom_target_families(
         if normalized_atom in {
             "implementation_action_report",
             "museum_collection_custody",
+        }:
+            add("conditional_normative")
+        if normalized_atom in {
+            "benefit_claim_adjudication",
+            "bill_lading_indorsement_negotiation",
+            "black_lung_benefit_claim",
+            "black_lung_benefits",
+            "integrated_agency_procedure",
+            "negotiable_bill_of_lading",
+            "order_document_delivery",
+            "securities_trust_indenture_procedure",
+        }:
+            add("deontic")
+        if normalized_atom in {
+            "benefit_claim_adjudication",
+            "black_lung_benefit_claim",
+            "black_lung_benefits",
+            "integrated_agency_procedure",
+            "mine_safety_health",
+            "securities_exchange_commission",
+            "securities_trust_indenture",
+            "securities_trust_indenture_procedure",
+        }:
+            add("frame")
+        if normalized_atom in {
+            "benefit_claim_adjudication",
+            "black_lung_benefit_claim",
+            "black_lung_benefits",
+            "integrated_agency_procedure",
+            "securities_trust_indenture_procedure",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "benefit_claim_adjudication",
+            "bill_lading_indorsement_negotiation",
+            "black_lung_benefit_claim",
+            "black_lung_benefits",
+            "integrated_agency_procedure",
+            "securities_trust_indenture_procedure",
         }:
             add("conditional_normative")
     return targets
