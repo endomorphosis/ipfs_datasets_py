@@ -41020,6 +41020,107 @@ def test_decompiler_reconstructs_packet_336_housing_and_authorization_slots() ->
     assert "supplemental authorization policy" in supplemental_structural_text
 
 
+def test_decompiler_reconstructs_packet_338_semantic_residual_slots() -> None:
+    definition = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Definitions. In this chapter, the term Director means the "
+            "Director of the Cybersecurity and Infrastructure Security Agency."
+        ),
+        predicate="director_definition",
+    )
+    freely_associated = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Freely associated States. The Secretary may make grants to the "
+            "Republic of the Marshall Islands, the Federated States of "
+            "Micronesia, and the Republic of Palau under the Compact of Free "
+            "Association for education assistance."
+        ),
+        predicate="freely_associated_states_education_assistance",
+    )
+    credit = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Export credit authority. The Board may determine whether the "
+            "Federal Financing Bank shall extend credit for export promotion."
+        ),
+        predicate="federal_financing_bank_export_credit_authority",
+    )
+    rail = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Railroad employees trust fund status. Amounts in the railroad "
+            "retirement account remain available for railroad employees."
+        ),
+        predicate="railroad_employee_trust_fund_status",
+    )
+
+    cases = [
+        (
+            definition,
+            {
+                "director_government_actor_definition",
+                "director_government_actor",
+            },
+            {"frame->frame", "frame->deontic"},
+            {"CEC.native", "knowledge_graphs.neo4j_compat"},
+            "director government actor definition",
+        ),
+        (
+            freely_associated,
+            {"freely_associated_state", "compact_free_association"},
+            {"frame->deontic", "frame->epistemic"},
+            {"CEC.native", "knowledge_graphs.neo4j_compat", "TDFOL.prover"},
+            "freely associated state",
+        ),
+        (
+            credit,
+            {
+                "credit_authority",
+                "export_credit_authority",
+                "federal_financing_bank",
+            },
+            {"frame->doxastic", "frame->deontic"},
+            {"CEC.native", "knowledge_graphs.neo4j_compat", "deontic.ir"},
+            "credit authority",
+        ),
+        (
+            rail,
+            {"rail_employee_status", "rail_employee_trust_fund"},
+            {"frame->deontic", "frame->temporal"},
+            {"CEC.native", "knowledge_graphs.neo4j_compat"},
+            "rail employee trust fund",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_views, fragment in cases:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_views.issubset(set(slot_texts["legal_ir_view_prototype"]))
+        assert fragment in structural_text
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

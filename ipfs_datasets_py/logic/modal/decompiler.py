@@ -167,6 +167,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("cybersecurity information sharing", "cybersecurity_information_sharing"),
     ("cybersecurity information", "cybersecurity_information_sharing"),
     ("information sharing", "information_sharing"),
+    ("the term director means", "director_government_actor_definition"),
+    ("director means the", "director_government_actor_definition"),
+    ("the term director", "director_government_actor"),
     ("consultation and cooperation", "consultation_cooperation"),
     ("following consultation", "consultation"),
     ("initiation of discussions", "interinstitutional_discussion"),
@@ -326,6 +329,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("appointment of an advisory committee", "advisory_committee_appointment"),
     ("authorized appointment", "appointment_authority"),
     ("railroad lands", "railroad_land_status"),
+    ("railroad employees", "rail_employee_status"),
+    ("railroad employee", "rail_employee_status"),
+    ("railroad retirement", "rail_employee_trust_fund"),
+    ("railroad unemployment insurance", "rail_employee_trust_fund"),
+    ("railroad retirement account", "rail_employee_trust_fund"),
     ("withdrawal or after restoration to market", "land_withdrawal_restoration_scope"),
     ("restoration to market", "land_withdrawal_restoration_scope"),
     ("irrigation projects", "irrigation_project"),
@@ -388,6 +396,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("illegal sexual activity", "illegal_sexual_activity"),
     ("related crimes", "related_crime"),
     ("export promotion", "export_promotion"),
+    ("export credit", "export_credit_authority"),
+    ("credit authority", "credit_authority"),
+    ("federal financing bank", "federal_financing_bank"),
+    ("financing bank", "federal_financing_bank"),
     ("interstate traffic of viruses", "biological_product_interstate_traffic"),
     ("interstate traffic of virus", "biological_product_interstate_traffic"),
     ("sale of and interstate traffic", "biological_product_interstate_traffic"),
@@ -491,6 +503,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("model demonstrations", "model_demonstration"),
     ("trainee support", "trainee_support"),
     ("individuals with disabilities", "disability_services"),
+    ("freely associated states", "freely_associated_state"),
+    ("freely associated state", "freely_associated_state"),
+    ("republic of the marshall islands", "freely_associated_state"),
+    ("federated states of micronesia", "freely_associated_state"),
+    ("republic of palau", "freely_associated_state"),
+    ("compact of free association", "compact_free_association"),
+    ("free association", "compact_free_association"),
     ("funds for printing, binding", "printing_binding"),
     ("printing, binding", "printing_binding"),
     ("printing binding", "printing_binding"),
@@ -3347,6 +3366,39 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add(term)
     if _has_definition_semantics(normalized):
         add("definition")
+    if re.search(r"\bthe\s+term\s+director\s+means\b", normalized):
+        add("director_government_actor_definition")
+        add("director_government_actor")
+    if re.search(
+        r"\b(?:freely\s+associated\s+states?|compact\s+of\s+free\s+association|"
+        r"republic\s+of\s+the\s+marshall\s+islands|"
+        r"federated\s+states\s+of\s+micronesia|republic\s+of\s+palau)\b",
+        normalized,
+    ):
+        add("freely_associated_state")
+    if re.search(r"\bcompact\s+of\s+free\s+association\b", normalized):
+        add("compact_free_association")
+    if re.search(
+        r"\b(?:export\s+credit|credit\s+authority|federal\s+financing\s+bank)\b",
+        normalized,
+    ):
+        add("credit_authority")
+        if "export" in tokens:
+            add("export_credit_authority")
+        if re.search(r"\bfederal\s+financing\s+bank\b", normalized):
+            add("federal_financing_bank")
+    if re.search(
+        r"\brailroad\s+(?:employees?|retirement|unemployment\s+insurance)\b",
+        normalized,
+    ):
+        add("rail_employee_status")
+    if re.search(
+        r"\brailroad\b.{0,80}\b(?:trust\s+fund|retirement\s+account|"
+        r"unemployment\s+insurance)\b|"
+        r"\b(?:trust\s+fund|retirement\s+account)\b.{0,80}\brailroad\b",
+        normalized,
+    ):
+        add("rail_employee_trust_fund")
     if re.search(
         r"\b(?:there\s+is\s+established|is\s+established\s+within|"
         r"office\s+to\s+be\s+known\s+as)\b",
@@ -9337,6 +9389,32 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
             views.append(view)
 
     if normalized_atom in {
+        "compact_free_association",
+        "credit_authority",
+        "director_government_actor",
+        "director_government_actor_definition",
+        "export_credit_authority",
+        "federal_financing_bank",
+        "freely_associated_state",
+        "rail_employee_status",
+        "rail_employee_trust_fund",
+    }:
+        add("CEC.native")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in {
+        "compact_free_association",
+        "credit_authority",
+        "export_credit_authority",
+        "federal_financing_bank",
+        "freely_associated_state",
+        "rail_employee_status",
+        "rail_employee_trust_fund",
+    }:
+        add("deontic.ir")
+        add("TDFOL.prover")
+
+    if normalized_atom in {
         "administration_enforcement",
         "admission_fee_collection",
         "appropriated_amount",
@@ -11152,6 +11230,50 @@ def _typed_decompiler_semantic_atom_target_families(
             "securities_trust_indenture_procedure",
         }:
             add("conditional_normative")
+        if normalized_atom in {
+            "compact_free_association",
+            "credit_authority",
+            "director_government_actor",
+            "director_government_actor_definition",
+            "export_credit_authority",
+            "federal_financing_bank",
+            "freely_associated_state",
+            "rail_employee_status",
+            "rail_employee_trust_fund",
+        }:
+            add("frame")
+        if normalized_atom in {
+            "compact_free_association",
+            "credit_authority",
+            "director_government_actor_definition",
+            "export_credit_authority",
+            "federal_financing_bank",
+            "freely_associated_state",
+            "rail_employee_status",
+            "rail_employee_trust_fund",
+        }:
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in {
+            "compact_free_association",
+            "credit_authority",
+            "export_credit_authority",
+            "federal_financing_bank",
+            "freely_associated_state",
+        }:
+            add("epistemic")
+        if normalized_atom in {
+            "credit_authority",
+            "export_credit_authority",
+            "federal_financing_bank",
+        }:
+            add("doxastic")
+        if normalized_atom in {
+            "freely_associated_state",
+            "rail_employee_status",
+            "rail_employee_trust_fund",
+        }:
+            add("temporal")
     return targets
 
 
