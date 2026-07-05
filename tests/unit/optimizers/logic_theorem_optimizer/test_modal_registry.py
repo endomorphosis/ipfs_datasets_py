@@ -1445,6 +1445,7 @@ def test_packet_000228_family_pairs_are_explicit_ambiguity_policy() -> None:
         ("deontic", "deontic"),
         ("deontic", "dynamic"),
         ("deontic", "frame"),
+        ("deontic", "temporal"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
         ("frame", "doxastic"),
@@ -1479,6 +1480,21 @@ def test_packet_000228_family_pairs_are_explicit_ambiguity_policy() -> None:
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
+        )
+
+    packet_refined_pairs = (
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    )
+    for predicted_family, target_family in packet_refined_pairs:
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.08
         )
 
 
