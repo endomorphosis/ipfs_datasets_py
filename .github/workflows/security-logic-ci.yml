@@ -52,8 +52,8 @@ jobs:
           IPFS_DATASETS_AUTO_INSTALL: '0'
           IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
-          args=(--example --strict --out proof_report.json)
+          args=(--example --fail-on disproof --require-real-ergoai --forbid-simulated-zkp --out proof_report.json)
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.strict_unknown }}" = "true" ]; then
-            args+=(--fail-on-unknown-critical)
+            args+=(--fail-on unknown-critical)
           fi
           python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all "${args[@]}"

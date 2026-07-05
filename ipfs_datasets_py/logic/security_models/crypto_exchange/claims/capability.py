@@ -14,7 +14,7 @@ class CapabilityDelegationMonotonicityClaim(SecurityClaim):
         super().__init__(
             claim_id='capability_delegation_no_authority_increase',
             description='Capability delegation cannot increase authority.',
-            required_assumptions=['cryptographic primitives are unbroken'],
+            required_assumptions=['A1', 'A7'],
             severity='high',
         )
 
@@ -52,7 +52,7 @@ class RevokedCapabilityClaim(SecurityClaim):
         super().__init__(
             claim_id='revoked_capability_no_future_authorization',
             description='Revoked capability cannot authorize future action.',
-            required_assumptions=['audit logs are append-only or tamper-evident'],
+            required_assumptions=['A10'],
             severity='high',
         )
 

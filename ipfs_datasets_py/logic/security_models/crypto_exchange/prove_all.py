@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Iterable
 
@@ -34,6 +35,7 @@ RUNNER_FACTORIES = {
 }
 
 DEFAULT_PROVERS = ('z3', 'tla', 'datalog', 'tamarin', 'proverif', 'hyperltl', 'lean', 'coq')
+FAIL_POLICIES = {'disproof', 'unknown-critical'}
 
 
 def _normalize_provers(provers: Iterable[str]) -> list[str]:
@@ -44,6 +46,19 @@ def _normalize_provers(provers: Iterable[str]) -> list[str]:
     if unsupported:
         raise ValueError(f"Unsupported provers: {', '.join(unsupported)}")
     return selected_provers
+
+
+def _normalize_fail_policies(values: Iterable[str]) -> set[str]:
+    policies = {
+        token.strip()
+        for item in values
+        for token in item.split(',')
+        if token.strip()
+    }
+    unsupported = sorted(policy for policy in policies if policy not in FAIL_POLICIES)
+    if unsupported:
+        raise ValueError(f"Unsupported fail policies: {', '.join(unsupported)}")
+    return policies
 
 
 def _load_model(args: argparse.Namespace) -> SecurityModelIR:
@@ -84,12 +99,42 @@ def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofRe
     return reports
 
 
-def _should_fail(report: ProofReport, *, strict: bool, fail_on_unknown_critical: bool) -> bool:
-    if not strict:
-        return False
-    if report.status == 'DISPROVED' and report.risk in {'blocking', 'high'}:
+def _proof_dependency_mode(model: SecurityModelIR, key: str) -> str:
+    proof_modes = model.metadata.get('proof_dependency_modes', {})
+    if not isinstance(proof_modes, dict):
+        return 'not-used'
+    return str(proof_modes.get(key, 'not-used')).strip().lower()
+
+
+def _execution_policy_violations(
+    model: SecurityModelIR,
+    *,
+    require_real_ergoai: bool,
+    forbid_simulated_zkp: bool,
+) -> list[str]:
+    violations: list[str] = []
+    flogic_mode = _proof_dependency_mode(model, 'flogic')
+    zkp_mode = _proof_dependency_mode(model, 'zkp')
+    if require_real_ergoai and flogic_mode == 'simulated':
+        violations.append('simulated F-logic dependencies are forbidden for this proof run')
+    ergoai_available = True
+    if require_real_ergoai and flogic_mode in {'required', 'real'}:
+        from ipfs_datasets_py.logic.flogic.ergoai_wrapper import ERGOAI_AVAILABLE
+
+        ergoai_available = ERGOAI_AVAILABLE
+    if require_real_ergoai and flogic_mode in {'required', 'real'} and not ergoai_available:
+        violations.append(
+            'real ErgoAI was required, but the model metadata indicates an F-logic dependency without an available ErgoAI binary'
+        )
+    if forbid_simulated_zkp and zkp_mode == 'simulated':
+        violations.append('simulated ZKP dependencies are forbidden for this proof run')
+    return violations
+
+
+def _should_fail(report: ProofReport, *, fail_policies: set[str]) -> bool:
+    if 'disproof' in fail_policies and report.status == 'DISPROVED' and report.risk in {'blocking', 'high'}:
         return True
-    if report.status == 'UNKNOWN' and report.risk == 'blocking' and fail_on_unknown_critical:
+    if 'unknown-critical' in fail_policies and report.status == 'UNKNOWN' and report.risk == 'blocking':
         return True
     return False
 
@@ -101,20 +146,37 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--out', help='Path to write proof reports as JSON')
     parser.add_argument('--strict', action='store_true', help='Return nonzero on critical DISPROVED results')
     parser.add_argument('--fail-on-unknown-critical', action='store_true', help='Treat blocking UNKNOWN results as failures in strict mode')
+    parser.add_argument('--fail-on', action='append', default=[], help='Repeatable failure policy: disproof, unknown-critical')
+    parser.add_argument('--require-real-ergoai', action='store_true', help='Reject models that depend on simulated or unavailable ErgoAI/F-logic execution')
+    parser.add_argument('--forbid-simulated-zkp', action='store_true', help='Reject models that depend on simulated ZKP execution')
     parser.add_argument('--provers', default=','.join(DEFAULT_PROVERS), help='Comma-separated prover list')
     args = parser.parse_args(argv)
     model = _load_model(args)
     try:
         provers = _normalize_provers(args.provers.split(','))
+        fail_policies = _normalize_fail_policies(args.fail_on)
     except ValueError as exc:
         parser.error(str(exc))
+    if args.strict:
+        fail_policies.add('disproof')
+        if args.fail_on_unknown_critical:
+            fail_policies.add('unknown-critical')
+    policy_violations = _execution_policy_violations(
+        model,
+        require_real_ergoai=args.require_real_ergoai,
+        forbid_simulated_zkp=args.forbid_simulated_zkp,
+    )
+    if policy_violations:
+        for violation in policy_violations:
+            print(f'error: {violation}', file=sys.stderr)
+        return 2
     reports = prove_claims(model, provers)
     payload = {'model_id': model.model_id, 'reports': [report.to_dict() for report in reports]}
     if args.out:
         Path(args.out).write_text(json.dumps(payload, indent=2, sort_keys=True), encoding='utf-8')
     else:
         print(json.dumps(payload, indent=2, sort_keys=True))
-    return 1 if any(_should_fail(report, strict=args.strict, fail_on_unknown_critical=args.fail_on_unknown_critical) for report in reports) else 0
+    return 1 if any(_should_fail(report, fail_policies=fail_policies) for report in reports) else 0
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -14,7 +14,7 @@ class NoUnauthorizedWithdrawalClaim(SecurityClaim):
         super().__init__(
             claim_id='no_unauthorized_withdrawal',
             description='No withdrawal broadcast occurs without authorization.',
-            required_assumptions=['database commits are serializable', 'nonce reservation is atomic'],
+            required_assumptions=['A3', 'A4', 'A5', 'A8'],
             severity='blocking',
         )
 

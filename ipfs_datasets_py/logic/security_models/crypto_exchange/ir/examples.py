@@ -97,6 +97,22 @@ def example_minimal_exchange_model() -> SecurityModelIR:
         assumptions=list(DEFAULT_THREAT_MODEL_ASSUMPTIONS),
         prover_targets=['z3', 'tla', 'datalog', 'tamarin', 'proverif', 'hyperltl', 'lean', 'coq'],
         metadata={
+            'proof_dependency_modes': {
+                'flogic': 'not-used',
+                'zkp': 'not-used',
+            },
+            'threat_model': [
+                {'id': 'T1', 'name': 'stolen_api_token'},
+                {'id': 'T2', 'name': 'compromised_exchange_employee'},
+                {'id': 'T3', 'name': 'replayed_withdrawal_request'},
+                {'id': 'T4', 'name': 'stale_blockchain_rpc_data'},
+                {'id': 'T5', 'name': 'chain_reorg_after_deposit_credit'},
+                {'id': 'T6', 'name': 'race_condition_between_withdrawals'},
+                {'id': 'T7', 'name': 'hot_wallet_key_compromise'},
+                {'id': 'T8', 'name': 'malicious_dependency_or_build_artifact'},
+                {'id': 'T9', 'name': 'prompt_injection_against_policy_compiler'},
+                {'id': 'T10', 'name': 'simulated_proof_mode_used_in_production'},
+            ],
             'runtime_trace': [
                 {'event': 'withdrawal_requested', 'wallet_id': 'wallet:user_alice'},
                 {'event': 'wallet_frozen', 'wallet_id': 'wallet:user_alice'},

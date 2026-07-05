@@ -17,10 +17,12 @@ Required top-level fields:
 - `events`
 - `state_machines`
 - `invariants`
-- `assumptions`
+- `assumptions` (either stable assumption IDs or `{id, description}` entries)
 - `prover_targets`
 
 Canonicalization uses stable JSON with sorted keys and compact separators so the same semantic model produces the same bytes and CID.
+
+The default exchange model ships with a bounded assumption registry (`A1`-`A10`) and threat-model metadata (`T1`-`T10`) so proof reports can name exactly which assumptions each claim consumes.
 
 ## Python side
 

@@ -6,16 +6,22 @@ from dataclasses import asdict, dataclass, field, fields, is_dataclass
 from typing import Any, Mapping
 
 
+DEFAULT_ASSUMPTION_REGISTRY = {
+    'A1': 'cryptographic primitives are unbroken',
+    'A2': 'private keys are generated with sufficient entropy',
+    'A3': 'signing code signs only approved canonical transaction bytes',
+    'A4': 'database commits are serializable',
+    'A5': 'nonce reservation is atomic',
+    'A6': 'blockchain finality threshold k is sufficient',
+    'A7': 'admin identities are not all compromised',
+    'A8': 'HSM/key manager obeys its interface contract',
+    'A9': 'external RPC providers may lie/delay/censor within modeled bounds',
+    'A10': 'audit logs are append-only or tamper-evident',
+}
+
 DEFAULT_THREAT_MODEL_ASSUMPTIONS = [
-    'cryptographic primitives are unbroken',
-    'private keys are generated with sufficient entropy',
-    'HSM/key manager obeys its interface contract',
-    'database commits are serializable',
-    'nonce reservation is atomic',
-    'blockchain finality threshold k is sufficient',
-    'external RPC providers may lie/delay/censor within modeled bounds',
-    'audit logs are append-only or tamper-evident',
-    'production must not depend on simulated proof/ZKP/F-logic mode',
+    {'id': assumption_id, 'description': description}
+    for assumption_id, description in DEFAULT_ASSUMPTION_REGISTRY.items()
 ]
 
 REQUIRED_SEQUENCE_FIELDS = (
@@ -56,7 +62,7 @@ class SecurityModelIR:
     events: list[dict[str, Any]] = field(default_factory=list)
     state_machines: list[dict[str, Any]] = field(default_factory=list)
     invariants: list[dict[str, Any]] = field(default_factory=list)
-    assumptions: list[str] = field(default_factory=lambda: list(DEFAULT_THREAT_MODEL_ASSUMPTIONS))
+    assumptions: list[dict[str, str] | str] = field(default_factory=lambda: list(DEFAULT_THREAT_MODEL_ASSUMPTIONS))
     prover_targets: list[str] = field(default_factory=lambda: ['z3'])
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -86,6 +92,20 @@ def _ensure_sequence_field(model_dict: Mapping[str, Any], field_name: str) -> No
         raise ValueError(f'{field_name} must be a list in SecurityModelIR')
 
 
+def _validate_assumption_entry(assumption: dict[str, Any] | str) -> None:
+    if isinstance(assumption, str):
+        if not assumption.strip():
+            raise ValueError('assumption identifiers must be non-empty strings')
+        return
+    if isinstance(assumption, Mapping):
+        if not isinstance(assumption.get('id'), str) or not assumption['id'].strip():
+            raise ValueError('assumption mappings must include a non-empty id')
+        if not isinstance(assumption.get('description'), str) or not assumption['description'].strip():
+            raise ValueError('assumption mappings must include a non-empty description')
+        return
+    raise ValueError('assumptions must be strings or {id, description} mappings')
+
+
 def validate_ir(model: SecurityModelIR | Mapping[str, Any]) -> SecurityModelIR:
     """Validate and normalize a security IR instance."""
 
@@ -97,6 +117,8 @@ def validate_ir(model: SecurityModelIR | Mapping[str, Any]) -> SecurityModelIR:
         raise ValueError('model_id is required')
     for field_name in REQUIRED_SEQUENCE_FIELDS:
         _ensure_sequence_field(model_dict, field_name)
+    for assumption in normalized.assumptions:
+        _validate_assumption_entry(assumption)
     for capability in normalized.capabilities:
         if 'id' not in capability:
             raise ValueError('Every capability must include an id')

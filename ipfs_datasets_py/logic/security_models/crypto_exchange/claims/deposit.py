@@ -15,7 +15,7 @@ class NoDepositCreditedBeforeFinalityClaim(SecurityClaim):
         super().__init__(
             claim_id='no_deposit_before_finality',
             description='Deposits are credited only after finality is reached.',
-            required_assumptions=['blockchain finality threshold k is sufficient'],
+            required_assumptions=['A6', 'A9'],
             severity='high',
         )
 

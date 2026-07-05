@@ -12,7 +12,7 @@ def test_proof_report_and_receipt_round_trip() -> None:
         status='PROVED',
         prover='z3',
         proof_or_trace_cid='cid:proof',
-        assumptions=['database commits are serializable'],
+        assumptions=['A4'],
         compiler_cid='cid:compiler',
         counterexample=None,
         risk='blocking',

@@ -14,7 +14,7 @@ class NoDoubleSpendInternalBalanceClaim(SecurityClaim):
         super().__init__(
             claim_id='no_double_spend_internal_balance',
             description='No double spend of internal balance.',
-            required_assumptions=['database commits are serializable', 'nonce reservation is atomic'],
+            required_assumptions=['A4', 'A5'],
             severity='blocking',
         )
 
@@ -58,7 +58,7 @@ class AuditEventExistsForCriticalTransitionClaim(SecurityClaim):
         super().__init__(
             claim_id='audit_event_exists_for_critical_transition',
             description='Audit event exists for every critical transition.',
-            required_assumptions=['audit logs are append-only or tamper-evident'],
+            required_assumptions=['A10'],
             severity='medium',
         )
 

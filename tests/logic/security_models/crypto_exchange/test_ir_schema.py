@@ -1,5 +1,8 @@
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
-from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import validate_ir
+from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import (
+    DEFAULT_THREAT_MODEL_ASSUMPTIONS,
+    validate_ir,
+)
 
 
 def test_ir_schema_validates_example_model() -> None:
@@ -8,3 +11,5 @@ def test_ir_schema_validates_example_model() -> None:
     assert validated.model_id == 'minimal-btc-exchange'
     assert validated.assumptions
     assert validated.policies
+    assert validated.assumptions == DEFAULT_THREAT_MODEL_ASSUMPTIONS
+    assert [assumption['id'] for assumption in validated.assumptions] == [f'A{index}' for index in range(1, 11)]

@@ -15,7 +15,7 @@ class NoSigningAfterWalletFreezeClaim(SecurityClaim):
         super().__init__(
             claim_id='no_signing_request_after_wallet_freeze',
             description='No signing request after wallet freeze.',
-            required_assumptions=['HSM/key manager obeys its interface contract'],
+            required_assumptions=['A3', 'A8'],
             severity='high',
         )
 
