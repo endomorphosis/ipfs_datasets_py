@@ -6,6 +6,8 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.proof_report
 
 
 def test_fail_on_disproof_returns_nonzero(monkeypatch) -> None:
+    """GIVEN a blocking DISPROVED report WHEN fail-on disproof is requested THEN the CLI returns nonzero."""
+
     def _stub_prove_claims(model, provers):
         return [
             ProofReport(
@@ -29,6 +31,8 @@ def test_fail_on_disproof_returns_nonzero(monkeypatch) -> None:
 
 
 def test_require_real_ergoai_rejects_simulated_dependency(monkeypatch) -> None:
+    """GIVEN a simulated F-logic dependency WHEN real ErgoAI is required THEN the CLI rejects the run."""
+
     model = deepcopy(example_minimal_exchange_model())
     model.metadata['proof_dependency_modes'] = {'flogic': 'simulated', 'zkp': 'not-used'}
     monkeypatch.setattr(
@@ -39,6 +43,8 @@ def test_require_real_ergoai_rejects_simulated_dependency(monkeypatch) -> None:
 
 
 def test_forbid_simulated_zkp_rejects_simulated_dependency(monkeypatch) -> None:
+    """GIVEN a simulated ZKP dependency WHEN simulated ZKP is forbidden THEN the CLI rejects the run."""
+
     model = deepcopy(example_minimal_exchange_model())
     model.metadata['proof_dependency_modes'] = {'flogic': 'not-used', 'zkp': 'simulated'}
     monkeypatch.setattr(

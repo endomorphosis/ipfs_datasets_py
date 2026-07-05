@@ -35,6 +35,7 @@ RUNNER_FACTORIES = {
 }
 
 DEFAULT_PROVERS = ('z3', 'tla', 'datalog', 'tamarin', 'proverif', 'hyperltl', 'lean', 'coq')
+# Supported failure policies for the fail-closed CLI gate.
 FAIL_POLICIES = {'disproof', 'unknown-critical'}
 
 
@@ -49,6 +50,8 @@ def _normalize_provers(provers: Iterable[str]) -> list[str]:
 
 
 def _normalize_fail_policies(values: Iterable[str]) -> set[str]:
+    """Normalize comma-separated fail policies into a validated set."""
+
     policies = {
         token.strip()
         for item in values
@@ -100,6 +103,8 @@ def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofRe
 
 
 def _proof_dependency_mode(model: SecurityModelIR, key: str) -> str:
+    """Return the declared proof dependency mode for a metadata key."""
+
     proof_modes = model.metadata.get('proof_dependency_modes', {})
     if not isinstance(proof_modes, dict):
         return 'not-used'
@@ -112,6 +117,8 @@ def _execution_policy_violations(
     require_real_ergoai: bool,
     forbid_simulated_zkp: bool,
 ) -> list[str]:
+    """Return fail-closed execution-policy violations declared by model metadata."""
+
     violations: list[str] = []
     flogic_mode = _proof_dependency_mode(model, 'flogic')
     zkp_mode = _proof_dependency_mode(model, 'zkp')

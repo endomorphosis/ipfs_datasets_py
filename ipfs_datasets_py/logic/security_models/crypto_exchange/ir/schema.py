@@ -11,6 +11,8 @@ class AssumptionEntry(TypedDict):
     description: str
 
 
+# Stable bounded-security assumption identifiers used by proof reports and the
+# default threat-model IR payload.
 DEFAULT_ASSUMPTION_REGISTRY = {
     'A1': 'cryptographic primitives are unbroken',
     'A2': 'private keys are generated with sufficient entropy',
@@ -101,6 +103,8 @@ def _ensure_sequence_field(model_dict: Mapping[str, Any], field_name: str) -> No
 
 
 def _validate_assumption_entry(assumption: AssumptionEntry | str) -> None:
+    """Validate an assumption identifier or structured `{id, description}` entry."""
+
     if isinstance(assumption, str):
         if not assumption.strip():
             raise ValueError('assumption identifiers must be non-empty strings')
