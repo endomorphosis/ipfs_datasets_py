@@ -66,18 +66,9 @@ def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofRe
                 reports.append(report)
                 break
         else:
-            reports.append(last_report or ProofReport(
-                claim_id=claim.claim_id,
-                model_cid='',
-                status='UNKNOWN',
-                prover='none',
-                proof_or_trace_cid='',
-                assumptions=list(claim.required_assumptions),
-                compiler_cid='',
-                counterexample={'reason': 'no prover selected'},
-                risk=claim.severity,
-                signatures=[],
-            ))
+            if last_report is None:  # pragma: no cover
+                raise AssertionError('prove_claims requires at least one normalized prover')
+            reports.append(last_report)
     return reports
 
 

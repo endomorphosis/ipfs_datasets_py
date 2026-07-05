@@ -78,9 +78,16 @@ def test_default_prover_list_includes_proverif_stub() -> None:
 
 
 def test_prove_claims_falls_through_when_z3_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    attempted_claims: list[str] = []
+
+    def _stub_proverif_run(self, claim, model):
+        attempted_claims.append(claim.claim_id)
+        return self.unknown_report(claim, model, 'stubbed proverif fallback')
+
     monkeypatch.setattr(Z3Runner, 'is_available', staticmethod(lambda: False))
+    monkeypatch.setattr(ProVerifRunner, 'run_claim', _stub_proverif_run)
     reports = prove_claims(example_minimal_exchange_model(), ['z3', 'proverif'])
-    assert all(report.status == 'UNKNOWN' for report in reports)
+    assert attempted_claims == [claim.claim_id for claim in default_claims()]
     assert all(report.prover == ProVerifRunner.prover_name for report in reports)
 
 
