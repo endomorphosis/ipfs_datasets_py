@@ -32,11 +32,11 @@ class RuntimeMTLMonitor:
         return self.violations
 
     def check_deposit_only_after_finality(self) -> list[dict[str, Any]]:
-        finalized = False
+        finalized_txids: set[Any] = set()
         for index, event in enumerate(self.events):
             if event.get('event') == 'deposit_finalized':
-                finalized = True
-            if event.get('event') == 'deposit_credited' and not finalized:
+                finalized_txids.add(event.get('txid'))
+            if event.get('event') == 'deposit_credited' and event.get('txid') not in finalized_txids:
                 self.violations.append({'property': 'deposit_observed -> credited only after finality', 'index': index, 'event': event})
         return self.violations
 

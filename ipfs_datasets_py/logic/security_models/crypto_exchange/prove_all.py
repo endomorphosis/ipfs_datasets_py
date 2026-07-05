@@ -68,9 +68,11 @@ def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofRe
 
 
 def _should_fail(report: ProofReport, *, strict: bool, fail_on_unknown_critical: bool) -> bool:
+    if not strict:
+        return False
     if report.status == 'DISPROVED' and report.risk in {'blocking', 'high'}:
-        return strict
-    if report.status == 'UNKNOWN' and report.risk == 'blocking' and fail_on_unknown_critical and strict:
+        return True
+    if report.status == 'UNKNOWN' and report.risk == 'blocking' and fail_on_unknown_critical:
         return True
     return False
 
