@@ -110,7 +110,7 @@ def run_vector(vector: Dict[str, Any]) -> Dict[str, Any]:
         elif vector.get("inputType") == "zkpWitness" and isinstance(zkp_witness, dict):
             outcome = evaluate_zkp_witness(zkp_witness)
         elif vector.get("inputType") == "tdfol" and isinstance(tdfol, dict):
-            outcome = evaluate_tdfol(tdfol)
+            outcome = evaluate_tdfol(tdfol, str(vector.get("subsystem") or "temporal"))
         elif vector.get("inputType") == "temporalTrace" and isinstance(temporal_trace, dict):
             outcome = evaluate_temporal_trace(temporal_trace)
         elif vector.get("inputType") == "modalKripke" and isinstance(modal_kripke, dict):
@@ -217,7 +217,7 @@ def evaluate_smt2(smt2: str) -> Dict[str, Any]:
             "status": "unknown",
             "reason": "unknown",
             "proverId": "python-z3-reference",
-            "metadata": {"pythonModuleMode": "smt2-runner", "route": "no-assertions"},
+            "metadata": {"pythonModuleMode": "smt2-runner", "hostDependent": True, "route": "no-assertions"},
         }
 
     z3_result = run_z3_smt2_check(smt2)
@@ -401,11 +401,11 @@ def deterministic_smt2_outcome(smt2: str) -> Dict[str, Any]:
         "status": "unknown",
         "reason": "unknown",
         "proverId": "python-reference",
-        "metadata": {"simulated": True, "route": "unsupported"},
+        "metadata": {"hostDependent": True, "route": "unsupported"},
     }
 
 
-def evaluate_tdfol(payload: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_tdfol(payload: Dict[str, Any], subsystem: str = "temporal") -> Dict[str, Any]:
     axioms = [str(item or "").strip() for item in payload.get("axioms", []) if str(item or "").strip()]
     goal = str(payload.get("goal") or "").strip()
 
@@ -420,30 +420,40 @@ def evaluate_tdfol(payload: Dict[str, Any]) -> Dict[str, Any]:
         if m_proh:
             prohibitions.add(str(m_proh.group(1) or "").strip())
 
+    policy = policy_from_literal_payload(
+        sorted(obligations),
+        sorted(prohibitions),
+        goal,
+        "tdfol",
+        f"conformance-tdfol-{normalize_atom(subsystem) or 'temporal'}",
+    )
     overlap = sorted(obligations.intersection(prohibitions))
     if overlap:
-        return {
+        fallback = {
             "status": "refuted",
             "reason": "refuted",
             "proverId": "tdfol-native",
             "metadata": {"simulated": True, "route": "deontic-contradiction", "atom": overlap[0]},
         }
+        return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
 
     if goal and goal in axioms:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "tdfol-native",
             "metadata": {"simulated": True, "route": "goal-in-axioms"},
         }
+        return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
 
     if axioms:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "tdfol-native",
             "metadata": {"simulated": True, "route": "axioms-consistent"},
         }
+        return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
 
     return {
         "status": "unknown",
@@ -469,29 +479,39 @@ def evaluate_fol_formula(payload: Dict[str, Any]) -> Dict[str, Any]:
             positives.add(str(m_pos.group(1) or "").strip())
 
     overlap = sorted(positives.intersection(negatives))
+    policy = policy_from_literal_payload(
+        sorted(positives),
+        sorted(negatives),
+        goal,
+        "fol",
+        "conformance-fol-formula",
+    )
     if overlap:
-        return {
+        fallback = {
             "status": "refuted",
             "reason": "refuted",
             "proverId": "fol-native",
             "metadata": {"simulated": True, "route": "symbol-contradiction", "atom": overlap[0]},
         }
+        return align_decision_with_native_policy(fallback, policy, "fol", "fol-native")
 
     if goal and goal in premises:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "fol-native",
             "metadata": {"simulated": True, "route": "goal-in-premises"},
         }
+        return align_decision_with_native_policy(fallback, policy, "fol", "fol-native")
 
     if premises:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "fol-native",
             "metadata": {"simulated": True, "route": "premises-consistent"},
         }
+        return align_decision_with_native_policy(fallback, policy, "fol", "fol-native")
 
     return {
         "status": "unknown",
@@ -517,29 +537,39 @@ def evaluate_temporal_trace(payload: Dict[str, Any]) -> Dict[str, Any]:
             positives.add(str(m_pos.group(1) or "").strip())
 
     overlap = sorted(positives.intersection(negatives))
+    policy = policy_from_literal_payload(
+        sorted(positives),
+        sorted(negatives),
+        query,
+        "temporal_trace",
+        "conformance-temporal-trace",
+    )
     if overlap:
-        return {
+        fallback = {
             "status": "refuted",
             "reason": "refuted",
             "proverId": "temporal-native",
             "metadata": {"simulated": True, "route": "trace-contradiction", "atom": overlap[0]},
         }
+        return align_decision_with_native_policy(fallback, policy, "temporal", "temporal-native")
 
     if query and query in events:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "temporal-native",
             "metadata": {"simulated": True, "route": "query-observed"},
         }
+        return align_decision_with_native_policy(fallback, policy, "temporal", "temporal-native")
 
     if events:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "temporal-native",
             "metadata": {"simulated": True, "route": "trace-present"},
         }
+        return align_decision_with_native_policy(fallback, policy, "temporal", "temporal-native")
 
     return {
         "status": "unknown",
@@ -565,29 +595,39 @@ def evaluate_modal_kripke(payload: Dict[str, Any]) -> Dict[str, Any]:
             positives.add(str(m_pos.group(1) or "").strip())
 
     overlap = sorted(positives.intersection(negatives))
+    policy = policy_from_literal_payload(
+        sorted(positives),
+        sorted(negatives),
+        query,
+        "modal_kripke",
+        "conformance-modal-kripke",
+    )
     if overlap:
-        return {
+        fallback = {
             "status": "refuted",
             "reason": "refuted",
             "proverId": "modal-native",
             "metadata": {"simulated": True, "route": "kripke-contradiction", "atom": overlap[0]},
         }
+        return align_decision_with_native_policy(fallback, policy, "modal", "modal-native")
 
     if query and query in worlds:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "modal-native",
             "metadata": {"simulated": True, "route": "query-true-in-frame"},
         }
+        return align_decision_with_native_policy(fallback, policy, "modal", "modal-native")
 
     if worlds:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "modal-native",
             "metadata": {"simulated": True, "route": "frame-present"},
         }
+        return align_decision_with_native_policy(fallback, policy, "modal", "modal-native")
 
     return {
         "status": "unknown",
@@ -603,30 +643,40 @@ def evaluate_deontic_conflict(payload: Dict[str, Any]) -> Dict[str, Any]:
     query = str(payload.get("query") or "").strip()
 
     prohibited = set(prohibitions)
+    policy = policy_from_literal_payload(
+        obligations,
+        prohibitions,
+        query,
+        "deontic_conflict",
+        "conformance-deontic-conflict",
+    )
     for obligation in obligations:
         if obligation in prohibited:
-            return {
+            fallback = {
                 "status": "refuted",
                 "reason": "refuted",
                 "proverId": "deontic-native",
                 "metadata": {"simulated": True, "route": "obligation-prohibition-conflict", "atom": obligation},
             }
+            return align_decision_with_native_policy(fallback, policy, "deontic", "deontic-native")
 
     if query and query in obligations and query not in prohibited:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "deontic-native",
             "metadata": {"simulated": True, "route": "query-obligated"},
         }
+        return align_decision_with_native_policy(fallback, policy, "deontic", "deontic-native")
 
     if obligations or prohibitions:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "deontic-native",
             "metadata": {"simulated": True, "route": "norms-consistent"},
         }
+        return align_decision_with_native_policy(fallback, policy, "deontic", "deontic-native")
 
     return {
         "status": "unknown",
@@ -651,30 +701,46 @@ def evaluate_dcec(payload: Dict[str, Any]) -> Dict[str, Any]:
         if m_proh:
             prohibitions.add(str(m_proh.group(1) or "").strip())
 
+    premise_atoms = []
+    for premise in premises:
+        atom = normalize_atom(premise)
+        if atom:
+            premise_atoms.append(atom)
+
+    policy = policy_from_literal_payload(
+        sorted(set(obligations).union(premise_atoms)),
+        sorted(prohibitions),
+        goal,
+        "dcec",
+        "conformance-dcec",
+    )
     overlap = sorted(obligations.intersection(prohibitions))
     if overlap:
-        return {
+        fallback = {
             "status": "refuted",
             "reason": "refuted",
             "proverId": "dcec-native",
             "metadata": {"simulated": True, "route": "deontic-contradiction", "atom": overlap[0]},
         }
+        return align_decision_with_native_policy(fallback, policy, "dcec", "dcec-native")
 
     if goal and goal in premises:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "dcec-native",
             "metadata": {"simulated": True, "route": "goal-in-premises"},
         }
+        return align_decision_with_native_policy(fallback, policy, "dcec", "dcec-native")
 
     if premises:
-        return {
+        fallback = {
             "status": "proved",
             "reason": "proved",
             "proverId": "dcec-native",
             "metadata": {"simulated": True, "route": "premises-consistent"},
         }
+        return align_decision_with_native_policy(fallback, policy, "dcec", "dcec-native")
 
     return {
         "status": "unknown",
@@ -698,9 +764,9 @@ def evaluate_legal_norm(payload: Dict[str, Any]) -> Dict[str, Any]:
             "proverId": "legal-norm-native",
             "metadata": {"simulated": True, "route": "query-negated-in-facts"},
         }
-        return fallback
+        # continue to native-policy alignment below when a synthetic policy exists
 
-    if query and (query in facts or f"derive:{query}" in norms):
+    elif query and (query in facts or f"derive:{query}" in norms):
         fallback = {
             "status": "proved",
             "reason": "proved",
@@ -1010,6 +1076,93 @@ def policy_from_zkp_statement_payload(payload: Dict[str, Any]) -> Optional[Dict[
         "prohibitions": [],
         "obligations": obligations,
     }
+
+
+def policy_from_literal_payload(
+    positives: Iterable[str],
+    negatives: Iterable[str],
+    goal: str,
+    resource: str,
+    policy_id: str,
+) -> Optional[Dict[str, Any]]:
+    permissions = []
+    for value in positives:
+        atom = normalize_atom(str(value))
+        if atom:
+            permissions.append({"cap": atom, "rsc": resource})
+
+    prohibitions = []
+    for value in negatives:
+        atom = normalize_atom(str(value))
+        if atom:
+            prohibitions.append({"cap": atom, "rsc": resource})
+
+    obligations: List[Dict[str, Any]] = []
+    goal_atom = normalize_atom(str(goal))
+    if goal_atom:
+        obligations.append({"description": goal_atom, "requiredCap": goal_atom, "rsc": resource})
+
+    if not permissions and not prohibitions and not obligations:
+        return None
+
+    return {
+        "id": policy_id,
+        "version": "1",
+        "permissions": permissions,
+        "prohibitions": prohibitions,
+        "obligations": obligations,
+    }
+
+
+def align_decision_with_native_policy(
+    fallback: Dict[str, Any],
+    policy: Optional[Dict[str, Any]],
+    subsystem: str,
+    prover_id: str,
+) -> Dict[str, Any]:
+    fallback_reason = str(fallback.get("reason") or "")
+    if fallback_reason not in {"proved", "refuted"}:
+        return fallback
+    if not policy:
+        return fallback
+
+    try:
+        native_outcome = evaluate_policy(policy, {"subsystem": subsystem})
+        mapped = map_native_policy_outcome(native_outcome, prover_id)
+        if mapped is not None and str(mapped.get("reason") or "") == fallback_reason:
+            metadata = dict(mapped.get("metadata") or {})
+            metadata.update(
+                {
+                    "nativeAttempted": True,
+                    "nativeProverId": native_outcome.get("proverId"),
+                    "nativeReason": native_outcome.get("reason"),
+                }
+            )
+            mapped["metadata"] = metadata
+            return mapped
+
+        metadata = dict(fallback.get("metadata") or {})
+        metadata.update(
+            {
+                "nativeAttempted": True,
+                "nativeProverId": native_outcome.get("proverId"),
+                "nativeReason": native_outcome.get("reason"),
+                "nativeFallback": True,
+            }
+        )
+        fallback["metadata"] = metadata
+        return fallback
+    except Exception as exc:
+        metadata = dict(fallback.get("metadata") or {})
+        metadata.update(
+            {
+                "nativeAttempted": True,
+                "nativeFallback": True,
+                "nativeError": f"{exc.__class__.__name__}: {exc}",
+            }
+        )
+        fallback["metadata"] = metadata
+        return fallback
 
 
 def build_tdfol_policy_formula(policy: Dict[str, Any], subsystem: str) -> Any:
