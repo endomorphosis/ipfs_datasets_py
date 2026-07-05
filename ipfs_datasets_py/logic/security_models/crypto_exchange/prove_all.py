@@ -56,8 +56,14 @@ def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofRe
     reports: list[ProofReport] = []
     selected_provers = _normalize_provers(provers)
     for claim in default_claims():
-        last_report: ProofReport | None = None
-        for prover_name in selected_provers:
+        prover_iter = iter(selected_provers)
+        first_prover_name = next(prover_iter)
+        first_runner = RUNNER_FACTORIES[first_prover_name]()
+        last_report = first_runner.run_claim(claim, model)
+        if last_report.status in {'PROVED', 'DISPROVED', 'NOT_MODELED'}:
+            reports.append(last_report)
+            continue
+        for prover_name in prover_iter:
             runner_factory = RUNNER_FACTORIES[prover_name]
             runner = runner_factory()
             report = runner.run_claim(claim, model)
@@ -66,8 +72,6 @@ def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofRe
                 reports.append(report)
                 break
         else:
-            if last_report is None:  # pragma: no cover
-                raise AssertionError('prove_claims requires at least one normalized prover')
             reports.append(last_report)
     return reports
 

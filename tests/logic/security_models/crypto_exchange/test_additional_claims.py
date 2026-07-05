@@ -2,16 +2,19 @@ import pytest
 from copy import deepcopy
 
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.capability import CapabilityDelegationMonotonicityClaim
+from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.base import SecurityClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims import default_claims
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.deposit import NoDepositCreditedBeforeFinalityClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.hsm import NoSigningAfterWalletFreezeClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.claims.ledger import AuditEventExistsForCriticalTransitionClaim
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
+from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import SecurityModelIR
 from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import (
     DEFAULT_PROVERS,
     _normalize_provers,
     prove_claims,
 )
+from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.proof_report import ProofReport
 from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.proverif_runner import ProVerifRunner
 from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.z3_runner import Z3Runner
 
@@ -80,7 +83,7 @@ def test_default_prover_list_includes_proverif_stub() -> None:
 def test_prove_claims_falls_through_when_z3_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     attempted_claims: list[str] = []
 
-    def _stub_proverif_run(self, claim, model):
+    def _stub_proverif_run(self, claim: SecurityClaim, model: SecurityModelIR) -> ProofReport:
         attempted_claims.append(claim.claim_id)
         return self.unknown_report(claim, model, 'stubbed proverif fallback')
 
