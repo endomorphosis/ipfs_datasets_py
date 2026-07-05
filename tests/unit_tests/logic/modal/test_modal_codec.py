@@ -40849,6 +40849,139 @@ def test_decompiler_reconstructs_packet_331_typed_domain_atoms() -> None:
         assert structural_fragment in structural_text
 
 
+def test_decompiler_reconstructs_packet_336_liability_and_status_slots() -> None:
+    penalty = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Penalties. An owner or master violating this chapter is liable "
+            "to the United States Government for a civil penalty of 3 times "
+            "the value of the seaman's money, property, and wages involved."
+        ),
+        predicate="owner_master_civil_penalty_liability",
+        conditions=["violating this chapter"],
+    )
+    status = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Transferred Editorial Notes Codification Section 3789l was "
+            "editorially reclassified as section 10235 of Title 34, Crime "
+            "Control and Law Enforcement."
+        ),
+        predicate="editorial_reclassification_status",
+    )
+    status.formulas[0].metadata[
+        "fallback_rule"
+    ] = "uscode_editorial_status_v1"
+
+    penalty_decoded = decode_modal_ir_document(penalty)
+    penalty_slots = decoded_modal_phrase_slot_text_map(penalty_decoded)
+    penalty_structural_text = _structural_decoded_text(
+        penalty_decoded,
+        modal_ir=penalty,
+        selected_frame=None,
+    )
+    status_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(status)
+    )
+
+    assert "civil_penalty_liability" in penalty_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "penalty_value_multiplier" in penalty_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "civil_penalty_liability:frame->deontic" in penalty_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "civil_penalty_liability:frame->conditional_normative" in penalty_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "CEC.native" in penalty_slots["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in penalty_slots["legal_ir_view_prototype"]
+    assert "civil penalty liability" in penalty_structural_text
+
+    assert "editorial_transfer_status" in status_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "editorial_reclassification" in status_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "crime_control_law_enforcement" in status_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in status_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+
+
+def test_decompiler_reconstructs_packet_336_housing_and_authorization_slots() -> None:
+    housing = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Specially adapted housing assistance. The Secretary may provide "
+            "specially adapted housing assistance to eligible disabled veterans."
+        ),
+        predicate="secretary_provide_specially_adapted_housing_assistance",
+    )
+    supplemental = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Efforts supplemental to existing authorizations. The policies "
+            "and goals set forth in this chapter are supplementary to those "
+            "set forth in existing authorizations of Federal agencies."
+        ),
+        predicate="policies_goals_supplement_existing_authorizations",
+    )
+
+    housing_decoded = decode_modal_ir_document(housing)
+    housing_slots = decoded_modal_phrase_slot_text_map(housing_decoded)
+    housing_structural_text = _structural_decoded_text(
+        housing_decoded,
+        modal_ir=housing,
+        selected_frame=None,
+    )
+    supplemental_decoded = decode_modal_ir_document(supplemental)
+    supplemental_slots = decoded_modal_phrase_slot_text_map(supplemental_decoded)
+    supplemental_structural_text = _structural_decoded_text(
+        supplemental_decoded,
+        modal_ir=supplemental,
+        selected_frame=None,
+    )
+
+    assert "special_adapted_housing_assistance" in housing_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "special_adapted_housing_assistance:frame->deontic" in housing_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "special_adapted_housing_assistance:frame->conditional_normative" in (
+        housing_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "deontic.ir" in housing_slots["legal_ir_view_prototype"]
+    assert "CEC.native" in housing_slots["legal_ir_view_prototype"]
+    assert "special adapted housing assistance" in housing_structural_text
+
+    assert "supplemental_authorization_policy" in supplemental_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "supplemental_authorization_policy:frame->conditional_normative" in (
+        supplemental_slots["typed-decompiler-target-semantic-family-pair"]
+    )
+    assert "CEC.native" in supplemental_slots["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in supplemental_slots[
+        "legal_ir_view_prototype"
+    ]
+    assert "supplemental authorization policy" in supplemental_structural_text
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

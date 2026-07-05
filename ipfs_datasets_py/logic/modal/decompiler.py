@@ -274,6 +274,8 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("hospital care and medical services", "veterans_medical_care"),
     ("medical care and treatment for commonwealth army veterans", "veterans_medical_care"),
     ("commonwealth army veterans", "commonwealth_army_veteran_benefit"),
+    ("specially adapted housing assistance", "special_adapted_housing_assistance"),
+    ("specially adapted housing", "special_adapted_housing_assistance"),
     ("republic of the philippines", "philippines_veteran_assistance"),
     ("assist the republic of the philippines", "philippines_veteran_assistance"),
     ("common-funded budgets of nato", "nato_common_funded_budget"),
@@ -583,6 +585,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("force and effect", "statutory_force_effect"),
     ("same force and effect", "statutory_force_effect"),
     ("relationship to other law", "legal_relationship_override"),
+    ("supplementary to those set forth in existing authorizations", "supplemental_authorization_policy"),
+    ("supplemental to existing authorizations", "supplemental_authorization_policy"),
+    ("supplementary to existing authorizations", "supplemental_authorization_policy"),
+    ("existing authorizations", "supplemental_authorization_policy"),
     ("payment authorization", "payment_authorization"),
     ("securities and trust indentures", "securities_trust_indenture"),
     ("trust indentures", "securities_trust_indenture"),
@@ -734,6 +740,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("false statement or representation", "false_statement_penalty"),
     ("false statements", "false_statement_penalty"),
     ("criminal penalty for false statements", "false_statement_penalty"),
+    ("civil penalty", "civil_penalty_liability"),
+    ("liable for a civil penalty", "civil_penalty_liability"),
+    ("liable to the united states government for a civil penalty", "civil_penalty_liability"),
     ("knowingly and willfully", "scienter_requirement"),
     ("material fact", "material_fact_representation"),
     ("destruction of letter boxes or mail", "postal_mailbox_destruction"),
@@ -3702,6 +3711,13 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     if re.search(r"\bsurplus\s+housing\b", normalized):
         add("surplus_housing_transfer")
     if re.search(
+        r"\bspecial(?:ly)?\s+adapted\s+housing\b|"
+        r"\badapted\s+housing\b.{0,80}\b(?:assist(?:ance)?|grant|benefit)\b|"
+        r"\b(?:assist(?:ance)?|grant|benefit)\b.{0,80}\badapted\s+housing\b",
+        normalized,
+    ):
+        add("special_adapted_housing_assistance")
+    if re.search(
         r"\bcertification\b.{0,80}\bsecretar(?:y|ies)\b|"
         r"\bsecretar(?:y|ies)\b.{0,80}\bcertif(?:y|ies|ied|ication)\b",
         normalized,
@@ -3866,6 +3882,25 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("scienter_requirement")
     if re.search(r"\bmaterial\s+fact\b", normalized):
         add("material_fact_representation")
+    if re.search(
+        r"\bliab(?:le|ility)\b.{0,120}\bcivil\s+penalt(?:y|ies)\b|"
+        r"\bcivil\s+penalt(?:y|ies)\b.{0,120}\bliab(?:le|ility)\b",
+        normalized,
+    ):
+        add("civil_penalty_liability")
+    if re.search(
+        r"\b(?:penalt(?:y|ies)|liable)\b.{0,80}\b\d+\s+times\s+the\s+value\b|"
+        r"\b\d+\s+times\s+the\s+value\b.{0,80}\b(?:penalt(?:y|ies)|liable)\b",
+        normalized,
+    ):
+        add("penalty_value_multiplier")
+    if re.search(
+        r"\b(?:policies|goals)\b.{0,120}\bsupplement(?:al|ary)\b"
+        r".{0,120}\bexisting\s+authorizations\b|"
+        r"\bsupplement(?:al|ary)\b.{0,120}\bexisting\s+authorizations\b",
+        normalized,
+    ):
+        add("supplemental_authorization_policy")
     if re.search(r"\bpredictive\s+modeling\b", normalized):
         add("predictive_analytics")
         if re.search(r"\b(?:disclos(?:e|ure)|analytics|technologies)\b", normalized):
@@ -9961,6 +9996,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "state_allotment_duty",
         "state_formula_grant",
         "secretary_availability",
+        "civil_penalty_liability",
         "sovereign_debt_conversion",
         "sea_grant_college_program",
         "settler_resource_use",
@@ -9992,6 +10028,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "valuable_shipment_regulation",
         "perishable_commodity_container_exemption",
         "veterans_personal_property",
+        "special_adapted_housing_assistance",
     }:
         add("deontic.ir")
         add("TDFOL.prover")
@@ -10065,6 +10102,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "retirement_home_payment",
         "professional_assessment_committee",
         "service_eligibility",
+        "civil_penalty_liability",
+        "penalty_value_multiplier",
+        "special_adapted_housing_assistance",
+        "supplemental_authorization_policy",
     }:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
@@ -10131,6 +10172,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "timber_stone_use",
         "valuable_shipment_regulation",
         "veterans_medical_care",
+        "special_adapted_housing_assistance",
+        "supplemental_authorization_policy",
         "commonwealth_army_veteran_benefit",
         "philippines_veteran_assistance",
         "nato_contribution_authority",
@@ -10279,6 +10322,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "false_claim_knowledge",
             "false_fraudulent_claim",
             "false_statement_penalty",
+            "civil_penalty_liability",
+            "penalty_value_multiplier",
             "foreign_commercial_service",
             "foreign_service",
             "foreign_relations_exchange_program",
@@ -10401,6 +10446,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "statutory_construction",
             "statutory_applicability",
             "statutory_chapter_applicability",
+            "supplemental_authorization_policy",
             "homestead_entry_confirmation",
             "irrigation_project",
             "settler_resource_use",
@@ -10438,6 +10484,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "valuable_shipment_regulation",
             "veterans_personal_property",
             "veterans_medical_care",
+            "special_adapted_housing_assistance",
             "commonwealth_army_veteran_benefit",
             "philippines_veteran_assistance",
             "nato_contribution_authority",
@@ -10598,6 +10645,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "false_claim_knowledge",
             "false_fraudulent_claim",
             "false_statement_penalty",
+            "civil_penalty_liability",
+            "penalty_value_multiplier",
             "game_bird_preserve_protection",
             "game_preserve",
             "grant_contract_award",
@@ -10730,6 +10779,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "statutory_force_effect",
             "statutory_applicability",
             "statutory_chapter_applicability",
+            "supplemental_authorization_policy",
             "statutory_short_title",
             "settler_resource_use",
             "sustainable_chemistry_research",
@@ -10771,6 +10821,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "valuable_shipment_regulation",
             "veterans_personal_property",
             "veterans_medical_care",
+            "special_adapted_housing_assistance",
             "commonwealth_army_veteran_benefit",
             "philippines_veteran_assistance",
             "nato_contribution_authority",
@@ -10909,6 +10960,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "secretary_availability",
             "surplus_housing_transfer",
             "veterans_medical_care",
+            "special_adapted_housing_assistance",
+            "civil_penalty_liability",
+            "penalty_value_multiplier",
             "commonwealth_army_veteran_benefit",
             "philippines_veteran_assistance",
             "nato_contribution_authority",
@@ -10955,6 +11009,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "territorial_jurisdiction",
             "hydraulic_mining",
             "false_statement_penalty",
+            "civil_penalty_liability",
+            "penalty_value_multiplier",
             "scienter_requirement",
             "material_fact_representation",
             "absent_uniformed_services_voter",
@@ -10978,6 +11034,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "perishable_agricultural_commodity",
             "statutory_applicability",
             "statutory_chapter_applicability",
+            "supplemental_authorization_policy",
             "state_energy_program",
             "state_ranking",
             "service_eligibility",
@@ -10992,6 +11049,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "clearing_bank_resolution",
             "federal_reserve_board_oversight",
             "perishable_commodity_container_exemption",
+            "special_adapted_housing_assistance",
         }:
             add("conditional_normative")
         if normalized_atom in {
