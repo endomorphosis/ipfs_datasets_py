@@ -267,7 +267,7 @@ class PythonASTExtractor:
                 enable_monitoring=False,
             ).to_fol(sentence)
         except Exception:
-            logger.warning('Falling back to minimal FOL placeholder for autoformalized sentence', exc_info=True)
+            logger.warning('Falling back to minimal FOL placeholder for autoformalized sentence')
             return f'Statement({sentence.replace(" ", "_")})'
 
     def _extract_natural_language_features(self, sentence: str) -> tuple[dict[str, list[str]], list[dict[str, Any]]]:
@@ -279,7 +279,7 @@ class PythonASTExtractor:
 
             return extract_predicates(sentence), extract_logical_relations(sentence)
         except Exception:
-            logger.warning('Falling back to empty natural-language features for autoformalized sentence', exc_info=True)
+            logger.warning('Falling back to empty natural-language features for autoformalized sentence')
             return ({'nouns': [], 'verbs': [], 'adjectives': [], 'relations': []}, [])
 
     @staticmethod

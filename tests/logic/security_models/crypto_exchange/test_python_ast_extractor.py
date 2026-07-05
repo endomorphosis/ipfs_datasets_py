@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from ipfs_datasets_py.logic.security_models.crypto_exchange.extractors import PythonASTExtractor
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema import validate_ir
 
@@ -44,7 +46,7 @@ def approve_withdrawal(wallet, authorized, balance, audit_log):
 
 
 
-def test_python_ast_extractor_aggregates_directory_inputs(tmp_path) -> None:
+def test_python_ast_extractor_aggregates_directory_inputs(tmp_path: Path) -> None:
     """GIVEN a Python codebase WHEN autoformalized from disk THEN module facts are aggregated into one IR."""
 
     first = tmp_path / 'withdrawals.py'
