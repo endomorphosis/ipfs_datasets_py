@@ -6,7 +6,7 @@ import hashlib
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from ..ir.schema import SecurityModelIR
 from .python_ast_extractor import (
@@ -66,6 +66,14 @@ _CRITICAL_ACTION_PATTERNS = tuple(re.compile(r'\b' + re.escape(keyword) + r'\b')
 _NON_DECLARATION_PREFIXES = ('if', 'for', 'while', 'switch', 'catch', 'return', 'throw', 'new')
 
 
+def _merge_lists(left: list[Any], right: list[Any]) -> list[Any]:
+    merged = list(left)
+    for item in right:
+        if item not in merged:
+            merged.append(item)
+    return merged
+
+
 @dataclass(frozen=True)
 class _CodeSymbol:
     """Symbol metadata harvested from non-Python source code."""
@@ -111,8 +119,13 @@ class SourceCodeExtractor:
                 'Cross-function dataflow, concrete balances, and principal aliasing remain partially modeled.',
             ],
         }
-        functions = [symbol for symbol in symbols if symbol.kind == 'function']
-        classes = [symbol for symbol in symbols if symbol.kind == 'class']
+        functions: list[_CodeSymbol] = []
+        classes: list[_CodeSymbol] = []
+        for symbol in symbols:
+            if symbol.kind == 'function':
+                functions.append(symbol)
+            elif symbol.kind == 'class':
+                classes.append(symbol)
         events = self._collect_events(functions)
         return SecurityModelIR(
             schema_version='security-model-ir/v1',
@@ -162,11 +175,11 @@ class SourceCodeExtractor:
         )
 
     def _extract_ir_from_directory(self, root: Path, *, model_id: str) -> SecurityModelIR:
-        file_paths = [
+        file_paths = sorted(
             file_path
-            for file_path in sorted(root.rglob('*'))
+            for file_path in root.rglob('*')
             if file_path.is_file() and file_path.suffix.lower() in _SUPPORTED_LANGUAGE_EXTENSIONS
-        ]
+        )
         if not file_paths:
             raise ValueError(f'No supported source files found under {root}')
 
@@ -225,10 +238,7 @@ class SourceCodeExtractor:
         return self._detect_language(Path(autoformalization['module_path']))
 
     def _merge_model_field(self, models: list[SecurityModelIR], field_name: str) -> list[dict[str, Any]]:
-        return self._python._dedupe_dicts(
-            self._python._flatten(getattr(model, field_name) for model in models),
-            'id',
-        )
+        return self._dedupe_dicts(self._flatten(getattr(model, field_name) for model in models), 'id')
 
     def _collect_symbols(self, source: str, language: str) -> list[_CodeSymbol]:
         symbols: list[_CodeSymbol] = []
@@ -270,7 +280,6 @@ class SourceCodeExtractor:
             matched_kind: str | None = None
             matched_name: str | None = None
             if self._looks_like_non_declaration(stripped):
-                comment_buffer = []
                 continue
             for pattern in _CLASS_PATTERNS[language]:
                 match = pattern.match(line)
@@ -307,6 +316,33 @@ class SourceCodeExtractor:
     @staticmethod
     def _looks_like_non_declaration(line: str) -> bool:
         return any(line.startswith(f'{prefix} ') or line.startswith(f'{prefix}(') for prefix in _NON_DECLARATION_PREFIXES)
+
+    @staticmethod
+    def _flatten(values: Iterable[list[dict[str, Any]]]) -> list[dict[str, Any]]:
+        flattened: list[dict[str, Any]] = []
+        for group in values:
+            flattened.extend(group)
+        return flattened
+
+    @staticmethod
+    def _dedupe_dicts(entries: list[dict[str, Any]], key: str) -> list[dict[str, Any]]:
+        deduped: dict[str, dict[str, Any]] = {}
+        for entry in entries:
+            entry_key = entry[key]
+            if entry_key not in deduped:
+                deduped[entry_key] = dict(entry)
+                continue
+            existing = deduped[entry_key]
+            merged = dict(existing)
+            for field_name, value in entry.items():
+                if field_name == key:
+                    continue
+                if isinstance(existing.get(field_name), list) and isinstance(value, list):
+                    merged[field_name] = _merge_lists(existing[field_name], value)
+                elif field_name not in merged or merged[field_name] in (None, '', []):
+                    merged[field_name] = value
+            deduped[entry_key] = merged
+        return [deduped[item_key] for item_key in sorted(deduped)]
 
     def _collect_policy_entries(self, functions: list[_CodeSymbol]) -> list[dict[str, Any]]:
         policies: dict[str, dict[str, Any]] = {}
