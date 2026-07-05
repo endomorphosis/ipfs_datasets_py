@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .base import SecurityClaim
+from ..monitors.runtime_mtl import RuntimeMTLMonitor
 from ..compilers.to_z3 import Z3Compilation, claim_not_modeled, z3_import
 from ..ir.schema import SecurityModelIR
 
@@ -22,18 +23,32 @@ class NoDepositCreditedBeforeFinalityClaim(SecurityClaim):
         if not model.events:
             return claim_not_modeled(self, 'deposit events are not modeled')
         z3 = z3_import()
-        credited = z3.Bool('deposit_credited')
-        finalized = z3.Bool('deposit_finalized')
-        assertions = []
-        if self.policy_enabled(model, 'credit_after_finality_required'):
-            assertions.append(z3.Implies(credited, finalized))
+        credited_events = [event for event in model.events if event.get('event') == 'deposit_credited']
+        if not credited_events:
+            return claim_not_modeled(self, 'credited deposit events are not modeled')
+        policy_enabled = z3.Bool('credit_after_finality_required')
+        credited_before_finality = z3.Bool('credited_before_finality')
+        violations = RuntimeMTLMonitor(events=model.events).check_deposit_only_after_finality()
+        offending_txids = sorted(
+            {
+                str(event.get('txid'))
+                for event in (violation.get('event', {}) for violation in violations)
+                if event.get('txid') is not None
+            }
+        )
+        assertions = [
+            policy_enabled == self.policy_enabled(model, 'credit_after_finality_required'),
+            credited_before_finality == bool(violations),
+        ]
         return Z3Compilation(
             claim=self,
             assertions=assertions,
-            property_formula=z3.Implies(credited, finalized),
-            violation_formula=z3.And(credited, z3.Not(finalized)),
+            property_formula=z3.And(policy_enabled, z3.Not(credited_before_finality)),
+            violation_formula=z3.Or(z3.Not(policy_enabled), credited_before_finality),
             compiler_artifact={
                 'kind': 'deposit_policy',
+                'credited_events': len(credited_events),
+                'offending_txids': offending_txids,
                 'assertions': [str(expr) for expr in assertions],
             },
         )

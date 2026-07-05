@@ -32,6 +32,8 @@ RUNNER_FACTORIES = {
     'coq': CoqRunner,
 }
 
+DEFAULT_PROVERS = ('z3', 'tla', 'datalog', 'tamarin', 'proverif', 'hyperltl', 'lean', 'coq')
+
 
 def _load_model(args: argparse.Namespace) -> SecurityModelIR:
     if args.example or not args.model:
@@ -84,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--out', help='Path to write proof reports as JSON')
     parser.add_argument('--strict', action='store_true', help='Return nonzero on critical DISPROVED results')
     parser.add_argument('--fail-on-unknown-critical', action='store_true', help='Treat blocking UNKNOWN results as failures in strict mode')
-    parser.add_argument('--provers', default='z3,tla,datalog,tamarin,hyperltl,lean,coq', help='Comma-separated prover list')
+    parser.add_argument('--provers', default=','.join(DEFAULT_PROVERS), help='Comma-separated prover list')
     args = parser.parse_args(argv)
     model = _load_model(args)
     provers = [item.strip() for item in args.provers.split(',') if item.strip()]

@@ -66,18 +66,35 @@ class AuditEventExistsForCriticalTransitionClaim(SecurityClaim):
         if not model.events:
             return claim_not_modeled(self, 'event trace is not modeled')
         z3 = z3_import()
-        critical_transition = z3.Bool('critical_transition')
-        audit_event = z3.Bool('audit_event')
-        assertions = []
-        if self.policy_enabled(model, 'audit_required'):
-            assertions.append(z3.Implies(critical_transition, audit_event))
+        critical_transitions = [
+            str(event.get('event'))
+            for event in model.events
+            if event.get('critical') and event.get('event')
+        ]
+        if not critical_transitions:
+            return claim_not_modeled(self, 'critical transitions are not modeled')
+        audited_transitions = {
+            str(event.get('transition'))
+            for event in model.events
+            if event.get('event') == 'audit_logged' and event.get('transition')
+        }
+        missing_audit = sorted(transition for transition in critical_transitions if transition not in audited_transitions)
+        audit_required = z3.Bool('audit_required')
+        missing_audit_event = z3.Bool('missing_audit_event')
+        assertions = [
+            audit_required == self.policy_enabled(model, 'audit_required'),
+            missing_audit_event == bool(missing_audit),
+        ]
         return Z3Compilation(
             claim=self,
             assertions=assertions,
-            property_formula=z3.Implies(critical_transition, audit_event),
-            violation_formula=z3.And(critical_transition, z3.Not(audit_event)),
+            property_formula=z3.And(audit_required, z3.Not(missing_audit_event)),
+            violation_formula=z3.Or(z3.Not(audit_required), missing_audit_event),
             compiler_artifact={
                 'kind': 'audit_transition_policy',
-                'policy_enabled': self.policy_enabled(model, 'audit_required'),
+                'critical_transitions': critical_transitions,
+                'audited_transitions': sorted(audited_transitions),
+                'missing_audit': missing_audit,
+                'assertions': [str(expr) for expr in assertions],
             },
         )

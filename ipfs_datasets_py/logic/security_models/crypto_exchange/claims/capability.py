@@ -23,21 +23,22 @@ class CapabilityDelegationMonotonicityClaim(SecurityClaim):
             return claim_not_modeled(self, 'capabilities are not modeled')
         capability = self.find_capability(model)
         z3 = z3_import()
+        policy_enabled = z3.Bool('delegation_monotonicity')
         delegated = z3.Int('delegated_authority')
         delegator = z3.Int('delegator_authority')
         assertions = [
+            policy_enabled == self.policy_enabled(model, 'delegation_monotonicity'),
             delegated == int(capability.get('delegated_authority', 0)),
             delegator == int(capability.get('delegator_authority', 0)),
         ]
-        if self.policy_enabled(model, 'delegation_monotonicity'):
-            assertions.append(delegated <= delegator)
         return Z3Compilation(
             claim=self,
             assertions=assertions,
-            property_formula=delegated <= delegator,
-            violation_formula=delegated > delegator,
+            property_formula=z3.And(policy_enabled, delegated <= delegator),
+            violation_formula=z3.Or(z3.Not(policy_enabled), delegated > delegator),
             compiler_artifact={
                 'kind': 'capability_delegation',
+                'policy_enabled': self.policy_enabled(model, 'delegation_monotonicity'),
                 'delegated_authority': int(capability.get('delegated_authority', 0)),
                 'delegator_authority': int(capability.get('delegator_authority', 0)),
             },
@@ -60,21 +61,28 @@ class RevokedCapabilityClaim(SecurityClaim):
             return claim_not_modeled(self, 'capability revocation data is not modeled')
         capability = self.find_capability(model)
         z3 = z3_import()
+        policy_enabled = z3.Bool('revocation_enforced')
         revoked_before_action = z3.Bool('revoked_before_action')
         privileged_action = z3.Bool('privileged_action_attempted')
         assertions = [
+            policy_enabled == self.policy_enabled(model, 'revocation_enforced'),
             revoked_before_action == bool(capability.get('revoked_before_action', False)),
             privileged_action == bool(capability.get('privileged_action_attempted', False)),
         ]
-        if self.policy_enabled(model, 'revocation_enforced'):
-            assertions.append(z3.Implies(privileged_action, z3.Not(revoked_before_action)))
         return Z3Compilation(
             claim=self,
             assertions=assertions,
-            property_formula=z3.Implies(privileged_action, z3.Not(revoked_before_action)),
-            violation_formula=z3.And(privileged_action, revoked_before_action),
+            property_formula=z3.And(
+                policy_enabled,
+                z3.Implies(privileged_action, z3.Not(revoked_before_action)),
+            ),
+            violation_formula=z3.Or(
+                z3.Not(policy_enabled),
+                z3.And(privileged_action, revoked_before_action),
+            ),
             compiler_artifact={
                 'kind': 'capability_revocation',
+                'policy_enabled': self.policy_enabled(model, 'revocation_enforced'),
                 'revoked_before_action': bool(capability.get('revoked_before_action', False)),
                 'privileged_action_attempted': bool(capability.get('privileged_action_attempted', False)),
             },

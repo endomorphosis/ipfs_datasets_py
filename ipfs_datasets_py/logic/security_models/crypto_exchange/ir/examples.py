@@ -66,7 +66,7 @@ def example_minimal_exchange_model() -> SecurityModelIR:
         events=[
             {'event': 'withdrawal_requested', 'principal': 'principal:alice', 'wallet_id': 'wallet:user_alice', 'authorized': True, 'nonce_fresh': True, 'sufficient_balance': True},
             {'event': 'withdrawal_approved', 'principal': 'principal:exchange_signer'},
-            {'event': 'withdrawal_broadcast', 'principal': 'principal:exchange_signer', 'authorized': True},
+            {'event': 'withdrawal_broadcast', 'principal': 'principal:exchange_signer', 'authorized': True, 'critical': True},
             {'event': 'deposit_observed', 'txid': 'tx:1', 'confirmations': 0},
             {'event': 'deposit_finalized', 'txid': 'tx:1', 'confirmations': 6},
             {'event': 'deposit_credited', 'txid': 'tx:1', 'after_finality': True},
@@ -95,7 +95,7 @@ def example_minimal_exchange_model() -> SecurityModelIR:
             {'id': 'inv:no_post_freeze_signing', 'description': 'Frozen wallets cannot sign future requests.'},
         ],
         assumptions=list(DEFAULT_THREAT_MODEL_ASSUMPTIONS),
-        prover_targets=['z3', 'tla', 'datalog', 'tamarin', 'hyperltl', 'lean', 'coq'],
+        prover_targets=['z3', 'tla', 'datalog', 'tamarin', 'proverif', 'hyperltl', 'lean', 'coq'],
         metadata={
             'runtime_trace': [
                 {'event': 'withdrawal_requested', 'wallet_id': 'wallet:user_alice'},
