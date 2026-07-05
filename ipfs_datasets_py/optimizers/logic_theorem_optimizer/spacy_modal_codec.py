@@ -5444,6 +5444,18 @@ def _apply_refined_modal_family_cue_pair_balance(
             )
             conditional_count = float(counts.get(conditional_family, 0.0))
         if (
+            frame_count >= conditional_count
+            and conditional_count > 0.0
+            and has_structural_conditional_scope
+            and has_conditional_scope_phrase
+            and not has_conditional_clause_scope
+        ):
+            counts[conditional_family] = max(
+                conditional_count,
+                frame_count + 0.01,
+            )
+            conditional_count = float(counts.get(conditional_family, 0.0))
+        if (
             frame_count >= doxastic_count
             and doxastic_count > 0.0
             and bool(signals.get("has_doxastic_cue"))
@@ -5460,6 +5472,17 @@ def _apply_refined_modal_family_cue_pair_balance(
                 frame_count + 0.01,
             )
             epistemic_count = float(counts.get(epistemic_family, 0.0))
+        if (
+            frame_count >= temporal_count
+            and temporal_count > 0.0
+            and has_temporal_scope
+            and (
+                has_temporal_status_scope
+                or has_calendar_date_scope
+            )
+        ):
+            counts[temporal_family] = max(temporal_count, frame_count + 0.01)
+            temporal_count = float(counts.get(temporal_family, 0.0))
 
     # temporal -> conditional_normative / deontic:
     # Fiscal-year openers are temporal scope, but in statutory authority

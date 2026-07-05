@@ -7786,6 +7786,33 @@ COMPILER_REFINED_PACKET_000111_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_000222_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_REFINED_PACKET_003313_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.FRAME.value,
@@ -8122,6 +8149,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_PACKET_000122_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000146_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000111_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_000222_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000043_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000044_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000112_FAMILY_PAIRS,
@@ -9778,6 +9806,22 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.FRAME.value,
     ): 0.28,
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ): 0.015,
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ): 0.015,
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ): 0.015,
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ): 0.015,
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.EPISTEMIC.value,
@@ -11995,6 +12039,7 @@ __all__ = [
     "COMPILER_REFINED_PACKET_000151_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_005680_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000111_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_000222_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_002666_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000467_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS",

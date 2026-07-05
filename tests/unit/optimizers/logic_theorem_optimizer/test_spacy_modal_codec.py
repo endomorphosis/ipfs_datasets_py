@@ -19,6 +19,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000124_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000222_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
@@ -316,6 +317,62 @@ def test_modal_registry_packet_000124_refines_family_cue_policy_pairs() -> None:
     assert set(COMPILER_REFINED_PACKET_000124_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+
+
+def test_modal_registry_packet_000222_refines_family_cue_policy_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_000222_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
+        >= 0.155
+    )
+    for target_family in (
+        "conditional_normative",
+        "deontic",
+        "epistemic",
+        "temporal",
+    ):
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer("frame", target_family)
+            >= 0.015
+        )
+
+
+def test_refined_pair_balance_promotes_typed_scope_over_generic_frame() -> None:
+    counts = {
+        "frame": 2.0,
+        "conditional_normative": 0.7,
+        "temporal": 0.8,
+        "epistemic": 0.9,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+        "has_statutory_scope_reference": True,
+        "has_condition_or_exception_scope": True,
+        "has_conditional_scope_phrase": True,
+        "has_temporal_scope": True,
+        "has_temporal_status_scope": True,
+        "has_epistemic_scope": True,
+        "has_epistemic_scope_phrase": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] > counts["frame"]
+    assert counts["temporal"] > counts["frame"]
+    assert counts["epistemic"] > counts["frame"]
 
 
 def test_refined_pair_balance_promotes_study_report_duty_over_deadline() -> None:
