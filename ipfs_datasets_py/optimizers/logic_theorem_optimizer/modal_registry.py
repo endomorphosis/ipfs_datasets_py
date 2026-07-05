@@ -2750,8 +2750,28 @@ COMPILER_REFINED_PACKET_000169_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.DEONTIC.value,
     ),
     (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DYNAMIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DOXASTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
     ),
 )
 
@@ -9728,7 +9748,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.FRAME.value,
-    ): 0.0015,
+    ): 0.28,
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.EPISTEMIC.value,
@@ -9740,7 +9760,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DYNAMIC.value,
-    ): 0.0015,
+    ): 0.325,
     (
         ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
@@ -9792,11 +9812,11 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-    ): 0.02,
+    ): 0.36,
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DEONTIC.value,
-    ): 0.006,
+    ): 0.34,
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.EPISTEMIC.value,
@@ -9808,7 +9828,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.TEMPORAL.value,
-    ): 0.006,
+    ): 0.13,
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DYNAMIC.value,
@@ -9816,7 +9836,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR: Mapping[
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DOXASTIC.value,
-    ): 0.0015,
+    ): 0.18,
     (
         ModalLogicFamily.DYNAMIC.value,
         ModalLogicFamily.DYNAMIC.value,

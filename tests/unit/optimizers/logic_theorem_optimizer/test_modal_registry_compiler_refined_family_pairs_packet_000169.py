@@ -24,7 +24,12 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
 
 _PACKET_000169_FAMILY_PAIRS = (
     ("deontic", "deontic"),
+    ("deontic", "dynamic"),
+    ("deontic", "frame"),
+    ("frame", "conditional_normative"),
     ("frame", "deontic"),
+    ("frame", "doxastic"),
+    ("frame", "temporal"),
 )
 
 
@@ -59,23 +64,33 @@ def test_packet_000169_pairs_are_supported_across_compiler_ambiguity_policies() 
 
 
 def test_packet_000169_pairs_have_refined_margin_buffers() -> None:
-    assert (
-        abs(
-            compiler_refined_modal_family_cue_margin_buffer(
-                ModalLogicFamily.FRAME,
-                ModalLogicFamily.DEONTIC,
+    expected_buffers = {
+        (ModalLogicFamily.DEONTIC, ModalLogicFamily.DEONTIC): 0.086,
+        (ModalLogicFamily.DEONTIC, ModalLogicFamily.DYNAMIC): 0.325,
+        (ModalLogicFamily.DEONTIC, ModalLogicFamily.FRAME): 0.28,
+        (ModalLogicFamily.FRAME, ModalLogicFamily.CONDITIONAL_NORMATIVE): 0.36,
+        (ModalLogicFamily.FRAME, ModalLogicFamily.DEONTIC): 0.34,
+        (ModalLogicFamily.FRAME, ModalLogicFamily.DOXASTIC): 0.18,
+        (ModalLogicFamily.FRAME, ModalLogicFamily.TEMPORAL): 0.13,
+    }
+    for (predicted_family, target_family), expected_buffer in expected_buffers.items():
+        assert (
+            abs(
+                compiler_refined_modal_family_cue_margin_buffer(
+                    predicted_family,
+                    target_family,
+                )
+                - expected_buffer
             )
-            - 0.0015
+            <= 1e-12
         )
-        <= 1e-12
-    )
     assert (
         abs(
             compiler_weak_typed_self_family_cue_margin_buffer(
                 ModalLogicFamily.DEONTIC,
                 ModalLogicFamily.DEONTIC,
             )
-            - 0.135
+            - 0.155
         )
         <= 1e-12
     )
