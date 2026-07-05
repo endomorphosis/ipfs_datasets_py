@@ -30,6 +30,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000222_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     compiler_refined_modal_family_cue_margin_buffer,
     compiler_weak_typed_self_family_cue_margin_buffer,
@@ -1214,6 +1215,27 @@ def test_packet_005718_registry_refines_frame_doxastic_temporal_cues() -> None:
     assert ("temporal", "time and manner") in extracted_cues
     assert ("doxastic", "knowingly and willfully") in extracted_cues
     assert ("doxastic", "false statement") in extracted_cues
+
+
+def test_packet_001002_registry_exposes_frame_deontic_doxastic_ambiguity_policy() -> None:
+    expected_pairs = (
+        ("frame", "deontic"),
+        ("frame", "doxastic"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
 
 
 def test_packet_004762_registry_refines_modal_family_cue_pairs() -> None:

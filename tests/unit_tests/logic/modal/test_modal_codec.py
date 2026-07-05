@@ -91,6 +91,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000587_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000580_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000778_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001068_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001392_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001692_FAMILY_PAIRS,
@@ -35588,6 +35589,43 @@ def test_modal_compiler_surfaces_packet_001068_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_base_ambiguity_type"]
             == "adaptive_family_margin_low"
             for ambiguity in ambiguities
+        )
+
+
+def test_modal_registry_packet_001002_exposes_frame_deontic_doxastic_policy() -> None:
+    expected_pairs = (
+        ("frame", "deontic"),
+        ("frame", "doxastic"),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
         )
 
 
