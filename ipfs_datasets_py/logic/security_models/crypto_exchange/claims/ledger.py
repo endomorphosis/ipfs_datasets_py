@@ -78,12 +78,14 @@ class AuditEventExistsForCriticalTransitionClaim(SecurityClaim):
             for event in model.events
             if event.get('event') == 'audit_logged' and event.get('transition')
         }
-        missing_audit = sorted(transition for transition in critical_transitions if transition not in audited_transitions)
+        missing_audit_transitions = sorted(
+            transition for transition in critical_transitions if transition not in audited_transitions
+        )
         audit_required = z3.Bool('audit_required')
         missing_audit_event = z3.Bool('missing_audit_event')
         assertions = [
             audit_required == self.policy_enabled(model, 'audit_required'),
-            missing_audit_event == bool(missing_audit),
+            missing_audit_event == bool(missing_audit_transitions),
         ]
         return Z3Compilation(
             claim=self,
@@ -94,7 +96,7 @@ class AuditEventExistsForCriticalTransitionClaim(SecurityClaim):
                 'kind': 'audit_transition_policy',
                 'critical_transitions': critical_transitions,
                 'audited_transitions': sorted(audited_transitions),
-                'missing_audit': missing_audit,
+                'missing_audit': missing_audit_transitions,
                 'assertions': [str(expr) for expr in assertions],
             },
         )

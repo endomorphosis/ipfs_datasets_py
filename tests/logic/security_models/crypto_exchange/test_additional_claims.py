@@ -13,6 +13,8 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.z3_runner im
 
 pytest.importorskip('z3')
 
+ESCALATED_DELEGATED_AUTHORITY = 4
+
 
 def test_good_model_proves_remaining_claims() -> None:
     model = deepcopy(example_minimal_exchange_model())
@@ -47,7 +49,7 @@ def test_bad_model_finds_signing_after_freeze_counterexample() -> None:
 
 def test_bad_model_finds_capability_authority_escalation() -> None:
     model = deepcopy(example_minimal_exchange_model())
-    model.capabilities[0]['delegated_authority'] = 4
+    model.capabilities[0]['delegated_authority'] = ESCALATED_DELEGATED_AUTHORITY
     report = Z3Runner().run_claim(CapabilityDelegationMonotonicityClaim(), model)
     assert report.status == 'DISPROVED'
 

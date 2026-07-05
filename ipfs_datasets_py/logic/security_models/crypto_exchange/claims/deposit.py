@@ -29,13 +29,8 @@ class NoDepositCreditedBeforeFinalityClaim(SecurityClaim):
         policy_enabled = z3.Bool('credit_after_finality_required')
         credited_before_finality = z3.Bool('credited_before_finality')
         violations = RuntimeMTLMonitor(events=model.events).check_deposit_only_after_finality()
-        offending_txids = sorted(
-            {
-                str(event.get('txid'))
-                for event in (violation.get('event', {}) for violation in violations)
-                if event.get('txid') is not None
-            }
-        )
+        violation_events = [violation.get('event', {}) for violation in violations]
+        offending_txids = sorted({str(event.get('txid')) for event in violation_events if event.get('txid') is not None})
         assertions = [
             policy_enabled == self.policy_enabled(model, 'credit_after_finality_required'),
             credited_before_finality == bool(violations),
