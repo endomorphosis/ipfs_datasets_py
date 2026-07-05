@@ -152,6 +152,18 @@ from .types.fol_types import (
 	FOLConversionResult,
 	PredicateExtraction,
 )
+from .security_models.crypto_exchange import (
+	SecurityModelIR,
+	ProofReport as ExchangeSecurityProofReport,
+	ProofReceipt as ExchangeSecurityProofReceipt,
+	RuntimeMTLMonitor,
+	calculate_model_cid as calculate_exchange_security_model_cid,
+	canonicalize_ir as canonicalize_exchange_security_ir,
+	default_claims as default_exchange_security_claims,
+	example_minimal_exchange_model,
+	prove_claims as prove_exchange_security_claims,
+	validate_ir as validate_exchange_security_ir,
+)
 
 
 def And(left: Formula, right: Formula) -> Formula:
@@ -397,6 +409,17 @@ __all__ = [
 	"FOLFormula",
 	"FOLConversionResult",
 	"PredicateExtraction",
+	# Exchange security verification
+	"SecurityModelIR",
+	"ExchangeSecurityProofReport",
+	"ExchangeSecurityProofReceipt",
+	"RuntimeMTLMonitor",
+	"calculate_exchange_security_model_cid",
+	"canonicalize_exchange_security_ir",
+	"default_exchange_security_claims",
+	"example_minimal_exchange_model",
+	"prove_exchange_security_claims",
+	"validate_exchange_security_ir",
 	# Logic submodule topology
 	"LogicSubmoduleSpec",
 	"logic_integration_manifest",
