@@ -5670,6 +5670,24 @@ def _apply_refined_modal_family_cue_pair_balance(
         )
         deontic_count = float(counts.get(deontic_family, 0.0))
 
+    # deontic -> doxastic:
+    # False-claim and fraud provisions frequently add deontic penalty verbs
+    # around the operative mental-state cue. Keep belief/intent evidence
+    # decisive when doxastic cues appear in a deontic liability clause.
+    if (
+        deontic_count >= doxastic_count
+        and deontic_count > 0.0
+        and has_doxastic_scope
+        and bool(signals.get("has_doxastic_cue"))
+        and has_deontic_scope
+        and not has_editorial_frame_context
+    ):
+        counts[doxastic_family] = max(
+            doxastic_count,
+            deontic_count + 0.01,
+        )
+        doxastic_count = float(counts.get(doxastic_family, 0.0))
+
     # frame -> epistemic:
     # Public-land and townsite provisions often include settlement/authority
     # frame nouns around an "in the opinion of" finding.  Preserve that

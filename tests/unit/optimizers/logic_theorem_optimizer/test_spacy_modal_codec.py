@@ -22,6 +22,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000224_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000697_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000122_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000205_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS,
@@ -568,6 +569,22 @@ def test_refined_pair_balance_promotes_typed_scope_over_generic_frame() -> None:
     assert counts["epistemic"] > counts["frame"]
 
 
+def test_modal_registry_packet_000697_refines_family_cue_policy_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "doxastic"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_000697_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
 def test_refined_pair_balance_promotes_study_report_duty_over_deadline() -> None:
     counts = {
         "deontic": 1.2,
@@ -584,6 +601,24 @@ def test_refined_pair_balance_promotes_study_report_duty_over_deadline() -> None
     _apply_refined_modal_family_cue_pair_balance(counts, signals)
 
     assert counts["deontic"] > counts["temporal"]
+
+
+def test_refined_pair_balance_promotes_false_claim_intent_over_deontic() -> None:
+    counts = {
+        "deontic": 2.4,
+        "doxastic": 0.8,
+        "frame": 0.2,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_cue": True,
+        "has_doxastic_scope": True,
+        "has_doxastic_cue": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["doxastic"] > counts["deontic"]
 
 
 def test_refined_pair_balance_promotes_implementation_budget_conditions() -> None:
