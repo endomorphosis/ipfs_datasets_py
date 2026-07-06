@@ -336,6 +336,23 @@ def test_fol_tdfol_bridge_uses_nested_guidance_semantic_terms() -> None:
     )
 
 
+def test_tdfol_parser_preserves_reserved_prefix_predicate_names() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+
+    formula = parse_tdfol("O(and_condition(context))")
+
+    assert formula.to_string() == "O(and_condition(context))"
+
+
+def test_fol_tdfol_bridge_coercion_accepts_reserved_prefix_predicate_names() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = coerce_tdfol_formula("O(or_relief(actor))")
+
+    assert formula is not None
+    assert formula.to_string() == "O(term_or_relief(actor))"
+
+
 def test_modal_frame_logic_bridge_projects_flogic_repair_guidance_to_ontology_terms() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

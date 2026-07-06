@@ -1404,10 +1404,10 @@ def _tdfol_parse_candidates(text: str) -> list[str]:
     if sanitized != normalized:
         _add(sanitized)
     export_normalized = _normalize_tdfol_export_formula(normalized)
-    _add(export_normalized)
     export_sanitized = _sanitize_tdfol_formula_text(export_normalized)
     if export_sanitized != export_normalized:
         _add(export_sanitized)
+    _add(export_normalized)
     _add(normalized)
 
     if normalized.endswith("."):
@@ -1416,10 +1416,10 @@ def _tdfol_parse_candidates(text: str) -> list[str]:
         if sanitized_stripped != stripped:
             _add(sanitized_stripped)
         stripped_export = _normalize_tdfol_export_formula(stripped)
-        _add(stripped_export)
         stripped_export_sanitized = _sanitize_tdfol_formula_text(stripped_export)
         if stripped_export_sanitized != stripped_export:
             _add(stripped_export_sanitized)
+        _add(stripped_export)
         _add(stripped)
 
     return candidates
