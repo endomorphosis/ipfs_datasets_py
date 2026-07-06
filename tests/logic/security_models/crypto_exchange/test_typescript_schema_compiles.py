@@ -21,10 +21,11 @@ def _repo_root() -> Path:
 REPO_ROOT = _repo_root()
 TEST_VECTOR_DIR = REPO_ROOT / 'docs' / 'security_verification' / 'test_vectors'
 EMITTER_SCRIPT = REPO_ROOT / 'scripts' / 'ops' / 'security_verification' / 'emit_security_typescript_schema.py'
+MIN_SCHEMA_NEWLINE_COUNT = 2
 
 
 def _hermetic_env() -> dict[str, str]:
-    """Return the minimal-import environment used by the focused security slice tests."""
+    """Return the env that disables auto-installs and keeps imports local to this test repo."""
     env = os.environ.copy()
     env.setdefault('PYTHONPATH', str(REPO_ROOT))
     env['IPFS_DATASETS_PY_MINIMAL_IMPORTS'] = '1'
@@ -57,7 +58,7 @@ def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tupl
     else:
         schema_path.write_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()), encoding='utf-8')
     schema_text = schema_path.read_text(encoding='utf-8')
-    assert schema_text.count('\n') > 1
+    assert schema_text.count('\n') >= MIN_SCHEMA_NEWLINE_COUNT
     assert 'export interface SecurityModelIR {' in schema_text
     assert 'export function verifyProofReceipt(' in schema_text
     if via_cli:
