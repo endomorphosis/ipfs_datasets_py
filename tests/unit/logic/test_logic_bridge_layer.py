@@ -225,6 +225,62 @@ def test_external_prover_router_promotes_nested_distillation_bundle() -> None:
     assert report.proof_gate.compiles is True
 
 
+def test_external_prover_router_bridge_passes_guidance_to_router_backup(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    class _FailingConfiguredProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            raise RuntimeError("configured prover unavailable")
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=False,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    router.provers = {"z3": _FailingConfiguredProver()}
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: router,
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_external_binaries=False,
+        enable_native=False,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="bridge-layer-external-router-guidance-backup",
+        citation="Bridge Layer Guidance Backup",
+        compiler_guidance={
+            "bundle": (
+                '{"program_synthesis_scope":"external_provers",'
+                '"route":"repair_external_prover_router",'
+                '"source":"compiler_guidance_distillation_v1",'
+                '"target_component":"external_provers.router",'
+                '"support":1}'
+            ),
+            "target_component": "external_provers.router",
+        },
+    )
+
+    assert report.proof_gate.compiles is True
+    assert "native_syntactic" in report.metadata["available_provers"]
+    assert report.proof_gate.details[0]["prover_used"] == "native_syntactic"
+    assert "external_provers:native_syntactic" in report.proof_gate.verified_by
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
 def test_external_prover_router_promotes_compiler_guidance_sample_route() -> None:
     from ipfs_datasets_py.logic.bridge.external_prover_router import (
         _router_guidance_signal,

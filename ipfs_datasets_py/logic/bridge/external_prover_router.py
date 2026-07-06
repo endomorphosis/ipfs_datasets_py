@@ -238,8 +238,12 @@ class ExternalProverRouterBridgeAdapter:
             enable_external_binaries=self.enable_external_binaries,
         )
         formulas = list(context["formulas"])
-        proof_gate = _proof_gate_from_router(router, formulas)
         guidance = _router_guidance_signal(compiler_guidance)
+        proof_gate = _proof_gate_from_router(
+            router,
+            formulas,
+            compiler_guidance=compiler_guidance,
+        )
         proof_gate_soft_pass = False
         proof_gate_soft_pass_reason = ""
         if _supports_router_compatibility_soft_pass(proof_gate):
@@ -307,7 +311,12 @@ def _build_router(*, enable_native: bool, enable_external_binaries: bool) -> Any
     )
 
 
-def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateResult:
+def _proof_gate_from_router(
+    router: Any,
+    formulas: Sequence[Any],
+    *,
+    compiler_guidance: Optional[Mapping[str, Any]] = None,
+) -> ProofGateResult:
     available = _router_available_provers(router)
     attempted = len(formulas)
     if attempted <= 0:
@@ -357,6 +366,7 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
                 formula,
                 strategy=ProverStrategy.SEQUENTIAL,
                 timeout=1.0,
+                compiler_guidance=compiler_guidance,
             )
         except RuntimeError as exc:
             unavailable += 1
@@ -1331,6 +1341,7 @@ def _route_formula_with_compat(
     *,
     strategy: Any,
     timeout: float,
+    compiler_guidance: Optional[Mapping[str, Any]] = None,
 ) -> Any:
     """Call a router using route/prove compatibility fallbacks."""
 
@@ -1338,11 +1349,16 @@ def _route_formula_with_compat(
     strategy_text = str(getattr(strategy, "value", strategy) or "sequential")
     timeout_ms = max(1, int(float(timeout or 0.0) * 1000.0))
     timeout_seconds = float(timeout or 0.0)
+    guidance_kwargs = (
+        ({"compiler_guidance": compiler_guidance},)
+        if compiler_guidance is not None
+        else ()
+    ) + ({},)
     for method_name in ("route", "prove"):
         method = getattr(router, method_name, None)
         if not callable(method):
             continue
-        for args, kwargs in (
+        base_attempts = (
             ((), {"strategy": strategy, "timeout": timeout}),
             ((), {"strategy": strategy_text, "timeout": timeout}),
             ((), {"strategy": strategy_text, "timeout_ms": timeout_ms}),
@@ -1355,14 +1371,16 @@ def _route_formula_with_compat(
             ((strategy_text, timeout_seconds), {}),
             ((strategy_text,), {}),
             ((), {}),
-        ):
-            try:
-                return method(formula, *args, **kwargs)
-            except (TypeError, ValueError) as exc:
-                attempts.append(exc)
-                continue
-            except Exception as exc:
-                raise exc
+        )
+        for guidance_kwarg in guidance_kwargs:
+            for args, kwargs in base_attempts:
+                try:
+                    return method(formula, *args, **{**kwargs, **guidance_kwarg})
+                except (TypeError, ValueError) as exc:
+                    attempts.append(exc)
+                    continue
+                except Exception as exc:
+                    raise exc
     compat_result = _route_formula_from_router_inventory(
         router,
         formula,
