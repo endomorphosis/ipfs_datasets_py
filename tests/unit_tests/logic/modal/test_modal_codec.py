@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 from dataclasses import replace
 import re
 import sys
@@ -2469,6 +2470,59 @@ def test_modal_ir_graph_projection_promotes_packet_component_gap_evidence() -> N
         "knowledge_graphs.neo4j_compat:0.095414",
     ) in learned_facts
     assert "LegalIRViewAlignment" in graph_data.schema.node_labels
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
+def test_flogic_graph_projection_extracts_weighted_packet_evidence_json() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-10-2515-cb1304b3980adf2a",
+                "predicate": "type",
+                "object": "legal_modal_document",
+            },
+            {
+                "subject": "us-code-10-2515-cb1304b3980adf2a",
+                "predicate": "evidence",
+                "object": json.dumps(
+                    {
+                        "bridge_failure_name": (
+                            "legal_ir_multiview_graph_failure_penalty"
+                        ),
+                        "legal_ir_component_gaps": {
+                            "knowledge_graphs.neo4j_compat": 0.151069107289,
+                            "modal.frame_logic": -0.009388851835,
+                        },
+                        "legal_ir_underrepresented_components": [
+                            "knowledge_graphs.neo4j_compat"
+                        ],
+                        "predicted_view": "knowledge_graphs.neo4j_compat",
+                        "target_view": "knowledge_graphs.neo4j_compat",
+                    },
+                    sort_keys=True,
+                ),
+            },
+        ],
+        graph_id="us-code-10-2515-cb1304b3980adf2a:flogic",
+    )
+    learned_facts = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+        if relationship.properties["flogic_predicate"].startswith("learned_legal_ir_")
+    }
+
+    assert (
+        "learned_legal_ir_target_view",
+        "knowledge_graphs.neo4j_compat",
+    ) in learned_facts
+    assert (
+        "learned_legal_ir_view_gap",
+        "knowledge_graphs.neo4j_compat:0.151069",
+    ) in learned_facts
     assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
@@ -30448,6 +30502,53 @@ def test_modal_compiler_covers_compact_uscode_definition_and_editorial_note_head
         }
 
         assert any(expected_span in span for span in frame_spans)
+
+
+def test_modal_compiler_keeps_uscode_source_boilerplate_out_of_section_heading_span() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    text = (
+        "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, "
+        "2024 Edition CHAPTER 134 - MISCELLANEOUS ADMINISTRATIVE "
+        "PROVISIONS Sec. 2263 - United States contributions to the North "
+        "Atlantic Treaty Organization common-funded budgets From the U.S. "
+        "Government Publishing Office, www.gpo.gov §2263. The total amount "
+        "contributed by the Secretary of Defense in any fiscal year for the "
+        "common-funded budgets of NATO may be an amount in excess of the "
+        "maximum amount that would otherwise be applicable to those "
+        "contributions in such fiscal year under the fiscal year 1998 "
+        "baseline limitation. Definitions. The term common-funded budgets "
+        "of NATO means the Military Budget."
+    )
+
+    compiled = compiler.compile(
+        text,
+        document_id="us-code-10-2263-571407a5044f94b2",
+        citation="10 U.S.C. 2263",
+        source="us_code",
+    )
+    spans_by_rule = {
+        formula.metadata.get("fallback_rule"): compiled.modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in compiled.modal_ir.formulas
+        if formula.operator.family == "frame"
+    }
+
+    assert (
+        spans_by_rule["uscode_section_heading_v1"]
+        == "2263 - United States contributions to the North Atlantic Treaty Organization common-funded budgets"
+    )
+    assert any(
+        span == "From the U.S. Government Publishing Office, www.gpo.gov §2263."
+        for formula in compiled.modal_ir.formulas
+        for span in [
+            compiled.modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip()
+        ]
+        if formula.operator.family == "frame"
+        and formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    )
 
 
 def test_modal_compiler_surfaces_packet_001248_ambiguity_policy_pairs(

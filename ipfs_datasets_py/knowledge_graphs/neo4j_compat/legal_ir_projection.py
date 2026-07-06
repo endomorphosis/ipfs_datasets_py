@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
@@ -933,7 +934,13 @@ def _append_legal_ir_guidance_alignment_triples(
         obj = triple["object"]
         guidance = guidance_by_subject.setdefault(
             subject,
-            {"predicted": set(), "target": set(), "actions": set(), "features": set()},
+            {
+                "predicted": set(),
+                "target": set(),
+                "actions": set(),
+                "features": set(),
+                "gaps": {},
+            },
         )
         normalized_predicate = predicate.strip().lower()
         normalized_view = _canonical_legal_ir_view_name(obj)
@@ -980,6 +987,9 @@ def _append_legal_ir_guidance_alignment_triples(
             continue
         facts: List[Tuple[str, str]] = []
         ranked_views = sorted(target_views | predicted_views)
+        gap_values = guidance.get("gaps", {})
+        if not isinstance(gap_values, Mapping):
+            gap_values = {}
         for rank, view in enumerate(ranked_views, start=1):
             if view in predicted_views:
                 facts.append(("learned_legal_ir_predicted_view", view))
@@ -990,7 +1000,9 @@ def _append_legal_ir_guidance_alignment_triples(
                 facts.append(("learned_legal_ir_target_view", view))
                 facts.append(("learned_legal_ir_target_view_weight", f"{view}:1.000000"))
             gap = 0.0
-            if view in target_views and view not in predicted_views:
+            if view in gap_values:
+                gap = _safe_float(gap_values.get(view), 0.0)
+            elif view in target_views and view not in predicted_views:
                 gap = 1.0
             elif view in predicted_views and view not in target_views:
                 gap = -1.0
@@ -1008,7 +1020,7 @@ def _append_legal_ir_guidance_alignment_triples(
 def _collect_legal_ir_guidance_features(
     value: Any,
     *,
-    guidance: Dict[str, set[str]],
+    guidance: Dict[str, Any],
     predicate_hint: str = "",
 ) -> None:
     """Extract graph-view guidance from raw packet-shaped triple values."""
@@ -1037,6 +1049,13 @@ def _collect_legal_ir_guidance_features(
                 "legal_ir_view_gaps",
             } and isinstance(raw_value, Mapping):
                 _collect_legal_ir_view_gap_features(raw_value, guidance=guidance)
+            elif key == "legal_ir_component_gaps" and isinstance(raw_value, Mapping):
+                _collect_legal_ir_component_gap_features(raw_value, guidance=guidance)
+            elif key == "legal_ir_underrepresented_components":
+                _collect_underrepresented_component_features(
+                    raw_value,
+                    guidance=guidance,
+                )
             _collect_legal_ir_guidance_features(
                 raw_value,
                 guidance=guidance,
@@ -1079,7 +1098,7 @@ def _collect_legal_ir_guidance_features(
 def _collect_legal_ir_view_gap_features(
     gaps: Mapping[Any, Any],
     *,
-    guidance: Dict[str, set[str]],
+    guidance: Dict[str, Any],
 ) -> None:
     for raw_key, raw_value in gaps.items():
         key = str(raw_key or "").strip()
@@ -1094,6 +1113,51 @@ def _collect_legal_ir_view_gap_features(
             "underrepresented",
         }:
             guidance["target"].add(_NEO4J_COMPAT_TARGET_COMPONENT)
+            gaps = guidance.setdefault("gaps", {})
+            if isinstance(gaps, dict):
+                gaps[_NEO4J_COMPAT_TARGET_COMPONENT] = max(
+                    _safe_float(gaps.get(_NEO4J_COMPAT_TARGET_COMPONENT), 0.0),
+                    _safe_float(value, 1.0),
+                )
+
+
+def _collect_legal_ir_component_gap_features(
+    gaps: Mapping[Any, Any],
+    *,
+    guidance: Dict[str, Any],
+) -> None:
+    gap_bucket = guidance.setdefault("gaps", {})
+    for raw_key, raw_value in gaps.items():
+        view = _canonical_legal_ir_view_name(str(raw_key or ""))
+        if not view:
+            continue
+        number = _safe_float(raw_value, 0.0)
+        guidance["features"].add(view)
+        if isinstance(gap_bucket, dict):
+            existing = _safe_float(gap_bucket.get(view), 0.0)
+            gap_bucket[view] = (
+                number if existing == 1.0 and number else existing + number
+            )
+        if view == _NEO4J_COMPAT_TARGET_COMPONENT and number > 0.0:
+            guidance["target"].add(_NEO4J_COMPAT_TARGET_COMPONENT)
+
+
+def _collect_underrepresented_component_features(
+    value: Any,
+    *,
+    guidance: Dict[str, Any],
+) -> None:
+    gap_bucket = guidance.setdefault("gaps", {})
+    for item in _iter_feature_values(value):
+        view = _canonical_legal_ir_view_name(item)
+        if not view:
+            continue
+        guidance["features"].add(view)
+        if view == _NEO4J_COMPAT_TARGET_COMPONENT:
+            guidance["target"].add(_NEO4J_COMPAT_TARGET_COMPONENT)
+            if isinstance(gap_bucket, dict):
+                existing = _safe_float(gap_bucket.get(view), 0.0)
+                gap_bucket[view] = existing if existing != 0.0 else 1.0
 
 
 def _json_guidance_value(text: str) -> Any:
@@ -1103,6 +1167,40 @@ def _json_guidance_value(text: str) -> Any:
         return json.loads(text)
     except json.JSONDecodeError:
         return None
+
+
+def _iter_feature_values(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, Mapping):
+        direct = str(value.get("feature") or value.get("name") or "").strip()
+        if direct:
+            return [direct]
+        values = value.values()
+    elif isinstance(value, (str, bytes)):
+        text = value.decode("utf-8", errors="ignore") if isinstance(value, bytes) else value
+        return [text.strip()] if text.strip() else []
+    else:
+        try:
+            values = list(value)
+        except TypeError:
+            values = [value]
+    features: List[str] = []
+    for item in values:
+        text = str(item or "").strip()
+        if text:
+            features.append(text)
+    return features
+
+
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(number):
+        return default
+    return number
 
 
 def _graph_repair_text_match(text: str) -> bool:
