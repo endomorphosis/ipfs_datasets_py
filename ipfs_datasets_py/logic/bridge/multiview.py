@@ -1659,9 +1659,12 @@ def _guidance_feature_lane_items(
     for key in (
         "compiler_guidance_feature_groups",
         "compiler_guidance_ranked_features",
+        "compiler_guidance_top_embedding_features",
+        "embedding_features",
         "feature_groups",
         "frame_features",
         "ranked_guidance_features",
+        "top_embedding_features",
         "top_family_features",
     ):
         items.extend(_guidance_feature_value_lane_items(mapping.get(key)))
@@ -1734,6 +1737,16 @@ def _guidance_family_pair_lane_items(
                     ("modal.frame_logic", 0.18),
                 )
             )
+        elif normalized_pair == "frame->deontic":
+            items.extend(
+                (
+                    ("deontic.ir", 1.25),
+                    ("TDFOL.prover", 0.90),
+                    ("knowledge_graphs.neo4j_compat", 0.68),
+                    ("CEC.native", 0.62),
+                    ("modal.frame_logic", 0.20),
+                )
+            )
         elif normalized_pair.endswith("->conditional_normative"):
             items.extend(
                 (
@@ -1758,14 +1771,28 @@ def _lane_from_guidance_feature(value: Any) -> str:
         return _bridge_contract_lane_component(
             _canonical_bridge_component_name(lane_text)
         )
+    for separator in ("||", "|"):
+        if separator in text:
+            _prefix, _separator, lane_text = text.rpartition(separator)
+            lane = _bridge_contract_lane_component(
+                _canonical_bridge_component_name(lane_text)
+            )
+            if lane:
+                return lane
     for prefix in (
         "legal-ir-view:",
+        "legal-ir-view-prototype:",
         "legal_ir_view:",
+        "legal_ir_view_prototype:",
+        "family-legal-ir-view-prototype:",
+        "family_legal_ir_view_prototype:",
         "target-component:",
         "target_component:",
     ):
         if normalized.startswith(prefix):
             _prefix, _separator, lane_text = text.partition(":")
+            if "||" in lane_text:
+                _family, _family_separator, lane_text = lane_text.rpartition("||")
             return _bridge_contract_lane_component(
                 _canonical_bridge_component_name(lane_text)
             )
