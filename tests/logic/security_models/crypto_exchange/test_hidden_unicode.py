@@ -14,6 +14,8 @@ def test_hidden_unicode_check_passes() -> None:
 
 def test_security_verification_files_use_real_lf_newlines() -> None:
     repo_root = Path(__file__).resolve().parents[4]
+    # These representative workflow/checker/schema files should be multi-line.
+    # A file swallowed into a single logical line would drop below this threshold.
     for relative_path in (
         '.github/workflows/security-logic-ci.yml',
         'scripts/ops/security_verification/check_no_hidden_unicode.py',
