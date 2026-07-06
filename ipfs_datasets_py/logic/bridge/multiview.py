@@ -1299,6 +1299,8 @@ def _compiler_guidance_bridge_contract_metadata(
             _add_metric_target_lanes(metric_name, add_lane=add_lane)
         for lane, score in _guidance_feature_lane_items(mapping):
             add_lane(lane, score)
+        for lane, score in _guidance_family_pair_lane_items(mapping):
+            add_lane(lane, score)
         for key in (
             "legal_ir_underrepresented_components",
             "underrepresented_components",
@@ -1692,6 +1694,54 @@ def _guidance_feature_value_lane_items(value: Any) -> tuple[tuple[str, float], .
     lane = _lane_from_guidance_feature(value)
     if lane:
         items.append((lane, 1.0))
+    return tuple(items)
+
+
+def _guidance_family_pair_lane_items(
+    mapping: Mapping[str, Any],
+) -> tuple[tuple[str, float], ...]:
+    """Return bridge lanes implied by modal semantic-family repair pairs."""
+
+    pairs: list[str] = []
+    for key in (
+        "family_pairs",
+        "semantic_family_pairs",
+        "modal_family_pairs",
+        "compiler_guidance_family_pairs",
+    ):
+        pairs.extend(
+            str(value or "").strip()
+            for value in _guidance_sequence(mapping.get(key))
+            if str(value or "").strip()
+        )
+
+    predicted_family = str(mapping.get("predicted_family") or "").strip()
+    target_family = str(mapping.get("target_family") or "").strip()
+    if predicted_family and target_family:
+        pairs.append(f"{predicted_family}->{target_family}")
+
+    items: list[tuple[str, float]] = []
+    for pair in pairs:
+        normalized_pair = pair.lower().replace(" ", "")
+        normalized_pair = normalized_pair.replace("=>", "->").replace("\u2192", "->")
+        if normalized_pair == "frame->conditional_normative":
+            items.extend(
+                (
+                    ("deontic.ir", 1.20),
+                    ("TDFOL.prover", 0.82),
+                    ("knowledge_graphs.neo4j_compat", 0.72),
+                    ("CEC.native", 0.32),
+                    ("modal.frame_logic", 0.18),
+                )
+            )
+        elif normalized_pair.endswith("->conditional_normative"):
+            items.extend(
+                (
+                    ("deontic.ir", 1.00),
+                    ("TDFOL.prover", 0.72),
+                    ("knowledge_graphs.neo4j_compat", 0.38),
+                )
+            )
     return tuple(items)
 
 
