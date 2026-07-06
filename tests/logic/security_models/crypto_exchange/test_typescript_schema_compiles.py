@@ -1,7 +1,9 @@
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 import pytest
 
@@ -18,15 +20,36 @@ def _repo_root() -> Path:
 
 REPO_ROOT = _repo_root()
 TEST_VECTOR_DIR = REPO_ROOT / 'docs' / 'security_verification' / 'test_vectors'
+EMITTER_SCRIPT = REPO_ROOT / 'scripts' / 'ops' / 'security_verification' / 'emit_security_typescript_schema.py'
 
 
-def _compile_typescript_schema(tmp_path: Path) -> tuple[str, str, Path]:
+def _hermetic_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env.setdefault('PYTHONPATH', str(REPO_ROOT))
+    env['IPFS_DATASETS_PY_MINIMAL_IMPORTS'] = '1'
+    env['IPFS_DATASETS_AUTO_INSTALL'] = '0'
+    env['IPFS_KIT_AUTO_INSTALL_DEPS'] = '0'
+    return env
+
+
+def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tuple[str, str, Path]:
     node = shutil.which('node')
     tsc = shutil.which('tsc') or shutil.which('npx')
     if not node or not tsc:
         pytest.skip('node and tsc/npx are not available')
     schema_path = tmp_path / 'security_schema.ts'
-    schema_path.write_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()), encoding='utf-8')
+    if via_cli:
+        subprocess.run(
+            [sys.executable, str(EMITTER_SCRIPT), '--example', '--out', str(schema_path)],
+            cwd=REPO_ROOT,
+            env=_hermetic_env(),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    else:
+        schema_path.write_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()), encoding='utf-8')
+    assert schema_path.read_text(encoding='utf-8').count('\n') > 1
     (tmp_path / 'tsconfig.json').write_text(
         json.dumps(
             {
@@ -48,6 +71,11 @@ def _compile_typescript_schema(tmp_path: Path) -> tuple[str, str, Path]:
 
 def test_typescript_schema_compiles_when_tsc_is_available(tmp_path: Path) -> None:
     _, _, compiled = _compile_typescript_schema(tmp_path)
+    assert compiled.exists()
+
+
+def test_typescript_schema_cli_emitter_outputs_strict_compilable_module(tmp_path: Path) -> None:
+    _, _, compiled = _compile_typescript_schema(tmp_path, via_cli=True)
     assert compiled.exists()
 
 

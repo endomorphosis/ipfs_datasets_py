@@ -15,6 +15,7 @@ TARGETS = [
     'scripts/ops/security_verification',
     'tests/logic/security_models/crypto_exchange',
 ]
+MULTILINE_TEXT_SUFFIXES = {'.py', '.yml', '.yaml', '.md', '.ts', '.js', '.sh'}
 BIDI_CONTROLS = {*range(0x202A, 0x202F), *range(0x2066, 0x206A)}
 ZERO_WIDTH_CONTROLS = {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF}
 NONSTANDARD_LINE_SEPARATORS = {0x2028, 0x2029}
@@ -43,6 +44,8 @@ def scan_file(path: Path) -> list[str]:
         return [f'{path}: invalid UTF-8 ({exc})']
     if b'\r\n' in raw:
         errors.append(f'{path}: CRLF newlines are not allowed')
+    if requires_multiple_physical_lines(path) and file_line_count(text) <= 1:
+        errors.append(f'{path}: expected ordinary physical newlines, found a single logical line')
     for index, character in enumerate(text, start=1):
         codepoint = ord(character)
         if codepoint in BIDI_CONTROLS:
@@ -58,6 +61,18 @@ def scan_file(path: Path) -> list[str]:
         elif unicodedata.category(character) == 'Cf':
             errors.append(f'{path}: unexpected format character U+{codepoint:04X} at character {index}')
     return errors
+
+
+def requires_multiple_physical_lines(path: Path) -> bool:
+    """Return whether the file should never be serialized as one logical line."""
+    return path.suffix in MULTILINE_TEXT_SUFFIXES
+
+
+def file_line_count(text: str) -> int:
+    """Count logical lines while tolerating missing trailing newlines."""
+    if not text:
+        return 0
+    return text.count('\n') + (0 if text.endswith('\n') else 1)
 
 
 def file_byte_diagnostics(path: Path) -> dict[str, int]:

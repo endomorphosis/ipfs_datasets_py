@@ -2,7 +2,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from scripts.ops.security_verification.check_no_hidden_unicode import file_byte_diagnostics
+from scripts.ops.security_verification.check_no_hidden_unicode import (
+    _iter_files,
+    file_byte_diagnostics,
+    file_line_count,
+    requires_multiple_physical_lines,
+)
 
 
 def test_hidden_unicode_check_passes() -> None:
@@ -13,20 +18,11 @@ def test_hidden_unicode_check_passes() -> None:
 
 
 def test_security_verification_files_have_real_lf_newlines() -> None:
-    repo_root = Path(__file__).resolve().parents[4]
-    # These source/workflow/test files should contain many physical LF bytes.
-    # A swallowed single-line file would fall well below this threshold.
-    for relative_path in (
-        '.github/workflows/security-logic-ci.yml',
-        'scripts/ops/security_verification/check_no_hidden_unicode.py',
-        'ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/typescript_schema.py',
-        'ipfs_datasets_py/logic/security_models/crypto_exchange/reports/proof_report.py',
-        'ipfs_datasets_py/logic/security_models/crypto_exchange/prove_all.py',
-        'tests/logic/security_models/crypto_exchange/test_security_artifact_e2e.py',
-        'tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py',
-    ):
-        diagnostics = file_byte_diagnostics(repo_root / relative_path)
-        assert diagnostics['lf'] > 5, f'{relative_path}: expected physical LF newlines, got {diagnostics}'
-        assert diagnostics['cr'] == 0, f'{relative_path}: unexpected CR bytes, got {diagnostics}'
-        assert diagnostics['u2028'] == 0, f'{relative_path}: unexpected U+2028, got {diagnostics}'
-        assert diagnostics['u2029'] == 0, f'{relative_path}: unexpected U+2029, got {diagnostics}'
+    for path in _iter_files():
+        diagnostics = file_byte_diagnostics(path)
+        assert diagnostics['cr'] == 0, f'{path}: unexpected CR bytes, got {diagnostics}'
+        assert diagnostics['u2028'] == 0, f'{path}: unexpected U+2028, got {diagnostics}'
+        assert diagnostics['u2029'] == 0, f'{path}: unexpected U+2029, got {diagnostics}'
+        if requires_multiple_physical_lines(path):
+            line_count = file_line_count(path.read_text(encoding='utf-8'))
+            assert line_count > 1, f'{path}: expected ordinary physical newlines, got {diagnostics}'
