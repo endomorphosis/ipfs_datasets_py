@@ -1227,6 +1227,14 @@ def _append_structural_graph_view_alignment_triples(
             subject=subject,
             components=[
                 (
+                    "learned_legal_ir_predicted_view",
+                    "knowledge_graphs.neo4j_compat",
+                ),
+                (
+                    "learned_legal_ir_predicted_view_weight",
+                    "knowledge_graphs.neo4j_compat:1.000000",
+                ),
+                (
                     "learned_legal_ir_target_view",
                     "knowledge_graphs.neo4j_compat",
                 ),
@@ -1240,7 +1248,7 @@ def _append_structural_graph_view_alignment_triples(
                 ),
                 (
                     "learned_legal_ir_view_gap",
-                    "knowledge_graphs.neo4j_compat:1.000000",
+                    "knowledge_graphs.neo4j_compat:0.000000",
                 ),
             ],
             predicates_by_subject=predicates_by_subject,

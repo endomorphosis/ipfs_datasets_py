@@ -165,10 +165,14 @@ def test_legal_ir_projection_structural_us_code_facts_add_neo4j_target_view() ->
         assert ("usc_hierarchy_projection", "true") in values
         assert ("status_keyword", "repealed") in values
         assert (
+            "learned_legal_ir_predicted_view",
+            "knowledge_graphs.neo4j_compat",
+        ) in values
+        assert (
             "learned_legal_ir_target_view",
             "knowledge_graphs.neo4j_compat",
         ) in values
         assert (
             "learned_legal_ir_view_gap",
-            "knowledge_graphs.neo4j_compat:1.000000",
+            "knowledge_graphs.neo4j_compat:0.000000",
         ) in values
