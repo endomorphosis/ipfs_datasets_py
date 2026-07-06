@@ -1551,7 +1551,13 @@ def _compiler_guidance_bundle_mapping(
     compiler_guidance: Mapping[str, Any],
 ) -> Mapping[str, Any]:
     """Return compact bundle metadata from parsed or JSON-string guidance."""
-    for key in ("bundle", "semantic_bundle", "vector_bundle"):
+    for key in (
+        "bundle",
+        "semantic_bundle",
+        "semantic_bundle_key",
+        "compiler_guidance_bundle",
+        "vector_bundle",
+    ):
         raw_bundle = compiler_guidance.get(key)
         if isinstance(raw_bundle, Mapping):
             return raw_bundle

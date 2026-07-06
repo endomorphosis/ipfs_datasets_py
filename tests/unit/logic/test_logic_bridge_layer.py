@@ -495,6 +495,51 @@ def test_modal_frame_logic_bridge_promotes_json_bundle_packet_guidance() -> None
     assert "modal_frame_logic" in selected_terms
 
 
+def test_modal_frame_logic_bridge_promotes_semantic_bundle_key_flogic_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="bridge-layer-semantic-bundle-key-guided-flogic",
+        citation="Bridge Layer Semantic Bundle Key Guided FLogic",
+        compiler_guidance={
+            "semantic_bundle_key": json.dumps(
+                {
+                    "program_synthesis_scope": "frame_logic",
+                    "route": "repair_flogic_ontology_constraints",
+                    "source": "compiler_guidance_distillation_v1",
+                    "target_component": "modal.frame_logic",
+                },
+                sort_keys=True,
+            ),
+            "source": "compiler_guidance_distillation_v1",
+        },
+        evaluate_provers=False,
+    )
+
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
+        "metadata"
+    ]
+    frame_metadata = report.ir_document.views["frame_logic"].metadata
+    selected_terms = {
+        triple["object"]
+        for triple in report.ir_document.views["frame_logic"].payload["triples"]
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert modal_metadata["compiler_guidance_synthesis_focus"] == [
+        "repair_flogic_ontology_constraints"
+    ]
+    assert modal_metadata["compiler_guidance_legal_ir_target_view_distribution"] == {
+        "modal.frame_logic": 1.0
+    }
+    assert report.round_trip.extra_losses["ontology_violation_count"] == 0.0
+    assert "repair_flogic_ontology_constraints" in selected_terms
+    assert "modal_frame_logic" in selected_terms
+    assert "frame_ontology_terms" in frame_metadata
+
+
 def test_modal_frame_logic_bridge_promotes_sample_only_flogic_guidance() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
