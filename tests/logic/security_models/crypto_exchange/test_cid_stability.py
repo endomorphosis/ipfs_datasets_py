@@ -40,8 +40,10 @@ def test_sha256_fallback_is_stable_when_cid_utility_is_unavailable(monkeypatch) 
     monkeypatch.setattr(cid_module, 'import_module', _raise_import_error)
     model = example_minimal_exchange_model()
     cid_value = cid_module.calculate_model_cid(model)
+    expected_cid = (TEST_VECTOR_DIR / 'security_model_minimal.sha256_fallback.txt').read_text(encoding='utf-8').strip()
     assert cid_value.startswith('sha256:')
     assert cid_value == cid_module.calculate_model_cid(model)
+    assert cid_value == expected_cid
 
 
 
@@ -71,3 +73,14 @@ def test_proof_report_nondeterministic_cid_matches_committed_test_vector() -> No
     expected_cid = (TEST_VECTOR_DIR / 'proof_report_minimal.nondeterministic_cid.txt').read_text(encoding='utf-8').strip()
     report = ProofReport.from_untrusted_dict(payload)
     assert report.nondeterministic_report_cid == expected_cid
+
+
+
+def test_proof_report_sha256_fallback_matches_committed_test_vector(monkeypatch) -> None:
+    monkeypatch.setattr(cid_module, 'import_module', _raise_import_error)
+    payload = json.loads((TEST_VECTOR_DIR / 'proof_report_minimal.json').read_text(encoding='utf-8'))
+    payload.pop('deterministic_payload_cid', None)
+    payload.pop('nondeterministic_report_cid', None)
+    expected_cid = (TEST_VECTOR_DIR / 'proof_report_minimal.sha256_fallback.txt').read_text(encoding='utf-8').strip()
+    report = ProofReport.from_dict(payload)
+    assert report.deterministic_payload_cid == expected_cid

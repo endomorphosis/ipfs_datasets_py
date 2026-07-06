@@ -100,7 +100,6 @@ class ProofReport:
             'compiler_cid': self.compiler_cid,
             'counterexample': self.counterexample,
             'risk': self.risk,
-            'signatures': list(self.signatures),
             'timeout_ms': self.timeout_ms,
             'reason_unknown': self.reason_unknown,
             'assertion_count': self.assertion_count,
@@ -117,9 +116,22 @@ class ProofReport:
                 'created_at': self.created_at,
                 'generated_at': self.generated_at,
                 'deterministic_payload_cid': self.deterministic_payload_cid,
+                'signatures': list(self.signatures),
             }
         )
         return payload
+
+    def recompute_deterministic_payload_cid(self) -> str:
+        return self.content_cid(self.deterministic_payload())
+
+    def recompute_nondeterministic_report_cid(self) -> str:
+        return self.content_cid(self.nondeterministic_payload())
+
+    def verify_report_cids(self) -> bool:
+        return (
+            self.deterministic_payload_cid == self.recompute_deterministic_payload_cid()
+            and self.nondeterministic_report_cid == self.recompute_nondeterministic_report_cid()
+        )
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -248,9 +260,15 @@ def _validate_proof_report_instance(report: ProofReport) -> None:
         _require_non_negative_int('assertion_count', report.assertion_count)
 
 
-def validate_proof_report(report: ProofReport | Mapping[str, Any]) -> ProofReport:
+def validate_proof_report(
+    report: ProofReport | Mapping[str, Any],
+    *,
+    verify_cids: bool = True,
+) -> ProofReport:
     """Validate *report* and return a normalized :class:`ProofReport`."""
 
     normalized = report if isinstance(report, ProofReport) else ProofReport.from_untrusted_dict(report)
     _validate_proof_report_instance(normalized)
+    if verify_cids and not normalized.verify_report_cids():
+        raise ValueError('proof report CID integrity check failed')
     return normalized

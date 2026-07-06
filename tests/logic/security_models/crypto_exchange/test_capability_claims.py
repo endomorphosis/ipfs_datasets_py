@@ -47,3 +47,42 @@ def test_expired_capability_cannot_authorize() -> None:
     model.capabilities[0]['privileged_action_attempted'] = True
     report = Z3Runner().run_claim(RevokedCapabilityClaim(), model)
     assert report.status == 'DISPROVED'
+
+
+
+def test_reinstated_capability_uses_last_event_state() -> None:
+    model = deepcopy(example_minimal_exchange_model())
+    model.events.append(
+        {
+            'id': 'event:capability_reinstated:1',
+            'event': 'capability_reinstated',
+            'capability_id': 'cap:withdraw:user_alice',
+            'timestamp': 9.5,
+        }
+    )
+    model.events.append(
+        {
+            'id': 'event:privileged_action:after_reinstate',
+            'event': 'privileged_action',
+            'capability_id': 'cap:withdraw:user_alice',
+            'timestamp': 10,
+        }
+    )
+    report = Z3Runner().run_claim(RevokedCapabilityClaim(), model)
+    assert report.status == 'PROVED'
+
+
+
+def test_capability_expiry_disproves_late_privileged_action() -> None:
+    model = deepcopy(example_minimal_exchange_model())
+    model.capabilities[0]['expiry'] = 8
+    model.events.append(
+        {
+            'id': 'event:privileged_action:expired',
+            'event': 'privileged_action',
+            'capability_id': 'cap:withdraw:user_alice',
+            'timestamp': 8.5,
+        }
+    )
+    report = Z3Runner().run_claim(RevokedCapabilityClaim(), model)
+    assert report.status == 'DISPROVED'

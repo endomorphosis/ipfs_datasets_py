@@ -15,6 +15,11 @@ from ..reports.proof_report import ProofReport
 from ..runners.base import BaseSecurityRunner
 
 
+_EVENT_LOOKUP_KEYS: tuple[str, ...] = (
+    'withdrawal_id', 'deposit_id', 'txid', 'capability_id', 'wallet_id', 'account_id', 'asset_id', 'id',
+)
+
+
 class Z3Runner(BaseSecurityRunner):
     """Evaluate supported claims with the Z3 Python bindings."""
 
@@ -63,11 +68,19 @@ class Z3Runner(BaseSecurityRunner):
         source_facts.extend(
             self._matching_records(
                 model.events,
-                key_names=('withdrawal_id', 'deposit_id', 'txid', 'capability_id', 'wallet_id', 'id'),
+                key_names=_EVENT_LOOKUP_KEYS,
                 values=[
                     *[str(item) for item in artifact.get('violating_withdrawals', [])],
                     *[str(item) for item in artifact.get('offending_ids', [])],
                     *[str(item) for item in artifact.get('violations', [])],
+                    *[str(item) for item in artifact.get('violating_event_ids', [])],
+                    *[str(item) for item in artifact.get('withdrawal_ids', [])],
+                    *[str(item) for item in artifact.get('deposit_ids', [])],
+                    *[str(item) for item in artifact.get('txids', [])],
+                    *[str(item) for item in artifact.get('capability_ids', [])],
+                    *[str(item) for item in artifact.get('wallet_ids', [])],
+                    *[str(item) for item in artifact.get('account_ids', [])],
+                    *[str(item) for item in artifact.get('asset_ids', [])],
                 ],
             )
         )
@@ -75,14 +88,34 @@ class Z3Runner(BaseSecurityRunner):
             self._matching_records(
                 model.capabilities,
                 key_names=('id',),
-                values=[str(item) for item in artifact.get('violations', [])],
+                values=[
+                    *[str(item) for item in artifact.get('violations', [])],
+                    *[str(item) for item in artifact.get('capability_ids', [])],
+                ],
             )
         )
         source_facts.extend(
             self._matching_records(
                 model.accounts,
                 key_names=('id',),
-                values=[str(item) for item in artifact.get('overdrawn_accounts', [])],
+                values=[
+                    *[str(item) for item in artifact.get('overdrawn_accounts', [])],
+                    *[str(item) for item in artifact.get('account_ids', [])],
+                ],
+            )
+        )
+        source_facts.extend(
+            self._matching_records(
+                model.wallets,
+                key_names=('id',),
+                values=[str(item) for item in artifact.get('wallet_ids', [])],
+            )
+        )
+        source_facts.extend(
+            self._matching_records(
+                model.assets,
+                key_names=('id',),
+                values=[str(item) for item in artifact.get('asset_ids', [])],
             )
         )
         for violation in artifact.get('violations', []):
@@ -126,6 +159,7 @@ class Z3Runner(BaseSecurityRunner):
             capability_ids=[str(item) for item in artifact.get('capability_ids', artifact.get('violations', [])) if item is not None],
             wallet_ids=[str(item) for item in artifact.get('wallet_ids', [])],
             account_ids=[str(item) for item in artifact.get('account_ids', artifact.get('overdrawn_accounts', []))],
+            asset_ids=[str(item) for item in artifact.get('asset_ids', [])],
             source_facts=self._source_facts(model, compilation),
             evidence_refs=list(compilation.evidence_refs),
             soundness_notes=list(compilation.soundness_notes),

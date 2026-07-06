@@ -177,8 +177,8 @@ class TypeScriptSchemaEmitter:
             '  }',
             '  const candidate = value as ProofReport;',
             '  return candidate.schema_version === SECURITY_ARTIFACT_METADATA.proofReportSchemaVersion',
-            '    && PROOF_STATUSES.includes(candidate.status)',
-            '    && PROOF_RISKS.includes(candidate.risk);',
+            '    && (PROOF_STATUSES as readonly string[]).includes(candidate.status)',
+            '    && (PROOF_RISKS as readonly string[]).includes(candidate.risk);',
             '}',
             '',
             'export function validateProofReceiptStrict(value: unknown): value is ProofReceipt {',
@@ -284,7 +284,7 @@ class TypeScriptSchemaEmitter:
             '}',
             '',
             'export function verifyProofReceiptAssumptions(receipt: ProofReceipt, report: ProofReport): boolean {',
-            '  return verifyAcceptedAssumptions(receipt, report);',
+            '  return report.assumptions.every((assumption) => (receipt.accepted_assumptions as readonly string[]).includes(assumption));',
             '}',
         ]
         return '\n'.join(lines) + '\n'

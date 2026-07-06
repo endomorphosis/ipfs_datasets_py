@@ -106,6 +106,7 @@ class RevokedCapabilityClaim(SecurityClaim):
         assertions: list[Any] = []
         checks: list[Any] = []
         violations: list[dict[str, Any]] = []
+        capability_by_id = {str(capability.get('id')): capability for capability in capabilities if capability.get('id') is not None}
         revocations = [event for event in capability_events if event.get('event') == 'capability_revoked']
         reinstatements = [event for event in capability_events if event.get('event') == 'capability_reinstated']
         actions = [event for event in capability_events if event.get('event') == 'privileged_action']
@@ -120,15 +121,29 @@ class RevokedCapabilityClaim(SecurityClaim):
                 event for event in reinstatements
                 if event.get('capability_id') == capability_id and (event.get('timestamp') is None or action_time is None or event.get('timestamp') <= action_time)
             ]
-            not_revoked = len(prior_revocations) <= len(prior_reinstatements)
+            all_state_events = sorted(
+                prior_revocations + prior_reinstatements,
+                key=lambda event: (event.get('timestamp') is None, event.get('timestamp') or 0),
+            )
+            if all_state_events:
+                last_event = all_state_events[-1]
+                not_revoked = last_event.get('event') != 'capability_revoked'
+            else:
+                not_revoked = True
+            capability = capability_by_id.get(str(capability_id)) if capability_id is not None else None
+            expired_by_time = False
+            if capability is not None and action_time is not None and capability.get('expiry') is not None:
+                expired_by_time = action_time > capability.get('expiry')
+            action_allowed = not_revoked and not expired_by_time
             condition_var = z3.Bool(f'revocation_{index}_not_revoked')
-            assertions.append(condition_var == not_revoked)
+            assertions.append(condition_var == action_allowed)
             checks.append(condition_var)
-            if not not_revoked:
+            if not action_allowed:
                 violations.append(
                     {
                         'event_id': str(action.get('id', f'action:{index}')),
                         'capability_id': str(capability_id),
+                        'expired': expired_by_time,
                     }
                 )
         for index, capability in enumerate(capabilities):

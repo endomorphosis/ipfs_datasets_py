@@ -23,7 +23,6 @@
   "reason_unknown": null,
   "risk": "blocking",
   "schema_version": "proof-report/v1",
-  "signatures": [],
   "solver_name": "z3",
   "solver_result": "unsat",
   "solver_version": "4.16.0",

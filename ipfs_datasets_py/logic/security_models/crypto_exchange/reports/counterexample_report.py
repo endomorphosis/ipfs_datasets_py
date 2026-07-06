@@ -21,6 +21,7 @@ class CounterexampleReport:
     capability_ids: list[str] = field(default_factory=list)
     wallet_ids: list[str] = field(default_factory=list)
     account_ids: list[str] = field(default_factory=list)
+    asset_ids: list[str] = field(default_factory=list)
     source_facts: list[dict[str, Any]] = field(default_factory=list)
     evidence_refs: list[dict[str, Any]] = field(default_factory=list)
     soundness_notes: list[str] = field(default_factory=list)

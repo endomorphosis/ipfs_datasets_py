@@ -54,6 +54,7 @@ def _remove_terminal_conflict_marker(model):
         (lambda model: model.events[0].update({'account_id': 'account:missing'}), 'references unknown account'),
         (lambda model: model.events[8].update({'capability_id': 'cap:missing'}), 'references unknown capability'),
         (lambda model: model.state_machines[0].update({'current': 'missing'}), 'current must be present in state_machine.states'),
+        (lambda model: model.state_machines[0].update({'states': []}), 'states must not be empty'),
         (lambda model: model.policies[0]['evidence_refs'][0].update({'line_start': 0}), 'line_start must be a positive integer'),
         (_remove_deposit_identity, 'deposit_credited events require deposit_id or txid'),
         (_remove_withdrawal_identity, 'withdrawal_approved events require withdrawal_id or txid'),

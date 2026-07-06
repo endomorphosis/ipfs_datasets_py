@@ -45,8 +45,19 @@ def test_proof_report_round_trip_and_deterministic_payload_cid() -> None:
     restored = ProofReport.from_untrusted_dict(report.to_dict())
     assert restored.to_dict() == report.to_dict()
     assert validate_proof_report(restored) is restored
+    assert report.verify_report_cids() is True
     assert report.deterministic_payload_cid == same_payload_other_timestamp.deterministic_payload_cid
     assert report.cid != same_payload_other_timestamp.cid
+
+
+
+def test_deterministic_payload_excludes_signatures() -> None:
+    unsigned = _report(signatures=[])
+    signed = _report(signatures=[{'key_id': 'k1', 'signature': 'abc'}])
+    assert 'signatures' not in unsigned.deterministic_payload()
+    assert 'signatures' in signed.nondeterministic_payload()
+    assert unsigned.deterministic_payload_cid == signed.deterministic_payload_cid
+    assert unsigned.nondeterministic_report_cid != signed.nondeterministic_report_cid
 
 
 @pytest.mark.parametrize(
@@ -80,6 +91,17 @@ def test_proof_report_from_untrusted_dict_rejects_unknown_fields() -> None:
 def test_validate_proof_report_rejects_unknown_status_and_risk(field: str, value: str, message: str) -> None:
     with pytest.raises(ValueError, match=message):
         _report(**{field: value})
+
+
+def test_validate_proof_report_detects_cid_integrity_failures_unless_disabled() -> None:
+    report = _report()
+    report.signatures.append({'key_id': 'k1', 'signature': 'abc'})
+    with pytest.raises(ValueError, match='CID integrity check failed'):
+        validate_proof_report(report)
+    assert validate_proof_report(report, verify_cids=False) is report
+    assert report.recompute_deterministic_payload_cid() == report.deterministic_payload_cid
+    assert report.recompute_nondeterministic_report_cid() != report.nondeterministic_report_cid
+
 
 
 def test_proof_receipt_rejects_missing_explicit_assumptions_by_default() -> None:

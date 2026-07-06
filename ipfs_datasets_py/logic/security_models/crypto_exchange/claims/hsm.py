@@ -44,7 +44,15 @@ class NoSigningAfterWalletFreezeClaim(SecurityClaim):
                 event for event in unfrozen_events
                 if event.get('wallet_id') == wallet_id and (event.get('timestamp') is None or timestamp is None or event.get('timestamp') <= timestamp)
             ]
-            not_frozen = len(prior_freezes) <= len(prior_unfreezes)
+            all_freeze_events = sorted(
+                prior_freezes + prior_unfreezes,
+                key=lambda event: (event.get('timestamp') is None, event.get('timestamp') or 0),
+            )
+            if all_freeze_events:
+                last_event = all_freeze_events[-1]
+                not_frozen = last_event.get('event') == 'wallet_unfrozen'
+            else:
+                not_frozen = True
             transaction_reference = signing.get('txid') is not None or signing.get('approved_tx_bytes') is not None
             hsm_evidence_present = bool(signing.get('evidence_refs'))
             condition_values = {
