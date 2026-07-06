@@ -17,6 +17,7 @@ TARGETS = [
 ]
 # These are the executable/source-facing formats that should never collapse into a
 # single logical GitHub-rendered line within the focused security-verification surface.
+# Extend this list when new source/workflow/script types are added here.
 MULTILINE_TEXT_SUFFIXES = {'.py', '.yml', '.yaml', '.md', '.ts', '.js', '.sh'}
 BIDI_CONTROLS = {*range(0x202A, 0x202F), *range(0x2066, 0x206A)}
 ZERO_WIDTH_CONTROLS = {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF}
@@ -71,7 +72,7 @@ def must_be_multiline(path: Path) -> bool:
 
 
 def file_line_count(text: str) -> int:
-    r"""Count lines as editors do: ``"foo\nbar"`` -> 2 and ``"foo\nbar\n"`` -> 2."""
+    r"""Count newline-delimited lines, treating a final unterminated fragment as one line."""
     if not text:
         return 0
     return text.count('\n') + (0 if text.endswith('\n') else 1)

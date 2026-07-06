@@ -27,7 +27,8 @@ MIN_SCHEMA_NEWLINE_COUNT = 2
 def _hermetic_env() -> dict[str, str]:
     """Return an isolated env that disables auto-installs and keeps imports pinned to this repo."""
     env = os.environ.copy()
-    env.setdefault('PYTHONPATH', str(REPO_ROOT))
+    existing_pythonpath = env.get('PYTHONPATH')
+    env['PYTHONPATH'] = str(REPO_ROOT) if not existing_pythonpath else f'{REPO_ROOT}:{existing_pythonpath}'
     env['IPFS_DATASETS_PY_MINIMAL_IMPORTS'] = '1'
     env['IPFS_DATASETS_AUTO_INSTALL'] = '0'
     env['IPFS_KIT_AUTO_INSTALL_DEPS'] = '0'
@@ -49,6 +50,8 @@ def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tupl
     tsc = shutil.which('tsc') or shutil.which('npx')
     if not node or not tsc:
         pytest.skip('node and tsc/npx are not available')
+    if via_cli:
+        assert EMITTER_SCRIPT.is_file()
     schema_path = tmp_path / 'security_schema.ts'
     if via_cli:
         subprocess.run(
