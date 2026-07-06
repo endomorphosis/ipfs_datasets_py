@@ -1270,6 +1270,17 @@ def _compiler_guidance_bridge_contract_metadata(
     component_gaps: Dict[str, float] = {}
     diagnostic_probability_gaps: list[float] = []
     diagnostic_component_gap_max: list[float] = []
+    guidance_records = (
+        compiler_guidance,
+        *_compiler_guidance_nested_mappings(compiler_guidance),
+        *evidence_rows,
+    )
+    contract_evidence_count = sum(
+        1
+        for mapping in guidance_records
+        if _mapping_is_compiler_guidance_evidence(mapping)
+        and _mapping_targets_bridge_contracts(mapping)
+    )
 
     def add_lane(value: Any, score: float = 1.0) -> None:
         lane = _bridge_contract_lane_component(
@@ -1342,6 +1353,19 @@ def _compiler_guidance_bridge_contract_metadata(
         )
         if support > 0.0 and _mapping_is_compiler_guidance_evidence(mapping):
             diagnostic_probability_gaps.append(min(0.50, 0.10 * support))
+        if (
+            support <= 0.0
+            and _mapping_is_compiler_guidance_evidence(mapping)
+            and _mapping_targets_bridge_contracts(mapping)
+        ):
+            diagnostic_probability_gaps.append(0.10)
+        if (
+            _guidance_quality_gate_passes(mapping.get("quality_gate"))
+            or _guidance_quality_gate_passes(
+                mapping.get("compiler_guidance_quality_gate")
+            )
+        ) and _mapping_targets_bridge_contracts(mapping):
+            diagnostic_probability_gaps.append(0.16)
 
     collect(compiler_guidance)
     for mapping in _compiler_guidance_nested_mappings(compiler_guidance):
@@ -1364,8 +1388,10 @@ def _compiler_guidance_bridge_contract_metadata(
         component_gap_maxima=diagnostic_component_gap_max,
     )
     return {
-        "compiler_guidance_bridge_contract_evidence_count": len(evidence_rows),
+        "compiler_guidance_bridge_contract_applied": True,
+        "compiler_guidance_bridge_contract_evidence_count": contract_evidence_count,
         "compiler_guidance_bridge_contract_projection_strength": projection_strength,
+        "compiler_guidance_bridge_contract_routes": sorted(routes),
         "compiler_guidance_bridge_contract_target_distribution": target_distribution,
         "compiler_guidance_bridge_contract_target_lanes": sorted(target_distribution),
         "compiler_guidance_bridge_contract_target_probability_gap": max(
@@ -1560,6 +1586,27 @@ def _evidence_row_targets_bridge_contracts(row: Mapping[str, Any]) -> bool:
     return target == "bridge.contracts" or failure.startswith("legal_ir_")
 
 
+def _mapping_targets_bridge_contracts(mapping: Mapping[str, Any]) -> bool:
+    if _evidence_row_targets_bridge_contracts(mapping):
+        return True
+    route_values = (
+        mapping.get("action"),
+        mapping.get("route"),
+        mapping.get("compiler_guidance_route"),
+        mapping.get("semantic_bundle_key"),
+    )
+    return any(
+        str(value or "").strip()
+        in {
+            "repair_multiview_legal_ir_loss",
+            "repair_multiview_legal_ir_graph_projection",
+            "compiler-guidance:repair_multiview_legal_ir_loss",
+            "compiler-guidance:repair_multiview_legal_ir_graph_projection",
+        }
+        for value in route_values
+    )
+
+
 def _mapping_is_compiler_guidance_evidence(mapping: Mapping[str, Any]) -> bool:
     source = str(mapping.get("source") or "").strip()
     vector_bundle = str(mapping.get("vector_bundle") or "").strip()
@@ -1569,6 +1616,23 @@ def _mapping_is_compiler_guidance_evidence(mapping: Mapping[str, Any]) -> bool:
         if str(sample or "").strip().startswith("compiler-guidance:"):
             return True
     return False
+
+
+def _guidance_quality_gate_passes(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return any(
+            _guidance_quality_gate_passes(nested)
+            for nested in value.values()
+        )
+    normalized = str(value or "").strip().lower()
+    return normalized in {
+        "pass",
+        "passed",
+        "passing",
+        "ok",
+        "true",
+        "1",
+    }
 
 
 def _guidance_sequence(value: Any) -> tuple[Any, ...]:

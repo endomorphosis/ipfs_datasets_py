@@ -2488,6 +2488,11 @@ def test_bridge_contract_promotes_packet_json_bundle_guidance() -> None:
         "compiler_guidance_bridge_contract_target_distribution"
     ]
 
+    assert metadata["compiler_guidance_bridge_contract_applied"] is True
+    assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 1
+    assert metadata["compiler_guidance_bridge_contract_routes"] == [
+        "repair_multiview_legal_ir_loss"
+    ]
     assert metadata["compiler_guidance_bridge_contract_target_lanes"]
     assert set(target_distribution) == {
         "CEC.native",
@@ -2530,7 +2535,11 @@ def test_bridge_contract_promotes_packet_todo_guidance_fields() -> None:
         "compiler_guidance_bridge_contract_target_distribution"
     ]
 
-    assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 0
+    assert metadata["compiler_guidance_bridge_contract_applied"] is True
+    assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 1
+    assert metadata["compiler_guidance_bridge_contract_routes"] == [
+        "repair_multiview_legal_ir_loss"
+    ]
     assert set(target_distribution) == {
         "CEC.native",
         "TDFOL.prover",
