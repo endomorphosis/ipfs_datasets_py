@@ -3249,6 +3249,29 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "support_text": nato_contribution_limit_match.group(0)[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
+    passive_governance_match = re.search(
+        r"\b(?P<object>this\s+(?:chapter|subchapter|section|part|title|act)|"
+        r"the\s+(?:chapter|subchapter|section|part|title|act))\s+shall\s+be\s+"
+        r"(?P<verb>administered(?:\s+and\s+enforced)?|enforced|carried\s+out)\s+"
+        r"by\s+(?P<actor>(?:the\s+)?[a-z][^.;]{1,160})",
+        operative_text.lower(),
+    )
+    if passive_governance_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        object_text = _clean_operational_slot(passive_governance_match.group("object"))
+        object_text = re.sub(r"^(?:this|the)\s+", "", object_text, flags=re.IGNORECASE)
+        action_verb = _clean_operational_slot(passive_governance_match.group("verb"))
+        return {
+            "actor": _clean_operational_actor_slot(
+                passive_governance_match.group("actor")
+            ),
+            "action": _clean_operational_slot(f"{action_verb} {object_text}"),
+            "modality": "obligated",
+            "norm_type": "obligated",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": passive_governance_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     passive_administration_match = re.search(
         r"\b(?P<object>administration[^.;]{1,180}?)\s+shall\s+be\s+"
         r"(?P<action>exercised\s+under\s+the\s+direction\s+of\s+[^.;]+?)"

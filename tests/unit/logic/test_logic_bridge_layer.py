@@ -6419,6 +6419,75 @@ def test_cec_dcec_bridge_exposes_rescue_target_metrics() -> None:
     assert report.metadata["target_metrics"]["cosine_similarity"] == 1.0
 
 
+def test_cec_dcec_bridge_extracts_passive_section_governance_without_converter() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("section governance clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "33 U.S.C. 3803: U.S.C. Title 33 - NAVIGATION AND NAVIGABLE "
+            "WATERS Sec. 3803 - Administration and enforcement "
+            "§3803. Administration and enforcement This chapter shall be "
+            "administered and enforced by the Secretary."
+        ),
+        document_id="cec-bridge-clean-hulls-administration",
+        citation="33 U.S.C. 3803",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "secretary"
+    assert event_record["event"] == "administered_and_enforced_chapter"
+    assert formula_record["proof_input"].startswith("O(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_va_non_department_facility_contract_power() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("VA contract power clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "38 U.S.C. 1731: U.S.C. Title 38 - VETERANS' BENEFITS "
+            "PART II - GENERAL BENEFITS CHAPTER 17 - HOSPITAL, NURSING "
+            "HOME, DOMICILIARY, AND MEDICAL CARE SUBCHAPTER IV - HOSPITAL "
+            "CARE AND MEDICAL SERVICES IN NON-DEPARTMENT FACILITIES "
+            "Sec. 1731 - Hospital care and medical services in "
+            "non-Department facilities When Department facilities are not "
+            "capable of furnishing economical care because of geographical "
+            "inaccessibility or are not capable of furnishing the care or "
+            "services required, the Secretary may contract with "
+            "non-Department facilities in order to furnish hospital care or "
+            "medical services."
+        ),
+        document_id="cec-bridge-va-non-department-contract-power",
+        citation="38 U.S.C. 1731",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "secretary"
+    assert event_record["event"].startswith("contract_with_non_department_facilities")
+    assert formula_record["proof_input"].startswith("P(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_promotes_packet_shaped_compiler_guidance() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
