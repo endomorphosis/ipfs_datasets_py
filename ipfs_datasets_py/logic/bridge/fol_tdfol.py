@@ -735,6 +735,9 @@ def _tdfol_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         route = _normalized_guidance_token(value)
         if route:
             routes.add(route)
+        sample_route = _tdfol_guidance_sample_route(value)
+        if sample_route:
+            routes.add(sample_route)
 
     route_keys = (
         "route",
@@ -764,6 +767,9 @@ def _tdfol_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         "compiler_guidance_todo_routes",
         "top_todo_routes",
         "todo_routes",
+        "samples",
+        "sample",
+        "compiler_guidance_samples",
     ):
         value = compiler_guidance.get(key)
         if value is not None:
@@ -1039,7 +1045,12 @@ def _has_tdfol_parse_repair_evidence(
 ) -> bool:
     """Detect packet evidence that names the TDFOL parse-repair failure."""
 
-    for evidence in _tdfol_guidance_evidence_records(compiler_guidance):
+    evidence_records = [
+        dict(compiler_guidance),
+        *_tdfol_guidance_bundles(compiler_guidance),
+        *_tdfol_guidance_evidence_records(compiler_guidance),
+    ]
+    for evidence in evidence_records:
         target_metrics = _guidance_tokens(evidence.get("target_metrics"))
         failure_name = _normalized_guidance_token(
             evidence.get("bridge_failure_name") or evidence.get("failure_name")
@@ -1066,7 +1077,41 @@ def _has_tdfol_parse_repair_evidence(
             )
         ):
             return True
+        if (
+            _tdfol_guidance_sample_route(evidence.get("samples"))
+            == "repair_tdfol_bridge_parse"
+            and (
+                target_lane == "tdfol"
+                or target_view in {"tdfol.prover", "tdfol"}
+                or "tdfol_parse_failure_ratio" in target_metrics
+            )
+        ):
+            return True
     return False
+
+
+def _tdfol_guidance_sample_route(value: Any) -> str:
+    """Extract repair route names from compiler-guidance sample identifiers."""
+
+    if isinstance(value, Mapping):
+        for item in value.values():
+            route = _tdfol_guidance_sample_route(item)
+            if route:
+                return route
+        return ""
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for item in value:
+            route = _tdfol_guidance_sample_route(item)
+            if route:
+                return route
+        return ""
+    text = _normalized_guidance_token(value)
+    if not text:
+        return ""
+    for prefix in ("compiler-guidance:", "compiler_guidance:"):
+        if text.startswith(prefix):
+            return text.split(":", 1)[1]
+    return ""
 
 
 def _tdfol_guidance_evidence_records(

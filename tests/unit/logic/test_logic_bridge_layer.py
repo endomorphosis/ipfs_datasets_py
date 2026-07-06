@@ -15744,6 +15744,44 @@ def test_multiview_bridge_forwards_compiler_guidance_to_adapter() -> None:
     assert adapter.last_kwargs["compiler_guidance"] == guidance
 
 
+def test_fol_tdfol_bridge_promotes_packet_compiler_guidance_samples() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    guidance = {
+        "role": "program_synthesis",
+        "target": "TDFOL.prover",
+        "scope": "tdfol",
+        "bundle": {
+            "program_synthesis_scope": "tdfol",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "TDFOL.prover",
+        },
+        "samples": "compiler-guidance:repair_tdfol_bridge_parse",
+        "support": 1,
+        "target_metrics": ("tdfol_parse_failure_ratio",),
+    }
+
+    report = FolTdfolBridgeAdapter().evaluate(
+        "When the agency receives an application, the agency shall publish notice.",
+        compiler_guidance=guidance,
+        document_id="fol-tdfol-packet-guidance",
+    )
+    records = report.ir_document.views["tdfol_formula"].payload["records"]
+    guidance_records = [
+        record
+        for record in records
+        if record["source_id"].startswith("tdfol:compiler_guidance:")
+    ]
+
+    assert guidance_records
+    assert guidance_records[0]["parse_ok"] is True
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_routes"] == [
+        "repair_tdfol_bridge_parse"
+    ]
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
 def test_logic_manifest_includes_bridge_layer() -> None:
     from ipfs_datasets_py.logic.submodule_registry import logic_integration_manifest
 
