@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.canonicalize import canonicalize_ir
@@ -25,6 +26,7 @@ def test_canonicalization_is_stable() -> None:
 
 def test_canonicalization_matches_committed_test_vector() -> None:
     model = example_minimal_exchange_model()
-    assert canonicalize_ir(model).decode('utf-8') == (
-        TEST_VECTOR_DIR / 'security_model_minimal.canonical.json'
-    ).read_text(encoding='utf-8')
+    committed_vector = json.loads(
+        (TEST_VECTOR_DIR / 'security_model_minimal.canonical.json').read_text(encoding='utf-8')
+    )
+    assert canonicalize_ir(model) == canonicalize_ir(SecurityModelIR.from_dict(committed_vector))
