@@ -443,6 +443,23 @@ def evaluate_tdfol(payload: Dict[str, Any], subsystem: str = "temporal") -> Dict
         }
         return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
 
+    permission_goal = re.match(r"^P\((.+)\)$", goal)
+    if permission_goal:
+        permitted_atom = str(permission_goal.group(1) or "").strip()
+        if permitted_atom in obligations:
+            result = {
+                "status": "proved",
+                "reason": "proved",
+                "proverId": "tdfol-native",
+                "metadata": {
+                    "simulated": False,
+                    "route": "deontic-d-axiom",
+                    "sourceRule": "DeonticDRule",
+                    "atom": permitted_atom,
+                },
+            }
+            return align_decision_with_native_policy(result, policy, subsystem, "tdfol-native")
+
     if axioms:
         try:
             from ipfs_datasets_py.logic.TDFOL.tdfol_core import ProofStatus, TDFOLKnowledgeBase
