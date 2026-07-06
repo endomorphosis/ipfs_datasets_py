@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import sys
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -50,9 +51,24 @@ def scan_file(path: Path) -> list[str]:
             errors.append(f'{path}: zero-width control U+{codepoint:04X} at character {index}')
         elif codepoint in NONSTANDARD_LINE_SEPARATORS:
             errors.append(f'{path}: nonstandard line separator U+{codepoint:04X} at character {index}')
-        elif codepoint < 0x20 and codepoint not in ALLOWED_CONTROLS:
+        elif codepoint in ALLOWED_CONTROLS:
+            continue
+        elif unicodedata.category(character) == 'Cc':
             errors.append(f'{path}: unexpected control character U+{codepoint:04X} at character {index}')
+        elif unicodedata.category(character) == 'Cf':
+            errors.append(f'{path}: unexpected format character U+{codepoint:04X} at character {index}')
     return errors
+
+
+def file_byte_diagnostics(path: Path) -> dict[str, int]:
+    """Return simple byte-level newline/separator diagnostics for a file."""
+    raw = path.read_bytes()
+    return {
+        'lf': raw.count(b'\n'),
+        'cr': raw.count(b'\r'),
+        'u2028': raw.count('\u2028'.encode('utf-8')),
+        'u2029': raw.count('\u2029'.encode('utf-8')),
+    }
 
 
 

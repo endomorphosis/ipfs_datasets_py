@@ -21,4 +21,11 @@ def test_typescript_schema_emitter_outputs_runtime_guard_and_metadata() -> None:
     assert '(PROOF_STATUSES as readonly string[]).includes(candidate.status)' in rendered
     assert '(PROOF_RISKS as readonly string[]).includes(candidate.risk)' in rendered
     assert '(receipt.accepted_assumptions as readonly string[]).includes(assumption)' in rendered
+    assert 'export type SecurityRecord = Record<string, unknown>;' in rendered
+    assert 'assumptions: Array<string | SecurityAssumption>;' in rendered
+    assert 'Object.entries(input as Record<string, unknown>)' in rendered
+    assert 'const candidate = value as Record<string, unknown>;' in rendered
+    assert 'export type SecurityRecord = Record;' not in rendered
+    assert 'assumptions: Array;' not in rendered
+    assert 'const candidate = value as Record;' not in rendered
     assert 'canonicalizeJson' in rendered
