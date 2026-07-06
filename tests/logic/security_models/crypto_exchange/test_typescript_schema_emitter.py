@@ -18,4 +18,7 @@ def test_typescript_schema_emitter_outputs_runtime_guard_and_metadata() -> None:
     assert 'export function verifyProofReceiptSchemaOnly' in rendered
     assert 'export function verifyProofReceiptProofCritical' in rendered
     assert 'export function verifyProofReceipt' in rendered
+    assert '(PROOF_STATUSES as readonly string[]).includes(candidate.status)' in rendered
+    assert '(PROOF_RISKS as readonly string[]).includes(candidate.risk)' in rendered
+    assert '(receipt.accepted_assumptions as readonly string[]).includes(assumption)' in rendered
     assert 'canonicalizeJson' in rendered

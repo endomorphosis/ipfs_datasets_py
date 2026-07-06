@@ -52,6 +52,15 @@ def test_bad_model_finds_signing_after_freeze_counterexample() -> None:
 
 
 
+def test_wallet_unfreeze_uses_last_event_state() -> None:
+    model = deepcopy(example_minimal_exchange_model())
+    model.events.append({'id': 'event:wallet_unfrozen:1', 'event': 'wallet_unfrozen', 'wallet_id': 'wallet:user_alice', 'timestamp': 7.5})
+    model.events.append({'id': 'event:sign:after_unfreeze', 'event': 'signing_request', 'wallet_id': 'wallet:user_alice', 'txid': 'tx:2', 'approved_tx_bytes': '0xbeef', 'timestamp': 8})
+    report = Z3Runner().run_claim(NoSigningAfterWalletFreezeClaim(), model)
+    assert report.status == 'PROVED'
+
+
+
 def test_bad_model_finds_capability_authority_escalation() -> None:
     model = deepcopy(example_minimal_exchange_model())
     model.capabilities[0]['delegated_authority'] = ESCALATED_DELEGATED_AUTHORITY

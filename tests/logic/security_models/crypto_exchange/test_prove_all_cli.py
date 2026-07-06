@@ -215,6 +215,40 @@ def test_cli_coverage_thresholds_fail_when_modeled_or_proved_counts_are_too_low(
 
 
 
+def test_cli_require_domain_fails_when_requested_domain_is_not_modeled(monkeypatch) -> None:
+    reports = [
+        _report(claim_id='no_unauthorized_withdrawal'),
+        _report(claim_id='global_asset_conservation', status='NOT_MODELED', solver_result='not-modeled'),
+    ]
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: reports,
+    )
+    assert main(['--example', '--require-domain', 'ledger']) == 1
+    assert main(['--example', '--require-domain', 'withdrawals']) == 0
+
+
+
+def test_cli_coverage_summary_includes_domain_details(tmp_path: Path, monkeypatch) -> None:
+    report_path = tmp_path / 'coverage.json'
+    reports = [
+        _report(claim_id='no_unauthorized_withdrawal'),
+        _report(claim_id='global_asset_conservation', status='NOT_MODELED', solver_result='not-modeled'),
+        _report(claim_id='no_deposit_before_finality', risk='high'),
+    ]
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: reports,
+    )
+    assert main(['--example', '--out', str(report_path)]) == 0
+    payload = json.loads(report_path.read_text(encoding='utf-8'))
+    assert payload['coverage']['domains_modeled']['withdrawals'] is True
+    assert payload['coverage']['domains_modeled']['ledger'] is False
+    assert payload['coverage']['domain_summary']['withdrawals']['claim_statuses']['no_unauthorized_withdrawal'] == 'PROVED'
+    assert payload['coverage']['domain_summary']['ledger']['blocking_not_modeled'] == 1
+
+
+
 def test_cli_strict_validation_rejects_invalid_model(tmp_path: Path) -> None:
     model_path = tmp_path / 'invalid.json'
     payload = example_minimal_exchange_model().to_dict()

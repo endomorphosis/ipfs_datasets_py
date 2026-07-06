@@ -34,6 +34,9 @@ def test_all_asset_conservation_violation_is_detected() -> None:
     model.metadata['ledger_totals']['customer_liabilities']['asset:btc'] = 10
     report = Z3Runner().run_claim(GlobalAssetConservationClaim(), model)
     assert report.status == 'DISPROVED'
+    assert report.counterexample is not None
+    assert report.counterexample['asset_ids'] == ['asset:btc']
+    assert report.counterexample['compiler_artifact']['asset_ids'] == ['asset:btc']
 
 
 def test_backward_compatible_combined_ledger_claim_still_detects_violation() -> None:

@@ -559,12 +559,6 @@ def _validate_references(normalized: SecurityModelIR) -> None:
 
     for state_machine in normalized.state_machines:
         state_machine_id = state_machine.get('id', '<unknown>')
-        states = state_machine.get('states')
-        if not isinstance(states, list):
-            raise ValueError(f'state_machine {state_machine_id}.states must be a list')
-        current = state_machine.get('current')
-        if current is not None and current not in states:
-            raise ValueError(f'state_machine {state_machine_id}.current must be present in state_machine.states')
         transitions = state_machine.get('transitions', [])
         if transitions:
             if not isinstance(transitions, list):
@@ -587,6 +581,45 @@ def _event_identity(event: Mapping[str, Any], *keys: str) -> Any:
 
 
 
+def validate_event_registry(events: list[dict[str, Any]], *, strict: bool = False) -> list[str]:
+    """Return event-registry validation errors for *events*."""
+
+    errors: list[str] = []
+    for event in events:
+        event_id = event.get('id', '<unknown>')
+        event_name = event.get('event')
+        if not isinstance(event_name, str) or not event_name.strip():
+            continue
+        if event_name in KNOWN_EVENT_TYPES:
+            continue
+        if strict:
+            errors.append(f'event {event_id} uses unknown event type {event_name!r}')
+            continue
+        if not bool(event.get('custom', False)) or not isinstance(event.get('description'), str) or not event['description'].strip():
+            errors.append(f'event {event_id} uses unknown event type {event_name!r} without custom modeling metadata')
+    return errors
+
+
+
+def validate_state_machines(state_machines: list[dict[str, Any]]) -> list[str]:
+    """Return state-machine validation errors for *state_machines*."""
+
+    errors: list[str] = []
+    for state_machine in state_machines:
+        state_machine_id = state_machine.get('id', '<unknown>')
+        states = state_machine.get('states')
+        if not isinstance(states, list):
+            errors.append(f'state_machine {state_machine_id}.states must be a list')
+            continue
+        if not states:
+            errors.append(f'state_machine {state_machine_id}.states must not be empty')
+        current = state_machine.get('current')
+        if current is not None and current not in states:
+            errors.append(f'state_machine {state_machine_id}.current must be present in state_machine.states')
+    return errors
+
+
+
 def _validate_event_requirements(events: list[dict[str, Any]]) -> None:
     seen_event_ids: set[str] = set()
     terminal_events: dict[Any, set[str]] = {}
@@ -599,9 +632,9 @@ def _validate_event_requirements(events: list[dict[str, Any]]) -> None:
         event_name = event.get('event')
         if not isinstance(event_name, str) or not event_name.strip():
             raise ValueError(f'event {event_id} must include a non-empty event name')
-        if event_name not in KNOWN_EVENT_TYPES:
-            if not bool(event.get('custom', False)) or not isinstance(event.get('description'), str) or not event['description'].strip():
-                raise ValueError(f'event {event_id} uses unknown event type {event_name!r} without custom modeling metadata')
+        event_registry_errors = validate_event_registry([event])
+        if event_registry_errors:
+            raise ValueError(event_registry_errors[0])
         if event_name in {'withdrawal_requested', 'withdrawal_approved', 'withdrawal_broadcast', 'withdrawal_cancelled'}:
             if _event_identity(event, 'withdrawal_id', 'txid') is None:
                 raise ValueError(f'{event_name} events require withdrawal_id or txid')
@@ -650,6 +683,12 @@ def validate_ir(model: SecurityModelIR | Mapping[str, Any]) -> SecurityModelIR:
     if unsupported_targets:
         raise ValueError(f'Unsupported prover targets: {", ".join(unsupported_targets)}')
     _validate_policy_records(normalized.policies)
+    state_machine_errors = validate_state_machines(normalized.state_machines)
+    if state_machine_errors:
+        raise ValueError(state_machine_errors[0])
+    event_registry_errors = validate_event_registry(normalized.events)
+    if event_registry_errors:
+        raise ValueError(event_registry_errors[0])
     _validate_references(normalized)
     _validate_event_requirements(normalized.events)
     _validate_metadata(normalized.metadata)

@@ -42,6 +42,7 @@ CLAIM_DOMAINS = {
     'revoked_capability_no_future_authorization': 'capabilities',
     'audit_event_exists_for_critical_transition': 'audit',
 }
+REQUIRED_DOMAINS = tuple(sorted(set(CLAIM_DOMAINS.values())))
 
 
 
@@ -67,6 +68,20 @@ def _normalize_fail_policies(values: Iterable[str]) -> set[str]:
     if unsupported:
         raise ValueError(f"Unsupported fail policies: {', '.join(unsupported)}")
     return policies
+
+
+
+def _normalize_required_domains(values: Iterable[str]) -> set[str]:
+    domains = {
+        token.strip()
+        for item in values
+        for token in item.split(',')
+        if token.strip()
+    }
+    unsupported = sorted(domain for domain in domains if domain not in REQUIRED_DOMAINS)
+    if unsupported:
+        raise ValueError(f"Unsupported required domains: {', '.join(unsupported)}")
+    return domains
 
 
 
@@ -249,11 +264,38 @@ def _load_accepted_assumptions(args: argparse.Namespace) -> list[str] | None:
 
 def _coverage_summary(reports: list[ProofReport]) -> dict[str, object]:
     blocking_reports = [report for report in reports if report.risk == PROOF_RISK_BLOCKING]
-    domains_modeled = {domain: False for domain in sorted(set(CLAIM_DOMAINS.values()))}
+    domain_summary: dict[str, dict[str, object]] = {
+        domain: {
+            'modeled': False,
+            'total_claims': 0,
+            'blocking_claims': 0,
+            'blocking_proved': 0,
+            'blocking_unknown': 0,
+            'blocking_not_modeled': 0,
+            'claim_statuses': {},
+        }
+        for domain in REQUIRED_DOMAINS
+    }
     for report in reports:
         domain = CLAIM_DOMAINS.get(report.claim_id)
-        if domain and report.status != PROOF_STATUS_NOT_MODELED:
-            domains_modeled[domain] = True
+        if not domain:
+            continue
+        summary = domain_summary[domain]
+        summary['total_claims'] = int(summary['total_claims']) + 1
+        if report.risk == PROOF_RISK_BLOCKING:
+            summary['blocking_claims'] = int(summary['blocking_claims']) + 1
+        if report.status != PROOF_STATUS_NOT_MODELED:
+            summary['modeled'] = True
+        if report.status == PROOF_STATUS_PROVED and report.risk == PROOF_RISK_BLOCKING:
+            summary['blocking_proved'] = int(summary['blocking_proved']) + 1
+        if report.status == PROOF_STATUS_UNKNOWN and report.risk == PROOF_RISK_BLOCKING:
+            summary['blocking_unknown'] = int(summary['blocking_unknown']) + 1
+        if report.status == PROOF_STATUS_NOT_MODELED and report.risk == PROOF_RISK_BLOCKING:
+            summary['blocking_not_modeled'] = int(summary['blocking_not_modeled']) + 1
+        claim_statuses = summary['claim_statuses']
+        if isinstance(claim_statuses, dict):
+            claim_statuses[report.claim_id] = report.status
+    domains_modeled = {domain: bool(summary['modeled']) for domain, summary in domain_summary.items()}
     return {
         'total_claims': len(reports),
         'proved': sum(report.status == PROOF_STATUS_PROVED for report in reports),
@@ -263,8 +305,10 @@ def _coverage_summary(reports: list[ProofReport]) -> dict[str, object]:
         'blocking_claims': len(blocking_reports),
         'blocking_modeled': sum(report.status != PROOF_STATUS_NOT_MODELED for report in blocking_reports),
         'blocking_proved': sum(report.status == PROOF_STATUS_PROVED for report in blocking_reports),
+        'blocking_unknown': sum(report.status == PROOF_STATUS_UNKNOWN for report in blocking_reports),
         'blocking_not_modeled': sum(report.status == PROOF_STATUS_NOT_MODELED for report in blocking_reports),
         'domains_modeled': domains_modeled,
+        'domain_summary': domain_summary,
     }
 
 
@@ -289,7 +333,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--out', help='Path to write proof reports as JSON')
     parser.add_argument('--strict', action='store_true', help='Backward-compatible alias for --fail-on disproof')
     parser.add_argument('--fail-on-unknown-critical', action='store_true', help='Legacy companion to --strict that also fails on blocking UNKNOWN results')
-    parser.add_argument('--fail-on', action='append', default=[], help='Repeatable failure policy; takes precedence over legacy strict flags: disproof, unknown-critical')
+    parser.add_argument('--fail-on', action='append', default=[], help='Repeatable failure policy; takes precedence over legacy strict flags: disproof, unknown-critical, not-modeled-critical')
     parser.add_argument('--require-real-ergoai', action='store_true', help='Reject models that depend on simulated or unavailable ErgoAI/F-logic execution')
     parser.add_argument('--forbid-simulated-zkp', action='store_true', help='Reject models that depend on simulated ZKP execution')
     parser.add_argument('--require-reviewed-evidence', action='store_true', help='Fail blocking PROVED claims backed only by heuristic evidence')
@@ -300,6 +344,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--unsafe-accept-report-assumptions', action='store_true', help='Unsafe/test-only fallback: derive accepted assumptions from each report')
     parser.add_argument('--strict-validation', action='store_true', help='Fail fast if deep security IR validation fails before proving')
     parser.add_argument('--explain-soundness', action='store_true', help='Include assumptions, evidence status, and soundness notes in output')
+    parser.add_argument('--require-domain', action='append', default=[], help='Require one or more modeled security domains: withdrawals, deposits, ledger, capabilities, hsm, audit')
     parser.add_argument('--min-modeled-blocking-claims', type=int, default=0, help='Require at least N blocking claims to be modeled')
     parser.add_argument('--min-proved-blocking-claims', type=int, default=0, help='Require at least N blocking claims to be proved')
     parser.add_argument('--provers', default=','.join(DEFAULT_PROVERS), help='Comma-separated prover list')
@@ -310,6 +355,7 @@ def main(argv: list[str] | None = None) -> int:
         model = _load_model(args)
         provers = _normalize_provers(args.provers.split(','))
         fail_policies = _normalize_fail_policies(args.fail_on)
+        required_domains = _normalize_required_domains(args.require_domain)
         accepted_assumptions = _load_accepted_assumptions(args)
     except ValueError as exc:
         parser.error(str(exc))
@@ -369,6 +415,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     has_failures = has_failures or coverage['blocking_modeled'] < args.min_modeled_blocking_claims
     has_failures = has_failures or coverage['blocking_proved'] < args.min_proved_blocking_claims
+    domains_modeled = coverage['domains_modeled']
+    if isinstance(domains_modeled, dict):
+        has_failures = has_failures or any(not bool(domains_modeled.get(domain, False)) for domain in required_domains)
     return 1 if has_failures else 0
 
 
