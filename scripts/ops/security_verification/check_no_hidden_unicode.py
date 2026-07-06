@@ -46,7 +46,7 @@ def scan_file(path: Path) -> list[str]:
         return [f'{path}: invalid UTF-8 ({exc})']
     if b'\r\n' in raw:
         errors.append(f'{path}: CRLF newlines are not allowed')
-    if requires_multiple_physical_lines(path) and file_line_count(text) <= 1:
+    if must_be_multiline(path) and file_line_count(text) <= 1:
         errors.append(f'{path}: expected ordinary physical newlines, found a single logical line')
     for index, character in enumerate(text, start=1):
         codepoint = ord(character)
@@ -65,7 +65,7 @@ def scan_file(path: Path) -> list[str]:
     return errors
 
 
-def requires_multiple_physical_lines(path: Path) -> bool:
+def must_be_multiline(path: Path) -> bool:
     """Return whether the file should never be serialized as one logical line."""
     return path.suffix in MULTILINE_TEXT_SUFFIXES
 

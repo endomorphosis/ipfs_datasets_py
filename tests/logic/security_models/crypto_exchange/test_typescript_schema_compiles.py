@@ -24,6 +24,7 @@ EMITTER_SCRIPT = REPO_ROOT / 'scripts' / 'ops' / 'security_verification' / 'emit
 
 
 def _hermetic_env() -> dict[str, str]:
+    """Return the minimal-import environment used by the focused security slice tests."""
     env = os.environ.copy()
     env.setdefault('PYTHONPATH', str(REPO_ROOT))
     env['IPFS_DATASETS_PY_MINIMAL_IMPORTS'] = '1'
@@ -33,6 +34,7 @@ def _hermetic_env() -> dict[str, str]:
 
 
 def _expected_schema_text() -> str:
+    """Return the newline-normalized example schema text expected from the CLI emitter."""
     rendered = TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model())
     return rendered if rendered.endswith('\n') else rendered + '\n'
 

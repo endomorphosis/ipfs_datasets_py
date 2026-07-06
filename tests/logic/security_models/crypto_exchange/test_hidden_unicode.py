@@ -6,7 +6,7 @@ from scripts.ops.security_verification.check_no_hidden_unicode import (
     _iter_files,
     file_byte_diagnostics,
     file_line_count,
-    requires_multiple_physical_lines,
+    must_be_multiline,
 )
 
 
@@ -23,6 +23,6 @@ def test_security_verification_files_have_real_lf_newlines() -> None:
         assert diagnostics['cr'] == 0, f'{path}: unexpected CR bytes, got {diagnostics}'
         assert diagnostics['u2028'] == 0, f'{path}: unexpected U+2028, got {diagnostics}'
         assert diagnostics['u2029'] == 0, f'{path}: unexpected U+2029, got {diagnostics}'
-        if requires_multiple_physical_lines(path):
+        if must_be_multiline(path):
             line_count = file_line_count(path.read_text(encoding='utf-8'))
             assert line_count > 1, f'{path}: expected ordinary physical newlines, got {diagnostics}'
