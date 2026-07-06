@@ -14,6 +14,8 @@ def test_hidden_unicode_check_passes() -> None:
 
 def test_security_verification_files_have_real_lf_newlines() -> None:
     repo_root = Path(__file__).resolve().parents[4]
+    # These source/workflow/test files should contain many physical LF bytes.
+    # A swallowed single-line file would fall well below this threshold.
     for relative_path in (
         '.github/workflows/security-logic-ci.yml',
         'scripts/ops/security_verification/check_no_hidden_unicode.py',

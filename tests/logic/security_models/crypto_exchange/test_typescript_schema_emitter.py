@@ -25,6 +25,8 @@ def test_typescript_schema_emitter_outputs_runtime_guard_and_metadata() -> None:
     assert 'assumptions: Array<SecurityAssumption | string>;' in rendered
     assert 'Object.entries(input as Record<string, unknown>)' in rendered
     assert 'const candidate = value as Record<string, unknown>;' in rendered
+    # Keep both generic and site-specific regressions so future emitter rewrites
+    # do not reintroduce bare Record/Array forms through a different code path.
     forbidden = [
         'export type SecurityRecord = Record;',
         ': Array;',
