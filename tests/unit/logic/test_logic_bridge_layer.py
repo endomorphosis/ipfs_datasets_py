@@ -11887,6 +11887,56 @@ def test_zkp_attestation_bridge_promotes_top_level_packet_guidance() -> None:
     assert report.proof_gate.compiles is True
 
 
+def test_zkp_attestation_bridge_promotes_passing_autoencoder_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge.zkp_attestation import ZkpAttestationBridgeAdapter
+    from ipfs_datasets_py.logic.zkp import (
+        compiler_guidance_contract_from_metadata,
+        compiler_guidance_ref_from_metadata,
+    )
+
+    guidance = {
+        "compiler_guidance_evidence": [
+            {
+                "quality_gate": "pass",
+                "ranked_guidance_features": [
+                    {
+                        "feature": (
+                            "compiler-guidance-route:"
+                            "repair_zkp_attestation_bridge"
+                        ),
+                        "score": 1.0,
+                    }
+                ],
+                "source": "compiler_guidance_distillation_v1",
+                "target_component": "zkp.circuits",
+                "target_metrics": ["zkp_verification_failure_ratio"],
+            }
+        ]
+    }
+
+    contract = compiler_guidance_contract_from_metadata(guidance)
+    expected_ref = compiler_guidance_ref_from_metadata(guidance)
+
+    assert contract["route"] == "repair_zkp_attestation_bridge"
+    assert contract["program_synthesis_scope"] == "zkp"
+    assert contract["target_component"] == "zkp.circuits"
+
+    adapter = ZkpAttestationBridgeAdapter()
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="zkp-passing-autoencoder-evidence",
+        citation="ZKP Passing Autoencoder Evidence",
+        compiler_guidance=guidance,
+    )
+
+    record = report.ir_document.views["zkp_attestations"].payload["records"][0]
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert record["compiler_guidance_ref"] == expected_ref
+    assert record["public_inputs"]["compiler_guidance_ref"] == expected_ref
+    assert record["attestation_view"]["compiler_guidance_ref"] == expected_ref
+    assert report.proof_gate.compiles is True
+
+
 def test_form_certificate_serializes_distinct_zkp_public_inputs() -> None:
     from ipfs_datasets_py.logic.zkp import ZKPProver
     from ipfs_datasets_py.logic.zkp.form_circuit import FormCompletionCertificate
