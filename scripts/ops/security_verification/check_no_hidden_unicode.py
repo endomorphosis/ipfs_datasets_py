@@ -15,6 +15,8 @@ TARGETS = [
     'scripts/ops/security_verification',
     'tests/logic/security_models/crypto_exchange',
 ]
+# These are the executable/source-facing formats that should never collapse into a
+# single logical GitHub-rendered line within the focused security-verification surface.
 MULTILINE_TEXT_SUFFIXES = {'.py', '.yml', '.yaml', '.md', '.ts', '.js', '.sh'}
 BIDI_CONTROLS = {*range(0x202A, 0x202F), *range(0x2066, 0x206A)}
 ZERO_WIDTH_CONTROLS = {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF}
@@ -69,7 +71,7 @@ def requires_multiple_physical_lines(path: Path) -> bool:
 
 
 def file_line_count(text: str) -> int:
-    """Count logical lines while tolerating missing trailing newlines."""
+    """Count physical newline-delimited lines while tolerating a missing trailing newline."""
     if not text:
         return 0
     return text.count('\n') + (0 if text.endswith('\n') else 1)

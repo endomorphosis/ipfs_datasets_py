@@ -32,6 +32,11 @@ def _hermetic_env() -> dict[str, str]:
     return env
 
 
+def _expected_schema_text() -> str:
+    rendered = TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model())
+    return rendered if rendered.endswith('\n') else rendered + '\n'
+
+
 def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tuple[str, str, Path]:
     node = shutil.which('node')
     tsc = shutil.which('tsc') or shutil.which('npx')
@@ -49,7 +54,10 @@ def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tupl
         )
     else:
         schema_path.write_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()), encoding='utf-8')
-    assert schema_path.read_text(encoding='utf-8').count('\n') > 1
+    schema_text = schema_path.read_text(encoding='utf-8')
+    assert schema_text.count('\n') > 1
+    if via_cli:
+        assert schema_text == _expected_schema_text()
     (tmp_path / 'tsconfig.json').write_text(
         json.dumps(
             {
