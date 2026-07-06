@@ -132,6 +132,35 @@ def test_legal_ir_projection_graph_repair_action_adds_neo4j_target_view() -> Non
     ) in values
 
 
+def test_legal_ir_projection_promotes_family_gap_guidance_to_neo4j_view() -> None:
+    triples = augment_legal_ir_projection_triples(
+        [
+            {
+                "subject": "compiler-guidance-family-gap",
+                "predicate": "compiler_guidance_attribution",
+                "object": (
+                    '{"legal_ir_view_family_gaps": '
+                    '{"knowledge_graph:underrepresented": {"count": 2}}}'
+                ),
+            },
+        ]
+    )
+    values = {
+        (triple["predicate"], triple["object"])
+        for triple in triples
+        if triple["predicate"].startswith("learned_legal_ir_")
+    }
+
+    assert (
+        "learned_legal_ir_target_view",
+        "knowledge_graphs.neo4j_compat",
+    ) in values
+    assert (
+        "learned_legal_ir_view_gap",
+        "knowledge_graphs.neo4j_compat:2.000000",
+    ) in values
+
+
 def test_legal_ir_projection_structural_us_code_facts_add_neo4j_target_view() -> None:
     samples = [
         (

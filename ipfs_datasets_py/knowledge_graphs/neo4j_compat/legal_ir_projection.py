@@ -1046,6 +1046,8 @@ def _collect_legal_ir_guidance_features(
                     guidance["actions"].add(text)
             elif key in {
                 "compiler_guidance_legal_ir_view_gaps",
+                "compiler_guidance_legal_ir_view_family_gaps",
+                "legal_ir_view_family_gaps",
                 "legal_ir_view_gaps",
             } and isinstance(raw_value, Mapping):
                 _collect_legal_ir_view_gap_features(raw_value, guidance=guidance)
@@ -1117,7 +1119,7 @@ def _collect_legal_ir_view_gap_features(
             if isinstance(gaps, dict):
                 gaps[_NEO4J_COMPAT_TARGET_COMPONENT] = max(
                     _safe_float(gaps.get(_NEO4J_COMPAT_TARGET_COMPONENT), 0.0),
-                    _safe_float(value, 1.0),
+                    _guidance_gap_weight(raw_value),
                 )
 
 
@@ -1201,6 +1203,17 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
     if not math.isfinite(number):
         return default
     return number
+
+
+def _guidance_gap_weight(value: Any) -> float:
+    if isinstance(value, Mapping):
+        for key in ("count", "score", "weight", "loss_value", "ce_delta"):
+            number = _safe_float(value.get(key), 0.0)
+            if number != 0.0:
+                return abs(number)
+        return 1.0
+    number = _safe_float(value, 0.0)
+    return abs(number) if number != 0.0 else 1.0
 
 
 def _graph_repair_text_match(text: str) -> bool:

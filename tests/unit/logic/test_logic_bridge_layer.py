@@ -1059,6 +1059,55 @@ def test_neo4j_projection_promotes_packet_view_gap_buckets_to_alignment_view() -
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_projection_promotes_packet_family_gap_buckets_to_alignment_view() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import modal_ir_to_neo4j_graph_data
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
+        ModalIRDocument,
+        ModalIRFrameLogic,
+    )
+
+    modal_ir = ModalIRDocument(
+        document_id="us-code-26-994-family-gap-projection",
+        source="compiler_guidance_distillation_v1",
+        normalized_text=(
+            "26 U.S.C. 994: U.S.C. Title 26 - INTERNAL REVENUE CODE "
+            "Sec. 994 - Regulations."
+        ),
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "us-code-26-994-family-gap-projection",
+                    "predicate": "source_id",
+                    "object": "us-code-26-994",
+                },
+            ]
+        ),
+        metadata={
+            "compiler_guidance_attribution": {
+                "legal_ir_view_family_gaps": {
+                    "knowledge_graph:underrepresented": {
+                        "count": 2,
+                        "quality_gate": "fail",
+                    }
+                }
+            }
+        },
+    )
+
+    graph_data = modal_ir_to_neo4j_graph_data(modal_ir)
+    graph_relationships = graph_data.to_dict()["relationships"]
+
+    assert any(
+        relationship["properties"]["flogic_predicate"]
+        == "learned_legal_ir_target_view"
+        and relationship["properties"]["flogic_object"]
+        == "knowledge_graphs.neo4j_compat"
+        for relationship in graph_relationships
+    )
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_neo4j_projection_promotes_nested_packet_metric_scope_guidance() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import modal_ir_to_neo4j_graph_data
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
