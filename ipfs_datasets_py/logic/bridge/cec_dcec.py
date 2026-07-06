@@ -790,6 +790,10 @@ def _procedure_event_records_from_norm(
     if not records:
         records.extend(_exported_procedure_event_records_from_norm(norm))
 
+    records.extend(
+        _slot_procedure_event_records_from_norm(norm, source_id=source_id)
+    )
+
     normalized: list[dict[str, Any]] = []
     seen: set[tuple[str, str, int, str]] = set()
     for index, record in enumerate(records, start=1):
@@ -862,6 +866,69 @@ def _procedure_event_records_from_norm(
             }
         )
     return normalized
+
+
+def _slot_procedure_event_records_from_norm(
+    norm: Mapping[str, Any],
+    *,
+    source_id: str,
+) -> list[dict[str, Any]]:
+    """Promote explicit condition/exception IR slots into CEC procedure events."""
+
+    records: list[dict[str, Any]] = []
+    seen_symbols: set[str] = set()
+    for relation, key in (
+        ("condition_precedent", "condition"),
+        ("condition_precedent", "conditions"),
+        ("condition_precedent", "condition_text"),
+        ("condition_precedent", "preconditions"),
+        ("condition_precedent", "prerequisites"),
+        ("exception", "exception"),
+        ("exception", "exceptions"),
+        ("exception", "exception_details"),
+    ):
+        for condition_text in _condition_slot_texts(norm.get(key)):
+            cleaned = _clean_operational_slot(condition_text)
+            if not cleaned:
+                continue
+            event_symbol = _symbol(cleaned, fallback="condition")
+            if event_symbol in seen_symbols:
+                continue
+            seen_symbols.add(event_symbol)
+            records.append(
+                _condition_procedure_event_record(
+                    cleaned,
+                    source_id=source_id,
+                    relation=relation,
+                )
+            )
+    return records
+
+
+def _condition_slot_texts(value: Any) -> list[str]:
+    texts: list[str] = []
+    if isinstance(value, Mapping):
+        direct = _first_text_value(
+            value.get("condition"),
+            value.get("exception"),
+            value.get("value"),
+            value.get("text"),
+            value.get("raw_text"),
+            value.get("description"),
+            value.get("clause"),
+            value.get("expression"),
+        )
+        if direct:
+            texts.append(direct)
+        for nested_key in ("conditions", "exceptions", "items", "clauses"):
+            texts.extend(_condition_slot_texts(value.get(nested_key)))
+        return texts
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for item in value:
+            texts.extend(_condition_slot_texts(item))
+        return texts
+    text = str(value or "").strip()
+    return [text] if text else []
 
 
 def _procedure_event_records_from_procedure(

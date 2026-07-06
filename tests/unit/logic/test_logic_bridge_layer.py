@@ -8393,6 +8393,73 @@ def test_cec_dcec_bridge_extracts_conditional_required_clause_without_converter(
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_promotes_converter_condition_slots_to_events() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _SlottedNormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "cec-slotted-condition-guidance",
+                    "actor": "Secretary",
+                    "action": "approve the registration",
+                    "modality": "obligated",
+                    "conditions": [
+                        {"value": "the applicant submits a complete notice"}
+                    ],
+                    "exceptions": [
+                        {"value": "as provided in section 552"}
+                    ],
+                    "support_text": (
+                        "If the applicant submits a complete notice, the "
+                        "Secretary shall approve the registration except as "
+                        "provided in section 552."
+                    ),
+                }
+            ]
+        }
+
+    class _SlottedNormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _SlottedNormResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_SlottedNormConverter())
+    report = adapter.evaluate(
+        (
+            "If the applicant submits a complete notice, the Secretary shall "
+            "approve the registration except as provided in section 552."
+        ),
+        document_id="cec-slotted-condition-guidance",
+        citation="15 U.S.C. 9901",
+        compiler_guidance={
+            "compiler_guidance_quality_gate": "pass",
+            "compiler_guidance_route": "repair_cec_dcec_bridge",
+            "target_component": "CEC.native",
+        },
+    )
+
+    event_view = report.ir_document.views["cec_events"]
+    procedure_events = [
+        event
+        for event in event_view.payload["events"]
+        if event["event_role"] == "procedure_event"
+    ]
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert event_view.metadata["procedure_event_count"] == 2
+    assert [event["relation"] for event in procedure_events] == [
+        "condition_precedent",
+        "exception",
+    ]
+    assert procedure_events[0]["event"] == "applicant submits a complete notice"
+    assert procedure_events[1]["event"] == "as provided in section 552"
+    assert event_record["compiler_guidance_source"] == "repair_cec_dcec_bridge"
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_extracts_conditional_fee_collection_actor() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
