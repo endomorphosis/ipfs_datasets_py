@@ -1526,8 +1526,24 @@ def _unwrap_tdfol_targeted_export(text: str) -> str:
             if formula:
                 return formula
             extracted = _tdfol_formula_text_from_export_payload(candidate)
-            return extracted or candidate
+            if extracted:
+                return extracted
+            raw_formula = _formula_from_targeted_raw_tdfol_export(candidate)
+            return raw_formula or candidate
     return normalized
+
+
+def _formula_from_targeted_raw_tdfol_export(text: str) -> str:
+    """Synthesize TDFOL when a targeted proof view carries statutory prose."""
+
+    candidate = str(text or "").strip().strip("`\"'").strip()
+    if not candidate:
+        return ""
+    if candidate[:1] in "[{" and candidate[-1:] in "]}":
+        inner = candidate[1:-1].strip().strip("`\"'").strip()
+        if inner and "{" not in inner and "}" not in inner:
+            candidate = inner
+    return _formula_from_labeled_raw_proof_obligation(candidate)
 
 
 def _unwrap_tdfol_assignment_export(text: str) -> str:

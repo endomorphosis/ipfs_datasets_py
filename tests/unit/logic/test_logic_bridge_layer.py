@@ -5570,6 +5570,39 @@ def test_tdfol_bridge_coerce_extracts_targeted_json_view_export_text() -> None:
     assert coerced.to_string() == "O(collect_fees(chief_administrative_officer))"
 
 
+def test_tdfol_bridge_coerce_synthesizes_targeted_raw_statutory_view_text() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = (
+        "TDFOL.prover proof obligation view: 33 U.S.C. 3803: "
+        "Administration and enforcement. The Secretary shall administer "
+        "and enforce this chapter."
+    )
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.OBLIGATION
+    assert coerced.to_string() == "O(administer_and_enforce_this_chapter(secretary))"
+
+
+def test_tdfol_bridge_coerce_synthesizes_targeted_raw_statutory_list_text() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    formula = (
+        "TDFOL.prover proof_obligations=[10 U.S.C. 2263: "
+        "The Secretary may accept payment for services.]"
+    )
+
+    coerced = coerce_tdfol_formula(formula)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.PERMISSION
+    assert coerced.to_string() == "P(accept_payment_for_services(secretary))"
+
+
 def test_tdfol_bridge_coerce_extracts_assignment_container_export_text() -> None:
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
