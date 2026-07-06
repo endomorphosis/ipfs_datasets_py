@@ -4913,6 +4913,106 @@ def test_deontic_bridge_promotes_packet_view_gap_guidance_to_ir_evidence() -> No
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_infers_route_from_passing_packet_gap_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = "The Secretary shall maintain records."
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "schema_version": "legal_norm_ir-v1",
+                    "source_id": "legacy:deontic:packet-gap-route",
+                    "canonical_citation": "20 U.S.C. 1087",
+                    "norm_type": "obligation",
+                    "modality": "O",
+                    "actor": "Secretary",
+                    "action": "maintain records",
+                    "source_text": source_text,
+                    "support_text": source_text,
+                    "source_span": [0, len(source_text)],
+                    "support_span": [0, len(source_text)],
+                    "field_spans": {
+                        "subject": [4, 13],
+                        "modality": [14, 19],
+                        "action": [20, 36],
+                    },
+                    "quality": {
+                        "promotable_to_theorem": True,
+                        "parser_warnings": [],
+                        "export_readiness": {"blockers": []},
+                    },
+                    "export_readiness": {"blockers": []},
+                }
+            ]
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id="deontic-bridge-packet-gap-guidance-route",
+        citation="20 U.S.C. 1087",
+        compiler_guidance={
+            "compiler_guidance_attribution": {
+                "basis": "sample_records",
+                "legal_ir_view_family_gaps": {
+                    "deontic:overrepresented": {
+                        "count": 2,
+                        "quality_gate": "pass",
+                    }
+                },
+                "legal_ir_view_gaps": {
+                    "deontic_ir:overrepresented": {
+                        "count": 2,
+                        "quality_gate": "pass",
+                    },
+                    "tdfol_prover:overrepresented": {
+                        "count": 1,
+                        "quality_gate": "fail",
+                    },
+                },
+                "todo_routes": {},
+            },
+            "compiler_guidance_legal_ir_view_gaps": {
+                "deontic_ir:overrepresented": 2,
+                "tdfol_prover:overrepresented": 1,
+            },
+            "compiler_guidance_quality_gate": "pass",
+            "source": "compiler_guidance_distillation_v1",
+        },
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    legal_frame = norm["legal_frame"]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert legal_frame["compiler_guidance_source"] == (
+        "repair_deontic_bridge_quality_gate"
+    )
+    assert legal_frame["compiler_guidance_target_view"] == "deontic.ir"
+    assert legal_frame["compiler_guidance_quality_gate"] == "pass"
+    assert legal_frame["compiler_guidance_legal_ir_component_gaps"][
+        "deontic.ir:overrepresented"
+    ] == 2
+    assert "TDFOL.prover:overrepresented" not in legal_frame[
+        "compiler_guidance_legal_ir_component_gaps"
+    ]
+    assert any(
+        triple["predicate"] == "compiler_guidance_legal_ir_component_gap"
+        and triple["object"] == "deontic.ir:overrepresented:2"
+        for triple in report.ir_document.frame_logic_triples
+    )
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_rehydrates_legacy_coverage_rows_without_summary() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 

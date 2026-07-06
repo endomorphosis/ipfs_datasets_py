@@ -981,6 +981,8 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
         bundle = _mapping(guidance.get(key))
         if bundle and _compiler_guidance_has_deontic_route(bundle):
             return True
+    if _deontic_guidance_has_passing_gap_evidence(guidance):
+        return True
     return False
 
 
@@ -1017,7 +1019,24 @@ def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
             route = _deontic_guidance_route(bundle)
             if route:
                 return route
+    if _deontic_guidance_has_passing_gap_evidence(guidance):
+        return "repair_deontic_bridge_quality_gate"
     return "repair_deontic_bridge_quality_gate"
+
+
+def _deontic_guidance_has_passing_gap_evidence(guidance: Mapping[str, Any]) -> bool:
+    """Infer the deontic repair route from pass-gated view-gap evidence."""
+
+    if not isinstance(guidance, Mapping):
+        return False
+    for gap_key, gap_value in _deontic_guidance_component_gaps(guidance).items():
+        canonical_gap = _canonical_deontic_gap_key(gap_key)
+        component = canonical_gap.split(":", 1)[0]
+        if component != "deontic.ir":
+            continue
+        if _guidance_gap_quality_gate_passes(gap_value):
+            return True
+    return False
 
 
 def _deontic_bridge_evidence_from_compiler_guidance(
@@ -1098,13 +1117,24 @@ def _deontic_bridge_evidence_from_guidance_row(
             [_canonical_deontic_target_view(item) for item in normalized_underrepresented]
         )
     if isinstance(component_gaps, Mapping):
-        evidence["compiler_guidance_legal_ir_component_gaps"] = {
-            _canonical_deontic_gap_key(key): value
-            for key, value in dict(component_gaps).items()
-        }
+        evidence["compiler_guidance_legal_ir_component_gaps"] = (
+            _canonical_deontic_component_gap_map(component_gaps)
+        )
     if promoted_ir:
         evidence["compiler_guidance_legal_norm_ir"] = promoted_ir
     return evidence
+
+
+def _canonical_deontic_component_gap_map(
+    component_gaps: Mapping[str, Any],
+) -> dict[str, Any]:
+    gaps: dict[str, Any] = {}
+    for key, value in dict(component_gaps).items():
+        canonical_key = _canonical_deontic_gap_key(key)
+        if not canonical_key:
+            continue
+        gaps.setdefault(canonical_key, value)
+    return gaps
 
 
 def _deontic_guidance_legal_norm_ir_slots(row: Mapping[str, Any]) -> dict[str, Any]:
@@ -1270,12 +1300,22 @@ def _deontic_guidance_component_gaps(row: Mapping[str, Any]) -> dict[str, Any]:
 
     attribution = row.get("compiler_guidance_attribution")
     if isinstance(attribution, Mapping):
+        failed_gap_keys: set[str] = set()
         for key in ("legal_ir_view_gaps", "legal_ir_view_family_gaps"):
             value = attribution.get(key)
             if isinstance(value, Mapping):
                 for gap_key, gap_value in value.items():
+                    canonical_gap_key = _canonical_deontic_gap_key(gap_key)
                     if _guidance_gap_quality_gate_passes(gap_value):
                         gaps.setdefault(str(gap_key), gap_value)
+                    else:
+                        failed_gap_keys.add(canonical_gap_key)
+        if failed_gap_keys:
+            gaps = {
+                gap_key: gap_value
+                for gap_key, gap_value in gaps.items()
+                if _canonical_deontic_gap_key(gap_key) not in failed_gap_keys
+            }
     return gaps
 
 
