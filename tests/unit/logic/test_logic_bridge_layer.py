@@ -6647,6 +6647,45 @@ def test_cec_dcec_bridge_promotes_packet_shaped_compiler_guidance() -> None:
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_promotes_raw_todo_semantic_bundle_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    guidance = {
+        "compiler_guidance_quality_gate": "pass",
+        "sample_ids": ["compiler-guidance:repair_cec_dcec_bridge"],
+        "semantic_bundle_key": (
+            '{"program_synthesis_scope":"cec",'
+            '"route":"repair_cec_dcec_bridge",'
+            '"source":"compiler_guidance_distillation_v1",'
+            '"target_component":"CEC.native"}'
+        ),
+        "target_metrics": [
+            "compiler_ir_cross_entropy_loss",
+            "compiler_ir_cosine_similarity",
+            "cec_dcec_validation_failure_ratio",
+        ],
+    }
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="cec-bridge-raw-todo-guidance",
+        citation="CEC Bridge Raw TODO Guidance",
+        compiler_guidance=guidance,
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_routes"] == ["repair_cec_dcec_bridge"]
+    assert report.metadata["compiler_guidance_target_component"] == "CEC.native"
+    assert event_record["event_formula_source"] == (
+        "compiler_guidance.top_level.materialized_event_formula"
+    )
+    assert event_record["compiler_guidance_source"] == "repair_cec_dcec_bridge"
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_activates_from_target_metric_evidence() -> None:
     from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
 

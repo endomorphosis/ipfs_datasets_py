@@ -1669,6 +1669,7 @@ def _compiler_guidance_top_level_supports_cec_materialization(
         guidance.get("bundle")
         or guidance.get("compiler_guidance_bundle")
         or guidance.get("semantic_bundle")
+        or guidance.get("semantic_bundle_key")
     )
     scope = str(
         guidance.get("program_synthesis_scope")
@@ -2695,6 +2696,7 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
         "bundle",
         "compiler_guidance_bundle",
         "semantic_bundle",
+        "semantic_bundle_key",
         "vector_bundle",
     ):
         bundle = _mapping(guidance.get(key))
@@ -2709,6 +2711,16 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
             token = str(bundle.get(bundle_key) or "").strip().lower()
             if token in _CEC_GUIDANCE_ROUTE_TOKENS:
                 return True
+    for key in (
+        "sample_id",
+        "sample_ids",
+        "samples",
+    ):
+        if any(
+            _cec_guidance_token_targets_cec(item)
+            for item in _sequence_values(guidance.get(key))
+        ):
+            return True
     if _cec_guidance_record_targets_cec(guidance):
         return True
     for _, row in _compiler_guidance_evidence_rows(guidance):
@@ -2733,6 +2745,7 @@ def _cec_compiler_guidance_signal(
         guidance.get("bundle")
         or guidance.get("compiler_guidance_bundle")
         or guidance.get("semantic_bundle")
+        or guidance.get("semantic_bundle_key")
     )
     routes: list[str] = []
     for value in (
@@ -2930,10 +2943,14 @@ def _cec_guidance_token_targets_cec(value: Any) -> bool:
     token = str(value or "").strip().lower()
     if not token:
         return False
+    prefixed_route = token.rsplit(":", 1)[-1]
     normalized = token.replace("_", ".")
+    normalized_prefixed_route = prefixed_route.replace("_", ".")
     return (
         token in _CEC_GUIDANCE_ROUTE_TOKENS
+        or prefixed_route in _CEC_GUIDANCE_ROUTE_TOKENS
         or normalized in _CEC_GUIDANCE_ROUTE_TOKENS
+        or normalized_prefixed_route in _CEC_GUIDANCE_ROUTE_TOKENS
     )
 
 
