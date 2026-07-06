@@ -65,7 +65,7 @@ class TypeScriptSchemaEmitter:
             '  events: SecurityRecord[];',
             '  state_machines: SecurityRecord[];',
             '  invariants: SecurityRecord[];',
-            '  assumptions: Array<string | SecurityAssumption>;',
+            '  assumptions: Array<SecurityAssumption | string>;',
             '  prover_targets: string[];',
             '  metadata: SecurityRecord;',
             '}',
