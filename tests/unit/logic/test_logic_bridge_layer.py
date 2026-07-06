@@ -3623,6 +3623,98 @@ def test_deontic_bridge_promotes_passed_guidance_ir_into_reduced_parser_rows() -
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_guidance_ir_clears_stale_decoder_validation() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = "The Secretary shall publish notice."
+    source_id = "legacy:deontic:guidance-stale-warning"
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": source_id,
+                "canonical_citation": "20 U.S.C. 107b-3",
+                "norm_type": "obligation",
+                "subject": [],
+                "action": [],
+                "deontic_operator": "",
+                "text": source_text,
+                "source_text": source_text,
+                "support_text": source_text,
+                "support_span": [0, len(source_text)],
+                "promotable_to_theorem": False,
+                "parser_warnings": ["legacy_decoder_requires_validation"],
+                "export_readiness": {
+                    "blockers": ["legacy_decoder_requires_validation"],
+                },
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id="deontic-bridge-guidance-stale-warning",
+        citation="Deontic Bridge Guidance Stale Warning",
+        compiler_guidance={
+            "compiler_guidance_route": "repair_deontic_bridge_quality_gate",
+            "compiler_guidance_quality_gate": "pass",
+            "target_component": "deontic.ir",
+            "metric_sample_payloads": [
+                {
+                    "sample_id": source_id,
+                    "target_view": "deontic.ir",
+                    "quality_gate": "pass",
+                    "legal_norm_ir": {
+                        "actor": "Secretary",
+                        "modality": "O",
+                        "norm_type": "obligation",
+                        "action": "publish notice",
+                        "source_text": source_text,
+                        "support_text": source_text,
+                        "support_span": [0, len(source_text)],
+                        "field_spans": {
+                            "subject": [4, 13],
+                            "modality": [14, 19],
+                            "action": [20, 34],
+                        },
+                    },
+                }
+            ],
+        },
+    )
+
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
+        "records"
+    ][0]
+    formula_record = report.ir_document.views["deontic_formula_records"].payload[
+        "records"
+    ][0]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
+        "records"
+    ][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert formula_record["requires_validation"] is False
+    assert formula_record["deterministic_resolution"]["type"] == (
+        "compiler_guidance_deontic_ir_reconstruction"
+    )
+    assert decoder_record["missing_slots"] == []
+    assert decoder_record["requires_validation"] is False
+    assert decoder_record["decoder_validation_resolution"]["type"] == (
+        "formula_deterministic_readiness"
+    )
+    assert phase8_record["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_accepts_packet_shaped_bundle_guidance_route() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 

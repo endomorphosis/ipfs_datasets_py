@@ -922,7 +922,7 @@ def _parser_row_from_deontic_guidance_ir(
         "field_spans": _copy_slot_value(promoted_ir.get("field_spans") or {}),
         "formal_terms": _copy_slot_value(promoted_ir.get("formal_terms") or {}),
         "promotable_to_theorem": True,
-        "export_readiness": {"blockers": []},
+        "export_readiness": _deontic_guidance_export_readiness(evidence),
     }
     legal_frame = {
         key: _copy_slot_value(value)
@@ -1247,6 +1247,71 @@ def _fill_deontic_row_from_compiler_guidance_ir(
         "formal_terms",
     ):
         _fill_empty_field(row, promoted_ir, key)
+    if _promoted_deontic_guidance_ir_is_complete(promoted_ir):
+        export_readiness = dict(row.get("export_readiness") or {})
+        export_readiness.setdefault("formula_proof_ready", True)
+        export_readiness.setdefault("formula_requires_validation", False)
+        export_readiness.setdefault("formula_repair_required", False)
+        export_readiness.setdefault("metric_requires_validation", False)
+        export_readiness.setdefault(
+            "deterministic_resolution",
+            _deontic_guidance_deterministic_resolution(bridge_guidance),
+        )
+        row["export_readiness"] = export_readiness
+
+
+def _deontic_guidance_export_readiness(
+    bridge_guidance: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "blockers": [],
+        "formula_proof_ready": True,
+        "formula_requires_validation": False,
+        "formula_repair_required": False,
+        "metric_requires_validation": False,
+        "deterministic_resolution": _deontic_guidance_deterministic_resolution(
+            bridge_guidance
+        ),
+    }
+
+
+def _deontic_guidance_deterministic_resolution(
+    bridge_guidance: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "type": "compiler_guidance_deontic_ir_reconstruction",
+        "route": str(
+            bridge_guidance.get("compiler_guidance_source")
+            or "repair_deontic_bridge_quality_gate"
+        ),
+        "evidence_source": str(
+            bridge_guidance.get("compiler_guidance_evidence_source")
+            or "compiler_guidance"
+        ),
+        "target_view": str(
+            bridge_guidance.get("compiler_guidance_target_view") or "deontic.ir"
+        ),
+        "quality_gate": str(
+            bridge_guidance.get("compiler_guidance_quality_gate") or "pass"
+        ),
+    }
+
+
+def _promoted_deontic_guidance_ir_is_complete(
+    promoted_ir: Mapping[str, Any],
+) -> bool:
+    actor = _first_present_mapping_value(promoted_ir, ("actor", "subject"))
+    action = promoted_ir.get("action")
+    modality = _first_present_mapping_value(
+        promoted_ir,
+        ("modality", "deontic_operator"),
+    )
+    norm_type = promoted_ir.get("norm_type")
+    return bool(
+        _value_is_present(actor)
+        and _value_is_present(action)
+        and (_value_is_present(modality) or _value_is_present(norm_type))
+    )
 
 
 def _deontic_guidance_target_view(row: Mapping[str, Any]) -> str:
