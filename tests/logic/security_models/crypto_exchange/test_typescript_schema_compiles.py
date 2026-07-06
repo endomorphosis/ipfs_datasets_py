@@ -25,7 +25,7 @@ MIN_SCHEMA_NEWLINE_COUNT = 2
 
 
 def _hermetic_env() -> dict[str, str]:
-    """Return the env that disables auto-installs and keeps imports local to this test repo."""
+    """Return an isolated env that disables auto-installs and keeps imports pinned to this repo."""
     env = os.environ.copy()
     env.setdefault('PYTHONPATH', str(REPO_ROOT))
     env['IPFS_DATASETS_PY_MINIMAL_IMPORTS'] = '1'
@@ -34,10 +34,14 @@ def _hermetic_env() -> dict[str, str]:
     return env
 
 
+def _normalize_schema_text(rendered: str) -> str:
+    """Match the CLI contract that writes a trailing newline when persisting schema files."""
+    return rendered if rendered.endswith('\n') else rendered + '\n'
+
+
 def _expected_schema_text() -> str:
     """Return the newline-normalized example schema text expected from the CLI emitter."""
-    rendered = TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model())
-    return rendered if rendered.endswith('\n') else rendered + '\n'
+    return _normalize_schema_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()))
 
 
 def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tuple[str, str, Path]:
@@ -57,7 +61,7 @@ def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tupl
         )
     else:
         schema_path.write_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()), encoding='utf-8')
-    schema_text = schema_path.read_text(encoding='utf-8')
+    schema_text = _normalize_schema_text(schema_path.read_text(encoding='utf-8'))
     assert schema_text.count('\n') >= MIN_SCHEMA_NEWLINE_COUNT
     assert 'export interface SecurityModelIR {' in schema_text
     assert 'export function verifyProofReceipt(' in schema_text

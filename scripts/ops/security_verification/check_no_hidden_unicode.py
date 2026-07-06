@@ -71,7 +71,7 @@ def must_be_multiline(path: Path) -> bool:
 
 
 def file_line_count(text: str) -> int:
-    """Count lines as editors do: ``"foo\\nbar"`` -> 2 and ``"foo\\nbar\\n"`` -> 2."""
+    r"""Count lines as editors do: ``"foo\nbar"`` -> 2 and ``"foo\nbar\n"`` -> 2."""
     if not text:
         return 0
     return text.count('\n') + (0 if text.endswith('\n') else 1)
