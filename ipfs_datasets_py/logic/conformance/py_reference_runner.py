@@ -437,23 +437,81 @@ def evaluate_tdfol(payload: Dict[str, Any], subsystem: str = "temporal") -> Dict
         }
         return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
 
-    if goal and goal in axioms:
-        fallback = {
-            "status": "proved",
-            "reason": "proved",
-            "proverId": "tdfol-native",
-            "metadata": {"simulated": True, "route": "goal-in-axioms"},
-        }
-        return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
+    permission_goal = re.match(r"^P\((.+)\)$", goal)
+    if permission_goal:
+        permitted_atom = str(permission_goal.group(1) or "").strip()
+        if permitted_atom in obligations:
+            result = {
+                "status": "proved",
+                "reason": "proved",
+                "proverId": "tdfol-native",
+                "metadata": {
+                    "simulated": False,
+                    "route": "deontic-d-axiom",
+                    "sourceRule": "DeonticDRule",
+                    "atom": permitted_atom,
+                },
+            }
+            return align_decision_with_native_policy(result, policy, subsystem, "tdfol-native")
 
     if axioms:
-        fallback = {
-            "status": "proved",
-            "reason": "proved",
-            "proverId": "tdfol-native",
-            "metadata": {"simulated": True, "route": "axioms-consistent"},
-        }
-        return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
+        try:
+            from ipfs_datasets_py.logic.TDFOL.tdfol_core import ProofStatus, TDFOLKnowledgeBase
+            from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+            from ipfs_datasets_py.logic.TDFOL.tdfol_prover import TDFOLProver
+
+            kb = TDFOLKnowledgeBase()
+            parsed_axioms = [parse_tdfol(axiom) for axiom in axioms]
+            for formula in parsed_axioms:
+                kb.add_axiom(formula)
+
+            proof_goal = parse_tdfol(goal) if goal else parsed_axioms[0]
+            proof = TDFOLProver(kb).prove(proof_goal, timeout_ms=5000)
+            status = proof.status if isinstance(proof.status, ProofStatus) else None
+
+            if status == ProofStatus.PROVED:
+                result = {
+                    "status": "proved",
+                    "reason": "proved",
+                    "proverId": "tdfol-native",
+                    "metadata": {"simulated": False, "route": "tdfol-native-proof"},
+                }
+                return align_decision_with_native_policy(result, policy, subsystem, "tdfol-native")
+
+            if status == ProofStatus.DISPROVED:
+                result = {
+                    "status": "refuted",
+                    "reason": "refuted",
+                    "proverId": "tdfol-native",
+                    "metadata": {"simulated": False, "route": "tdfol-native-proof"},
+                }
+                return align_decision_with_native_policy(result, policy, subsystem, "tdfol-native")
+
+            fallback = {
+                "status": "unknown",
+                "reason": "unknown",
+                "proverId": "tdfol-native",
+                "metadata": {
+                    "simulated": False,
+                    "route": "tdfol-native-proof",
+                    "nativeStatus": str(getattr(status, "value", proof.status)),
+                },
+            }
+            return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
+        except Exception as exc:
+            fallback = {
+                "status": "proved",
+                "reason": "proved",
+                "proverId": "tdfol-native",
+                "metadata": {
+                    "simulated": True,
+                    "route": "axioms-consistent",
+                    "nativeAttempted": True,
+                    "nativeFallback": True,
+                    "nativeError": f"{exc.__class__.__name__}: {exc}",
+                },
+            }
+            return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
 
     return {
         "status": "unknown",
