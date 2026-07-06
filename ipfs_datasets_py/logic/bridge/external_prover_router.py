@@ -554,19 +554,27 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         "sample_ids",
         "samples",
     )
+    feature_route_keys = (
+        "feature",
+        "features",
+        "compiler_guidance_feature",
+        "compiler_guidance_features",
+        "ranked_guidance_features",
+    )
 
-    def collect(value: Any) -> None:
+    def collect(value: Any, *, include_mapping_keys: bool = True) -> None:
         if isinstance(value, Mapping):
-            for route in value.keys():
-                add_route(route)
+            if include_mapping_keys:
+                for route in value.keys():
+                    add_route(route)
+            for nested_key in route_keys + sample_route_keys:
+                add_route(value.get(nested_key))
+            for nested_key in feature_route_keys:
+                collect(value.get(nested_key), include_mapping_keys=False)
             return
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             for route in value:
-                if isinstance(route, Mapping):
-                    for nested_key in route_keys + sample_route_keys:
-                        add_route(route.get(nested_key))
-                else:
-                    add_route(route)
+                collect(route, include_mapping_keys=include_mapping_keys)
             return
         add_route(value)
 
@@ -578,6 +586,16 @@ def _router_guidance_routes(compiler_guidance: Mapping[str, Any]) -> set[str]:
         value = compiler_guidance.get(key)
         if value is not None:
             collect(value)
+
+    for key in (
+        "ranked_guidance_features",
+        "compiler_guidance_ranked_features",
+        "compiler_guidance_features",
+        "features",
+    ):
+        value = compiler_guidance.get(key)
+        if value is not None:
+            collect(value, include_mapping_keys=False)
 
     for key in route_keys:
         add_route(compiler_guidance.get(key))
@@ -634,10 +652,18 @@ def _router_guidance_route_name(value: Any) -> str:
         return ""
     route = route.replace("-", "_").replace(" ", "_")
     for prefix in (
+        "compiler_guidance_route:",
+        "compiler_guidance_route_",
+        "compiler-guidance-route:",
+        "compiler-guidance-route_",
         "compiler_guidance_activation:",
         "compiler_guidance_activation_",
+        "compiler-guidance-activation:",
+        "compiler-guidance-activation_",
         "compiler_guidance:",
         "compiler_guidance_",
+        "compiler-guidance:",
+        "compiler-guidance_",
     ):
         if route.startswith(prefix):
             route = route[len(prefix) :]

@@ -243,6 +243,28 @@ def test_external_prover_router_promotes_compiler_guidance_sample_route() -> Non
     assert "repair_external_prover_router" in signal["routes"]
 
 
+def test_external_prover_router_promotes_compact_route_feature() -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        _router_guidance_signal,
+    )
+
+    signal = _router_guidance_signal(
+        {
+            "ranked_guidance_features": [
+                {
+                    "feature": "compiler-guidance-route:repair_external_prover_router",
+                    "score": 1.0,
+                }
+            ],
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "external_provers.router",
+        }
+    )
+
+    assert signal["prover_gate_hint"] is True
+    assert "repair_external_prover_router" in signal["routes"]
+
+
 def test_fol_tdfol_bridge_promotes_json_string_parse_repair_evidence() -> None:
     from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
 
@@ -9571,6 +9593,45 @@ def test_external_prover_router_guidance_promotes_sample_route_backup() -> None:
         compiler_guidance={
             "program_synthesis_scope": "external_provers",
             "samples": "compiler-guidance:repair_external_prover_router",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "external_provers.router",
+        },
+    )
+
+    assert router.get_available_provers() == ["z3", "native_syntactic"]
+    assert result.is_compiled() is True
+    assert result.prover_used == "native_syntactic"
+
+
+def test_external_prover_router_guidance_promotes_compact_route_feature_backup() -> None:
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    class _FailingConfiguredProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            raise RuntimeError("configured prover unavailable")
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=False,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    router.provers = {"z3": _FailingConfiguredProver()}
+
+    result = router.route(
+        {"proof_formula": "O(register_notice(secretary))"},
+        strategy="sequential",
+        compiler_guidance={
+            "ranked_guidance_features": [
+                {
+                    "feature": "compiler-guidance-route:repair_external_prover_router",
+                    "score": 1.0,
+                }
+            ],
             "source": "compiler_guidance_distillation_v1",
             "target_component": "external_provers.router",
         },
