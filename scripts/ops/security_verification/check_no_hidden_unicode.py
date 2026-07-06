@@ -71,7 +71,7 @@ def must_be_multiline(path: Path) -> bool:
 
 
 def file_line_count(text: str) -> int:
-    """Count physical newline-delimited lines while tolerating a missing trailing newline."""
+    """Count editor-style physical lines, including a final unterminated line when present."""
     if not text:
         return 0
     return text.count('\n') + (0 if text.endswith('\n') else 1)

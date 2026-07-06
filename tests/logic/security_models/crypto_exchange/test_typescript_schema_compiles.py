@@ -58,6 +58,8 @@ def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tupl
         schema_path.write_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()), encoding='utf-8')
     schema_text = schema_path.read_text(encoding='utf-8')
     assert schema_text.count('\n') > 1
+    assert 'export interface SecurityModelIR {' in schema_text
+    assert 'export function verifyProofReceipt(' in schema_text
     if via_cli:
         assert schema_text == _expected_schema_text()
     (tmp_path / 'tsconfig.json').write_text(
