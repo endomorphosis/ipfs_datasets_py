@@ -15620,6 +15620,7 @@ def test_multiview_bridge_soft_pass_uses_effective_proof_loss() -> None:
     assert losses["fol_tdfol.raw_proof_failure_ratio"] == 0.5
     assert losses["fol_tdfol.proof_failure_ratio"] == 0.0
     assert canonical_losses["legal_ir_view_cross_entropy_loss"] == 0.125
+    assert canonical_losses["legal_ir_multiview_cross_entropy_loss"] == 0.125
     assert canonical_losses["legal_ir_multiview_total_loss"] == bridge_report.total_loss
     assert bridge_report.total_loss < 0.5
 

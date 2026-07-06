@@ -820,8 +820,8 @@ class MultiViewLegalIRReport:
                         self._legal_ir_view_cross_entropy_loss()
                     ),
                     "legal_ir_multiview_cosine_loss": self._round_trip_mean("cosine_loss"),
-                    "legal_ir_multiview_cross_entropy_loss": self._round_trip_mean(
-                        "cross_entropy_loss"
+                    "legal_ir_multiview_cross_entropy_loss": (
+                        self._bridge_contract_cross_entropy_loss()
                     ),
                     "legal_ir_multiview_frame_logic_missing_loss": 0.0
                     if self.document.has_frame_logic
@@ -1044,6 +1044,9 @@ class MultiViewLegalIRReport:
         )
 
     def _legal_ir_view_cross_entropy_loss(self) -> float:
+        return self._bridge_contract_cross_entropy_loss()
+
+    def _bridge_contract_cross_entropy_loss(self) -> float:
         return _mean_with_failures(
             [
                 _float_or_zero(
