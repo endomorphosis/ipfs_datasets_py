@@ -13,6 +13,14 @@ from scripts.ops.security_verification.check_no_hidden_unicode import (
 )
 
 
+def _has_error(errors: list[dict[str, object]], *, category: str, message: str | None = None) -> bool:
+    return any(
+        error['category'] == category
+        and (message is None or error['message'] == message)
+        for error in errors
+    )
+
+
 def test_hidden_unicode_check_passes() -> None:
     repo_root = Path(__file__).resolve().parents[4]
     script = repo_root / 'scripts/ops/security_verification/check_no_hidden_unicode.py'
@@ -35,10 +43,10 @@ def test_hidden_unicode_check_fails_closed_on_single_line_source_file(tmp_path: 
     candidate = tmp_path / 'single_line.py'
     candidate.write_text('print("security")', encoding='utf-8')
     errors = scan_file(candidate)
-    assert any(
-        error['category'] == 'single_line_file'
-        and error['message'] == 'expected ordinary physical newlines, found a single logical line'
-        for error in errors
+    assert _has_error(
+        errors,
+        category='single_line_file',
+        message='expected ordinary physical newlines, found a single logical line',
     )
 
 
@@ -46,7 +54,7 @@ def test_hidden_unicode_check_rejects_carriage_return_bytes(tmp_path: Path) -> N
     candidate = tmp_path / 'carriage_return.py'
     candidate.write_bytes(b'print("security")\rprint("verification")\r')
     errors = scan_file(candidate)
-    assert any(error['category'] == 'carriage_return' for error in errors)
+    assert _has_error(errors, category='carriage_return')
     assert [error['byte_offset'] for error in errors if error['category'] == 'carriage_return'] == [17, 39]
 
 

@@ -216,8 +216,11 @@ def file_byte_diagnostics(path: Path) -> dict[str, int]:
 
 
 def build_report() -> dict[str, Any]:
-    scanned_files = [_display_path(path) for path in _iter_files()]
-    violations = [violation for path in _iter_files() for violation in scan_file(path)]
+    scanned_files: list[str] = []
+    violations: list[dict[str, Any]] = []
+    for path in _iter_files():
+        scanned_files.append(_display_path(path))
+        violations.extend(scan_file(path))
     return {
         'root': ROOT.as_posix(),
         'files_scanned': scanned_files,

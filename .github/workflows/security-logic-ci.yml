@@ -175,18 +175,19 @@ jobs:
           import json
           from pathlib import Path
 
-          summary = {
-              "hidden_unicode_clean": "${{ steps.hidden_unicode.outcome }}" == "success",
-              "python_compileall_passed": "${{ steps.compileall.outcome }}" == "success",
-              "workflow_yaml_parsed": "${{ steps.workflow_yaml.outcome }}" == "success",
-              "pytest_passed": "${{ steps.pytest_security_logic.outcome }}" == "success",
-              "proof_cli_strict_passed": "${{ steps.proof_cli_strict.outcome }}" == "success",
-              "proof_cli_reviewed_evidence_passed": "${{ steps.proof_cli_reviewed.outcome }}" == "success",
-              "proof_cli_fail_closed_passed": "${{ steps.proof_cli_fail_closed.outcome }}" == "success",
-              "typescript_compile_passed": "${{ steps.typescript_compile.outcome }}" == "success",
-              "typescript_runtime_verifier_passed": "${{ steps.typescript_runtime.outcome }}" == "success",
-              "proof_reports_uploaded": "${{ steps.upload_security_logic_artifacts.outcome }}" == "success",
+          step_outcomes = {
+              "hidden_unicode_clean": "${{ steps.hidden_unicode.outcome }}",
+              "python_compileall_passed": "${{ steps.compileall.outcome }}",
+              "workflow_yaml_parsed": "${{ steps.workflow_yaml.outcome }}",
+              "pytest_passed": "${{ steps.pytest_security_logic.outcome }}",
+              "proof_cli_strict_passed": "${{ steps.proof_cli_strict.outcome }}",
+              "proof_cli_reviewed_evidence_passed": "${{ steps.proof_cli_reviewed.outcome }}",
+              "proof_cli_fail_closed_passed": "${{ steps.proof_cli_fail_closed.outcome }}",
+              "typescript_compile_passed": "${{ steps.typescript_compile.outcome }}",
+              "typescript_runtime_verifier_passed": "${{ steps.typescript_runtime.outcome }}",
+              "proof_reports_uploaded": "${{ steps.upload_security_logic_artifacts.outcome }}",
           }
+          summary = {key: outcome == "success" for key, outcome in step_outcomes.items()}
           summary["security_logic_v1_ready"] = all(summary.values())
           payload = Path("security_logic_v1_summary.json")
           payload.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
