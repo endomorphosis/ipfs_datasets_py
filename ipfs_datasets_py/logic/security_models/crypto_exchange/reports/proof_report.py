@@ -189,6 +189,8 @@ def _validate_untrusted_report_payload(data: Mapping[str, Any]) -> dict[str, Any
     if not isinstance(data, Mapping):
         raise ValueError('proof report payload must be a mapping')
     payload = dict(data)
+    if 'generated_at' not in payload and 'created_at' in payload:
+        payload['generated_at'] = payload['created_at']
     required = {
         'schema_version',
         'claim_id',
