@@ -237,7 +237,6 @@ def write_report(report_path: Path, payload: dict[str, Any]) -> None:
     report_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8')
 
 
-
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     payload = build_report()
@@ -246,7 +245,7 @@ def main(argv: list[str] | None = None) -> int:
     failures = payload['violations']
     if failures:
         rendered = [_format_violation(failure) for failure in failures]
-        stream = sys.stderr if args.verbose else sys.stdout
+        stream = sys.stderr
         print('\n'.join(rendered), file=stream)
         return 1
     if args.verbose:

@@ -129,8 +129,8 @@ jobs:
           IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
           python scripts/ops/security_verification/emit_security_typescript_schema.py --example --out emitted_security_schema.ts
-      - name: Run emitted TypeScript schema compile/runtime tests
-        id: typescript_validation
+      - name: Run emitted TypeScript schema compile tests
+        id: typescript_compile
         env:
           PYTHONPATH: ${{ github.workspace }}
           IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
@@ -139,7 +139,20 @@ jobs:
           IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN: '1'
         run: |
           npx tsc --version
-          pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py -v --tb=short
+          pytest \
+            tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py::test_typescript_schema_compiles_when_tsc_is_available \
+            tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py::test_typescript_schema_cli_emitter_outputs_strict_compilable_module \
+            -v --tb=short
+      - name: Run emitted TypeScript runtime verifier tests
+        id: typescript_runtime
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+          IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN: '1'
+        run: |
+          pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py::test_typescript_runtime_verifier_rejects_bad_receipts_and_accepts_valid_fixture -v --tb=short
       - name: Upload security logic artifacts
         id: upload_security_logic_artifacts
         if: always()
@@ -163,7 +176,6 @@ jobs:
           from pathlib import Path
 
           summary = {
-              "security_logic_v1_ready": True,
               "hidden_unicode_clean": "${{ steps.hidden_unicode.outcome }}" == "success",
               "python_compileall_passed": "${{ steps.compileall.outcome }}" == "success",
               "workflow_yaml_parsed": "${{ steps.workflow_yaml.outcome }}" == "success",
@@ -171,8 +183,8 @@ jobs:
               "proof_cli_strict_passed": "${{ steps.proof_cli_strict.outcome }}" == "success",
               "proof_cli_reviewed_evidence_passed": "${{ steps.proof_cli_reviewed.outcome }}" == "success",
               "proof_cli_fail_closed_passed": "${{ steps.proof_cli_fail_closed.outcome }}" == "success",
-              "typescript_compile_passed": "${{ steps.typescript_validation.outcome }}" == "success",
-              "typescript_runtime_verifier_passed": "${{ steps.typescript_validation.outcome }}" == "success",
+              "typescript_compile_passed": "${{ steps.typescript_compile.outcome }}" == "success",
+              "typescript_runtime_verifier_passed": "${{ steps.typescript_runtime.outcome }}" == "success",
               "proof_reports_uploaded": "${{ steps.upload_security_logic_artifacts.outcome }}" == "success",
           }
           summary["security_logic_v1_ready"] = all(summary.values())

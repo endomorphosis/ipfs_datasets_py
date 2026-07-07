@@ -35,8 +35,11 @@ def test_hidden_unicode_check_fails_closed_on_single_line_source_file(tmp_path: 
     candidate = tmp_path / 'single_line.py'
     candidate.write_text('print("security")', encoding='utf-8')
     errors = scan_file(candidate)
-    assert any(error['category'] == 'single_line_file' for error in errors)
-    assert any(error['message'] == 'expected ordinary physical newlines, found a single logical line' for error in errors)
+    assert any(
+        error['category'] == 'single_line_file'
+        and error['message'] == 'expected ordinary physical newlines, found a single logical line'
+        for error in errors
+    )
 
 
 def test_hidden_unicode_check_rejects_carriage_return_bytes(tmp_path: Path) -> None:
