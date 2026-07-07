@@ -34,7 +34,7 @@ class ProofReceipt:
         return cls(**dict(data))
 
     @classmethod
-    def from_untrusted_dict(cls, data: Mapping[str, Any]) -> 'ProofReceipt':
+    def from_untrusted_dict(cls, data: Mapping[str, Any], *, report: ProofReport | None = None) -> 'ProofReceipt':
         if not isinstance(data, Mapping):
             raise ValueError('proof receipt payload must be a mapping')
         payload = dict(data)
@@ -57,6 +57,19 @@ class ProofReceipt:
         missing = sorted(field_name for field_name in required if field_name not in payload)
         if missing:
             raise ValueError(f'Missing required proof receipt field(s): {", ".join(missing)}')
+        aa = payload.get('accepted_assumptions')
+        if not isinstance(aa, list) or len(aa) == 0:
+            raise ValueError('accepted_assumptions must be a non-empty list of assumption IDs')
+        if report is not None:
+            valid_assumption_ids = set(report.assumptions)
+            unknown_assumptions = sorted(set(aa) - valid_assumption_ids)
+            if unknown_assumptions:
+                raise ValueError(
+                    f'accepted_assumptions contains IDs not declared in the report: {", ".join(unknown_assumptions)}'
+                )
+            stored_cid = payload.get('proof_report_cid', '')
+            if stored_cid and stored_cid != report.cid:
+                raise ValueError('proof_report_cid does not match the provided report CID')
         return cls(**payload)
 
     @staticmethod
@@ -159,6 +172,8 @@ def validate_proof_receipt(receipt: ProofReceipt | Mapping[str, Any]) -> ProofRe
     if normalized.schema_version != PROOF_RECEIPT_SCHEMA_VERSION:
         raise ValueError(f'unsupported proof receipt schema version: {normalized.schema_version}')
     _require_string_list('accepted_assumptions', normalized.accepted_assumptions)
+    if not normalized.accepted_assumptions:
+        raise ValueError('accepted_assumptions must be non-empty')
     if not isinstance(normalized.valid, bool):
         raise ValueError('valid must be a boolean')
     if not isinstance(normalized.metadata, dict):

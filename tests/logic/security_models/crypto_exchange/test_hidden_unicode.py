@@ -55,7 +55,21 @@ def test_hidden_unicode_check_rejects_carriage_return_bytes(tmp_path: Path) -> N
     candidate.write_bytes(b'print("security")\rprint("verification")\r')
     errors = scan_file(candidate)
     assert _has_error(errors, category='carriage_return')
-    assert [error['byte_offset'] for error in errors if error['category'] == 'carriage_return'] == [17, 39]
+    cr_errors = [error for error in errors if error['category'] == 'carriage_return']
+    assert [error['byte_offset'] for error in cr_errors] == [17, 39]
+    assert [error['char_offset'] for error in cr_errors] == [17, 39]
+    for error in cr_errors:
+        assert 'char_offset' in error
+
+
+def test_violation_report_includes_char_offset(tmp_path: Path) -> None:
+    candidate = tmp_path / 'bidi.py'
+    candidate.write_bytes('x = 1\n\u202ax = 2\n'.encode('utf-8'))
+    errors = scan_file(candidate)
+    assert errors, 'expected bidi control violation'
+    for error in errors:
+        assert 'char_offset' in error, f'char_offset missing in {error}'
+        assert isinstance(error['char_offset'], int)
 
 
 def test_hidden_unicode_check_emits_machine_readable_report(tmp_path: Path) -> None:
