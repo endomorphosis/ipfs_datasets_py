@@ -52,6 +52,7 @@ def _build_violation(
     category: str,
     line_number: int,
     byte_offset: int,
+    char_offset: int,
     message: str,
     codepoint: int | None = None,
     unicode_category: str | None = None,
@@ -60,6 +61,7 @@ def _build_violation(
         'path': _display_path(path),
         'line_number': line_number,
         'byte_offset': byte_offset,
+        'char_offset': char_offset,
         'code_point': None if codepoint is None else f'U+{codepoint:04X}',
         'unicode_category': unicode_category,
         'category': category,
@@ -72,6 +74,7 @@ def _format_violation(violation: dict[str, Any]) -> str:
     unicode_category = violation['unicode_category'] or 'n/a'
     return (
         f"{violation['path']}: byte_offset={violation['byte_offset']} "
+        f"char_offset={violation['char_offset']} "
         f"line={violation['line_number']} code_point={code_point} "
         f"unicode_category={unicode_category} category={violation['category']} "
         f"message={violation['message']}"
@@ -90,6 +93,7 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
                 category='invalid_utf8',
                 line_number=1,
                 byte_offset=exc.start,
+                char_offset=exc.start,
                 codepoint=None,
                 unicode_category=None,
                 message=f'invalid UTF-8 ({exc})',
@@ -97,6 +101,7 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
         ]
     line_number = 1
     byte_offset = 0
+    char_offset = 0
     for character in text:
         codepoint = ord(character)
         unicode_category = unicodedata.category(character)
@@ -109,6 +114,7 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
                     category='carriage_return',
                     line_number=line_number,
                     byte_offset=byte_offset,
+                    char_offset=char_offset,
                     codepoint=codepoint,
                     unicode_category=unicode_category,
                     message='carriage return bytes are not allowed; use LF newlines only',
@@ -121,6 +127,7 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
                     category='bidi_control',
                     line_number=line_number,
                     byte_offset=byte_offset,
+                    char_offset=char_offset,
                     codepoint=codepoint,
                     unicode_category=unicode_category,
                     message='bidi controls are not allowed',
@@ -133,6 +140,7 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
                     category='zero_width_control',
                     line_number=line_number,
                     byte_offset=byte_offset,
+                    char_offset=char_offset,
                     codepoint=codepoint,
                     unicode_category=unicode_category,
                     message='zero-width controls are not allowed',
@@ -145,6 +153,7 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
                     category='nonstandard_line_separator',
                     line_number=line_number,
                     byte_offset=byte_offset,
+                    char_offset=char_offset,
                     codepoint=codepoint,
                     unicode_category=unicode_category,
                     message='U+2028 and U+2029 line separators are not allowed',
@@ -159,6 +168,7 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
                     category='unexpected_control_character',
                     line_number=line_number,
                     byte_offset=byte_offset,
+                    char_offset=char_offset,
                     codepoint=codepoint,
                     unicode_category=unicode_category,
                     message='unexpected control character is not allowed',
@@ -171,12 +181,14 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
                     category='unexpected_format_character',
                     line_number=line_number,
                     byte_offset=byte_offset,
+                    char_offset=char_offset,
                     codepoint=codepoint,
                     unicode_category=unicode_category,
                     message='unexpected format character is not allowed',
                 )
             )
         byte_offset += len(character.encode('utf-8'))
+        char_offset += 1
     if must_be_multiline(path) and file_line_count(text) <= 1:
         errors.append(
             _build_violation(
@@ -184,6 +196,7 @@ def scan_file(path: Path) -> list[dict[str, Any]]:
                 category='single_line_file',
                 line_number=1,
                 byte_offset=0,
+                char_offset=0,
                 codepoint=None,
                 unicode_category=None,
                 message='expected ordinary physical newlines, found a single logical line',

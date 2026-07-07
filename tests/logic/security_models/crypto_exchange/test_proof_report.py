@@ -194,3 +194,59 @@ def test_proof_receipt_accepts_valid_proved_report() -> None:
     assert validate_proof_receipt(receipt) is receipt
     assert receipt.proof_report_cid == report.cid
     assert receipt.valid is True
+
+
+def test_proof_receipt_from_untrusted_dict_rejects_empty_accepted_assumptions() -> None:
+    report = _report()
+    receipt = ProofReceipt.from_report(
+        report,
+        verifier='ts-wasm-kernel',
+        verifier_version='0.1.0',
+        accepted_assumptions=['A4'],
+    )
+    payload = receipt.to_dict()
+    payload['accepted_assumptions'] = []
+    with pytest.raises(ValueError, match='accepted_assumptions must be a non-empty list'):
+        ProofReceipt.from_untrusted_dict(payload)
+
+
+def test_proof_receipt_from_untrusted_dict_with_report_rejects_unknown_assumption_ids() -> None:
+    report = _report(assumptions=['A1', 'A2'])
+    receipt = ProofReceipt.from_report(
+        report,
+        verifier='ts-wasm-kernel',
+        verifier_version='0.1.0',
+        accepted_assumptions=['A1', 'A2'],
+    )
+    payload = receipt.to_dict()
+    payload['accepted_assumptions'] = ['A1', 'X99']
+    with pytest.raises(ValueError, match='not declared in the report'):
+        ProofReceipt.from_untrusted_dict(payload, report=report)
+
+
+def test_proof_receipt_from_untrusted_dict_with_report_rejects_mismatched_cid() -> None:
+    report = _report()
+    receipt = ProofReceipt.from_report(
+        report,
+        verifier='ts-wasm-kernel',
+        verifier_version='0.1.0',
+        accepted_assumptions=['A4'],
+    )
+    payload = receipt.to_dict()
+    payload['proof_report_cid'] = 'sha256:wrong'
+    with pytest.raises(ValueError, match='proof_report_cid does not match'):
+        ProofReceipt.from_untrusted_dict(payload, report=report)
+
+
+def test_proof_receipt_from_untrusted_dict_with_report_accepts_valid_payload() -> None:
+    report = _report(assumptions=['A1', 'A2', 'A3'])
+    receipt = ProofReceipt.from_report(
+        report,
+        verifier='ts-wasm-kernel',
+        verifier_version='0.1.0',
+        accepted_assumptions=['A1', 'A2', 'A3'],
+    )
+    payload = receipt.to_dict()
+    restored = ProofReceipt.from_untrusted_dict(payload, report=report)
+    assert restored.accepted_assumptions == ['A1', 'A2', 'A3']
+    assert restored.proof_report_cid == report.cid
