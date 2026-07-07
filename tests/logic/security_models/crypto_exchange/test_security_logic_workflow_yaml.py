@@ -10,8 +10,12 @@ def test_security_logic_workflow_yaml_parses_if_pyyaml_is_available() -> None:
     assert payload['name'] == 'Security Logic CI'
     steps = payload['jobs']['test']['steps']
     assert any(step.get('uses', '').startswith('actions/setup-node@') for step in steps)
-    typescript_install_step = next(step for step in steps if step.get('name') == 'Install focused TypeScript toolchain')
+    typescript_install_steps = [step for step in steps if step.get('name') == 'Install focused TypeScript toolchain']
+    assert typescript_install_steps
+    typescript_install_step = typescript_install_steps[0]
     assert 'npm install --global typescript' in typescript_install_step['run']
-    typescript_test_step = next(step for step in steps if step.get('name') == 'Run emitted TypeScript schema compile test')
+    typescript_test_steps = [step for step in steps if step.get('name') == 'Run emitted TypeScript schema compile test']
+    assert typescript_test_steps
+    typescript_test_step = typescript_test_steps[0]
     assert 'pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py -v --tb=short' in typescript_test_step['run']
     assert 'Skipping TypeScript compile test' not in typescript_test_step['run']
