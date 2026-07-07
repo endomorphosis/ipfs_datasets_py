@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
+import argparse
+import json
 import sys
 import unicodedata
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 TARGETS = [
@@ -25,7 +28,6 @@ NONSTANDARD_LINE_SEPARATORS = {0x2028, 0x2029}
 ALLOWED_CONTROLS = {0x09, 0x0A}
 
 
-
 def _iter_files() -> list[Path]:
     files: list[Path] = []
     for target in TARGETS:
@@ -37,32 +39,156 @@ def _iter_files() -> list[Path]:
     return files
 
 
+def _display_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
 
-def scan_file(path: Path) -> list[str]:
-    errors: list[str] = []
+
+def _build_violation(
+    path: Path,
+    *,
+    category: str,
+    line_number: int,
+    byte_offset: int,
+    message: str,
+    codepoint: int | None = None,
+    unicode_category: str | None = None,
+) -> dict[str, Any]:
+    return {
+        'path': _display_path(path),
+        'line_number': line_number,
+        'byte_offset': byte_offset,
+        'code_point': None if codepoint is None else f'U+{codepoint:04X}',
+        'unicode_category': unicode_category,
+        'category': category,
+        'message': message,
+    }
+
+
+def _format_violation(violation: dict[str, Any]) -> str:
+    code_point = violation['code_point'] or 'n/a'
+    unicode_category = violation['unicode_category'] or 'n/a'
+    return (
+        f"{violation['path']}: byte_offset={violation['byte_offset']} "
+        f"line={violation['line_number']} code_point={code_point} "
+        f"unicode_category={unicode_category} category={violation['category']} "
+        f"message={violation['message']}"
+    )
+
+
+def scan_file(path: Path) -> list[dict[str, Any]]:
+    errors: list[dict[str, Any]] = []
     raw = path.read_bytes()
     try:
         text = raw.decode('utf-8')
     except UnicodeDecodeError as exc:
-        return [f'{path}: invalid UTF-8 ({exc})']
-    if b'\r' in raw:
-        errors.append(f'{path}: carriage return bytes are not allowed; use LF newlines only')
-    if must_be_multiline(path) and file_line_count(text) <= 1:
-        errors.append(f'{path}: expected ordinary physical newlines, found a single logical line')
-    for index, character in enumerate(text, start=1):
+        return [
+            _build_violation(
+                path,
+                category='invalid_utf8',
+                line_number=1,
+                byte_offset=exc.start,
+                codepoint=None,
+                unicode_category=None,
+                message=f'invalid UTF-8 ({exc})',
+            )
+        ]
+    line_number = 1
+    byte_offset = 0
+    for character in text:
         codepoint = ord(character)
-        if codepoint in BIDI_CONTROLS:
-            errors.append(f'{path}: bidi control U+{codepoint:04X} at character {index}')
+        unicode_category = unicodedata.category(character)
+        if codepoint == 0x0A:
+            line_number += 1
+        elif codepoint == 0x0D:
+            errors.append(
+                _build_violation(
+                    path,
+                    category='carriage_return',
+                    line_number=line_number,
+                    byte_offset=byte_offset,
+                    codepoint=codepoint,
+                    unicode_category=unicode_category,
+                    message='carriage return bytes are not allowed; use LF newlines only',
+                )
+            )
+        elif codepoint in BIDI_CONTROLS:
+            errors.append(
+                _build_violation(
+                    path,
+                    category='bidi_control',
+                    line_number=line_number,
+                    byte_offset=byte_offset,
+                    codepoint=codepoint,
+                    unicode_category=unicode_category,
+                    message='bidi controls are not allowed',
+                )
+            )
         elif codepoint in ZERO_WIDTH_CONTROLS:
-            errors.append(f'{path}: zero-width control U+{codepoint:04X} at character {index}')
+            errors.append(
+                _build_violation(
+                    path,
+                    category='zero_width_control',
+                    line_number=line_number,
+                    byte_offset=byte_offset,
+                    codepoint=codepoint,
+                    unicode_category=unicode_category,
+                    message='zero-width controls are not allowed',
+                )
+            )
         elif codepoint in NONSTANDARD_LINE_SEPARATORS:
-            errors.append(f'{path}: nonstandard line separator U+{codepoint:04X} at character {index}')
+            errors.append(
+                _build_violation(
+                    path,
+                    category='nonstandard_line_separator',
+                    line_number=line_number,
+                    byte_offset=byte_offset,
+                    codepoint=codepoint,
+                    unicode_category=unicode_category,
+                    message='U+2028 and U+2029 line separators are not allowed',
+                )
+            )
         elif codepoint in ALLOWED_CONTROLS:
-            continue
-        elif unicodedata.category(character) == 'Cc':
-            errors.append(f'{path}: unexpected control character U+{codepoint:04X} at character {index}')
-        elif unicodedata.category(character) == 'Cf':
-            errors.append(f'{path}: unexpected format character U+{codepoint:04X} at character {index}')
+            pass
+        elif unicode_category == 'Cc':
+            errors.append(
+                _build_violation(
+                    path,
+                    category='unexpected_control_character',
+                    line_number=line_number,
+                    byte_offset=byte_offset,
+                    codepoint=codepoint,
+                    unicode_category=unicode_category,
+                    message='unexpected control character is not allowed',
+                )
+            )
+        elif unicode_category == 'Cf':
+            errors.append(
+                _build_violation(
+                    path,
+                    category='unexpected_format_character',
+                    line_number=line_number,
+                    byte_offset=byte_offset,
+                    codepoint=codepoint,
+                    unicode_category=unicode_category,
+                    message='unexpected format character is not allowed',
+                )
+            )
+        byte_offset += len(character.encode('utf-8'))
+    if must_be_multiline(path) and file_line_count(text) <= 1:
+        errors.append(
+            _build_violation(
+                path,
+                category='single_line_file',
+                line_number=1,
+                byte_offset=0,
+                codepoint=None,
+                unicode_category=None,
+                message='expected ordinary physical newlines, found a single logical line',
+            )
+        )
     return errors
 
 
@@ -89,14 +215,42 @@ def file_byte_diagnostics(path: Path) -> dict[str, int]:
     }
 
 
+def build_report() -> dict[str, Any]:
+    scanned_files = [_display_path(path) for path in _iter_files()]
+    violations = [violation for path in _iter_files() for violation in scan_file(path)]
+    return {
+        'root': ROOT.as_posix(),
+        'files_scanned': scanned_files,
+        'file_count': len(scanned_files),
+        'violations': violations,
+    }
 
-def main() -> int:
-    failures: list[str] = []
-    for path in _iter_files():
-        failures.extend(scan_file(path))
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--verbose', action='store_true', help='print detailed per-violation diagnostics')
+    parser.add_argument('--report', type=Path, help='write a machine-readable JSON report to this path')
+    return parser.parse_args(argv)
+
+
+def write_report(report_path: Path, payload: dict[str, Any]) -> None:
+    report_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    payload = build_report()
+    if args.report:
+        write_report(args.report, payload)
+    failures = payload['violations']
     if failures:
-        print('\n'.join(failures), file=sys.stderr)
+        rendered = [_format_violation(failure) for failure in failures]
+        stream = sys.stderr if args.verbose else sys.stdout
+        print('\n'.join(rendered), file=stream)
         return 1
+    if args.verbose:
+        print(json.dumps(payload, indent=2, sort_keys=True))
     print('No hidden Unicode issues found.')
     return 0
 

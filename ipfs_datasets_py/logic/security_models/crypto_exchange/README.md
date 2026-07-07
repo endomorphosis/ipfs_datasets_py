@@ -8,6 +8,8 @@ This package adds a language-neutral security verification layer for wallet and 
 
 The current implementation surface is intentionally limited to the pieces that execute end-to-end today: a minimal exchange model, Z3-backed claims, runtime temporal monitors, proof/disproof reports, source-code autoformalization, and deterministic TypeScript schema emission for downstream consumers.
 
+This is a v1 bounded `SecurityModelIR`/Z3/proof-report/proof-receipt/TypeScript-consumer slice. It does not prove a production exchange secure: `PROVED` means a modeled finite-IR property holds under the listed assumptions, while `UNKNOWN` and `NOT_MODELED` remain fail-closed, non-secure outcomes. TLA+, Tamarin, ProVerif, HyperLTL, Lean, and Coq execution stay documented future work until they run end-to-end with tests.
+
 Default proof artifacts record bounded assumption IDs (`A1`-`A10`), and the CLI can fail closed when a model declares simulated F-logic/ZKP dependencies.
 
 The extractor surface now supports seed autoformalization of Python plus popular source languages (JavaScript, TypeScript, Go, Java, and Rust) into `SecurityModelIR`, reusing lightweight natural-language-to-FOL helpers to capture security-relevant comments and docstring obligations as reviewable invariants.

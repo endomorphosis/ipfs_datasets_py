@@ -49,6 +49,8 @@ def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tupl
     node = shutil.which('node')
     tsc = shutil.which('tsc') or shutil.which('npx')
     if not node or not tsc:
+        if os.environ.get('IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN') == '1':
+            pytest.fail('node and tsc/npx are required for this test run')
         pytest.skip('node and tsc/npx are not available')
     if via_cli:
         assert EMITTER_SCRIPT.is_file()

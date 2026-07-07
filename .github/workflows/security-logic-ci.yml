@@ -42,16 +42,28 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml z3-solver multiformats
-      - name: Install focused TypeScript toolchain
+      - name: Install TypeScript toolchain
         run: |
-          npm install --global typescript
+          npm install --no-save typescript
       - name: Check hidden Unicode and newline normalization
+        id: hidden_unicode
         run: |
-          python scripts/ops/security_verification/check_no_hidden_unicode.py
+          python scripts/ops/security_verification/check_no_hidden_unicode.py --verbose --report hidden_unicode_report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path("hidden_unicode_report.json")
+          assert report.exists(), "hidden unicode report was not emitted"
+          payload = json.loads(report.read_text(encoding="utf-8"))
+          assert payload["violations"] == [], payload
+          print("hidden unicode report clean")
+          PY
       - name: Compile focused security verification sources
+        id: compileall
         run: |
           python -m compileall ipfs_datasets_py/logic/security_models scripts/ops/security_verification tests/logic/security_models/crypto_exchange
       - name: Parse workflow YAML
+        id: workflow_yaml
         run: |
           python - <<'PY'
           import yaml
@@ -60,6 +72,7 @@ jobs:
           print("yaml ok")
           PY
       - name: Run focused security model tests
+        id: pytest_security_logic
         env:
           PYTHONPATH: ${{ github.workspace }}
           IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
@@ -68,6 +81,7 @@ jobs:
         run: |
           pytest tests/logic/security_models/crypto_exchange -v --tb=short
       - name: Run proof CLI with strict validation
+        id: proof_cli_strict
         env:
           PYTHONPATH: ${{ github.workspace }}
           IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
@@ -79,6 +93,7 @@ jobs:
             --strict-validation \
             --out proof_report_strict.json
       - name: Run proof CLI with reviewed evidence policy on trusted fixture
+        id: proof_cli_reviewed
         env:
           PYTHONPATH: ${{ github.workspace }}
           IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
@@ -93,6 +108,7 @@ jobs:
             --accepted-assumptions A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 \
             --out proof_report_reviewed.json
       - name: Run proof CLI in fail-closed mode
+        id: proof_cli_fail_closed
         env:
           PYTHONPATH: ${{ github.workspace }}
           IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
@@ -104,20 +120,72 @@ jobs:
             args+=(--fail-on unknown-critical)
           fi
           python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all "${args[@]}"
-      - name: Run emitted TypeScript schema compile test
+      - name: Emit TypeScript proof-consumer schema artifact
+        id: emit_typescript_schema
         env:
           PYTHONPATH: ${{ github.workspace }}
           IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
           IPFS_DATASETS_AUTO_INSTALL: '0'
           IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
+          python scripts/ops/security_verification/emit_security_typescript_schema.py --example --out emitted_security_schema.ts
+      - name: Run emitted TypeScript schema compile/runtime tests
+        id: typescript_validation
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+          IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN: '1'
+        run: |
+          npx tsc --version
           pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py -v --tb=short
-      - name: Upload proof report artifacts
+      - name: Upload security logic artifacts
+        id: upload_security_logic_artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: security-logic-proof-reports
+          if-no-files-found: warn
           path: |
+            emitted_security_schema.ts
+            hidden_unicode_report.json
             counterexamples
             proof_report.json
             proof_report_reviewed.json
             proof_report_strict.json
+      - name: Emit merge readiness summary
+        id: merge_readiness_summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          summary = {
+              "security_logic_v1_ready": True,
+              "hidden_unicode_clean": "${{ steps.hidden_unicode.outcome }}" == "success",
+              "python_compileall_passed": "${{ steps.compileall.outcome }}" == "success",
+              "workflow_yaml_parsed": "${{ steps.workflow_yaml.outcome }}" == "success",
+              "pytest_passed": "${{ steps.pytest_security_logic.outcome }}" == "success",
+              "proof_cli_strict_passed": "${{ steps.proof_cli_strict.outcome }}" == "success",
+              "proof_cli_reviewed_evidence_passed": "${{ steps.proof_cli_reviewed.outcome }}" == "success",
+              "proof_cli_fail_closed_passed": "${{ steps.proof_cli_fail_closed.outcome }}" == "success",
+              "typescript_compile_passed": "${{ steps.typescript_validation.outcome }}" == "success",
+              "typescript_runtime_verifier_passed": "${{ steps.typescript_validation.outcome }}" == "success",
+              "proof_reports_uploaded": "${{ steps.upload_security_logic_artifacts.outcome }}" == "success",
+          }
+          summary["security_logic_v1_ready"] = all(summary.values())
+          payload = Path("security_logic_v1_summary.json")
+          payload.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(payload.read_text(encoding="utf-8"), end="")
+          assert summary["security_logic_v1_ready"], summary
+          PY
+      - name: Upload security logic summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-logic-v1-summary
+          if-no-files-found: error
+          path: |
+            security_logic_v1_summary.json
