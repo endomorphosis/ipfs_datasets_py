@@ -58,6 +58,55 @@ jobs:
           assert payload["violations"] == [], payload
           print("hidden unicode report clean")
           PY
+      - name: Summarize hidden Unicode report
+        id: hidden_unicode_summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = Path("hidden_unicode_report.json")
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          if not report.exists():
+              summary_path.write_text(
+                  "## Hidden Unicode report\n\n- status: missing hidden_unicode_report.json\n",
+                  encoding="utf-8",
+              )
+              raise SystemExit("hidden unicode report was not emitted")
+
+          payload = json.loads(report.read_text(encoding="utf-8"))
+          violations = payload.get("violations", [])
+          lines = [
+              "## Hidden Unicode report",
+              "",
+              f"- files scanned: {payload.get('file_count', 0)}",
+              f"- violations: {len(violations)}",
+              "- artifact: hidden_unicode_report.json",
+          ]
+          if violations:
+              first = violations[0]
+              lines.extend(
+                  [
+                      "- status: failing",
+                      (
+                          "- first violation: "
+                          f"{first['path']} "
+                          f"byte_offset={first['byte_offset']} "
+                          f"char_offset={first['char_offset']} "
+                          f"line={first['line_number']} "
+                          f"code_point={first['code_point']} "
+                          f"category={first['category']} "
+                          f"message={first['message']}"
+                      ),
+                  ]
+              )
+          else:
+              lines.append("- status: clean")
+          summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print(summary_path.read_text(encoding="utf-8"), end="")
+          PY
       - name: Compile focused security verification sources
         id: compileall
         run: |
