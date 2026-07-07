@@ -73,12 +73,13 @@ jobs:
 
           report = Path("hidden_unicode_report.json")
           summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          missing_report_message = "hidden unicode report was not emitted"
           if not report.exists():
               summary_path.write_text(
                   "## Hidden Unicode report\n\n- status: missing hidden_unicode_report.json\n",
                   encoding="utf-8",
               )
-              raise SystemExit("hidden unicode report was not emitted")
+              raise SystemExit(missing_report_message)
 
           try:
               payload = load_report_json(report)

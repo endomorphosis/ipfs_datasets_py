@@ -267,7 +267,8 @@ def build_github_summary_lines(payload: dict[str, Any], *, report_name: str = 'h
     Args:
         payload: Parsed report payload containing at least ``file_count`` and
             ``violations`` keys from :func:`build_report`.
-        report_name: Display name for the emitted JSON report file.
+        report_name: Display name to show in the summary for the emitted JSON
+            report file.
 
     Returns:
         A list of markdown lines suitable for writing to ``GITHUB_STEP_SUMMARY``.

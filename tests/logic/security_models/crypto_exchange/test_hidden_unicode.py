@@ -118,7 +118,11 @@ def test_hidden_unicode_summary_lines_include_first_violation_details() -> None:
     }
     lines = build_github_summary_lines(payload)
     assert '- status: failing' in lines
-    assert any('byte_offset=12' in line and 'char_offset=12' in line for line in lines)
+    assert lines[-1] == (
+        '- first violation: .github/workflows/security-logic-ci.yml '
+        'byte_offset=12 char_offset=12 line=2 code_point=U+202A '
+        'category=bidi_control message=bidi controls are not allowed'
+    )
 
 
 def test_hidden_unicode_report_loader_rejects_invalid_json(tmp_path: Path) -> None:
