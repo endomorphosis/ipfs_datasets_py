@@ -57,6 +57,7 @@ _SUBMODULE_EXPORTS = {
     "monitoring",
     "observability",
     "security",
+    "security_models",
     "submodule_registry",
     "TDFOL",
     "tools",
