@@ -3336,6 +3336,41 @@ def test_deontic_bridge_falls_back_to_parser_for_failed_definition_conversion() 
     )
 
 
+def test_deontic_bridge_proof_gate_accepts_boolean_target_status_summary() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import (
+        _proof_gate_from_coverage_records,
+    )
+
+    record = {
+        "source_id": "legacy-boolean-target-status",
+        "coverage_summary": {
+            "required_targets": [
+                "frame_logic",
+                "deontic_cec",
+                "fol",
+                "deontic_fol",
+                "deontic_temporal_fol",
+            ],
+            "target_status_by_target": {
+                "frame_logic": True,
+                "deontic_cec": True,
+                "fol": True,
+                "deontic_fol": True,
+                "deontic_temporal_fol": True,
+            },
+        },
+        "coverage_blockers": [],
+    }
+
+    gate = _proof_gate_from_coverage_records([record])
+
+    assert gate.compiles is True
+    assert gate.attempted_count == 5
+    assert gate.valid_count == 5
+    assert gate.failed_count == 0
+    assert gate.failure_ratio == 0.0
+
+
 def test_deontic_bridge_phase8_quality_gate_uses_present_optional_slots_only() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

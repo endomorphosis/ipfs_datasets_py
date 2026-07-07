@@ -3,6 +3,7 @@
 from ipfs_datasets_py.logic.deontic.exports import (
     LOCAL_PROVER_SYNTAX_TARGETS,
     build_prover_syntax_target_coverage_records_from_irs,
+    summarize_prover_syntax_target_coverage,
 )
 from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
@@ -77,3 +78,23 @@ def test_batch_prover_target_coverage_keeps_unresolved_numbered_exception_blocke
     assert norm.proof_ready is False
     assert "cross_reference_requires_resolution" in norm.blockers
     assert "exception_requires_scope_review" in norm.blockers
+
+
+def test_prover_target_coverage_accepts_legacy_formal_syntax_valid_rows():
+    records = [
+        {
+            "source_id": "legacy-obligation",
+            "target": target,
+            "formal_syntax_valid": True,
+            "exported_formula": "forall x. (Agency(x) -> PublishNotice(x))",
+        }
+        for target in LOCAL_PROVER_SYNTAX_TARGETS
+    ]
+
+    summary = summarize_prover_syntax_target_coverage(records)
+
+    assert summary["all_required_passed"] is True
+    assert summary["passed_targets"] == sorted(LOCAL_PROVER_SYNTAX_TARGETS)
+    assert summary["failed_targets"] == []
+    assert summary["missing_targets"] == []
+    assert summary["syntax_valid_rate"] == 1.0

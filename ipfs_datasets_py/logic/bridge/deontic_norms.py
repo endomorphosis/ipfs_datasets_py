@@ -2555,15 +2555,21 @@ def _coverage_summary_from_record(record: Mapping[str, Any]) -> dict[str, Any]:
             failed_targets: list[str] = []
             missing_targets: list[str] = []
             for target in required_targets:
-                status = str(status_by_target.get(target) or "").strip().lower()
-                if status in {"passed", "pass", "valid", "ok"}:
+                status_value = status_by_target.get(target)
+                status = str(status_value or "").strip().lower()
+                if status_value is True or status in {"passed", "pass", "valid", "ok"}:
                     passed_targets.append(target)
                 elif status in {"missing", "absent"}:
                     missing_targets.append(target)
                 elif status in {"skipped", "skip", "unavailable"}:
                     # Skipped targets stay non-blocking for proof compilation.
                     continue
-                elif status in {"failed", "failure", "invalid", "error"}:
+                elif status_value is False or status in {
+                    "failed",
+                    "failure",
+                    "invalid",
+                    "error",
+                }:
                     failed_targets.append(target)
                 else:
                     failed_targets.append(target)
