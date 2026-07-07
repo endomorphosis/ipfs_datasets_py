@@ -57,12 +57,12 @@ class ProofReceipt:
         missing = sorted(field_name for field_name in required if field_name not in payload)
         if missing:
             raise ValueError(f'Missing required proof receipt field(s): {", ".join(missing)}')
-        aa = payload.get('accepted_assumptions')
-        if not isinstance(aa, list) or len(aa) == 0:
+        accepted_assumptions = payload.get('accepted_assumptions')
+        if not isinstance(accepted_assumptions, list) or len(accepted_assumptions) == 0:
             raise ValueError('accepted_assumptions must be a non-empty list of assumption IDs')
         if report is not None:
             valid_assumption_ids = set(report.assumptions)
-            unknown_assumptions = sorted(set(aa) - valid_assumption_ids)
+            unknown_assumptions = sorted(set(accepted_assumptions) - valid_assumption_ids)
             if unknown_assumptions:
                 raise ValueError(
                     f'accepted_assumptions contains IDs not declared in the report: {", ".join(unknown_assumptions)}'

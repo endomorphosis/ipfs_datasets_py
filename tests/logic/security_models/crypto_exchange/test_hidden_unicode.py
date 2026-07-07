@@ -64,7 +64,9 @@ def test_hidden_unicode_check_rejects_carriage_return_bytes(tmp_path: Path) -> N
 
 def test_violation_report_includes_char_offset(tmp_path: Path) -> None:
     candidate = tmp_path / 'bidi.py'
-    candidate.write_bytes('x = 1\n\u202ax = 2\n'.encode('utf-8'))
+    # U+202A LEFT-TO-RIGHT EMBEDDING is a bidi control and must be flagged.
+    bidi_char = '\u202a'
+    candidate.write_bytes(f'x = 1\n{bidi_char}x = 2\n'.encode('utf-8'))
     errors = scan_file(candidate)
     assert errors, 'expected bidi control violation'
     for error in errors:
