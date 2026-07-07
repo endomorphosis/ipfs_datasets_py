@@ -1755,6 +1755,26 @@ def _guidance_family_pair_lane_items(
                     ("modal.frame_logic", 0.20),
                 )
             )
+        elif normalized_pair == "frame->temporal":
+            items.extend(
+                (
+                    ("TDFOL.prover", 1.28),
+                    ("deontic.ir", 0.72),
+                    ("knowledge_graphs.neo4j_compat", 0.58),
+                    ("CEC.native", 0.36),
+                    ("modal.frame_logic", 0.18),
+                )
+            )
+        elif normalized_pair == "frame->frame":
+            items.extend(
+                (
+                    ("knowledge_graphs.neo4j_compat", 1.06),
+                    ("CEC.native", 0.86),
+                    ("modal.frame_logic", 0.74),
+                    ("deontic.ir", 0.34),
+                    ("TDFOL.prover", 0.22),
+                )
+            )
         elif normalized_pair.endswith("->conditional_normative"):
             items.extend(
                 (

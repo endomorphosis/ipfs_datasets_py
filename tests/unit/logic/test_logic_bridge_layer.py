@@ -2864,6 +2864,74 @@ def test_bridge_contract_guidance_projects_frame_to_conditional_normative_pairs(
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
 
 
+def test_bridge_contract_guidance_projects_frame_temporal_and_frame_pairs() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "action": "repair_multiview_legal_ir_loss",
+            "bundle": {
+                "family_pairs": ["frame->frame", "frame->temporal"],
+                "program_synthesis_scope": "bridge",
+                "target_component": "bridge.contracts",
+            },
+            "evidence": [
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_component_gaps": {
+                        "CEC.native": -0.010583960717,
+                        "TDFOL.prover": 0.018627877981,
+                        "deontic.ir": 0.018161159398,
+                        "knowledge_graphs.neo4j_compat": 0.010959734373,
+                        "modal.frame_logic": -0.007427758005,
+                    },
+                    "legal_ir_underrepresented_components": [
+                        "TDFOL.prover",
+                        "deontic.ir",
+                        "knowledge_graphs.neo4j_compat",
+                    ],
+                    "pipeline_stage_diagnostics": {
+                        "legal_ir_component_gap_max": 0.018627877981,
+                        "modal_family_target_probability_gap": 0.395394247759,
+                    },
+                    "predicted_family": "frame",
+                    "predicted_view": "TDFOL.prover",
+                    "target_component": "bridge.contracts",
+                    "target_family": "temporal",
+                    "target_view": "TDFOL.prover",
+                },
+            ],
+            "target_component": "bridge.contracts",
+            "target_metrics": (
+                "legal_ir_view_cross_entropy_loss, "
+                "legal_ir_multiview_cross_entropy_loss, "
+                "legal_ir_multiview_total_loss"
+            ),
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
+    } <= set(target_distribution)
+    assert target_distribution["TDFOL.prover"] > target_distribution["CEC.native"]
+    assert target_distribution["deontic.ir"] > target_distribution["modal.frame_logic"]
+    assert target_distribution["knowledge_graphs.neo4j_compat"] > (
+        target_distribution["modal.frame_logic"]
+    )
+    assert metadata["compiler_guidance_component_gap_max"] == 0.018627877981
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
+
+
 def test_bridge_contract_guidance_keeps_packet_120_primary_lanes() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _compiler_guidance_bridge_contract_metadata,
