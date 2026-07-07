@@ -262,7 +262,16 @@ def load_report_json(report_path: Path) -> dict[str, Any]:
 
 
 def build_github_summary_lines(payload: dict[str, Any], *, report_name: str = 'hidden_unicode_report.json') -> list[str]:
-    """Build a concise GitHub step summary for the emitted hidden-Unicode report."""
+    """Build GitHub step-summary lines for an emitted hidden-Unicode report.
+
+    Args:
+        payload: Parsed report payload containing at least ``file_count`` and
+            ``violations`` keys from :func:`build_report`.
+        report_name: Display name for the emitted JSON report file.
+
+    Returns:
+        A list of markdown lines suitable for writing to ``GITHUB_STEP_SUMMARY``.
+    """
     violations = payload.get('violations', [])
     lines = [
         '## Hidden Unicode report',
