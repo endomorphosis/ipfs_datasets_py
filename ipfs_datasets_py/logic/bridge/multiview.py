@@ -258,6 +258,10 @@ _BRIDGE_CONTRACT_CITATION_TOKEN_RE = re.compile(
     r"\b\d+[a-z0-9\-\.]*\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_BARE_USC_CITATION_RE = re.compile(
+    r"^\s*\d+\s+u\.?\s*s\.?\s*c\.?\s+(?:§+\s*)?\d+[a-z0-9\-\.]*\s*$",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE = re.compile(
     r"\b(?:u\.?\s*s\.?\s*c\.?\s+title|united\s+states\s+code|"
     r"u\.s\.\s+government\s+publishing\s+office|pub\.\s*l\.|"
@@ -1008,6 +1012,10 @@ class MultiViewLegalIRReport:
             text=self.document.normalized_text or self.document.source_text,
         )
         rebalanced = _compact_official_usc_contract_distribution(
+            rebalanced,
+            text=self.document.normalized_text or self.document.source_text,
+        )
+        rebalanced = _compact_bare_usc_citation_contract_distribution(
             rebalanced,
             text=self.document.normalized_text or self.document.source_text,
         )
@@ -3941,6 +3949,48 @@ def _compact_official_usc_contract_distribution(
         compacted,
         text=normalized_text,
     )
+
+
+def _compact_bare_usc_citation_contract_distribution(
+    distribution: Mapping[str, float],
+    *,
+    text: str,
+) -> Dict[str, float]:
+    """Collapse citation-only frame samples into stable bridge-contract lanes."""
+
+    lanes = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if not lanes:
+        return lanes
+    normalized_text = " ".join(str(text or "").split())
+    if _BRIDGE_CONTRACT_BARE_USC_CITATION_RE.fullmatch(normalized_text) is None:
+        return lanes
+
+    target_mix = {
+        "knowledge_graphs.neo4j_compat": 0.44,
+        "CEC.native": 0.20,
+        "TDFOL.prover": 0.16,
+        "deontic.ir": 0.12,
+        "modal.frame_logic": 0.08,
+    }
+    relevant = {
+        lane: lanes.get(lane, 0.0)
+        for lane in target_mix
+        if lanes.get(lane, 0.0) > 0.0
+    }
+    if len(relevant) < 2:
+        return lanes
+
+    total = sum(target_mix[lane] for lane in relevant)
+    if total <= 0.0:
+        return lanes
+    return {
+        lane: target_mix[lane] / total
+        for lane in sorted(relevant)
+    }
 
 
 def _project_official_usc_primary_contract_distribution(

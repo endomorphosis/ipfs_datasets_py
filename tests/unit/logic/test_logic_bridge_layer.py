@@ -63,6 +63,36 @@ def test_bridge_import_is_lightweight() -> None:
     assert "ipfs_datasets_py.logic.external_provers" not in sys.modules
 
 
+def test_bare_usc_citation_contract_distribution_prunes_auxiliary_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compact_bare_usc_citation_contract_distribution,
+    )
+
+    compacted = _compact_bare_usc_citation_contract_distribution(
+        {
+            "CEC.native": 0.16,
+            "TDFOL.prover": 0.15,
+            "deontic.ir": 0.16,
+            "external_provers.router": 0.12,
+            "knowledge_graphs.neo4j_compat": 0.14,
+            "modal.frame_logic": 0.13,
+            "zkp.circuits": 0.14,
+        },
+        text="47 U.S.C. § 1752",
+    )
+
+    assert set(compacted) == {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
+    }
+    assert compacted["knowledge_graphs.neo4j_compat"] > compacted["CEC.native"]
+    assert compacted["CEC.native"] > compacted["deontic.ir"]
+    assert sum(compacted.values()) == 1.0
+
+
 def test_deontic_phase8_quality_soft_passes_stale_coverage_validation() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import (
         _merge_phase8_validation_from_coverage_records,
