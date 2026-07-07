@@ -253,6 +253,46 @@ def write_report(report_path: Path, payload: dict[str, Any]) -> None:
     report_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8')
 
 
+def load_report_json(report_path: Path) -> dict[str, Any]:
+    """Load a previously emitted report with a descriptive error on malformed JSON."""
+    try:
+        return json.loads(report_path.read_text(encoding='utf-8'))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f'invalid hidden unicode report JSON in {report_path}: {exc}') from exc
+
+
+def build_github_summary_lines(payload: dict[str, Any], *, report_name: str = 'hidden_unicode_report.json') -> list[str]:
+    """Build a concise GitHub step summary for the emitted hidden-Unicode report."""
+    violations = payload.get('violations', [])
+    lines = [
+        '## Hidden Unicode report',
+        '',
+        f"- files scanned: {payload.get('file_count', 0)}",
+        f'- violations: {len(violations)}',
+        f'- report file: {report_name}',
+    ]
+    if violations:
+        first = violations[0]
+        lines.extend(
+            [
+                '- status: failing',
+                (
+                    '- first violation: '
+                    f"{first['path']} "
+                    f"byte_offset={first['byte_offset']} "
+                    f"char_offset={first['char_offset']} "
+                    f"line={first['line_number']} "
+                    f"code_point={first['code_point']} "
+                    f"category={first['category']} "
+                    f"message={first['message']}"
+                ),
+            ]
+        )
+    else:
+        lines.append('- status: clean')
+    return lines
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     payload = build_report()

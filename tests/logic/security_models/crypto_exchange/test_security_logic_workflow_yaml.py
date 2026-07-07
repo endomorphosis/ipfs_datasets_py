@@ -15,13 +15,14 @@ def test_security_logic_workflow_yaml_parses_if_pyyaml_is_available() -> None:
     hidden_unicode_step = hidden_unicode_steps[0]
     assert '--verbose --report hidden_unicode_report.json' in hidden_unicode_step['run']
     assert 'hidden unicode report clean' in hidden_unicode_step['run']
-    hidden_unicode_summary_steps = [step for step in steps if step.get('name') == 'Summarize hidden Unicode report']
-    assert hidden_unicode_summary_steps
-    hidden_unicode_summary_step = hidden_unicode_summary_steps[0]
+    hidden_unicode_summary_step_list = [step for step in steps if step.get('name') == 'Summarize hidden Unicode report']
+    assert hidden_unicode_summary_step_list
+    hidden_unicode_summary_step = hidden_unicode_summary_step_list[0]
     assert hidden_unicode_summary_step['if'] == 'always()'
     assert 'GITHUB_STEP_SUMMARY' in hidden_unicode_summary_step['run']
     assert 'hidden_unicode_report.json' in hidden_unicode_summary_step['run']
-    assert '- status: clean' in hidden_unicode_summary_step['run']
+    assert 'build_github_summary_lines' in hidden_unicode_summary_step['run']
+    assert 'load_report_json' in hidden_unicode_summary_step['run']
     typescript_install_steps = [step for step in steps if step.get('name') == 'Install TypeScript toolchain']
     assert typescript_install_steps
     typescript_install_step = typescript_install_steps[0]

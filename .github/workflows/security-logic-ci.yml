@@ -63,9 +63,13 @@ jobs:
         if: always()
         run: |
           python - <<'PY'
-          import json
           import os
           from pathlib import Path
+
+          from scripts.ops.security_verification.check_no_hidden_unicode import (
+              build_github_summary_lines,
+              load_report_json,
+          )
 
           report = Path("hidden_unicode_report.json")
           summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
@@ -76,34 +80,16 @@ jobs:
               )
               raise SystemExit("hidden unicode report was not emitted")
 
-          payload = json.loads(report.read_text(encoding="utf-8"))
-          violations = payload.get("violations", [])
-          lines = [
-              "## Hidden Unicode report",
-              "",
-              f"- files scanned: {payload.get('file_count', 0)}",
-              f"- violations: {len(violations)}",
-              "- artifact: hidden_unicode_report.json",
-          ]
-          if violations:
-              first = violations[0]
-              lines.extend(
-                  [
-                      "- status: failing",
-                      (
-                          "- first violation: "
-                          f"{first['path']} "
-                          f"byte_offset={first['byte_offset']} "
-                          f"char_offset={first['char_offset']} "
-                          f"line={first['line_number']} "
-                          f"code_point={first['code_point']} "
-                          f"category={first['category']} "
-                          f"message={first['message']}"
-                      ),
-                  ]
+          try:
+              payload = load_report_json(report)
+          except ValueError as exc:
+              summary_path.write_text(
+                  f"## Hidden Unicode report\n\n- status: invalid hidden_unicode_report.json\n- error: {exc}\n",
+                  encoding="utf-8",
               )
-          else:
-              lines.append("- status: clean")
+              raise SystemExit(str(exc)) from exc
+
+          lines = build_github_summary_lines(payload)
           summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
           print(summary_path.read_text(encoding="utf-8"), end="")
           PY

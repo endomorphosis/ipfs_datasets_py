@@ -3,11 +3,15 @@ import sys
 import json
 from pathlib import Path
 
+import pytest
+
 from scripts.ops.security_verification.check_no_hidden_unicode import (
     _iter_files,
+    build_github_summary_lines,
     build_report,
     file_byte_diagnostics,
     file_line_count,
+    load_report_json,
     must_be_multiline,
     scan_file,
 )
@@ -89,3 +93,36 @@ def test_hidden_unicode_check_emits_machine_readable_report(tmp_path: Path) -> N
     payload = json.loads(report_path.read_text(encoding='utf-8'))
     assert payload == build_report()
     assert payload['violations'] == []
+
+
+def test_hidden_unicode_summary_lines_include_clean_status() -> None:
+    lines = build_github_summary_lines({'file_count': 76, 'violations': []})
+    assert '- report file: hidden_unicode_report.json' in lines
+    assert '- status: clean' in lines
+
+
+def test_hidden_unicode_summary_lines_include_first_violation_details() -> None:
+    payload = {
+        'file_count': 1,
+        'violations': [
+            {
+                'path': '.github/workflows/security-logic-ci.yml',
+                'byte_offset': 12,
+                'char_offset': 12,
+                'line_number': 2,
+                'code_point': 'U+202A',
+                'category': 'bidi_control',
+                'message': 'bidi controls are not allowed',
+            }
+        ],
+    }
+    lines = build_github_summary_lines(payload)
+    assert '- status: failing' in lines
+    assert any('byte_offset=12' in line and 'char_offset=12' in line for line in lines)
+
+
+def test_hidden_unicode_report_loader_rejects_invalid_json(tmp_path: Path) -> None:
+    report_path = tmp_path / 'hidden_unicode_report.json'
+    report_path.write_text('{"violations": [}', encoding='utf-8')
+    with pytest.raises(ValueError, match='invalid hidden unicode report JSON'):
+        load_report_json(report_path)
