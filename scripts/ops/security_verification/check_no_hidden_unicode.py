@@ -22,7 +22,7 @@ MULTILINE_TEXT_SUFFIXES = {'.py', '.yml', '.yaml', '.md', '.ts', '.js', '.sh', '
 BIDI_CONTROLS = {*range(0x202A, 0x202F), *range(0x2066, 0x206A)}
 ZERO_WIDTH_CONTROLS = {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF}
 NONSTANDARD_LINE_SEPARATORS = {0x2028, 0x2029}
-ALLOWED_CONTROLS = {0x09, 0x0A, 0x0D}
+ALLOWED_CONTROLS = {0x09, 0x0A}
 
 
 
@@ -45,8 +45,8 @@ def scan_file(path: Path) -> list[str]:
         text = raw.decode('utf-8')
     except UnicodeDecodeError as exc:
         return [f'{path}: invalid UTF-8 ({exc})']
-    if b'\r\n' in raw:
-        errors.append(f'{path}: CRLF newlines are not allowed')
+    if b'\r' in raw:
+        errors.append(f'{path}: carriage return bytes are not allowed; use LF newlines only')
     if must_be_multiline(path) and file_line_count(text) <= 1:
         errors.append(f'{path}: expected ordinary physical newlines, found a single logical line')
     for index, character in enumerate(text, start=1):

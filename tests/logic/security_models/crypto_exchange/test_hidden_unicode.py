@@ -7,6 +7,7 @@ from scripts.ops.security_verification.check_no_hidden_unicode import (
     file_byte_diagnostics,
     file_line_count,
     must_be_multiline,
+    scan_file,
 )
 
 
@@ -26,3 +27,17 @@ def test_security_verification_files_have_real_lf_newlines() -> None:
         if must_be_multiline(path):
             line_count = file_line_count(path.read_text(encoding='utf-8'))
             assert line_count > 1, f'{path}: expected ordinary physical newlines, got {diagnostics}'
+
+
+def test_hidden_unicode_check_fails_closed_on_single_line_source_file(tmp_path: Path) -> None:
+    candidate = tmp_path / 'single_line.py'
+    candidate.write_text('print("security")', encoding='utf-8')
+    errors = scan_file(candidate)
+    assert any('expected ordinary physical newlines' in error for error in errors)
+
+
+def test_hidden_unicode_check_rejects_carriage_return_bytes(tmp_path: Path) -> None:
+    candidate = tmp_path / 'carriage_return.py'
+    candidate.write_bytes(b'print("security")\rprint("verification")\r')
+    errors = scan_file(candidate)
+    assert any('carriage return bytes are not allowed' in error for error in errors)

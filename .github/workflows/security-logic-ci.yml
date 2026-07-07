@@ -35,10 +35,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Install focused test dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml z3-solver multiformats
+      - name: Install focused TypeScript toolchain
+        run: |
+          npm install --global typescript
       - name: Check hidden Unicode and newline normalization
         run: |
           python scripts/ops/security_verification/check_no_hidden_unicode.py
@@ -98,18 +104,14 @@ jobs:
             args+=(--fail-on unknown-critical)
           fi
           python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all "${args[@]}"
-      - name: Run emitted TypeScript schema compile test when toolchain is available
+      - name: Run emitted TypeScript schema compile test
         env:
           PYTHONPATH: ${{ github.workspace }}
           IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
           IPFS_DATASETS_AUTO_INSTALL: '0'
           IPFS_KIT_AUTO_INSTALL_DEPS: '0'
         run: |
-          if command -v node >/dev/null 2>&1 && (command -v tsc >/dev/null 2>&1 || command -v npx >/dev/null 2>&1); then
-            pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py -v --tb=short
-          else
-            echo 'Skipping TypeScript compile test because node/tsc is unavailable.'
-          fi
+          pytest tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py -v --tb=short
       - name: Upload proof report artifacts
         uses: actions/upload-artifact@v4
         with:
