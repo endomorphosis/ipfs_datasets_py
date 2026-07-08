@@ -114,6 +114,29 @@ COMPILER_AMBIGUITY_PACKET_002055_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.DOXASTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_AMBIGUITY_PACKET_000008_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.FRAME.value,
@@ -12415,6 +12438,42 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
 )
 
 
+COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS,
+        )
+    )
+)
+
+COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS,
+        )
+    )
+)
+
+SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS,
+        )
+    )
+)
+
+PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS,
+        )
+    )
+)
+
 class ModalSystem(Enum):
     """Common modal systems and legal-parser profiles."""
 
@@ -13430,6 +13489,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_006115_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_002055_FAMILY_PAIRS",
+    "COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000008_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000003_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000431_FAMILY_PAIRS",

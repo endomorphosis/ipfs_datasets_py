@@ -16,6 +16,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_001444_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001061_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001807_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002717_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004796_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000194_FAMILY_PAIRS,
@@ -2007,6 +2008,50 @@ def test_failed_validation_rescue_packet_family_pairs_are_registered() -> None:
             target_family,
         )
         assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_002864_compiler_ambiguity_pairs_are_explicit_policy() -> None:
+    expected_pairs = {
+        ("deontic", "epistemic"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("doxastic", "conditional_normative"),
+        ("frame", "temporal"),
+    }
+
+
+    assert (
+        set(COMPILER_AMBIGUITY_PACKET_002864_FAMILY_PAIRS)
+        == expected_pairs
+    )
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
             predicted_family
         )
         assert is_signal_free_adaptive_ambiguity_pair(
