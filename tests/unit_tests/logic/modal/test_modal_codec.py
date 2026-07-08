@@ -2477,6 +2477,69 @@ def test_modal_decompiler_reconstructs_semantic_text_from_typed_slots_without_so
     assert "deontic legal obligations" in slot_texts["typed_ir_legal_view_support"]
 
 
+def test_modal_decompiler_promotes_guided_typed_semantics_for_ir_residuals() -> None:
+    source = "The agency may make grants subject to section 314."
+    modal_ir = ModalIRDocument(
+        document_id="packet-001960-guided-reconstruction",
+        source="us_code",
+        normalized_text=source,
+        metadata={
+            "hint_evidence": [
+                {
+                    "bridge_failure_name": "source_decompiled_text_token_loss",
+                    "target_file_lane": "ir_decompiler",
+                    "bundle": {
+                        "action": "refine_semantic_decompiler_reconstruction",
+                        "program_synthesis_scope": "ir_decompiler",
+                        "target_component": "modal.ir_decompiler",
+                        "family_pairs": ["frame->deontic"],
+                    },
+                    "target_family": "deontic",
+                    "target_view": "deontic.ir",
+                }
+            ],
+        },
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-guided-frame-deontic",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="agency make grants",
+                    arguments=["actor:agency", "action:make", "object:grants"],
+                    role="frame",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-001960-guided-reconstruction",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="42 U.S.C. 19036",
+                ),
+                conditions=["subject to section 314"],
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+
+    assert decoded.text.startswith(source)
+    assert "legal frame source reconstructs" in decoded.text
+    assert "deontic obligations" in decoded.text
+    assert "guided_typed_ir_semantic_reconstruction" in semantic_slot_texts
+    assert "frame->deontic" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert "deontic legal obligations" in slot_texts["typed_ir_legal_view_support"]
+
+
 def test_flogic_graph_projection_metadata_tracks_frame_logic_alignment() -> None:
     graph_data = flogic_triples_to_graph_data(
         [

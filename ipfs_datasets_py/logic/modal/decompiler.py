@@ -2019,11 +2019,17 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
                 formula=formula,
             )
         )
+        typed_reconstruction_phrases = _typed_ir_reconstruction_phrases(
+            document=document,
+            formula=formula,
+            provenance_only=typed_reconstruction_provenance_only,
+        )
+        phrases.extend(typed_reconstruction_phrases)
         phrases.extend(
-            _typed_ir_reconstruction_phrases(
+            _guided_semantic_reconstruction_phrases(
                 document=document,
                 formula=formula,
-                provenance_only=typed_reconstruction_provenance_only,
+                typed_phrases=typed_reconstruction_phrases,
             )
         )
 
@@ -3619,6 +3625,117 @@ def _typed_ir_semantic_bridge_phrases(
                 )
             )
     return phrases
+
+
+def _guided_semantic_reconstruction_phrases(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    typed_phrases: Sequence[DecodedModalPhrase],
+) -> List[DecodedModalPhrase]:
+    """Promote one typed semantic clause when guidance flags decoder residuals."""
+    if not _should_emit_guided_semantic_reconstruction(document):
+        return []
+    source_text = _formula_source_span_text(document=document, formula=formula)
+    if not source_text:
+        source_text = str(document.normalized_text or "")
+    if not _clean_text(source_text):
+        return []
+    candidate = _guided_semantic_reconstruction_text(
+        source_text=source_text,
+        typed_phrases=typed_phrases,
+    )
+    if not candidate:
+        return []
+    return [
+        DecodedModalPhrase(
+            text=candidate,
+            slot="guided_typed_ir_semantic_reconstruction",
+            spans=[[formula.provenance.start_char, formula.provenance.end_char]],
+            provenance_only=False,
+        )
+    ]
+
+
+def _should_emit_guided_semantic_reconstruction(document: ModalIRDocument) -> bool:
+    """Return whether packet evidence asks text to include typed IR semantics."""
+    for entry in _autoencoder_guidance_entries(document):
+        sources: List[Mapping[str, Any]] = [entry]
+        for key in ("bundle", "semantic_bundle", "vector_bundle", "program_bundle"):
+            nested = _autoencoder_guidance_nested_mapping(entry.get(key))
+            if nested is not None:
+                sources.append(nested)
+        for source in sources:
+            action = _clean_text(str(source.get("action") or "")).lower()
+            target_component = _clean_text(
+                str(source.get("target_component") or source.get("target") or "")
+            ).lower()
+            scope = _clean_text(
+                str(
+                    source.get("program_synthesis_scope")
+                    or source.get("target_file_lane")
+                    or source.get("scope")
+                    or ""
+                )
+            ).lower()
+            bridge_failure = _clean_text(
+                str(source.get("bridge_failure_name") or "")
+            ).lower()
+            if (
+                action == "refine_semantic_decompiler_reconstruction"
+                and (
+                    target_component == "modal.ir_decompiler"
+                    or scope == "ir_decompiler"
+                )
+            ):
+                return True
+            if (
+                scope == "ir_decompiler"
+                and bridge_failure.startswith("source_decompiled_text_")
+            ):
+                return True
+    return False
+
+
+def _guided_semantic_reconstruction_text(
+    *,
+    source_text: str,
+    typed_phrases: Sequence[DecodedModalPhrase],
+    max_tokens: int = 36,
+) -> str:
+    source_tokens = set(_tokenize_for_similarity(source_text))
+    preferred_slots = (
+        "typed_ir_semantic_reconstruction_clause",
+        "typed_ir_semantic_bridge_reconstruction",
+        "typed_ir_policy_view_semantic_reconstruction",
+        "typed_ir_family_pair_semantic_reconstruction",
+        "typed_ir_source_semantic_sentence",
+        "typed_ir_semantic_surface_reconstruction",
+        "typed_ir_reconstruction",
+    )
+    candidates: List[Tuple[int, int, str]] = []
+    for phrase in typed_phrases:
+        slot = _clean_text(phrase.slot)
+        if slot not in preferred_slots:
+            continue
+        text = _clean_text(phrase.text)
+        if not text:
+            continue
+        candidate_tokens = set(_tokenize_for_similarity(text))
+        if not candidate_tokens:
+            continue
+        new_signal = candidate_tokens - source_tokens
+        if len(new_signal) < 2:
+            continue
+        try:
+            slot_rank = preferred_slots.index(slot)
+        except ValueError:
+            slot_rank = len(preferred_slots)
+        candidates.append((slot_rank, -len(new_signal), text))
+    if not candidates:
+        return ""
+    _slot_rank, _signal_rank, text = sorted(candidates)[0]
+    return _bounded_reconstruction_text((text,), max_tokens=max_tokens)
 
 
 def _typed_decompiler_predicate_head_text(predicate_text: str) -> str:
