@@ -90,7 +90,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-059 Freeze proof-boundary and security decision policy
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: ops
