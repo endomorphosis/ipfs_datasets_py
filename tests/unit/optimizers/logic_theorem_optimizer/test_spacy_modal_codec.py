@@ -48,6 +48,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_005786_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003559_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     ModalLogicFamily,
@@ -202,6 +203,159 @@ def test_modal_compiler_surfaces_packet_000486_adaptive_ambiguity_policy(
         == "adaptive_family_margin_low"
         for ambiguity in ambiguities
     )
+
+
+def test_modal_compiler_surfaces_packet_002296_adaptive_ambiguity_policy() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    scenarios = (
+        ("conditional_normative", "deontic", -0.163344133887),
+        ("frame", "deontic", -0.773399856727),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS == (
+        ("conditional_normative", "deontic"),
+        ("frame", "deontic"),
+    )
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    for predicted_family, target_family, family_margin in scenarios:
+        predicted_share = 0.5
+        target_share = predicted_share + family_margin
+        text = f"Packet 002296 {predicted_family} to {target_family} ambiguity."
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-002296-{predicted_family}-{target_family}",
+            text=text,
+            normalized_text=text.lower(),
+            tokens=[],
+            sentences=[],
+            cues=[],
+            citation="packet-002296",
+            source="unit_test",
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="unit_test",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"packet-002296-{predicted_family}-f0",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=(
+                            "KD"
+                            if predicted_family == "conditional_normative"
+                            else "FRAME_BM25"
+                        ),
+                        symbol=(
+                            "O|"
+                            if predicted_family == "conditional_normative"
+                            else "Frame"
+                        ),
+                        label=predicted_family,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role=predicted_family,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=encoding.document_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-002296",
+                    ),
+                )
+            ],
+        )
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": round(target_share, 6),
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        policy_pair = f"{predicted_family}->{target_family}"
+        explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="packet_002296_test",
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+
+        assert base_ambiguity.candidate_ids == [predicted_family, target_family]
+        assert base_ambiguity.severity == "requires_rule"
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+        assert abs(
+            float(base_ambiguity.metadata["family_margin_raw"]) - family_margin
+        ) < 1e-12
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
 
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
