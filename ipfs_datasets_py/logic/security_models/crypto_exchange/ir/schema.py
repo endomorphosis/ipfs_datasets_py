@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
 from datetime import datetime, timezone
-from typing import Any, Mapping, NotRequired, Required, TypedDict
+from typing import Any, Iterable, Mapping, NotRequired, Required, TypedDict
 
 
 class AssumptionEntry(TypedDict, total=False):
@@ -27,6 +27,64 @@ class EvidenceRef(TypedDict, total=False):
     line_end: NotRequired[int]
     sha256: NotRequired[str]
     notes: NotRequired[str]
+
+
+class ClaimEntry(TypedDict, total=False):
+    """A declarative security claim bound to a modeled security domain."""
+
+    id: Required[str]
+    description: Required[str]
+    domain: Required[str]
+    severity: NotRequired[str]
+    required_assumptions: NotRequired[list[str]]
+    evidence_refs: NotRequired[list[EvidenceRef]]
+    custom: NotRequired[bool]
+
+
+class ProofObligationEntry(TypedDict, total=False):
+    """A prover-bound obligation that a claim must be discharged for a model."""
+
+    id: Required[str]
+    claim_id: Required[str]
+    prover: Required[str]
+    status: Required[str]
+    model_cid: NotRequired[str]
+    report_cid: NotRequired[str]
+    evidence_refs: NotRequired[list[EvidenceRef]]
+
+
+class DisproofVectorEntry(TypedDict, total=False):
+    """A mutation/attack/counterexample search bound to a claim."""
+
+    id: Required[str]
+    claim_id: Required[str]
+    tactic: Required[str]
+    status: Required[str]
+    counterexample: NotRequired[dict[str, Any]]
+    evidence_refs: NotRequired[list[EvidenceRef]]
+
+
+class RuntimeTraceEntry(TypedDict, total=False):
+    """A runtime/e2e trace checked for conformance against the formal model."""
+
+    id: Required[str]
+    description: Required[str]
+    domain: NotRequired[str]
+    events: NotRequired[list[str]]
+    conformance_status: NotRequired[str]
+    evidence_refs: NotRequired[list[EvidenceRef]]
+
+
+class SolverResultEntry(TypedDict, total=False):
+    """A raw solver invocation result bound to a claim and proof obligation."""
+
+    id: Required[str]
+    claim_id: Required[str]
+    solver_name: Required[str]
+    result: Required[str]
+    solver_version: NotRequired[str]
+    report_cid: NotRequired[str]
+    evidence_refs: NotRequired[list[EvidenceRef]]
 
 
 # Stable bounded-security assumption identifiers used by proof reports and the
@@ -96,9 +154,53 @@ REQUIRED_SEQUENCE_FIELDS = (
     'events',
     'state_machines',
     'invariants',
+    'claims',
+    'proof_obligations',
+    'disproof_vectors',
+    'runtime_traces',
+    'solver_results',
     'assumptions',
     'prover_targets',
 )
+
+# Security domains covered by production exchange claims (see
+# ``prove_all.CLAIM_DOMAINS``) and by the Xaman React Native wallet corpus
+# (see ``extractors.xaman_source_extractor.XamanSourceExtractor._security_category``).
+# Both sets are duplicated here (rather than imported) to avoid a circular
+# import between ``ir.schema`` and the higher-level claim/extractor modules
+# that themselves import from ``ir.schema``. Coverage tests assert the two
+# stay in sync with these constants.
+PRODUCTION_SECURITY_DOMAINS = frozenset(
+    {
+        'audit',
+        'capabilities',
+        'deposits',
+        'hsm',
+        'ledger',
+        'withdrawals',
+    }
+)
+XAMAN_SECURITY_DOMAINS = frozenset(
+    {
+        'auth_component',
+        'e2e_flow',
+        'ledger',
+        'payload',
+        'service',
+        'store',
+        'vault',
+    }
+)
+KNOWN_SECURITY_DOMAINS = PRODUCTION_SECURITY_DOMAINS | XAMAN_SECURITY_DOMAINS
+
+# Proof-obligation / solver-result / disproof-vector status vocabularies.
+# ``PROOF_OBLIGATION_STATUSES`` intentionally mirrors
+# ``reports.proof_report.PROOF_STATUSES`` (duplicated for the same
+# circular-import reason as the domain constants above).
+PROOF_OBLIGATION_STATUSES = frozenset({'PROVED', 'DISPROVED', 'UNKNOWN', 'NOT_MODELED'})
+DISPROOF_VECTOR_STATUSES = frozenset({'DISPROVED', 'SURVIVED', 'UNKNOWN'})
+SOLVER_RESULT_VALUES = frozenset({'sat', 'unsat', 'unknown', 'not-modeled', 'error', 'timeout'})
+CLAIM_SEVERITIES = frozenset({'blocking', 'high', 'medium', 'low'})
 
 IMPLEMENTED_PROVER_TARGETS = {'z3'}
 KNOWN_DISABLED_PROVER_TARGETS = {
@@ -187,6 +289,11 @@ class SecurityModelIR:
     events: list[dict[str, Any]] = field(default_factory=list)
     state_machines: list[dict[str, Any]] = field(default_factory=list)
     invariants: list[dict[str, Any]] = field(default_factory=list)
+    claims: list[dict[str, Any]] = field(default_factory=list)
+    proof_obligations: list[dict[str, Any]] = field(default_factory=list)
+    disproof_vectors: list[dict[str, Any]] = field(default_factory=list)
+    runtime_traces: list[dict[str, Any]] = field(default_factory=list)
+    solver_results: list[dict[str, Any]] = field(default_factory=list)
     assumptions: list[AssumptionEntry | str] = field(default_factory=lambda: list(DEFAULT_THREAT_MODEL_ASSUMPTIONS))
     prover_targets: list[str] = field(default_factory=lambda: ['z3'])
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -227,6 +334,11 @@ _ID_FIELDS = {
     'events': 'event',
     'state_machines': 'state machine',
     'invariants': 'invariant',
+    'claims': 'claim',
+    'proof_obligations': 'proof obligation',
+    'disproof_vectors': 'disproof vector',
+    'runtime_traces': 'runtime trace',
+    'solver_results': 'solver result',
 }
 
 
@@ -540,6 +652,114 @@ def _validate_policy_records(policies: list[dict[str, Any]]) -> None:
 
 
 
+def _validate_claims(claims: list[dict[str, Any]]) -> None:
+    """Validate typed claim entries, enforcing the fail-closed domain vocabulary."""
+
+    for claim in claims:
+        claim_id = claim.get('id', '<unknown>')
+        description = claim.get('description')
+        if not isinstance(description, str) or not description.strip():
+            raise ValueError(f'claim {claim_id} must include a non-empty description')
+        domain = claim.get('domain')
+        if not isinstance(domain, str) or not domain.strip():
+            raise ValueError(f'claim {claim_id} must include a non-empty domain')
+        if domain not in KNOWN_SECURITY_DOMAINS and not bool(claim.get('custom', False)):
+            raise ValueError(
+                f'claim {claim_id} references unknown security domain {domain!r}; '
+                'mark it custom=True to model a domain outside PRODUCTION_SECURITY_DOMAINS/XAMAN_SECURITY_DOMAINS'
+            )
+        severity = claim.get('severity')
+        if severity is not None and severity not in CLAIM_SEVERITIES:
+            raise ValueError(f'claim {claim_id} has unsupported severity: {severity}')
+        required_assumptions = claim.get('required_assumptions', [])
+        if not isinstance(required_assumptions, list):
+            raise ValueError(f'claim {claim_id}.required_assumptions must be a list')
+        for assumption_id in required_assumptions:
+            if not isinstance(assumption_id, str) or not assumption_id.strip():
+                raise ValueError(f'claim {claim_id}.required_assumptions entries must be non-empty strings')
+
+
+
+def _validate_claim_references(
+    records: list[dict[str, Any]],
+    *,
+    collection_name: str,
+    claim_ids: set[str],
+) -> None:
+    for record in records:
+        record_id = record.get('id', '<unknown>')
+        claim_id = record.get('claim_id')
+        if not isinstance(claim_id, str) or not claim_id.strip():
+            raise ValueError(f'{collection_name} {record_id} must include a non-empty claim_id')
+        if claim_id not in claim_ids:
+            raise ValueError(f'{collection_name} {record_id} references unknown claim: {claim_id}')
+
+
+
+def _validate_proof_obligations(proof_obligations: list[dict[str, Any]], *, claim_ids: set[str]) -> None:
+    _validate_claim_references(proof_obligations, collection_name='proof_obligation', claim_ids=claim_ids)
+    for obligation in proof_obligations:
+        obligation_id = obligation.get('id', '<unknown>')
+        prover = obligation.get('prover')
+        if not isinstance(prover, str) or not prover.strip():
+            raise ValueError(f'proof_obligation {obligation_id} must include a non-empty prover')
+        if prover not in ALLOWED_PROVER_TARGETS:
+            raise ValueError(f'proof_obligation {obligation_id} references unsupported prover: {prover}')
+        status = obligation.get('status')
+        if status not in PROOF_OBLIGATION_STATUSES:
+            raise ValueError(f'proof_obligation {obligation_id} has unsupported status: {status}')
+
+
+
+def _validate_disproof_vectors(disproof_vectors: list[dict[str, Any]], *, claim_ids: set[str]) -> None:
+    _validate_claim_references(disproof_vectors, collection_name='disproof_vector', claim_ids=claim_ids)
+    for vector in disproof_vectors:
+        vector_id = vector.get('id', '<unknown>')
+        tactic = vector.get('tactic')
+        if not isinstance(tactic, str) or not tactic.strip():
+            raise ValueError(f'disproof_vector {vector_id} must include a non-empty tactic')
+        status = vector.get('status')
+        if status not in DISPROOF_VECTOR_STATUSES:
+            raise ValueError(f'disproof_vector {vector_id} has unsupported status: {status}')
+        counterexample = vector.get('counterexample')
+        if counterexample is not None and not isinstance(counterexample, Mapping):
+            raise ValueError(f'disproof_vector {vector_id}.counterexample must be a mapping when present')
+
+
+
+def _validate_solver_results(solver_results: list[dict[str, Any]], *, claim_ids: set[str]) -> None:
+    _validate_claim_references(solver_results, collection_name='solver_result', claim_ids=claim_ids)
+    for result in solver_results:
+        result_id = result.get('id', '<unknown>')
+        solver_name = result.get('solver_name')
+        if not isinstance(solver_name, str) or not solver_name.strip():
+            raise ValueError(f'solver_result {result_id} must include a non-empty solver_name')
+        value = result.get('result')
+        if value not in SOLVER_RESULT_VALUES:
+            raise ValueError(f'solver_result {result_id} has unsupported result value: {value}')
+
+
+
+def _validate_runtime_traces(runtime_traces: list[dict[str, Any]], *, event_ids: set[str]) -> None:
+    for trace in runtime_traces:
+        trace_id = trace.get('id', '<unknown>')
+        description = trace.get('description')
+        if not isinstance(description, str) or not description.strip():
+            raise ValueError(f'runtime_trace {trace_id} must include a non-empty description')
+        domain = trace.get('domain')
+        if domain is not None and domain not in KNOWN_SECURITY_DOMAINS:
+            raise ValueError(f'runtime_trace {trace_id} references unknown security domain: {domain}')
+        events = trace.get('events', [])
+        if not isinstance(events, list):
+            raise ValueError(f'runtime_trace {trace_id}.events must be a list')
+        for event_id in events:
+            if not isinstance(event_id, str) or not event_id.strip():
+                raise ValueError(f'runtime_trace {trace_id}.events entries must be non-empty strings')
+            if event_id not in event_ids:
+                raise ValueError(f'runtime_trace {trace_id} references unknown event id: {event_id}')
+
+
+
 def _validate_timestamp(value: Any) -> None:
     """Accept integer, float, numeric-string, or ISO-8601 event timestamps."""
 
@@ -759,6 +979,98 @@ def validate_ir(model: SecurityModelIR | Mapping[str, Any]) -> SecurityModelIR:
     _validate_references(normalized)
     _validate_event_requirements(normalized.events)
     _validate_metadata(normalized.metadata)
+    claim_ids = {claim['id'] for claim in normalized.claims if isinstance(claim.get('id'), str)}
+    event_ids = {event['id'] for event in normalized.events if isinstance(event.get('id'), str)}
+    _validate_claims(normalized.claims)
+    _validate_proof_obligations(normalized.proof_obligations, claim_ids=claim_ids)
+    _validate_disproof_vectors(normalized.disproof_vectors, claim_ids=claim_ids)
+    _validate_solver_results(normalized.solver_results, claim_ids=claim_ids)
+    _validate_runtime_traces(normalized.runtime_traces, event_ids=event_ids)
+    return normalized
+
+
+
+def claim_domains(model: SecurityModelIR | Mapping[str, Any]) -> dict[str, str]:
+    """Return a mapping of ``claim_id`` to ``domain`` for every claim in *model*."""
+
+    normalized = as_security_model_ir(model)
+    return {
+        claim['id']: claim['domain']
+        for claim in normalized.claims
+        if isinstance(claim.get('id'), str) and isinstance(claim.get('domain'), str)
+    }
+
+
+
+def domain_coverage_report(
+    model: SecurityModelIR | Mapping[str, Any],
+    *,
+    required_domains: Iterable[str] | None = None,
+) -> dict[str, Any]:
+    """Return a deterministic coverage report for *model* against *required_domains*.
+
+    Defaults to :data:`KNOWN_SECURITY_DOMAINS`, i.e. every production and
+    Xaman security domain. The report lists, per domain, whether at least one
+    claim models that domain and which claim ids provide that coverage.
+    """
+
+    normalized = as_security_model_ir(model)
+    domains = frozenset(required_domains) if required_domains is not None else KNOWN_SECURITY_DOMAINS
+    domain_to_claims: dict[str, list[str]] = {domain: [] for domain in domains}
+    for claim in normalized.claims:
+        domain = claim.get('domain')
+        claim_id = claim.get('id')
+        if isinstance(domain, str) and domain in domain_to_claims and isinstance(claim_id, str):
+            domain_to_claims[domain].append(claim_id)
+    domains_report = {
+        domain: {
+            'covered': bool(domain_to_claims[domain]),
+            'claim_ids': sorted(domain_to_claims[domain]),
+        }
+        for domain in sorted(domains)
+    }
+    missing = sorted(domain for domain, entry in domains_report.items() if not entry['covered'])
+    return {
+        'model_id': normalized.model_id,
+        'required_domains': sorted(domains),
+        'domains': domains_report,
+        'missing_domains': missing,
+        'fully_covered': not missing,
+    }
+
+
+
+def check_domain_coverage(
+    model: SecurityModelIR | Mapping[str, Any],
+    *,
+    required_domains: Iterable[str] | None = None,
+) -> list[str]:
+    """Return the sorted list of *required_domains* missing claim coverage in *model*."""
+
+    return list(domain_coverage_report(model, required_domains=required_domains)['missing_domains'])
+
+
+
+def validate_domain_coverage(
+    model: SecurityModelIR | Mapping[str, Any],
+    *,
+    required_domains: Iterable[str] | None = None,
+) -> SecurityModelIR:
+    """Fail closed unless *model* has at least one claim for every required domain.
+
+    This is the coverage gate referenced by ``PORTAL-CXTP-062``: every
+    production and Xaman security domain must be modeled by a claim before
+    the IR can be treated as proof-ready. Raises :class:`ValueError` listing
+    the missing domains otherwise.
+    """
+
+    normalized = validate_ir(model)
+    missing = check_domain_coverage(normalized, required_domains=required_domains)
+    if missing:
+        raise ValueError(
+            'SecurityModelIR is missing claim coverage for required security domain(s): '
+            + ', '.join(missing)
+        )
     return normalized
 
 
