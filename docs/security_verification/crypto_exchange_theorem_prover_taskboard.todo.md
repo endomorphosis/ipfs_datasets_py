@@ -134,7 +134,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-063 Extend extractor for Xaman React Native TypeScript corpus
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
