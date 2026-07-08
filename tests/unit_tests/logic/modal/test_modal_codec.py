@@ -129,6 +129,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_007716_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_008285_FAMILY_PAIRS,
     COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
+    COMPILER_REFINED_PACKET_002842_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000202_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000593_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000001_RESCUE_FAMILY_PAIRS,
@@ -304,6 +305,62 @@ def test_modal_registry_packet_000165_exposes_compiler_ambiguity_policy_pairs() 
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
             target_family,
+        )
+
+
+def test_modal_registry_packet_002842_refines_family_cue_policy_pairs() -> None:
+    expected_pairs = {
+        ("conditional_normative", "conditional_normative"),
+        ("deontic", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "doxastic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_002842_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    margin_floors = {
+        ("conditional_normative", "conditional_normative"): 0.055,
+        ("deontic", "conditional_normative"): 0.12,
+        ("deontic", "temporal"): 0.36,
+        ("frame", "doxastic"): 0.5,
+    }
+    for (predicted_family, target_family), expected_floor in margin_floors.items():
+        _assert_refined_margin_buffer_at_least(
+            predicted_family,
+            target_family,
+            expected_floor,
         )
 
 
