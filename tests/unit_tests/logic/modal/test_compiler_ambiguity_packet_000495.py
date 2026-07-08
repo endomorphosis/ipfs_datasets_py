@@ -11,6 +11,7 @@ from ipfs_datasets_py.logic.modal.compiler import (
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000495_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_002295_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000186_FAMILY_PAIRS,
     ModalLogicFamily,
     compiler_ambiguity_policy_targets,
@@ -177,6 +178,130 @@ def test_compiler_exposes_packet_000495_explicit_adaptive_ambiguities() -> None:
         result = compiler.compile(
             "The Secretary shall transfer functions subject to this section.",
             document_id=f"compiler-ambiguity-packet-000495-{sample_id}",
+        )
+        ambiguity = _matching_explicit_ambiguity(
+            ambiguities=result.ambiguities,
+            predicted_family=predicted_family,
+            target_family=target_family,
+            family_margin=family_margin,
+        )
+        assert ambiguity is not None, (
+            sample_id,
+            [item.to_dict() for item in result.ambiguities],
+        )
+
+        expected_priority = (
+            threshold - family_margin
+            if family_margin > 0.0
+            else abs(family_margin) + threshold
+        )
+        assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+        assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+        assert ambiguity.metadata.get("explicit_ambiguity_type") == ambiguity.ambiguity_type
+        assert (
+            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
+            <= 1e-12
+        )
+
+
+def test_packet_002295_pairs_are_registered_across_ambiguity_policies() -> None:
+    expected_pairs = (
+        (
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.EPISTEMIC.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.TEMPORAL.value,
+        ),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_002295_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_compiler_exposes_packet_002295_explicit_adaptive_ambiguities() -> None:
+    evidence_cases: Tuple[Tuple[str, str, str, float], ...] = (
+        (
+            "us-code-13-63-c55aed0c50923e68",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
+            -0.906829270603,
+        ),
+        (
+            "us-code-29-2002-81a9d2c07b08917c",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+            -0.977404413614,
+        ),
+        (
+            "us-code-25-389b-2d50dabb4faf7ea6",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.EPISTEMIC.value,
+            -0.20600495476,
+        ),
+        (
+            "us-code-22-6726-8ca5f00028082d2e",
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.DEONTIC.value,
+            0.067659448905,
+        ),
+        (
+            "us-code-22-6842-524e5e95de406104",
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.TEMPORAL.value,
+            -0.705342704296,
+        ),
+    )
+
+    threshold = 0.15
+    for sample_id, predicted_family, target_family, family_margin in evidence_cases:
+        compiler = DeterministicModalCompiler(
+            config=ModalCompilerConfig(parser_backend="spacy")
+        )
+        ranking = _mock_adaptive_ranking(
+            predicted_family=predicted_family,
+            target_family=target_family,
+            family_margin=family_margin,
+        )
+        compiler._adaptive_family_ranking_from_logits = (  # type: ignore[method-assign]
+            lambda _encoding, _ranking=ranking: _ranking
+        )
+
+        result = compiler.compile(
+            "The Secretary shall transfer functions subject to this section.",
+            document_id=f"compiler-ambiguity-packet-002295-{sample_id}",
         )
         ambiguity = _matching_explicit_ambiguity(
             ambiguities=result.ambiguities,
