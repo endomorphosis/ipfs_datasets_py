@@ -167,7 +167,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-066 Model XRPL transaction semantics from Xaman ledger code
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: ledger
