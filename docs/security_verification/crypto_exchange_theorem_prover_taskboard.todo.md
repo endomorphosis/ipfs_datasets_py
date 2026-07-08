@@ -112,7 +112,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-061 Build Xaman dependency and build-environment probe
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: ops
