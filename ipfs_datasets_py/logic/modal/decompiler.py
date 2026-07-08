@@ -13866,7 +13866,17 @@ def _typed_decompiler_status_detail_target_families(
         }
     ):
         add("temporal")
-    if keywords.intersection({"omitted", "repealed", "terminated", "vacant"}):
+    if keywords.intersection(
+        {
+            "omitted",
+            "reclassified",
+            "renumbered",
+            "repealed",
+            "terminated",
+            "transferred",
+            "vacant",
+        }
+    ):
         add("deontic")
     return targets
 
@@ -13895,7 +13905,15 @@ def _typed_decompiler_status_detail_legal_ir_views(
         "typed-decompiler-status-target_title",
     }:
         add("TDFOL.prover")
-    if value in {"omitted", "repealed", "terminated", "vacant"}:
+    if value in {
+        "omitted",
+        "reclassified",
+        "renumbered",
+        "repealed",
+        "terminated",
+        "transferred",
+        "vacant",
+    }:
         add("deontic.ir")
     return views
 

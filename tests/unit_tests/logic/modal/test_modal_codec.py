@@ -40752,6 +40752,16 @@ def test_decompiler_emits_typed_status_detail_legal_ir_slots() -> None:
         in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
     )
 
+    assert (
+        "typed-decompiler-status-keyword:reclassified:frame->deontic"
+        in slot_texts["typed-decompiler-target-status-family-pair"]
+    )
+    assert (
+        "deontic||slot-pair:typed-decompiler-status-keyword:reclassified|"
+        "typed-decompiler-family-pair:frame->deontic||deontic.ir"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+
 
 def test_codec_source_copy_loss_ignores_structurally_excluded_source_spans() -> None:
     codec = DeterministicModalLogicCodec(ModalLogicCodecConfig(embedding_dimensions=8))
