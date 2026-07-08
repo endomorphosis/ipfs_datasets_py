@@ -10889,6 +10889,32 @@ def test_spacy_codec_refines_packet_000709_notification_deadline_family_evidence
     assert shares["temporal"] > shares["deontic"]
 
 
+def test_spacy_codec_refines_packet_002839_frame_temporal_deadline_evidence() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="242v",
+        text=(
+            "Authority and jurisdiction under this section. The Secretary shall "
+            "review each foreign talent recruitment program and issue guidance "
+            "not later than 60 days after December 29, 2022, under this section."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_temporal_deadline_cue"] is True
+    assert signals["has_calendar_date_scope"] is True
+    assert shares["temporal"] > shares["frame"]
+
+
 def test_spacy_codec_refines_active_measures_after_notification_timing() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

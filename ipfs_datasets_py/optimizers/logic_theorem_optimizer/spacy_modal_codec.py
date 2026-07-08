@@ -5566,7 +5566,33 @@ def _apply_refined_modal_family_cue_pair_balance(
                 or signals.get("has_temporal_deadline_cue")
             )
         ):
-            counts[temporal_family] = max(temporal_count, frame_count + 0.01)
+            temporal_edge = 0.02 if (
+                has_temporal_deadline_scope
+                and (
+                    has_temporal_notification_deadline_scope_phrase
+                    or has_calendar_date_scope
+                    or bool(signals.get("has_temporal_within_scope"))
+                )
+                and not has_structural_authority_frame_scope
+            ) else 0.01
+            counts[temporal_family] = max(
+                temporal_count,
+                frame_count + temporal_edge,
+            )
+            temporal_count = float(counts.get(temporal_family, 0.0))
+        if (
+            frame_count >= temporal_count
+            and temporal_count > 0.0
+            and has_temporal_scope
+            and has_temporal_deadline_scope
+            and not has_strong_temporal_scope
+            and (
+                has_temporal_notification_deadline_scope_phrase
+                or bool(signals.get("has_temporal_within_scope"))
+            )
+            and not has_structural_authority_frame_scope
+        ):
+            counts[temporal_family] = max(temporal_count, frame_count + 0.02)
             temporal_count = float(counts.get(temporal_family, 0.0))
         if (
             frame_count >= conditional_count
