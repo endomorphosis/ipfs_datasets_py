@@ -2747,6 +2747,83 @@ def test_modal_decompiler_promotes_guided_typed_semantics_for_ir_residuals() -> 
     assert "deontic legal obligations" in slot_texts["typed_ir_legal_view_support"]
 
 
+def test_modal_decompiler_guided_semantics_follow_family_pair_target() -> None:
+    source = (
+        "Not later than one year after enactment, the Secretary shall submit "
+        "a report subject to section 314."
+    )
+    modal_ir = ModalIRDocument(
+        document_id="packet-002088-guided-frame-temporal",
+        source="us_code",
+        normalized_text=source,
+        metadata={
+            "hint_evidence": [
+                {
+                    "bridge_failure_name": "source_decompiled_text_token_loss",
+                    "target_file_lane": "ir_decompiler",
+                    "predicted_family": "frame",
+                    "target_family": "temporal",
+                    "target_view": "CEC.native",
+                    "bundle": {
+                        "action": "refine_semantic_decompiler_reconstruction",
+                        "program_synthesis_scope": "ir_decompiler",
+                        "target_component": "modal.ir_decompiler",
+                        "family_pairs": [
+                            "frame->conditional_normative",
+                            "frame->temporal",
+                        ],
+                    },
+                }
+            ],
+        },
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-guided-frame-temporal",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="secretary submit report",
+                    arguments=[
+                        "actor:secretary",
+                        "action:submit",
+                        "object:report",
+                    ],
+                    role="frame",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-002088-guided-frame-temporal",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="1 U.S.C. 314",
+                ),
+                conditions=[
+                    "not later than one year after enactment",
+                    "subject to section 314",
+                ],
+                metadata={"cue": "not_later_than"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(modal_ir)
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+    guided_text = " ".join(
+        semantic_slot_texts["guided_typed_ir_semantic_reconstruction"]
+    )
+
+    assert "legal frame source reconstructs temporal deadline period" in guided_text
+    assert "event calculus native events" in guided_text
+    assert "later than one" in guided_text
+    assert "legal frame source reconstructs temporal deadline period" in decoded.text
+
+
 def test_flogic_graph_projection_metadata_tracks_frame_logic_alignment() -> None:
     graph_data = flogic_triples_to_graph_data(
         [

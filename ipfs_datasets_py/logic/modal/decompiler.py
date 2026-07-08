@@ -3708,6 +3708,7 @@ def _guided_semantic_reconstruction_phrases(
     if not _clean_text(source_text):
         return []
     candidate = _guided_semantic_reconstruction_text(
+        document=document,
         source_text=source_text,
         typed_phrases=typed_phrases,
     )
@@ -3765,21 +3766,23 @@ def _should_emit_guided_semantic_reconstruction(document: ModalIRDocument) -> bo
 
 def _guided_semantic_reconstruction_text(
     *,
+    document: ModalIRDocument,
     source_text: str,
     typed_phrases: Sequence[DecodedModalPhrase],
     max_tokens: int = 36,
 ) -> str:
     source_tokens = set(_tokenize_for_similarity(source_text))
     preferred_slots = (
-        "typed_ir_semantic_reconstruction_clause",
-        "typed_ir_semantic_bridge_reconstruction",
         "typed_ir_policy_view_semantic_reconstruction",
         "typed_ir_family_pair_semantic_reconstruction",
+        "typed_ir_semantic_bridge_reconstruction",
+        "typed_ir_semantic_reconstruction_clause",
         "typed_ir_source_semantic_sentence",
         "typed_ir_semantic_surface_reconstruction",
         "typed_ir_reconstruction",
     )
-    candidates: List[Tuple[int, int, str]] = []
+    target_terms = _guided_semantic_reconstruction_target_terms(document)
+    candidates: List[Tuple[int, int, int, int, str]] = []
     for phrase in typed_phrases:
         slot = _clean_text(phrase.slot)
         if slot not in preferred_slots:
@@ -3797,11 +3800,65 @@ def _guided_semantic_reconstruction_text(
             slot_rank = preferred_slots.index(slot)
         except ValueError:
             slot_rank = len(preferred_slots)
-        candidates.append((slot_rank, -len(new_signal), text))
+        target_rank = 3
+        target_term_rank = len(target_terms)
+        lowered_text = text.lower()
+        for term_index, target_term in enumerate(target_terms):
+            target_tokens = set(_tokenize_for_similarity(target_term))
+            is_pair_term = (
+                " source reconstructs " in target_term
+                or " source reconstruction" in target_term
+            )
+            if is_pair_term:
+                if target_term in lowered_text:
+                    target_rank = 0
+                    target_term_rank = min(target_term_rank, term_index)
+                    break
+                continue
+            if target_term in lowered_text:
+                target_rank = min(target_rank, 1)
+                target_term_rank = min(target_term_rank, term_index)
+            elif target_tokens and target_tokens.issubset(candidate_tokens):
+                target_rank = min(target_rank, 2)
+                target_term_rank = min(target_term_rank, term_index)
+        candidates.append(
+            (target_rank, target_term_rank, slot_rank, -len(new_signal), text)
+        )
     if not candidates:
         return ""
-    _slot_rank, _signal_rank, text = sorted(candidates)[0]
+    _target_rank, _term_rank, _slot_rank, _signal_rank, text = sorted(candidates)[0]
     return _bounded_reconstruction_text((text,), max_tokens=max_tokens)
+
+
+def _guided_semantic_reconstruction_target_terms(
+    document: ModalIRDocument,
+) -> List[str]:
+    """Return target labels that should dominate residual-guided reconstruction."""
+    terms: List[str] = []
+
+    def add(value: str) -> None:
+        cleaned = _clean_text(value).lower()
+        if cleaned and cleaned not in terms:
+            terms.append(cleaned)
+
+    for target in _autoencoder_target_family_guidance_values(document):
+        add(_typed_ir_target_family_label(target))
+    for entry in _autoencoder_guidance_entries(document):
+        predicted = _slot_safe_family_key(
+            _clean_text(str(entry.get("predicted_family") or "")).lower()
+        )
+        target = _slot_safe_family_key(
+            _clean_text(str(entry.get("target_family") or "")).lower()
+        )
+        if target:
+            add(_typed_ir_target_family_label(target))
+        if predicted and target:
+            add(_typed_ir_family_pair_reconstruction_label(predicted, target))
+    for pair in _autoencoder_family_pair_guidance_values(document):
+        source, target = pair.split("->", 1)
+        add(_typed_ir_target_family_label(target))
+        add(_typed_ir_family_pair_reconstruction_label(source, target))
+    return terms
 
 
 def _typed_decompiler_predicate_head_text(predicate_text: str) -> str:
