@@ -133,6 +133,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_007716_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_008285_FAMILY_PAIRS,
     COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
+    COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
     COMPILER_REFINED_PACKET_002842_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000202_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000593_FAMILY_PAIRS,
@@ -151,9 +152,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_003186_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003148_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_005786_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_006096_FAMILY_PAIRS,
     DEFAULT_MODAL_REGISTRY,
     ModalLogicFamily,
     compiler_required_adaptive_ambiguity_targets,
+    compiler_weak_typed_self_family_cue_margin_buffer,
     compiler_refined_modal_family_cue_margin_buffer,
     compiler_ambiguity_policy_targets,
     is_compiler_ambiguity_policy_pair,
@@ -6827,6 +6830,34 @@ def test_modal_registry_applies_refined_cue_policy_for_packet_002346_pairs() -> 
             compiler_refined_modal_family_cue_margin_buffer(*pair)
             >= expected_min_buffer
         )
+
+
+def test_modal_registry_applies_refined_cue_policy_for_packet_006096_pairs() -> None:
+    packet_pair_buffers = (
+        (("deontic", "temporal"), 0.36),
+        (("frame", "conditional_normative"), 0.58),
+        (("frame", "deontic"), 0.47),
+        (("frame", "frame"), 0.16),
+    )
+
+    assert tuple(COMPILER_REFINED_PACKET_006096_FAMILY_PAIRS) == tuple(
+        pair for pair, _ in packet_pair_buffers
+    )
+    for pair, expected_min_buffer in packet_pair_buffers:
+        assert is_compiler_ambiguity_policy_pair(*pair) is True
+        assert is_compiler_required_adaptive_ambiguity_pair(*pair) is True
+        assert is_signal_free_adaptive_ambiguity_pair(*pair) is True
+        assert supports_signal_free_adaptive_ambiguity_pair(*pair) is True
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(*pair)
+            >= expected_min_buffer
+        )
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("frame", "frame")
+        == COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR[
+            ("frame", "frame")
+        ]
+    )
 
 
 def test_modal_registry_refined_cue_margin_buffer_keys_are_pair_shaped() -> None:
