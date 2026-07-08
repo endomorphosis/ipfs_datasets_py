@@ -17144,6 +17144,19 @@ def _append_statutory_scope_phrases(
                 provenance_only=True,
             )
         )
+    for slot, value in _statutory_condition_grounding_slots(text):
+        marker = (slot, value)
+        if marker in emitted:
+            continue
+        emitted.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
 
 
 def _statutory_scope_slots(text: str) -> List[Tuple[str, str]]:
@@ -17202,6 +17215,116 @@ def _statutory_scope_slots(text: str) -> List[Tuple[str, str]]:
             seen.add(slot)
             result.append(slot)
     return result
+
+
+def _statutory_condition_grounding_slots(text: str) -> List[Tuple[str, str]]:
+    """Bind statutory references to conditional/deontic reconstruction cues."""
+    scope_slots = _statutory_scope_slots(text)
+    if not scope_slots:
+        return []
+
+    slot_map: Dict[str, List[str]] = {}
+    for slot, value in scope_slots:
+        slot_map.setdefault(slot, []).append(value)
+
+    references = slot_map.get("statutory_scope_reference", [])
+    connectors = slot_map.get("statutory_scope_connector", [])
+    units = slot_map.get("statutory_scope_unit", [])
+    targets = slot_map.get("statutory_scope_target", [])
+    if not references:
+        return []
+
+    result: List[Tuple[str, str]] = []
+    for index, reference in enumerate(references):
+        connector = connectors[index] if index < len(connectors) else ""
+        unit = units[index] if index < len(units) else ""
+        target = targets[index] if index < len(targets) else ""
+        if not unit:
+            continue
+        cue = _statutory_condition_cue_for_connector(connector)
+        reference_key = _slot_safe_family_pair_key(reference)
+        target_key = _slot_safe_family_pair_key(target) if target else "implicit"
+        unit_key = _slot_safe_family_pair_key(unit)
+        cue_key = _slot_safe_family_pair_key(cue)
+        result.extend(
+            (
+                ("statutory_condition_reference", reference),
+                ("statutory_condition_cue", cue),
+                ("statutory_condition_unit", unit),
+                (
+                    "statutory_condition_grounding",
+                    f"{cue_key}:{unit_key}:{target_key}",
+                ),
+                (
+                    "constraint-grounding",
+                    f"cross-reference-grounding:direct:{unit_key}:{target_key}:conditioned",
+                ),
+                (
+                    "quantifier-scope",
+                    f"operator-quantifier:deontic:clause:universal:conditioned:{unit_key}",
+                ),
+                (
+                    "semantic_slot_legal_ir_view_prototype",
+                    (
+                        "slot:statutory-condition-grounding:"
+                        f"{cue_key}:{unit_key}:{target_key}||deontic.ir"
+                    ),
+                ),
+                (
+                    "semantic_slot_legal_ir_view_prototype",
+                    (
+                        "slot:statutory-condition-grounding:"
+                        f"{cue_key}:{unit_key}:{target_key}||TDFOL.prover"
+                    ),
+                ),
+            )
+        )
+        if reference_key:
+            result.extend(
+                (
+                    (
+                        "statutory_condition_reference_key",
+                        reference_key,
+                    ),
+                    (
+                        "semantic_slot_legal_ir_view_prototype",
+                        (
+                            "slot:statutory-condition-reference:"
+                            f"{reference_key}||CEC.native"
+                        ),
+                    ),
+                )
+            )
+        if connector:
+            result.append(
+                (
+                    "statutory_condition_connector",
+                    connector,
+                )
+            )
+        if target:
+            result.append(("statutory_condition_target", target))
+    return _unique_slot_values(result)
+
+
+def _statutory_condition_cue_for_connector(connector: str) -> str:
+    normalized = _clean_text(connector).lower()
+    if normalized.startswith("except"):
+        return "exception"
+    if normalized in {
+        "as otherwise provided in",
+        "as provided in",
+        "as set forth in",
+        "in accordance with",
+        "pursuant to",
+        "subject to",
+        "under",
+        "within",
+    }:
+        return "condition"
+    if normalized in {"as described in", "as defined in", "referred to in"}:
+        return "definition_reference"
+    return "reference"
 
 
 def _canonical_statutory_scope_unit(unit: str) -> str:

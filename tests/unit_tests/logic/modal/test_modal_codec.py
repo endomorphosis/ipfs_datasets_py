@@ -17838,6 +17838,22 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
         "paragraph",
     ]
     assert slot_texts["statutory_scope_target"] == ["this", "(b)", "(1)", "552(a)(1)"]
+    assert "under this section" in slot_texts["statutory_condition_reference"]
+    assert "condition" in slot_texts["statutory_condition_cue"]
+    assert "section" in slot_texts["statutory_condition_unit"]
+    assert "this" in slot_texts["statutory_condition_target"]
+    assert (
+        "condition:section:this"
+        in slot_texts["statutory_condition_grounding"]
+    )
+    assert (
+        "cross-reference-grounding:direct:section:this:conditioned"
+        in slot_texts["constraint-grounding"]
+    )
+    assert (
+        "operator-quantifier:deontic:clause:universal:conditioned:section"
+        in slot_texts["quantifier-scope"]
+    )
     assert slot_texts["predicate_token_count"] == ["6"]
     assert slot_texts["predicate_token_prefix"] == ["must"]
     assert slot_texts["predicate_token_suffix"] == ["notice"]
@@ -17866,6 +17882,17 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
     assert any(
         triple["predicate"] == "statutory_scope_target"
         and triple["object"] == "552(a)(1)"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_condition_grounding"
+        and triple["object"] == "condition:section:this"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "constraint-grounding"
+        and triple["object"]
+        == "cross-reference-grounding:direct:section:this:conditioned"
         for triple in triples
     )
     assert any(
