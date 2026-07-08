@@ -1,0 +1,339 @@
+{
+  "artifact_path": "security_ir_artifacts/policies/security-decision-policy.json",
+  "consumer_requirements": [
+    "Release consumers must fail closed by default.",
+    "Release consumers must not infer security from missing proof reports.",
+    "Release consumers must not accept UNKNOWN, NOT_MODELED, DISPROVED, stale evidence, or missing solver states for blocking claims.",
+    "Release consumers must report blocked-production when any blocking claim is non-proved.",
+    "Dashboards may display non-proved states but must label them non-secure for production release."
+  ],
+  "default_consumer_rule": "Only outcome prove may be consumed as secure for a blocking claim; every non-proved blocking claim is non-secure and blocks production.",
+  "effective_date": "2026-07-08",
+  "maintenance_triggers": [
+    "claim severity changes",
+    "new blocking or high-risk claim",
+    "required assumption changes",
+    "solver allowlist or dependency changes",
+    "proof receipt validation changes",
+    "runtime monitor release-gate changes"
+  ],
+  "outcomes": [
+    {
+      "definition": "The claim is modeled, the authoritative solver returned a proof-producing success result, required assumptions and evidence are current, and all consumer validation checks pass.",
+      "outcome": "prove",
+      "production_release_effect": "eligible-for-acceptance",
+      "required_consumer_action": "May treat a blocking claim as secure only after validating model binding, assumptions, reviewed evidence, receipt or signature policy, solver allowlist, and release packet freshness.",
+      "secure_for_blocking_claims": true,
+      "source_signals": [
+        "PROVED"
+      ]
+    },
+    {
+      "definition": "The solver found a satisfiable counterexample to the claim.",
+      "outcome": "disprove",
+      "production_release_effect": "blocked-production",
+      "required_consumer_action": "Reject the release and preserve the counterexample as blocking security evidence.",
+      "secure_for_blocking_claims": false,
+      "source_signals": [
+        "DISPROVED",
+        "counterexample-present"
+      ]
+    },
+    {
+      "definition": "The prover did not establish the claim and did not return a concrete counterexample that is accepted as a disproof.",
+      "outcome": "unknown",
+      "production_release_effect": "blocked-production",
+      "required_consumer_action": "Reject blocking claims; do not downgrade unknown to warning or manual approval.",
+      "secure_for_blocking_claims": false,
+      "source_signals": [
+        "UNKNOWN",
+        "timeout",
+        "unsupported-theory",
+        "solver-unknown"
+      ]
+    },
+    {
+      "definition": "The production IR does not model the claim, domain, or facts required to evaluate it.",
+      "outcome": "not-modeled",
+      "production_release_effect": "blocked-production",
+      "required_consumer_action": "Reject blocking claims until the production IR or formal claim scope is updated.",
+      "secure_for_blocking_claims": false,
+      "source_signals": [
+        "NOT_MODELED",
+        "missing-domain",
+        "missing-claim-model"
+      ]
+    },
+    {
+      "definition": "A required assumption, source fact, model CID, environment profile, or reviewed evidence item is missing, expired, ownerless, unevidenced, unaccepted, or no longer bound to the release packet.",
+      "outcome": "stale-evidence",
+      "production_release_effect": "blocked-production",
+      "required_consumer_action": "Reject blocking claims until evidence is refreshed and accepted by the consumer.",
+      "secure_for_blocking_claims": false,
+      "source_signals": [
+        "assumption-stale",
+        "evidence-expired",
+        "missing-review",
+        "unaccepted-assumption"
+      ]
+    },
+    {
+      "definition": "A required prover, compiler, runtime, or differential solver dependency is missing or unusable for the release gate.",
+      "outcome": "missing-solver",
+      "production_release_effect": "blocked-production",
+      "required_consumer_action": "Reject proof acceptance until the dependency probe reports no required blockers.",
+      "secure_for_blocking_claims": false,
+      "source_signals": [
+        "required-solver-missing",
+        "solver-unavailable",
+        "dependency-blocker"
+      ]
+    },
+    {
+      "definition": "The aggregate release decision when any blocking claim is not prove or when a release-packet gate fails closed.",
+      "outcome": "blocked-production",
+      "production_release_effect": "blocked-production",
+      "required_consumer_action": "Block deployment and report a non-secure production decision.",
+      "secure_for_blocking_claims": false,
+      "source_signals": [
+        "release-gate-failure",
+        "runtime-counterexample",
+        "receipt-validation-failure",
+        "non-proved-blocking-claim"
+      ]
+    }
+  ],
+  "policy_document": "docs/security_verification/production_release_decision_policy.md",
+  "proof_boundary": {
+    "authoritative_report_statuses": [
+      "DISPROVED",
+      "NOT_MODELED",
+      "PROVED",
+      "UNKNOWN"
+    ],
+    "blocking_claims": [
+      "no_unauthorized_withdrawal",
+      "no_over_reserved_internal_account",
+      "global_asset_conservation"
+    ],
+    "high_risk_claims": [
+      "no_deposit_before_finality",
+      "no_signing_request_after_wallet_freeze",
+      "capability_delegation_no_authority_increase",
+      "revoked_capability_no_future_authorization"
+    ],
+    "non_secure_blocking_outcomes": [
+      "blocked-production",
+      "disprove",
+      "missing-solver",
+      "not-modeled",
+      "stale-evidence",
+      "unknown"
+    ],
+    "out_of_scope": [
+      "claims absent from the production SecurityModelIR",
+      "optional prover coverage not present in the solver dependency probe",
+      "runtime behavior outside collected release-window traces",
+      "cryptographic primitive breakage beyond listed assumptions"
+    ],
+    "required_domains": [
+      "audit",
+      "capabilities",
+      "deposits",
+      "hsm",
+      "ledger",
+      "withdrawals"
+    ],
+    "required_input_artifacts": [
+      "production SecurityModelIR and model CID",
+      "proof report JSON for every required claim",
+      "proof receipt or trusted signature validation output",
+      "accepted assumptions file",
+      "current assumption and evidence registry",
+      "solver dependency probe",
+      "production environment profile",
+      "disproof suite report and counterexample vectors",
+      "runtime monitor report for the release window"
+    ],
+    "required_release_claims": [
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_unauthorized_withdrawal",
+        "domain": "withdrawals",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "A broadcast withdrawal without request, approval, nonce, reservation, and live wallet checks is a direct funds-loss condition.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A3",
+          "A4",
+          "A5",
+          "A8"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_over_reserved_internal_account",
+        "domain": "ledger",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Over-reservation means internal available balance can be spent more than once.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A4",
+          "A5"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "global_asset_conservation",
+        "domain": "ledger",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Customer liabilities exceeding custody plus pending settlement is a solvency failure.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A4",
+          "A10"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_deposit_before_finality",
+        "domain": "deposits",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Crediting deposits before finality exposes the exchange to reorg and false-credit losses.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A6",
+          "A9"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_signing_request_after_wallet_freeze",
+        "domain": "hsm",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "A frozen wallet that can still request signatures defeats incident response controls.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A3",
+          "A8"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "capability_delegation_no_authority_increase",
+        "domain": "capabilities",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Delegation that amplifies authority can bypass administrative and custody controls.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A1",
+          "A7"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "revoked_capability_no_future_authorization",
+        "domain": "capabilities",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Revoked capabilities authorizing later privileged actions breaks emergency revocation.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A10"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "audit_event_exists_for_critical_transition",
+        "domain": "audit",
+        "fail_closed_statuses": [
+          "DISPROVED"
+        ],
+        "rationale": "Missing audit linkage is a release risk; a concrete disproof blocks release, while UNKNOWN or NOT_MODELED requires manual triage.",
+        "release_gate": "medium",
+        "required_assumptions": [
+          "A10"
+        ],
+        "requires_reviewed_evidence": false
+      }
+    ],
+    "secure_blocking_outcome": "prove"
+  },
+  "release_readiness_rule": {
+    "accepted": [
+      "every blocking claim outcome is prove",
+      "every high-risk claim outcome is prove",
+      "required assumptions are owned, evidenced, accepted, and current",
+      "required solver dependencies are present",
+      "proof receipts or trusted signatures validate against the release packet",
+      "disproof and runtime monitor gates have no unexplained blockers"
+    ],
+    "blocked": [
+      "any blocking claim outcome is not prove",
+      "any required high-risk claim outcome is not prove",
+      "any stale-evidence outcome affects a required claim or release packet artifact",
+      "any missing-solver outcome affects required proof acceptance",
+      "any proof receipt, model CID, report CID, or environment binding fails validation"
+    ]
+  },
+  "schema_version": "crypto-exchange-security-decision-policy/v1",
+  "scope": "Crypto-exchange wallet and exchange production release consumers that evaluate proof reports, proof receipts, assumption evidence, solver dependency probes, runtime monitor evidence, and release packets.",
+  "status_to_outcome": {
+    "DISPROVED": "disprove",
+    "NOT_MODELED": "not-modeled",
+    "PROVED": "prove",
+    "UNKNOWN": "unknown"
+  },
+  "task_id": "PORTAL-CXTP-059",
+  "title": "Freeze proof-boundary and security decision policy"
+}

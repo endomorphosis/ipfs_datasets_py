@@ -1,153 +1,232 @@
-# Production Release Decision Policy
+# Production Release Decision Policy (Crypto Exchange Security Models)
 
-Date: 2026-07-07
+- Task: `PORTAL-CXTP-059` — Freeze proof-boundary and security decision policy
+- Status: frozen, effective `2026-07-08`
+- Authoritative artifact: [`security_ir_artifacts/policies/security-decision-policy.json`](../../security_ir_artifacts/policies/security-decision-policy.json)
+- Authoritative builder: `ipfs_datasets_py.logic.security_models.crypto_exchange.release_policy.build_security_decision_policy`
+- Validating tests: [`tests/logic/security_models/crypto_exchange/test_release_decision_policy.py`](../../tests/logic/security_models/crypto_exchange/test_release_decision_policy.py)
 
-Scope: crypto-exchange wallet and exchange releases that use `ipfs_datasets_py/logic/security_models/crypto_exchange` proof reports, disproof reports, assumption-registry results, proof receipts, and runtime monitor evidence.
+## Purpose
 
-This policy defines the only release outcomes that may be claimed from the current theorem-prover workflow. It is intentionally fail-closed: missing evidence, incomplete modeling, stale assumptions, unreviewed blocking evidence, or unsupported prover behavior cannot be interpreted as security.
+This document freezes the proof boundary and the security decision policy for
+every production release consumer that reads crypto-exchange formal proof
+reports (`ProofReport`), proof receipts, assumption/evidence registries,
+solver dependency probes, disproof suites, and runtime monitor reports. It
+defines the complete, closed set of outcomes a release consumer may observe
+for a formal claim, and the single rule every consumer must apply when
+deciding whether a release is safe to ship.
 
-## Release Outcomes
+The policy is **frozen**: the set of outcomes, their security semantics, and
+the default consumer rule below may not be silently changed. Any change to
+this document requires updating `build_security_decision_policy()`, the
+checked-in JSON artifact, and this document together, plus review by a
+release-owner (see [Maintenance triggers](#maintenance-triggers)).
 
-### Release Accepted
+## Proof boundary
 
-A release may be described as formally accepted only when all required checks pass:
+The proof boundary is the set of claims, domains, and input artifacts that a
+production release decision is scoped to. Anything outside this boundary is
+explicitly out of scope for automated proof-based release gating.
 
-- Every blocking and high-risk production claim is present in the proof report.
-- Every blocking and high-risk production claim has status `PROVED`.
-- No blocking or high-risk claim has status `DISPROVED`, `UNKNOWN`, or `NOT_MODELED`.
-- Every required domain is modeled: `withdrawals`, `deposits`, `ledger`, `capabilities`, `hsm`, and `audit`.
-- Every required assumption has an owner, evidence, review timestamp, expiry timestamp, and current non-stale evidence.
-- Every assumption consumed by a proof report is explicitly accepted by the proof consumer.
-- Every blocking and high-risk `PROVED` claim is backed by `human_reviewed` or equivalently trusted evidence.
-- The production disproof suite still produces expected `DISPROVED` results for known-bad models.
-- Runtime monitor evidence for the release window has no unexplained violations.
-- Proof reports bind to the exact production model CID, code revision, prover version, and environment profile.
-- Proof receipts validate in the downstream consumer path that gates deployment.
+### Required domains
 
-### Release Rejected
+`audit`, `capabilities`, `deposits`, `hsm`, `ledger`, `withdrawals`
 
-A release must be rejected when any of these occur:
+### Blocking claims (must be `prove` or the release is blocked)
 
-- A blocking or high-risk claim is `DISPROVED`.
-- A blocking or high-risk claim is `UNKNOWN`.
-- A blocking or high-risk claim is `NOT_MODELED`.
-- A configured blocking or high-risk claim is missing from the proof report.
-- A required security domain is not modeled.
-- A required assumption is missing, ownerless, unevidenced, stale, expired, or explicitly unaccepted.
-- A blocking or high-risk `PROVED` claim is backed only by `heuristic` or `machine_extracted` evidence.
-- A disproof scenario does not produce the expected counterexample.
-- A runtime monitor violation contradicts the model or proof boundary.
-- A model CID, report CID, receipt CID, code revision, or environment profile does not match the release packet.
-- A proof report or receipt relies on simulated proof dependencies in production.
-- The configured prover is unavailable, unsupported, times out, or returns an unsupported theory result for a critical claim.
+- `no_unauthorized_withdrawal`
+- `no_over_reserved_internal_account`
+- `global_asset_conservation`
 
-### Release Inconclusive
+### High-risk claims (must be `prove` or the release is blocked)
 
-A release is inconclusive, and therefore not accepted, when the team cannot decide whether a failure is real or modeled:
+- `no_deposit_before_finality`
+- `no_signing_request_after_wallet_freeze`
+- `capability_delegation_no_authority_increase`
+- `revoked_capability_no_future_authorization`
 
-- Production source, API traces, policy documents, logs, or runbooks are unavailable.
-- The production `SecurityModelIR` cannot be generated or validated.
-- Evidence review is incomplete.
-- Runtime traces are unavailable for the release window.
-- Proof receipt consumers are not deployed or cannot validate the release packet.
-- Independent prover backends are planned but not executable end to end.
+Every blocking and high-risk claim, along with its required assumptions,
+release gate, and rationale, is enumerated in
+`proof_boundary.required_release_claims` in the frozen artifact and in
+`release_policy_entries()` in code — these two representations are validated
+to stay in sync by `test_release_decision_policy.py`.
 
-Inconclusive is operationally equivalent to rejected for deployment gates.
+### Required input artifacts
 
-## Current Claim Gates
+A release decision consumer must have all of the following before it may
+render a `prove` outcome for any blocking claim:
 
-| Claim | Domain | Gate | Accepted Status | Fail-Closed Statuses | Required Assumptions |
-| --- | --- | --- | --- | --- | --- |
-| `no_unauthorized_withdrawal` | `withdrawals` | blocking | `PROVED` | `DISPROVED`, `UNKNOWN`, `NOT_MODELED` | `A3`, `A4`, `A5`, `A8` |
-| `no_over_reserved_internal_account` | `ledger` | blocking | `PROVED` | `DISPROVED`, `UNKNOWN`, `NOT_MODELED` | `A4`, `A5` |
-| `global_asset_conservation` | `ledger` | blocking | `PROVED` | `DISPROVED`, `UNKNOWN`, `NOT_MODELED` | `A4`, `A10` |
-| `no_deposit_before_finality` | `deposits` | high | `PROVED` | `DISPROVED`, `UNKNOWN`, `NOT_MODELED` | `A6`, `A9` |
-| `no_signing_request_after_wallet_freeze` | `hsm` | high | `PROVED` | `DISPROVED`, `UNKNOWN`, `NOT_MODELED` | `A3`, `A8` |
-| `capability_delegation_no_authority_increase` | `capabilities` | high | `PROVED` | `DISPROVED`, `UNKNOWN`, `NOT_MODELED` | `A1`, `A7` |
-| `revoked_capability_no_future_authorization` | `capabilities` | high | `PROVED` | `DISPROVED`, `UNKNOWN`, `NOT_MODELED` | `A10` |
-| `audit_event_exists_for_critical_transition` | `audit` | medium | `PROVED` | `DISPROVED` | `A10` |
+1. Production `SecurityModelIR` and its model CID
+2. Proof report JSON for every required claim
+3. Proof receipt or trusted signature validation output
+4. Accepted assumptions file
+5. Current assumption and evidence registry
+6. Solver dependency probe
+7. Production environment profile
+8. Disproof suite report and counterexample vectors
+9. Runtime monitor report for the release window
 
-The audit-linkage claim is medium severity in the current release policy. A concrete audit disproof blocks release. `UNKNOWN` or `NOT_MODELED` audit coverage still requires release triage and must be reconciled with required-domain coverage before acceptance.
+### Out of scope
 
-## Required Commands
+- Claims absent from the production `SecurityModelIR`
+- Optional prover coverage not present in the solver dependency probe
+- Runtime behavior outside collected release-window traces
+- Cryptographic primitive breakage beyond listed assumptions
 
-Run the production proof gate:
+## Outcomes
 
-```bash
-PYTHONPATH=. python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all \
-  --model security_ir_artifacts/production/production-security-model.json \
-  --out security_ir_artifacts/production/proof-report.json \
-  --strict-validation \
-  --release-gate \
-  --require-current-assumptions \
-  --require-reviewed-evidence \
-  --require-domain withdrawals \
-  --require-domain deposits \
-  --require-domain ledger \
-  --require-domain capabilities \
-  --require-domain hsm \
-  --require-domain audit \
-  --min-modeled-blocking-claims 3 \
-  --min-proved-blocking-claims 3 \
-  --emit-counterexamples-dir security_ir_artifacts/production/counterexamples \
-  --emit-proof-receipts \
-  --accepted-assumptions-file security_ir_artifacts/production/accepted-assumptions.json \
-  --explain-soundness
+Every formal claim evaluation resolves to exactly one of the following seven
+frozen outcomes. This is a closed set: a release consumer that observes a
+signal not covered here must fail closed into `blocked-production`.
+
+| Outcome | Secure for blocking claims? | Production release effect |
+| --- | --- | --- |
+| `prove` | **Yes** | `eligible-for-acceptance` |
+| `disprove` | No | `blocked-production` |
+| `unknown` | No | `blocked-production` |
+| `not-modeled` | No | `blocked-production` |
+| `stale-evidence` | No | `blocked-production` |
+| `missing-solver` | No | `blocked-production` |
+| `blocked-production` | No | `blocked-production` |
+
+### `prove`
+
+The claim is modeled, the authoritative solver returned a proof-producing
+success result (`ProofReport.status == PROVED`), required assumptions and
+evidence are current, and all consumer validation checks pass (model
+binding, assumptions, reviewed evidence, receipt/signature policy, solver
+allowlist, release packet freshness). A blocking claim may be treated as
+secure **only** in this outcome, and only after those validation checks pass.
+
+### `disprove`
+
+The solver found a satisfiable counterexample to the claim
+(`ProofReport.status == DISPROVED`). The release consumer must reject the
+release and preserve the counterexample as blocking security evidence.
+
+### `unknown`
+
+The prover did not establish the claim and did not return a concrete,
+accepted counterexample (`ProofReport.status == UNKNOWN`, solver timeout,
+unsupported theory, or solver-reported unknown). The release consumer must
+reject blocking claims and must not downgrade `unknown` to a warning or a
+manual-approval state.
+
+### `not-modeled`
+
+The production IR does not model the claim, domain, or facts required to
+evaluate it (`ProofReport.status == NOT_MODELED`, missing domain, or missing
+claim model). The release consumer must reject blocking claims until the
+production IR or formal claim scope is updated.
+
+### `stale-evidence`
+
+A required assumption, source fact, model CID, environment profile, or
+reviewed evidence item is missing, expired, ownerless, unevidenced,
+unaccepted, or no longer bound to the release packet. The release consumer
+must reject blocking claims until evidence is refreshed and accepted.
+
+### `missing-solver`
+
+A required prover, compiler, runtime, or differential solver dependency is
+missing or unusable for the release gate (see the solver dependency probe,
+`PORTAL-CXTP-058`). The release consumer must reject proof acceptance until
+the dependency probe reports no required blockers.
+
+### `blocked-production`
+
+The aggregate release decision whenever any blocking (or required high-risk)
+claim is not `prove`, a proof report is missing entirely, or any
+release-packet gate (receipt validation, runtime monitor, disproof suite)
+fails closed. This is also the outcome returned when no proof report exists
+for a claim that is required for release.
+
+## Default consumer rule
+
+> Only outcome `prove` may be consumed as secure for a blocking claim; every
+> non-`prove` outcome for a blocking claim is non-secure and blocks
+> production.
+
+Equivalently: release consumers must treat every non-`prove` outcome for a blocking claim as non-secure, and must report the aggregate release
+decision as `blocked-production` whenever this happens. This includes
+`disprove`, `unknown`, `not-modeled`, `stale-evidence`, `missing-solver`, and
+`blocked-production` itself — none of these may ever be interpreted as
+"secure enough to ship." The same rule applies to high-risk claims.
+
+### Consumer requirements
+
+- Release consumers must fail closed by default.
+- Release consumers must not infer security from missing proof reports.
+- Release consumers must not accept `UNKNOWN`, `NOT_MODELED`, `DISPROVED`,
+  stale evidence, or missing-solver states for blocking claims.
+- Release consumers must report `blocked-production` when any blocking claim
+  is non-proved.
+- Dashboards may display non-proved states but must label them non-secure for
+  production release.
+
+## Release readiness rule
+
+**Accepted** (release may proceed) requires all of:
+
+- Every blocking claim outcome is `prove`.
+- Every high-risk claim outcome is `prove`.
+- Required assumptions are owned, evidenced, accepted, and current.
+- Required solver dependencies are present.
+- Proof receipts or trusted signatures validate against the release packet.
+- Disproof and runtime monitor gates have no unexplained blockers.
+
+**Blocked** (release must not proceed) if any of:
+
+- Any blocking claim outcome is not `prove`.
+- Any required high-risk claim outcome is not `prove`.
+- Any `stale-evidence` outcome affects a required claim or release packet
+  artifact.
+- Any `missing-solver` outcome affects required proof acceptance.
+- Any proof receipt, model CID, report CID, or environment binding fails
+  validation.
+
+## Using the policy in code
+
+```python
+from ipfs_datasets_py.logic.security_models.crypto_exchange.release_policy import (
+    classify_release_consumer_outcome,
+    decision_outcome_for_proof_status,
+    blocking_claim_is_secure_outcome,
+    build_security_decision_policy,
+    security_decision_outcomes,
+)
+
+decision = classify_release_consumer_outcome(proof_report, release_gate='blocking')
+if not decision['secure_for_release']:
+    # decision['outcome'] is one of disprove/unknown/not-modeled/stale-evidence/
+    # missing-solver/blocked-production; treat the claim as non-secure.
+    reject_release(decision['reasons'])
 ```
 
-Run the production disproof gate:
+`classify_release_consumer_outcome` fails closed: a missing proof report
+always resolves to `blocked-production`; an unavailable required solver
+dependency always resolves to `missing-solver`; stale or unaccepted evidence
+always resolves to `stale-evidence`; otherwise the outcome is derived from
+the proof report's `status` via `decision_outcome_for_proof_status`.
 
-```bash
-PYTHONPATH=. python scripts/ops/security_verification/run_security_ir_disproof_suite.py \
-  --model security_ir_artifacts/production/production-security-model.json \
-  --out security_ir_artifacts/production/disproof-report.json \
-  --fuzz-rounds 128 \
-  --seed 7 \
-  --emit-counterexamples-dir security_ir_artifacts/production/counterexample-vectors
-```
+## Maintenance triggers
 
-Run the release baseline:
+This policy, the checked-in artifact, and the builder function must be
+reviewed and updated together whenever any of the following occur:
 
-```bash
-PYTHONPATH=. python scripts/ops/security_verification/run_security_ir_assurance_baseline.py \
-  --model security_ir_artifacts/production/production-security-model.json \
-  --out-dir security_ir_artifacts/production-baseline \
-  --fuzz-rounds 64 \
-  --seed 7 \
-  --min-modeled-blocking-claims 3 \
-  --min-proved-blocking-claims 3
-```
-
-## Decision Packet
-
-Every accepted release must archive:
-
-- Production `SecurityModelIR` JSON and model CID.
-- Production environment profile and assumption evidence bundle.
-- Proof report JSON.
-- Disproof report JSON.
-- Counterexample vectors.
-- Runtime monitor report for the release window.
-- Proof receipts for blocking and high claims.
-- Proof receipt consumer validation output.
-- Code revision, build revision, dependency/prover versions, and reviewer approvals.
-
-## Triage Rules
-
-- `DISPROVED`: open a security defect against the owning domain, attach the counterexample, and reject the release until the model or code is fixed.
-- Blocking/high `UNKNOWN`: reject the release unless the claim is explicitly removed from production scope through a reviewed policy change.
-- Blocking/high `NOT_MODELED`: reject the release and update the production IR or claim scope.
-- Stale assumption: refresh operational evidence or reject the release.
-- Unreviewed evidence: complete human review or quarantine the fact from production proofs.
-- Runtime violation: treat the trace as a counterexample until explained and reconciled.
-
-## Policy Maintenance
-
-This file must be updated whenever:
-
-- A claim changes release severity.
-- A new blocking or high-risk claim is added.
-- Required assumptions change.
-- A new prover backend becomes release-authoritative.
+- Claim severity changes.
+- A new blocking or high-risk claim is introduced.
+- Required assumption changes.
+- Solver allowlist or dependency changes.
 - Proof receipt validation changes.
-- Runtime monitor requirements change.
+- Runtime monitor release-gate changes.
+
+## Change control
+
+Because this is a frozen policy, any pull request that changes
+`build_security_decision_policy()`, the checked-in
+`security-decision-policy.json` artifact, or this document must change all
+three together and must keep
+`tests/logic/security_models/crypto_exchange/test_release_decision_policy.py`
+passing, including the invariant that the checked-in artifact is byte-for-byte
+equal (as a JSON structure) to the output of `build_security_decision_policy()`.
