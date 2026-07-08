@@ -233,7 +233,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-072 Add Tamarin/ProVerif protocol checks for payload flow
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: solver
