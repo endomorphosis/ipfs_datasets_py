@@ -222,7 +222,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-071 Add TLA/Apalache workflow checks for Xaman signing
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: solver
