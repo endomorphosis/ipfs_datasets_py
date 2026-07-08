@@ -45256,6 +45256,114 @@ def test_decompiler_reconstructs_packet_002060_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_002071_uscode_semantic_surfaces() -> None:
+    cases = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "26 U.S.C. 4182: Recreational equipment. Manufacturers "
+                    "excise taxes apply to sport fishing equipment under the "
+                    "Internal Revenue Code."
+                ),
+                predicate="recreational_equipment_excise_tax",
+            ),
+            {"recreational_equipment_tax", "manufacturers_excise_tax", "excise_tax"},
+            {"deontic->deontic", "deontic->conditional_normative", "deontic->temporal"},
+            "uscode_excise_tax_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "2 U.S.C. 1438: Severability. If any provision is held "
+                    "invalid, the remainder of this chapter shall not be "
+                    "affected."
+                ),
+                predicate="statutory_severability",
+                conditions=["if any provision is held invalid"],
+            ),
+            {"statutory_severability"},
+            {"frame->conditional_normative", "frame->deontic", "frame->temporal"},
+            "uscode_severability_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "22 U.S.C. 4132: Grievances concerning former members of "
+                    "the Service. A former employee may file a Foreign Service "
+                    "grievance within the applicable period."
+                ),
+                predicate="former_employee_foreign_service_grievance",
+                conditions=["within the applicable period"],
+            ),
+            {"former_employee_grievance", "foreign_service_grievance"},
+            {"frame->temporal", "frame->conditional_normative", "frame->epistemic"},
+            "uscode_grievance_review_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "42 U.S.C. 7264: Seal of Department. The Secretary shall "
+                    "cause a seal of office to be made and judicial notice "
+                    "shall be taken of such seal."
+                ),
+                predicate="department_office_seal_judicial_notice",
+            ),
+            {"department_office_seal", "office_seal", "judicial_notice"},
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_official_seal_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "16 U.S.C. 742k: Management and disposition of vessels "
+                    "and other property acquired and arising out of fishery "
+                    "loans."
+                ),
+                predicate="fishery_vessel_property_disposition",
+            ),
+            {"fishery_vessel_property_disposition", "fishery_loan_property"},
+            {"frame->deontic", "frame->frame", "frame->conditional_normative"},
+            "uscode_property_disposition_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in cases:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
+        assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

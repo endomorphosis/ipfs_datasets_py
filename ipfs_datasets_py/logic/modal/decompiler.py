@@ -657,6 +657,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("seal from the plant variety protection office", "office_seal"),
     ("seal of office", "office_seal"),
     ("official seal", "official_seal"),
+    ("seal of department", "department_office_seal"),
+    ("judicial notice shall be taken", "judicial_notice"),
+    ("judicial notice", "judicial_notice"),
     ("capitol visitor center", "capitol_visitor_center"),
     ("assistant to the chief executive officer", "visitor_center_assistant"),
     ("assistant to chief executive officer", "visitor_center_assistant"),
@@ -672,6 +675,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("vessels and other property acquired", "fishery_vessel_property_disposition"),
     ("fishery loans", "fishery_loan_property"),
     ("arising out of fishery loans", "fishery_loan_property"),
+    ("recreational equipment", "recreational_equipment_tax"),
+    ("sport fishing equipment", "recreational_equipment_tax"),
+    ("manufacturers excise taxes", "manufacturers_excise_tax"),
+    ("miscellaneous excise taxes", "manufacturers_excise_tax"),
+    ("excise tax", "excise_tax"),
     ("loan size limitation", "loan_size_limitation"),
     ("project loans", "project_loan_program"),
     ("project loan", "project_loan_program"),
@@ -979,6 +987,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("eligible to participate", "participation_eligibility"),
     ("eligible state", "funding_eligibility"),
     ("eligible states", "funding_eligibility"),
+    ("grievances concerning former", "former_employee_grievance"),
+    ("former members of the service", "former_employee_grievance"),
+    ("former employees of the department", "former_employee_grievance"),
+    ("foreign service grievance", "foreign_service_grievance"),
+    ("foreign service", "foreign_service"),
+    ("severability", "statutory_severability"),
     ("per-capita combined", "per_capita_ranking"),
     ("per capita combined", "per_capita_ranking"),
     ("highest annual per-capita", "per_capita_ranking"),
@@ -11428,6 +11442,22 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
             views.append(view)
 
     if normalized_atom in {
+        "department_office_seal",
+        "excise_tax",
+        "foreign_service_grievance",
+        "former_employee_grievance",
+        "judicial_notice",
+        "manufacturers_excise_tax",
+        "recreational_equipment_tax",
+        "statutory_severability",
+    }:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+
+    if normalized_atom in {
         "judicial_review",
         "presidential_action",
         "presidential_action_judicial_review",
@@ -12596,6 +12626,34 @@ def _typed_decompiler_semantic_atom_target_families(
 
     for atom in semantic_atoms:
         normalized_atom = _clean_text(atom).lower()
+        if normalized_atom in {
+            "department_office_seal",
+            "excise_tax",
+            "foreign_service_grievance",
+            "former_employee_grievance",
+            "judicial_notice",
+            "manufacturers_excise_tax",
+            "recreational_equipment_tax",
+            "statutory_severability",
+        }:
+            add("deontic")
+            add("conditional_normative")
+            add("frame")
+        if normalized_atom in {
+            "excise_tax",
+            "former_employee_grievance",
+            "manufacturers_excise_tax",
+            "recreational_equipment_tax",
+            "statutory_severability",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "department_office_seal",
+            "foreign_service_grievance",
+            "former_employee_grievance",
+            "judicial_notice",
+        }:
+            add("epistemic")
         if normalized_atom in {
             "comptroller_general_audit",
             "deposit_nontaxation",
@@ -14560,6 +14618,18 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_law_relationship_surface")
     if re.search(r"\b(?:general\s+eligibility|eligibility\s+requirements?|may\s+be\s+issued\s+under\s+this\s+chapter\s+only\s+if)\b", lowered):
         add("uscode_eligibility_condition_surface")
+    if re.search(r"\b(?:eligibility\s+for\s+services|congregate\s+services|professional\s+assessment\s+committee)\b", lowered):
+        add("uscode_service_eligibility_surface")
+    if re.search(r"\b(?:recreational\s+equipment|sport\s+fishing\s+equipment|manufacturers?\s+excise\s+tax(?:es)?|miscellaneous\s+excise\s+tax(?:es)?)\b", lowered):
+        add("uscode_excise_tax_surface")
+    if re.search(r"\b(?:grievances?\s+concerning\s+former|former\s+(?:members?|employees?)\s+of\s+the\s+(?:service|department)|foreign\s+service\s+grievance)\b", lowered):
+        add("uscode_grievance_review_surface")
+    if re.search(r"\b(?:seal\s+of\s+department|seal\s+of\s+office|judicial\s+notice\s+shall\s+be\s+taken|judicial\s+notice)\b", lowered):
+        add("uscode_official_seal_surface")
+    if re.search(r"\bseverability\b", lowered):
+        add("uscode_severability_surface")
+    if re.search(r"\b(?:management\s+and\s+disposition\s+of\s+vessels|disposition\s+of\s+vessels\s+and\s+other\s+property|arising\s+out\s+of\s+fishery\s+loans?)\b", lowered):
+        add("uscode_property_disposition_surface")
     if re.search(r"\b(?:amendments?|struck\s+out|inserted|substituted|redesignated|reclassified)\b", lowered):
         add("uscode_amendment_operation_surface")
     if re.search(r"\b(?:receiving\s+loan\s+from\s+court\s+officer|court\s+officer|receiver|receivership)\b", lowered):
