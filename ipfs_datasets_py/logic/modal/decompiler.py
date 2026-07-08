@@ -193,6 +193,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("former jeopardy", "former_jeopardy_protection"),
     ("double jeopardy", "former_jeopardy_protection"),
     ("jeopardy for the same offense", "former_jeopardy_protection"),
+    ("judicial review of certain actions", "presidential_action_judicial_review"),
+    ("judicial review of certain action", "presidential_action_judicial_review"),
+    ("judicial review", "judicial_review"),
+    ("presidential order", "presidential_order"),
+    ("presidential action", "presidential_action"),
     ("receiverships", "receivership_administration"),
     ("receivership", "receivership_administration"),
     ("appointment of a receiver", "receiver_appointment"),
@@ -11182,6 +11187,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
             views.append(view)
 
     if normalized_atom in {
+        "judicial_review",
+        "presidential_action",
+        "presidential_action_judicial_review",
+        "presidential_order",
         "receiver_appointment",
         "receiver_duty",
         "receivership_administration",
@@ -12330,6 +12339,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("temporal")
             add("epistemic")
         if normalized_atom in {
+            "judicial_review",
+            "presidential_action",
+            "presidential_action_judicial_review",
+            "presidential_order",
             "receiver_appointment",
             "receiver_duty",
             "receivership_administration",
@@ -12341,6 +12354,14 @@ def _typed_decompiler_semantic_atom_target_families(
             add("deontic")
             add("conditional_normative")
             add("frame")
+        if normalized_atom in {
+            "judicial_review",
+            "presidential_action",
+            "presidential_action_judicial_review",
+            "presidential_order",
+        }:
+            add("temporal")
+            add("epistemic")
         if normalized_atom in {
             "renewable_energy_barrier_study",
             "renewable_energy_project",
@@ -13519,7 +13540,15 @@ def _typed_decompiler_status_atom_target_families(
             "vacant",
         }:
             add("deontic")
-        if normalized_atom in {"omitted", "reclassified", "renumbered", "transferred"}:
+        if normalized_atom in {
+            "omitted",
+            "reclassified",
+            "renumbered",
+            "repealed",
+            "terminated",
+            "transferred",
+            "vacant",
+        }:
             add("temporal")
         if normalized_atom == "editorial_transfer_status":
             add("temporal")
@@ -13605,7 +13634,17 @@ def _typed_decompiler_status_detail_target_families(
     if status_detail_slots:
         add("frame")
         add("conditional_normative")
-    if keywords.intersection({"reclassified", "renumbered", "transferred"}):
+    if keywords.intersection(
+        {
+            "omitted",
+            "reclassified",
+            "renumbered",
+            "repealed",
+            "terminated",
+            "transferred",
+            "vacant",
+        }
+    ):
         add("temporal")
     if keywords.intersection({"omitted", "repealed", "terminated", "vacant"}):
         add("deontic")

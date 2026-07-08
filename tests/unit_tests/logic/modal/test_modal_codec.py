@@ -44143,6 +44143,72 @@ def test_decompiler_reconstructs_packet_4166_modal_ir_semantic_slots() -> None:
     assert "receiver duty" in receivership_structural_text
 
 
+def test_decompiler_reconstructs_packet_001953_frame_semantic_slots() -> None:
+    judicial_review = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Judicial review of certain actions by Presidential order. "
+            "The court shall review the Presidential action under this chapter."
+        ),
+        predicate="judicial_review_presidential_action",
+    )
+    repealed = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "26 U.S.C. 4980A: Sec. 4980A - Repealed. Pub. L. 105-34 "
+            "repealed this section."
+        ),
+        predicate="section_repealed",
+    )
+    repealed.formulas[0].metadata[
+        "fallback_rule"
+    ] = "uscode_editorial_status_heading_v1"
+
+    judicial_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(judicial_review)
+    )
+    repealed_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(repealed)
+    )
+
+    assert {
+        "judicial_review",
+        "presidential_action",
+        "presidential_action_judicial_review",
+        "presidential_order",
+    }.issubset(set(judicial_slots["typed-decompiler-source-semantic-atom"]))
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+    }.issubset(set(judicial_slots["typed-decompiler-target-reconstruction-pair"]))
+    assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(judicial_slots["legal_ir_view_prototype"])
+    )
+
+    assert "repealed" in repealed_slots["typed-decompiler-source-semantic-atom"]
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+    }.issubset(set(repealed_slots["typed-decompiler-target-reconstruction-pair"]))
+    assert "uscode_catalog_record:frame->temporal" in repealed_slots[
+        "typed-decompiler-target-reconstruction-surface-profile"
+    ]
+    assert "uscode_editorial_status_surface" in repealed_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
+        set(repealed_slots["legal_ir_view_prototype"])
+    )
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
