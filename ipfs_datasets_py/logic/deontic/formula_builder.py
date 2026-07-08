@@ -3653,6 +3653,7 @@ def _reconstruction_warning_core_slots(norm: LegalNormIR) -> tuple[str, ...]:
 
 
 _READINESS_FORMULA_RESOLUTION_TYPES = {
+    "compiler_guidance_deontic_ir_reconstruction",
     "local_scope_applicability",
     "local_scope_reference_condition",
     "local_scope_reference_exception",

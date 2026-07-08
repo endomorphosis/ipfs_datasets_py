@@ -38,8 +38,17 @@ _COMPILER_GUIDANCE_CONTAINER_KEYS = (
 _COMPILER_GUIDANCE_PACKET_KEYS = frozenset(
     {
         "action",
+        "compiler_guidance_quality_gate",
+        "compiler_guidance_ranked_features",
+        "compiler_guidance_route",
+        "compiler_guidance_target_metrics",
+        "compiler_guidance_todo_routes",
+        "feature_groups",
+        "legal_ir_target_view_distribution",
         "objective",
         "program_synthesis_scope",
+        "quality_gate",
+        "ranked_guidance_features",
         "role",
         "route",
         "samples",
@@ -51,7 +60,17 @@ _COMPILER_GUIDANCE_PACKET_KEYS = frozenset(
         "target",
         "target_component",
         "target_metrics",
+        "target_file_lane",
+        "target_view",
+        "todo_routes",
     }
+)
+_COMPILER_GUIDANCE_EVIDENCE_KEYS = (
+    "compiler_guidance_evidence",
+    "guidance_evidence",
+    "evidence",
+    "passing_compiler_guidance_evidence",
+    "autoencoder_evidence",
 )
 
 
@@ -193,6 +212,171 @@ def _guidance_container_contract(value: Any) -> Any:
     return _canonical_guidance_value(decoded)
 
 
+def _sequence_values(value: Any) -> list[Any]:
+    decoded = _decode_json_guidance_value(value)
+    if isinstance(decoded, Mapping):
+        return [decoded]
+    if isinstance(decoded, (list, tuple)):
+        return list(decoded)
+    return []
+
+
+def _guidance_text_tokens(value: Any) -> set[str]:
+    decoded = _decode_json_guidance_value(value)
+    tokens: set[str] = set()
+    if isinstance(decoded, Mapping):
+        for key, item in decoded.items():
+            tokens.update(_guidance_text_tokens(key))
+            tokens.update(_guidance_text_tokens(item))
+        return tokens
+    if isinstance(decoded, (list, tuple, set)):
+        for item in decoded:
+            tokens.update(_guidance_text_tokens(item))
+        return tokens
+    text = str(decoded or "").strip().lower()
+    if not text:
+        return tokens
+    normalized = "".join(char if char.isalnum() else "_" for char in text)
+    tokens.add(normalized.strip("_"))
+    tokens.update(part for part in normalized.split("_") if part)
+    return tokens
+
+
+def _guidance_targets_zkp(value: Mapping[str, Any]) -> bool:
+    target_values = [
+        value.get("program_synthesis_scope"),
+        value.get("scope"),
+        value.get("target"),
+        value.get("target_component"),
+        value.get("target_file_lane"),
+        value.get("target_view"),
+    ]
+    for key in (
+        "feature_groups",
+        "legal_ir_target_view_distribution",
+        "compiler_guidance_legal_ir_target_view_distribution",
+        "target_metrics",
+        "compiler_guidance_target_metrics",
+    ):
+        target_values.append(value.get(key))
+
+    tokens: set[str] = set()
+    for item in target_values:
+        tokens.update(_guidance_text_tokens(item))
+
+    return bool(
+        {
+            "zkp",
+            "zkp_circuits",
+            "zkp_attestation",
+            "zkp_attestations",
+            "zkp_verification_failure_ratio",
+        }
+        & tokens
+    )
+
+
+def _guidance_route_tokens(value: Mapping[str, Any]) -> set[str]:
+    route_values = [
+        value.get("action"),
+        value.get("route"),
+        value.get("compiler_guidance_route"),
+        value.get("samples"),
+        value.get("sample_ids"),
+        value.get("todo_routes"),
+        value.get("compiler_guidance_todo_routes"),
+        value.get("ranked_guidance_features"),
+        value.get("compiler_guidance_ranked_features"),
+    ]
+    tokens: set[str] = set()
+    for item in route_values:
+        tokens.update(_guidance_text_tokens(item))
+    return tokens
+
+
+def _guidance_has_zkp_attestation_route(value: Mapping[str, Any]) -> bool:
+    return any(
+        "repair_zkp_attestation_bridge" in token
+        for token in _guidance_route_tokens(value)
+    )
+
+
+def _guidance_quality_passes(value: Mapping[str, Any]) -> bool:
+    quality = _first_nonempty(
+        value.get("compiler_guidance_quality_gate"),
+        value.get("quality_gate"),
+        value.get("gate"),
+        value.get("status"),
+    ).lower()
+    if quality:
+        return quality in {"pass", "passed", "ok", "success", "accepted", "true"}
+    passed = value.get("passed")
+    if isinstance(passed, bool):
+        return passed
+    return True
+
+
+def _contract_from_guidance_evidence_row(value: Any) -> Dict[str, Any]:
+    decoded = _decode_json_guidance_value(value)
+    if not isinstance(decoded, Mapping):
+        return {}
+    row = dict(decoded)
+    route_matches = _guidance_has_zkp_attestation_route(row)
+    target_matches = _guidance_targets_zkp(row)
+    if not _guidance_quality_passes(row):
+        return {}
+    if not (route_matches or target_matches):
+        return {}
+
+    selected: Dict[str, Any] = {}
+    for key, item in sorted(row.items(), key=lambda pair: str(pair[0])):
+        name = str(key)
+        if name in _COMPILER_GUIDANCE_PACKET_KEYS or name.startswith(
+            "compiler_guidance_"
+        ):
+            selected[name] = _canonical_guidance_value(item)
+
+    if route_matches and not selected.get("route"):
+        selected.setdefault("route", "repair_zkp_attestation_bridge")
+    if target_matches and not selected.get("target_component"):
+        selected.setdefault("target_component", "zkp.circuits")
+    if not selected.get("program_synthesis_scope") and target_matches:
+        selected.setdefault("program_synthesis_scope", "zkp")
+    if not selected.get("source") and (
+        route_matches or "compiler_guidance_distillation_v1" in _guidance_text_tokens(row)
+    ):
+        selected.setdefault("source", "compiler_guidance_distillation_v1")
+
+    return selected
+
+
+def _evidence_contract_from_metadata(metadata: Mapping[str, Any]) -> Dict[str, Any]:
+    for key in _COMPILER_GUIDANCE_EVIDENCE_KEYS:
+        for row in _sequence_values(metadata.get(key)):
+            contract = _contract_from_guidance_evidence_row(row)
+            if contract:
+                return contract
+
+    nested_values = []
+    attribution = metadata.get("compiler_guidance_attribution")
+    if isinstance(_decode_json_guidance_value(attribution), Mapping):
+        nested_values.append(_decode_json_guidance_value(attribution))
+    for nested in nested_values:
+        for key in _COMPILER_GUIDANCE_EVIDENCE_KEYS + ("sample_records", "records"):
+            for row in _sequence_values(nested.get(key)):
+                contract = _contract_from_guidance_evidence_row(row)
+                if contract:
+                    return contract
+
+    compact_contract = _contract_from_guidance_evidence_row(metadata)
+    if compact_contract and (
+        _guidance_has_zkp_attestation_route(metadata)
+        or _guidance_targets_zkp(metadata)
+    ):
+        return compact_contract
+    return {}
+
+
 def compiler_guidance_contract_from_metadata(
     metadata: Mapping[str, Any] | None,
 ) -> Any:
@@ -210,7 +394,11 @@ def compiler_guidance_contract_from_metadata(
     selected: Dict[str, Any] = {}
     for key, value in sorted(metadata_dict.items(), key=lambda pair: str(pair[0])):
         name = str(key)
-        if name.startswith("compiler_guidance_") and name not in _COMPILER_GUIDANCE_CONTAINER_KEYS:
+        if (
+            name.startswith("compiler_guidance_")
+            and name not in _COMPILER_GUIDANCE_CONTAINER_KEYS
+            and name not in _COMPILER_GUIDANCE_EVIDENCE_KEYS
+        ):
             selected[name] = _canonical_guidance_value(value)
 
     packet_signal = {
@@ -230,9 +418,14 @@ def compiler_guidance_contract_from_metadata(
         or selected.get("route")
         or selected.get("samples")
         or selected.get("sample_ids")
+        or _guidance_has_zkp_attestation_route(selected)
     )
     if explicit_route_signal:
         return selected
+
+    evidence_contract = _evidence_contract_from_metadata(metadata_dict)
+    if evidence_contract:
+        return evidence_contract
 
     for key in _COMPILER_GUIDANCE_CONTAINER_KEYS:
         if key not in metadata_dict:

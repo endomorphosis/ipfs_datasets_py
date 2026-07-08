@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from ipfs_datasets_py.logic.modal.decompiler import decode_modal_ir_document
+from ipfs_datasets_py.logic.modal.decompiler import (
+    decode_modal_ir_document,
+    decoded_modal_phrase_slot_text_map,
+)
 from ipfs_datasets_py.logic.modal.compiler import (
     DeterministicModalCompiler,
     ModalCompilationAmbiguity,
@@ -21,24 +24,46 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRProvenance,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_AMBIGUITY_PACKET_001029_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000224_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000486_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_007373_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000697_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000935_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001316_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_001117_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000122_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000205_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004071_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_004558_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000124_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000176_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000222_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_002414_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_005718_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000399_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_001615_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_005786_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003559_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS,
+    compiler_ambiguity_policy_targets,
+    ModalLogicFamily,
     compiler_refined_modal_family_cue_margin_buffer,
     compiler_weak_typed_self_family_cue_margin_buffer,
+    is_compiler_required_adaptive_ambiguity_pair,
     compiler_required_adaptive_ambiguity_targets,
     is_compiler_ambiguity_policy_pair,
+    is_priority_signal_free_adaptive_ambiguity_pair,
+    is_signal_free_adaptive_ambiguity_pair,
     priority_signal_free_adaptive_ambiguity_targets,
+    signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
@@ -64,6 +89,373 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
 )
 
 pytest.importorskip("spacy")
+
+
+def test_packet_002837_registry_refines_modal_family_cue_policy() -> None:
+    expected_pairs = {
+        ("deontic", "temporal"),
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.12
+        )
+
+
+def test_packet_003002_registry_refines_modal_family_cue_policy() -> None:
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("frame", "conditional_normative"),
+        ("frame", "epistemic"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS) == expected_pairs
+    margin_floors = {
+        ("deontic", "conditional_normative"): 0.12,
+        ("frame", "conditional_normative"): 0.14,
+        ("frame", "epistemic"): 0.34,
+    }
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= margin_floors[(predicted_family, target_family)]
+        )
+
+
+@pytest.mark.parametrize(
+    ("predicted_family", "target_family", "runner_up_family", "expected_direction"),
+    [
+        ("deontic", "deontic", "frame", "contested"),
+        ("deontic", "frame", "frame", "outvoted"),
+        ("frame", "conditional_normative", "deontic", "outvoted"),
+        ("frame", "deontic", "deontic", "outvoted"),
+        ("frame", "epistemic", "deontic", "outvoted"),
+        ("frame", "temporal", "deontic", "outvoted"),
+    ],
+)
+def test_modal_compiler_surfaces_packet_000486_adaptive_ambiguity_policy(
+    predicted_family: str,
+    target_family: str,
+    runner_up_family: str,
+    expected_direction: str,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    text = "Packet 000486 synthetic low-margin family evidence."
+    encoding = SpaCyLegalEncoding(
+        document_id=f"packet-000486-{predicted_family}-{target_family}",
+        text=text,
+        normalized_text=text.lower(),
+        tokens=[],
+        sentences=[],
+        cues=[],
+        citation="packet-000486",
+        source="unit_test",
+    )
+    modal_ir = ModalIRDocument(
+        document_id=encoding.document_id,
+        source="unit_test",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000486-f0",
+                operator=ModalIROperator(
+                    family=predicted_family,
+                    system="D" if predicted_family == "deontic" else "FRAME_BM25",
+                    symbol="O" if predicted_family == "deontic" else "Frame",
+                    label=predicted_family,
+                ),
+                predicate=ModalIRPredicate(
+                    name=f"{predicted_family}_predicate",
+                    arguments=["actor:agency"],
+                    role=predicted_family,
+                ),
+                provenance=ModalIRProvenance(
+                    source_id=encoding.document_id,
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="packet-000486",
+                ),
+            )
+        ],
+    )
+    ranking = [
+        {"family": predicted_family, "share_raw": 0.54, "share": 0.54},
+        {"family": runner_up_family, "share_raw": 0.46, "share": 0.46},
+    ]
+    family_shares = {
+        str(candidate["family"]): float(candidate["share_raw"])
+        for candidate in ranking
+    }
+
+    policy_pair = f"{predicted_family}->{target_family}"
+    explicit_type = (
+        f"adaptive_{predicted_family}_{target_family}_{expected_direction}_margin_low"
+    )
+    assert (predicted_family, target_family) in set(
+        COMPILER_AMBIGUITY_PACKET_000486_FAMILY_PAIRS
+    )
+    assert target_family in compiler_required_adaptive_ambiguity_targets(
+        predicted_family
+    )
+    assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+        predicted_family
+    )
+    assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+    assert supports_signal_free_adaptive_ambiguity_pair(
+        predicted_family,
+        target_family,
+    )
+
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=ranking,
+        family_shares=family_shares,
+        predicted_family_source="packet_000486_test",
+    )
+    base_ambiguity = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+    )
+    assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+    assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+    assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+    assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
+    assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+    assert any(
+        ambiguity.ambiguity_type == explicit_type
+        and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        and ambiguity.metadata["adaptive_base_ambiguity_type"]
+        == "adaptive_family_margin_low"
+        for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_surfaces_packet_002296_adaptive_ambiguity_policy() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    scenarios = (
+        ("conditional_normative", "deontic", -0.163344133887),
+        ("frame", "deontic", -0.773399856727),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS == (
+        ("conditional_normative", "deontic"),
+        ("frame", "deontic"),
+    )
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    for predicted_family, target_family, family_margin in scenarios:
+        predicted_share = 0.5
+        target_share = predicted_share + family_margin
+        text = f"Packet 002296 {predicted_family} to {target_family} ambiguity."
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-002296-{predicted_family}-{target_family}",
+            text=text,
+            normalized_text=text.lower(),
+            tokens=[],
+            sentences=[],
+            cues=[],
+            citation="packet-002296",
+            source="unit_test",
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="unit_test",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"packet-002296-{predicted_family}-f0",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=(
+                            "KD"
+                            if predicted_family == "conditional_normative"
+                            else "FRAME_BM25"
+                        ),
+                        symbol=(
+                            "O|"
+                            if predicted_family == "conditional_normative"
+                            else "Frame"
+                        ),
+                        label=predicted_family,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role=predicted_family,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=encoding.document_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-002296",
+                    ),
+                )
+            ],
+        )
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": round(target_share, 6),
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        policy_pair = f"{predicted_family}->{target_family}"
+        explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="packet_002296_test",
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+
+        assert base_ambiguity.candidate_ids == [predicted_family, target_family]
+        assert base_ambiguity.severity == "requires_rule"
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+        assert abs(
+            float(base_ambiguity.metadata["family_margin_raw"]) - family_margin
+        ) < 1e-12
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
 
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
@@ -499,6 +891,214 @@ def test_modal_compiler_surfaces_packet_000224_family_cue_policy(
         )
 
 
+def test_modal_compiler_surfaces_packet_001029_ambiguity_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    expected_pairs = {
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+    assert set(COMPILER_AMBIGUITY_PACKET_001029_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    family_operator = {
+        "deontic": ("D", "O", "obligation"),
+        "frame": ("FRAME_BM25", "Frame", "frame"),
+    }
+    scenarios = (
+        (
+            "us-code-7-4207-7841fcb215fbf21c",
+            "frame",
+            "temporal",
+            -0.381161941551,
+        ),
+        (
+            "us-code-40-11703-b6f57de28c340894",
+            "frame",
+            "deontic",
+            -0.482417937439,
+        ),
+        (
+            "us-code-11-781-567abfcaee308b66",
+            "frame",
+            "conditional_normative",
+            -0.961080824965,
+        ),
+        (
+            "us-code-42-300jj-f338d43f4efd49a3",
+            "frame",
+            "conditional_normative",
+            -0.56442733376,
+        ),
+        (
+            "us-code-10-2216-fd634bec8b2ae0f5",
+            "frame",
+            "temporal",
+            -0.692747437275,
+        ),
+        (
+            "us-code-42-141 to 148.-b4619e2a4060b8f9",
+            "deontic",
+            "temporal",
+            -0.294339101504,
+        ),
+    )
+    for index, (
+        sample_id,
+        predicted_family,
+        target_family,
+        family_margin,
+    ) in enumerate(scenarios, start=1):
+        predicted_system, predicted_symbol, predicted_label = family_operator[
+            predicted_family
+        ]
+        predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.001))
+        target_share = predicted_share + family_margin
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-001029-adaptive-evidence-{index}",
+            text=f"Synthetic packet 001029 {predicted_family} ambiguity evidence.",
+            normalized_text=(
+                f"Synthetic packet 001029 {predicted_family} ambiguity evidence."
+            ),
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system=predicted_system,
+                    symbol=predicted_symbol,
+                    label=predicted_label,
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-001029-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=predicted_system,
+                        symbol=predicted_symbol,
+                        label=predicted_label,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role=predicted_label,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-001029",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert base_ambiguity.severity == "requires_rule"
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
 def test_modal_compiler_surfaces_packet_001316_deontic_ambiguity_policy(
     monkeypatch,
 ) -> None:
@@ -668,6 +1268,198 @@ def test_modal_compiler_surfaces_packet_001316_deontic_ambiguity_policy(
         )
 
 
+def test_modal_compiler_surfaces_packet_000935_adaptive_ambiguity_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        (
+            "us-code-11-781-567abfcaee308b66",
+            "frame",
+            "conditional_normative",
+            -0.959614180332,
+        ),
+        (
+            "us-code-42-300jj-f338d43f4efd49a3",
+            "frame",
+            "conditional_normative",
+            -0.553315447242,
+        ),
+        (
+            "us-code-40-11703-b6f57de28c340894",
+            "frame",
+            "deontic",
+            -0.493490397595,
+        ),
+        (
+            "us-code-7-4207-7841fcb215fbf21c",
+            "frame",
+            "temporal",
+            -0.370624321296,
+        ),
+        (
+            "us-code-42-141 to 148.-b4619e2a4060b8f9",
+            "deontic",
+            "temporal",
+            -0.309802392535,
+        ),
+        (
+            "us-code-10-2216-fd634bec8b2ae0f5",
+            "frame",
+            "temporal",
+            -0.710609697904,
+        ),
+    )
+    expected_pairs = {
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+    assert set(COMPILER_AMBIGUITY_PACKET_000935_FAMILY_PAIRS) == expected_pairs
+
+    family_operator = {
+        "deontic": ("D", "O", "obligation"),
+        "frame": ("FRAME_BM25", "Frame", "frame"),
+    }
+    for index, (
+        sample_id,
+        predicted_family,
+        target_family,
+        family_margin,
+    ) in enumerate(scenarios, start=1):
+        predicted_system, predicted_symbol, predicted_label = family_operator[
+            predicted_family
+        ]
+        predicted_share = min(0.999, max(0.2, abs(family_margin) + 0.001))
+        target_share = predicted_share + family_margin
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-000935-adaptive-evidence-{index}",
+            text=f"Synthetic packet 000935 {predicted_family} ambiguity evidence.",
+            normalized_text=(
+                f"Synthetic packet 000935 {predicted_family} ambiguity evidence."
+            ),
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system=predicted_system,
+                    symbol=predicted_symbol,
+                    label=predicted_label,
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-000935-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=predicted_system,
+                        symbol=predicted_symbol,
+                        label=predicted_label,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role=predicted_label,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-000935",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert base_ambiguity.severity == "requires_rule"
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
 def test_modal_registry_packet_000124_refines_family_cue_policy_pairs() -> None:
     expected_pairs = {
         ("deontic", "conditional_normative"),
@@ -689,7 +1481,9 @@ def test_modal_registry_packet_000222_refines_family_cue_policy_pairs() -> None:
         ("deontic", "frame"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
+        ("frame", "doxastic"),
         ("frame", "epistemic"),
+        ("frame", "frame"),
         ("frame", "temporal"),
     }
 
@@ -704,12 +1498,213 @@ def test_modal_registry_packet_000222_refines_family_cue_policy_pairs() -> None:
     for target_family in (
         "conditional_normative",
         "deontic",
+        "doxastic",
         "epistemic",
+        "frame",
         "temporal",
     ):
         assert (
             compiler_refined_modal_family_cue_margin_buffer("frame", target_family)
             >= 0.015
+        )
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("frame", "frame")
+        >= 0.19
+    )
+
+
+def test_modal_registry_packet_000176_refines_frame_normative_temporal_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "frame"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_000176_FAMILY_PAIRS) == expected_pairs
+def test_packet_002414_registry_exposes_adaptive_family_ambiguity_policy() -> None:
+    expected_pairs = {
+        ("conditional_normative", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "epistemic"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_002414_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
+
+
+def test_packet_002414_adaptive_low_margins_emit_explicit_ambiguities() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(spacy_model_name="blank")
+    )
+    scenarios = (
+        (
+            "us-code-10-931a-f50abc457484ada6",
+            "frame",
+            0.843606,
+            "conditional_normative",
+            0.156394,
+            "conditional_normative",
+            -0.687212,
+            "outvoted",
+            ["frame", "conditional_normative"],
+        ),
+        (
+            "us-code-22-8808-387e8cde9e6ad300",
+            "deontic",
+            0.639709,
+            "temporal",
+            0.360291,
+            "temporal",
+            -0.279418,
+            "outvoted",
+            ["deontic", "temporal"],
+        ),
+        (
+            "us-code-43-364f.-f76294ee50dd54b8",
+            "deontic",
+            0.510048,
+            "temporal",
+            0.489952,
+            "deontic",
+            0.020096,
+            "contested",
+            ["deontic"],
+        ),
+        (
+            "us-code-18-647-dff85016d0ab1ea6",
+            "frame",
+            0.805782,
+            "epistemic",
+            0.194218,
+            "epistemic",
+            -0.611564,
+            "outvoted",
+            ["frame", "epistemic"],
+        ),
+        (
+            "us-code-31-735-5e38334daee34d4d",
+            "conditional_normative",
+            0.508316,
+            "frame",
+            0.491684,
+            "conditional_normative",
+            0.016632,
+            "contested",
+            ["conditional_normative"],
+        ),
+    )
+
+    for (
+        sample_id,
+        predicted_family,
+        predicted_share,
+        runner_up_family,
+        runner_up_share,
+        target_family,
+        family_margin,
+        margin_direction,
+        candidate_ids,
+    ) in scenarios:
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": runner_up_family,
+                "count": 0,
+                "share_raw": runner_up_share,
+                "share": runner_up_share,
+            },
+        ]
+        encoding = SpaCyLegalEncoding(
+            document_id=sample_id,
+            text="Synthetic packet 002414 adaptive family ambiguity evidence.",
+            normalized_text="Synthetic packet 002414 adaptive family ambiguity evidence.",
+            tokens=[],
+            sentences=[],
+            cues=[],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-{sample_id}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system="packet-002414",
+                        symbol=predicted_family,
+                        label="packet_002414",
+                    ),
+                    predicate=ModalIRPredicate(
+                        name="packet_002414_predicate",
+                        arguments=["actor:agency"],
+                        role="packet_002414",
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-002414",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares={
+                str(candidate["family"]): float(candidate["share_raw"])
+                for candidate in ranking
+            },
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_"
+            f"{margin_direction}_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == margin_direction
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+        assert base_ambiguity.metadata["family_margin"] == family_margin
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == candidate_ids
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
+            for ambiguity in ambiguities
         )
 
 
@@ -739,6 +1734,46 @@ def test_refined_pair_balance_promotes_typed_scope_over_generic_frame() -> None:
     assert counts["epistemic"] > counts["frame"]
 
 
+def test_refined_pair_balance_promotes_definition_conditional_over_frame() -> None:
+    counts = {
+        "frame": 2.0,
+        "conditional_normative": 0.6,
+    }
+    signals = {
+        "has_definition_scope": True,
+        "has_condition_or_exception_scope": True,
+        "has_conditional_scope_phrase": True,
+        "has_purpose_scope_phrase": True,
+    }
+
+    _apply_refined_modal_family_cue_pair_balance(counts, signals)
+
+    assert counts["conditional_normative"] > counts["frame"]
+
+
+def test_modal_registry_packet_001117_refines_frame_target_family_pairs() -> None:
+    expected_pairs = {
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_001117_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.0015
+        )
+
+
 def test_modal_registry_packet_000697_refines_family_cue_policy_pairs() -> None:
     expected_pairs = {
         ("deontic", "doxastic"),
@@ -748,6 +1783,27 @@ def test_modal_registry_packet_000697_refines_family_cue_policy_pairs() -> None:
 
     assert set(COMPILER_AMBIGUITY_PACKET_000697_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_modal_registry_packet_007373_exposes_normative_frame_ambiguity_pairs() -> None:
+    expected_pairs = {
+        ("conditional_normative", "deontic"),
+        ("frame", "conditional_normative"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_007373_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert supports_signal_free_adaptive_ambiguity_pair(
             predicted_family,
@@ -1422,6 +2478,51 @@ def test_packet_005718_registry_refines_frame_doxastic_temporal_cues() -> None:
     assert ("doxastic", "false statement") in extracted_cues
 
 
+def test_spacy_encoder_treats_bare_knowingly_as_doxastic_mens_rea() -> None:
+    encoding = SpaCyLegalEncoder(model_name="definitely_missing_legal_model").encode(
+        (
+            "Whoever knowingly receives money from an officer of a court "
+            "is guilty of embezzlement and shall be fined."
+        ),
+        document_id="bare-knowingly-mens-rea",
+    )
+    cues_by_family = {
+        (cue.family, cue.cue.lower())
+        for cue in encoding.cues
+    }
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    share_by_family = {
+        str(item["family"]): float(item["share_raw"])
+        for item in ranking
+    }
+
+    assert ("doxastic", "knowingly") in cues_by_family
+    assert signals["has_doxastic_cue"] is True
+    assert share_by_family["doxastic"] > 0.0
+
+
+def test_packet_005786_registry_refines_family_cue_policy_pairs() -> None:
+    assert tuple(COMPILER_REFINED_PACKET_005786_FAMILY_PAIRS) == (
+        ("deontic", "temporal"),
+        ("frame", "deontic"),
+        ("frame", "frame"),
+    )
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_005786_FAMILY_PAIRS:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
+
+
 def test_packet_001002_registry_exposes_frame_deontic_doxastic_ambiguity_policy() -> None:
     expected_pairs = (
         ("frame", "deontic"),
@@ -1458,6 +2559,23 @@ def test_packet_004762_registry_refines_modal_family_cue_pairs() -> None:
                 target_family,
             )
             >= 0.006
+        )
+
+
+def test_packet_001615_registry_refines_frame_to_typed_family_cues() -> None:
+    assert tuple(COMPILER_REFINED_PACKET_001615_FAMILY_PAIRS) == (
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+    )
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_001615_FAMILY_PAIRS:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= 0.095
         )
 
 
@@ -1603,6 +2721,30 @@ def test_packet_004348_registry_refines_modal_family_cue_pairs() -> None:
     }
     for predicted_family, target_family in COMPILER_REFINED_PACKET_004348_FAMILY_PAIRS:
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            > 0.0
+        )
+
+
+def test_packet_000399_registry_refines_modal_family_cue_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("deontic", "epistemic"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_000399_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
         assert (
             compiler_refined_modal_family_cue_margin_buffer(
                 predicted_family,
@@ -6346,6 +7488,37 @@ def test_spacy_codec_prefers_conditional_share_for_frame_statutory_scope_with_ex
     assert conditional_share > frame_share
 
 
+def test_spacy_codec_prefers_conditional_override_for_relationship_to_other_law() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="31",
+        section="735",
+        text=(
+            "Relationship to other laws. Except as provided in this section, "
+            "this subchapter does not affect any other provision of law. "
+            "Except as specifically provided in this subchapter, those "
+            "provisions do not change the application of a law applicable "
+            "to officers and employees. Historical and Revision Notes."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    share_by_family = {
+        str(item["family"]): float(item["share_raw"])
+        for item in ranking
+    }
+
+    assert signals["has_frame_context"] is True
+    assert signals["has_exception_clause"] is True
+    assert signals["has_conditional_scope_phrase"] is True
+    assert ranking[0]["family"] == "conditional_normative"
+    assert share_by_family["conditional_normative"] > share_by_family["frame"]
+
+
 def test_spacy_codec_avoids_conditional_backfill_for_bare_statutory_frame_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -6702,6 +7875,79 @@ def test_spacy_codec_strengthens_deontic_share_for_generic_frame_scope_with_pena
     )
     assert competing_deontic_share > baseline_deontic_share
     assert competing_deontic_share > 0.0
+
+
+def test_spacy_codec_preserves_conditional_penalty_scope_over_frame_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "If a vessel to which this chapter applies is operated in violation "
+            "of this chapter, the owner is liable to the United States "
+            "Government for a civil penalty."
+        ),
+        document_id="packet-000178-conditional-penalty-scope",
+    )
+
+    shares = {
+        item["family"]: float(item["share"])
+        for item in ranked_modal_families(encoding)
+    }
+    assert shares["conditional_normative"] > shares["frame"]
+    assert shares["conditional_normative"] >= shares["deontic"]
+
+
+def test_spacy_encoder_marks_direct_civil_penalty_liability_as_deontic() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The owner is liable for a civil penalty under this section.",
+        document_id="packet-000178-direct-civil-penalty-liability",
+    )
+
+    assert any(
+        cue.family == "deontic"
+        and cue.cue.lower() == "liable for a civil penalty"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_marks_public_interest_opinion_as_epistemic() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The Secretary may, if in the opinion of the Secretary public "
+            "interests require it, survey the lands and report to Congress."
+        ),
+        document_id="packet-000178-public-interest-opinion",
+    )
+
+    shares = {
+        item["family"]: float(item["share"])
+        for item in ranked_modal_families(encoding)
+    }
+    assert shares["epistemic"] > shares["deontic"]
+    assert shares["epistemic"] > shares["conditional_normative"]
+
+
+def test_spacy_encoder_marks_in_lieu_substitution_as_conditional_normative() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Section provided that this chapter be in lieu of different "
+            "provisions and shall not affect rights under applicable law."
+        ),
+        document_id="packet-000178-in-lieu-substitution",
+    )
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "be in lieu of"
+        for cue in encoding.cues
+    )
+    shares = {
+        item["family"]: float(item["share"])
+        for item in ranked_modal_families(encoding)
+    }
+    assert shares["conditional_normative"] > shares["deontic"]
 
 
 def test_spacy_codec_limits_temporal_share_for_after_notice_procedural_scope() -> None:
@@ -8169,6 +9415,40 @@ def test_spacy_compiler_covers_packet_000161_subsection_heading_spans() -> None:
     assert "(a) In General ." in subsection_heading_spans
 
 
+def test_spacy_compiler_covers_packet_000162_section_marker_spans() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "10 U.S.C. 2263: Sec. 2263 - United States contributions to the "
+        "North Atlantic Treaty Organization common-funded budgets §2263. "
+        "United States contributions to the North Atlantic Treaty Organization "
+        "common-funded budgets (a) In General .-The total amount contributed "
+        "by the Secretary of Defense in any fiscal year for the common-funded "
+        "budgets of NATO may be an amount in excess of the maximum amount "
+        "that would otherwise be applicable to those contributions in such "
+        "fiscal year under the fiscal year 1998 baseline limitation."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-10-2263-571407a5044f94b2",
+        citation="10 U.S.C. 2263",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    marker_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule")
+        == "uscode_section_marker_coverage_v1"
+    }
+
+    assert "Sec. 2263 -" in marker_spans
+    assert "§2263." in marker_spans
+
+
 def test_spacy_compiler_adds_packet_000004_short_structural_heading_spans() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
@@ -9309,6 +10589,62 @@ def test_spacy_decompiler_preserves_uscode_source_surface_when_typed_slots_overl
         assert expected_fragment in decoded.text
 
 
+def test_spacy_decompiler_exports_frame_residual_deontic_and_conditional_cues() -> None:
+    text = (
+        "30 U.S.C. 1512. Loan size limitation. The Secretary may make loans "
+        "subject to amounts made available under this section."
+    )
+    span_start = text.index("The Secretary")
+    modal_ir = ModalIRDocument(
+        document_id="us-code-30-1512-frame-residual-cue-slots",
+        source="us_code",
+        normalized_text=text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FLogic",
+                    symbol="Frame",
+                    label="framed as",
+                ),
+                predicate=ModalIRPredicate(
+                    name="loan_size_limitation",
+                    arguments=["argument_subject:Secretary"],
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-30-1512-frame-residual-cue-slots",
+                    start_char=span_start,
+                    end_char=len(text),
+                    citation="30 U.S.C. 1512",
+                ),
+                metadata={
+                    "cue": "__uscode_residual_span_fallback__",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            )
+        ],
+        metadata={"citation": "30 U.S.C. 1512"},
+    )
+
+    decoded = decode_modal_ir_document(modal_ir)
+    slot_map = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_fixed=False,
+        include_provenance_only=True,
+    )
+
+    assert "frame->deontic:may" in slot_map["typed_decompiler_family_pair_cue"]
+    assert (
+        "frame->conditional_normative:subject_to"
+        in slot_map["typed_decompiler_family_pair_cue"]
+    )
+    assert (
+        "frame->deontic:may"
+        in slot_map["typed-decompiler-target-reconstruction-cue"]
+    )
+
+
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -9606,6 +10942,32 @@ def test_spacy_codec_refines_packet_000709_notification_deadline_family_evidence
     assert shares["temporal"] > shares["deontic"]
 
 
+def test_spacy_codec_refines_packet_002839_frame_temporal_deadline_evidence() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="242v",
+        text=(
+            "Authority and jurisdiction under this section. The Secretary shall "
+            "review each foreign talent recruitment program and issue guidance "
+            "not later than 60 days after December 29, 2022, under this section."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_temporal_deadline_cue"] is True
+    assert signals["has_calendar_date_scope"] is True
+    assert shares["temporal"] > shares["frame"]
+
+
 def test_spacy_codec_refines_active_measures_after_notification_timing() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -9764,6 +11126,289 @@ def test_packet_002219_dense_frame_headings_do_not_outvote_explicit_deontic_cues
     assert shares["deontic"] > shares["frame"]
     assert shares["frame"] > 0.0
     assert shares["conditional_normative"] > 0.0
+
+
+def test_packet_003559_frame_policy_exposes_explicit_adaptive_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    scenarios = (
+        ("us-code-6-1402-e4f4e4514225aa0f", "epistemic", -0.532464262103),
+        ("us-code-16-482n-1-d224d4c3b20604b2", "temporal", -0.956936053292),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_003559_FAMILY_PAIRS == (
+        ("frame", "epistemic"),
+        ("frame", "temporal"),
+    )
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_003559_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    for sample_id, target_family, family_margin in scenarios:
+        predicted_family = "frame"
+        predicted_share = 0.1
+        target_share = predicted_share - family_margin
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        ambiguities = compiler._compiled_primary_family_adaptive_pair_ambiguities(
+            compiled_primary_family=predicted_family,
+            competing_family=target_family,
+            ranking=ranking,
+            family_shares=family_shares,
+            threshold=compiler.config.modal_adaptive_family_margin,
+            signals={},
+            has_frame_scope=False,
+            has_frame_bm25_support=False,
+            compiled_modal_families=[predicted_family],
+            predicted_family_source=f"packet_003559:{sample_id}",
+        )
+        explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        )
+
+        assert base_ambiguity.candidate_ids == [predicted_family, target_family]
+        assert base_ambiguity.severity == "requires_rule"
+        assert base_ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == explicit_type
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            for ambiguity in ambiguities
+        )
+
+
+def test_packet_003166_compiler_policy_exposes_explicit_adaptive_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    scenarios = (
+        ("us-code-43-364f.-f76294ee50dd54b8", "deontic", "deontic", 0.027210909929),
+        ("us-code-22-8808-387e8cde9e6ad300", "deontic", "temporal", -0.305611079378),
+        (
+            "us-code-10-931a-f50abc457484ada6",
+            "frame",
+            "conditional_normative",
+            -0.675306020683,
+        ),
+    )
+
+    assert COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS == (
+        ("deontic", "deontic"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+    )
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    for sample_id, predicted_family, target_family, family_margin in scenarios:
+        is_self_pair = predicted_family == target_family
+        predicted_share = 0.3 if is_self_pair else 0.1
+        competing_share = predicted_share - family_margin
+        runner_up_family = (
+            "temporal"
+            if is_self_pair and predicted_family == "deontic"
+            else target_family
+        )
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": runner_up_family,
+                "count": 0,
+                "share_raw": competing_share,
+                "share": competing_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        ambiguities = compiler._compiled_primary_family_adaptive_pair_ambiguities(
+            compiled_primary_family=predicted_family,
+            competing_family=target_family,
+            ranking=ranking,
+            family_shares=family_shares,
+            threshold=compiler.config.modal_adaptive_family_margin,
+            signals={},
+            has_frame_scope=False,
+            has_frame_bm25_support=False,
+            compiled_modal_families=[predicted_family],
+            predicted_family_source=f"packet_003166:{sample_id}",
+        )
+        expected_direction = "outvoted" if family_margin <= 0.0 else "contested"
+        expected_explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_"
+            f"{expected_direction}_margin_low"
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        expected_candidate_ids = (
+            [predicted_family]
+            if is_self_pair
+            else [predicted_family, target_family]
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        )
+
+        assert base_ambiguity.candidate_ids == expected_candidate_ids
+        assert base_ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == expected_direction
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert any(
+            ambiguity.ambiguity_type == expected_explicit_type
+            and ambiguity.candidate_ids == expected_candidate_ids
+            and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            for ambiguity in ambiguities
+        )
+
+
+def test_packet_004558_exchange_classification_rule_prefers_conditional_family() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "26 U.S.C. 1241. Cancellation of lease or distributor agreements. "
+            "Amounts received by a lessee for cancellation of a lease or by a "
+            "distributor of goods for the cancellation of a distributor agreement "
+            "shall be considered as amounts received in exchange for such lease "
+            "or agreement."
+        ),
+        document_id="packet-004558-us-code-26-1241",
+    )
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ) in COMPILER_REFINED_PACKET_004558_FAMILY_PAIRS
+    assert signals["has_conditional_exchange_classification_scope_phrase"] is True
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "shall be considered as amounts received in exchange"
+        for cue in encoding.cues
+    )
+    assert ranking[0]["family"] == "conditional_normative"
+    assert shares["conditional_normative"] > shares["deontic"]
+
+
+def test_packet_004558_personnel_action_rule_remains_deontic() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "5 U.S.C. 7513. An agency may take an action under this section "
+            "only for such cause as will promote the efficiency of the service. "
+            "The employee is entitled to written notice and may appeal."
+        ),
+        document_id="packet-004558-us-code-5-7513",
+    )
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share_raw"]) for item in ranking}
+
+    assert (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ) in COMPILER_REFINED_PACKET_004558_FAMILY_PAIRS
+    assert signals["has_conditional_exchange_classification_scope_phrase"] is False
+    assert ranking[0]["family"] == "deontic"
+    assert shares["deontic"] > shares["conditional_normative"]
 
 
 def test_spacy_compiler_covers_uscode_effect_of_act_catchline_for_701e() -> None:

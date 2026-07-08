@@ -87,6 +87,10 @@ _USCODE_CITATION_MARKER_RE = re.compile(
     r"\bU\.?\s*S\.?\s*C\.?(?!\w)",
     re.IGNORECASE,
 )
+_USCODE_GPO_SOURCE_BOILERPLATE_RE = re.compile(
+    r"\s+From\s+the\s+U(?:\.?\s*$|\.?\s*S\.?\s+Government\s+Publishing\s+Office\b)",
+    re.IGNORECASE,
+)
 _USCODE_CITATION_SECTION_RE = re.compile(
     rf"\bU\.?\s*S\.?\s*C\.?(?!\w)\s*{_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}([0-9A-Za-z.\-]+)\b",
     re.IGNORECASE,
@@ -3653,6 +3657,9 @@ class LegalModalParser:
                 fallback_rule_override = "uscode_section_heading_coarse_v1"
         if candidate_segment is None:
             return None
+        candidate_segment = self._trim_uscode_gpo_source_boilerplate(
+            candidate_segment
+        )
         candidate_segment = self._expanded_uscode_leading_citation_heading_segment(
             candidate_segment=candidate_segment,
             normalized_text=normalized_text,
@@ -3707,6 +3714,29 @@ class LegalModalParser:
                     else "uscode_heading_without_section_reference_v1"
                 ),
             },
+        )
+
+    def _trim_uscode_gpo_source_boilerplate(
+        self,
+        candidate_segment: LegalSegment,
+    ) -> LegalSegment:
+        """Keep section headings separate from adjacent GPO source boilerplate."""
+        match = _USCODE_GPO_SOURCE_BOILERPLATE_RE.search(candidate_segment.text)
+        if match is None or match.start() <= 0:
+            return candidate_segment
+        trimmed_text = candidate_segment.text[: match.start()].rstrip(
+            " \u2012\u2013\u2014\u2015-"
+        )
+        if not trimmed_text.strip():
+            return candidate_segment
+        leading_offset = len(trimmed_text) - len(trimmed_text.lstrip())
+        trimmed_text = trimmed_text.strip()
+        stripped_segment_start = candidate_segment.end_char - len(candidate_segment.text)
+        return LegalSegment(
+            text=trimmed_text,
+            start_char=stripped_segment_start + leading_offset,
+            end_char=stripped_segment_start + leading_offset + len(trimmed_text),
+            role=candidate_segment.role,
         )
 
     def _expanded_uscode_leading_citation_heading_segment(

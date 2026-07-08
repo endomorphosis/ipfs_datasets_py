@@ -6580,6 +6580,57 @@ def test_codex_work_packet_apply_to_main_keeps_patch_when_baseline_validation_is
     )
 
 
+def test_codex_work_packet_apply_to_main_commits_baseline_red_acceptance(
+    tmp_path,
+) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    readme = Path(packet["worktree_path"]) / "README.md"
+    readme.write_text("test repo\ncommitted baseline red edit\n", encoding="utf-8")
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        commit_mode="commit_applied",
+        validation_commands=(
+            [sys.executable, "-c", "raise SystemExit(1)"],
+        ),
+    )
+
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["main_apply_validation"]["status"] == "failed"
+    assert updated["main_apply_baseline_validation"]["status"] == "failed"
+    assert updated["main_apply_baseline_failure_accepted"] is True
+    assert updated["main_commit"]["status"] == "committed"
+    assert updated["patch_path"] is None
+    assert (repo / "README.md").read_text(encoding="utf-8") == (
+        "test repo\ncommitted baseline red edit\n"
+    )
+    latest_subject = subprocess.run(
+        ["git", "log", "-1", "--pretty=%s"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert latest_subject == "Apply Codex legal IR packet packet-000001"
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    assert status == ""
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
 def test_codex_work_packet_apply_to_main_keeps_unavailable_target_metrics_diagnostic(
     tmp_path,
     monkeypatch,

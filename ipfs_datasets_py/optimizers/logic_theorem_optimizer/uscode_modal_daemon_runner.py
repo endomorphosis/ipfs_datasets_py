@@ -8979,6 +8979,60 @@ def apply_codex_worktree_changes_to_main(
                 if reapply.returncode == 0:
                     updated["main_apply_baseline_failure_accepted"] = True
                     updated["main_apply_validation_gate"] = "inconclusive_baseline_failed"
+                    if str(commit_mode).strip().lower() == "commit_applied":
+                        try:
+                            commit = _commit_codex_main_changes(
+                                source_repo_root,
+                                packet=updated,
+                                target_files=target_files,
+                            )
+                        except (
+                            OSError,
+                            RuntimeError,
+                            subprocess.SubprocessError,
+                            ValueError,
+                        ) as exc:
+                            commit = {
+                                "status": "failed",
+                                "error": str(exc),
+                                "step": "commit",
+                            }
+                        updated["main_commit"] = commit
+                        if commit["status"] != "committed":
+                            subprocess.run(
+                                ["git", "reset", "--", *target_files],
+                                cwd=source_repo_root,
+                                capture_output=True,
+                                text=True,
+                                timeout=60.0,
+                            )
+                            rollback = _run_git_apply_stdin(
+                                source_repo_root,
+                                diff_content,
+                                "-R",
+                            )
+                            updated["main_apply_rollback"] = {
+                                "exit_code": rollback.returncode,
+                                "stderr_tail": (rollback.stderr or "")[-500:],
+                                "stdout_tail": (rollback.stdout or "")[-500:],
+                            }
+                            patch_path = _save_codex_packet_diff_patch(
+                                updated,
+                                diff_content=diff_content,
+                                reason="baseline-accepted-commit-failed",
+                            )
+                            updated["patch_path"] = (
+                                str(patch_path) if patch_path is not None else None
+                            )
+                            updated["patch_status"] = (
+                                "main_apply_baseline_accepted_commit_failed_rolled_back"
+                                if rollback.returncode == 0
+                                else "main_apply_baseline_accepted_commit_failed_rollback_failed"
+                            )
+                            updated["patch_error"] = "commit failed"
+                            updated["main_apply_error"] = updated["patch_error"]
+                            _save_packet_if_possible(updated, packet_path)
+                            return updated
                     updated["main_apply_status"] = "applied"
                     updated["patch_error"] = None
                     updated["patch_path"] = None

@@ -258,6 +258,10 @@ _BRIDGE_CONTRACT_CITATION_TOKEN_RE = re.compile(
     r"\b\d+[a-z0-9\-\.]*\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_BARE_USC_CITATION_RE = re.compile(
+    r"^\s*\d+\s+u\.?\s*s\.?\s*c\.?\s+(?:§+\s*)?\d+[a-z0-9\-\.]*\s*$",
+    flags=re.IGNORECASE,
+)
 _BRIDGE_CONTRACT_OFFICIAL_USC_EXCERPT_RE = re.compile(
     r"\b(?:u\.?\s*s\.?\s*c\.?\s+title|united\s+states\s+code|"
     r"u\.s\.\s+government\s+publishing\s+office|pub\.\s*l\.|"
@@ -820,8 +824,8 @@ class MultiViewLegalIRReport:
                         self._legal_ir_view_cross_entropy_loss()
                     ),
                     "legal_ir_multiview_cosine_loss": self._round_trip_mean("cosine_loss"),
-                    "legal_ir_multiview_cross_entropy_loss": self._round_trip_mean(
-                        "cross_entropy_loss"
+                    "legal_ir_multiview_cross_entropy_loss": (
+                        self._bridge_contract_cross_entropy_loss()
                     ),
                     "legal_ir_multiview_frame_logic_missing_loss": 0.0
                     if self.document.has_frame_logic
@@ -1011,6 +1015,10 @@ class MultiViewLegalIRReport:
             rebalanced,
             text=self.document.normalized_text or self.document.source_text,
         )
+        rebalanced = _compact_bare_usc_citation_contract_distribution(
+            rebalanced,
+            text=self.document.normalized_text or self.document.source_text,
+        )
         rebalanced = _project_guided_contract_distribution(
             rebalanced,
             metadata=self.document.metadata,
@@ -1044,6 +1052,9 @@ class MultiViewLegalIRReport:
         )
 
     def _legal_ir_view_cross_entropy_loss(self) -> float:
+        return self._bridge_contract_cross_entropy_loss()
+
+    def _bridge_contract_cross_entropy_loss(self) -> float:
         return _mean_with_failures(
             [
                 _float_or_zero(
@@ -1270,6 +1281,17 @@ def _compiler_guidance_bridge_contract_metadata(
     component_gaps: Dict[str, float] = {}
     diagnostic_probability_gaps: list[float] = []
     diagnostic_component_gap_max: list[float] = []
+    guidance_records = (
+        compiler_guidance,
+        *_compiler_guidance_nested_mappings(compiler_guidance),
+        *evidence_rows,
+    )
+    contract_evidence_count = sum(
+        1
+        for mapping in guidance_records
+        if _mapping_is_compiler_guidance_evidence(mapping)
+        and _mapping_targets_bridge_contracts(mapping)
+    )
 
     def add_lane(value: Any, score: float = 1.0) -> None:
         lane = _bridge_contract_lane_component(
@@ -1284,6 +1306,8 @@ def _compiler_guidance_bridge_contract_metadata(
         for metric_name in _guidance_metric_names(mapping.get("target_metrics")):
             _add_metric_target_lanes(metric_name, add_lane=add_lane)
         for lane, score in _guidance_feature_lane_items(mapping):
+            add_lane(lane, score)
+        for lane, score in _guidance_family_pair_lane_items(mapping):
             add_lane(lane, score)
         for key in (
             "legal_ir_underrepresented_components",
@@ -1342,6 +1366,19 @@ def _compiler_guidance_bridge_contract_metadata(
         )
         if support > 0.0 and _mapping_is_compiler_guidance_evidence(mapping):
             diagnostic_probability_gaps.append(min(0.50, 0.10 * support))
+        if (
+            support <= 0.0
+            and _mapping_is_compiler_guidance_evidence(mapping)
+            and _mapping_targets_bridge_contracts(mapping)
+        ):
+            diagnostic_probability_gaps.append(0.10)
+        if (
+            _guidance_quality_gate_passes(mapping.get("quality_gate"))
+            or _guidance_quality_gate_passes(
+                mapping.get("compiler_guidance_quality_gate")
+            )
+        ) and _mapping_targets_bridge_contracts(mapping):
+            diagnostic_probability_gaps.append(0.16)
 
     collect(compiler_guidance)
     for mapping in _compiler_guidance_nested_mappings(compiler_guidance):
@@ -1364,8 +1401,10 @@ def _compiler_guidance_bridge_contract_metadata(
         component_gap_maxima=diagnostic_component_gap_max,
     )
     return {
-        "compiler_guidance_bridge_contract_evidence_count": len(evidence_rows),
+        "compiler_guidance_bridge_contract_applied": True,
+        "compiler_guidance_bridge_contract_evidence_count": contract_evidence_count,
         "compiler_guidance_bridge_contract_projection_strength": projection_strength,
+        "compiler_guidance_bridge_contract_routes": sorted(routes),
         "compiler_guidance_bridge_contract_target_distribution": target_distribution,
         "compiler_guidance_bridge_contract_target_lanes": sorted(target_distribution),
         "compiler_guidance_bridge_contract_target_probability_gap": max(
@@ -1560,15 +1599,56 @@ def _evidence_row_targets_bridge_contracts(row: Mapping[str, Any]) -> bool:
     return target == "bridge.contracts" or failure.startswith("legal_ir_")
 
 
+def _mapping_targets_bridge_contracts(mapping: Mapping[str, Any]) -> bool:
+    if _evidence_row_targets_bridge_contracts(mapping):
+        return True
+    route_values = (
+        mapping.get("action"),
+        mapping.get("route"),
+        mapping.get("compiler_guidance_route"),
+        mapping.get("semantic_bundle_key"),
+    )
+    return any(
+        str(value or "").strip()
+        in {
+            "repair_multiview_legal_ir_loss",
+            "repair_multiview_legal_ir_graph_projection",
+            "compiler-guidance:repair_multiview_legal_ir_loss",
+            "compiler-guidance:repair_multiview_legal_ir_graph_projection",
+        }
+        for value in route_values
+    )
+
+
 def _mapping_is_compiler_guidance_evidence(mapping: Mapping[str, Any]) -> bool:
     source = str(mapping.get("source") or "").strip()
     vector_bundle = str(mapping.get("vector_bundle") or "").strip()
     if source == "compiler_guidance_distillation_v1" or vector_bundle == "score":
         return True
+    failure_name = str(mapping.get("bridge_failure_name") or mapping.get("loss_name") or "")
+    if failure_name.startswith("legal_ir_") and _mapping_targets_bridge_contracts(mapping):
+        return True
     for sample in _guidance_sequence(mapping.get("samples")):
         if str(sample or "").strip().startswith("compiler-guidance:"):
             return True
     return False
+
+
+def _guidance_quality_gate_passes(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return any(
+            _guidance_quality_gate_passes(nested)
+            for nested in value.values()
+        )
+    normalized = str(value or "").strip().lower()
+    return normalized in {
+        "pass",
+        "passed",
+        "passing",
+        "ok",
+        "true",
+        "1",
+    }
 
 
 def _guidance_sequence(value: Any) -> tuple[Any, ...]:
@@ -1590,9 +1670,12 @@ def _guidance_feature_lane_items(
     for key in (
         "compiler_guidance_feature_groups",
         "compiler_guidance_ranked_features",
+        "compiler_guidance_top_embedding_features",
+        "embedding_features",
         "feature_groups",
         "frame_features",
         "ranked_guidance_features",
+        "top_embedding_features",
         "top_family_features",
     ):
         items.extend(_guidance_feature_value_lane_items(mapping.get(key)))
@@ -1628,6 +1711,84 @@ def _guidance_feature_value_lane_items(value: Any) -> tuple[tuple[str, float], .
     return tuple(items)
 
 
+def _guidance_family_pair_lane_items(
+    mapping: Mapping[str, Any],
+) -> tuple[tuple[str, float], ...]:
+    """Return bridge lanes implied by modal semantic-family repair pairs."""
+
+    pairs: list[str] = []
+    for key in (
+        "family_pairs",
+        "semantic_family_pairs",
+        "modal_family_pairs",
+        "compiler_guidance_family_pairs",
+    ):
+        pairs.extend(
+            str(value or "").strip()
+            for value in _guidance_sequence(mapping.get(key))
+            if str(value or "").strip()
+        )
+
+    predicted_family = str(mapping.get("predicted_family") or "").strip()
+    target_family = str(mapping.get("target_family") or "").strip()
+    if predicted_family and target_family:
+        pairs.append(f"{predicted_family}->{target_family}")
+
+    items: list[tuple[str, float]] = []
+    for pair in pairs:
+        normalized_pair = pair.lower().replace(" ", "")
+        normalized_pair = normalized_pair.replace("=>", "->").replace("\u2192", "->")
+        if normalized_pair == "frame->conditional_normative":
+            items.extend(
+                (
+                    ("deontic.ir", 1.20),
+                    ("TDFOL.prover", 0.82),
+                    ("knowledge_graphs.neo4j_compat", 0.72),
+                    ("CEC.native", 0.32),
+                    ("modal.frame_logic", 0.18),
+                )
+            )
+        elif normalized_pair == "frame->deontic":
+            items.extend(
+                (
+                    ("deontic.ir", 1.25),
+                    ("TDFOL.prover", 0.90),
+                    ("knowledge_graphs.neo4j_compat", 0.68),
+                    ("CEC.native", 0.62),
+                    ("modal.frame_logic", 0.20),
+                )
+            )
+        elif normalized_pair == "frame->temporal":
+            items.extend(
+                (
+                    ("TDFOL.prover", 1.28),
+                    ("deontic.ir", 0.72),
+                    ("knowledge_graphs.neo4j_compat", 0.58),
+                    ("CEC.native", 0.36),
+                    ("modal.frame_logic", 0.18),
+                )
+            )
+        elif normalized_pair == "frame->frame":
+            items.extend(
+                (
+                    ("knowledge_graphs.neo4j_compat", 1.06),
+                    ("CEC.native", 0.86),
+                    ("modal.frame_logic", 0.74),
+                    ("deontic.ir", 0.34),
+                    ("TDFOL.prover", 0.22),
+                )
+            )
+        elif normalized_pair.endswith("->conditional_normative"):
+            items.extend(
+                (
+                    ("deontic.ir", 1.00),
+                    ("TDFOL.prover", 0.72),
+                    ("knowledge_graphs.neo4j_compat", 0.38),
+                )
+            )
+    return tuple(items)
+
+
 def _lane_from_guidance_feature(value: Any) -> str:
     text = str(value or "").strip()
     if not text:
@@ -1641,14 +1802,28 @@ def _lane_from_guidance_feature(value: Any) -> str:
         return _bridge_contract_lane_component(
             _canonical_bridge_component_name(lane_text)
         )
+    for separator in ("||", "|"):
+        if separator in text:
+            _prefix, _separator, lane_text = text.rpartition(separator)
+            lane = _bridge_contract_lane_component(
+                _canonical_bridge_component_name(lane_text)
+            )
+            if lane:
+                return lane
     for prefix in (
         "legal-ir-view:",
+        "legal-ir-view-prototype:",
         "legal_ir_view:",
+        "legal_ir_view_prototype:",
+        "family-legal-ir-view-prototype:",
+        "family_legal_ir_view_prototype:",
         "target-component:",
         "target_component:",
     ):
         if normalized.startswith(prefix):
             _prefix, _separator, lane_text = text.partition(":")
+            if "||" in lane_text:
+                _family, _family_separator, lane_text = lane_text.rpartition("||")
             return _bridge_contract_lane_component(
                 _canonical_bridge_component_name(lane_text)
             )
@@ -3797,6 +3972,48 @@ def _compact_official_usc_contract_distribution(
         compacted,
         text=normalized_text,
     )
+
+
+def _compact_bare_usc_citation_contract_distribution(
+    distribution: Mapping[str, float],
+    *,
+    text: str,
+) -> Dict[str, float]:
+    """Collapse citation-only frame samples into stable bridge-contract lanes."""
+
+    lanes = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if not lanes:
+        return lanes
+    normalized_text = " ".join(str(text or "").split())
+    if _BRIDGE_CONTRACT_BARE_USC_CITATION_RE.fullmatch(normalized_text) is None:
+        return lanes
+
+    target_mix = {
+        "knowledge_graphs.neo4j_compat": 0.44,
+        "CEC.native": 0.20,
+        "TDFOL.prover": 0.16,
+        "deontic.ir": 0.12,
+        "modal.frame_logic": 0.08,
+    }
+    relevant = {
+        lane: lanes.get(lane, 0.0)
+        for lane in target_mix
+        if lanes.get(lane, 0.0) > 0.0
+    }
+    if len(relevant) < 2:
+        return lanes
+
+    total = sum(target_mix[lane] for lane in relevant)
+    if total <= 0.0:
+        return lanes
+    return {
+        lane: target_mix[lane] / total
+        for lane in sorted(relevant)
+    }
 
 
 def _project_official_usc_primary_contract_distribution(

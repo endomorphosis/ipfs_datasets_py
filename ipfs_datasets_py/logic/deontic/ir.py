@@ -1057,7 +1057,7 @@ _MODAL_CLAUSE_ACTOR_RE = re.compile(
     r"are\s+required\s+to))\b",
 )
 _PASSIVE_CONTRIBUTION_MODAL_ACTOR_RE = re.compile(
-    r"\bcontributed\s+by\s+(?:the\s+)?"
+    r"\b(?:contributed|received)\s+by\s+(?:the\s+)?"
     r"(?P<actor>[A-Z][A-Za-z]*(?:\s+(?:of|for|and|or|the|[A-Z][A-Za-z]*)){0,8})"
     r"\s+.+?\s+(?P<modal>(?i:shall|must|may|is\s+authorized\s+to|"
     r"are\s+authorized\s+to|is\s+required\s+to|are\s+required\s+to))\b",
@@ -1178,7 +1178,7 @@ def _modal_clause_actor_match(
 def _passive_contribution_actor_match(
     element: Mapping[str, Any],
 ) -> Optional[tuple[re.Match[str], str]]:
-    """Return source-grounded actor for clipped contribution permission rows."""
+    """Return source-grounded actor for clipped passive payment/deposit rows."""
 
     for key, text in _modal_clause_source_text_candidates(element):
         matches = list(_PASSIVE_CONTRIBUTION_MODAL_ACTOR_RE.finditer(text))
@@ -1276,6 +1276,8 @@ def _is_clipped_passive_actor(flat_value: str, recovered_actor: str) -> bool:
     actor = _clean_source_label(recovered_actor).lower()
     if not flat or not actor or flat == actor:
         return False
+    if flat.startswith(f"by the {actor}") or flat.startswith(f"by {actor}"):
+        return True
     actor_tail = actor.split()[-1]
     return flat.startswith(f"{actor_tail} ") and len(actor.split()) > 1
 
@@ -1532,6 +1534,13 @@ def _actor_entities(element: Dict[str, Any]) -> List[str]:
     """Return all actor labels, including detail-only actor provenance."""
 
     actors = _actor_texts(element.get("subject"))
+    passive_actor = _passive_contribution_actor_text(element)
+    if (
+        len(actors) == 1
+        and passive_actor
+        and _is_clipped_passive_actor(actors[0], passive_actor)
+    ):
+        return [passive_actor]
     if actors:
         return actors
     actor = (

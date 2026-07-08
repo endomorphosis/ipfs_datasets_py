@@ -1427,9 +1427,19 @@ def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
         return "skipped"
     if status in {"failed", "failure", "invalid", "error"}:
         return "failed"
-    if record.get("syntax_valid") is False or record.get("valid") is False:
+    if (
+        record.get("syntax_valid") is False
+        or record.get("formal_syntax_valid") is False
+        or record.get("valid") is False
+    ):
         return "failed"
-    if status in {"passed", "pass", "valid", "ok"} or record.get("syntax_valid") is True:
+    if (
+        status in {"passed", "pass", "valid", "ok"}
+        or record.get("syntax_valid") is True
+        or record.get("formal_syntax_valid") is True
+        or record.get("proof_ready") is True
+        or record.get("valid") is True
+    ):
         return "passed"
     return "failed"
 

@@ -9,6 +9,7 @@ LOG_DIR="${ROOT_DIR}/workspace/test-logs"
 PIPELINE_LOG="${LOG_DIR}/${BASE_RUN_ID}.pipeline.log"
 PID_FILE="${LOG_DIR}/${BASE_RUN_ID}.pid"
 ARGS_SNAPSHOT="${LOG_DIR}/${BASE_RUN_ID}.args"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 STOP_EXISTING="${STOP_EXISTING:-1}"
 START_SUPERVISOR="${START_SUPERVISOR:-1}"
@@ -63,7 +64,7 @@ if [[ "${STOP_EXISTING}" == "1" ]]; then
 fi
 
 CMD=(
-  python3
+  "${PYTHON_BIN}"
   -m
   ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner
   --run-id "${BASE_RUN_ID}"
