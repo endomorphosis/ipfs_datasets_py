@@ -178,7 +178,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-067 Define Xaman XRPL security claims and assumptions
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: wallet
