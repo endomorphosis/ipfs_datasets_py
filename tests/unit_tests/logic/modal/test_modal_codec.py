@@ -39096,6 +39096,70 @@ def test_decompiler_uses_guided_family_pairs_in_typed_reconstruction() -> None:
     assert "event calculus native legal events" in structural_text
 
 
+def test_decompiler_emits_compact_reconstruction_profiles_for_packet_2064_pairs() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "31 U.S.C. 735. Relationship to other law. Except as provided in "
+            "this section, this subchapter shall not affect any other provision "
+            "of law and the Comptroller General shall submit reports to Congress."
+        ),
+        predicate="relationship_to_other_law_reports",
+        conditions=["Except as provided in this section"],
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "bundle": {
+                "family_pairs": [
+                    "frame->conditional_normative",
+                    "frame->deontic",
+                    "frame->doxastic",
+                    "frame->temporal",
+                ],
+            },
+            "target_view": "CEC.native",
+            "predicted_view": "deontic.ir",
+            "legal_ir_underrepresented_components": [
+                "knowledge_graphs.neo4j_compat",
+                "CEC.native",
+                "TDFOL.prover",
+            ],
+        }
+    ]
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+    profiles = slot_texts["typed-decompiler-reconstruction-semantic-profile"]
+
+    assert "frame->doxastic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert any(
+        value.startswith("frame->conditional_normative|view:CEC.native|")
+        and "uscode_law_relationship_surface" in value
+        and "predicate:relationship" in value
+        for value in profiles
+    )
+    assert any(
+        value.startswith("frame->deontic|view:deontic.ir|")
+        and "uscode_report_to_congress_surface" in value
+        for value in profiles
+    )
+    assert any(
+        value.startswith("frame->doxastic|view:knowledge_graphs.neo4j_compat|")
+        for value in profiles
+    )
+    assert (
+        "conditional_normative||slot:typed-decompiler-reconstruction-semantic-"
+        "profile:frame->conditional_normative:uscode_catalog_record_"
+        "uscode_law_relationship_surface:relationship||CEC.native"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+
+
 def test_decompiler_infers_within_condition_for_deontic_conditional_reconstruction() -> None:
     document = _single_formula_document(
         family="deontic",

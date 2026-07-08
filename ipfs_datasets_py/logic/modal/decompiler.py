@@ -10056,6 +10056,20 @@ def _typed_decompiler_target_reconstruction_slots(
                 pair=pair,
             )
         )
+        slots.extend(
+            _typed_decompiler_reconstruction_profile_slots(
+                document=document,
+                formula=formula,
+                source_family=source_family,
+                target_family=target,
+                pair=pair,
+                force=force,
+                polarity=polarity,
+                predicate_key=predicate_key,
+                semantic_predicate_key=semantic_predicate_key,
+                semantic_atoms=semantic_atoms,
+            )
+        )
         if semantic_predicate_key and semantic_predicate_key != predicate_key:
             slots.extend(
                 (
@@ -14385,16 +14399,124 @@ def _typed_decompiler_surface_profile_slots(
     return _unique_slot_values(slots)
 
 
+def _typed_decompiler_reconstruction_profile_slots(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    source_family: str,
+    target_family: str,
+    pair: str,
+    force: str,
+    polarity: str,
+    predicate_key: str,
+    semantic_predicate_key: str,
+    semantic_atoms: Sequence[str],
+) -> List[Tuple[str, str]]:
+    """Bind typed reconstruction slots to one compact LegalIR surface profile."""
+    source = _clean_text(source_family).lower()
+    target = _clean_text(target_family).lower()
+    if not source or not target or not pair:
+        return []
+
+    source_profile = _typed_decompiler_source_surface_profile(document)
+    target_profiles = _typed_decompiler_target_surface_profiles(
+        document=document,
+        formula=formula,
+    )
+    if not source_profile and not target_profiles:
+        return []
+
+    views = _typed_decompiler_family_pair_legal_ir_views(source, target)
+    if not views:
+        views = _default_force_view_family_pair_views(
+            source_family=source,
+            target_family=target,
+        )
+    if not views:
+        return []
+
+    predicate = semantic_predicate_key or predicate_key or "unnamed"
+    force_value = _slot_safe_family_pair_key(force) or "unspecified"
+    polarity_value = _slot_safe_family_pair_key(polarity) or "positive_scope"
+    surface_values = target_profiles or ["typed_ir_surface"]
+    if source_profile:
+        surface_values = [
+            f"{source_profile}->{target_profile}"
+            for target_profile in surface_values
+        ]
+
+    slots: List[Tuple[str, str]] = []
+    atom_values = [
+        _slot_safe_family_pair_key(atom)
+        for atom in semantic_atoms[:4]
+        if _slot_safe_family_pair_key(atom)
+    ]
+    for surface in surface_values:
+        surface_key = _slot_safe_family_pair_key(surface)
+        if not surface_key:
+            continue
+        for view in views:
+            profile = (
+                f"{pair}|view:{view}|surface:{surface_key}|"
+                f"force:{force_value}:{polarity_value}|predicate:{predicate}"
+            )
+            slots.extend(
+                (
+                    ("typed-decompiler-reconstruction-semantic-profile", profile),
+                    (
+                        "semantic_slot_legal_ir_view_prototype",
+                        (
+                            "slot:typed-decompiler-reconstruction-semantic-profile:"
+                            f"{pair}:{surface_key}:{predicate}||{view}"
+                        ),
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{source}||slot:typed-decompiler-reconstruction-"
+                            f"semantic-profile:{pair}:{surface_key}:{predicate}||{view}"
+                        ),
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        (
+                            f"{target}||slot:typed-decompiler-reconstruction-"
+                            f"semantic-profile:{pair}:{surface_key}:{predicate}||{view}"
+                        ),
+                    ),
+                )
+            )
+            for atom in atom_values:
+                slots.extend(
+                    (
+                        (
+                            "typed-decompiler-reconstruction-semantic-profile-atom",
+                            f"{profile}|atom:{atom}",
+                        ),
+                        (
+                            "family_semantic_slot_legal_ir_view_prototype",
+                            (
+                                f"{target}||slot:typed-decompiler-reconstruction-"
+                                f"semantic-profile-atom:{pair}:{atom}||{view}"
+                            ),
+                        ),
+                    )
+                )
+    return _unique_slot_values(slots)
+
+
 def _typed_decompiler_source_surface_profile(document: ModalIRDocument) -> str:
     """Classify source document surfaces that recur in U.S.C. samples."""
     source = _clean_text(document.source).lower()
     source_id = _clean_text(document.document_id).lower()
     text = _clean_text(document.normalized_text)
+    citation = _clean_text(document.metadata.get("citation") or "")
     if not text:
         return ""
     if (
         source == "us_code"
         or source_id.startswith("us-code-")
+        or re.search(r"\bU\.?\s*S\.?\s*C\.?\b", citation, flags=re.IGNORECASE)
         or re.search(r"\bU\.?\s*S\.?\s*C\.?\b", text, flags=re.IGNORECASE)
         or re.search(r"\bUnited States Code\b", text, flags=re.IGNORECASE)
     ):
@@ -14432,6 +14554,16 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_tax_treatment_surface")
     if re.search(r"\b(?:audit(?:s)?\s+by\s+comptroller\s+general|government\s+accountability\s+office)\b", lowered):
         add("uscode_audit_oversight_surface")
+    if re.search(r"\b(?:reports?\s+to\s+congress|submit\s+reports?|transmit\s+.+\breport|report\s+on\s+use)\b", lowered):
+        add("uscode_report_to_congress_surface")
+    if re.search(r"\b(?:relationship\s+to\s+other\s+law|shall\s+not\s+affect|not\s+affect\s+any\s+other\s+provision)\b", lowered):
+        add("uscode_law_relationship_surface")
+    if re.search(r"\b(?:general\s+eligibility|eligibility\s+requirements?|may\s+be\s+issued\s+under\s+this\s+chapter\s+only\s+if)\b", lowered):
+        add("uscode_eligibility_condition_surface")
+    if re.search(r"\b(?:amendments?|struck\s+out|inserted|substituted|redesignated|reclassified)\b", lowered):
+        add("uscode_amendment_operation_surface")
+    if re.search(r"\b(?:receiving\s+loan\s+from\s+court\s+officer|court\s+officer|receiver|receivership)\b", lowered):
+        add("uscode_court_officer_receivership_surface")
     if re.search(r"\b(?:independent\s+living|vocational\s+rehabilitation|rehabilitation\s+services)\b", lowered):
         add("uscode_rehabilitation_service_surface")
     if re.search(r"\b(?:patents?\s+for\s+designs?|ornamental\s+design)\b", lowered):
