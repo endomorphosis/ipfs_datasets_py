@@ -2393,6 +2393,66 @@ def test_modal_decompiler_reconstructs_public_document_allotment_semantics() -> 
     }.issubset(set(slot_texts["typed_ir_family_pair_reconstruction_support"]))
 
 
+def test_modal_decompiler_reconstructs_land_title_frame_semantics() -> None:
+    source_text = (
+        "Sec. 5105 - Title to lands. Title to lands acquired pursuant to this "
+        "chapter shall be taken in the name of the United States in trust for "
+        "the Indian tribe."
+    )
+    document = ModalIRDocument(
+        document_id="packet-002263-land-title-frame",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-002263-land-title-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="title_to_lands",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-25-5105-e22c1c65e0a1178b",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="25 U.S.C. 5105",
+                ),
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert "land_title_authority" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+    }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-pair"]))
+    assert (
+        "legal frame source reconstructs conditional obligation"
+        in slot_texts["typed_ir_family_pair_reconstruction_support"]
+    )
+    for view in {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+    }:
+        assert (
+            f"frame||slot:source-semantic-atom:land_title_authority||{view}"
+            in legal_ir_slots
+        )
+
+
 def test_modal_decompiler_reconstructs_repealed_range_status_semantics() -> None:
     source_text = (
         "Secs. 262 to 297 - Repealed. Dec. 17, 1943, ch. 344, §1, "
@@ -2480,4 +2540,223 @@ def test_modal_decompiler_anchors_frame_epistemic_residuals_to_knowledge_graph_v
     assert (
         "frame->epistemic||knowledge_graphs.neo4j_compat"
         in set(slot_texts["typed-decompiler-target-reconstruction-view"])
+    )
+
+
+def test_modal_decompiler_binds_frame_force_slots_to_deontic_conditional_views() -> None:
+    source_text = (
+        "Subject to section 1428, the Board shall examine State laws not later "
+        "than 2027 except as otherwise provided in subsection (b)."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000292-frame-force-conditional-deontic",
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000292-frame-force",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="ontology_frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="board_examine_state_laws",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="us-code-12-1428-98c61df0d8acddd7",
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="12 U.S.C. 1428",
+                ),
+                conditions=["subject to section 1428", "not later than 2027"],
+                exceptions=["except as otherwise provided in subsection (b)"],
+                metadata={"cue": "shall"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+    family_pairs = set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+    force_views = set(
+        slot_texts["typed-decompiler-source-predicate-force-view-family-pair"]
+    )
+    legal_ir_slots = set(slot_texts["family_semantic_slot_legal_ir_view_prototype"])
+
+    assert {"frame->deontic", "frame->conditional_normative"}.issubset(
+        family_pairs
+    )
+    assert any(
+        value.endswith("||deontic.ir||frame->deontic")
+        and "obligation:mandatory" in value
+        for value in force_views
+    )
+    assert any(
+        value.endswith("||deontic.ir||frame->conditional_normative")
+        and "obligation:mandatory" in value
+        for value in force_views
+    )
+    assert (
+        "conditional_normative||slot:typed-decompiler-source-predicate-force-pair:"
+        "frame:board|typed-decompiler-force-polarity:obligation:mandatory||deontic.ir"
+        in legal_ir_slots
+    )
+    assert "conditional_normative" in set(slot_texts["family_exception_present"])
+def _packet_000447_document(
+    *,
+    source_id: str,
+    citation: str,
+    source_text: str,
+    family: str,
+    symbol: str,
+    predicate: str,
+    cue: str,
+    conditions: list[str] | None = None,
+    exceptions: list[str] | None = None,
+    metadata: dict[str, str] | None = None,
+) -> ModalIRDocument:
+    formula_metadata = {"cue": cue}
+    if metadata:
+        formula_metadata.update(metadata)
+    formula = ModalIRFormula(
+        formula_id=f"packet-000447-{predicate}",
+        operator=ModalIROperator(
+            family=family,
+            system=family,
+            symbol=symbol,
+            label=family,
+        ),
+        predicate=ModalIRPredicate(name=predicate, role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation=citation,
+        ),
+        conditions=conditions or [],
+        exceptions=exceptions or [],
+        metadata=formula_metadata,
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_modal_decompiler_reconstructs_packet_000447_frame_deontic_samples() -> None:
+    seashore = decode_modal_ir_document(
+        _packet_000447_document(
+            source_id="us-code-16-459i-1-441224bf1e72b168",
+            citation="16 U.S.C. 459i-1",
+            source_text=(
+                "National seashore recreational areas. The Secretary may "
+                "acquire lands and transfer Federal property for "
+                "administrative jurisdiction of the seashore."
+            ),
+            family="frame",
+            symbol="Frame",
+            predicate="secretary_acquire_transfer_national_seashore_land",
+            cue="may",
+        )
+    )
+    repealed = decode_modal_ir_document(
+        _packet_000447_document(
+            source_id="us-code-42-7156a.-2a04b5b7c42f2880",
+            citation="42 U.S.C. 7156a",
+            source_text=(
+                "Sec. 7156a. Repealed. Section related to assignment of "
+                "naval officers to key management positions."
+            ),
+            family="frame",
+            symbol="Frame",
+            predicate="repealed_naval_officer_management_assignment",
+            cue="repealed",
+            metadata={"status_keyword": "repealed"},
+        )
+    )
+    air_transport = decode_modal_ir_document(
+        _packet_000447_document(
+            source_id="us-code-49-41702.-fba028d6ff1426eb",
+            citation="49 U.S.C. 41702",
+            source_text=(
+                "An air carrier shall provide safe and adequate interstate "
+                "air transportation except as provided by the Secretary."
+            ),
+            family="conditional_normative",
+            symbol="IfO",
+            predicate="air_carrier_safe_adequate_transportation",
+            cue="shall",
+            exceptions=["except as provided by the Secretary"],
+        )
+    )
+    workforce = decode_modal_ir_document(
+        _packet_000447_document(
+            source_id="us-code-29-3193a-b946ff283567ed1c",
+            citation="29 U.S.C. 3193a",
+            source_text=(
+                "The State shall use the performance accountability system "
+                "for workforce development and State performance reports."
+            ),
+            family="frame",
+            symbol="Frame",
+            predicate="state_workforce_performance_accountability_reports",
+            cue="shall",
+        )
+    )
+
+    seashore_slots = decoded_modal_phrase_slot_text_map(seashore)
+    repealed_slots = decoded_modal_phrase_slot_text_map(repealed)
+    air_slots = decoded_modal_phrase_slot_text_map(air_transport)
+    workforce_slots = decoded_modal_phrase_slot_text_map(workforce)
+
+    assert "national_seashore_recreation_area" in set(
+        seashore_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->deontic" in set(
+        seashore_slots["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "legal frame reconstructs deontic duty" in set(
+        seashore_slots["typed_ir_family_pair_semantic_bridge"]
+    )
+    assert {"deontic.ir", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(seashore_slots["legal_ir_view_prototype"])
+    )
+
+    assert "repealed" in set(repealed_slots["typed-decompiler-source-semantic-atom"])
+    assert "naval_officer_management_assignment" in set(
+        repealed_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->frame" in set(
+        repealed_slots["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "legal frame preserves ontology frame" in set(
+        repealed_slots["typed_ir_family_pair_semantic_bridge"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in set(
+        repealed_slots["legal_ir_view_prototype"]
+    )
+
+    assert "air_transportation_service_duty" in set(
+        air_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "conditional_normative->deontic" in set(
+        air_slots["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "conditional legal rule reconstructs deontic obligation" in set(
+        air_slots["typed_ir_family_pair_semantic_bridge"]
+    )
+    assert "deontic.ir" in set(air_slots["legal_ir_view_prototype"])
+
+    assert "workforce_performance_accountability" in set(
+        workforce_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "workforce_performance_reporting" in set(
+        workforce_slots["typed-decompiler-source-semantic-atom"]
+    )
+    assert "frame->deontic" in set(
+        workforce_slots["typed-decompiler-target-reconstruction-pair"]
     )

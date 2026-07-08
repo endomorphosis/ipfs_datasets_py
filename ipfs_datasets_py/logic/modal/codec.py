@@ -12057,11 +12057,13 @@ def _structural_decoded_text(
     )
     typed_ir_values = [
         *slot_text_map.get("typed_ir_reconstruction", ()),
+        *slot_text_map.get("typed_ir_semantic_reconstruction_clause", ()),
         *slot_text_map.get("typed_ir_source_semantic_sentence", ()),
         *slot_text_map.get("typed_ir_clause_role_support", ()),
         *slot_text_map.get("typed_ir_semantic_support", ()),
         *slot_text_map.get("typed_ir_compact_semantic_support", ()),
         *slot_text_map.get("typed_ir_family_pair_semantic_reconstruction", ()),
+        *slot_text_map.get("typed_ir_policy_view_semantic_reconstruction", ()),
         *slot_text_map.get("typed_ir_semantic_summary", ()),
         *slot_text_map.get("typed_ir_legal_view_support", ()),
         *slot_text_map.get("typed_ir_cross_family_semantic_support", ()),

@@ -7522,6 +7522,212 @@ def test_decode_modal_ir_document_routes_air_transportation_frame_to_deontic() -
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
 
 
+def _program_activity_reconstruction_document() -> ModalIRDocument:
+    source_id = "us-code-42-19059-program-activity-91665c522bc27130"
+    source_text = (
+        "In accordance with section 9303 of title 15, the Director shall "
+        "carry out activities in support of sustainable chemistry, including "
+        "establishing a program to make awards on a competitive basis."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-program-activity-reconstruction",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="carry_out_sustainable_chemistry_program"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 19059",
+        ),
+        conditions=["in accordance with section 9303 of title 15"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_program_activity_slots() -> None:
+    decoded = decode_modal_ir_document(_program_activity_reconstruction_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "program_activity_implementation" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "sustainable_chemistry_activity_support" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "competitive_award_program" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "CEC.native" in slot_map["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _education_assistance_program_document() -> ModalIRDocument:
+    source_id = "us-code-20-1132-3-education-assistance-80f3f53cc302786f"
+    source_text = (
+        "Higher education resources and student assistance. International "
+        "education programs shall include an educational assistance program."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-education-assistance-reconstruction",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="international_education_program"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="20 U.S.C. 1132-3",
+        ),
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_education_program_views() -> None:
+    decoded = decode_modal_ir_document(_education_assistance_program_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "higher_education_student_assistance" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "international_education_program" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "education_assistance_benefit" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _administration_enforcement_reconstruction_document() -> ModalIRDocument:
+    source_id = "us-code-19-541-admin-enforcement-c6c57595b336e4ef"
+    source_text = (
+        "Customs duties. Tariff and related provisions. Customs "
+        "administration enforcement provisions require customs officers "
+        "to comply with the regulations."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-admin-enforcement-reconstruction",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="customs_enforcement_compliance"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="19 U.S.C. 541",
+        ),
+        metadata={"cue": "require"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_administration_enforcement_slots() -> None:
+    decoded = decode_modal_ir_document(_administration_enforcement_reconstruction_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "customs_administration" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "customs_enforcement_provision" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "tariff_administration" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "deontic->deontic" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_map["legal_ir_view_prototype"]
+
+
+def _effective_date_transition_document() -> ModalIRDocument:
+    source_id = "us-code-26-7810-effective-date-4903dbc02721b3eb"
+    source_text = (
+        "Procedure and administration. Application of internal revenue laws "
+        "shall take effect on the effective date."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-effective-date-reconstruction",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="apply_internal_revenue_laws"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="26 U.S.C. 7810",
+        ),
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_effective_date_tax_slots() -> None:
+    decoded = decode_modal_ir_document(_effective_date_transition_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "internal_revenue_administration" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "tax_procedure_administration" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "effective_date_transition" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "deontic->temporal" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
 def _packet_000158_document(
     *,
     source_id: str,
@@ -7622,3 +7828,125 @@ def test_decode_modal_ir_document_reconstructs_packet_000158_temporal_budget_fra
     ]
     assert "temporal->frame" in slot_map["typed_ir_cross_family_semantic_support"]
     assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]
+
+
+def _packet_005202_document(
+    *,
+    source_id: str,
+    citation: str,
+    source_text: str,
+    family: str = "deontic",
+    symbol: str = "O",
+    label: str = "obligatory",
+    predicate: str = "report_duty",
+    cue: str = "shall",
+    conditions: list[str] | None = None,
+) -> ModalIRDocument:
+    formula = ModalIRFormula(
+        formula_id=f"f-{predicate}",
+        operator=ModalIROperator(
+            family=family,
+            system=family,
+            symbol=symbol,
+            label=label,
+        ),
+        predicate=ModalIRPredicate(name=predicate, role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation=citation,
+        ),
+        conditions=conditions or [],
+        metadata={"cue": cue},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_packet_005202_studies_reports_to_frame_and_temporal() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_005202_document(
+            source_id="us-code-31-6508-8d4680d70c29f16d",
+            citation="31 U.S.C. 6508",
+            source_text=(
+                "Studies and reports. The Secretary may make studies and "
+                "reports under this chapter on intergovernmental cooperation."
+            ),
+            symbol="P",
+            label="permitted",
+            predicate="make_studies_and_reports",
+            cue="may",
+            conditions=["under this chapter"],
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "study_report_duty" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->temporal" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]
+
+
+def test_decode_modal_ir_document_reconstructs_packet_005202_uranium_inventory_deadline_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_005202_document(
+            source_id="us-code-42-2296b-ff510ff401bf04bc",
+            citation="42 U.S.C. 2296b-5",
+            source_text=(
+                "Uranium inventory study. Within 1 year after October 24, "
+                "1992, the Secretary shall submit to the Congress a study "
+                "and report that includes a comprehensive inventory of all "
+                "Government owned uranium or uranium equivalents."
+            ),
+            predicate="submit_uranium_inventory_study",
+            conditions=["within 1 year after October 24, 1992"],
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "uranium_inventory_study" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "inventory_study_report" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->temporal" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
+def test_decode_modal_ir_document_surfaces_packet_005202_editorial_status_profiles() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_005202_document(
+            source_id="us-code-50-4622-9528cfa09faafb9f",
+            citation="50 U.S.C. 4622",
+            source_text=(
+                "Editorial Notes Codification. Section 4622 was editorially "
+                "reclassified as section 3806 of this title."
+            ),
+            predicate="editorial_reclassification",
+            cue="reclassified",
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "reclassified" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert (
+        "editorial_status_surface:deontic->temporal"
+        in slot_map["typed-decompiler-target-reconstruction-surface-profile"]
+    )
+    assert (
+        "editorial_target_reference:deontic->temporal"
+        in slot_map["typed-decompiler-target-reconstruction-surface-profile"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]

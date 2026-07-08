@@ -64,6 +64,7 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "provided , that",
     "does not affect",
     "notwithstanding",
+    "shall be considered as amounts received in exchange",
     "for purposes of",
     "for the purposes of",
     "with respect to",
@@ -1853,6 +1854,21 @@ class SpaCyModalIRCompiler:
                     ],
                 )
 
+            def _marker_formulas(start_index: int) -> List[ModalIRFormula]:
+                return self._fallback_parser.uscode_section_marker_coverage_formulas(
+                    document_id=encoding.document_id,
+                    text=encoding.normalized_text,
+                    citation=encoding.citation,
+                    start_index=start_index,
+                    covered_spans=[
+                        (
+                            int(formula.provenance.start_char),
+                            int(formula.provenance.end_char),
+                        )
+                        for formula in formulas
+                    ],
+                )
+
             def _subsection_heading_formulas(start_index: int) -> List[ModalIRFormula]:
                 return self._fallback_parser.uscode_subsection_heading_coverage_formulas(
                     document_id=encoding.document_id,
@@ -1917,6 +1933,7 @@ class SpaCyModalIRCompiler:
                             fallback_formula = reindexed_fallback
                     formulas.extend(_prefix_formulas(len(formulas) + 2))
                     formulas.extend(_subsection_heading_formulas(len(formulas) + 2))
+                    formulas.extend(_marker_formulas(len(formulas) + 2))
                     formulas.extend(_catchline_formulas(len(formulas) + 2))
                     formulas.append(fallback_formula)
                 else:
@@ -1929,6 +1946,7 @@ class SpaCyModalIRCompiler:
                         )
                     )
                     formulas.extend(_prefix_formulas(len(formulas) + 1))
+                    formulas.extend(_marker_formulas(len(formulas) + 1))
                     formulas.extend(_catchline_formulas(len(formulas) + 1))
             else:
                 segments = self._fallback_parser.segment(encoding.normalized_text)
@@ -1971,6 +1989,7 @@ class SpaCyModalIRCompiler:
                     )
                     formulas.extend(_prefix_formulas(len(formulas) + 2))
                     formulas.extend(_subsection_heading_formulas(len(formulas) + 2))
+                    formulas.extend(_marker_formulas(len(formulas) + 2))
                     formulas.extend(_catchline_formulas(len(formulas) + 2))
                     formulas.append(residual_fallback_formula)
                 else:
@@ -1985,6 +2004,7 @@ class SpaCyModalIRCompiler:
                     )
                     formulas.extend(_prefix_formulas(len(formulas) + 1))
                     formulas.extend(_subsection_heading_formulas(len(formulas) + 1))
+                    formulas.extend(_marker_formulas(len(formulas) + 1))
                     formulas.extend(_catchline_formulas(len(formulas) + 1))
         return ModalIRDocument(
             document_id=encoding.document_id,
@@ -5301,6 +5321,9 @@ def _apply_refined_modal_family_cue_pair_balance(
         and not has_conditional_clause_scope
         and not has_conditional_scope_token
     )
+    has_conditional_exchange_classification_scope_phrase = bool(
+        signals.get("has_conditional_exchange_classification_scope_phrase")
+    )
 
     # frame -> deontic / temporal / conditional_normative:
     # U.S.C. headers and statutory cross-references often contribute generic
@@ -5521,6 +5544,29 @@ def _apply_refined_modal_family_cue_pair_balance(
         ):
             counts[temporal_family] = max(temporal_count, frame_count + 0.01)
             temporal_count = float(counts.get(temporal_family, 0.0))
+
+    # frame -> conditional_normative:
+    # Definition sections often carry ontology-like frame language, while the
+    # operative force is scoped by "for purposes of", "when used in", or similar
+    # proviso cues. Let explicit definition-scope conditionals contest the frame
+    # family instead of being suppressed as structural metadata.
+    if (
+        frame_count >= conditional_count
+        and frame_count > 0.0
+        and has_definition_scope
+        and has_structural_conditional_scope
+        and (
+            has_explicit_conditional_scope
+            or has_conditional_scope_phrase
+            or has_purpose_scope_phrase
+        )
+        and not has_editorial_frame_context
+    ):
+        counts[conditional_family] = max(
+            conditional_count,
+            frame_count + 0.01,
+        )
+        conditional_count = float(counts.get(conditional_family, 0.0))
 
     # temporal -> conditional_normative / deontic:
     # Fiscal-year openers are temporal scope, but in statutory authority
@@ -6110,6 +6156,22 @@ def _apply_refined_modal_family_cue_pair_balance(
         counts[conditional_family] = max(
             conditional_count,
             conditional_floor,
+        )
+        conditional_count = float(counts.get(conditional_family, 0.0))
+
+    # deontic -> conditional_normative:
+    # Tax exchange-classification rules use "shall be considered" as a deeming
+    # operator over a transaction condition, not as an actor obligation.
+    if (
+        deontic_count >= conditional_count
+        and has_conditional_exchange_classification_scope_phrase
+        and has_deontic_cue
+        and conditional_count > 0.0
+        and not has_temporal_scope
+    ):
+        counts[conditional_family] = max(
+            conditional_count,
+            deontic_count + 0.01,
         )
         conditional_count = float(counts.get(conditional_family, 0.0))
 
@@ -7586,6 +7648,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     conditional_scope_phrase = _contains_scope_phrase(
         normalized_text, _CONDITIONAL_SCOPE_PHRASES
     )
+    conditional_exchange_classification_scope_phrase = (
+        "shall be considered as amounts received in exchange" in normalized_text
+    )
     purpose_scope_phrase = _contains_scope_phrase(
         normalized_text, _PURPOSE_SCOPE_PHRASES
     )
@@ -7766,6 +7831,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_condition_clause": condition_clauses,
         "has_conditional_scope_token": conditional_scope_token,
         "has_conditional_scope_phrase": conditional_scope_phrase,
+        "has_conditional_exchange_classification_scope_phrase": (
+            conditional_exchange_classification_scope_phrase
+        ),
         "has_purpose_scope_phrase": purpose_scope_phrase,
         "has_statutory_scope_reference": statutory_scope_reference,
         "has_exception_clause": exception_clauses,
