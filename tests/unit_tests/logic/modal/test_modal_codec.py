@@ -43882,6 +43882,76 @@ def test_decompiler_reconstructs_packet_280_authority_and_program_slots() -> Non
         "typed-decompiler-target-reconstruction-pair"
     ]
     assert "CEC.native" in developing_slots["legal_ir_view_prototype"]
+
+
+def test_decompiler_reconstructs_packet_186_research_and_administration_slots() -> None:
+    education_research = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Education Sciences Reform. The Director shall conduct education "
+            "research, statistics, evaluation, information, and dissemination "
+            "and submit reports to Congress."
+        ),
+        predicate="director_education_research_statistics_dissemination",
+    )
+    noaa = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "National Oceanic and Atmospheric Administration general "
+            "provisions. The Administrator may administer the program and "
+            "publish information and dissemination materials."
+        ),
+        predicate="noaa_administration_information_dissemination",
+    )
+
+    cases = [
+        (
+            education_research,
+            {
+                "education_sciences_reform",
+                "education_research_statistics_dissemination",
+                "education_research_program",
+            },
+            "education research statistics dissemination",
+        ),
+        (
+            noaa,
+            {
+                "noaa_administration",
+                "information_dissemination_program",
+                "program_administration",
+            },
+            "noaa administration",
+        ),
+    ]
+
+    for document, expected_atoms, structural_fragment in cases:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert {
+            "frame->conditional_normative",
+            "frame->deontic",
+            "frame->temporal",
+        }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-pair"]))
+        assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert structural_fragment in structural_text
+
+
 def test_decompiler_reconstructs_packet_4166_modal_ir_semantic_slots() -> None:
     energy_study = _single_formula_document(
         family="deontic",

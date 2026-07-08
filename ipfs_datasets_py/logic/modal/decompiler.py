@@ -574,6 +574,29 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("alternative fuels in motor vehicles", "alternative_fuel_vehicle_program"),
     ("benefits and costs", "benefit_cost_information"),
     ("environmental performance", "environmental_performance_disclosure"),
+    ("education sciences reform", "education_sciences_reform"),
+    (
+        "education research, statistics, evaluation, information, and dissemination",
+        "education_research_statistics_dissemination",
+    ),
+    (
+        "education research statistics evaluation information and dissemination",
+        "education_research_statistics_dissemination",
+    ),
+    ("education research and statistics", "education_research_statistics"),
+    (
+        "research, statistics, evaluation, information, and dissemination",
+        "education_research_statistics_dissemination",
+    ),
+    (
+        "research statistics evaluation information and dissemination",
+        "education_research_statistics_dissemination",
+    ),
+    ("education research", "education_research_program"),
+    ("education statistics", "education_statistics_dissemination"),
+    ("information and dissemination", "information_dissemination_program"),
+    ("national oceanic and atmospheric administration", "noaa_administration"),
+    ("national oceanic atmospheric administration", "noaa_administration"),
     ("use of funds", "fund_use_authority"),
     ("amounts provided under a grant or contract", "grant_contract_fund_use"),
     ("grant or contract awarded", "grant_contract_award"),
@@ -997,6 +1020,17 @@ _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS = frozenset(
 _TEMPORAL_STATUTORY_RECONSTRUCTION_ATOMS = frozenset(
     {
         "effective_date_transition",
+    }
+)
+_RESEARCH_ADMINISTRATION_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "education_research_program",
+        "education_research_statistics",
+        "education_research_statistics_dissemination",
+        "education_sciences_reform",
+        "education_statistics_dissemination",
+        "information_dissemination_program",
+        "noaa_administration",
     }
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
@@ -11198,6 +11232,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("CEC.native")
         add("modal.frame_logic")
+    if normalized_atom in _RESEARCH_ADMINISTRATION_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
 
     if normalized_atom in {
         "administration_enforcement",
@@ -12247,6 +12287,12 @@ def _typed_decompiler_semantic_atom_target_families(
         if normalized_atom in _TEMPORAL_STATUTORY_RECONSTRUCTION_ATOMS:
             add("temporal")
             add("frame")
+        if normalized_atom in _RESEARCH_ADMINISTRATION_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+            add("temporal")
+            add("epistemic")
         if normalized_atom in {
             "receiver_appointment",
             "receiver_duty",
