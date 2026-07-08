@@ -866,7 +866,12 @@ def _is_frame_family_feature_list_key(key_text: str) -> bool:
         "_",
         str(key_text or "").strip().lower(),
     ).strip("_")
-    return normalized_key in {"frame_features", "top_family_features"}
+    return normalized_key in {
+        "family_features",
+        "frame_features",
+        "modal_family_features",
+        "top_family_features",
+    }
 
 
 def _collect_frame_family_feature_list_candidates(
