@@ -3408,6 +3408,8 @@ def _typed_ir_reconstruction_phrases(
             polarity=polarity,
             predicate_text=predicate_text,
             roles=roles,
+            condition_values=condition_values,
+            exception_values=exception_values,
             semantic_atoms=semantic_atoms,
             legal_ir_view_support=legal_ir_view_support,
             spans=spans,
@@ -3501,11 +3503,13 @@ def _typed_ir_semantic_bridge_phrases(
     polarity: str,
     predicate_text: str,
     roles: Mapping[str, str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
     semantic_atoms: Sequence[str],
     legal_ir_view_support: Sequence[str],
     spans: List[List[int]],
     provenance_only: bool,
-    max_tokens: int = 44,
+    max_tokens: int = 56,
 ) -> List[DecodedModalPhrase]:
     """Emit compact non-provenance bridge text for deontic/frame residuals."""
     normalized_family = _clean_text(family).lower()
@@ -3538,10 +3542,19 @@ def _typed_ir_semantic_bridge_phrases(
         }
     ]
     role_values = [
-        roles.get(role, "")
+        f"{role} {_humanize_typed_ir_value(roles.get(role, ''))}"
         for role in ("subject", "action", "object", "temporal")
         if roles.get(role, "")
     ]
+    scope_values: List[str] = []
+    for value in condition_values[:2]:
+        cleaned = _humanize_typed_ir_value(value)
+        if cleaned:
+            scope_values.append(f"condition {cleaned}")
+    for value in exception_values[:2]:
+        cleaned = _humanize_typed_ir_value(value)
+        if cleaned:
+            scope_values.append(f"exception {cleaned}")
     view_values = [
         value
         for value in legal_ir_view_support
@@ -3565,6 +3578,7 @@ def _typed_ir_semantic_bridge_phrases(
             predicate_head,
             *(_humanize_typed_ir_value(atom) for atom in bridge_atoms[:6]),
             *role_values[:4],
+            *scope_values[:4],
             *view_values[:3],
         ]
         text = _bounded_reconstruction_text(parts, max_tokens=max_tokens)
