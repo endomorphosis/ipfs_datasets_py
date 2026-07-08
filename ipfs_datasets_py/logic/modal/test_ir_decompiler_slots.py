@@ -7728,6 +7728,62 @@ def test_decode_modal_ir_document_reconstructs_effective_date_tax_slots() -> Non
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
 
 
+def _reserved_land_lease_revenue_document() -> ModalIRDocument:
+    source_id = "us-code-43-617u-reserved-land-lease-ccc23533fe0bd328"
+    source_text = (
+        "The Secretary of the Interior is authorized and empowered, under "
+        "such rules and regulations as he may prescribe, to establish rental "
+        "rates for the lease of reserved lands in Boulder City, Nevada, and "
+        "to provide for the disposition of revenues."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-reserved-land-lease",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="lease_reserved_lands"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="43 U.S.C. 617u",
+        ),
+        conditions=["under such rules and regulations"],
+        metadata={"cue": "authorized"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_reserved_land_lease_revenue_slots() -> None:
+    decoded = decode_modal_ir_document(_reserved_land_lease_revenue_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "reserved_land_lease_authority" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "rental_rate_authority" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "revenue_disposition" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
 def _packet_000158_document(
     *,
     source_id: str,

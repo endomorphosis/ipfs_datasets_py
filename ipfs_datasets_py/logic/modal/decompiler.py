@@ -146,6 +146,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("make cooperative agreements", "cooperative_agreement_authority"),
     ("cooperative agreements", "cooperative_agreement_authority"),
     ("cooperative agreement", "cooperative_agreement_authority"),
+    ("lease of reserved lands", "reserved_land_lease_authority"),
+    ("reserved lands", "reserved_land"),
+    ("rental rates", "rental_rate_authority"),
+    ("disposition of revenues", "revenue_disposition"),
     ("information technology acquisition", "information_technology_acquisition"),
     ("information technology management", "information_technology_management"),
     ("telemedicine and distance learning services", "telemedicine_distance_learning"),
@@ -4230,6 +4234,25 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("rail_employee_trust_fund")
+    if re.search(
+        r"\b(?:lease|leases|leasing)\b.{0,120}\b(?:reserved\s+)?lands?\b|"
+        r"\b(?:reserved\s+)?lands?\b.{0,120}\b(?:lease|leases|leasing)\b",
+        normalized,
+    ):
+        add("reserved_land_lease_authority")
+        add("reserved_land")
+    if re.search(
+        r"\b(?:establish|prescribe|set|fix)\b.{0,80}\brental\s+rates?\b|"
+        r"\brental\s+rates?\b.{0,80}\b(?:establish|prescribe|set|fix)\b",
+        normalized,
+    ):
+        add("rental_rate_authority")
+    if re.search(
+        r"\b(?:disposition|deposit|dispose|revenues?)\b.{0,80}\brevenues?\b|"
+        r"\brevenues?\b.{0,80}\b(?:disposition|deposit|dispose)\b",
+        normalized,
+    ):
+        add("revenue_disposition")
     if re.search(
         r"\b(?:there\s+is\s+established|is\s+established\s+within|"
         r"office\s+to\s+be\s+known\s+as)\b",
@@ -12295,6 +12318,10 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "developing_institution_program",
         "fund_transfer_authority",
         "higher_education_student_assistance",
+        "rental_rate_authority",
+        "reserved_land",
+        "reserved_land_lease_authority",
+        "revenue_disposition",
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -12304,6 +12331,9 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "contracting_authority",
         "cooperative_agreement_authority",
         "fund_transfer_authority",
+        "rental_rate_authority",
+        "reserved_land_lease_authority",
+        "revenue_disposition",
     }:
         add("TDFOL.prover")
     return views
@@ -13464,6 +13494,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "chapter_administration",
             "developing_institution_program",
             "higher_education_student_assistance",
+            "rental_rate_authority",
+            "reserved_land",
+            "reserved_land_lease_authority",
+            "revenue_disposition",
         }:
             add("deontic")
             add("frame")
@@ -13472,6 +13506,9 @@ def _typed_decompiler_semantic_atom_target_families(
             "contracting_authority",
             "cooperative_agreement_authority",
             "fund_transfer_authority",
+            "rental_rate_authority",
+            "reserved_land_lease_authority",
+            "revenue_disposition",
         }:
             add("deontic")
             add("dynamic")
