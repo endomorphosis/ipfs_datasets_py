@@ -664,6 +664,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("vessels and other property acquired", "fishery_vessel_property_disposition"),
     ("fishery loans", "fishery_loan_property"),
     ("arising out of fishery loans", "fishery_loan_property"),
+    ("loan size limitation", "loan_size_limitation"),
+    ("project loans", "project_loan_program"),
+    ("project loan", "project_loan_program"),
+    ("geothermal energy", "geothermal_energy_program"),
+    ("loan made under this subchapter", "project_loan_limit"),
+    ("loans made under this subchapter", "project_loan_limit"),
+    ("loan guarantee", "loan_guarantee_authority"),
     ("border infrastructure and technology modernization", "border_infrastructure_modernization"),
     ("border infrastructure", "border_infrastructure_modernization"),
     ("technology modernization", "technology_modernization"),
@@ -772,6 +779,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("progress made in advancing smart manufacturing", "smart_manufacturing_report"),
     ("expand the naval facilities", "naval_facility_expansion"),
     ("naval facilities", "naval_facility_expansion"),
+    ("medal of honor", "medal_of_honor_award"),
+    ("award to individual", "individual_military_award"),
+    ("award to individual", "military_award_review"),
+    ("award of the medal of honor", "medal_of_honor_award"),
+    ("review the proposal", "award_proposal_review"),
+    ("proposal for the award", "award_proposal_review"),
     ("local asthma surveillance", "public_health_surveillance"),
     ("asthma surveillance", "public_health_surveillance"),
     ("collect data on the prevalence", "public_health_surveillance"),
@@ -1048,6 +1061,19 @@ _RESEARCH_ADMINISTRATION_RECONSTRUCTION_ATOMS = frozenset(
         "education_statistics_dissemination",
         "information_dissemination_program",
         "noaa_administration",
+    }
+)
+_PROJECT_LOAN_AWARD_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "award_proposal_review",
+        "geothermal_energy_program",
+        "individual_military_award",
+        "loan_guarantee_authority",
+        "loan_size_limitation",
+        "medal_of_honor_award",
+        "military_award_review",
+        "project_loan_limit",
+        "project_loan_program",
     }
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
@@ -4604,6 +4630,35 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("competitive_award_program")
+    if re.search(
+        r"\b(?:medal\s+of\s+honor|military\s+decorations?|military\s+awards?)\b",
+        normalized,
+    ):
+        add("medal_of_honor_award")
+        add("individual_military_award")
+        add("military_award_review")
+    if re.search(
+        r"\b(?:review|consider|submit|approve)\b.{0,100}"
+        r"\b(?:proposal|recommendation)\b.{0,100}\b(?:award|medal)\b|"
+        r"\b(?:proposal|recommendation)\b.{0,100}\b(?:award|medal)\b.{0,100}"
+        r"\b(?:review|consider|submit|approve)\b",
+        normalized,
+    ):
+        add("award_proposal_review")
+    if re.search(
+        r"\b(?:loan|loans)\b.{0,80}\b(?:size|limitation|limit|amount|exceed)\b|"
+        r"\b(?:size|limitation|limit|amount|exceed)\b.{0,80}\b(?:loan|loans)\b",
+        normalized,
+    ):
+        add("loan_size_limitation")
+        add("project_loan_limit")
+    if re.search(
+        r"\b(?:project\s+loans?|loan\s+program|loan\s+guarantee)\b",
+        normalized,
+    ):
+        add("project_loan_program")
+    if re.search(r"\bgeothermal\s+energy\b", normalized):
+        add("geothermal_energy_program")
     if re.search(
         r"\bhealth\s+professionals?\b.{0,80}\beducational\s+assistance\b",
         normalized,
@@ -11417,6 +11472,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PROJECT_LOAN_AWARD_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
 
     if normalized_atom in {
         "administration_enforcement",
@@ -12485,6 +12546,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("conditional_normative")
             add("temporal")
             add("epistemic")
+        if normalized_atom in _PROJECT_LOAN_AWARD_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in {
             "judicial_review",
             "presidential_action",
@@ -14798,6 +14863,26 @@ def _typed_decompiler_predicate_classes(
     if normalized_atoms.intersection(_TEMPORAL_STATUTORY_RECONSTRUCTION_ATOMS):
         add("statutory")
         add("temporal")
+    if normalized_atoms.intersection(_PROJECT_LOAN_AWARD_RECONSTRUCTION_ATOMS):
+        add("authorization")
+        add("program")
+        add("statutory")
+    if normalized_atoms.intersection(
+        {
+            "award_proposal_review",
+            "individual_military_award",
+            "medal_of_honor_award",
+            "military_award_review",
+        }
+    ):
+        add("duty")
+    if normalized_atoms.intersection(
+        {
+            "loan_size_limitation",
+            "project_loan_limit",
+        }
+    ):
+        add("remedy")
     if normalized_atoms.intersection(
         {
             "clean_hull_administration_enforcement",

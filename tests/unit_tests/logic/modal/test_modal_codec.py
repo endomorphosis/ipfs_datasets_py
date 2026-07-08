@@ -44299,6 +44299,78 @@ def test_decompiler_reconstructs_packet_001953_frame_semantic_slots() -> None:
     )
 
 
+def test_decompiler_reconstructs_packet_001961_project_loan_and_award_slots() -> None:
+    project_loan = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "30 U.S.C. 1512: Geothermal energy project loans. Loan size "
+            "limitation. A project loan made under this subchapter may not "
+            "exceed the statutory loan limit except as otherwise provided."
+        ),
+        predicate="geothermal_project_loan_limit",
+        conditions=["except as otherwise provided"],
+    )
+    medal_review = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "10 U.S.C. 1134: Medal of honor: award to individual. The "
+            "Secretary may review the proposal for the award and make a "
+            "recommendation to the President."
+        ),
+        predicate="medal_of_honor_award_review",
+    )
+
+    loan_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(project_loan)
+    )
+    medal_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(medal_review)
+    )
+
+    assert {
+        "geothermal_energy_program",
+        "loan_size_limitation",
+        "project_loan_limit",
+        "project_loan_program",
+    }.issubset(set(loan_slots["typed-decompiler-source-semantic-atom"]))
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+    }.issubset(set(loan_slots["typed-decompiler-target-reconstruction-pair"]))
+    assert "frame->deontic:may" in loan_slots[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert "frame->conditional_normative:except_as_otherwise_provided" in loan_slots[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(loan_slots["legal_ir_view_prototype"])
+    )
+
+    assert {
+        "award_proposal_review",
+        "individual_military_award",
+        "medal_of_honor_award",
+        "military_award_review",
+    }.issubset(set(medal_slots["typed-decompiler-source-semantic-atom"]))
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+    }.issubset(set(medal_slots["typed-decompiler-target-reconstruction-pair"]))
+    assert "medal_of_honor_award:frame->deontic" in medal_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert {"deontic.ir", "CEC.native", "TDFOL.prover"}.issubset(
+        set(medal_slots["legal_ir_view_prototype"])
+    )
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
