@@ -1625,6 +1625,9 @@ def _mapping_is_compiler_guidance_evidence(mapping: Mapping[str, Any]) -> bool:
     vector_bundle = str(mapping.get("vector_bundle") or "").strip()
     if source == "compiler_guidance_distillation_v1" or vector_bundle == "score":
         return True
+    failure_name = str(mapping.get("bridge_failure_name") or mapping.get("loss_name") or "")
+    if failure_name.startswith("legal_ir_") and _mapping_targets_bridge_contracts(mapping):
+        return True
     for sample in _guidance_sequence(mapping.get("samples")):
         if str(sample or "").strip().startswith("compiler-guidance:"):
             return True

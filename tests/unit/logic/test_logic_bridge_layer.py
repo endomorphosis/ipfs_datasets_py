@@ -2864,6 +2864,88 @@ def test_bridge_contract_guidance_projects_frame_to_conditional_normative_pairs(
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
 
 
+def test_bridge_contract_guidance_counts_unmarked_frame_deontic_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH,
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "action": "repair_multiview_legal_ir_loss",
+            "bundle": {
+                "family_pairs": ["frame->deontic"],
+                "program_synthesis_scope": "bridge",
+                "target_component": "bridge.contracts",
+            },
+            "target_component": "bridge.contracts",
+            "target_metrics": (
+                "legal_ir_view_cross_entropy_loss, "
+                "legal_ir_multiview_cross_entropy_loss, "
+                "legal_ir_multiview_total_loss"
+            ),
+            "evidence": [
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_component_gaps": {
+                        "CEC.native": 0.000604079031,
+                        "TDFOL.prover": 0.017693665125,
+                        "deontic.ir": -0.001457749658,
+                        "knowledge_graphs.neo4j_compat": 0.018177909088,
+                        "modal.frame_logic": -0.007038386663,
+                    },
+                    "legal_ir_underrepresented_components": [
+                        "knowledge_graphs.neo4j_compat",
+                        "TDFOL.prover",
+                    ],
+                    "pipeline_stage_diagnostics": {
+                        "legal_ir_component_gap_max": 0.018177909088,
+                        "modal_family_target_probability_gap": 0.179249010355,
+                    },
+                    "predicted_family": "frame",
+                    "predicted_view": "knowledge_graphs.neo4j_compat",
+                    "target_component": "bridge.contracts",
+                    "target_family": "deontic",
+                    "target_view": "knowledge_graphs.neo4j_compat",
+                    "top_embedding_features": [
+                        "modal-family-prototype:frame",
+                        "modal-family-prototype:deontic",
+                        "legal-ir-view-prototype:deontic.ir",
+                        "legal-ir-view-prototype:CEC.native",
+                        "legal-ir-view-prototype:TDFOL.prover",
+                        "family-legal-ir-view-prototype:deontic||deontic.ir",
+                        "legal-ir-view-prototype:knowledge_graphs.neo4j_compat",
+                    ],
+                }
+            ],
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 1
+    assert metadata["compiler_guidance_component_gaps"][
+        "knowledge_graphs.neo4j_compat"
+    ] == 0.018177909088
+    assert metadata["compiler_guidance_bridge_contract_projection_strength"] > (
+        _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH
+    )
+    assert {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+    } <= set(target_distribution)
+    assert target_distribution["deontic.ir"] > target_distribution["modal.frame_logic"]
+    assert target_distribution["TDFOL.prover"] > target_distribution["modal.frame_logic"]
+    assert target_distribution["knowledge_graphs.neo4j_compat"] > (
+        target_distribution["modal.frame_logic"]
+    )
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-12
+
+
 def test_bridge_contract_guidance_projects_frame_temporal_and_frame_pairs() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _compiler_guidance_bridge_contract_metadata,
