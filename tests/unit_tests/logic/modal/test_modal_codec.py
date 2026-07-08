@@ -117,6 +117,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_002680_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003819_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003624_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004656_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004672_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004674_FAMILY_PAIRS,
@@ -304,6 +305,152 @@ def test_modal_registry_packet_000165_exposes_compiler_ambiguity_policy_pairs() 
             predicted_family,
             target_family,
         )
+
+
+def test_modal_registry_packet_003057_exposes_explicit_adaptive_ambiguity_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("frame", "conditional_normative"),
+    }
+
+    assert expected_pairs == set(COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS)
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    compiler = DeterministicModalCompiler()
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-003057-deontic-margin",
+        text="The Secretary shall state all conditions subject to subsection (b).",
+        normalized_text=(
+            "The Secretary shall state all conditions subject to subsection (b)."
+        ),
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+                cue="shall",
+                start_char=14,
+                end_char=19,
+                token_indices=[],
+            ),
+            SpaCyModalCueFeature(
+                family="conditional_normative",
+                system="CEC",
+                symbol="=>O",
+                label="condition",
+                cue="subject to",
+                start_char=41,
+                end_char=51,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id=encoding.document_id,
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-003057-deontic",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="policy_conditions_disclosure",
+                    arguments=["actor:secretary"],
+                    role="action",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-003057",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                ),
+            )
+        ],
+    )
+    ranking = [
+        {
+            "family": "deontic",
+            "count": 1,
+            "share_raw": 0.354297207747,
+            "share": 0.354297,
+        },
+        {
+            "family": "conditional_normative",
+            "count": 1,
+            "share_raw": 0.300000000000,
+            "share": 0.3,
+        },
+        {
+            "family": "frame",
+            "count": 1,
+            "share_raw": 0.180000000000,
+            "share": 0.18,
+        },
+    ]
+
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=ranking,
+        family_shares={
+            "deontic": 0.354297207747,
+            "conditional_normative": 0.300000000000,
+            "frame": 0.180000000000,
+        },
+        predicted_family_source="adaptive_logits",
+    )
+
+    explicit_types = {ambiguity.ambiguity_type for ambiguity in ambiguities}
+    assert "adaptive_deontic_deontic_contested_margin_low" in explicit_types
+    assert (
+        "adaptive_deontic_conditional_normative_outvoted_margin_low"
+        in explicit_types
+    )
+    conditional_base = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic", "conditional_normative"]
+    )
+    assert conditional_base.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+    assert conditional_base.metadata["is_compiler_required_policy_pair"] is True
+    assert conditional_base.metadata["signal_free_pair_policy_applied"] is False
+    assert conditional_base.metadata["adaptive_margin_direction"] == "outvoted"
 
 
 def test_modal_registry_packet_001063_exposes_refined_family_cue_pairs() -> None:
