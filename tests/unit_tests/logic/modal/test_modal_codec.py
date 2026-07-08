@@ -43952,6 +43952,75 @@ def test_decompiler_reconstructs_packet_186_research_and_administration_slots() 
         assert structural_fragment in structural_text
 
 
+def test_decompiler_reconstructs_packet_188_frame_semantic_slots() -> None:
+    iss_utilization = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Maximum utilization of the International Space Station. NASA "
+            "shall take steps to maximize the productivity and use of the ISS "
+            "with respect to scientific and technological research."
+        ),
+        predicate="nasa_iss_research_utilization",
+    )
+    income_multiplier = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Income gap multiplier. The Secretary shall determine the income "
+            "gap multiplier for federal payments under this chapter."
+        ),
+        predicate="secretary_income_gap_multiplier_federal_payments",
+    )
+
+    iss_decoded = decode_modal_ir_document(iss_utilization)
+    iss_slots = decoded_modal_phrase_slot_text_map(iss_decoded)
+    iss_structural_text = _structural_decoded_text(
+        iss_decoded,
+        modal_ir=iss_utilization,
+        selected_frame=None,
+    )
+    income_decoded = decode_modal_ir_document(income_multiplier)
+    income_slots = decoded_modal_phrase_slot_text_map(income_decoded)
+    income_structural_text = _structural_decoded_text(
+        income_decoded,
+        modal_ir=income_multiplier,
+        selected_frame=None,
+    )
+
+    assert {
+        "iss_research_utilization",
+        "international_space_station",
+        "space_science_research",
+    }.issubset(set(iss_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"frame->conditional_normative", "frame->epistemic"}.issubset(
+        set(iss_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "legal frame reconstructs conditional obligation" in iss_slots[
+        "typed_ir_family_pair_semantic_bridge"
+    ]
+    assert "legal frame reconstructs knowledge finding" in iss_slots[
+        "typed_ir_family_pair_semantic_bridge"
+    ]
+    assert "international space station" in iss_structural_text
+    assert "knowledge determination finding" in iss_structural_text
+
+    assert {
+        "income_gap_multiplier",
+        "federal_payment_formula",
+    }.issubset(set(income_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"frame->conditional_normative", "frame->epistemic"}.issubset(
+        set(income_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(income_slots["legal_ir_view_prototype"])
+    )
+    assert "income gap multiplier" in income_structural_text
+    assert "federal payment formula" in income_structural_text
+
+
 def test_decompiler_reconstructs_packet_4166_modal_ir_semantic_slots() -> None:
     energy_study = _single_formula_document(
         family="deontic",

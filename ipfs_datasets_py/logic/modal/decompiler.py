@@ -767,6 +767,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("asthma surveillance", "public_health_surveillance"),
     ("collect data on the prevalence", "public_health_surveillance"),
     ("magnet schools assistance", "education_assistance_program"),
+    ("maximum utilization of the international space station", "iss_research_utilization"),
+    ("international space station", "international_space_station"),
+    ("maximize the productivity and use of the iss", "iss_research_utilization"),
+    ("productivity and use of the iss", "iss_research_utilization"),
+    ("scientific and technological research", "space_science_research"),
+    ("income gap multiplier", "income_gap_multiplier"),
+    ("federal payments", "federal_payment_formula"),
+    ("general assistance administration", "federal_assistance_administration"),
     (
         "minority science and engineering improvement",
         "science_engineering_education_program",
@@ -3633,8 +3641,16 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
         "conditional_normative->deontic": (
             "conditional legal rule reconstructs deontic obligation"
         ),
+        "conditional_normative->conditional_normative": (
+            "conditional legal rule preserves conditioned obligation"
+        ),
+        "frame->conditional_normative": (
+            "legal frame reconstructs conditional obligation"
+        ),
         "frame->deontic": "legal frame reconstructs deontic duty",
+        "frame->epistemic": "legal frame reconstructs knowledge finding",
         "frame->frame": "legal frame preserves ontology frame",
+        "frame->temporal": "legal frame reconstructs temporal deadline",
     }
     return labels.get(pair, "")
 def _typed_ir_policy_view_semantic_reconstruction_text(
@@ -12136,9 +12152,15 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
     if normalized_atom in {
         "appeal_bail_rule",
         "education_assistance_program",
+        "federal_assistance_administration",
+        "federal_payment_formula",
+        "income_gap_multiplier",
+        "international_space_station",
+        "iss_research_utilization",
         "naval_facility_expansion",
         "public_health_surveillance",
         "science_engineering_education_program",
+        "space_science_research",
         "seaman_discharge",
         "smart_manufacturing_report",
         "wage_account_discharge",
@@ -13212,8 +13234,14 @@ def _typed_decompiler_semantic_atom_target_families(
             add("conditional_normative")
         if normalized_atom in {
             "education_assistance_program",
+            "federal_assistance_administration",
+            "federal_payment_formula",
+            "income_gap_multiplier",
+            "international_space_station",
+            "iss_research_utilization",
             "public_health_surveillance",
             "science_engineering_education_program",
+            "space_science_research",
             "seaman_discharge",
             "smart_manufacturing_report",
             "wage_account_discharge",
@@ -13221,18 +13249,34 @@ def _typed_decompiler_semantic_atom_target_families(
             add("deontic")
         if normalized_atom in {
             "appeal_bail_rule",
+            "federal_assistance_administration",
+            "federal_payment_formula",
+            "income_gap_multiplier",
+            "international_space_station",
+            "iss_research_utilization",
             "naval_facility_expansion",
             "public_health_surveillance",
+            "space_science_research",
             "smart_manufacturing_report",
         }:
             add("frame")
         if normalized_atom in {
             "appeal_bail_rule",
+            "iss_research_utilization",
             "naval_facility_expansion",
             "seaman_discharge",
             "smart_manufacturing_report",
         }:
             add("temporal")
+        if normalized_atom in {
+            "federal_payment_formula",
+            "income_gap_multiplier",
+            "international_space_station",
+            "iss_research_utilization",
+            "space_science_research",
+        }:
+            add("conditional_normative")
+            add("epistemic")
         if normalized_atom in {
             "appeal_bail_rule",
             "education_assistance_program",
@@ -14490,14 +14534,32 @@ def _typed_decompiler_predicate_classes(
         {
             "appeal_bail_rule",
             "education_assistance_program",
+            "federal_assistance_administration",
+            "federal_payment_formula",
+            "income_gap_multiplier",
+            "international_space_station",
+            "iss_research_utilization",
             "public_health_surveillance",
             "science_engineering_education_program",
+            "space_science_research",
             "seaman_discharge",
             "smart_manufacturing_report",
             "wage_account_discharge",
         }
     ):
         add("duty")
+    if normalized_atoms.intersection(
+        {
+            "federal_assistance_administration",
+            "federal_payment_formula",
+            "income_gap_multiplier",
+            "international_space_station",
+            "iss_research_utilization",
+            "space_science_research",
+        }
+    ):
+        add("program")
+        add("statutory")
     if normalized_atoms.intersection(
         {
             "naval_facility_expansion",

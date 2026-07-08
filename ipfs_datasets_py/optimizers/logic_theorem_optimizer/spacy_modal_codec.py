@@ -455,6 +455,12 @@ _VACANT_SECTION_STATUS_RE = re.compile(
     r"vacant\b|\bvacant\s*\]",
     re.IGNORECASE,
 )
+_USCODE_INLINE_STATUS_HEADING_LEFT_RE = re.compile(
+    r"(?:^|[.;]\s*)"
+    r"(?:sec(?:tion)?s?\.?\s+|§{1,2}\s*)"
+    r"[0-9A-Za-z()._-]+\s*(?:[-–—:.]\s*)?$",
+    re.IGNORECASE,
+)
 _MONTH_NAME_TOKENS = frozenset(
     {
         "jan",
@@ -1353,6 +1359,20 @@ class SpaCyLegalEncoder:
                         ):
                             continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
+                            if self._is_inline_uscode_editorial_status_cue(
+                                normalized_text=normalized,
+                                cue=cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            ):
+                                continue
+                            if self._is_calendar_date_literal_temporal_cue(
+                                normalized_text=normalized,
+                                cue=cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            ):
+                                continue
                             if self._fallback_parser._is_non_temporal_editorial_status_heading_cue(
                                 normalized_text=normalized,
                                 start_char=match.start(),
@@ -1474,6 +1494,60 @@ class SpaCyLegalEncoder:
             return False
         trailing = normalized_text[end_char:]
         return bool(re.match(r"^\s+\d{1,2}(?:,\s*|\s+)\d{4}\b", trailing))
+
+    def _is_inline_uscode_editorial_status_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Suppress U.S.C. status headings embedded after ``Sec. ... -``."""
+        lowered_cue = cue.lower().strip()
+        if lowered_cue not in {
+            "omitted",
+            "renumbered",
+            "repealed",
+            "reserved",
+            "terminated",
+            "transferred",
+            "vacant",
+        }:
+            return False
+        left_context = normalized_text[max(0, start_char - 80) : start_char]
+        if not _USCODE_INLINE_STATUS_HEADING_LEFT_RE.search(left_context):
+            return False
+        right_context = normalized_text[
+            end_char : min(len(normalized_text), end_char + 2)
+        ]
+        return (
+            not right_context
+            or right_context[:1] in {".", ";", ":", " ", "\n", "\t"}
+        )
+
+    def _is_calendar_date_literal_temporal_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Keep date literals as scope signals instead of explicit modal cues."""
+        cue_text = normalized_text[start_char:end_char]
+        lowered_cue = cue.lower().strip()
+        if not (
+            _MONTH_DAY_RE.search(cue_text)
+            or _CALENDAR_DATE_RE.search(
+                normalized_text[start_char : min(len(normalized_text), end_char + 12)]
+            )
+        ):
+            return False
+        return (
+            _MONTH_DAY_RE.fullmatch(cue_text.strip()) is not None
+            or lowered_cue.startswith(("on ", "as of ", "after ", "before ", "by "))
+        )
 
     def _is_non_alethic_possible_cue(
         self,
