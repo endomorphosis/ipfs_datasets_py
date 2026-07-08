@@ -2345,7 +2345,28 @@ def _canonicalize_event_formula_text(text: str) -> str:
         normalized = normalized.replace(token, replacement)
     normalized = _normalize_event_formula_brackets(normalized)
     normalized = _canonicalize_event_formula_function_names(normalized)
+    normalized = _canonicalize_function_style_event_connectors(normalized)
     return " ".join(normalized.split())
+
+
+def _canonicalize_function_style_event_connectors(text: str) -> str:
+    """Normalize common prefix connector exports into event-calculus infix rules."""
+
+    value = str(text or "").strip()
+    match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*\(", value)
+    if not match:
+        return value
+    connector = str(match.group(1) or "").strip().lower()
+    if connector not in {"implies", "imply", "ifthen", "if_then"}:
+        return value
+    open_index = value.find("(", match.start())
+    close_index = _matching_close_paren_index(value, open_index)
+    if close_index != len(value) - 1:
+        return value
+    arguments = _split_top_level_arguments(value[open_index + 1:close_index])
+    if len(arguments) != 2 or not arguments[0] or not arguments[1]:
+        return value
+    return f"{arguments[0]} => {arguments[1]}"
 
 
 def _canonicalize_event_formula_function_names(text: str) -> str:
