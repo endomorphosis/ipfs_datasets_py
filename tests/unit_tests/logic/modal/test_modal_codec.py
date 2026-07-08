@@ -44566,6 +44566,128 @@ def test_decompiler_reconstructs_packet_001961_project_loan_and_award_slots() ->
     )
 
 
+def test_decompiler_reconstructs_packet_002060_uscode_semantic_surfaces() -> None:
+    cases = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "2 U.S.C. 182d: Audits by Comptroller General. The "
+                    "Comptroller General shall audit Library of Congress "
+                    "programs and report findings."
+                ),
+                predicate="library_of_congress_audit",
+            ),
+            {"comptroller_general_audit"},
+            {"frame->deontic", "frame->conditional_normative", "frame->temporal"},
+            "uscode_audit_oversight_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 4013a. Policy disclosures. Each policy under "
+                    "the National Flood Insurance Program shall state all "
+                    "conditions, exclusions, and other limitations."
+                ),
+                predicate="flood_insurance_policy_disclosures",
+            ),
+            {
+                "flood_insurance_program",
+                "policy_condition_exclusion_disclosure",
+                "policy_disclosure_requirement",
+            },
+            {"frame->deontic", "frame->conditional_normative"},
+            "uscode_policy_disclosure_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "46 U.S.C. 53507. Nontaxation of deposits. Subject to "
+                    "subsection (b), under the Internal Revenue Code taxable "
+                    "income shall be determined without regard to deposits."
+                ),
+                predicate="deposit_tax_treatment",
+                conditions=["subject to subsection (b)"],
+            ),
+            {
+                "deposit_nontaxation",
+                "deposit_tax_treatment",
+                "internal_revenue_code",
+                "tax_treatment",
+                "taxable_income_determination",
+            },
+            {"deontic->conditional_normative", "deontic->deontic"},
+            "uscode_tax_treatment_surface",
+        ),
+        (
+            _single_formula_document(
+                family="temporal",
+                symbol="F",
+                label="eventually",
+                text=(
+                    "29 U.S.C. 796l. Independent living services and centers "
+                    "for independent living. States shall provide vocational "
+                    "rehabilitation services within the fiscal year."
+                ),
+                predicate="state_independent_living_services",
+            ),
+            {
+                "independent_living_center",
+                "independent_living_services",
+                "rehabilitation_services",
+                "vocational_rehabilitation_services",
+            },
+            {"temporal->temporal", "temporal->deontic"},
+            "uscode_rehabilitation_service_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="P",
+                label="permission",
+                text=(
+                    "35 U.S.C. 171. Patents for designs. Whoever invents any "
+                    "new, original and ornamental design may obtain a patent "
+                    "for the design."
+                ),
+                predicate="design_patent_protection",
+            ),
+            {"design_patent_protection"},
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_design_patent_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in cases:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
+        assert {"deontic.ir", "CEC.native", "TDFOL.prover"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

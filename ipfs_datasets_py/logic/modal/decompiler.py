@@ -362,6 +362,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("nato common-funded budgets", "nato_common_funded_budget"),
     ("nato common funded budgets", "nato_common_funded_budget"),
     ("accountability and responsibility", "accountability_responsibility"),
+    ("audits by comptroller general", "comptroller_general_audit"),
+    ("audit by comptroller general", "comptroller_general_audit"),
+    ("comptroller general", "comptroller_general_audit"),
     ("audit by government accountability office", "audit_requirement"),
     ("government accountability office", "audit_requirement"),
     ("termination of authority", "termination_authority"),
@@ -392,6 +395,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("performance accountability system", "workforce_performance_accountability"),
     ("state performance reports", "workforce_performance_reporting"),
     ("workforce development", "workforce_development_program"),
+    ("independent living services and centers for independent living", "independent_living_services"),
+    ("centers for independent living", "independent_living_center"),
+    ("independent living services", "independent_living_services"),
+    ("vocational rehabilitation", "vocational_rehabilitation_services"),
+    ("rehabilitation services", "rehabilitation_services"),
     ("applicability of this chapter", "statutory_chapter_applicability"),
     ("applicability", "statutory_applicability"),
     ("short title", "statutory_short_title"),
@@ -701,6 +709,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("proofs of citizenship", "mining_claim_citizenship_proof"),
     ("land shall be patented", "land_patent_requirement"),
     ("mining claim shall be patented", "land_patent_requirement"),
+    ("patents for designs", "design_patent_protection"),
+    ("patent for a design", "design_patent_protection"),
+    ("new original and ornamental design", "design_patent_protection"),
+    ("ornamental design", "design_patent_protection"),
     ("limitation on assessments", "fund_assessment_limitation"),
     ("limitation on assessment", "fund_assessment_limitation"),
     ("assessments against migratory bird conservation fund", "migratory_bird_fund_assessment_limitation"),
@@ -710,6 +722,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("disposition of property", "property_disposition"),
     ("basis of property", "property_basis_determination"),
     ("adjusted basis", "property_basis_determination"),
+    ("nontaxation of deposits", "deposit_nontaxation"),
+    ("nontaxation", "tax_exemption"),
+    ("taxable income", "taxable_income_determination"),
+    ("internal revenue code", "internal_revenue_code"),
+    ("deposits under", "deposit_tax_treatment"),
     ("moneys deposited by unknown parties", "unknown_party_deposit"),
     ("treasurer of the united states", "treasury_deposit"),
     ("costs and expenses", "cost_expense_charge"),
@@ -734,6 +751,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("supplementary to existing authorizations", "supplemental_authorization_policy"),
     ("existing authorizations", "supplemental_authorization_policy"),
     ("payment authorization", "payment_authorization"),
+    ("policy disclosures", "policy_disclosure_requirement"),
+    ("policy disclosure", "policy_disclosure_requirement"),
+    ("national flood insurance program", "flood_insurance_program"),
+    ("flood insurance program", "flood_insurance_program"),
+    ("conditions, exclusion", "policy_condition_exclusion_disclosure"),
+    ("conditions exclusion", "policy_condition_exclusion_disclosure"),
+    ("conditions and exclusions", "policy_condition_exclusion_disclosure"),
+    ("exclusions and limitations", "policy_condition_exclusion_disclosure"),
     ("securities and trust indentures", "securities_trust_indenture"),
     ("trust indentures", "securities_trust_indenture"),
     ("trust indenture", "securities_trust_indenture"),
@@ -4397,6 +4422,12 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("revenue_disposition")
+    if re.search(
+        r"\b(?:nontaxation|internal\s+revenue\s+code|taxable\s+income)\b",
+        normalized,
+    ) and re.search(r"\bdeposits?\b", normalized):
+        add("deposit_tax_treatment")
+        add("tax_treatment")
     if re.search(
         r"\b(?:there\s+is\s+established|is\s+established\s+within|"
         r"office\s+to\s+be\s+known\s+as)\b",
@@ -12515,6 +12546,28 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "revenue_disposition",
     }:
         add("TDFOL.prover")
+    if normalized_atom in {
+        "comptroller_general_audit",
+        "deposit_nontaxation",
+        "deposit_tax_treatment",
+        "design_patent_protection",
+        "flood_insurance_program",
+        "independent_living_center",
+        "independent_living_services",
+        "internal_revenue_code",
+        "policy_condition_exclusion_disclosure",
+        "policy_disclosure_requirement",
+        "rehabilitation_services",
+        "tax_exemption",
+        "tax_treatment",
+        "taxable_income_determination",
+        "vocational_rehabilitation_services",
+    }:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     return views
 
 
@@ -12529,6 +12582,48 @@ def _typed_decompiler_semantic_atom_target_families(
 
     for atom in semantic_atoms:
         normalized_atom = _clean_text(atom).lower()
+        if normalized_atom in {
+            "comptroller_general_audit",
+            "deposit_nontaxation",
+            "deposit_tax_treatment",
+            "design_patent_protection",
+            "flood_insurance_program",
+            "independent_living_center",
+            "independent_living_services",
+            "internal_revenue_code",
+            "policy_condition_exclusion_disclosure",
+            "policy_disclosure_requirement",
+            "rehabilitation_services",
+            "tax_exemption",
+            "tax_treatment",
+            "taxable_income_determination",
+            "vocational_rehabilitation_services",
+        }:
+            add("deontic")
+            add("conditional_normative")
+            add("frame")
+        if normalized_atom in {
+            "comptroller_general_audit",
+            "deposit_nontaxation",
+            "deposit_tax_treatment",
+            "independent_living_center",
+            "independent_living_services",
+            "internal_revenue_code",
+            "rehabilitation_services",
+            "tax_exemption",
+            "tax_treatment",
+            "taxable_income_determination",
+            "vocational_rehabilitation_services",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "comptroller_general_audit",
+            "design_patent_protection",
+            "flood_insurance_program",
+            "policy_condition_exclusion_disclosure",
+            "policy_disclosure_requirement",
+        }:
+            add("epistemic")
         if normalized_atom in _PROGRAM_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
@@ -14330,6 +14425,17 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_section_heading_surface")
     if _uscode_status_clause_keywords(document=document, formula=formula):
         add("uscode_editorial_status_surface")
+    lowered = text.lower()
+    if re.search(r"\b(?:policy\s+disclosures?|conditions?\s+and\s+exclusions?|national\s+flood\s+insurance)\b", lowered):
+        add("uscode_policy_disclosure_surface")
+    if re.search(r"\b(?:nontaxation|tax\s+treatment|taxable\s+income|internal\s+revenue\s+code)\b", lowered):
+        add("uscode_tax_treatment_surface")
+    if re.search(r"\b(?:audit(?:s)?\s+by\s+comptroller\s+general|government\s+accountability\s+office)\b", lowered):
+        add("uscode_audit_oversight_surface")
+    if re.search(r"\b(?:independent\s+living|vocational\s+rehabilitation|rehabilitation\s+services)\b", lowered):
+        add("uscode_rehabilitation_service_surface")
+    if re.search(r"\b(?:patents?\s+for\s+designs?|ornamental\s+design)\b", lowered):
+        add("uscode_design_patent_surface")
     return profiles
 
 
