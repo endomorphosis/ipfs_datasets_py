@@ -52,6 +52,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     ModalLogicFamily,
     compiler_refined_modal_family_cue_margin_buffer,
@@ -135,6 +136,57 @@ def test_packet_002837_registry_refines_modal_family_cue_policy() -> None:
             )
             >= 0.12
         )
+
+
+def test_packet_003002_registry_refines_modal_family_cue_policy() -> None:
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("frame", "conditional_normative"),
+        ("frame", "epistemic"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS) == expected_pairs
+    margin_floors = {
+        ("deontic", "conditional_normative"): 0.12,
+        ("frame", "conditional_normative"): 0.14,
+        ("frame", "epistemic"): 0.34,
+    }
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= margin_floors[(predicted_family, target_family)]
+        )
+
 
 @pytest.mark.parametrize(
     ("predicted_family", "target_family", "runner_up_family", "expected_direction"),
