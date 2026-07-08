@@ -2625,6 +2625,7 @@ def _decode_formula_phrases(
         )
     for cue_force_slot, cue_force_value in _typed_decompiler_cue_force_slots(
         formula=formula,
+        document=document,
         text=source_span_text or predicate_text,
         condition_values=condition_values,
         exception_values=exception_values,
@@ -15748,6 +15749,7 @@ def _uscode_residual_fallback_decompiler_cues(formula: ModalIRFormula) -> List[s
 def _typed_decompiler_cue_force_slots(
     *,
     formula: ModalIRFormula,
+    document: ModalIRDocument | None = None,
     text: str,
     condition_values: Sequence[str],
     exception_values: Sequence[str],
@@ -15780,6 +15782,19 @@ def _typed_decompiler_cue_force_slots(
         text=searchable_text,
         roles=role_values,
     )
+    if document is not None:
+        for guided_target in _autoencoder_family_pair_target_guidance_values(
+            document,
+            source_family=family,
+        ):
+            if guided_target not in target_families:
+                target_families.append(guided_target)
+        for guided_target in _autoencoder_target_family_guidance_values(document):
+            if guided_target not in target_families:
+                target_families.append(guided_target)
+    for directional_target in _typed_decompiler_directional_target_families(family):
+        if directional_target not in target_families:
+            target_families.append(directional_target)
     if not target_families:
         target_families = [family]
     predicate_head = _typed_decompiler_predicate_head(formula)
@@ -15822,6 +15837,24 @@ def _typed_decompiler_cue_force_slots(
                         ),
                     )
                 )
+                slots.extend(
+                    _typed_decompiler_force_polarity_family_pair_slots(
+                        source_family=family,
+                        target_family=target_family,
+                        force=cue_force,
+                        polarity=polarity,
+                    )
+                )
+                if document is not None:
+                    slots.extend(
+                        _typed_decompiler_force_view_family_pair_slots(
+                            document=document,
+                            source_family=family,
+                            target_family=target_family,
+                            force=cue_force,
+                            polarity=polarity,
+                        )
+                    )
     return _unique_slot_values(slots)
 
 

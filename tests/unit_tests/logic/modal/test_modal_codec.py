@@ -40052,6 +40052,44 @@ def test_decompiler_emits_force_polarity_family_slots_for_frame_conditional_norm
     )
 
 
+def test_decompiler_reuses_guided_family_pairs_for_cue_force_slots() -> None:
+    document = _single_formula_document(
+        family="doxastic",
+        symbol="B",
+        label="belief",
+        text=(
+            "A person who knowingly acts with intent to obstruct a proceeding "
+            "shall be subject to this section."
+        ),
+        predicate="knowingly_obstruct_proceeding",
+    )
+    document.metadata.update(
+        {
+            "bundle": {
+                "family_pairs": ["doxastic->conditional_normative"],
+            },
+            "target_view": "deontic.ir",
+        }
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert (
+        "shall:obligation:mandatory:doxastic->conditional_normative"
+        in slot_texts["typed_decompiler_cue_force_polarity_family_pair"]
+    )
+    assert (
+        "obligation:mandatory:doxastic->conditional_normative"
+        in slot_texts["typed-decompiler-force-polarity-family-pair"]
+    )
+    assert (
+        "obligation:mandatory:deontic.ir:doxastic->conditional_normative"
+        in slot_texts["typed-decompiler-force-polarity-view-family-pair"]
+    )
+
+
 def test_decompiler_preserves_budget_submission_and_audit_semantic_slots() -> None:
     document = _single_formula_document(
         family="deontic",
