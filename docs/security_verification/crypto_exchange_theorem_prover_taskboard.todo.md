@@ -156,7 +156,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-065 Model Xaman payload and sign-request lifecycle
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: wallet
