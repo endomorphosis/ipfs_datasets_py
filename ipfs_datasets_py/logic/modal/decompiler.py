@@ -148,6 +148,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("cooperative agreement", "cooperative_agreement_authority"),
     ("lease of reserved lands", "reserved_land_lease_authority"),
     ("reserved lands", "reserved_land"),
+    ("reservation of lands", "reserved_land"),
+    ("reconveying to the united states title", "federal_land_reconveyance"),
+    ("reconveying title", "federal_land_reconveyance"),
     ("rental rates", "rental_rate_authority"),
     ("disposition of revenues", "revenue_disposition"),
     ("information technology acquisition", "information_technology_acquisition"),
@@ -409,6 +412,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("advisory committee", "advisory_committee"),
     ("appointment of an advisory committee", "advisory_committee_appointment"),
     ("authorized appointment", "appointment_authority"),
+    ("state adjutants general", "state_adjutant_general_appointment"),
+    ("state adjutant general", "state_adjutant_general_appointment"),
+    ("special appointments", "special_appointment_authority"),
     ("railroad lands", "railroad_land_status"),
     ("railroad employees", "rail_employee_status"),
     ("railroad employee", "rail_employee_status"),
@@ -677,6 +683,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("arising out of fishery loans", "fishery_loan_property"),
     ("recreational equipment", "recreational_equipment_tax"),
     ("sport fishing equipment", "recreational_equipment_tax"),
+    ("wages due or accruing", "seaman_wage_tax_withholding"),
+    ("withholding", "tax_withholding"),
+    ("individual employed on a fishing vessel", "fishing_vessel_employment"),
     ("manufacturers excise taxes", "manufacturers_excise_tax"),
     ("miscellaneous excise taxes", "manufacturers_excise_tax"),
     ("excise tax", "excise_tax"),
@@ -808,6 +817,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("full and true account", "wage_account_discharge"),
     ("paying off or discharging", "seaman_discharge"),
     ("discharging the seaman", "seaman_discharge"),
+    ("hospitalization of certain former members", "former_member_hospitalization"),
+    ("hospitalization of former members", "former_member_hospitalization"),
+    ("hospital relief for seamen", "seamen_hospital_relief"),
+    ("used rechargeable batteries", "rechargeable_battery_regulation"),
+    ("rechargeable batteries", "rechargeable_battery_regulation"),
+    ("collection, storage, or transportation", "collection_storage_transport_regulation"),
+    ("collection storage or transportation", "collection_storage_transport_regulation"),
     ("smart manufacturing", "smart_manufacturing_report"),
     ("progress made in advancing smart manufacturing", "smart_manufacturing_report"),
     ("expand the naval facilities", "naval_facility_expansion"),
@@ -3749,7 +3765,11 @@ def _should_emit_guided_semantic_reconstruction(document: ModalIRDocument) -> bo
                 str(source.get("bridge_failure_name") or "")
             ).lower()
             if (
-                action == "refine_semantic_decompiler_reconstruction"
+                action
+                in {
+                    "refine_semantic_decompiler_reconstruction",
+                    "refine_typed_ir_or_decompiler_slots",
+                }
                 and (
                     target_component == "modal.ir_decompiler"
                     or scope == "ir_decompiler"
@@ -3906,6 +3926,9 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
         ),
         "conditional_normative->conditional_normative": (
             "conditional legal rule preserves conditioned obligation"
+        ),
+        "deontic->conditional_normative": (
+            "deontic duty reconstructs conditioned legal obligation"
         ),
         "frame->conditional_normative": (
             "legal frame reconstructs conditional obligation"

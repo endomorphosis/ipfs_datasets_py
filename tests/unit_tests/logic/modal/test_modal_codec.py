@@ -39960,6 +39960,65 @@ def test_decompiler_uses_guided_family_pairs_in_typed_reconstruction() -> None:
     assert "event calculus native legal events" in structural_text
 
 
+def test_decompiler_guides_typed_slot_reconstruction_for_packet_003763() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Requirements. The collection, storage, or transportation of used "
+            "rechargeable batteries is subject to regulations under this "
+            "subchapter."
+        ),
+        predicate="battery_collection_storage_transportation",
+        conditions=["subject to regulations under this subchapter"],
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "action": "refine_typed_ir_or_decompiler_slots",
+            "target_component": "modal.ir_decompiler",
+            "program_synthesis_scope": "ir_decompiler",
+            "predicted_family": "deontic",
+            "target_family": "conditional_normative",
+            "target_view": "deontic.ir",
+            "bridge_failure_name": "reconstruction_loss",
+            "bundle": {
+                "family_pairs": [
+                    "deontic->conditional_normative",
+                    "epistemic->epistemic",
+                ],
+            },
+        }
+    ]
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "rechargeable_battery_regulation" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "collection_storage_transport_regulation" in slot_texts[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "deontic->conditional_normative" in slot_texts[
+        "typed_ir_cross_family_semantic_support"
+    ]
+    assert slot_texts["guided_typed_ir_semantic_reconstruction"]
+    assert any(
+        "conditional obligation" in value
+        and "rechargeable battery regulation" in value
+        and "deontic obligations" in value
+        for value in slot_texts["guided_typed_ir_semantic_reconstruction"]
+    )
+    assert "conditional obligation" in structural_text
+    assert "rechargeable battery regulation" in structural_text
+
+
 def test_decompiler_emits_compact_reconstruction_profiles_for_packet_2064_pairs() -> None:
     document = _single_formula_document(
         family="frame",
