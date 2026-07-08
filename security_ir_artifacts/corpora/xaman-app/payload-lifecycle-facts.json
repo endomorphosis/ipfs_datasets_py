@@ -1,0 +1,1096 @@
+{
+  "schema_version": "xaman-payload-lifecycle-facts/v1",
+  "task_id": "PORTAL-CXTP-042",
+  "corpus": "xaman-app",
+  "source": {
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
+    "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "coverage_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+    "coverage_schema_version": "xaman-source-coverage/v1"
+  },
+  "review": {
+    "review_status": "reviewed",
+    "reviewed_at": "2026-07-08",
+    "review_scope": [
+      "payload creation",
+      "QR intake",
+      "deep-link intake",
+      "push and event-list intake",
+      "review UI",
+      "approval",
+      "rejection",
+      "expiration",
+      "replay controls",
+      "network binding",
+      "signing boundary",
+      "broadcast boundary"
+    ],
+    "model_boundary": "Source-backed React Native and TypeScript payload lifecycle facts at the pinned Xaman-App commit. This artifact models client-side fetch, verification, review, signing, rejection, and optional broadcast transitions. Backend payload API authorization, backend single-use enforcement, deployed binaries, native camera/linking delivery, third-party string decoding, ledger consensus, and runtime traces are outside this artifact unless explicitly modeled."
+  },
+  "source_inputs": [
+    {
+      "path": "src/common/libs/payload/object.ts",
+      "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+      "size_bytes": 13295,
+      "categories": [
+        "payload_creation",
+        "expiration",
+        "replay_control",
+        "approval",
+        "rejection",
+        "broadcast_boundary",
+        "network_binding"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/payload/types.ts",
+      "sha256": "73974e2b05f90da51f38908e46b4f09ddc4d547467e44e12bc7aafbb7076b290",
+      "size_bytes": 2911,
+      "categories": [
+        "payload_creation",
+        "expiration",
+        "network_binding"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/payload/digest/serialize.ts",
+      "sha256": "3ab28229751274e665ec810f3f183e9b6e416abe670d7037c2f08b6e9d0d46a4",
+      "size_bytes": 2945,
+      "categories": [
+        "replay_control",
+        "payload_creation"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/screens/Modal/Scan/ScanModal.tsx",
+      "sha256": "3b3f28345569ddbc3bee9a80653f989d07265035110455eeb1f27899830e96d3",
+      "size_bytes": 31286,
+      "categories": [
+        "qr_intake",
+        "payload_creation",
+        "network_binding"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/services/LinkingService.ts",
+      "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0",
+      "size_bytes": 18959,
+      "categories": [
+        "deep_link_intake",
+        "payload_creation",
+        "network_binding"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/services/PushNotificationsService.ts",
+      "sha256": "7e7ef303f36885342bdcf5c18b9bd008ffcc1edc334fe8f56f10e8e7659bd4ed",
+      "size_bytes": 16188,
+      "categories": [
+        "push_intake"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/services/BackendService.ts",
+      "sha256": "b47e023137ca486fc44c29eb43a6d223b11fc096321278264c1040cd49816461",
+      "size_bytes": 27464,
+      "categories": [
+        "event_list_intake",
+        "replay_control"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/screens/Events/EventsView.tsx",
+      "sha256": "e372483de033bce810be9e5cc48e85bbde3cd688fcbaf96013d0d0983b82f518",
+      "size_bytes": 53794,
+      "categories": [
+        "event_list_intake"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/components/Modules/EventsList/EventListItems/Request.tsx",
+      "sha256": "ec4541316d9e512e4e0241db49c55eb6ed2a96cb84167251d2a0f7c30871daae",
+      "size_bytes": 6658,
+      "categories": [
+        "event_list_intake",
+        "review_ui"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+      "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+      "size_bytes": 30280,
+      "categories": [
+        "review_ui",
+        "approval",
+        "rejection",
+        "expiration",
+        "replay_control",
+        "broadcast_boundary"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/screens/Modal/ReviewTransaction/Steps/Preflight/PreflightStep.tsx",
+      "sha256": "cd123a8356151e9b75c2ea9ae8bfa9f170d257ebbe8bd519794bd63062ba6b1e",
+      "size_bytes": 14745,
+      "categories": [
+        "review_ui",
+        "network_binding"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/screens/Modal/ReviewTransaction/Steps/Review/ReviewStep.tsx",
+      "sha256": "dcf465bf1641a3c2ce3f630b6e8ddd715c84e766680ad862144fa4c6678620c3",
+      "size_bytes": 8565,
+      "categories": [
+        "review_ui",
+        "approval"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/screens/Modal/ReviewTransaction/Steps/Submitting/SubmittingStep.tsx",
+      "sha256": "c399f10440ded8f7113db76c0a7ac819a9664b2d7022e0685c325b6f86735505",
+      "size_bytes": 3305,
+      "categories": [
+        "broadcast_boundary"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/screens/Modal/ReviewTransaction/Steps/Result/ResultStep.tsx",
+      "sha256": "b353a0e56a8990edf4a4ff2d41fb9466ce144ddd895af575b9db84a84b9e976f",
+      "size_bytes": 14078,
+      "categories": [
+        "broadcast_boundary",
+        "review_ui"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+      "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+      "size_bytes": 16501,
+      "categories": [
+        "approval",
+        "network_binding",
+        "broadcast_boundary",
+        "replay_control"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/types/methods/submit.ts",
+      "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e",
+      "size_bytes": 3180,
+      "categories": [
+        "broadcast_boundary"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/store/repositories/network.ts",
+      "sha256": "6d4cbd801a287489e74b86e7fc2a922565562261eb415731a6e9a602baf4b57f",
+      "size_bytes": 8150,
+      "categories": [
+        "network_binding"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    }
+  ],
+  "lifecycle_model": {
+    "states": [
+      "created_local",
+      "referenced_remote",
+      "fetched_verified",
+      "review_preflight",
+      "review_displayed",
+      "declined",
+      "approved_revalidated",
+      "signed",
+      "patched_signed",
+      "submitted",
+      "dispatch_patched",
+      "result_displayed",
+      "expired_or_resolved_blocked",
+      "aborted"
+    ],
+    "terminal_states": [
+      "declined",
+      "result_displayed",
+      "expired_or_resolved_blocked",
+      "aborted"
+    ],
+    "approval_path": [
+      "referenced_remote",
+      "fetched_verified",
+      "review_preflight",
+      "review_displayed",
+      "approved_revalidated",
+      "signed",
+      "patched_signed",
+      "submitted",
+      "dispatch_patched",
+      "result_displayed"
+    ],
+    "non_broadcast_path": [
+      "referenced_remote",
+      "fetched_verified",
+      "review_preflight",
+      "review_displayed",
+      "approved_revalidated",
+      "signed",
+      "patched_signed",
+      "result_displayed"
+    ],
+    "rejection_path": [
+      "referenced_remote",
+      "fetched_verified",
+      "review_preflight",
+      "review_displayed",
+      "declined"
+    ]
+  },
+  "modeled_facts": [
+    {
+      "id": "xaman-payload-lifecycle:fact:payload-build-creates-local-sign-request",
+      "status": "MODELED",
+      "category": "payload_creation",
+      "summary": "In-app payload creation builds a local generated payload with a new UUID, submit/pathfinding metadata, signer constraints from TxJson.Account, request JSON, tx_type, and timestamps.",
+      "normalized_fact": {
+        "operation": "Payload.build",
+        "origin": "local_generated",
+        "uuid_source": "uuidv4",
+        "submit_default": true,
+        "signers_from_account_field": true,
+        "generated_flag": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 79,
+          "line_end": 105,
+          "review_status": "reviewed",
+          "notes": "Payload.build constructs generated sign requests from local transaction JSON."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:payload-types-carry-expiration-origin-and-network-fields",
+      "status": "MODELED",
+      "category": "payload_creation",
+      "summary": "Payload metadata and reference types explicitly carry uuid, submit, resolved/signed/cancelled/expired flags, origin return URLs, forced signer list, force_network, created_at, expires_at, request_json, and optional hash.",
+      "normalized_fact": {
+        "meta_fields": [
+          "uuid",
+          "submit",
+          "resolved",
+          "signed",
+          "cancelled",
+          "expired",
+          "return_url_app",
+          "signers",
+          "force_network"
+        ],
+        "payload_fields": [
+          "request_json",
+          "created_at",
+          "expires_at",
+          "hash"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/types.ts",
+          "sha256": "73974e2b05f90da51f38908e46b4f09ddc4d547467e44e12bc7aafbb7076b290",
+          "line_start": 20,
+          "line_end": 51,
+          "review_status": "reviewed",
+          "notes": "Lifecycle-relevant payload fields are declared in TypeScript interfaces."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest",
+      "status": "MODELED",
+      "category": "replay_control",
+      "summary": "Remote payload fetch validates the response payload hash against the canonical request_json digest before accepting it into the review flow.",
+      "normalized_fact": {
+        "verification_point": "Payload.fetch",
+        "digest_over": "payload.request_json",
+        "rejects_digest_mismatch": true,
+        "digest_algorithm_header": "DigestSerializeWithSHA1"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 119,
+          "line_end": 139,
+          "review_status": "reviewed",
+          "notes": "Payload.verify compares request_json digest with payload hash."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 173,
+          "line_end": 184,
+          "review_status": "reviewed",
+          "notes": "Payload.fetch sends the digest header and rejects unverified payloads."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/digest/serialize.ts",
+          "sha256": "3ab28229751274e665ec810f3f183e9b6e416abe670d7037c2f08b6e9d0d46a4",
+          "line_start": 27,
+          "line_end": 70,
+          "review_status": "reviewed",
+          "notes": "Digest serialization sorts object keys and hashes serialized request JSON."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads",
+      "status": "MODELED",
+      "category": "expiration",
+      "summary": "Payload.fetch rejects backend responses that already have response.resolved_at or meta.expired, blocking already-resolved or expired sign requests before review.",
+      "normalized_fact": {
+        "rejects_resolved_at": true,
+        "rejects_meta_expired": true,
+        "block_state": "expired_or_resolved_blocked"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 188,
+          "line_end": 198,
+          "review_status": "reviewed",
+          "notes": "Fetch rejects already-resolved and expired payloads."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:qr-payload-reference-intake-fetches-and-routes-to-review",
+      "status": "MODELED",
+      "category": "qr_intake",
+      "summary": "QR scanning detects Xumm/Xaman payload references, validates UUID shape, fetches the payload with QR origin, and opens the review transaction modal.",
+      "normalized_fact": {
+        "origin": "QR",
+        "uuid_shape_checked": true,
+        "route": "AppScreens.Modal.ReviewTransaction"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/Scan/ScanModal.tsx",
+          "sha256": "3b3f28345569ddbc3bee9a80653f989d07265035110455eeb1f27899830e96d3",
+          "line_start": 204,
+          "line_end": 225,
+          "review_status": "reviewed",
+          "notes": "handlePayloadReference validates UUIDs, fetches with PayloadOrigin.QR, and routes to review."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/Scan/ScanModal.tsx",
+          "sha256": "3b3f28345569ddbc3bee9a80653f989d07265035110455eeb1f27899830e96d3",
+          "line_start": 633,
+          "line_end": 642,
+          "review_status": "reviewed",
+          "notes": "The scan dispatcher routes payload references and transaction templates to dedicated handlers."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:deep-link-payload-reference-intake-fetches-and-routes-to-review",
+      "status": "MODELED",
+      "category": "deep_link_intake",
+      "summary": "Deep-link handling registers URL listeners, checks the initial URL, detects Xumm/Xaman payload references, validates UUID shape, fetches with DEEP_LINK origin, and opens review.",
+      "normalized_fact": {
+        "origin": "DEEP_LINK",
+        "url_listener_registered_on_default_root": true,
+        "initial_url_checked": true,
+        "uuid_shape_checked": true,
+        "route": "AppScreens.Modal.ReviewTransaction"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/LinkingService.ts",
+          "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0",
+          "line_start": 47,
+          "line_end": 77,
+          "review_status": "reviewed",
+          "notes": "LinkingService adds runtime URL listeners and checks initial URLs."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/LinkingService.ts",
+          "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0",
+          "line_start": 103,
+          "line_end": 122,
+          "review_status": "reviewed",
+          "notes": "Deep-link payload references fetch with PayloadOrigin.DEEP_LINK and route to review."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/LinkingService.ts",
+          "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0",
+          "line_start": 480,
+          "line_end": 518,
+          "review_status": "reviewed",
+          "notes": "LinkingService dispatches detected payload references into handlePayloadReference."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:push-notification-payload-intake-fetches-with-push-origin",
+      "status": "MODELED",
+      "category": "push_intake",
+      "summary": "Sign-request push notifications validate the payload UUID, fetch the payload with PUSH_NOTIFICATION origin, and route to the review transaction modal.",
+      "normalized_fact": {
+        "origin": "PUSH_NOTIFICATION",
+        "uuid_shape_checked": true,
+        "route": "AppScreens.Modal.ReviewTransaction",
+        "foreground_request_update_event": "signRequestUpdate"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/PushNotificationsService.ts",
+          "sha256": "7e7ef303f36885342bdcf5c18b9bd008ffcc1edc334fe8f56f10e8e7659bd4ed",
+          "line_start": 241,
+          "line_end": 252,
+          "review_status": "reviewed",
+          "notes": "Foreground sign-request notifications emit a request-list update."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/PushNotificationsService.ts",
+          "sha256": "7e7ef303f36885342bdcf5c18b9bd008ffcc1edc334fe8f56f10e8e7659bd4ed",
+          "line_start": 296,
+          "line_end": 325,
+          "review_status": "reviewed",
+          "notes": "Notification opens fetch payloads with PUSH_NOTIFICATION origin and route to review."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:event-list-loads-pending-payloads-and-opens-review",
+      "status": "MODELED",
+      "category": "event_list_intake",
+      "summary": "The events screen loads pending payloads from the backend, refreshes when signRequestUpdate or app foreground events occur, and request rows set EVENT_LIST origin before opening review.",
+      "normalized_fact": {
+        "pending_source": "BackendService.getPendingPayloads",
+        "origin": "EVENT_LIST",
+        "refresh_events": [
+          "signRequestUpdate",
+          "appStateChange Active"
+        ],
+        "route": "AppScreens.Modal.ReviewTransaction"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/BackendService.ts",
+          "sha256": "b47e023137ca486fc44c29eb43a6d223b11fc096321278264c1040cd49816461",
+          "line_start": 153,
+          "line_end": 172,
+          "review_status": "reviewed",
+          "notes": "Pending payload API responses are converted to Payload objects."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Events/EventsView.tsx",
+          "sha256": "e372483de033bce810be9e5cc48e85bbde3cd688fcbaf96013d0d0983b82f518",
+          "line_start": 196,
+          "line_end": 218,
+          "review_status": "reviewed",
+          "notes": "Events screen subscribes to sign-request and app foreground refresh events."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Events/EventsView.tsx",
+          "sha256": "e372483de033bce810be9e5cc48e85bbde3cd688fcbaf96013d0d0983b82f518",
+          "line_start": 440,
+          "line_end": 460,
+          "review_status": "reviewed",
+          "notes": "Events screen loads pending payloads via BackendService."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/components/Modules/EventsList/EventListItems/Request.tsx",
+          "sha256": "ec4541316d9e512e4e0241db49c55eb6ed2a96cb84167251d2a0f7c30871daae",
+          "line_start": 103,
+          "line_end": 115,
+          "review_status": "reviewed",
+          "notes": "Request list rows set EVENT_LIST origin and open ReviewTransaction."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:review-preflight-binds-forced-network-and-signer",
+      "status": "MODELED",
+      "category": "network_binding",
+      "summary": "Review preflight checks payload.force_network against the active network and filters available signable accounts against payload signers before the review screen can pass preflight.",
+      "normalized_fact": {
+        "forced_network_checked": true,
+        "required_action_on_mismatch": "SWITCH_NETWORK",
+        "forced_signers_filter_accounts": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 418,
+          "line_end": 438,
+          "review_status": "reviewed",
+          "notes": "Payload accessors expose forced signers and forced network."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Preflight/PreflightStep.tsx",
+          "sha256": "cd123a8356151e9b75c2ea9ae8bfa9f170d257ebbe8bd519794bd63062ba6b1e",
+          "line_start": 85,
+          "line_end": 95,
+          "review_status": "reviewed",
+          "notes": "Preflight runs forced network, transaction creation, and signing-account loading in order."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Preflight/PreflightStep.tsx",
+          "sha256": "cd123a8356151e9b75c2ea9ae8bfa9f170d257ebbe8bd519794bd63062ba6b1e",
+          "line_start": 144,
+          "line_end": 180,
+          "review_status": "reviewed",
+          "notes": "Forced network mismatch produces a SWITCH_NETWORK preflight error."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Preflight/PreflightStep.tsx",
+          "sha256": "cd123a8356151e9b75c2ea9ae8bfa9f170d257ebbe8bd519794bd63062ba6b1e",
+          "line_start": 182,
+          "line_end": 260,
+          "review_status": "reviewed",
+          "notes": "Preflight loads signable accounts and applies forced signer filtering."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control",
+      "status": "MODELED",
+      "category": "review_ui",
+      "summary": "The review UI displays the request header, application information, signer label, account picker, sign-for-account information, transaction details, developer JSON when enabled, and a slide-to-accept control disabled while the request is not ready.",
+      "normalized_fact": {
+        "shows_application_info": true,
+        "shows_account_picker": true,
+        "shows_transaction_details": true,
+        "accept_control": "SwipeButton",
+        "accept_disabled_when_not_ready": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Review/ReviewStep.tsx",
+          "sha256": "dcf465bf1641a3c2ce3f630b6e8ddd715c84e766680ad862144fa4c6678620c3",
+          "line_start": 79,
+          "line_end": 133,
+          "review_status": "reviewed",
+          "notes": "ReviewStep renders transaction-specific and fallback templates."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Review/ReviewStep.tsx",
+          "sha256": "dcf465bf1641a3c2ce3f630b6e8ddd715c84e766680ad862144fa4c6678620c3",
+          "line_start": 155,
+          "line_end": 224,
+          "review_status": "reviewed",
+          "notes": "ReviewStep renders app info, account picker, transaction details, and accept SwipeButton."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing",
+      "status": "MODELED",
+      "category": "approval",
+      "summary": "On user acceptance, non-generated payloads are fetched again through Payload.validate before account activation checks, transaction validations, warning overlays, and signing can proceed.",
+      "normalized_fact": {
+        "accept_entrypoint": "ReviewTransactionModal.onAccept",
+        "revalidates_remote_payload": true,
+        "generated_payload_skips_remote_revalidation": true,
+        "stops_on_validation_error": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 271,
+          "line_end": 276,
+          "review_status": "reviewed",
+          "notes": "Payload.validate re-fetches the payload by UUID."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 216,
+          "line_end": 256,
+          "review_status": "reviewed",
+          "notes": "onAccept validates non-generated payloads before continuing."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 264,
+          "line_end": 328,
+          "review_status": "reviewed",
+          "notes": "Account activation and transaction-specific validation can stop approval before signing."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:approval-enters-vault-signing-boundary",
+      "status": "MODELED",
+      "category": "approval",
+      "summary": "After approval validations pass, the modal signs through transaction.sign, which checks supported transaction definitions, prepares fee/sequence fields, rejects already-signed or aborted transactions, and opens the vault overlay for authenticated signing.",
+      "normalized_fact": {
+        "signing_entrypoint": "transaction.sign",
+        "rejects_already_signed": true,
+        "rejects_aborted_before_vault": true,
+        "checks_transaction_supported_by_network": true,
+        "requires_vault_overlay": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 118,
+          "line_end": 156,
+          "review_status": "reviewed",
+          "notes": "prepareAndSignTransaction calls transaction.sign and then submit."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 184,
+          "line_end": 241,
+          "review_status": "reviewed",
+          "notes": "Sign.mixin checks signing preconditions and opens the vault overlay."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 253,
+          "line_end": 290,
+          "review_status": "reviewed",
+          "notes": "Sign result must include signed transaction, signer public key, sign method, and transaction id for non-pseudo transactions."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:rejection-patches-backend-for-user-or-app-decline",
+      "status": "MODELED",
+      "category": "rejection",
+      "summary": "Review dismissal rejects non-generated payloads through a backend PATCH carrying reject=true, USER or APP initiator, optional reason, and origin type; XApp and pseudo payload closes directly decline rather than just closing.",
+      "normalized_fact": {
+        "reject_patch": true,
+        "reject_initiator_values": [
+          "USER",
+          "APP"
+        ],
+        "origin_included": true,
+        "generated_payload_reject_ignored": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 247,
+          "line_end": 269,
+          "review_status": "reviewed",
+          "notes": "Payload.reject patches backend rejection for non-generated payloads."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 159,
+          "line_end": 214,
+          "review_status": "reviewed",
+          "notes": "Review close and decline paths determine whether to reject, close, or show a reject dialog."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing",
+      "status": "MODELED",
+      "category": "network_binding",
+      "summary": "QR/deep-link transaction templates reject network mismatch, preflight enforces force_network, Sign.mixin populates NetworkID for non-legacy networks, and signing rejects transaction types not supported by the current network definitions.",
+      "normalized_fact": {
+        "template_network_mismatch_blocked": true,
+        "force_network_preflight": true,
+        "network_id_auto_populated_when_network_id_gt_1024": true,
+        "unsupported_transaction_type_rejected": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/Scan/ScanModal.tsx",
+          "sha256": "3b3f28345569ddbc3bee9a80653f989d07265035110455eeb1f27899830e96d3",
+          "line_start": 237,
+          "line_end": 276,
+          "review_status": "reviewed",
+          "notes": "QR transaction templates check NetworkID before building a local payload."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/LinkingService.ts",
+          "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0",
+          "line_start": 428,
+          "line_end": 464,
+          "review_status": "reviewed",
+          "notes": "Deep-link transaction templates check NetworkID before building a local payload."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 167,
+          "line_end": 175,
+          "review_status": "reviewed",
+          "notes": "Sign.mixin populates NetworkID on non-legacy networks."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 201,
+          "line_end": 217,
+          "review_status": "reviewed",
+          "notes": "Sign.mixin checks current network transaction definitions before signing."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:signed-payload-is-patched-before-optional-ledger-broadcast",
+      "status": "MODELED",
+      "category": "broadcast_boundary",
+      "summary": "After signing, the review modal patches the backend with signed_blob, tx_id, signmethod, signpubkey, optional multisign account, and current node/network environment before any optional ledger submission.",
+      "normalized_fact": {
+        "signed_patch_before_submit": true,
+        "patched_fields": [
+          "signed_blob",
+          "tx_id",
+          "signmethod",
+          "signpubkey",
+          "multisigned",
+          "environment.nodeuri",
+          "environment.nodetype"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 219,
+          "line_end": 245,
+          "review_status": "reviewed",
+          "notes": "Payload.patch sends PATCH updates for non-generated payloads."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 645,
+          "line_end": 677,
+          "review_status": "reviewed",
+          "notes": "ReviewTransactionModal creates the signed payload patch and sends it before submission."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:broadcast-only-when-submit-true-non-pseudo-and-not-multisign",
+      "status": "MODELED",
+      "category": "broadcast_boundary",
+      "summary": "Ledger broadcast is conditional: payload.shouldSubmit requires meta.submit, non-pseudo transaction, and not multisign. Pseudo and multisign requests can be signed and patched without client broadcast.",
+      "normalized_fact": {
+        "submit_required": "meta.submit",
+        "pseudo_submits": false,
+        "multisign_submits": false,
+        "non_broadcast_result_supported": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 278,
+          "line_end": 291,
+          "review_status": "reviewed",
+          "notes": "Payload.shouldSubmit excludes pseudo and multisign payloads."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 678,
+          "line_end": 735,
+          "review_status": "reviewed",
+          "notes": "Ledger submit and verification run only when payload.shouldSubmit() is true."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Result/ResultStep.tsx",
+          "sha256": "b353a0e56a8990edf4a4ff2d41fb9466ce144ddd895af575b9db84a84b9e976f",
+          "line_start": 204,
+          "line_end": 264,
+          "review_status": "reviewed",
+          "notes": "ResultStep has a signed-only result view separate from submitted results."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:ledger-submit-has-local-single-submit-and-abort-guards",
+      "status": "MODELED",
+      "category": "replay_control",
+      "summary": "Ledger submission requires a signed blob, rejects already-submitted/in-progress transactions, rejects aborted transactions, sets an isSubmitted flag before calling the ledger, and records the submit result.",
+      "normalized_fact": {
+        "requires_signed_blob": true,
+        "rejects_already_submitted": true,
+        "rejects_aborted": true,
+        "sets_is_submitted_before_network_call": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 352,
+          "line_end": 402,
+          "review_status": "reviewed",
+          "notes": "Sign.mixin submit guards signed state, duplicate submits, aborted state, and records submit results."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:dispatch-result-is-patched-after-ledger-submit",
+      "status": "MODELED",
+      "category": "broadcast_boundary",
+      "summary": "When ledger submission runs, the review modal patches backend dispatch status with target node, node/network type, and engine result, then moves to the result step.",
+      "normalized_fact": {
+        "dispatch_patch_after_submit": true,
+        "dispatch_fields": [
+          "to",
+          "nodetype",
+          "result"
+        ],
+        "result_step_after_patch": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 684,
+          "line_end": 744,
+          "review_status": "reviewed",
+          "notes": "ReviewTransactionModal submits, verifies, patches dispatch result, emits update, and moves to result."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Submitting/SubmittingStep.tsx",
+          "sha256": "c399f10440ded8f7113db76c0a7ac819a9664b2d7022e0685c325b6f86735505",
+          "line_start": 36,
+          "line_end": 78,
+          "review_status": "reviewed",
+          "notes": "SubmittingStep displays the connected network while submitting/verifying."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:fact:submit-request-type-boundary-is-xrpl-submit",
+      "status": "MODELED",
+      "category": "broadcast_boundary",
+      "summary": "The typed ledger submit request boundary is XRPL command submit with a tx_blob and optional fail_hard; its response records preliminary engine result, acceptance, applied/broadcast/queued/kept booleans, and validated ledger index.",
+      "normalized_fact": {
+        "ledger_command": "submit",
+        "request_tx_blob_required": true,
+        "request_fail_hard_optional": true,
+        "response_includes_broadcast": true,
+        "response_is_preliminary": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submit.ts",
+          "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e",
+          "line_start": 3,
+          "line_end": 19,
+          "review_status": "reviewed",
+          "notes": "SubmitRequest models the ledger broadcast boundary."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submit.ts",
+          "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e",
+          "line_start": 21,
+          "line_end": 89,
+          "review_status": "reviewed",
+          "notes": "SubmitResponse records preliminary result and broadcast/queued/kept state."
+        }
+      ]
+    }
+  ],
+  "not_modeled_gaps": [
+    {
+      "id": "xaman-payload-lifecycle:gap:backend-payload-creation-auth-and-single-use",
+      "status": "NOT_MODELED",
+      "category": "replay_control",
+      "summary": "The client source shows fetch, validate, patch, reject, and expired/resolved checks, but does not prove backend authorization, payload creation policy, atomic single-use resolution, replay resistance across devices, or PATCH conflict handling.",
+      "required_evidence_to_model": [
+        "Xaman backend payload API source or formal API contract",
+        "server-side tests for payload UUID authorization, resolved_at atomicity, expiration enforcement, and duplicate PATCH rejection",
+        "runtime traces showing backend response behavior under replay races"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 173,
+          "line_end": 198,
+          "review_status": "reviewed",
+          "notes": "Client fetch checks backend fields but backend enforcement is outside this source file."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:gap:string-decoder-and-native-intake-integrity",
+      "status": "NOT_MODELED",
+      "category": "qr_intake",
+      "summary": "The model uses client dispatch after StringTypeDetector/StringDecoder output, but does not prove the third-party decoder, native camera module, OS deep-link dispatcher, clipboard, or QR image parsing integrity.",
+      "required_evidence_to_model": [
+        "Audited xumm-string-decode implementation and test vectors",
+        "Native camera and OS linking behavior evidence",
+        "End-to-end QR/deep-link runtime traces for malformed, spoofed, and boundary inputs"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/Scan/ScanModal.tsx",
+          "sha256": "3b3f28345569ddbc3bee9a80653f989d07265035110455eeb1f27899830e96d3",
+          "line_start": 558,
+          "line_end": 660,
+          "review_status": "reviewed",
+          "notes": "ScanModal dispatches decoded types but decoder/native correctness is external."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/LinkingService.ts",
+          "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0",
+          "line_start": 513,
+          "line_end": 518,
+          "review_status": "reviewed",
+          "notes": "LinkingService receives OS URLs but OS delivery semantics are not modeled."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:gap:ledger-consensus-and-node-honesty",
+      "status": "NOT_MODELED",
+      "category": "broadcast_boundary",
+      "summary": "The model covers client submit and verify calls plus typed submit response fields, but not XRPL consensus safety, node honesty, mempool behavior, or final ledger inclusion beyond the app's verify response.",
+      "required_evidence_to_model": [
+        "LedgerService implementation and node trust policy review",
+        "XRPL consensus assumptions and validator/network model",
+        "Runtime traces for submit, queued, failed, and verified ledger outcomes"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 318,
+          "line_end": 349,
+          "review_status": "reviewed",
+          "notes": "Client verifies by hash through LedgerService, but consensus behavior is not proven here."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submit.ts",
+          "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e",
+          "line_start": 41,
+          "line_end": 89,
+          "review_status": "reviewed",
+          "notes": "SubmitResponse fields are modeled as preliminary ledger/node response state."
+        }
+      ]
+    },
+    {
+      "id": "xaman-payload-lifecycle:gap:deployed-runtime-equivalence",
+      "status": "NOT_MODELED",
+      "category": "review_ui",
+      "summary": "This artifact models pinned source behavior, not compiled app binaries, mobile OS runtime behavior, production configuration, or backend deployment equivalence.",
+      "required_evidence_to_model": [
+        "Reproducible build attestation for the reviewed commit",
+        "Runtime telemetry or e2e traces for QR/deep-link/review/approval/rejection/expiration/replay/broadcast paths",
+        "Production backend and node endpoint configuration evidence"
+      ],
+      "evidence": [
+        {
+          "kind": "source_manifest",
+          "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+          "sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+          "line_start": 1,
+          "line_end": 1,
+          "review_status": "reviewed",
+          "notes": "The source manifest pins source content but not deployed runtime equivalence."
+        }
+      ]
+    }
+  ],
+  "derived_security_boundary": {
+    "claimed": [
+      "Client-side remote payload intake verifies request_json digest before review.",
+      "Client-side remote payload intake blocks already-resolved and expired payloads when the backend reports those states.",
+      "User approval revalidates non-generated payloads before signing.",
+      "User or app rejection patches backend rejection state for non-generated payloads.",
+      "Review preflight and signing bind forced network, active network definitions, and non-legacy NetworkID population.",
+      "Signed payload backend patching is separate from optional ledger broadcast.",
+      "Ledger submit has local signed-state, duplicate-submit, and abort guards."
+    ],
+    "not_claimed": [
+      "Backend payload API authorization, creation policy, atomic single-use enforcement, and replay resistance.",
+      "Native camera, OS deep-link, push notification, and third-party string decoder correctness.",
+      "Ledger consensus, node honesty, and finality beyond client submit/verify calls.",
+      "Deployed mobile binary or production backend equivalence to the reviewed source."
+    ]
+  }
+}

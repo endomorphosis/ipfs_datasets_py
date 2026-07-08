@@ -8,12 +8,14 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+from .assumption_registry import evaluate_assumption_registry
 from .claims.base import SecurityClaim
 from .claims import default_claims
 from .extractors import SourceCodeExtractor
 from .ir.cid import calculate_model_cid
 from .ir.examples import example_minimal_exchange_model
 from .ir.schema import DEFAULT_ASSUMPTION_REGISTRY, SecurityModelIR, evidence_review_statuses, validate_ir
+from .release_policy import evaluate_release_policy
 from .reports.proof_receipt import ProofReceipt
 from .reports.proof_report import (
     PROOF_RISK_BLOCKING,
@@ -24,14 +26,18 @@ from .reports.proof_report import (
     PROOF_STATUS_UNKNOWN,
     ProofReport,
 )
+from .runners.cvc5_runner import CVC5Runner
 from .runners.z3_runner import Z3Runner
 
 RUNNER_FACTORIES = {
+    'cvc5': CVC5Runner,
     'z3': Z3Runner,
 }
 
 DEFAULT_PROVERS = ('z3',)
 FAIL_POLICIES = {'disproof', 'unknown-critical', 'not-modeled-critical'}
+DIFFERENTIAL_FAIL_CLOSED_STATUSES = {PROOF_STATUS_UNKNOWN, PROOF_STATUS_NOT_MODELED}
+DIFFERENTIAL_CRITICAL_RISKS = {PROOF_RISK_BLOCKING, PROOF_RISK_HIGH}
 CLAIM_DOMAINS = {
     'no_unauthorized_withdrawal': 'withdrawals',
     'no_over_reserved_internal_account': 'ledger',
@@ -135,10 +141,60 @@ def prove_claims(model: SecurityModelIR, provers: Iterable[str]) -> list[ProofRe
             runner = runner_factory()
             report = runner.run_claim(claim, model)
             last_report = report
-            if report.status in {PROOF_STATUS_PROVED, PROOF_STATUS_DISPROVED, 'NOT_MODELED'}:
+            if report.status in {PROOF_STATUS_PROVED, PROOF_STATUS_DISPROVED, PROOF_STATUS_NOT_MODELED}:
                 break
         reports.append(last_report)
     return reports
+
+
+def compare_prover_reports(model: SecurityModelIR, provers: Iterable[str]) -> dict[str, object]:
+    """Run every selected prover for every claim and summarize fail-closed agreement."""
+
+    selected_provers = _normalize_provers(provers)
+    comparisons: list[dict[str, object]] = []
+    critical_failures = 0
+    for claim in default_claims():
+        reports: list[ProofReport] = []
+        for prover_name in selected_provers:
+            runner = RUNNER_FACTORIES[prover_name]()
+            reports.append(runner.run_claim(claim, model))
+        statuses = {report.prover: report.status for report in reports}
+        unique_statuses = sorted(set(statuses.values()))
+        critical = claim.severity in DIFFERENTIAL_CRITICAL_RISKS
+        disagreement = len(unique_statuses) > 1
+        fail_closed_reports = [
+            report
+            for report in reports
+            if report.status in DIFFERENTIAL_FAIL_CLOSED_STATUSES
+        ]
+        critical_failure = critical and (disagreement or bool(fail_closed_reports))
+        if critical_failure:
+            critical_failures += 1
+        reasons: list[str] = []
+        if disagreement:
+            reasons.append('prover status disagreement')
+        for report in fail_closed_reports:
+            details = report.reason_unknown or report.solver_result or report.status
+            reasons.append(f'{report.prover}:{report.status}:{details}')
+        comparisons.append(
+            {
+                'claim_id': claim.claim_id,
+                'risk': claim.severity,
+                'critical': critical,
+                'statuses': statuses,
+                'disagreement': disagreement,
+                'fail_closed': bool(fail_closed_reports),
+                'critical_failure': critical_failure,
+                'reasons': reasons,
+                'reports': [report.to_dict() for report in reports],
+            }
+        )
+    return {
+        'release_ready': critical_failures == 0,
+        'selected_provers': selected_provers,
+        'critical_failures': critical_failures,
+        'claims': comparisons,
+    }
 
 
 
@@ -323,6 +379,18 @@ def _soundness_summary(report: ProofReport) -> dict[str, object]:
     }
 
 
+def _required_assumption_ids(reports: list[ProofReport]) -> list[str]:
+    return sorted(
+        {
+            assumption
+            for report in reports
+            for assumption in report.assumptions
+            if isinstance(assumption, str) and assumption.strip()
+        },
+        key=lambda item: (item[:1], int(item[1:]) if item[1:].isdigit() else item[1:]),
+    )
+
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Run crypto exchange security claims.')
@@ -347,6 +415,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--require-domain', action='append', default=[], help='Require one or more modeled security domains: withdrawals, deposits, ledger, capabilities, hsm, audit')
     parser.add_argument('--min-modeled-blocking-claims', type=int, default=0, help='Require at least N blocking claims to be modeled')
     parser.add_argument('--min-proved-blocking-claims', type=int, default=0, help='Require at least N blocking claims to be proved')
+    parser.add_argument('--require-prover-agreement', action='store_true', help='Run all selected provers per claim and fail blocking/high claims on disagreement, timeout, or unsupported results')
+    parser.add_argument('--release-gate', action='store_true', help='Fail unless configured blocking/high release-policy claims are accepted')
+    parser.add_argument('--require-current-assumptions', action='store_true', help='Fail unless proof assumptions have owner, evidence, and unexpired evidence')
+    parser.add_argument('--assumption-as-of', help='ISO timestamp used for assumption freshness checks; defaults to current UTC time')
     parser.add_argument('--provers', default=','.join(DEFAULT_PROVERS), help='Comma-separated prover list')
     args = parser.parse_args(argv)
     if sum(bool(value) for value in (args.example, args.model, args.source_path)) > 1:
@@ -375,14 +447,26 @@ def main(argv: list[str] | None = None) -> int:
             print(f'error: {violation}', file=sys.stderr)
         return 2
     reports = prove_claims(model, provers)
+    prover_agreement = compare_prover_reports(model, provers) if args.require_prover_agreement else None
     coverage = _coverage_summary(reports)
+    release_gate = evaluate_release_policy(reports, require_reviewed_evidence=True)
+    assumption_registry = evaluate_assumption_registry(
+        model,
+        required_assumptions=_required_assumption_ids(reports),
+        accepted_assumptions=accepted_assumptions,
+        as_of=args.assumption_as_of,
+    )
     if args.emit_counterexamples_dir:
         _emit_counterexamples(reports, args.emit_counterexamples_dir)
     payload: dict[str, object] = {
         'model_id': model.model_id,
         'reports': [report.to_dict() for report in reports],
         'coverage': coverage,
+        'release_gate': release_gate,
+        'assumption_registry': assumption_registry,
     }
+    if prover_agreement is not None:
+        payload['prover_agreement'] = prover_agreement
     if args.emit_proof_receipts:
         if accepted_assumptions is None and not args.unsafe_accept_report_assumptions:
             parser.error(
@@ -415,6 +499,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     has_failures = has_failures or coverage['blocking_modeled'] < args.min_modeled_blocking_claims
     has_failures = has_failures or coverage['blocking_proved'] < args.min_proved_blocking_claims
+    has_failures = has_failures or (prover_agreement is not None and not bool(prover_agreement['release_ready']))
+    has_failures = has_failures or (args.release_gate and not bool(release_gate['release_ready']))
+    has_failures = has_failures or (args.require_current_assumptions and not bool(assumption_registry['release_ready']))
     domains_modeled = coverage['domains_modeled']
     if isinstance(domains_modeled, dict):
         has_failures = has_failures or any(not bool(domains_modeled.get(domain, False)) for domain in required_domains)

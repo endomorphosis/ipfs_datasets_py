@@ -1,0 +1,131 @@
+{
+  "claim_id": "capability_delegation_no_authority_increase",
+  "counterexample": {
+    "account_ids": [],
+    "asset_ids": [],
+    "capability_ids": [
+      "cap:admin:quorum-bypass"
+    ],
+    "claim_id": "capability_delegation_no_authority_increase",
+    "compiler_artifact": {
+      "capability_ids": [
+        "cap:admin:quorum-bypass"
+      ],
+      "kind": "capability_delegation",
+      "violations": [
+        {
+          "capability_id": "cap:admin:quorum-bypass",
+          "conditions": {
+            "actions_ok": false,
+            "authority_ok": true,
+            "caveats_ok": true,
+            "expiry_ok": true,
+            "parent_active": true,
+            "parent_exists": true,
+            "resources_ok": true
+          }
+        }
+      ]
+    },
+    "deposit_ids": [],
+    "evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 65,
+        "line_start": 55,
+        "notes": "Fixture delegation monotonicity policy.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 54,
+        "line_start": 45,
+        "notes": "Fixture capability chain.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
+    "message": "Z3 found a satisfying violation trace.",
+    "soundness_notes": [],
+    "source_facts": [
+      {
+        "allow_expiry_extension": false,
+        "caveats_relax_authority": false,
+        "delegated_actions": [
+          "withdraw",
+          "freeze_wallet"
+        ],
+        "delegated_authority": 2,
+        "delegated_resources": [
+          "wallet:exchange_hot"
+        ],
+        "delegator_authority": 2,
+        "expired": false,
+        "expiry": 100,
+        "id": "cap:admin:quorum-bypass",
+        "parent_actions": [
+          "view_balance"
+        ],
+        "parent_expiry": 100,
+        "parent_resources": [
+          "wallet:exchange_hot"
+        ],
+        "principal": "principal:exchange_signer",
+        "privileged_action_attempted": true,
+        "resource_id": "wallet:exchange_hot",
+        "revoked_before_action": false
+      },
+      {
+        "capability_id": "cap:admin:quorum-bypass",
+        "conditions": {
+          "actions_ok": false,
+          "authority_ok": true,
+          "caveats_ok": true,
+          "expiry_ok": true,
+          "parent_active": true,
+          "parent_exists": true,
+          "resources_ok": true
+        }
+      }
+    ],
+    "trace": [],
+    "txids": [],
+    "violating_event_ids": [],
+    "wallet_ids": [],
+    "withdrawal_ids": [],
+    "witness": {
+      "capability_0_actions_ok": "True",
+      "capability_0_authority_ok": "True",
+      "capability_0_caveats_ok": "True",
+      "capability_0_expiry_ok": "True",
+      "capability_0_parent_active": "True",
+      "capability_0_parent_exists": "True",
+      "capability_0_resources_ok": "True",
+      "capability_1_actions_ok": "False",
+      "capability_1_authority_ok": "True",
+      "capability_1_caveats_ok": "True",
+      "capability_1_expiry_ok": "True",
+      "capability_1_parent_active": "True",
+      "capability_1_parent_exists": "True",
+      "capability_1_resources_ok": "True"
+    }
+  },
+  "expected_claims": [
+    "capability_delegation_no_authority_increase"
+  ],
+  "matched_claims": [
+    "capability_delegation_no_authority_increase"
+  ],
+  "model_id": "minimal-btc-exchange::admin_quorum_delegation_gap",
+  "mutators": [
+    "admin_quorum_delegation_gap"
+  ],
+  "proof_or_trace_cid": "bafkreibnb7ssowsm5brnbylcmnd6ozmcfroixd564n56jrb23hl637b5yi",
+  "risk": "high",
+  "scenario": "admin_quorum_delegation_gap",
+  "schema_version": "crypto-exchange-counterexample-vector/v1",
+  "solver_name": "z3",
+  "solver_result": "sat",
+  "status": "DISPROVED"
+}

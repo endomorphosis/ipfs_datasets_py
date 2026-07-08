@@ -35,6 +35,13 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.runners.z3_runner im
 Mutator = Callable[[SecurityModelIR], None]
 
 
+def _safe_file_stem(value: str) -> str:
+    return ''.join(
+        char if char.isalnum() or char in {'-', '_'} else '-'
+        for char in value
+    ).strip('-') or 'counterexample'
+
+
 def _load_model(
     *,
     example: bool,
@@ -213,7 +220,375 @@ def _mutate_missing_audit(model: SecurityModelIR) -> None:
     ]
 
 
+def _mutate_multi_asset_conservation_gap(model: SecurityModelIR) -> None:
+    if not any(asset.get('id') == 'asset:eth' for asset in model.assets):
+        model.assets.append({'id': 'asset:eth', 'symbol': 'ETH', 'decimals': 18})
+    ledger_totals = model.metadata.setdefault('ledger_totals', {})
+    for bucket_name in (
+        'customer_liabilities',
+        'custody_assets',
+        'pending_settlements',
+        'known_losses',
+    ):
+        ledger_totals.setdefault(bucket_name, {})
+    ledger_totals['customer_liabilities']['asset:eth'] = 10
+    ledger_totals['custody_assets']['asset:eth'] = 3
+    ledger_totals['pending_settlements']['asset:eth'] = 0
+    ledger_totals['known_losses']['asset:eth'] = 0
+
+
+def _mutate_multi_chain_conservation_gap(model: SecurityModelIR) -> None:
+    if not any(asset.get('id') == 'asset:usdc' for asset in model.assets):
+        model.assets.append({'id': 'asset:usdc', 'symbol': 'USDC', 'decimals': 6})
+    ledger_totals = model.metadata.setdefault('ledger_totals', {})
+    for bucket_name in (
+        'customer_liabilities',
+        'custody_assets',
+        'pending_settlements',
+        'known_losses',
+    ):
+        ledger_totals.setdefault(bucket_name, {})
+    ledger_totals['customer_liabilities']['asset:usdc'] = 1_000
+    ledger_totals['custody_assets']['asset:usdc'] = 250
+    ledger_totals['pending_settlements']['asset:usdc'] = 50
+    ledger_totals['known_losses']['asset:usdc'] = 0
+    model.metadata['chain_ledger_totals'] = {
+        'chain:ethereum': {
+            'asset:usdc': {
+                'customer_liabilities': 500,
+                'custody_assets': 250,
+                'pending_settlements': 0,
+                'known_losses': 0,
+            },
+        },
+        'chain:polygon': {
+            'asset:usdc': {
+                'customer_liabilities': 500,
+                'custody_assets': 0,
+                'pending_settlements': 50,
+                'known_losses': 0,
+            },
+        },
+    }
+
+
+def _mutate_reorg_after_deposit_credit(model: SecurityModelIR) -> None:
+    _ensure_event(
+        model,
+        'deposit_observed',
+        deposit_id='deposit:reorged',
+        txid='tx:reorged',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=0,
+        timestamp=20,
+    )
+    _ensure_event(
+        model,
+        'deposit_finalized',
+        deposit_id='deposit:reorged',
+        txid='tx:reorged',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=6,
+        finality_threshold=6,
+        timestamp=21,
+    )
+    _ensure_event(
+        model,
+        'chain_reorg_detected',
+        deposit_id='deposit:reorged',
+        txid='tx:reorged',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        timestamp=22,
+    )
+    _ensure_event(
+        model,
+        'deposit_credited',
+        deposit_id='deposit:reorged',
+        txid='tx:reorged',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=6,
+        finality_threshold=6,
+        after_finality=True,
+        timestamp=23,
+    )
+
+
+def _mutate_partial_rollback_deposit_gap(model: SecurityModelIR) -> None:
+    _ensure_event(
+        model,
+        'deposit_observed',
+        deposit_id='deposit:partial-rollback',
+        txid='tx:partial-rollback',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=3,
+        timestamp=50,
+    )
+    _ensure_event(
+        model,
+        'deposit_credited',
+        deposit_id='deposit:partial-rollback',
+        txid='tx:partial-rollback',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=3,
+        finality_threshold=6,
+        after_finality=False,
+        timestamp=51,
+    )
+    _ensure_event(
+        model,
+        'chain_reorg_detected',
+        deposit_id='deposit:partial-rollback',
+        txid='tx:partial-rollback',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        rollback_depth=2,
+        timestamp=52,
+    )
+    _ensure_event(
+        model,
+        'deposit_finalized',
+        deposit_id='deposit:partial-rollback',
+        txid='tx:partial-rollback',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=6,
+        finality_threshold=6,
+        timestamp=53,
+    )
+
+
+def _mutate_nonce_reuse_without_reservation(model: SecurityModelIR) -> None:
+    withdrawal_id = 'withdrawal:nonce-reuse'
+    _ensure_event(
+        model,
+        'wallet_unfrozen',
+        wallet_id='wallet:user_alice',
+        timestamp=29,
+    )
+    _ensure_event(
+        model,
+        'withdrawal_requested',
+        withdrawal_id=withdrawal_id,
+        principal='principal:alice',
+        wallet_id='wallet:user_alice',
+        nonce='nonce:1',
+        amount=1,
+        asset_id='asset:btc',
+        timestamp=30,
+    )
+    _ensure_event(
+        model,
+        'withdrawal_approved',
+        withdrawal_id=withdrawal_id,
+        principal='principal:exchange_signer',
+        wallet_id='wallet:user_alice',
+        nonce='nonce:1',
+        amount=1,
+        asset_id='asset:btc',
+        timestamp=31,
+    )
+    _ensure_event(
+        model,
+        'balance_reserved',
+        withdrawal_id=withdrawal_id,
+        wallet_id='wallet:user_alice',
+        amount=1,
+        asset_id='asset:btc',
+        timestamp=31.5,
+    )
+    _ensure_event(
+        model,
+        'withdrawal_broadcast',
+        withdrawal_id=withdrawal_id,
+        principal='principal:exchange_signer',
+        wallet_id='wallet:user_alice',
+        nonce='nonce:1',
+        amount=1,
+        asset_id='asset:btc',
+        authorized=True,
+        nonce_fresh=False,
+        sufficient_balance=True,
+        wallet_not_frozen=True,
+        critical=True,
+        timestamp=32,
+    )
+
+
+def _mutate_mempool_replacement_gap(model: SecurityModelIR) -> None:
+    withdrawal_id = 'withdrawal:mempool-replacement'
+    _ensure_event(
+        model,
+        'wallet_unfrozen',
+        wallet_id='wallet:user_alice',
+        timestamp=59,
+    )
+    _ensure_event(
+        model,
+        'withdrawal_requested',
+        withdrawal_id=withdrawal_id,
+        principal='principal:alice',
+        wallet_id='wallet:user_alice',
+        nonce='nonce:replacement',
+        amount=1,
+        asset_id='asset:btc',
+        timestamp=60,
+    )
+    _ensure_event(
+        model,
+        'withdrawal_approved',
+        withdrawal_id=withdrawal_id,
+        principal='principal:exchange_signer',
+        wallet_id='wallet:user_alice',
+        nonce='nonce:replacement',
+        amount=1,
+        asset_id='asset:btc',
+        timestamp=61,
+    )
+    _ensure_event(
+        model,
+        'nonce_reserved',
+        withdrawal_id=withdrawal_id,
+        nonce='nonce:replacement',
+        timestamp=61.2,
+    )
+    _ensure_event(
+        model,
+        'balance_reserved',
+        withdrawal_id=withdrawal_id,
+        wallet_id='wallet:user_alice',
+        amount=1,
+        asset_id='asset:btc',
+        timestamp=61.4,
+    )
+    _ensure_event(
+        model,
+        'withdrawal_broadcast',
+        withdrawal_id=withdrawal_id,
+        principal='principal:exchange_signer',
+        wallet_id='wallet:user_alice',
+        nonce='nonce:replacement',
+        amount=3,
+        asset_id='asset:btc',
+        txid='tx:mempool-replacement:higher-amount',
+        replacement_of='tx:mempool-replacement:approved',
+        authorized=True,
+        nonce_fresh=True,
+        sufficient_balance=False,
+        wallet_not_frozen=True,
+        critical=True,
+        timestamp=62,
+    )
+
+
+def _mutate_admin_quorum_delegation_gap(model: SecurityModelIR) -> None:
+    model.capabilities.append(
+        {
+            'id': 'cap:admin:quorum-bypass',
+            'principal': 'principal:exchange_signer',
+            'resource_id': 'wallet:exchange_hot',
+            'delegator_authority': 2,
+            'delegated_authority': 2,
+            'parent_actions': ['view_balance'],
+            'delegated_actions': ['withdraw', 'freeze_wallet'],
+            'parent_resources': ['wallet:exchange_hot'],
+            'delegated_resources': ['wallet:exchange_hot'],
+            'parent_expiry': 100,
+            'expiry': 100,
+            'allow_expiry_extension': False,
+            'caveats_relax_authority': False,
+            'revoked_before_action': False,
+            'expired': False,
+            'privileged_action_attempted': True,
+        }
+    )
+
+
+def _mutate_stale_rpc_finality_gap(model: SecurityModelIR) -> None:
+    _ensure_event(
+        model,
+        'deposit_observed',
+        deposit_id='deposit:stale-rpc',
+        txid='tx:stale-rpc',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=1,
+        timestamp=40,
+    )
+    _ensure_event(
+        model,
+        'deposit_finalized',
+        deposit_id='deposit:stale-rpc',
+        txid='tx:stale-rpc',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=1,
+        finality_threshold=6,
+        timestamp=41,
+    )
+    _ensure_event(
+        model,
+        'deposit_credited',
+        deposit_id='deposit:stale-rpc',
+        txid='tx:stale-rpc',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=1,
+        finality_threshold=6,
+        after_finality=True,
+        rpc_observation='stale',
+        timestamp=42,
+    )
+
+
+def _mutate_rpc_censorship_finality_gap(model: SecurityModelIR) -> None:
+    _ensure_event(
+        model,
+        'deposit_observed',
+        deposit_id='deposit:rpc-censored',
+        txid='tx:rpc-censored',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=0,
+        rpc_observation='censored',
+        timestamp=70,
+    )
+    _ensure_event(
+        model,
+        'deposit_credited',
+        deposit_id='deposit:rpc-censored',
+        txid='tx:rpc-censored',
+        asset_id='asset:btc',
+        chain_id='chain:btc',
+        account_id='account:alice_btc',
+        confirmations=0,
+        finality_threshold=6,
+        after_finality=False,
+        rpc_observation='censored',
+        timestamp=71,
+    )
+
+
 SCENARIO_REGISTRY: dict[str, dict[str, object]] = {
+    'admin_quorum_delegation_gap': {
+        'expected_claims': ['capability_delegation_no_authority_increase'],
+        'mutator': _mutate_admin_quorum_delegation_gap,
+    },
     'unauthorized_withdrawal_policy_gap': {
         'expected_claims': ['no_unauthorized_withdrawal'],
         'mutator': _mutate_unauthorized_withdrawal,
@@ -226,9 +601,33 @@ SCENARIO_REGISTRY: dict[str, dict[str, object]] = {
         'expected_claims': ['no_deposit_before_finality'],
         'mutator': _mutate_deposit_before_finality,
     },
+    'multi_asset_conservation_gap': {
+        'expected_claims': ['global_asset_conservation'],
+        'mutator': _mutate_multi_asset_conservation_gap,
+    },
+    'multi_chain_conservation_gap': {
+        'expected_claims': ['global_asset_conservation'],
+        'mutator': _mutate_multi_chain_conservation_gap,
+    },
+    'mempool_replacement_gap': {
+        'expected_claims': ['no_unauthorized_withdrawal'],
+        'mutator': _mutate_mempool_replacement_gap,
+    },
+    'nonce_reuse_without_reservation': {
+        'expected_claims': ['no_unauthorized_withdrawal'],
+        'mutator': _mutate_nonce_reuse_without_reservation,
+    },
+    'partial_rollback_deposit_gap': {
+        'expected_claims': ['no_deposit_before_finality'],
+        'mutator': _mutate_partial_rollback_deposit_gap,
+    },
     'post_freeze_signing_gap': {
         'expected_claims': ['no_signing_request_after_wallet_freeze'],
         'mutator': _mutate_signing_after_freeze,
+    },
+    'reorg_after_deposit_credit': {
+        'expected_claims': ['no_deposit_before_finality'],
+        'mutator': _mutate_reorg_after_deposit_credit,
     },
     'delegation_authority_escalation': {
         'expected_claims': ['capability_delegation_no_authority_increase'],
@@ -237,6 +636,14 @@ SCENARIO_REGISTRY: dict[str, dict[str, object]] = {
     'revocation_enforcement_gap': {
         'expected_claims': ['revoked_capability_no_future_authorization'],
         'mutator': _mutate_revocation_gap,
+    },
+    'stale_rpc_finality_gap': {
+        'expected_claims': ['no_deposit_before_finality'],
+        'mutator': _mutate_stale_rpc_finality_gap,
+    },
+    'rpc_censorship_finality_gap': {
+        'expected_claims': ['no_deposit_before_finality'],
+        'mutator': _mutate_rpc_censorship_finality_gap,
     },
     'missing_audit_transition': {
         'expected_claims': ['audit_event_exists_for_critical_transition'],
@@ -295,6 +702,62 @@ def _fuzzed_mutator_names(seed: int, rounds: int) -> list[list[str]]:
     return fuzzed
 
 
+def _counterexample_vectors(scenario: dict[str, object]) -> list[dict[str, object]]:
+    vectors: list[dict[str, object]] = []
+    reports = scenario.get('reports', [])
+    if not isinstance(reports, list):
+        return vectors
+    for report in reports:
+        if not isinstance(report, dict):
+            continue
+        if report.get('status') != 'DISPROVED':
+            continue
+        counterexample = report.get('counterexample')
+        if not isinstance(counterexample, dict):
+            continue
+        vectors.append(
+            {
+                'schema_version': 'crypto-exchange-counterexample-vector/v1',
+                'scenario': scenario.get('name', ''),
+                'mutators': scenario.get('mutators', []),
+                'model_id': scenario.get('model_id', ''),
+                'expected_claims': scenario.get('expected_claims', []),
+                'matched_claims': scenario.get('matched_claims', []),
+                'claim_id': report.get('claim_id', ''),
+                'status': report.get('status', ''),
+                'risk': report.get('risk', ''),
+                'solver_name': report.get('solver_name', ''),
+                'solver_result': report.get('solver_result', ''),
+                'proof_or_trace_cid': report.get('proof_or_trace_cid', ''),
+                'counterexample': counterexample,
+            }
+        )
+    return vectors
+
+
+def _emit_counterexample_vectors(
+    scenarios: list[dict[str, object]],
+    target_dir: str,
+) -> int:
+    directory = Path(target_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    vector_count = 0
+    for scenario in scenarios:
+        scenario_name = str(scenario.get('name', 'scenario'))
+        for vector in _counterexample_vectors(scenario):
+            claim_id = str(vector.get('claim_id', 'claim'))
+            output_path = directory / (
+                f'{_safe_file_stem(scenario_name)}'
+                f'--{_safe_file_stem(claim_id)}.json'
+            )
+            output_path.write_text(
+                json.dumps(vector, indent=2, sort_keys=True) + '\n',
+                encoding='utf-8',
+            )
+            vector_count += 1
+    return vector_count
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -320,6 +783,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         '--out',
         help='Optional output path; stdout is used when omitted',
+    )
+    parser.add_argument(
+        '--emit-counterexamples-dir',
+        help='Directory to emit compact counterexample vectors as JSON files',
     )
     parser.add_argument(
         '--strategy',
@@ -393,6 +860,13 @@ def main(argv: list[str] | None = None) -> int:
         rendered_scenarios.append(scenario_payload)
         success = success and scenario_ok
 
+    vector_count = 0
+    if args.emit_counterexamples_dir:
+        vector_count = _emit_counterexample_vectors(
+            rendered_scenarios,
+            args.emit_counterexamples_dir,
+        )
+
     payload = {
         'model_id': base_model.model_id,
         'seed': args.seed,
@@ -407,6 +881,7 @@ def main(argv: list[str] | None = None) -> int:
             'total_disproved_claims': sum(
                 len(item['disproved_claims']) for item in rendered_scenarios
             ),
+            'counterexample_vector_count': vector_count,
         },
     }
     rendered = json.dumps(payload, indent=2, sort_keys=True)

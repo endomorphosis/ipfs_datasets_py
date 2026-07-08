@@ -6,6 +6,7 @@ import pytest
 
 from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.examples import example_minimal_exchange_model
 from ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all import main
+from ipfs_datasets_py.logic.security_models.crypto_exchange.release_policy import release_policy_entries
 from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.proof_report import ProofReport
 
 
@@ -246,6 +247,55 @@ def test_cli_coverage_summary_includes_domain_details(tmp_path: Path, monkeypatc
     assert payload['coverage']['domains_modeled']['ledger'] is False
     assert payload['coverage']['domain_summary']['withdrawals']['claim_statuses']['no_unauthorized_withdrawal'] == 'PROVED'
     assert payload['coverage']['domain_summary']['ledger']['blocking_not_modeled'] == 1
+
+
+def test_cli_emits_and_enforces_release_gate(tmp_path: Path, monkeypatch) -> None:
+    report_path = tmp_path / 'release-gate.json'
+    reports = []
+    for entry in release_policy_entries():
+        reports.append(
+            _report(
+                claim_id=entry.claim_id,
+                status='UNKNOWN' if entry.claim_id == 'no_deposit_before_finality' else 'PROVED',
+                solver_result='unknown' if entry.claim_id == 'no_deposit_before_finality' else 'unsat',
+                risk=entry.release_gate if entry.release_gate in {'blocking', 'high', 'medium'} else 'low',
+                assumptions=list(entry.required_assumptions),
+                evidence_refs=[{'kind': 'test_fixture', 'path': 'fixture.py', 'review_status': 'trusted_fixture'}],
+            )
+        )
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: reports,
+    )
+
+    assert main(['--example', '--out', str(report_path)]) == 0
+    payload = json.loads(report_path.read_text(encoding='utf-8'))
+    assert payload['release_gate']['release_ready'] is False
+    assert payload['release_gate']['gates']['high']['failed'] == 1
+    assert main(['--example', '--release-gate']) == 1
+
+
+def test_cli_emits_and_enforces_current_assumption_registry(tmp_path: Path, monkeypatch) -> None:
+    report_path = tmp_path / 'assumptions.json'
+    model = deepcopy(example_minimal_exchange_model())
+    for assumption in model.assumptions:
+        if isinstance(assumption, dict) and assumption['id'] == 'A4':
+            assumption['last_reviewed_at'] = '2025-01-01T00:00:00Z'
+            assumption['evidence_expires_at'] = '2026-01-01T00:00:00Z'
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all._load_model',
+        lambda args: model,
+    )
+    monkeypatch.setattr(
+        'ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all.prove_claims',
+        lambda model, provers: [_report(assumptions=['A4'])],
+    )
+
+    assert main(['--example', '--assumption-as-of', '2026-07-07T00:00:00Z', '--out', str(report_path)]) == 0
+    payload = json.loads(report_path.read_text(encoding='utf-8'))
+    assert payload['assumption_registry']['release_ready'] is False
+    assert payload['assumption_registry']['summary']['stale'] == 1
+    assert main(['--example', '--assumption-as-of', '2026-07-07T00:00:00Z', '--require-current-assumptions']) == 1
 
 
 

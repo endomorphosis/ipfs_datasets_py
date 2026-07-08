@@ -10,7 +10,9 @@ The current implementation surface is intentionally limited to the pieces that e
 
 This is a v1 bounded `SecurityModelIR`/Z3/proof-report/proof-receipt/TypeScript-consumer slice. It does not prove a production exchange secure: `PROVED` means a modeled finite-IR property holds under the listed assumptions, while `UNKNOWN` and `NOT_MODELED` remain fail-closed, non-secure outcomes. TLA+, Tamarin, ProVerif, HyperLTL, Lean, and Coq execution stay documented future work until they run end-to-end with tests.
 
-Default proof artifacts record bounded assumption IDs (`A1`-`A10`), and the CLI can fail closed when a model declares simulated F-logic/ZKP dependencies.
+Default proof artifacts record bounded assumption IDs (`A1`-`A10`), and the default IR now attaches owner, evidence, review timestamp, and expiry timestamp metadata to those assumptions. The CLI can fail closed when a model declares simulated F-logic/ZKP dependencies or when consumed assumptions lack current operational evidence.
+
+The default release policy maps the current eight claims into blocking, high, and medium release gates. `prove_all` always emits `release_gate` and `assumption_registry` summaries. `--release-gate` exits non-zero unless configured blocking/high claims are accepted, required assumptions are present, and production-critical evidence is reviewed. `--require-current-assumptions` exits non-zero when consumed assumptions have missing owner/evidence/expiry metadata or stale evidence. The audit-linkage claim is medium severity: concrete `DISPROVED` audit gaps block release, while `UNKNOWN` or `NOT_MODELED` audit coverage is triaged with the broader required-domain checks.
 
 The extractor surface now supports seed autoformalization of Python plus popular source languages (JavaScript, TypeScript, Go, Java, and Rust) into `SecurityModelIR`, reusing lightweight natural-language-to-FOL helpers to capture security-relevant comments and docstring obligations as reviewable invariants.
 
@@ -28,4 +30,5 @@ Utility scripts for the PR surface live under `scripts/ops/security_verification
 - `emit_security_typescript_schema.py` emits the deterministic TypeScript/WASM schema module and runtime guard.
 - `run_security_ir_proof_suite.py` wraps the proof CLI for ops automation.
 - `run_security_ir_disproof_suite.py` applies deterministic attack tactics plus bounded mutation fuzzing to hunt for counterexamples.
+- `run_security_ir_assurance_baseline.py` runs proof, release-gate, and disproof checks into a single markdown summary.
 - `run_security_ir_tests.sh` runs the focused test suite plus the fail-closed proof/disproof smoke paths.

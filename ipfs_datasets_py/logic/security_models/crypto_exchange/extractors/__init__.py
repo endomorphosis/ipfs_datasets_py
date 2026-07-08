@@ -7,6 +7,7 @@ from .python_ast_extractor import PythonASTExtractor
 from .source_code_extractor import SourceCodeExtractor
 from .typescript_schema import TypeScriptSchemaEmitter
 from .ucan_policy_extractor import UCANPolicyExtractor
+from .xaman_source_extractor import XamanSourceExtractor
 
 __all__ = [
     'SecurityIRFeatureLoopProjector',
@@ -16,4 +17,5 @@ __all__ = [
     'SourceCodeExtractor',
     'TypeScriptSchemaEmitter',
     'UCANPolicyExtractor',
+    'XamanSourceExtractor',
 ]

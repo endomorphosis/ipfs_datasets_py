@@ -31,12 +31,14 @@ _SUPPORTED_LANGUAGE_EXTENSIONS = {
 
 _FUNCTION_PATTERNS = {
     'javascript': (
-        re.compile(r'^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_]\w*)\s*\('),
+        re.compile(r'^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+([A-Za-z_]\w*)\s*\('),
         re.compile(r'^\s*(?:export\s+)?const\s+([A-Za-z_]\w*)\s*=\s*(?:async\s*)?\('),
+        re.compile(r'^\s*(?:public\s+|private\s+|protected\s+)?(?:async\s+)?([A-Za-z_]\w*)\s*\([^)]*\)\s*(?:\{|:)'),
     ),
     'typescript': (
-        re.compile(r'^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_]\w*)\s*\('),
+        re.compile(r'^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+([A-Za-z_]\w*)\s*\('),
         re.compile(r'^\s*(?:export\s+)?const\s+([A-Za-z_]\w*)\s*=\s*(?:async\s*)?\('),
+        re.compile(r'^\s*(?:public\s+|private\s+|protected\s+)?(?:async\s+)?([A-Za-z_]\w*)\s*\([^)]*\)\s*(?:\{|:)'),
     ),
     'go': (
         re.compile(r'^\s*func\s+(?:\(\s*\w+\s+\*?\w+\s*\)\s*)?([A-Za-z_]\w*)\s*\('),
@@ -52,8 +54,8 @@ _FUNCTION_PATTERNS = {
 }
 
 _CLASS_PATTERNS = {
-    'javascript': (re.compile(r'^\s*(?:export\s+)?class\s+([A-Za-z_]\w*)\b'),),
-    'typescript': (re.compile(r'^\s*(?:export\s+)?class\s+([A-Za-z_]\w*)\b'),),
+    'javascript': (re.compile(r'^\s*(?:export\s+)?(?:default\s+)?class\s+([A-Za-z_]\w*)\b'),),
+    'typescript': (re.compile(r'^\s*(?:export\s+)?(?:default\s+)?class\s+([A-Za-z_]\w*)\b'),),
     'go': (re.compile(r'^\s*type\s+([A-Za-z_]\w*)\s+struct\b'),),
     'java': (re.compile(r'^\s*(?:public|protected|private)?\s*class\s+([A-Za-z_]\w*)\b'),),
     'rust': (re.compile(r'^\s*(?:pub\s+)?struct\s+([A-Za-z_]\w*)\b'),),

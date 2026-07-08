@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Mapping, NotRequired, Required, TypedDict
 
 
@@ -11,6 +11,10 @@ class AssumptionEntry(TypedDict, total=False):
     id: str
     description: str
     custom: bool
+    owner: str
+    evidence_refs: list['EvidenceRef']
+    last_reviewed_at: str
+    evidence_expires_at: str
 
 
 class EvidenceRef(TypedDict, total=False):
@@ -40,8 +44,40 @@ DEFAULT_ASSUMPTION_REGISTRY = {
     'A10': 'audit logs are append-only or tamper-evident',
 }
 
+DEFAULT_ASSUMPTION_OWNERS = {
+    'A1': 'security-architecture',
+    'A2': 'wallet-key-management',
+    'A3': 'wallet-transaction-signing',
+    'A4': 'exchange-ledger-database',
+    'A5': 'withdrawal-nonce-service',
+    'A6': 'chain-risk-management',
+    'A7': 'security-governance',
+    'A8': 'custody-platform',
+    'A9': 'blockchain-infrastructure',
+    'A10': 'audit-compliance',
+}
+DEFAULT_ASSUMPTION_LAST_REVIEWED_AT = '2026-07-07T00:00:00Z'
+DEFAULT_ASSUMPTION_EVIDENCE_EXPIRES_AT = '2027-01-01T00:00:00Z'
+
+
+def _assumption_evidence_ref(assumption_id: str) -> EvidenceRef:
+    return {
+        'kind': 'manual_review',
+        'path': 'docs/security_verification/threat_model.md',
+        'review_status': 'trusted_fixture',
+        'notes': f'Built-in fixture evidence for bounded assumption {assumption_id}.',
+    }
+
+
 DEFAULT_THREAT_MODEL_ASSUMPTIONS: list[AssumptionEntry] = [
-    {'id': assumption_id, 'description': description}
+    {
+        'id': assumption_id,
+        'description': description,
+        'owner': DEFAULT_ASSUMPTION_OWNERS[assumption_id],
+        'evidence_refs': [_assumption_evidence_ref(assumption_id)],
+        'last_reviewed_at': DEFAULT_ASSUMPTION_LAST_REVIEWED_AT,
+        'evidence_expires_at': DEFAULT_ASSUMPTION_EVIDENCE_EXPIRES_AT,
+    }
     for assumption_id, description in sorted(
         DEFAULT_ASSUMPTION_REGISTRY.items(),
         key=lambda item: int(item[0][1:]),
@@ -332,6 +368,18 @@ def validate_ir_payload(payload: Mapping[str, Any], *, strict: bool = True) -> d
 
 
 
+def _parse_iso_datetime(field_name: str, value: Any) -> datetime:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f'{field_name} must be a non-empty ISO timestamp')
+    try:
+        parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+    except ValueError as exc:
+        raise ValueError(f'{field_name} must be an ISO timestamp') from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
 def _validate_assumption_entry(assumption: AssumptionEntry | str) -> None:
     """Validate an assumption identifier or structured ``{id, description}`` entry."""
 
@@ -348,6 +396,25 @@ def _validate_assumption_entry(assumption: AssumptionEntry | str) -> None:
             raise ValueError('assumption mappings must include a non-empty id')
         if not isinstance(description, str) or not description.strip():
             raise ValueError('assumption mappings must include a non-empty description')
+        if 'owner' in assumption and (not isinstance(assumption['owner'], str) or not assumption['owner'].strip()):
+            raise ValueError('assumption owner must be a non-empty string when present')
+        if 'evidence_refs' in assumption:
+            evidence_refs = assumption['evidence_refs']
+            if not isinstance(evidence_refs, list):
+                raise ValueError('assumption evidence_refs must be a list when present')
+            for reference in evidence_refs:
+                if not isinstance(reference, Mapping):
+                    raise ValueError('assumption evidence_refs entries must be mappings')
+                _validate_evidence_ref(reference)
+        last_reviewed_at = assumption.get('last_reviewed_at')
+        evidence_expires_at = assumption.get('evidence_expires_at')
+        if last_reviewed_at is not None:
+            _parse_iso_datetime('assumption last_reviewed_at', last_reviewed_at)
+        if evidence_expires_at is not None:
+            _parse_iso_datetime('assumption evidence_expires_at', evidence_expires_at)
+        if last_reviewed_at is not None and evidence_expires_at is not None:
+            if _parse_iso_datetime('assumption evidence_expires_at', evidence_expires_at) < _parse_iso_datetime('assumption last_reviewed_at', last_reviewed_at):
+                raise ValueError('assumption evidence_expires_at must be >= last_reviewed_at')
         if assumption_id in DEFAULT_ASSUMPTION_REGISTRY:
             return
         if not bool(assumption.get('custom', False)):

@@ -27,6 +27,11 @@ def test_ir_schema_validates_example_model() -> None:
         for assumption in validated.assumptions
     ]
     assert assumption_ids == [f'A{index}' for index in range(1, 11)]
+    for assumption in validated.assumptions:
+        assert isinstance(assumption, dict)
+        assert assumption['owner']
+        assert assumption['evidence_refs']
+        assert assumption['evidence_expires_at']
 
 
 @pytest.mark.parametrize(

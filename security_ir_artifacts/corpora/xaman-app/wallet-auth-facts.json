@@ -1,0 +1,1149 @@
+{
+  "schema_version": "xaman-wallet-auth-facts/v1",
+  "task_id": "PORTAL-CXTP-041",
+  "corpus": "xaman-app",
+  "source": {
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
+    "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "coverage_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+    "coverage_schema_version": "xaman-source-coverage/v1"
+  },
+  "review": {
+    "review_status": "reviewed",
+    "reviewed_at": "2026-07-08",
+    "review_scope": [
+      "account storage",
+      "vault access",
+      "storage encryption",
+      "authentication overlays",
+      "biometric gates",
+      "passcode gates",
+      "key custody boundaries",
+      "signing preconditions"
+    ],
+    "model_boundary": "Source-backed React Native and TypeScript wallet-auth facts at the pinned Xaman-App commit. Native module internals, third-party cryptographic libraries, hardware-card firmware, deployed binaries, backend service behavior, and runtime traces are outside this artifact unless explicitly modeled."
+  },
+  "source_inputs": [
+    {
+      "path": "src/common/libs/vault.ts",
+      "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+      "size_bytes": 6302,
+      "categories": [
+        "vault_access",
+        "storage_encryption",
+        "key_custody_boundary"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/store/storage.ts",
+      "sha256": "170f2dbda14c5c657ed54a6128de96c40dc753c36c0f4a7ede12705c0f7e15b2",
+      "size_bytes": 7419,
+      "categories": [
+        "account_storage",
+        "storage_encryption"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/store/repositories/account.ts",
+      "sha256": "475f4e00545de9fef217a76e6f2916c2e65bc8d68c328944705d54f47b69b1b1",
+      "size_bytes": 10438,
+      "categories": [
+        "account_storage",
+        "key_custody_boundary",
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/store/models/objects/account.ts",
+      "sha256": "0af64149a51f1d708b5edf5b098a0a84e03b393080acdbd25c250bc3188b6ae0",
+      "size_bytes": 4484,
+      "categories": [
+        "account_storage"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/store/models/objects/accountDetails.ts",
+      "sha256": "9dd78f0689111984d9e4d9fcc3d7395a95c9782fa177d89e06be7acf768601f7",
+      "size_bytes": 1740,
+      "categories": [
+        "account_storage"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/store/types.ts",
+      "sha256": "2556d6c3b6325639bf09145fb7bfa5398c8415c61102a93f0ec056e60f2689d4",
+      "size_bytes": 1514,
+      "categories": [
+        "account_storage",
+        "authentication_overlay",
+        "key_custody_boundary"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/services/AuthenticationService.ts",
+      "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+      "size_bytes": 14970,
+      "categories": [
+        "authentication_overlay",
+        "biometric_gate",
+        "passcode_gate"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/screens/Overlay/Authenticate/AuthenticateOverlay.tsx",
+      "sha256": "2546924c36ebdc4da92a2fe4298694a944fc26543f98a41333b20630e85b0c25",
+      "size_bytes": 10923,
+      "categories": [
+        "authentication_overlay",
+        "biometric_gate",
+        "passcode_gate"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/screens/Overlay/PassphraseAuthentication/PassphraseAuthenticationOverlay.tsx",
+      "sha256": "19f985dd1c4317ffd523c8d6dee489d0c9ac411efb5b36ef238c01142991c188",
+      "size_bytes": 10015,
+      "categories": [
+        "authentication_overlay",
+        "vault_access",
+        "key_custody_boundary"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+      "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+      "size_bytes": 16501,
+      "categories": [
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+      "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+      "size_bytes": 18940,
+      "categories": [
+        "authentication_overlay",
+        "vault_access",
+        "key_custody_boundary",
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/screens/Overlay/Vault/Methods/Passcode/PasscodeMethod.tsx",
+      "sha256": "73cfc7f14e0bb170709ea936bd00f3ff44264af88d1e74c4cef95ab87226dcda",
+      "size_bytes": 10666,
+      "categories": [
+        "authentication_overlay",
+        "biometric_gate",
+        "passcode_gate",
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/screens/Overlay/Vault/Methods/Passphrase/PassphraseMethod.tsx",
+      "sha256": "62be6eec05a8cdfe52f3b4366fa2f6c83f4c07eb1a3cb4a59f6b48e6b0ba6e76",
+      "size_bytes": 7212,
+      "categories": [
+        "authentication_overlay",
+        "vault_access",
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/screens/Overlay/Vault/Methods/Tangem/TangemMethod.tsx",
+      "sha256": "ac405fb65c02b4f4542c05c39fdc2ddf33f86510133f197d5b609443800b2108",
+      "size_bytes": 1247,
+      "categories": [
+        "authentication_overlay",
+        "key_custody_boundary",
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "e2e/02_generate_account.feature",
+      "sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1",
+      "size_bytes": 6858,
+      "categories": [
+        "account_storage",
+        "authentication_overlay",
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "e2e/03_import_account.feature",
+      "sha256": "6cd8e22cb78bc03815288349f6d97667d36e181bbca0e459633fd151eeb0f9b1",
+      "size_bytes": 9887,
+      "categories": [
+        "account_storage",
+        "authentication_overlay",
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "e2e/04_upgrade_account.feature",
+      "sha256": "bb036b7ea71919606c7cb3c99ce6a3399879402afbfb59341e1c71b7b8d9307a",
+      "size_bytes": 5356,
+      "categories": [
+        "account_storage",
+        "authentication_overlay",
+        "signing_precondition"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    }
+  ],
+  "modeled_facts": [
+    {
+      "id": "xaman-wallet-auth:fact:account-secret-vaulted-for-full-access",
+      "status": "MODELED",
+      "category": "account_storage",
+      "summary": "Full-access software accounts require both a private key and an encryption key, then store the private key in the vault under the account public key before the account record is created.",
+      "normalized_fact": {
+        "subject": "full_access_software_account",
+        "requires": [
+          "private_key",
+          "encryption_key",
+          "account_public_key"
+        ],
+        "stores_secret_in": "native_vault",
+        "vault_name": "account.publicKey",
+        "repository_record_created_after_vault_create": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/store/repositories/account.ts",
+          "line_start": 44,
+          "line_end": 68,
+          "sha256": "475f4e00545de9fef217a76e6f2916c2e65bc8d68c328944705d54f47b69b1b1",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/vault.ts",
+          "line_start": 29,
+          "line_end": 39,
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:readonly-and-tangem-accounts-do-not-store-software-private-key-on-add",
+      "status": "MODELED",
+      "category": "key_custody_boundary",
+      "summary": "Readonly accounts and Tangem accounts are created without the repository storing a software private key in the vault during account add.",
+      "normalized_fact": {
+        "subject": [
+          "readonly_account",
+          "tangem_account"
+        ],
+        "software_private_key_required_on_add": false,
+        "vault_create_called_on_add": false
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/store/repositories/account.ts",
+          "line_start": 49,
+          "line_end": 54,
+          "sha256": "475f4e00545de9fef217a76e6f2916c2e65bc8d68c328944705d54f47b69b1b1",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/store/types.ts",
+          "line_start": 9,
+          "line_end": 24,
+          "sha256": "2556d6c3b6325639bf09145fb7bfa5398c8415c61102a93f0ec056e60f2689d4",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:account-records-store-public-and-derived-ledger-state",
+      "status": "MODELED",
+      "category": "account_storage",
+      "summary": "The Realm account model stores address, label, public key, access level, encryption level, optional Tangem metadata, and network-scoped account details such as balance, sequence, regular key, flags, and trust lines.",
+      "normalized_fact": {
+        "subject": "realm_account_record",
+        "stores_public_identity": [
+          "address",
+          "label",
+          "publicKey"
+        ],
+        "stores_access_metadata": [
+          "accessLevel",
+          "encryptionLevel",
+          "encryptionVersion",
+          "additionalInfoString"
+        ],
+        "stores_network_details": [
+          "balance",
+          "sequence",
+          "regularKey",
+          "flags",
+          "lines"
+        ],
+        "stores_private_key_material": false
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/store/models/objects/account.ts",
+          "line_start": 24,
+          "line_end": 45,
+          "sha256": "0af64149a51f1d708b5edf5b098a0a84e03b393080acdbd25c250bc3188b6ae0",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/store/models/objects/accountDetails.ts",
+          "line_start": 26,
+          "line_end": 39,
+          "sha256": "9dd78f0689111984d9e4d9fcc3d7395a95c9782fa177d89e06be7acf768601f7",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:realm-storage-encryption-key-comes-from-vault",
+      "status": "MODELED",
+      "category": "storage_encryption",
+      "summary": "Realm storage opens with an encryption key obtained from the native vault; an existing Realm file without a stored encryption key is rejected.",
+      "normalized_fact": {
+        "subject": "realm_datastore",
+        "encryption_key_source": "Vault.getStorageEncryptionKey",
+        "existing_database_without_key": "reject",
+        "key_length_bytes": 64
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/store/storage.ts",
+          "line_start": 211,
+          "line_end": 228,
+          "sha256": "170f2dbda14c5c657ed54a6128de96c40dc753c36c0f4a7ede12705c0f7e15b2",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/vault.ts",
+          "line_start": 91,
+          "line_end": 119,
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:vault-access-is-through-native-module",
+      "status": "MODELED",
+      "category": "vault_access",
+      "summary": "The TypeScript vault facade delegates create, open, existence, rekey, purge, storage-key, and clear-storage operations to React Native's VaultManagerModule.",
+      "normalized_fact": {
+        "subject": "vault_facade",
+        "native_module": "VaultManagerModule",
+        "operations": [
+          "createVault",
+          "openVault",
+          "vaultExist",
+          "isStorageEncryptionKeyExist",
+          "getStorageEncryptionKey",
+          "reKeyVault",
+          "reKeyBatchVaults",
+          "purgeVault",
+          "clearStorage"
+        ],
+        "open_failure_returns": "undefined"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/vault.ts",
+          "line_start": 8,
+          "line_end": 14,
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/vault.ts",
+          "line_start": 31,
+          "line_end": 59,
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/vault.ts",
+          "line_start": 142,
+          "line_end": 191,
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:passcode-authentication-hashes-and-throttles",
+      "status": "MODELED",
+      "category": "passcode_gate",
+      "summary": "Passcode authentication checks a wrong-attempt backoff, hashes the entered passcode, compares it to stored settings, unlocks on success, and records failed attempts on failure.",
+      "normalized_fact": {
+        "subject": "app_passcode_gate",
+        "input_length": 6,
+        "success_effects": [
+          "lock_status_unlocked",
+          "failed_attempts_reset",
+          "last_unlocked_timestamp_updated"
+        ],
+        "failure_effects": [
+          "failed_attempts_incremented",
+          "last_failed_timestamp_updated"
+        ],
+        "backoff_threshold_attempts": 6,
+        "max_recorded_backoff_seconds": 7200
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 176,
+          "line_end": 190,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 197,
+          "line_end": 213,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 221,
+          "line_end": 255,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 294,
+          "line_end": 323,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:bruteforce-reset-clears-vault-and-storage",
+      "status": "MODELED",
+      "category": "passcode_gate",
+      "summary": "When purge-on-bruteforce is enabled, failed passcode attempts warn at the tenth failed attempt and reset the app after more than ten failed attempts by clearing vault storage and deleting the Realm file.",
+      "normalized_fact": {
+        "subject": "purge_on_bruteforce",
+        "warning_attempt_number": 10,
+        "reset_after_attempts_greater_than": 10,
+        "reset_actions": [
+          "Vault.clearStorage",
+          "DataStorage.wipe",
+          "ExitApp"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 138,
+          "line_end": 151,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 232,
+          "line_end": 253,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/store/storage.ts",
+          "line_start": 129,
+          "line_end": 135,
+          "sha256": "170f2dbda14c5c657ed54a6128de96c40dc753c36c0f4a7ede12705c0f7e15b2",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/vault.ts",
+          "line_start": 182,
+          "line_end": 191,
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:autolock-shows-lock-overlay",
+      "status": "MODELED",
+      "category": "authentication_overlay",
+      "summary": "The authentication service shows a lock overlay and marks the app locked when the app has never been unlocked, elapsed realtime moves backward, or the configured auto-lock duration has elapsed.",
+      "normalized_fact": {
+        "subject": "app_lock_state",
+        "lock_triggers": [
+          "lastUnlockedTimestamp_is_zero",
+          "elapsed_realtime_less_than_last_unlock",
+          "elapsed_realtime_exceeds_minutesAutoLock"
+        ],
+        "overlay": "AppScreens.Overlay.Lock",
+        "state_after_overlay": "LOCKED"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 327,
+          "line_end": 367,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:authenticate-overlay-allows-passcode-or-enabled-biometrics",
+      "status": "MODELED",
+      "category": "authentication_overlay",
+      "summary": "The generic authentication overlay presents a six-digit passcode input and exposes biometric authorization only when biometrics are available and the caller allows biometric authorization.",
+      "normalized_fact": {
+        "subject": "authenticate_overlay",
+        "passcode_gate": "AuthenticationService.authenticatePasscode",
+        "biometric_gate": "AuthenticationService.authenticateBiometrics",
+        "biometric_requires": [
+          "isBiometricAvailable",
+          "canAuthorizeBiometrics"
+        ],
+        "success_callback": "props.onSuccess"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Authenticate/AuthenticateOverlay.tsx",
+          "line_start": 45,
+          "line_end": 49,
+          "sha256": "2546924c36ebdc4da92a2fe4298694a944fc26543f98a41333b20630e85b0c25",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Authenticate/AuthenticateOverlay.tsx",
+          "line_start": 215,
+          "line_end": 244,
+          "sha256": "2546924c36ebdc4da92a2fe4298694a944fc26543f98a41333b20630e85b0c25",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Authenticate/AuthenticateOverlay.tsx",
+          "line_start": 265,
+          "line_end": 276,
+          "sha256": "2546924c36ebdc4da92a2fe4298694a944fc26543f98a41333b20630e85b0c25",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:biometric-authentication-requires-enabled-setting-active-app-and-device-sensor",
+      "status": "MODELED",
+      "category": "biometric_gate",
+      "summary": "Biometric authentication is available only when the stored biometric setting is not None and the device sensor check succeeds; authentication is rejected if requested while the app is not active.",
+      "normalized_fact": {
+        "subject": "biometric_gate",
+        "availability_requires": [
+          "coreSettings.biometricMethod != None",
+          "Biometric.isSensorAvailable succeeds"
+        ],
+        "authentication_requires": [
+          "AppService.currentAppState == Active",
+          "Biometric.authenticate succeeds"
+        ],
+        "success_effect": "onSuccessAuthentication",
+        "biometric_change_effect": "disable_biometric_setting"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 370,
+          "line_end": 439,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:vault-passcode-signing-uses-hashed-passcode-or-stored-hash-after-biometrics",
+      "status": "MODELED",
+      "category": "signing_precondition",
+      "summary": "For passcode-protected signing, entering a valid passcode passes the computed passcode hash as the vault encryption key; successful biometrics passes the stored passcode hash as the vault encryption key.",
+      "normalized_fact": {
+        "subject": "vault_passcode_signing_method",
+        "pin_success_encryption_key": "hashedPasscode",
+        "biometric_success_encryption_key": "coreSettings.passcode",
+        "sign_methods": [
+          "PIN",
+          "BIOMETRIC"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/Methods/Passcode/PasscodeMethod.tsx",
+          "line_start": 144,
+          "line_end": 155,
+          "sha256": "73cfc7f14e0bb170709ea936bd00f3ff44264af88d1e74c4cef95ab87226dcda",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/Methods/Passcode/PasscodeMethod.tsx",
+          "line_start": 157,
+          "line_end": 186,
+          "sha256": "73cfc7f14e0bb170709ea936bd00f3ff44264af88d1e74c4cef95ab87226dcda",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:vault-passphrase-signing-requires-nonempty-passphrase",
+      "status": "MODELED",
+      "category": "signing_precondition",
+      "summary": "For passphrase-protected signing, the sign button is disabled until a passphrase exists, and signing passes that passphrase as the vault encryption key.",
+      "normalized_fact": {
+        "subject": "vault_passphrase_signing_method",
+        "requires_nonempty_passphrase": true,
+        "encryption_key": "entered_passphrase",
+        "sign_method": "PASSPHRASE"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/Methods/Passphrase/PassphraseMethod.tsx",
+          "line_start": 113,
+          "line_end": 124,
+          "sha256": "62be6eec05a8cdfe52f3b4366fa2f6c83f4c07eb1a3cb4a59f6b48e6b0ba6e76",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/Methods/Passphrase/PassphraseMethod.tsx",
+          "line_start": 178,
+          "line_end": 195,
+          "sha256": "62be6eec05a8cdfe52f3b4366fa2f6c83f4c07eb1a3cb4a59f6b48e6b0ba6e76",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:passphrase-account-auth-verifies-vault-open-before-success",
+      "status": "MODELED",
+      "category": "vault_access",
+      "summary": "The passphrase account-auth overlay verifies the passphrase by opening the vault using account.publicKey and only calls success after Vault.open returns a private key; the local privateKey variable is cleared before success.",
+      "normalized_fact": {
+        "subject": "passphrase_account_authentication_overlay",
+        "vault_name": "account.publicKey",
+        "success_requires": "Vault.open returns privateKey",
+        "local_private_key_cleared_before_success": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/PassphraseAuthentication/PassphraseAuthenticationOverlay.tsx",
+          "line_start": 129,
+          "line_end": 156,
+          "sha256": "19f985dd1c4317ffd523c8d6dee489d0c9ac411efb5b36ef238c01142991c188",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:signable-account-selection-requires-full-access-or-imported-full-access-regular-key",
+      "status": "MODELED",
+      "category": "signing_precondition",
+      "summary": "Repository signability includes full-access accounts unless master-key and regular-key conditions block them, and includes readonly accounts only when their regular key is imported as a full-access account.",
+      "normalized_fact": {
+        "subject": "account_signability",
+        "full_access_account_signable": true,
+        "readonly_account_signable_requires": "regularKey imported with Full access",
+        "disabled_master_key_requires_imported_regular_key": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/store/repositories/account.ts",
+          "line_start": 163,
+          "line_end": 211,
+          "sha256": "475f4e00545de9fef217a76e6f2916c2e65bc8d68c328944705d54f47b69b1b1",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:vault-overlay-selects-signer-and-auth-method-from-access-and-encryption-level",
+      "status": "MODELED",
+      "category": "authentication_overlay",
+      "summary": "The Vault overlay rejects readonly accounts without usable regular-key signing, selects a preferred signer, prompts signer selection when both master and regular-key signers are usable, and routes authentication by the preferred signer's encryption level.",
+      "normalized_fact": {
+        "subject": "vault_overlay_signer_selection",
+        "rejects": [
+          "readonly_without_regular_key",
+          "readonly_with_regular_key_not_imported_full_access"
+        ],
+        "multiple_signers_step": "SelectSigner",
+        "authentication_step_by_encryption_level": {
+          "Passcode": "PasscodeMethod",
+          "Passphrase": "PassphraseMethod",
+          "Physical": "TangemMethod"
+        }
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "line_start": 87,
+          "line_end": 163,
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "line_start": 472,
+          "line_end": 517,
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/store/types.ts",
+          "line_start": 14,
+          "line_end": 24,
+          "sha256": "2556d6c3b6325639bf09145fb7bfa5398c8415c61102a93f0ec056e60f2689d4",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:software-private-key-signing-requires-vault-open-with-encryption-key",
+      "status": "MODELED",
+      "category": "key_custody_boundary",
+      "summary": "Software signing requires a supplied encryption key, a full-access preferred signer with public key, and a successful Vault.open before deriving a private-key signer and signing the transaction.",
+      "normalized_fact": {
+        "subject": "software_private_key_signing",
+        "requires": [
+          "encryptionKey",
+          "preferredSigner.accessLevel == Full",
+          "preferredSigner.publicKey",
+          "Vault.open(preferredSigner.publicKey, encryptionKey) returns privateKey"
+        ],
+        "signing_library": "xrpl-accountlib",
+        "private_key_loaded_into_js_for_signing": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "line_start": 286,
+          "line_end": 365,
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:tangem-physical-signing-uses-card-session-not-local-vault-secret",
+      "status": "MODELED",
+      "category": "key_custody_boundary",
+      "summary": "Physical-encryption Tangem signing obtains card metadata from the account, prepares a raw signing hash, starts a Tangem SDK session, asks the card to sign, and completes the signed object without opening the software vault.",
+      "normalized_fact": {
+        "subject": "tangem_physical_signing",
+        "local_vault_open": false,
+        "signing_interface": "tangem-sdk-react-native",
+        "session_attestation_mode": "offline",
+        "sign_method": "TANGEM"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/Methods/Tangem/TangemMethod.tsx",
+          "line_start": 22,
+          "line_end": 36,
+          "sha256": "ac405fb65c02b4f4542c05c39fdc2ddf33f86510133f197d5b609443800b2108",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "line_start": 375,
+          "line_end": 440,
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:transaction-signing-preconditions-before-vault-overlay",
+      "status": "MODELED",
+      "category": "signing_precondition",
+      "summary": "Before showing the Vault overlay, transaction signing rejects missing accounts, duplicate signing, unsupported transaction types for the current network, missing fees, missing account sequence, and aborted transactions.",
+      "normalized_fact": {
+        "subject": "transaction_sign_pre_vault",
+        "rejects_before_overlay": [
+          "missing_account",
+          "already_signed",
+          "unsupported_transaction_type",
+          "missing_fee",
+          "unable_to_set_sequence",
+          "aborted_transaction"
+        ],
+        "overlay": "AppScreens.Overlay.Vault"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "line_start": 91,
+          "line_end": 127,
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "line_start": 184,
+          "line_end": 240,
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:signed-object-callback-must-include-blob-pubkey-method-and-id-for-non-pseudo",
+      "status": "MODELED",
+      "category": "signing_precondition",
+      "summary": "The signing callback rejects signed results without signed transaction data, signer public key, sign method, or a transaction id for non-pseudo transactions before storing the signed blob.",
+      "normalized_fact": {
+        "subject": "signed_object_acceptance",
+        "requires": [
+          "signedTransaction",
+          "signerPubKey",
+          "signMethod",
+          "id unless pseudo transaction"
+        ],
+        "accepted_fields_set": [
+          "hash",
+          "SignedBlob",
+          "SignMethod",
+          "SignerPubKey",
+          "SignerAccount"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "line_start": 241,
+          "line_end": 289,
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:submit-requires-signed-blob-single-submit-and-not-aborted",
+      "status": "MODELED",
+      "category": "signing_precondition",
+      "summary": "Ledger submission is rejected unless a signed blob exists, the transaction is not already submitted or submitting, and the transaction is not aborted.",
+      "normalized_fact": {
+        "subject": "ledger_submit",
+        "requires": [
+          "SignedBlob",
+          "no SubmitResult",
+          "isSubmitted is false",
+          "isAborted is false"
+        ],
+        "submit_sets_isSubmitted": true,
+        "account_delete_fail_hard": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "line_start": 352,
+          "line_end": 385,
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:account-removal-and-downgrade-purge-vault-secrets",
+      "status": "MODELED",
+      "category": "key_custody_boundary",
+      "summary": "Downgrading a full-access account to readonly purges its vault entry when present, and purging a full-access account purges its vault entry before deleting the account record.",
+      "normalized_fact": {
+        "subject": "account_secret_removal",
+        "downgrade_to_readonly_purges_vault": true,
+        "full_access_account_purge_purges_vault": true,
+        "post_downgrade_access_level": "Readonly",
+        "post_downgrade_encryption_level": "None"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/store/repositories/account.ts",
+          "line_start": 231,
+          "line_end": 258,
+          "sha256": "475f4e00545de9fef217a76e6f2916c2e65bc8d68c328944705d54f47b69b1b1",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/store/repositories/account.ts",
+          "line_start": 267,
+          "line_end": 293,
+          "sha256": "475f4e00545de9fef217a76e6f2916c2e65bc8d68c328944705d54f47b69b1b1",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:fact:e2e-flows-cover-passcode-passphrase-generate-import-upgrade-and-signing",
+      "status": "MODELED",
+      "category": "authentication_overlay",
+      "summary": "Xaman e2e feature files exercise generated and imported accounts with passcode and passphrase security, signing with passcode and passphrase, passphrase change, and readonly-to-full-access upgrade and downgrade flows.",
+      "normalized_fact": {
+        "subject": "wallet_auth_e2e_flows",
+        "covered_paths": [
+          "generate_passcode_account",
+          "generate_passphrase_account",
+          "import_secret_numbers_with_passcode",
+          "import_family_seed_with_passcode",
+          "import_mnemonic_with_passcode",
+          "import_family_seed_with_passphrase",
+          "sign_with_passcode",
+          "sign_with_passphrase",
+          "change_passphrase",
+          "readonly_upgrade_and_downgrade"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "e2e/02_generate_account.feature",
+          "line_start": 1,
+          "line_end": 151,
+          "sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "e2e/03_import_account.feature",
+          "line_start": 1,
+          "line_end": 222,
+          "sha256": "6cd8e22cb78bc03815288349f6d97667d36e181bbca0e459633fd151eeb0f9b1",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "e2e/04_upgrade_account.feature",
+          "line_start": 1,
+          "line_end": 119,
+          "sha256": "bb036b7ea71919606c7cb3c99ce6a3399879402afbfb59341e1c71b7b8d9307a",
+          "review_status": "reviewed"
+        }
+      ]
+    }
+  ],
+  "not_modeled_gaps": [
+    {
+      "id": "xaman-wallet-auth:gap:native-vault-manager-cryptographic-implementation",
+      "status": "NOT_MODELED",
+      "category": "vault_access",
+      "severity": "blocking_for_native_key_custody_claims",
+      "summary": "The TypeScript facade proves that VaultManagerModule is called, but this artifact does not model the Android or iOS native implementation, keychain accessibility class, cipher mode, hardware-backed storage, migration behavior, or memory-zeroization guarantees.",
+      "required_evidence_to_model": [
+        "android native VaultManagerModule implementation",
+        "ios native VaultManagerModule implementation",
+        "keychain/keystore accessibility and hardware-backed settings",
+        "cipher and migration tests"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/vault.ts",
+          "line_start": 8,
+          "line_end": 14,
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:gap:biometric-native-security-properties",
+      "status": "NOT_MODELED",
+      "category": "biometric_gate",
+      "severity": "blocking_for_biometric_strength_claims",
+      "summary": "This artifact models calls to the biometric helper and the app's fallback behavior, but not the native biometric prompt policy, biometric enrollment binding, device secure-enclave behavior, or spoof-resistance properties.",
+      "required_evidence_to_model": [
+        "native biometric module implementation",
+        "platform biometric policy configuration",
+        "device enrollment-change tests"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 382,
+          "line_end": 439,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:gap:passcode-hash-kdf-strength",
+      "status": "NOT_MODELED",
+      "category": "passcode_gate",
+      "severity": "blocking_for_offline_passcode_attack_claims",
+      "summary": "The reviewed authentication service calls CoreRepository.hashPasscode and compares the result, but this artifact does not model the hash or KDF algorithm, salt handling, parameter strength, or stored-passcode protection.",
+      "required_evidence_to_model": [
+        "CoreRepository.hashPasscode implementation",
+        "core settings schema and persistence protection",
+        "KDF parameter review"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/AuthenticationService.ts",
+          "line_start": 309,
+          "line_end": 317,
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:gap:third-party-signing-library-correctness",
+      "status": "NOT_MODELED",
+      "category": "signing_precondition",
+      "severity": "blocking_for_cryptographic_correctness_claims",
+      "summary": "This artifact models when Xaman calls xrpl-accountlib and Tangem SDK signing paths, but not the correctness of transaction canonicalization, signature generation, raw signing completion, Tangem firmware, or SDK attestation.",
+      "required_evidence_to_model": [
+        "xrpl-accountlib source and version pin review",
+        "Tangem SDK source/version and firmware attestation model",
+        "XRPL transaction signing test vectors"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "line_start": 334,
+          "line_end": 365,
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "line_start": 390,
+          "line_end": 440,
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:gap:source-coverage-extractor-vault-overlay-root",
+      "status": "NOT_MODELED",
+      "category": "authentication_overlay",
+      "severity": "blocking_for_extractor_completeness_claims",
+      "summary": "The checked-in source coverage artifact does not classify src/screens/Overlay/Vault/** even though signing authentication methods live there. This wallet-auth artifact reviewed the manifest-pinned files directly, but extractor completeness for those files remains a separate gap.",
+      "required_evidence_to_model": [
+        "extended Xaman source coverage extractor roots for src/screens/Overlay/Vault",
+        "parsed coverage for VaultOverlay and Vault Methods files"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "line_start": 40,
+          "line_end": 47,
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-wallet-auth:gap:runtime-and-deployed-binary-behavior",
+      "status": "NOT_MODELED",
+      "category": "account_storage",
+      "severity": "blocking_for_production_release_claims",
+      "summary": "The artifact binds source facts at a commit, but does not prove that an app-store binary, build environment, backend dependency, native runtime trace, or device configuration matches these source facts.",
+      "required_evidence_to_model": [
+        "reproducible mobile build evidence",
+        "native runtime traces for vault and signing flows",
+        "deployed binary provenance"
+      ],
+      "evidence": [
+        {
+          "kind": "source_manifest",
+          "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+          "line_start": 1,
+          "line_end": 1,
+          "sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+          "review_status": "reviewed"
+        }
+      ]
+    }
+  ],
+  "derived_security_boundary": {
+    "source_backed_claims": [
+      "Full-access software account secrets are routed through the native vault facade.",
+      "Realm datastore encryption key material is obtained through the vault facade.",
+      "Generic authentication overlays require passcode or enabled biometric success before caller success callbacks.",
+      "Signing flows use Vault overlay authentication by encryption level before returning signed blobs.",
+      "Submission requires a signed blob and rejects duplicate or aborted submission attempts."
+    ],
+    "not_claimed": [
+      "Native keychain/keystore implementation security.",
+      "Biometric spoof resistance or platform enrollment guarantees.",
+      "Passcode KDF resistance to offline attack.",
+      "Cryptographic correctness of xrpl-accountlib, Tangem SDK, or Tangem firmware.",
+      "Equivalence between this source commit and any deployed binary."
+    ]
+  }
+}

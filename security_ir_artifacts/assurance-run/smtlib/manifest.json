@@ -1,0 +1,19 @@
+{
+  "artifact_sets": [
+    {
+      "artifact_count": 8,
+      "expected_solver_result": "unsat",
+      "manifest_cid": "bafkreicew2tigj6h3zou5hnxovgjjezoxhricoewznw4h2pbnyw3s7ebxi",
+      "name": "positive",
+      "path": "positive/manifest.json"
+    },
+    {
+      "artifact_count": 8,
+      "expected_solver_result": "sat",
+      "manifest_cid": "bafkreihghqvxs4qogozmvsukzgfpoizjfdphzalvipoonkzmxulby6fsjy",
+      "name": "counterexamples",
+      "path": "counterexamples/manifest.json"
+    }
+  ],
+  "schema_version": "crypto-exchange-smtlib/v1"
+}
