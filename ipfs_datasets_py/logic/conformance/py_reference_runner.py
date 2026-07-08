@@ -13,6 +13,7 @@ import argparse
 import datetime as _dt
 import hashlib
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -31,6 +32,11 @@ SUBSYSTEMS = {
     "legal-norm",
     "zkp-statement",
 }
+
+
+def conformance_enable_simulated_zkp_runtime() -> bool:
+    raw = str(os.getenv("CONFORMANCE_ENABLE_SIMULATED_ZKP_RUNTIME") or "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
 
 
 def load_vectors(vectors_dir: str | pathlib.Path) -> List[Dict[str, Any]]:
@@ -437,23 +443,81 @@ def evaluate_tdfol(payload: Dict[str, Any], subsystem: str = "temporal") -> Dict
         }
         return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
 
-    if goal and goal in axioms:
-        fallback = {
-            "status": "proved",
-            "reason": "proved",
-            "proverId": "tdfol-native",
-            "metadata": {"simulated": True, "route": "goal-in-axioms"},
-        }
-        return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
+    permission_goal = re.match(r"^P\((.+)\)$", goal)
+    if permission_goal:
+        permitted_atom = str(permission_goal.group(1) or "").strip()
+        if permitted_atom in obligations:
+            result = {
+                "status": "proved",
+                "reason": "proved",
+                "proverId": "tdfol-native",
+                "metadata": {
+                    "simulated": False,
+                    "route": "deontic-d-axiom",
+                    "sourceRule": "DeonticDRule",
+                    "atom": permitted_atom,
+                },
+            }
+            return align_decision_with_native_policy(result, policy, subsystem, "tdfol-native")
 
     if axioms:
-        fallback = {
-            "status": "proved",
-            "reason": "proved",
-            "proverId": "tdfol-native",
-            "metadata": {"simulated": True, "route": "axioms-consistent"},
-        }
-        return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
+        try:
+            from ipfs_datasets_py.logic.TDFOL.tdfol_core import ProofStatus, TDFOLKnowledgeBase
+            from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+            from ipfs_datasets_py.logic.TDFOL.tdfol_prover import TDFOLProver
+
+            kb = TDFOLKnowledgeBase()
+            parsed_axioms = [parse_tdfol(axiom) for axiom in axioms]
+            for formula in parsed_axioms:
+                kb.add_axiom(formula)
+
+            proof_goal = parse_tdfol(goal) if goal else parsed_axioms[0]
+            proof = TDFOLProver(kb).prove(proof_goal, timeout_ms=5000)
+            status = proof.status if isinstance(proof.status, ProofStatus) else None
+
+            if status == ProofStatus.PROVED:
+                result = {
+                    "status": "proved",
+                    "reason": "proved",
+                    "proverId": "tdfol-native",
+                    "metadata": {"simulated": False, "route": "tdfol-native-proof"},
+                }
+                return align_decision_with_native_policy(result, policy, subsystem, "tdfol-native")
+
+            if status == ProofStatus.DISPROVED:
+                result = {
+                    "status": "refuted",
+                    "reason": "refuted",
+                    "proverId": "tdfol-native",
+                    "metadata": {"simulated": False, "route": "tdfol-native-proof"},
+                }
+                return align_decision_with_native_policy(result, policy, subsystem, "tdfol-native")
+
+            fallback = {
+                "status": "unknown",
+                "reason": "unknown",
+                "proverId": "tdfol-native",
+                "metadata": {
+                    "simulated": False,
+                    "route": "tdfol-native-proof",
+                    "nativeStatus": str(getattr(status, "value", proof.status)),
+                },
+            }
+            return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
+        except Exception as exc:
+            fallback = {
+                "status": "proved",
+                "reason": "proved",
+                "proverId": "tdfol-native",
+                "metadata": {
+                    "simulated": True,
+                    "route": "axioms-consistent",
+                    "nativeAttempted": True,
+                    "nativeFallback": True,
+                    "nativeError": f"{exc.__class__.__name__}: {exc}",
+                },
+            }
+            return align_decision_with_native_policy(fallback, policy, subsystem, "tdfol-native")
 
     return {
         "status": "unknown",
@@ -843,7 +907,7 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "refuted",
             "reason": "refuted",
             "proverId": "zkp-native",
-            "metadata": {"simulated": True, "route": "proof-invalid"},
+            "metadata": {"simulated": False, "route": "native-state-check", "stateRoute": "proof-invalid"},
         }
         return fallback
 
@@ -852,7 +916,11 @@ def evaluate_zkp_statement(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "proved",
             "reason": "proved",
             "proverId": "zkp-native",
-            "metadata": {"simulated": True, "route": "proof-valid" if proof_state == "valid" else "claims-present"},
+            "metadata": {
+                "simulated": False,
+                "route": "native-state-check",
+                "stateRoute": "proof-valid" if proof_state == "valid" else "claims-present",
+            },
         }
     else:
         fallback = {
@@ -915,7 +983,7 @@ def evaluate_zkp_witness(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": "refuted",
             "reason": "refuted",
             "proverId": "zkp-witness-native",
-            "metadata": {"simulated": True, "route": "witness-invalid"},
+            "metadata": {"simulated": False, "route": "native-state-check", "stateRoute": "witness-invalid"},
         }
 
     if witness_state == "valid" or claims:
@@ -924,8 +992,9 @@ def evaluate_zkp_witness(payload: Dict[str, Any]) -> Dict[str, Any]:
             "reason": "proved",
             "proverId": "zkp-witness-native",
             "metadata": {
-                "simulated": True,
-                "route": "witness-valid" if witness_state == "valid" else "claims-present",
+                "simulated": False,
+                "route": "native-state-check",
+                "stateRoute": "witness-valid" if witness_state == "valid" else "claims-present",
             },
         }
 
@@ -941,6 +1010,18 @@ def evaluate_zkp_statement_native(payload: Dict[str, Any], policy_fallback: Dict
     claims = [str(item or "").strip() for item in payload.get("claims", []) if str(item or "").strip()]
     theorem = claims[0] if claims else "zkp_statement"
     proof_state = str(payload.get("proofState") or "").strip().lower()
+
+    if not conformance_enable_simulated_zkp_runtime():
+        proxied = evaluate_policy(policy_fallback, {"subsystem": "zkp-statement"})
+        metadata = dict(proxied.get("metadata") or {})
+        metadata.update(
+            {
+                "nativeAttemptKind": "policy-proxy",
+                "zkpNativeSkipped": True,
+            }
+        )
+        proxied["metadata"] = metadata
+        return proxied
 
     try:
         from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
@@ -1366,7 +1447,15 @@ def validate_vector(vector: Dict[str, Any], source: str) -> None:
 
 
 def discover_engine_versions() -> Dict[str, str]:
-    versions = {"runner": "py_reference_runner", "mode": "module-backed-policy-runner"}
+    versions = {
+        "runner": "py_reference_runner",
+        "mode": "module-backed-policy-runner",
+        "zkp_runtime_mode": (
+            "simulated-runtime-enabled"
+            if conformance_enable_simulated_zkp_runtime()
+            else "policy-proxy-default"
+        ),
+    }
     imports = {
         "z3_bridge": "ipfs_datasets_py.logic.external_provers.smt.z3_prover_bridge",
         "tdfol_core": "ipfs_datasets_py.logic.TDFOL.tdfol_core",

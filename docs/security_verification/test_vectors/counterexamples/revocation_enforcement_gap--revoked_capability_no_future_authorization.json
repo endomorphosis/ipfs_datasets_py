@@ -1,0 +1,166 @@
+{
+  "claim_id": "revoked_capability_no_future_authorization",
+  "counterexample": {
+    "account_ids": [],
+    "asset_ids": [],
+    "capability_ids": [
+      "cap:withdraw:user_alice"
+    ],
+    "claim_id": "revoked_capability_no_future_authorization",
+    "compiler_artifact": {
+      "capability_ids": [
+        "cap:withdraw:user_alice"
+      ],
+      "kind": "capability_revocation",
+      "violating_event_ids": [
+        "legacy:cap:withdraw:user_alice"
+      ],
+      "violations": [
+        {
+          "capability_id": "cap:withdraw:user_alice",
+          "event_id": "legacy:cap:withdraw:user_alice"
+        }
+      ]
+    },
+    "deposit_ids": [],
+    "evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 65,
+        "line_start": 55,
+        "notes": "Fixture capability revocation policy.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture privileged action trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture capability revocation trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 54,
+        "line_start": 45,
+        "notes": "Fixture capability chain.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
+    "message": "Z3 found a satisfying violation trace.",
+    "soundness_notes": [],
+    "source_facts": [
+      {
+        "capability_id": "cap:withdraw:user_alice",
+        "event": "privileged_action",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture privileged action trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:privileged_action:pre_revoke",
+        "timestamp": 8
+      },
+      {
+        "capability_id": "cap:withdraw:user_alice",
+        "event": "capability_revoked",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture capability revocation trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:capability_revoked:1",
+        "timestamp": 9
+      },
+      {
+        "allow_expiry_extension": false,
+        "caveats_relax_authority": false,
+        "delegated_actions": [
+          "withdraw"
+        ],
+        "delegated_authority": 2,
+        "delegated_resources": [
+          "wallet:user_alice"
+        ],
+        "delegator_authority": 3,
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 54,
+            "line_start": 45,
+            "notes": "Fixture capability chain.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "expired": false,
+        "expiry": 90,
+        "id": "cap:withdraw:user_alice",
+        "parent_actions": [
+          "withdraw",
+          "cancel"
+        ],
+        "parent_expiry": 100,
+        "parent_resources": [
+          "wallet:user_alice"
+        ],
+        "principal": "principal:alice",
+        "privileged_action_attempted": true,
+        "resource_id": "wallet:user_alice",
+        "revoked_before_action": true
+      },
+      {
+        "capability_id": "cap:withdraw:user_alice",
+        "event_id": "legacy:cap:withdraw:user_alice"
+      }
+    ],
+    "trace": [],
+    "txids": [],
+    "violating_event_ids": [
+      "legacy:cap:withdraw:user_alice"
+    ],
+    "wallet_ids": [],
+    "withdrawal_ids": [],
+    "witness": {
+      "capability_0_legacy_not_revoked": "False",
+      "revocation_0_not_revoked": "True"
+    }
+  },
+  "expected_claims": [
+    "revoked_capability_no_future_authorization"
+  ],
+  "matched_claims": [
+    "revoked_capability_no_future_authorization"
+  ],
+  "model_id": "minimal-btc-exchange::revocation_enforcement_gap",
+  "mutators": [
+    "revocation_enforcement_gap"
+  ],
+  "proof_or_trace_cid": "bafkreidymxdzgzq7izep3bbcr6e6wz3zvkrwk6eeoiud7g6buol5xzhdny",
+  "risk": "high",
+  "scenario": "revocation_enforcement_gap",
+  "schema_version": "crypto-exchange-counterexample-vector/v1",
+  "solver_name": "z3",
+  "solver_result": "sat",
+  "status": "DISPROVED"
+}

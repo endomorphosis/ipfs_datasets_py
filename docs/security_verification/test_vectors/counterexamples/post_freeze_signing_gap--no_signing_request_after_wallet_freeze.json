@@ -1,0 +1,243 @@
+{
+  "claim_id": "no_signing_request_after_wallet_freeze",
+  "counterexample": {
+    "account_ids": [],
+    "asset_ids": [],
+    "capability_ids": [
+      "{'event_id': 'signing:1', 'wallet_id': 'wallet:user_alice', 'conditions': {'wallet_exists': True, 'not_frozen': False, 'transaction_reference': False}}"
+    ],
+    "claim_id": "no_signing_request_after_wallet_freeze",
+    "compiler_artifact": {
+      "kind": "hsm_freeze_policy",
+      "violating_event_ids": [
+        "signing:1"
+      ],
+      "violations": [
+        {
+          "conditions": {
+            "not_frozen": false,
+            "transaction_reference": false,
+            "wallet_exists": true
+          },
+          "event_id": "signing:1",
+          "wallet_id": "wallet:user_alice"
+        }
+      ],
+      "wallet_ids": [
+        "wallet:user_alice"
+      ]
+    },
+    "deposit_ids": [],
+    "evidence_refs": [
+      {
+        "kind": "test_fixture",
+        "line_end": 65,
+        "line_start": 55,
+        "notes": "Fixture wallet freeze policy.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture wallet freeze trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      },
+      {
+        "kind": "test_fixture",
+        "line_end": 77,
+        "line_start": 66,
+        "notes": "Fixture signing request trace.",
+        "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+        "review_status": "trusted_fixture"
+      }
+    ],
+    "message": "Z3 found a satisfying violation trace.",
+    "soundness_notes": [
+      "Signing request evidence is incomplete; attach HSM or key-manager evidence before production proof use."
+    ],
+    "source_facts": [
+      {
+        "amount": 2,
+        "asset_id": "asset:btc",
+        "authorized": true,
+        "event": "withdrawal_requested",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture withdrawal request trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:withdrawal_requested:1",
+        "nonce": "nonce:1",
+        "nonce_fresh": true,
+        "principal": "principal:alice",
+        "sufficient_balance": true,
+        "timestamp": 1,
+        "wallet_id": "wallet:user_alice",
+        "wallet_not_frozen": true,
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "amount": 2,
+        "asset_id": "asset:btc",
+        "event": "withdrawal_approved",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture withdrawal approval trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:withdrawal_approved:1",
+        "max_seconds": 30,
+        "nonce": "nonce:1",
+        "principal": "principal:exchange_signer",
+        "timestamp": 2,
+        "wallet_id": "wallet:user_alice",
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "amount": 2,
+        "asset_id": "asset:btc",
+        "event": "balance_reserved",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture balance reservation trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:balance_reserved:1",
+        "timestamp": 2.6,
+        "wallet_id": "wallet:user_alice",
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "amount": 2,
+        "asset_id": "asset:btc",
+        "authorized": true,
+        "critical": true,
+        "event": "withdrawal_broadcast",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture withdrawal broadcast trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:withdrawal_broadcast:1",
+        "nonce": "nonce:1",
+        "nonce_fresh": true,
+        "principal": "principal:exchange_signer",
+        "sufficient_balance": true,
+        "timestamp": 3,
+        "wallet_id": "wallet:user_alice",
+        "wallet_not_frozen": true,
+        "withdrawal_id": "withdrawal:1"
+      },
+      {
+        "approved_tx_bytes": "0xdeadbeef",
+        "event": "signing_request",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture signing request trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:signing_request:pre_freeze",
+        "timestamp": 6.5,
+        "txid": "tx:withdrawal:1",
+        "wallet_id": "wallet:user_alice"
+      },
+      {
+        "event": "wallet_frozen",
+        "evidence_refs": [
+          {
+            "kind": "test_fixture",
+            "line_end": 77,
+            "line_start": 66,
+            "notes": "Fixture wallet freeze trace.",
+            "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+            "review_status": "trusted_fixture"
+          }
+        ],
+        "id": "event:wallet_frozen:1",
+        "timestamp": 7,
+        "wallet_id": "wallet:user_alice"
+      },
+      {
+        "event": "signing_request",
+        "wallet_id": "wallet:user_alice"
+      },
+      {
+        "asset": "asset:btc",
+        "id": "wallet:user_alice",
+        "owner": "principal:alice",
+        "status": "active"
+      },
+      {
+        "conditions": {
+          "not_frozen": false,
+          "transaction_reference": false,
+          "wallet_exists": true
+        },
+        "event_id": "signing:1",
+        "wallet_id": "wallet:user_alice"
+      }
+    ],
+    "trace": [],
+    "txids": [],
+    "violating_event_ids": [
+      "signing:1"
+    ],
+    "wallet_ids": [
+      "wallet:user_alice"
+    ],
+    "withdrawal_ids": [],
+    "witness": {
+      "signing_0_not_frozen": "True",
+      "signing_0_transaction_reference": "True",
+      "signing_0_wallet_exists": "True",
+      "signing_1_not_frozen": "False",
+      "signing_1_transaction_reference": "False",
+      "signing_1_wallet_exists": "True"
+    }
+  },
+  "expected_claims": [
+    "no_signing_request_after_wallet_freeze"
+  ],
+  "matched_claims": [
+    "no_signing_request_after_wallet_freeze"
+  ],
+  "model_id": "minimal-btc-exchange::post_freeze_signing_gap",
+  "mutators": [
+    "post_freeze_signing_gap"
+  ],
+  "proof_or_trace_cid": "bafkreiahljtau2z2z7abffj7tw5gy5i7puug2ohkqigpso73ggnpr66hj4",
+  "risk": "high",
+  "scenario": "post_freeze_signing_gap",
+  "schema_version": "crypto-exchange-counterexample-vector/v1",
+  "solver_name": "z3",
+  "solver_result": "sat",
+  "status": "DISPROVED"
+}

@@ -327,6 +327,21 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         public_symbols=("InputValidator", "LLMCircuitBreaker"),
     ),
     LogicSubmoduleSpec(
+        name="security_models",
+        module="ipfs_datasets_py.logic.security_models",
+        description="Canonical security IRs, proof reports, and prover orchestration for exchange-style verification.",
+        roles=("security_models", "proof", "policy", "runtime_monitor"),
+        optimizer_components=("security_models.crypto_exchange",),
+        target_files=(
+            "ipfs_datasets_py/logic/security_models/__init__.py",
+            "ipfs_datasets_py/logic/security_models/crypto_exchange/__init__.py",
+            "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/schema.py",
+            "ipfs_datasets_py/logic/security_models/crypto_exchange/runners/z3_runner.py",
+        ),
+        ast_scope="security_models",
+        public_symbols=("SecurityModelIR", "ProofReport", "ProofReceipt", "RuntimeMTLMonitor"),
+    ),
+    LogicSubmoduleSpec(
         name="observability",
         module="ipfs_datasets_py.logic.observability",
         description="Structured logs, performance spans, and log analysis helpers for logic/prover runs.",

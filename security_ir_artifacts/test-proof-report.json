@@ -1,0 +1,655 @@
+{
+  "coverage": {
+    "blocking_claims": 3,
+    "blocking_modeled": 3,
+    "blocking_not_modeled": 0,
+    "blocking_proved": 3,
+    "blocking_unknown": 0,
+    "disproved": 0,
+    "domain_summary": {
+      "audit": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "audit_event_exists_for_critical_transition": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 1
+      },
+      "capabilities": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "capability_delegation_no_authority_increase": "PROVED",
+          "revoked_capability_no_future_authorization": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 2
+      },
+      "deposits": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_deposit_before_finality": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 1
+      },
+      "hsm": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_signing_request_after_wallet_freeze": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 1
+      },
+      "ledger": {
+        "blocking_claims": 2,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 2,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "global_asset_conservation": "PROVED",
+          "no_over_reserved_internal_account": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 2
+      },
+      "withdrawals": {
+        "blocking_claims": 1,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 1,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_unauthorized_withdrawal": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 1
+      }
+    },
+    "domains_modeled": {
+      "audit": true,
+      "capabilities": true,
+      "deposits": true,
+      "hsm": true,
+      "ledger": true,
+      "withdrawals": true
+    },
+    "not_modeled": 0,
+    "proved": 8,
+    "total_claims": 8,
+    "unknown": 0
+  },
+  "model_id": "minimal-btc-exchange",
+  "reports": [
+    {
+      "assertion_count": 8,
+      "assumptions": [
+        "A3",
+        "A4",
+        "A5",
+        "A8"
+      ],
+      "claim_id": "no_unauthorized_withdrawal",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreicbv5beq7ny7s57lbipzqypiwhoeeehw3hozqodefxxubb4wdvzqa",
+      "counterexample": null,
+      "created_at": "2026-07-07T21:22:52+00:00",
+      "deterministic_payload_cid": "bafkreibf7nzuni32zmdqlyunojxsbirduomh4b6bqxdej7d2elod7k6oce",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture authorization policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture nonce freshness policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture balance policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture wallet freeze policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal approval trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal broadcast trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-07T21:22:52+00:00",
+      "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreif22enyzgvojsikgali4wp3loqufuf6z4jghc6gbudf7yuknbgq5e",
+      "proof_or_trace_cid": "bafkreiftnbzhedublmyedl7qzuvertxo5lp7rwkutfb4v2vu7igf3oq55m",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 3,
+      "assumptions": [
+        "A4",
+        "A5"
+      ],
+      "claim_id": "no_over_reserved_internal_account",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiaje7257cj35pktizyx7sadjklvjgil7tfszgk4kewzgevvbusoiy",
+      "counterexample": null,
+      "created_at": "2026-07-07T21:22:52+00:00",
+      "deterministic_payload_cid": "bafkreib2k2nmtqlry74yqexk35a5d5rru4n4n4hvxezqubm7gxcvwunx4a",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture atomic reservation policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 129,
+          "line_start": 8,
+          "notes": "Fixture account balance and reservations.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-07T21:22:52+00:00",
+      "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreigvorjd2z7su67extc34vyvvw5u3b2tro55u4rferaidnd5lyoxfu",
+      "proof_or_trace_cid": "bafkreicoupeymiho2lqx3x7o3rdqysszr3eqywdaiiqnql3rrrbo2inpta",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 4,
+      "assumptions": [
+        "A4",
+        "A10"
+      ],
+      "claim_id": "global_asset_conservation",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreifrkxyregy4ycgj5cthivxgzib2zky2eeqqlht6cvwpd7jil7yxc4",
+      "counterexample": null,
+      "created_at": "2026-07-07T21:22:52+00:00",
+      "deterministic_payload_cid": "bafkreifzz4jawh2zuusw62zwuinnup3qrmkqqco5bajakbmkskc54pt47i",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 129,
+          "line_start": 8,
+          "notes": "Fixture account balance and reservations.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 150,
+          "line_start": 132,
+          "notes": "Fixture ledger totals for global conservation.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-07T21:22:52+00:00",
+      "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreifm6xo3q3mvvkrynevsyqnyyfxms63xjyy45xcmsnvxque3cwgrzq",
+      "proof_or_trace_cid": "bafkreigfqp6zqit2nxihwo2hnmxlnk6n5lw3fl7uydb5ln6g5xwtzbduia",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 6,
+      "assumptions": [
+        "A6",
+        "A9"
+      ],
+      "claim_id": "no_deposit_before_finality",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreib676kpvtfbnt5675ihws7tecq7oa2ou3wgrr5k2a63pos4rox62a",
+      "counterexample": null,
+      "created_at": "2026-07-07T21:22:52+00:00",
+      "deterministic_payload_cid": "bafkreicvmv7edj26nvb3tabxbdduruxjkl6tkragj7r5l6oavvfqnv5meu",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture deposit finality policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit credited trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit observed trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit finalized trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-07T21:22:52+00:00",
+      "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreiesb3xieukyryi4uewygigzber2biglqonlz4zw65aazvaychdoby",
+      "proof_or_trace_cid": "bafkreifmszbijlrw7htc65jotoglqg6mpdwwjizyi35eubnecii2vbve5e",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 3,
+      "assumptions": [
+        "A3",
+        "A8"
+      ],
+      "claim_id": "no_signing_request_after_wallet_freeze",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiex724y52kgrmxj64z2qaab2gtdnxlwgjrahfcghnnlvl6igp4wem",
+      "counterexample": null,
+      "created_at": "2026-07-07T21:22:52+00:00",
+      "deterministic_payload_cid": "bafkreiahgczdulg6ozlcnpu5vagfvqc5pffeeioasrv3jwzgh32pbtxrre",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture wallet freeze policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture wallet freeze trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture signing request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-07T21:22:52+00:00",
+      "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreigszcgzrhn52qlli3qqspaigcp2apcpvrdp2eojwzqqm3ygdaa3hq",
+      "proof_or_trace_cid": "bafkreigr6qghtekiwrx7hcv2c5rfemdgtiapvhdmnvavlp3rqsnswruss4",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 7,
+      "assumptions": [
+        "A1",
+        "A7"
+      ],
+      "claim_id": "capability_delegation_no_authority_increase",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiazyraphzvs76kvto7tmli22yxorz2fo7lgghkxtptu4n3bb57bsi",
+      "counterexample": null,
+      "created_at": "2026-07-07T21:22:52+00:00",
+      "deterministic_payload_cid": "bafkreia7nhx2ffaagzlv6cike54nfaddd357jkhqiwmmjpoqdhr6xrc324",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture delegation monotonicity policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 54,
+          "line_start": 45,
+          "notes": "Fixture capability chain.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-07T21:22:52+00:00",
+      "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreiapypsa3fqhc5f5k7mkbgn3bk653l6ujaaldanowv5wrrnx25vyvi",
+      "proof_or_trace_cid": "bafkreie2giccgvhpr62hssgqcwacn6m7xshbpe3f7ji7jglbtu4cltfyo4",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 1,
+      "assumptions": [
+        "A10"
+      ],
+      "claim_id": "revoked_capability_no_future_authorization",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiejak3xmoazuivo5ar5szfonxaxxut56owzbwm3cu6loireynlx3i",
+      "counterexample": null,
+      "created_at": "2026-07-07T21:22:52+00:00",
+      "deterministic_payload_cid": "bafkreifrumpmr2qkgejebutrdpipzusm653mwcce7lt3pzi4npmukikfqe",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture capability revocation policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture privileged action trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture capability revocation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 54,
+          "line_start": 45,
+          "notes": "Fixture capability chain.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-07T21:22:52+00:00",
+      "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreiaiw2c3gqn5hzwkakdxmoayfrz7jtfka6b6wdnqmskkax4elajida",
+      "proof_or_trace_cid": "bafkreicvtxs525criye5pm2zgggmrtrm47e3ho4tjqsqtzs4r5ajxb5edu",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 1,
+      "assumptions": [
+        "A10"
+      ],
+      "claim_id": "audit_event_exists_for_critical_transition",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreih57y7raaprhzjxhexcgimfz2j7vutwwmhposig5n265nq7cgysqq",
+      "counterexample": null,
+      "created_at": "2026-07-07T21:22:52+00:00",
+      "deterministic_payload_cid": "bafkreigx2x7ucm7hmauez4wh5s4ik6pmyfopua4zqndkvpoygwi6dwdn4q",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture audit policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal approval trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture nonce reservation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture balance reservation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal broadcast trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit observed trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit finalized trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit credited trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture signing request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture wallet freeze trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture privileged action trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture capability revocation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture audit trail trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-07T21:22:52+00:00",
+      "model_cid": "bafkreihwg5gmkqycnq73geeudvfscbjssaaudj4n4bgvgj6t6fp3gmnbhi",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreiai2cy3vban7ssbc4dxepdz3scmb4w2tdfx7ywsetwhln3vnopsc4",
+      "proof_or_trace_cid": "bafkreieyaogdoxkqtpdd7webk7sozjfmxmhv6ehwzqauqexlvpmtwknrki",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "medium",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": "crypto-exchange-evidence-promotion/v1",
+  "generated_at": "2026-07-08T00:00:00Z",
+  "review_policy": {
+    "source_review_statuses": [
+      "heuristic",
+      "machine_extracted"
+    ],
+    "promoted_review_statuses": [
+      "human_reviewed",
+      "trusted_fixture"
+    ],
+    "critical_release_gates": [
+      "blocking",
+      "high"
+    ],
+    "unreviewed_critical_fact_behavior": "quarantine_release_blocking",
+    "required_promotion_fields": [
+      "fact_id",
+      "claim_id",
+      "release_gate",
+      "source_review_status",
+      "promoted_review_status",
+      "reviewer.id",
+      "reviewer.reviewed_at",
+      "source_digest.sha256",
+      "line_start_and_line_end_or_trace_identifier",
+      "expires_at"
+    ]
+  },
+  "evidence_reviews": [
+    {
+      "fact_id": "policy.authorization_required",
+      "claim_id": "no_unauthorized_withdrawal",
+      "release_gate": "blocking",
+      "source_review_status": "machine_extracted",
+      "decision": "promote",
+      "promoted_review_status": "human_reviewed",
+      "reviewer": {
+        "id": "security-reviewer@example.com",
+        "team": "security-architecture",
+        "reviewed_at": "2026-07-08T00:00:00Z"
+      },
+      "source_digest": {
+        "algorithm": "sha256",
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expires_at": "2027-01-08T00:00:00Z",
+      "evidence_ref": {
+        "kind": "policy_doc",
+        "path": "docs/security_verification/production_release_decision_policy.md",
+        "review_status": "machine_extracted",
+        "line_start": 1,
+        "line_end": 80,
+        "notes": "Reviewer confirmed the authorization policy text backs the withdrawal authorization fact."
+      }
+    },
+    {
+      "fact_id": "runtime.nonce_reservation_trace",
+      "claim_id": "no_unauthorized_withdrawal",
+      "release_gate": "blocking",
+      "source_review_status": "heuristic",
+      "decision": "quarantine",
+      "quarantine": {
+        "reason": "Runtime trace has not been reviewed and bound to a digest.",
+        "blocking_behavior": "release_blocking",
+        "until": "reviewed_runtime_trace_supplied"
+      },
+      "evidence_ref": {
+        "kind": "audit_log",
+        "path": "security_ir_artifacts/production/runtime-monitor-baseline.json",
+        "review_status": "heuristic",
+        "trace_identifier": "release-window-withdrawal-nonce-reservation"
+      }
+    }
+  ]
+}
