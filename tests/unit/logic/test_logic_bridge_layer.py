@@ -4189,6 +4189,89 @@ def test_deontic_bridge_accepts_packet_shaped_bundle_guidance_route() -> None:
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_accepts_prover_bridge_action_guidance_route() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = (
+        "The Secretary shall provide notice and hearing before issuing a final "
+        "determination."
+    )
+    source_id = "us-code-22-4132-fb7a9075c4859965"
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": source_id,
+                "canonical_citation": "22 U.S.C. 4132",
+                "norm_type": "obligation",
+                "subject": [],
+                "action": [],
+                "deontic_operator": "",
+                "text": source_text,
+                "source_text": source_text,
+                "support_text": source_text,
+                "support_span": [0, len(source_text)],
+                "export_readiness": {"blockers": []},
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id=source_id,
+        citation="22 U.S.C. 4132",
+        compiler_guidance={
+            "action": "repair_deontic_prover_bridge",
+            "compiler_guidance_quality_gate": "pass",
+            "metric_sample_payloads": [
+                {
+                    "sample_id": source_id,
+                    "target_view": "deontic.ir",
+                    "quality_gate": "pass",
+                    "selected_frame_after": "administrative_notice_hearing",
+                    "legal_norm_ir": {
+                        "actor": "Secretary",
+                        "modality": "O",
+                        "norm_type": "obligation",
+                        "action": "provide notice and hearing",
+                        "source_text": source_text,
+                        "support_text": source_text,
+                        "support_span": [0, len(source_text)],
+                        "field_spans": {
+                            "subject": [4, 13],
+                            "modality": [14, 19],
+                            "action": [20, 47],
+                        },
+                    },
+                }
+            ],
+        },
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    coverage_record = report.ir_document.views["deontic_prover_syntax"].payload[
+        "records"
+    ][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert norm["actor"] == "Secretary"
+    assert norm["modality"] == "O"
+    assert norm["action"] == "provide notice and hearing"
+    assert norm["legal_frame"]["selected_frame"] == "administrative_notice_hearing"
+    assert coverage_record["formal_syntax_valid"] is True
+    assert coverage_record["coverage_blockers"] == []
+    assert report.proof_gate.failure_ratio == 0.0
+    assert report.proof_gate.valid_count == 5
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+
+
 def test_deontic_bridge_synthesizes_rows_from_passed_guidance_ir() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 

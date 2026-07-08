@@ -946,6 +946,7 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
         "deontic_ir",
         "deontic_norms",
         "repair_deontic_bridge_quality_gate",
+        "repair_deontic_prover_bridge",
     }
     for key in (
         "route",
@@ -957,7 +958,10 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
         "source_id",
     ):
         token = str(guidance.get(key) or "").strip().lower()
-        if token in route_tokens or "repair_deontic_bridge_quality_gate" in token:
+        if token in route_tokens or _compiler_guidance_token_is_deontic(
+            token,
+            route_tokens,
+        ):
             return True
 
     for key in ("compiler_guidance_todo_routes", "todo_routes", "routes", "samples"):
@@ -993,7 +997,7 @@ def _compiler_guidance_token_is_deontic(
     token = str(value or "").strip().lower()
     if not token:
         return False
-    return token in route_tokens or "repair_deontic_bridge_quality_gate" in token
+    return token in route_tokens or any(route in token for route in route_tokens)
 
 
 def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
