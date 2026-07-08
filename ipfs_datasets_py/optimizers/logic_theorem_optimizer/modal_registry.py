@@ -248,6 +248,37 @@ COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_AMBIGUITY_PACKET_003171_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DOXASTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+)
+
 COMPILER_REFINED_PACKET_002542_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
@@ -12031,6 +12062,7 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000202_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_003171_FAMILY_PAIRS,
         )
     )
 )
@@ -12050,6 +12082,7 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000202_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_003171_FAMILY_PAIRS,
         )
     )
 )
@@ -12069,6 +12102,7 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000202_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_003171_FAMILY_PAIRS,
         )
     )
 )
@@ -12488,6 +12522,7 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000202_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_003171_FAMILY_PAIRS,
         )
     )
 )
