@@ -200,7 +200,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-069 Emit SMT-LIB and run Z3/CVC5 differential proofs
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: solver
