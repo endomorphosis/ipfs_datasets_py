@@ -2085,7 +2085,10 @@ class DecodedModalText:
 def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     """Reconstruct source semantics while preserving formula audit metadata."""
     source_phrases, modal_span_coverage = _source_reconstruction_phrases(document)
-    typed_reconstruction_provenance_only = bool(source_phrases)
+    typed_reconstruction_provenance_only = (
+        bool(source_phrases)
+        and not _should_emit_guided_semantic_reconstruction(document)
+    )
     formula_order = tuple(sorted(document.formulas, key=lambda item: item.formula_id))
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
@@ -3975,6 +3978,7 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
         "frame->epistemic": "legal frame reconstructs knowledge finding",
         "frame->frame": "legal frame preserves ontology frame",
         "frame->temporal": "legal frame reconstructs temporal deadline",
+        "temporal->temporal": "temporal rule preserves deadline period",
     }
     return labels.get(pair, "")
 def _typed_ir_policy_view_semantic_reconstruction_text(

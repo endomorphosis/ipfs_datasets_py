@@ -2886,6 +2886,93 @@ def test_modal_decompiler_guided_semantics_follow_family_pair_target() -> None:
     assert "legal frame source reconstructs temporal deadline period" in decoded.text
 
 
+def test_modal_decompiler_packet_005035_promotes_typed_self_pair_semantics() -> None:
+    source = (
+        "Not later than 180 days after enactment, the Secretary shall submit "
+        "a report to Congress."
+    )
+    document = ModalIRDocument(
+        document_id="packet-005035-temporal-self-pair",
+        source="us_code",
+        normalized_text=source,
+        metadata={
+            "hint_evidence": [
+                {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "target_component": "modal.ir_decompiler",
+                    "program_synthesis_scope": "ir_decompiler",
+                    "bridge_failure_name": "source_decompiled_text_token_loss",
+                    "predicted_family": "temporal",
+                    "target_family": "temporal",
+                    "target_view": "CEC.native",
+                    "bundle": {
+                        "action": "refine_semantic_decompiler_reconstruction",
+                        "program_synthesis_scope": "ir_decompiler",
+                        "target_component": "modal.ir_decompiler",
+                        "family_pairs": [
+                            "deontic->deontic",
+                            "frame->frame",
+                            "temporal->temporal",
+                        ],
+                    },
+                }
+            ],
+        },
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-005035-temporal",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="deadline",
+                ),
+                predicate=ModalIRPredicate(
+                    name="secretary_submit_report",
+                    arguments=[
+                        "actor:secretary",
+                        "action:submit",
+                        "object:report",
+                        "temporal:not_later_than_180_days_after_enactment",
+                    ],
+                    role="temporal",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-005035-temporal-self-pair",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="1 U.S.C. 180",
+                ),
+                conditions=["not later than 180 days after enactment"],
+                metadata={"cue": "not_later_than"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+
+    assert "temporal->temporal" in slot_texts["autoencoder_modal_family_guided_pair"]
+    assert "temporal->temporal" in slot_texts[
+        "typed_ir_cross_family_semantic_support"
+    ]
+    assert "temporal rule preserves deadline period" in semantic_slot_texts[
+        "typed_ir_family_pair_semantic_bridge"
+    ]
+    assert any(
+        "temporal deadline period source reconstruction" in value
+        for value in semantic_slot_texts[
+            "guided_typed_ir_semantic_reconstruction"
+        ]
+    )
+    assert "temporal rule preserves deadline period" in decoded.text
+    assert "not later than 180 days after enactment" in decoded.text
+
+
 def test_flogic_graph_projection_metadata_tracks_frame_logic_alignment() -> None:
     graph_data = flogic_triples_to_graph_data(
         [
