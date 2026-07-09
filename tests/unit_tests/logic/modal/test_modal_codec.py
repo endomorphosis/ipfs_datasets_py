@@ -132,6 +132,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_006116_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_007710_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_007716_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_008285_FAMILY_PAIRS,
     COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
     COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
@@ -284,6 +285,133 @@ def test_modal_registry_packet_007052_refines_weak_modal_family_cues() -> None:
         0.82,
     )
     _assert_refined_margin_buffer_at_least("frame", "deontic", 0.54)
+
+
+def test_packet_007816_exposes_modal_ambiguity_policy() -> None:
+    expected_pairs = {
+        ("doxastic", "deontic"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_007816_doxastic_deontic_margin_emits_explicit_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-007816-doxastic-deontic",
+        text="The officer knowingly shall file the certification.",
+        normalized_text="The officer knowingly shall file the certification.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="doxastic",
+                system="KD45",
+                symbol="B",
+                label="belief",
+                cue="knowingly",
+                start_char=12,
+                end_char=21,
+                token_indices=[],
+            ),
+            SpaCyModalCueFeature(
+                family="deontic",
+                system="KD",
+                symbol="O",
+                label="obligation",
+                cue="shall",
+                start_char=22,
+                end_char=27,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id=encoding.document_id,
+        source="legal_text",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-doxastic-007816",
+                operator=ModalIROperator(
+                    family="doxastic",
+                    system="KD45",
+                    symbol="B",
+                    label="belief",
+                ),
+                predicate=ModalIRPredicate(
+                    name="knowingly_file",
+                    arguments=["actor:officer"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id=encoding.document_id,
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "doxastic", "count": 1, "share": 0.52},
+            {"family": "deontic", "count": 1, "share": 0.48},
+        ],
+        family_shares={"doxastic": 0.52, "deontic": 0.48},
+        predicted_family_source="adaptive_logits",
+    )
+
+    explicit = [
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type
+        == "adaptive_doxastic_deontic_outvoted_margin_low"
+    ]
+    assert explicit
+    ambiguity = explicit[0]
+    assert ambiguity.candidate_ids == ["doxastic", "deontic"]
+    assert ambiguity.severity == "requires_rule"
+    assert ambiguity.metadata["adaptive_policy_pair"] == "doxastic->deontic"
+    assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+    assert ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+    assert ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
 
 
 def test_modal_registry_packet_000393_exposes_compiler_ambiguity_policy_pairs() -> None:
