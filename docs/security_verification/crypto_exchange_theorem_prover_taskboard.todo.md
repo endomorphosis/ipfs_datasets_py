@@ -167,7 +167,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-066 Model XRPL transaction semantics from Xaman ledger code
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: ledger
@@ -178,7 +178,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-067 Define Xaman XRPL security claims and assumptions
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: wallet
@@ -189,7 +189,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-068 Generate Xaman SecurityModelIR baseline
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -200,7 +200,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-069 Emit SMT-LIB and run Z3/CVC5 differential proofs
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: solver
@@ -211,7 +211,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-070 Build mutation and disproof counterexample suite
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: solver
@@ -222,7 +222,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-071 Add TLA/Apalache workflow checks for Xaman signing
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: solver
@@ -233,7 +233,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-072 Add Tamarin/ProVerif protocol checks for payload flow
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: solver
@@ -244,7 +244,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-073 Add Lean/Coq proof-consumer invariants
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: solver
@@ -255,7 +255,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-074 Ingest Xaman e2e and runtime traces
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: runtime
@@ -266,7 +266,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-075 Produce Xaman assurance packet and release decision
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: ops
@@ -395,7 +395,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-086 Build optional solver installer and blocker remover
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: ops
@@ -406,7 +406,7 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 ## PORTAL-CXTP-087 Wire taskboard integrity into CI and supervisor preflight
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: quality
