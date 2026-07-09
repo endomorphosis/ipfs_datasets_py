@@ -1,0 +1,792 @@
+{
+  "schema_version": "xaman-security-claims/v1",
+  "task_id": "PORTAL-CXTP-067",
+  "corpus": "xaman-app",
+  "source": {
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
+    "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "coverage_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+    "coverage_schema_version": "xaman-source-coverage/v1"
+  },
+  "dependencies": [
+    {
+      "task_id": "PORTAL-CXTP-064",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "document_path": "docs/security_verification/xaman_wallet_auth_model.md",
+      "schema_version": "xaman-wallet-auth-facts/v1"
+    },
+    {
+      "task_id": "PORTAL-CXTP-065",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "document_path": "docs/security_verification/xaman_payload_lifecycle_model.md",
+      "schema_version": "xaman-payload-lifecycle-facts/v1"
+    },
+    {
+      "task_id": "PORTAL-CXTP-066",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "document_path": "docs/security_verification/xaman_xrpl_transaction_model.md",
+      "schema_version": "xaman-xrpl-transaction-facts/v1"
+    }
+  ],
+  "review": {
+    "review_status": "reviewed",
+    "reviewed_at": "2026-07-08",
+    "review_scope": [
+      "custody",
+      "authentication",
+      "payload_integrity",
+      "replay_prevention",
+      "network_binding",
+      "transaction_semantics",
+      "backend_trust",
+      "runtime_equivalence",
+      "proof_consumer_policy"
+    ],
+    "model_boundary": "Claims are derived from the reviewed PORTAL-CXTP-064, PORTAL-CXTP-065, and PORTAL-CXTP-066 Xaman source-fact artifacts plus the frozen proof-consumer and release-decision policies. A claim is not production-accepted unless every referenced assumption is evidenced, accepted, current, and the proof consumer can validate the exact model, proof report, receipt or signature, runtime profile, and release packet."
+  },
+  "assumptions": [
+    {
+      "id": "xaman-security:assumption:pinned-source-corpus-integrity",
+      "category": "runtime_equivalence",
+      "severity": "blocking",
+      "status": "EVIDENCED",
+      "statement": "The reviewed Xaman source facts are bound to the pinned source manifest, commit, and aggregate manifest digest.",
+      "evidence": [
+        {
+          "kind": "source_manifest",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:software-account-private-key-storage-path",
+      "category": "custody",
+      "severity": "blocking",
+      "status": "EVIDENCED",
+      "statement": "Full-access software-account private keys are created through the account repository and stored through the native vault facade before the Realm account record is created.",
+      "evidence": [
+        {
+          "kind": "dependency_fact",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "fact_ids": [
+            "xaman-wallet-auth:fact:account-secret-vaulted-for-full-access",
+            "xaman-wallet-auth:fact:readonly-and-tangem-accounts-do-not-store-software-private-key-on-add",
+            "xaman-wallet-auth:fact:account-removal-and-downgrade-purge-vault-secrets"
+          ],
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:native-vault-cryptographic-confidentiality",
+      "category": "custody",
+      "severity": "blocking",
+      "status": "BLOCKING",
+      "statement": "The native vault manager must preserve software private-key confidentiality, integrity, access-control binding, migration safety, and memory-handling guarantees.",
+      "blocking_reason": "The reviewed artifact only models the TypeScript vault facade, not the native implementation or platform keychain/keystore policy.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "gap_ids": [
+            "xaman-wallet-auth:gap:native-vault-manager-cryptographic-implementation"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Native VaultManagerModule source review for iOS and Android.",
+        "Keychain/Keystore access-control, encryption, migration, and backup policy evidence.",
+        "Runtime or binary-equivalence evidence proving the reviewed native module is deployed."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:passcode-kdf-and-secret-protection",
+      "category": "authentication",
+      "severity": "blocking",
+      "status": "BLOCKING",
+      "statement": "Passcode-derived encryption keys must resist offline guessing and the stored passcode hash must be protected against unauthorized disclosure or downgrade.",
+      "blocking_reason": "The reviewed source facts show passcode hashing and throttling, but not the KDF algorithm, salt handling, parameters, or stored-hash protection.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "gap_ids": [
+            "xaman-wallet-auth:gap:passcode-hash-kdf-strength"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Reviewed KDF implementation and parameter evidence.",
+        "Evidence that stored passcode material is encrypted or hardware-bound.",
+        "Attack-cost analysis for the supported passcode policy."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:biometric-native-binding",
+      "category": "authentication",
+      "severity": "high",
+      "status": "BLOCKING",
+      "statement": "Biometric authentication must be cryptographically or OS-policy bound to the same vault authorization boundary as passcode authentication.",
+      "blocking_reason": "The reviewed facts cover app-level biometric checks, not native prompt integrity, secure hardware binding, enrollment-change enforcement, or spoof resistance.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "gap_ids": [
+            "xaman-wallet-auth:gap:biometric-native-security-properties"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Native biometric prompt and enrollment-binding source review.",
+        "Platform security policy for biometric unlock fallback and revocation.",
+        "Runtime tests for enrollment change and inactive-app rejection."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:third-party-signing-correctness",
+      "category": "custody",
+      "severity": "blocking",
+      "status": "BLOCKING",
+      "statement": "Third-party signing libraries, Tangem SDK behavior, Tangem firmware, and raw XRPL signing output must be correct for the transaction bytes presented for review.",
+      "blocking_reason": "The reviewed artifact records signing preconditions and callback shape, but not library, SDK, firmware, or cryptographic signing correctness.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "gap_ids": [
+            "xaman-wallet-auth:gap:third-party-signing-library-correctness"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "XRPL signing test vectors for supported signing paths.",
+        "Dependency and SDK version review.",
+        "Tangem firmware and SDK attestation or reviewed vendor evidence."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:authentication-overlay-gates-vault-signing",
+      "category": "authentication",
+      "severity": "blocking",
+      "status": "EVIDENCED",
+      "statement": "The reviewed client routes software signing through the vault overlay and requires a passcode, passphrase, biometric-authorized passcode hash, or Tangem signing path before signing proceeds.",
+      "evidence": [
+        {
+          "kind": "dependency_fact",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "fact_ids": [
+            "xaman-wallet-auth:fact:software-private-key-signing-requires-vault-open-with-encryption-key",
+            "xaman-wallet-auth:fact:authenticate-overlay-allows-passcode-or-enabled-biometrics",
+            "xaman-wallet-auth:fact:transaction-signing-preconditions-before-vault-overlay",
+            "xaman-wallet-auth:fact:tangem-physical-signing-uses-card-session-not-local-vault-secret"
+          ],
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:payload-client-integrity-and-revalidation",
+      "category": "payload_integrity",
+      "severity": "high",
+      "status": "EVIDENCED",
+      "statement": "The reviewed client verifies remote payload request JSON digests, rejects expired or resolved payloads before review, and revalidates non-generated payloads immediately before signing.",
+      "evidence": [
+        {
+          "kind": "dependency_fact",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "fact_ids": [
+            "xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest",
+            "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads",
+            "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing"
+          ],
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+      "category": "backend_trust",
+      "severity": "blocking",
+      "status": "BLOCKING",
+      "statement": "The backend payload API must authorize payload creation, bind payload UUIDs to the intended requester and signer constraints, enforce atomic single-use resolution across devices, enforce expiration, and reject conflicting PATCH operations.",
+      "blocking_reason": "Backend authorization, atomic resolution, cross-device replay prevention, and PATCH conflict behavior are explicitly outside the reviewed client source model.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "gap_ids": [
+            "xaman-payload-lifecycle:gap:backend-payload-creation-auth-and-single-use"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Backend payload API source and deployment review.",
+        "Atomic storage or transaction evidence for single-use resolution.",
+        "Cross-device replay tests and PATCH conflict traces."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
+      "category": "payload_integrity",
+      "severity": "high",
+      "status": "BLOCKING",
+      "statement": "QR, deep-link, push, and native intake layers must deliver the intended payload reference without parser confusion, spoofing, or OS-delivery substitution.",
+      "blocking_reason": "The reviewed model covers client branches after payload-reference detection, not third-party string decoder, native camera parser, OS deep-link delivery, clipboard, or malformed-input runtime behavior.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "gap_ids": [
+            "xaman-payload-lifecycle:gap:string-decoder-and-native-intake-integrity"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Native camera and OS-linking behavior review.",
+        "Malformed QR/deep-link fuzzing traces.",
+        "Push-notification authenticity and routing evidence."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:client-replay-guards-before-submit",
+      "category": "replay_prevention",
+      "severity": "high",
+      "status": "EVIDENCED",
+      "statement": "The reviewed client has local replay guards for resolved or expired payloads, pre-sign revalidation, already-signed transactions, aborted transactions, signed blob presence, in-progress submit state, and prior submit result.",
+      "evidence": [
+        {
+          "kind": "dependency_fact",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "fact_ids": [
+            "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads",
+            "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing",
+            "xaman-payload-lifecycle:fact:ledger-submit-has-local-single-submit-and-abort-guards"
+          ],
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:network-binding-is-client-enforced",
+      "category": "network_binding",
+      "severity": "high",
+      "status": "EVIDENCED",
+      "statement": "The reviewed client rejects forced-network mismatch during review, rejects unsupported transaction types for the connected network, and populates NetworkID for non-legacy networks.",
+      "evidence": [
+        {
+          "kind": "dependency_fact",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "fact_ids": [
+            "xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing"
+          ],
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "dependency_fact",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "fact_ids": [
+            "xaman-xrpl-transaction:fact:network-id-is-auto-populated-for-non-legacy-networks-above-1024",
+            "xaman-xrpl-transaction:fact:signing-rejects-transaction-types-unsupported-by-connected-network-definitions"
+          ],
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:deployed-network-and-node-config-equivalence",
+      "category": "network_binding",
+      "severity": "blocking",
+      "status": "BLOCKING",
+      "statement": "The deployed app and backend/node configuration must use the same network definitions, node endpoints, and environment binding modeled in the reviewed source.",
+      "blocking_reason": "Node endpoint configuration, backend deployment, app-store binary, and runtime traces are not modeled by the source-fact artifacts.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "gap_ids": [
+            "xaman-payload-lifecycle:gap:deployed-runtime-equivalence"
+          ],
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "gap_ids": [
+            "xaman-xrpl-transaction:gap:deployed-runtime-equivalence"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Deployed network configuration artifact and owner review.",
+        "Runtime traces binding selected network, node URI, NetworkID, and payload force_network.",
+        "Binary-to-source or reproducible-build evidence."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:xrpl-transaction-field-semantics",
+      "category": "transaction_semantics",
+      "severity": "high",
+      "status": "EVIDENCED",
+      "statement": "The reviewed transaction model covers account, destination, amount, fee, sequence, network, memo, issued-currency, trustline, multisign, and transaction-type facts needed for signing safety claims.",
+      "evidence": [
+        {
+          "kind": "dependency_fact",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "fact_ids": [
+            "xaman-xrpl-transaction:fact:account-field-requires-valid-classic-address",
+            "xaman-xrpl-transaction:fact:payment-destination-is-a-required-accountid-field",
+            "xaman-xrpl-transaction:fact:payment-amount-must-be-present-and-nonzero-unless-paths-set",
+            "xaman-xrpl-transaction:fact:signing-requires-fee-to-be-explicitly-set-before-prepare-completes",
+            "xaman-xrpl-transaction:fact:signing-auto-fills-missing-sequence-from-live-account-sequence",
+            "xaman-xrpl-transaction:fact:issued-currency-amount-requires-currency-and-issuer-when-non-native",
+            "xaman-xrpl-transaction:fact:payment-requires-recipient-trustline-for-non-native-non-issuer-delivery",
+            "xaman-xrpl-transaction:fact:multisign-flag-is-derived-from-payload-meta-multisign",
+            "xaman-xrpl-transaction:fact:validation-dispatch-requires-a-matching-typevalidation-export-or-throws"
+          ],
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:trustset-and-signerlist-client-validation",
+      "category": "transaction_semantics",
+      "severity": "high",
+      "status": "BLOCKING",
+      "statement": "TrustSet and SignerListSet transactions must have client-side or server-side validation evidence strong enough to support signing-safety claims for trust lines and signer-list changes.",
+      "blocking_reason": "The reviewed client source has TrustSetValidation and SignerListSetValidation stubs that always resolve.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "gap_ids": [
+            "xaman-xrpl-transaction:gap:trustset-and-signerlistset-client-validation-not-implemented"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Implemented TrustSet and SignerListSet validation source review, or explicit policy excluding those transactions from the claim.",
+        "Regression tests for signer quorum, trust-line limit, issuer, and freeze edge cases."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
+      "category": "transaction_semantics",
+      "severity": "blocking",
+      "status": "BLOCKING",
+      "statement": "XRPL server-side enforcement, consensus behavior, final inclusion, mempool behavior, node honesty, and result-code semantics must match the transaction safety obligations consumed by the proof model.",
+      "blocking_reason": "The reviewed artifacts explicitly do not model rippled authoritative enforcement, consensus safety, node honesty, mempool behavior, or final ledger inclusion.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "gap_ids": [
+            "xaman-payload-lifecycle:gap:ledger-consensus-and-node-honesty"
+          ],
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "gap_ids": [
+            "xaman-xrpl-transaction:gap:xrpl-server-side-transaction-rule-enforcement-not-modeled"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "XRPL/rippled version and network rule evidence.",
+        "Node trust and quorum/finality model.",
+        "Result-code handling and ledger-inclusion traces."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:external-multisign-coordination",
+      "category": "transaction_semantics",
+      "severity": "high",
+      "status": "BLOCKING",
+      "statement": "External multisign collection must only combine intended signer shares and must meet the on-ledger signer-list quorum for the exact reviewed transaction bytes.",
+      "blocking_reason": "The reviewed source excludes multisign payloads from automatic submit and does not model the external coordination process that collects and combines signer shares.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "gap_ids": [
+            "xaman-xrpl-transaction:gap:external-multisign-signature-collection-not-modeled"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Multisign coordination protocol and storage review.",
+        "Trace evidence that combined signatures bind to the intended transaction.",
+        "Quorum and signer-weight tests."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:deployed-runtime-equivalence",
+      "category": "runtime_equivalence",
+      "severity": "blocking",
+      "status": "BLOCKING",
+      "statement": "The deployed mobile binaries, native modules, backend services, node configuration, and runtime event traces must be equivalent to the reviewed source and environment profile.",
+      "blocking_reason": "The dependency models are source-backed and explicitly do not prove deployed binary, backend, native runtime, or real-device trace equivalence.",
+      "blocking_references": [
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "gap_ids": [
+            "xaman-wallet-auth:gap:runtime-and-deployed-binary-behavior"
+          ],
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "gap_ids": [
+            "xaman-payload-lifecycle:gap:deployed-runtime-equivalence"
+          ],
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "dependency_gap",
+          "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "gap_ids": [
+            "xaman-xrpl-transaction:gap:deployed-runtime-equivalence"
+          ],
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Reproducible build or signed binary provenance for deployed app builds.",
+        "Native module and backend deployment digests.",
+        "Release-window runtime traces for authentication, payload review, signing, patch, network, and submit transitions."
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:proof-consumer-fail-closed-policy",
+      "category": "proof_consumer_policy",
+      "severity": "blocking",
+      "status": "EVIDENCED",
+      "statement": "Proof consumers must reject blocking and high-risk claims unless the outcome is prove, assumptions are current and accepted, evidence is reviewed, required solvers are available, and proof receipts or signatures validate.",
+      "evidence": [
+        {
+          "kind": "policy_artifact",
+          "artifact_path": "security_ir_artifacts/policies/security-decision-policy.json",
+          "document_path": "docs/security_verification/production_release_decision_policy.md",
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "policy_document",
+          "document_path": "docs/security_verification/proof_receipt_consumer_policy.md",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-security:assumption:proof-receipt-cid-or-signature-validation",
+      "category": "proof_consumer_policy",
+      "severity": "blocking",
+      "status": "BLOCKING",
+      "statement": "Production proof consumers must be able to recompute canonical report CIDs byte-for-byte or verify a trusted signature over the proof report or receipt bundle.",
+      "blocking_reason": "The proof receipt consumer policy states proof-critical mode fails closed until canonical CID recomputation or trusted signature verification is available in the runtime.",
+      "blocking_references": [
+        {
+          "kind": "policy_document",
+          "document_path": "docs/security_verification/proof_receipt_consumer_policy.md",
+          "review_status": "reviewed"
+        }
+      ],
+      "required_evidence_to_accept": [
+        "Production proof-consumer implementation test proving canonical CID recomputation or trusted signature validation.",
+        "Release-packet evidence binding model CID, report CID, receipt CID, claim ID, and accepted assumptions."
+      ]
+    }
+  ],
+  "security_claims": [
+    {
+      "id": "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
+      "category": "custody",
+      "release_gate": "blocking",
+      "risk": "blocking",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "A software private key cannot be used for XRPL signing unless the selected account reaches an authorized vault or Tangem signing path for the same reviewed transaction.",
+      "evidence_fact_ids": [
+        "xaman-wallet-auth:fact:account-secret-vaulted-for-full-access",
+        "xaman-wallet-auth:fact:software-private-key-signing-requires-vault-open-with-encryption-key",
+        "xaman-wallet-auth:fact:tangem-physical-signing-uses-card-session-not-local-vault-secret"
+      ],
+      "assumption_ids": [
+        "xaman-security:assumption:pinned-source-corpus-integrity",
+        "xaman-security:assumption:software-account-private-key-storage-path",
+        "xaman-security:assumption:native-vault-cryptographic-confidentiality",
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:native-vault-cryptographic-confidentiality",
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "proof_obligation": "No transition from review approval to signed blob may read or use a software private key except through a successful vault-open path for the selected signer, and all signing output must bind to the reviewed XRPL transaction bytes.",
+      "consumer_policy": "fail_closed_until_all_blocking_assumptions_evidenced_and_proved"
+    },
+    {
+      "id": "xaman-security:claim:authentication-gates-vault-and-signing",
+      "category": "authentication",
+      "release_gate": "blocking",
+      "risk": "blocking",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "Passcode, passphrase, biometric-assisted passcode, or physical-card authentication gates every software or Tangem signing path before a signed transaction can be produced.",
+      "evidence_fact_ids": [
+        "xaman-wallet-auth:fact:authenticate-overlay-allows-passcode-or-enabled-biometrics",
+        "xaman-wallet-auth:fact:passcode-authentication-hashes-and-throttles",
+        "xaman-wallet-auth:fact:transaction-signing-preconditions-before-vault-overlay"
+      ],
+      "assumption_ids": [
+        "xaman-security:assumption:authentication-overlay-gates-vault-signing",
+        "xaman-security:assumption:passcode-kdf-and-secret-protection",
+        "xaman-security:assumption:biometric-native-binding",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:passcode-kdf-and-secret-protection",
+        "xaman-security:assumption:biometric-native-binding",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "proof_obligation": "Every signing transition must have a preceding successful authentication event that is valid for the selected account encryption level and is not bypassed by inactive-app, stale-unlock, or enrollment-change conditions.",
+      "consumer_policy": "fail_closed_until_all_blocking_assumptions_evidenced_and_proved"
+    },
+    {
+      "id": "xaman-security:claim:payload-integrity-before-review-and-signing",
+      "category": "payload_integrity",
+      "release_gate": "high",
+      "risk": "high",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "The transaction reviewed and signed by the user is the transaction JSON fetched for the payload reference after digest verification and immediate pre-sign revalidation.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest",
+        "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing",
+        "xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control"
+      ],
+      "assumption_ids": [
+        "xaman-security:assumption:payload-client-integrity-and-revalidation",
+        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "proof_obligation": "A payload reference may reach the approval transition only after digest-matched fetch, visible review of the same transaction fields, and successful validation refresh of unresolved, unexpired backend state.",
+      "consumer_policy": "fail_closed_until_all_blocking_assumptions_evidenced_and_proved"
+    },
+    {
+      "id": "xaman-security:claim:payload-replay-prevention-is-single-use",
+      "category": "replay_prevention",
+      "release_gate": "blocking",
+      "risk": "blocking",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "A payload cannot be signed or submitted more than once across local state, devices, and backend resolution races.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads",
+        "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing",
+        "xaman-payload-lifecycle:fact:ledger-submit-has-local-single-submit-and-abort-guards"
+      ],
+      "assumption_ids": [
+        "xaman-security:assumption:client-replay-guards-before-submit",
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "proof_obligation": "No two successful signed or submitted terminal transitions may consume the same remote payload UUID, including concurrent clients and repeated PATCH attempts.",
+      "consumer_policy": "fail_closed_until_backend_atomic_single_use_is_evidenced"
+    },
+    {
+      "id": "xaman-security:claim:network-binding-prevents-cross-network-signing",
+      "category": "network_binding",
+      "release_gate": "high",
+      "risk": "high",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "A payload intended for one XRPL network cannot be reviewed, signed, patched, or submitted on a different configured network.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing",
+        "xaman-xrpl-transaction:fact:network-id-is-auto-populated-for-non-legacy-networks-above-1024",
+        "xaman-xrpl-transaction:fact:signing-rejects-transaction-types-unsupported-by-connected-network-definitions"
+      ],
+      "assumption_ids": [
+        "xaman-security:assumption:network-binding-is-client-enforced",
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "proof_obligation": "For every approved transaction, payload force_network, active app network, populated NetworkID, patch environment, and submit node must be mutually consistent.",
+      "consumer_policy": "fail_closed_until_runtime_network_binding_is_evidenced"
+    },
+    {
+      "id": "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent",
+      "category": "transaction_semantics",
+      "release_gate": "high",
+      "risk": "high",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "The XRPL transaction fields signed by the user match the reviewed account, destination, amount, fee, sequence, network, memo, issued-currency, trustline, multisign, and transaction-type semantics.",
+      "evidence_fact_ids": [
+        "xaman-xrpl-transaction:fact:account-field-requires-valid-classic-address",
+        "xaman-xrpl-transaction:fact:payment-destination-is-a-required-accountid-field",
+        "xaman-xrpl-transaction:fact:payment-amount-must-be-present-and-nonzero-unless-paths-set",
+        "xaman-xrpl-transaction:fact:signing-requires-fee-to-be-explicitly-set-before-prepare-completes",
+        "xaman-xrpl-transaction:fact:payment-requires-recipient-trustline-for-non-native-non-issuer-delivery",
+        "xaman-xrpl-transaction:fact:submit-multisigned-request-requires-signer-weights-meeting-signerlist-quorum"
+      ],
+      "assumption_ids": [
+        "xaman-security:assumption:xrpl-transaction-field-semantics",
+        "xaman-security:assumption:trustset-and-signerlist-client-validation",
+        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
+        "xaman-security:assumption:external-multisign-coordination",
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:trustset-and-signerlist-client-validation",
+        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
+        "xaman-security:assumption:external-multisign-coordination",
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "proof_obligation": "A signed transaction must preserve the reviewed semantic fields, pass all required client validation, and rely only on ledger/server behaviors that are explicitly modeled or evidenced.",
+      "consumer_policy": "fail_closed_until_unmodeled_transaction_classes_and_ledger_rules_are_evidenced"
+    },
+    {
+      "id": "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
+      "category": "backend_trust",
+      "release_gate": "blocking",
+      "risk": "blocking",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "The backend payload service cannot cause an unauthorized, stale, replayed, or conflicting transaction to be signed or accepted as resolved.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:signed-payload-is-patched-before-optional-ledger-broadcast",
+        "xaman-payload-lifecycle:fact:rejection-patches-backend-for-user-or-app-decline",
+        "xaman-payload-lifecycle:fact:dispatch-result-is-patched-after-ledger-submit"
+      ],
+      "assumption_ids": [
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:payload-client-integrity-and-revalidation",
+        "xaman-security:assumption:client-replay-guards-before-submit",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "proof_obligation": "Backend create, fetch, validate, reject, signed-patch, and dispatch-patch transitions must be authorized, atomic where required, and bound to the same payload UUID and signer constraints.",
+      "consumer_policy": "fail_closed_until_backend_source_and_runtime_evidence_are_reviewed"
+    },
+    {
+      "id": "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime",
+      "category": "runtime_equivalence",
+      "release_gate": "blocking",
+      "risk": "blocking",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "The source and environment profile reviewed for Xaman claims are equivalent to the mobile binaries, native modules, backend services, and runtime traces consumed by a production proof packet.",
+      "evidence_fact_ids": [
+        "xaman-wallet-auth:gap:runtime-and-deployed-binary-behavior",
+        "xaman-payload-lifecycle:gap:deployed-runtime-equivalence",
+        "xaman-xrpl-transaction:gap:deployed-runtime-equivalence"
+      ],
+      "assumption_ids": [
+        "xaman-security:assumption:pinned-source-corpus-integrity",
+        "xaman-security:assumption:deployed-runtime-equivalence",
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:deployed-runtime-equivalence",
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence"
+      ],
+      "proof_obligation": "Every production proof packet must bind source commit, manifest digest, environment profile, app binary provenance, native module digest, backend deployment digest, and release-window runtime traces.",
+      "consumer_policy": "fail_closed_until_binary_backend_and_trace_equivalence_are_evidenced"
+    },
+    {
+      "id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
+      "category": "proof_consumer_policy",
+      "release_gate": "blocking",
+      "risk": "blocking",
+      "status": "BLOCKED_BY_ASSUMPTIONS",
+      "claim": "No proof consumer may treat a Xaman blocking or high-risk claim as secure unless the claim outcome is prove and the proof packet validates model binding, assumption acceptance, evidence review, solver support, runtime freshness, and receipt or signature binding.",
+      "evidence_fact_ids": [],
+      "assumption_ids": [
+        "xaman-security:assumption:proof-consumer-fail-closed-policy",
+        "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
+      ],
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
+      ],
+      "proof_obligation": "A production consumer must reject missing, DISPROVED, UNKNOWN, NOT_MODELED, stale-evidence, missing-solver, mismatched-CID, mismatched-claim, unaccepted-assumption, and unreviewed-evidence packets for every Xaman blocking or high-risk claim.",
+      "consumer_policy": "fail_closed_until_cid_recomputation_or_trusted_signature_validation_is_evidenced"
+    }
+  ],
+  "claim_policy": {
+    "allowed_release_gates": [
+      "blocking",
+      "high"
+    ],
+    "allowed_secure_statuses_for_production": [
+      "PROVED"
+    ],
+    "non_secure_statuses_for_production": [
+      "BLOCKED_BY_ASSUMPTIONS",
+      "DISPROVED",
+      "UNKNOWN",
+      "NOT_MODELED",
+      "STALE_EVIDENCE",
+      "MISSING_SOLVER"
+    ],
+    "assumption_rule": "Every assumption consumed by a claim must be status EVIDENCED with reviewed evidence or status BLOCKING with explicit required evidence to accept.",
+    "consumer_rule": "Release consumers must fail closed for every blocking or high-risk Xaman claim unless all assumptions are evidenced and accepted, the claim is modeled in the production SecurityModelIR, required provers return PROVED, disproof and runtime gates pass, and proof receipt or trusted signature validation binds the selected model and report."
+  },
+  "production_decision": {
+    "outcome": "blocked-production",
+    "reason": "All nine Xaman blocking or high-risk claims depend on at least one blocking assumption inherited from the reviewed source-fact artifacts or proof-consumer policy.",
+    "blocking_claim_ids": [
+      "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
+      "xaman-security:claim:authentication-gates-vault-and-signing",
+      "xaman-security:claim:payload-replay-prevention-is-single-use",
+      "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
+      "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime",
+      "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims"
+    ],
+    "high_risk_claim_ids": [
+      "xaman-security:claim:payload-integrity-before-review-and-signing",
+      "xaman-security:claim:network-binding-prevents-cross-network-signing",
+      "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent"
+    ],
+    "required_next_artifacts": [
+      "Xaman SecurityModelIR binding these claims and assumptions.",
+      "Backend payload API source and deployment evidence.",
+      "Native vault, biometric, and signing implementation evidence.",
+      "XRPL node, consensus, and server-rule assumption evidence.",
+      "Runtime and deployed-binary equivalence evidence.",
+      "Proof-consumer CID recomputation or trusted-signature validation evidence."
+    ]
+  }
+}

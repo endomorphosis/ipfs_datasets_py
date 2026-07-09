@@ -1,6 +1,6 @@
 # Xaman Payload Lifecycle Model
 
-Task: `PORTAL-CXTP-042`
+Task: `PORTAL-CXTP-065`
 
 This model records reviewed payload and sign-request lifecycle facts for the pinned Xaman React Native source corpus. The machine-readable artifact is `security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json`.
 

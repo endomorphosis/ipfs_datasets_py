@@ -1,6 +1,6 @@
 {
   "schema_version": "xaman-wallet-auth-facts/v1",
-  "task_id": "PORTAL-CXTP-041",
+  "task_id": "PORTAL-CXTP-064",
   "corpus": "xaman-app",
   "source": {
     "repo_url": "https://github.com/XRPL-Labs/Xaman-App",

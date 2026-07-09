@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 import shutil
 import subprocess
 import tempfile
@@ -11,7 +12,15 @@ from pathlib import Path
 from typing import Any
 
 from ..claims.base import SecurityClaim
-from ..compilers.to_smtlib import SMTLIBCompilation, compile_claim_to_smtlib
+from ..compilers.to_smtlib import (
+    SMTLIBCompilation,
+    SMTLIB_LOGIC,
+    XAMAN_CRITICAL_SEVERITIES,
+    compile_claim_to_smtlib,
+    compile_ir_claims_to_smtlib,
+    emit_ir_smtlib_artifacts,
+)
+from ..ir.cid import calculate_artifact_cid, calculate_model_cid
 from ..ir.schema import SecurityModelIR, evidence_review_statuses
 from ..reports.proof_report import ProofReport
 from ..runners.base import BaseSecurityRunner
@@ -19,6 +28,9 @@ from ..runners.base import BaseSecurityRunner
 
 _PREFERRED_CVC5_PATH = Path('/home/barberb/.local/bin/cvc5')
 _ENV_CVC5_PATH = 'IPFS_DATASETS_PY_CVC5'
+XAMAN_DIFFERENTIAL_SCHEMA_VERSION = 'xaman-z3-cvc5-differential/v1'
+XAMAN_DIFFERENTIAL_CLASSIFICATIONS = ('proved', 'disproved', 'unknown', 'blocked')
+SUPPORTED_SMTLIB_LOGICS = frozenset({SMTLIB_LOGIC})
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +42,30 @@ class CVC5CLIResult:
     stderr: str
     returncode: int | None
     reason_unknown: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SMTLIBSolverRun:
+    """A normalized solver execution result for an SMT-LIB2 artifact."""
+
+    prover: str
+    solver_result: str
+    stdout: str = ''
+    stderr: str = ''
+    returncode: int | None = None
+    reason_unknown: str | None = None
+    solver_version: str = ''
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'prover': self.prover,
+            'solver_result': self.solver_result,
+            'stdout': self.stdout,
+            'stderr': self.stderr,
+            'returncode': self.returncode,
+            'reason_unknown': self.reason_unknown,
+            'solver_version': self.solver_version,
+        }
 
 
 class CVC5Runner(BaseSecurityRunner):
@@ -167,6 +203,20 @@ class CVC5Runner(BaseSecurityRunner):
             stderr=stderr,
             returncode=completed.returncode,
             reason_unknown=f'cvc5 output did not contain a SAT/UNSAT/UNKNOWN result: {stdout.strip()}',
+        )
+
+    def run_smtlib_artifact(self, artifact: SMTLIBCompilation) -> SMTLIBSolverRun:
+        """Run a precompiled SMT-LIB artifact and return a normalized result."""
+
+        result = self._run_cli(artifact)
+        return SMTLIBSolverRun(
+            prover=self.prover_name,
+            solver_result=result.solver_result,
+            stdout=result.stdout,
+            stderr=result.stderr,
+            returncode=result.returncode,
+            reason_unknown=result.reason_unknown,
+            solver_version=self._solver_version(),
         )
 
     @staticmethod
@@ -309,4 +359,245 @@ class CVC5Runner(BaseSecurityRunner):
         )
 
 
-__all__ = ['CVC5CLIResult', 'CVC5Runner']
+def run_z3_smtlib_artifact(artifact: SMTLIBCompilation, *, timeout_ms: int = 5_000) -> SMTLIBSolverRun:
+    """Run a precompiled SMT-LIB artifact through Z3's SMT-LIB parser."""
+
+    try:
+        import z3
+    except ImportError:
+        return SMTLIBSolverRun(
+            prover='z3',
+            solver_result='unavailable',
+            reason_unknown='Z3 Python bindings are not installed',
+        )
+    solver = z3.Solver()
+    solver.set('timeout', timeout_ms)
+    try:
+        solver.from_string(artifact.smtlib)
+        result = solver.check()
+    except z3.Z3Exception as exc:
+        return SMTLIBSolverRun(
+            prover='z3',
+            solver_result='parser_error',
+            stderr=str(exc),
+            reason_unknown=f'Z3 could not parse or run SMT-LIB: {exc}',
+            solver_version=getattr(z3, 'get_full_version', lambda: 'unknown')(),
+        )
+    result_text = str(result)
+    reason_unknown = None
+    if result_text == 'unknown':
+        reason_unknown = solver.reason_unknown()
+    return SMTLIBSolverRun(
+        prover='z3',
+        solver_result=result_text if result_text in {'sat', 'unsat', 'unknown'} else 'error',
+        reason_unknown=reason_unknown,
+        solver_version=getattr(z3, 'get_full_version', lambda: 'unknown')(),
+    )
+
+
+def run_xaman_smt_differential(
+    model: SecurityModelIR,
+    *,
+    smtlib_dir: str | Path,
+    report_path: str | Path | None = None,
+    timeout_ms: int = 5_000,
+    cvc5_executable: str | os.PathLike[str] | None = None,
+) -> dict[str, Any]:
+    """Emit Xaman SMT-LIB artifacts and cross-check them with Z3 and CVC5."""
+
+    smtlib_directory = Path(smtlib_dir)
+    manifest = emit_ir_smtlib_artifacts(
+        model,
+        smtlib_directory,
+        severities=XAMAN_CRITICAL_SEVERITIES,
+    )
+    artifacts = compile_ir_claims_to_smtlib(
+        model,
+        severities=XAMAN_CRITICAL_SEVERITIES,
+    )
+    manifest_entries_by_claim = {
+        entry['claim_id']: entry
+        for entry in manifest['artifacts']
+    }
+    cvc5_runner = CVC5Runner(timeout_ms=timeout_ms, executable=cvc5_executable)
+    claim_reports: list[dict[str, Any]] = []
+    unsupported_theory_rejections: list[dict[str, Any]] = []
+    disagreement_rejections: list[dict[str, Any]] = []
+    for artifact in artifacts:
+        logic = str(artifact.metadata.get('logic') or '')
+        unsupported = logic not in SUPPORTED_SMTLIB_LOGICS
+        if unsupported:
+            unsupported_theory_rejections.append(
+                {
+                    'claim_id': artifact.claim_id,
+                    'logic': logic,
+                    'reason': f'unsupported SMT-LIB logic {logic}',
+                }
+            )
+            z3_result = SMTLIBSolverRun(
+                prover='z3',
+                solver_result='unsupported',
+                reason_unknown=f'unsupported SMT-LIB logic {logic}',
+            )
+            cvc5_result = SMTLIBSolverRun(
+                prover='cvc5',
+                solver_result='unsupported',
+                reason_unknown=f'unsupported SMT-LIB logic {logic}',
+            )
+        else:
+            z3_result = run_z3_smtlib_artifact(artifact, timeout_ms=timeout_ms)
+            cvc5_result = cvc5_runner.run_smtlib_artifact(artifact)
+        solver_results = {
+            'z3': z3_result.to_dict(),
+            'cvc5': cvc5_result.to_dict(),
+        }
+        comparable_results = {
+            prover: result['solver_result']
+            for prover, result in solver_results.items()
+            if result['solver_result'] in {'sat', 'unsat', 'unknown'}
+        }
+        disagreement = len(comparable_results) == 2 and len(set(comparable_results.values())) > 1
+        if disagreement:
+            disagreement_rejections.append(
+                {
+                    'claim_id': artifact.claim_id,
+                    'solver_results': dict(comparable_results),
+                    'reason': 'Z3/CVC5 solver result disagreement',
+                }
+            )
+        classification, classification_reason = _classify_xaman_differential(
+            artifact,
+            z3_result,
+            cvc5_result,
+            unsupported=unsupported,
+            disagreement=disagreement,
+        )
+        manifest_entry = manifest_entries_by_claim[artifact.claim_id]
+        claim_reports.append(
+            {
+                'claim_id': artifact.claim_id,
+                'claim_version': artifact.claim_version,
+                'severity': artifact.metadata['severity'],
+                'risk': artifact.metadata.get('risk', artifact.metadata['severity']),
+                'domain': artifact.metadata.get('domain'),
+                'xaman_category': artifact.metadata.get('xaman_category'),
+                'classification': classification,
+                'classification_reason': classification_reason,
+                'blocked_by_assumptions': list(artifact.metadata.get('blocking_assumption_ids', [])),
+                'agreement': not disagreement,
+                'disagreement': disagreement,
+                'unsupported_theory': unsupported,
+                'smtlib_artifact': {
+                    'path': f'smtlib/{manifest_entry["path"]}',
+                    'artifact_cid': artifact.artifact_cid,
+                    'logic': logic,
+                    'query_kind': artifact.metadata['query_kind'],
+                    'assertion_count': artifact.metadata['assertion_count'],
+                },
+                'solver_results': solver_results,
+                'evidence_refs': list(artifact.metadata.get('evidence_refs', [])),
+                'soundness_notes': list(artifact.metadata.get('soundness_notes', [])),
+            }
+        )
+    summary = _xaman_differential_summary(
+        claim_reports,
+        unsupported_theory_rejections=unsupported_theory_rejections,
+        disagreement_rejections=disagreement_rejections,
+    )
+    report = {
+        'schema_version': XAMAN_DIFFERENTIAL_SCHEMA_VERSION,
+        'task_id': 'PORTAL-CXTP-069',
+        'model_id': model.model_id,
+        'model_schema_version': model.schema_version,
+        'model_cid': calculate_model_cid(model),
+        'classification_vocabulary': list(XAMAN_DIFFERENTIAL_CLASSIFICATIONS),
+        'selected_provers': ['z3', 'cvc5'],
+        'timeout_ms': timeout_ms,
+        'smtlib_manifest_path': 'security_ir_artifacts/corpora/xaman-app/smtlib/manifest.json',
+        'smtlib_manifest_cid': calculate_artifact_cid(manifest),
+        'supported_smtlib_logics': sorted(SUPPORTED_SMTLIB_LOGICS),
+        'unsupported_theory_rejections': unsupported_theory_rejections,
+        'disagreement_rejections': disagreement_rejections,
+        'summary': summary,
+        'claims': claim_reports,
+    }
+    report['report_cid'] = calculate_artifact_cid(report)
+    if report_path is not None:
+        path = Path(report_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+    return report
+
+
+def _classify_xaman_differential(
+    artifact: SMTLIBCompilation,
+    z3_result: SMTLIBSolverRun,
+    cvc5_result: SMTLIBSolverRun,
+    *,
+    unsupported: bool,
+    disagreement: bool,
+) -> tuple[str, str]:
+    blockers = list(artifact.metadata.get('blocking_assumption_ids', []))
+    solver_values = {z3_result.solver_result, cvc5_result.solver_result}
+    if unsupported:
+        return 'unknown', 'unsupported SMT-LIB theory was rejected before proof classification'
+    if disagreement:
+        return 'unknown', 'Z3 and CVC5 disagreed; differential proof is rejected fail-closed'
+    if any(value in {'unavailable', 'timeout', 'parser_error', 'error', 'unsupported'} for value in solver_values):
+        return 'unknown', 'at least one solver did not return sat, unsat, or unknown'
+    if 'unknown' in solver_values:
+        return 'unknown', 'at least one solver returned unknown'
+    if blockers:
+        return 'blocked', 'claim has blocking assumptions that prevent production proof acceptance'
+    if solver_values == {'unsat'}:
+        return 'proved', 'both solvers found no satisfiable blocking or violation condition'
+    if solver_values == {'sat'}:
+        return 'disproved', 'both solvers found a satisfiable violation condition'
+    return 'unknown', 'solver result combination is not classified'
+
+
+def _xaman_differential_summary(
+    claim_reports: list[dict[str, Any]],
+    *,
+    unsupported_theory_rejections: list[dict[str, Any]],
+    disagreement_rejections: list[dict[str, Any]],
+) -> dict[str, Any]:
+    counts = {
+        classification: sum(report['classification'] == classification for report in claim_reports)
+        for classification in XAMAN_DIFFERENTIAL_CLASSIFICATIONS
+    }
+    blocking_or_high = [
+        report
+        for report in claim_reports
+        if report.get('severity') in {'blocking', 'high'}
+    ]
+    return {
+        'claim_count': len(claim_reports),
+        'critical_claim_count': len(blocking_or_high),
+        'proved': counts['proved'],
+        'disproved': counts['disproved'],
+        'unknown': counts['unknown'],
+        'blocked': counts['blocked'],
+        'agreements': sum(not bool(report['disagreement']) for report in claim_reports),
+        'disagreements': len(disagreement_rejections),
+        'unsupported_theory_rejections': len(unsupported_theory_rejections),
+        'release_ready': (
+            counts['blocked'] == 0
+            and counts['unknown'] == 0
+            and counts['disproved'] == 0
+            and not unsupported_theory_rejections
+            and not disagreement_rejections
+        ),
+    }
+
+
+__all__ = [
+    'CVC5CLIResult',
+    'CVC5Runner',
+    'SMTLIBSolverRun',
+    'SUPPORTED_SMTLIB_LOGICS',
+    'XAMAN_DIFFERENTIAL_CLASSIFICATIONS',
+    'XAMAN_DIFFERENTIAL_SCHEMA_VERSION',
+    'run_xaman_smt_differential',
+    'run_z3_smtlib_artifact',
+]

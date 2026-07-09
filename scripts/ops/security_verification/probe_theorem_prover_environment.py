@@ -35,6 +35,7 @@ class DependencySpec:
     capability: str
     env_var: str | None = None
     minimum_version: str | None = None
+    repo_relative_paths: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -82,6 +83,10 @@ DEPENDENCIES: tuple[DependencySpec, ...] = (
         candidates=('tsc',),
         version_args=('--version',),
         capability='Type-check emitted security proof schemas consumed by downstream clients.',
+        env_var='TSC_EXE',
+        repo_relative_paths=(
+            'security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc',
+        ),
     ),
     DependencySpec(
         name='z3',
@@ -185,6 +190,15 @@ ENV_VARS: tuple[EnvVarSpec, ...] = (
         name='CVC5_EXE',
         required=False,
         purpose='Explicit CVC5 executable override for differential SMT runners.',
+        path_like=True,
+    ),
+    EnvVarSpec(
+        name='TSC_EXE',
+        required=False,
+        purpose=(
+            'Explicit TypeScript compiler executable override for reproducible '
+            'repo-scoped toolchains provisioned by PORTAL-CXTP-089.'
+        ),
         path_like=True,
     ),
     EnvVarSpec(
@@ -350,6 +364,7 @@ def _resolve_executable(
     spec: DependencySpec,
     environ: Mapping[str, str],
     which: Which | None = None,
+    repo_root: Path | None = None,
 ) -> tuple[str | None, str | None, list[str]]:
     which_fn = shutil.which if which is None else which
     searched: list[str] = []
@@ -364,6 +379,13 @@ def _resolve_executable(
 
     if spec.name == 'python':
         return sys.executable, None, [sys.executable]
+
+    if repo_root is not None:
+        for repo_relative_path in spec.repo_relative_paths:
+            candidate_path = repo_root / repo_relative_path
+            searched.append(candidate_path.as_posix())
+            if candidate_path.is_file():
+                return candidate_path.as_posix(), 'repo_relative_path', searched
 
     for candidate in spec.candidates:
         searched.append(candidate)
@@ -395,10 +417,11 @@ def probe_dependency(
     runner: CommandRunner | None = None,
     which: Which | None = None,
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    repo_root: Path | None = None,
 ) -> dict[str, Any]:
     env = os.environ if environ is None else environ
     runner_fn = _default_runner if runner is None else runner
-    executable, resolved_by, searched = _resolve_executable(spec, env, which)
+    executable, resolved_by, searched = _resolve_executable(spec, env, which, repo_root)
     command = [executable, *spec.version_args] if executable else None
     command_result = runner_fn(command, timeout_seconds) if command else None
     raw_version = _first_line(
@@ -441,6 +464,7 @@ def probe_dependencies(
     runner: CommandRunner | None = None,
     which: Which | None = None,
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    repo_root: Path | None = None,
 ) -> list[dict[str, Any]]:
     return [
         probe_dependency(
@@ -449,6 +473,7 @@ def probe_dependencies(
             runner=runner,
             which=which,
             timeout_seconds=timeout_seconds,
+            repo_root=repo_root,
         )
         for spec in DEPENDENCIES
     ]
@@ -583,7 +608,7 @@ def build_probe(
 ) -> dict[str, Any]:
     root = Path(repo_root) if repo_root is not None else _repo_root()
     env = os.environ if environ is None else environ
-    dependencies = probe_dependencies(env, runner, which, timeout_seconds)
+    dependencies = probe_dependencies(env, runner, which, timeout_seconds, repo_root=root)
     env_vars = probe_env_vars(env)
     blockers = _blocking_evidence(dependencies, env_vars)
     capability_gaps = _capability_gaps(dependencies)

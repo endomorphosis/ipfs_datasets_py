@@ -1,15 +1,5 @@
 {
-  "blocking_evidence": [
-    {
-      "capability": "Type-check emitted security proof schemas consumed by downstream clients.",
-      "category": "runtime",
-      "code": "REQUIRED_DEPENDENCY_MISSING",
-      "component": "typescript",
-      "display_name": "TypeScript compiler",
-      "remediation": "Install TypeScript compiler and ensure it is available on PATH.",
-      "status": "missing"
-    }
-  ],
+  "blocking_evidence": [],
   "cpu": {
     "architecture": [
       "64bit",
@@ -121,23 +111,33 @@
       "version_raw": "11.16.0"
     },
     {
-      "blocking": true,
+      "blocking": false,
       "capability": "Type-check emitted security proof schemas consumed by downstream clients.",
       "capability_gap": false,
       "category": "runtime",
-      "command": null,
+      "command": [
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "Version 5.6.3",
+        "timed_out": false
+      },
       "display_name": "TypeScript compiler",
-      "executable": null,
+      "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
       "minimum_version": null,
       "name": "typescript",
       "required": true,
-      "resolved_by_env_var": null,
+      "resolved_by_env_var": "TSC_EXE",
       "searched_names": [
-        "tsc"
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc"
       ],
-      "status": "missing",
-      "version": null,
-      "version_raw": null
+      "status": "present",
+      "version": "5.6.3",
+      "version_raw": "Version 5.6.3"
     },
     {
       "blocking": false,
@@ -306,14 +306,14 @@
   ],
   "environment_variables": [
     {
-      "entry_count": 31,
-      "length": 885,
+      "entry_count": 32,
+      "length": 1067,
       "name": "PATH",
       "present": true,
       "purpose": "Executable discovery path for Python, Node, SMT solvers, and proof assistants.",
       "required": true,
       "status": "present",
-      "value_sha256": "d5eb083e466985f27d882a00f9455dfc9bf4cedc74b151d39527c1f7ce4b9a9e"
+      "value_sha256": "331d2cb8ea154ba8173e733827a3ce5ab199b42ca2d6cfc3f2319207d9184e3d"
     },
     {
       "entry_count": 1,
@@ -345,6 +345,16 @@
       "purpose": "Explicit CVC5 executable override for differential SMT runners.",
       "required": false,
       "status": "missing"
+    },
+    {
+      "entry_count": 1,
+      "length": 185,
+      "name": "TSC_EXE",
+      "present": true,
+      "purpose": "Explicit TypeScript compiler executable override for reproducible repo-scoped toolchains provisioned by PORTAL-CXTP-089.",
+      "required": false,
+      "status": "present",
+      "value_sha256": "2e890dc2f97dffc757c4fee17e717df8b4ec69b3996669097ed6d5513fe59e7c"
     },
     {
       "name": "APALACHE_EXE",
@@ -396,7 +406,7 @@
       "status": "missing"
     }
   ],
-  "generated_at_utc": "2026-07-08T18:19:30Z",
+  "generated_at_utc": "2026-07-08T20:11:22Z",
   "optional_capability_gaps": [
     {
       "capability": "Optional TLA+ workflow and interleaving model-checking coverage.",
@@ -457,19 +467,19 @@
     "system": "Linux",
     "version": "#35~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Tue May 26 19:30:42 UTC 2"
   },
-  "overall_status": "blocked",
+  "overall_status": "ready",
   "policy_document": "docs/security_verification/solver_dependency_bootstrap.md",
   "probe_script": "scripts/ops/security_verification/probe_theorem_prover_environment.py",
-  "proof_acceptance_blocked": true,
+  "proof_acceptance_blocked": false,
   "repo_root": "ipfs_datasets",
   "schema_version": "crypto-exchange-solver-dependency-probe/v1",
-  "security_decision": "BLOCK_PROOF_ACCEPTANCE_MISSING_SOLVER_DEPENDENCY",
+  "security_decision": "SOLVER_DEPENDENCY_ENVIRONMENT_READY_WITH_CAPABILITY_GAPS",
   "summary": {
-    "blocking_evidence_count": 1,
+    "blocking_evidence_count": 0,
     "dependency_count": 11,
-    "env_var_count": 12,
+    "env_var_count": 13,
     "optional_capability_gap_count": 5,
-    "present_required_dependency_count": 5,
+    "present_required_dependency_count": 6,
     "required_dependency_count": 6,
     "required_env_var_count": 2
   },

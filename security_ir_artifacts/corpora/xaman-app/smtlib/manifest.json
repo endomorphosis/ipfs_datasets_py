@@ -1,0 +1,267 @@
+{
+  "artifact_count": 9,
+  "artifacts": [
+    {
+      "artifact_cid": "bafkreihgi44rnjhtiz4thkv5lrglkmca7t5uxj5yghqjpbvlqq4dlrde7i",
+      "assertion_count": 4,
+      "blocking_assumption_count": 3,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:native-vault-cryptographic-confidentiality",
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
+      "claim_version": "1.0",
+      "domain": "vault",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_custody-software-private-key-not-available-without-authorized-vault-path.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "blocking",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "blocking",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "custody"
+    },
+    {
+      "artifact_cid": "bafkreia26q3wbd5k77a4oxmagrhz6frosuieaaygdvzzdvwrxgatwzrz6a",
+      "assertion_count": 4,
+      "blocking_assumption_count": 3,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:passcode-kdf-and-secret-protection",
+        "xaman-security:assumption:biometric-native-binding",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:authentication-gates-vault-and-signing",
+      "claim_version": "1.0",
+      "domain": "auth_component",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_authentication-gates-vault-and-signing.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "blocking",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "blocking",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "authentication"
+    },
+    {
+      "artifact_cid": "bafkreigupsxfaoevz42pfmjxy4xu2kue6bnz3v57o7j74z7kgpciuyxk4q",
+      "assertion_count": 4,
+      "blocking_assumption_count": 3,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:payload-integrity-before-review-and-signing",
+      "claim_version": "1.0",
+      "domain": "payload",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_payload-integrity-before-review-and-signing.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "high",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "high",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "payload_integrity"
+    },
+    {
+      "artifact_cid": "bafkreiaou2uqfvk6helxz4sr4rwq4iw7up4c4culyfz4h7pzkk4agv36zu",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:payload-replay-prevention-is-single-use",
+      "claim_version": "1.0",
+      "domain": "payload",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_payload-replay-prevention-is-single-use.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "blocking",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "blocking",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "replay_prevention"
+    },
+    {
+      "artifact_cid": "bafkreieshwdnmbabdq767sk7mdfo3m7yrwlsxwklmlkfjo6nvxwjdxiqn4",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:network-binding-prevents-cross-network-signing",
+      "claim_version": "1.0",
+      "domain": "ledger",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_network-binding-prevents-cross-network-signing.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "high",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "high",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "network_binding"
+    },
+    {
+      "artifact_cid": "bafkreig4jsgvl6kcmkr27uhqefw6hcrbt2tulvkquhkhu4pprv4zbs4ae4",
+      "assertion_count": 6,
+      "blocking_assumption_count": 5,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:trustset-and-signerlist-client-validation",
+        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
+        "xaman-security:assumption:external-multisign-coordination",
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent",
+      "claim_version": "1.0",
+      "domain": "ledger",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_xrpl-transaction-semantics-match-reviewed-signing-intent.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "high",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "high",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "transaction_semantics"
+    },
+    {
+      "artifact_cid": "bafkreiczenuu7joxxn76xuzqa7or5lwyj3lxx6hv7lljl6xfeb63tq6ira",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
+      "claim_version": "1.0",
+      "domain": "service",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_backend-trust-boundary-is-safe-for-payload-resolution.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "blocking",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "blocking",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "backend_trust"
+    },
+    {
+      "artifact_cid": "bafkreiadwuymzzwnxmbb2x3ym2cfjfxmwstvrmj5ra7sqsl4s6bhyjvdxu",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:deployed-runtime-equivalence",
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime",
+      "claim_version": "1.0",
+      "domain": "e2e_flow",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_reviewed-source-is-equivalent-to-deployed-runtime.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "blocking",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "blocking",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "runtime_equivalence"
+    },
+    {
+      "artifact_cid": "bafkreid4rtbgozxfekqj7f2dshy2fwoxicvlcznsbzyfeapo27vh33rn2q",
+      "assertion_count": 2,
+      "blocking_assumption_count": 1,
+      "blocking_assumption_ids": [
+        "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
+      ],
+      "claim_id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
+      "claim_version": "1.0",
+      "domain": "service",
+      "logic": "QF_LIA",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "model_id": "xaman-app-security-model-ir-baseline",
+      "model_schema_version": "security-model-ir/v1",
+      "modeled": true,
+      "not_modeled_reason": null,
+      "path": "xaman-security_claim_proof-consumers-fail-closed-for-xaman-security-claims.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "risk": "blocking",
+      "schema_version": "crypto-exchange-smtlib/v1",
+      "severity": "blocking",
+      "supported_theories": [
+        "QF_LIA"
+      ],
+      "xaman_category": "proof_consumer_policy"
+    }
+  ],
+  "claim_scope": {
+    "selection": "blocking-and-high-xaman-claims",
+    "severities": [
+      "blocking",
+      "high"
+    ]
+  },
+  "logic": "QF_LIA",
+  "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+  "model_id": "xaman-app-security-model-ir-baseline",
+  "model_schema_version": "security-model-ir/v1",
+  "query_kind": "xaman_blocking_acceptance_satisfiability",
+  "schema_version": "crypto-exchange-smtlib/v1",
+  "task_id": "PORTAL-CXTP-069"
+}

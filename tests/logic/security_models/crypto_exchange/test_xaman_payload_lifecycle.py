@@ -89,7 +89,7 @@ def test_xaman_payload_lifecycle_schema_and_source_pin() -> None:
     coverage = _load_json(COVERAGE_PATH)
 
     assert facts['schema_version'] == 'xaman-payload-lifecycle-facts/v1'
-    assert facts['task_id'] == 'PORTAL-CXTP-042'
+    assert facts['task_id'] == 'PORTAL-CXTP-065'
     assert facts['corpus'] == 'xaman-app'
     assert facts['source']['repo_url'] == manifest['source']['repo_url']
     assert facts['source']['commit_sha'] == manifest['source']['commit_sha']
@@ -266,7 +266,7 @@ def test_xaman_payload_lifecycle_document_covers_artifact_and_gaps() -> None:
     doc = DOC_PATH.read_text(encoding='utf-8')
     facts = _load_json(FACTS_PATH)
 
-    assert 'PORTAL-CXTP-042' in doc
+    assert 'PORTAL-CXTP-065' in doc
     assert 'security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json' in doc
     assert facts['source']['commit_sha'] in doc
     assert 'NOT_MODELED' in doc

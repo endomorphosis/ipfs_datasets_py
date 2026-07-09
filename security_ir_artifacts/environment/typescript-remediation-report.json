@@ -1,0 +1,102 @@
+{
+  "generated_at_utc": "2026-07-08T20:11:22Z",
+  "input_probe_found": true,
+  "input_probe_path": "security_ir_artifacts/environment/solver-dependency-probe.json",
+  "overall_status": "remediated",
+  "policy_document": "docs/security_verification/typescript_solver_dependency_remediation.md",
+  "proof_acceptance_blocked": false,
+  "refreshed_probe": {
+    "blocking_evidence_count": 0,
+    "optional_capability_gap_count": 5,
+    "overall_status": "ready",
+    "path": "security_ir_artifacts/environment/solver-dependency-probe.json",
+    "proof_acceptance_blocked": false,
+    "written": true
+  },
+  "remediation_actions": [
+    {
+      "action": "check_existing_tsc",
+      "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+      "resolved_by": "toolchain_dir",
+      "searched": [
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc"
+      ],
+      "status": "already_present"
+    },
+    {
+      "action": "verify_tsc_version",
+      "command": [
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+        "--version"
+      ],
+      "error": null,
+      "exit_code": 0,
+      "status": "ok",
+      "timed_out": false,
+      "version": "5.6.3",
+      "version_raw": "Version 5.6.3"
+    }
+  ],
+  "remediation_status": "skipped_already_present",
+  "remediation_strategy": "repo_scoped_npm_install",
+  "repo_root": "ipfs_datasets",
+  "reproduction_instructions": [
+    "mkdir -p security_ir_artifacts/environment/typescript_toolchain",
+    "cat > security_ir_artifacts/environment/typescript_toolchain/package.json <<'JSON'\n{\n  \"description\": \"Repo-scoped TypeScript compiler toolchain provisioned for PORTAL-CXTP-089 so crypto_exchange proof-consumer schemas can be type-checked without a machine-wide TypeScript install.\",\n  \"devDependencies\": {\n    \"typescript\": \"5.6.3\"\n  },\n  \"name\": \"crypto-exchange-typescript-toolchain\",\n  \"private\": true,\n  \"version\": \"1.0.0\"\n}\nJSON",
+    "npm install --no-audit --no-fund --prefix security_ir_artifacts/environment/typescript_toolchain",
+    "security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc --version",
+    "export TSC_EXE=\"$PWD/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc\"",
+    "PYTHONPATH=. python scripts/ops/security_verification/probe_theorem_prover_environment.py --out security_ir_artifacts/environment/solver-dependency-probe.json"
+  ],
+  "schema_version": "crypto-exchange-typescript-dependency-remediation/v1",
+  "security_decision": "TYPESCRIPT_DEPENDENCY_REMEDIATED",
+  "stability_task_id": "PORTAL-CXTP-088",
+  "task_id": "PORTAL-CXTP-089",
+  "toolchain": {
+    "bin_path": "security_ir_artifacts/environment/typescript_toolchain/node_modules/typescript/bin/tsc",
+    "override_env_var": "TSC_EXE",
+    "package_json_path": "security_ir_artifacts/environment/typescript_toolchain/package.json",
+    "pinned_typescript_version": "5.6.3",
+    "toolchain_dir": "security_ir_artifacts/environment/typescript_toolchain"
+  },
+  "typescript_status_after": {
+    "blocking": false,
+    "display_name": "TypeScript compiler",
+    "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+    "name": "typescript",
+    "resolved_by": "toolchain_dir",
+    "status": "present",
+    "version": "5.6.3",
+    "version_raw": "Version 5.6.3"
+  },
+  "typescript_status_before": {
+    "blocking": false,
+    "capability": "Type-check emitted security proof schemas consumed by downstream clients.",
+    "capability_gap": false,
+    "category": "runtime",
+    "command": [
+      "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+      "--version"
+    ],
+    "command_result": {
+      "error": null,
+      "exit_code": 0,
+      "stderr_first_line": null,
+      "stdout_first_line": "Version 5.6.3",
+      "timed_out": false
+    },
+    "display_name": "TypeScript compiler",
+    "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+    "minimum_version": null,
+    "name": "typescript",
+    "required": true,
+    "resolved_by_env_var": "TSC_EXE",
+    "searched_names": [
+      "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc"
+    ],
+    "status": "present",
+    "version": "5.6.3",
+    "version_raw": "Version 5.6.3"
+  },
+  "upstream_probe_task_id": "PORTAL-CXTP-058"
+}

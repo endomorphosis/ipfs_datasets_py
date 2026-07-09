@@ -1,0 +1,135 @@
+name: Crypto Exchange Security Verification
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/security_verification/**'
+      - 'ipfs_datasets_py/logic/security_models/crypto_exchange/**'
+      - 'scripts/ops/security_verification/**'
+      - 'security_ir_artifacts/**'
+      - 'tests/logic/security_models/crypto_exchange/**'
+      - '.github/workflows/crypto-exchange-security-verification.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/security_verification/**'
+      - 'ipfs_datasets_py/logic/security_models/crypto_exchange/**'
+      - 'scripts/ops/security_verification/**'
+      - 'security_ir_artifacts/**'
+      - 'tests/logic/security_models/crypto_exchange/**'
+      - '.github/workflows/crypto-exchange-security-verification.yml'
+  workflow_dispatch:
+
+jobs:
+  taskboard-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install focused test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pyyaml
+
+      - name: Install TypeScript toolchain
+        run: |
+          npm install --no-save typescript
+
+      - name: Compile taskboard preflight sources
+        run: |
+          python -m compileall \
+            scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py \
+            tests/logic/security_models/crypto_exchange/test_taskboard_preflight.py
+
+      - name: Parse crypto exchange workflow YAML
+        run: |
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+
+          payload = yaml.safe_load(
+              Path(".github/workflows/crypto-exchange-security-verification.yml").read_text(encoding="utf-8")
+          )
+          assert payload["name"] == "Crypto Exchange Security Verification"
+          print("yaml ok")
+          PY
+
+      - name: Run supervisor recovery verify-only preflight
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python scripts/ops/security_verification/restore_crypto_exchange_security_tree.py \
+            --verify-only \
+            --report security_ir_artifacts/recovery/supervisor-stability-report.json
+
+      - name: Run taskboard integrity preflight
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py \
+            --out taskboard-preflight-report.json
+
+      - name: Summarize taskboard preflight
+        if: always()
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          from scripts.ops.security_verification.preflight_crypto_exchange_taskboard import (
+              build_github_summary_lines,
+          )
+
+          report_path = Path("taskboard-preflight-report.json")
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          if not report_path.is_file():
+              summary_path.write_text(
+                  "## Crypto Exchange Taskboard Preflight\n\n- status: `missing-report`\n",
+                  encoding="utf-8",
+              )
+              raise SystemExit("taskboard preflight report was not emitted")
+
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          summary_path.write_text("\n".join(build_github_summary_lines(report)) + "\n", encoding="utf-8")
+          print(summary_path.read_text(encoding="utf-8"), end="")
+          PY
+
+      - name: Run taskboard preflight tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          pytest tests/logic/security_models/crypto_exchange/test_taskboard_preflight.py -q
+
+      - name: Upload taskboard preflight report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crypto-exchange-taskboard-preflight
+          path: |
+            taskboard-preflight-report.json
+            security_ir_artifacts/recovery/supervisor-stability-report.json
+          if-no-files-found: ignore
