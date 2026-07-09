@@ -4048,6 +4048,21 @@ COMPILER_REFINED_PACKET_003200_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_007187_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.ALETHIC.value,
@@ -4225,6 +4240,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS: Tuple[Tuple[str, str], ...] = (
     *COMPILER_REFINED_PACKET_003357_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_004558_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_003200_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_007187_FAMILY_PAIRS,
 )
 
 COMPILER_AMBIGUITY_PACKET_000669_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
@@ -14049,6 +14065,19 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
     **COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.DEONTIC.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                ModalLogicFamily.DEONTIC.value,
+            ),
+            0.0,
+        ),
+        0.16,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ): max(
         COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
@@ -14654,6 +14683,7 @@ __all__ = [
     "COMPILER_REFINED_PACKET_004762_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_004558_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000138_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_007187_FAMILY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",
     "COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",
