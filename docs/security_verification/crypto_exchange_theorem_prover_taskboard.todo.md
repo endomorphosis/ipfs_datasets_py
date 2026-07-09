@@ -414,3 +414,82 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 - Outputs: .github/workflows/crypto-exchange-security-verification.yml, scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py, docs/security_verification/taskboard_preflight_ci.md, tests/logic/security_models/crypto_exchange/test_taskboard_preflight.py
 - Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_taskboard_preflight.py -q
 - Acceptance: Make CI and supervisor preflight fail when the taskboard has no parseable tasks, source files disappear, required artifacts are absent, statuses contradict evidence, or production blockers are accidentally treated as release-acceptable.
+
+## PORTAL-CXTP-090 Remediate Lean optional proof-consumer solver lane
+
+- Status: completed
+- Completion: manual
+- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_lean_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_lean_solver_lane.py --out security_ir_artifacts/environment/lean-solver-lane-report.json
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-058, PORTAL-CXTP-086, PORTAL-CXTP-096
+- Outputs: docs/security_verification/lean_proof_consumer_solver_lane.md, scripts/ops/security_verification/probe_lean_solver_lane.py, security_ir_artifacts/environment/lean-solver-lane-report.json, tests/logic/security_models/crypto_exchange/test_lean_solver_lane.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_lean_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_lean_solver_lane.py --out security_ir_artifacts/environment/lean-solver-lane-report.json
+- Acceptance: Keep Lean proof-consumer coverage explicit, record ready, degraded, or blocked lane evidence, and prevent missing Lean or Lake from being consumed as proof acceptance.
+
+## PORTAL-CXTP-091 Provision Apalache TLA model-checker lane
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-058, PORTAL-CXTP-086, PORTAL-CXTP-096
+- Outputs: docs/security_verification/apalache_tla_solver_lane.md, scripts/ops/security_verification/probe_apalache_solver_lane.py, security_ir_artifacts/environment/apalache-solver-lane-report.json, tests/logic/security_models/crypto_exchange/test_apalache_solver_lane.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_apalache_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_apalache_solver_lane.py --out security_ir_artifacts/environment/apalache-solver-lane-report.json
+- Acceptance: Install or probe Apalache in a reviewed, reproducible way, emit a lane report, and keep TLA workflow claims blocked or degraded when Apalache is unavailable.
+
+## PORTAL-CXTP-092 Provision Tamarin and ProVerif protocol solver lanes
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-058, PORTAL-CXTP-086, PORTAL-CXTP-096
+- Outputs: docs/security_verification/protocol_solver_lanes.md, scripts/ops/security_verification/probe_protocol_solver_lanes.py, security_ir_artifacts/environment/protocol-solver-lane-report.json, tests/logic/security_models/crypto_exchange/test_protocol_solver_lanes.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_protocol_solver_lanes.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_protocol_solver_lanes.py --out security_ir_artifacts/environment/protocol-solver-lane-report.json
+- Acceptance: Install or probe Tamarin and ProVerif in reviewed lanes, emit protocol solver evidence, and keep protocol claims blocked or degraded when either solver is unavailable.
+
+## PORTAL-CXTP-093 Provision Coq proof-kernel solver lane
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-058, PORTAL-CXTP-086, PORTAL-CXTP-096
+- Outputs: docs/security_verification/coq_proof_kernel_solver_lane.md, scripts/ops/security_verification/probe_coq_solver_lane.py, security_ir_artifacts/environment/coq-solver-lane-report.json, tests/logic/security_models/crypto_exchange/test_coq_solver_lane.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_coq_solver_lane.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_coq_solver_lane.py --out security_ir_artifacts/environment/coq-solver-lane-report.json
+- Acceptance: Install or probe Coq in a reviewed proof-kernel lane, emit versioned evidence, and keep Coq-backed proof-consumer claims blocked or degraded when Coq is unavailable.
+
+## PORTAL-CXTP-094 Generate production evidence packets for each remaining blocker
+
+- Status: todo
+- Completion: manual
+- Priority: P0
+- Track: ops
+- Depends on: PORTAL-CXTP-077, PORTAL-CXTP-078, PORTAL-CXTP-085, PORTAL-CXTP-096
+- Outputs: docs/security_verification/production_blocker_evidence_packets.md, scripts/ops/security_verification/generate_production_blocker_packets.py, security_ir_artifacts/production/blocker-packets.json, tests/logic/security_models/crypto_exchange/test_production_blocker_packets.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_production_blocker_packets.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_production_blocker_packets.py --out security_ir_artifacts/production/blocker-packets.json
+- Acceptance: Generate one explicit evidence packet per remaining production blocker, preserving owner, freshness, source, environment, runtime, and solver requirements without marking production secure.
+
+## PORTAL-CXTP-095 Build guarded production blocker status updater
+
+- Status: todo
+- Completion: manual
+- Priority: P0
+- Track: ops
+- Depends on: PORTAL-CXTP-085, PORTAL-CXTP-094, PORTAL-CXTP-096
+- Outputs: docs/security_verification/production_blocker_status_updater.md, scripts/ops/security_verification/update_production_blocker_status.py, security_ir_artifacts/production/blocker-status-update-report.json, tests/logic/security_models/crypto_exchange/test_production_blocker_status_updater.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_production_blocker_status_updater.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/update_production_blocker_status.py --dry-run --packets security_ir_artifacts/production/blocker-packets.json --out security_ir_artifacts/production/blocker-status-update-report.json
+- Acceptance: Update production blocker status only from validated evidence packets, reject stale or incomplete inputs, and preserve fail-closed release blocking when production evidence is absent.
+
+## PORTAL-CXTP-096 Protect appended solver and production unblocker tasks
+
+- Status: completed
+- Completion: manual
+- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_appended_cxtp_task_retention.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/check_appended_cxtp_tasks.py --taskboard docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md --out security_ir_artifacts/recovery/appended-task-retention-report.json
+- Priority: P0
+- Track: quality
+- Depends on: PORTAL-CXTP-057, PORTAL-CXTP-087, PORTAL-CXTP-088
+- Outputs: docs/security_verification/appended_task_retention_runbook.md, scripts/ops/security_verification/check_appended_cxtp_tasks.py, security_ir_artifacts/recovery/appended-task-retention-report.json, tests/logic/security_models/crypto_exchange/test_appended_cxtp_task_retention.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_appended_cxtp_task_retention.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/check_appended_cxtp_tasks.py --taskboard docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md --out security_ir_artifacts/recovery/appended-task-retention-report.json
+- Acceptance: Fail closed when appended tasks PORTAL-CXTP-090 through PORTAL-CXTP-095 disappear, lose required metadata, or are marked complete without evidence, and keep downstream solver or production unblocker tasks blocked until the report passes.

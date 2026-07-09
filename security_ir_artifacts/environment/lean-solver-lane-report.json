@@ -1,0 +1,256 @@
+{
+  "acceptance_policy": {
+    "missing_lake_effect": "degraded lane; standalone Lean kernel may compile, but project-level Lake coverage is not claimable",
+    "missing_lean_effect": "degraded optional proof-consumer lane on supported hosts; emit missing-solver for Lean-backed receipt claims",
+    "release_claim_rule": "Do not claim Lean proof-consumer coverage unless proof_lane.status is ready and proof_kernel_check.status is checked.",
+    "silent_success_allowed": false,
+    "unusable_lean_effect": "blocked proof-consumer lane until lean --version and kernel compile checks succeed"
+  },
+  "blockers": [
+    {
+      "code": "LEAN_EXECUTABLE_UNUSABLE",
+      "component": "lean",
+      "remediation": "Fix the Lean executable, active toolchain, Lake executable, or proof-kernel compile error before claiming Lean proof-consumer coverage.",
+      "status": "blocked"
+    },
+    {
+      "code": "LAKE_EXECUTABLE_UNUSABLE",
+      "component": "lake",
+      "remediation": "Fix the Lean executable, active toolchain, Lake executable, or proof-kernel compile error before claiming Lean proof-consumer coverage.",
+      "status": "blocked"
+    }
+  ],
+  "commands_executed_by_default": "Lean/Lake/elan version probes and Lean proof-kernel compile check only",
+  "default_mode": "probe-only",
+  "degraded_reasons": [],
+  "generated_at_utc": "2026-07-09T15:25:08Z",
+  "installation_guidance": {
+    "commands": [
+      {
+        "command": "curl -fsSLo /tmp/elan-init.sh https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh && sh /tmp/elan-init.sh -y --default-toolchain leanprover/lean4:v4.31.0",
+        "destructive": false,
+        "purpose": "Install Lean through elan with the lane-pinned Lean 4 toolchain after reviewing the fetched installer script.",
+        "requires_network": true,
+        "requires_privilege": false,
+        "review_required": true,
+        "step": "install-elan-reviewed-script"
+      },
+      {
+        "command": "printf \"%s\\n\" \"leanprover/lean4:v4.31.0\" > lean-toolchain",
+        "destructive": false,
+        "purpose": "Pin the Lean toolchain used for reproducible proof-kernel checks.",
+        "requires_network": false,
+        "requires_privilege": false,
+        "review_required": true,
+        "step": "pin-project-toolchain"
+      },
+      {
+        "command": "export PATH=\"$HOME/.elan/bin:$PATH\"",
+        "destructive": false,
+        "purpose": "Expose elan-managed lean, lake, and elan executables to the current shell.",
+        "requires_network": false,
+        "requires_privilege": false,
+        "review_required": true,
+        "step": "activate-elan-path"
+      },
+      {
+        "command": "PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_lean_solver_lane.py --out security_ir_artifacts/environment/lean-solver-lane-report.json",
+        "destructive": false,
+        "purpose": "Regenerate the Lean lane report after installation.",
+        "requires_network": false,
+        "requires_privilege": false,
+        "review_required": false,
+        "step": "verify-lean-lane"
+      }
+    ],
+    "pinned_toolchain": "leanprover/lean4:v4.31.0",
+    "reproducible": true,
+    "source_url": "https://lean-lang.org/install/"
+  },
+  "optional_installer_document": "docs/security_verification/optional_solver_installation.md",
+  "overall_status": "blocked",
+  "platform": {
+    "machine": "x86_64",
+    "machine_key": "x86_64",
+    "support_level": "native",
+    "supported": true,
+    "system": "Linux",
+    "system_key": "linux",
+    "unsupported_reason": null
+  },
+  "policy_document": "docs/security_verification/lean_proof_consumer_solver_lane.md",
+  "probe_commands": [
+    {
+      "command": "lean --version",
+      "destructive": false,
+      "purpose": "Record the exact Lean executable version.",
+      "requires_network": false,
+      "requires_privilege": false,
+      "review_required": false,
+      "step": "probe-lean-version"
+    },
+    {
+      "command": "lake --version",
+      "destructive": false,
+      "purpose": "Record the exact Lake executable version when available.",
+      "requires_network": false,
+      "requires_privilege": false,
+      "review_required": false,
+      "step": "probe-lake-version"
+    },
+    {
+      "command": "elan --version",
+      "destructive": false,
+      "purpose": "Record the elan toolchain manager version when available.",
+      "requires_network": false,
+      "requires_privilege": false,
+      "review_required": false,
+      "step": "probe-elan-version"
+    },
+    {
+      "command": "lean --print-prefix",
+      "destructive": false,
+      "purpose": "Record the active Lean toolchain prefix path.",
+      "requires_network": false,
+      "requires_privilege": false,
+      "review_required": false,
+      "step": "probe-lean-prefix"
+    },
+    {
+      "command": "lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+      "destructive": false,
+      "purpose": "Compile-check the proof-consumer Lean kernel.",
+      "requires_network": false,
+      "requires_privilege": false,
+      "review_required": false,
+      "step": "check-proof-kernel"
+    }
+  ],
+  "proof_consumer_claims": {
+    "claim_id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
+    "claim_status": "blocked",
+    "missing_lean_receipt_outcome": "missing-solver",
+    "proof_consumer_report": {
+      "proof_consumer_report_exists": false,
+      "proof_consumer_report_path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
+      "proof_consumer_report_sha256": null
+    },
+    "receipt_acceptance": "blocked-or-degraded-no-lean-receipt",
+    "silent_acceptance_allowed": false,
+    "xaman_rejected_fixture_outcome": "MISSING_SOLVER"
+  },
+  "proof_consumer_document": "docs/security_verification/xaman_proof_consumer_invariants.md",
+  "proof_kernel_check": {
+    "command": null,
+    "exists": false,
+    "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+    "path_absolute": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+    "reason": "Lean executable is not available.",
+    "sha256": null,
+    "status": "missing-lean"
+  },
+  "proof_lane": {
+    "lane_id": "lean_proof_consumer_invariants",
+    "missing_solver_outcome": "missing-solver",
+    "name": "Lean proof-consumer invariant checks",
+    "operator_action": "Fix the Lean executable, active toolchain, Lake executable, or proof-kernel compile error before claiming Lean proof-consumer coverage.",
+    "release_effect": "blocked-proof-lane",
+    "required_for_global_release": false,
+    "security_decision": "BLOCK_OPTIONAL_SOLVER_LANE",
+    "status": "blocked"
+  },
+  "repo_root": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets",
+  "schema_version": "crypto-exchange-lean-solver-lane-report/v1",
+  "security_decision": "BLOCK_OPTIONAL_SOLVER_LANE",
+  "summary": {
+    "blocked_lane_count": 1,
+    "degraded_lane_count": 0,
+    "elan_present": true,
+    "lake_present": false,
+    "lean_present": false,
+    "proof_kernel_checked": false,
+    "ready_lane_count": 0,
+    "silent_success_allowed": false
+  },
+  "task_id": "PORTAL-CXTP-090",
+  "toolchain_paths": {
+    "elan_toolchains_root": "/home/barberb/.elan/toolchains",
+    "lake_executable": "/home/barberb/.elan/bin/lake",
+    "lean_libdir": null,
+    "lean_prefix": null
+  },
+  "tools": {
+    "elan": {
+      "command": [
+        "/home/barberb/.elan/bin/elan",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "elan 4.1.2 (58e8d545e 2025-05-26)",
+        "timed_out": false
+      },
+      "display_name": "elan",
+      "executable": "/home/barberb/.elan/bin/elan",
+      "name": "elan",
+      "required_for_lane": false,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "elan"
+      ],
+      "status": "present",
+      "version": "4.1.2",
+      "version_raw": "elan 4.1.2 (58e8d545e 2025-05-26)"
+    },
+    "lake": {
+      "command": [
+        "/home/barberb/.elan/bin/lake",
+        "--version"
+      ],
+      "command_result": {
+        "error": "timeout",
+        "exit_code": null,
+        "stderr_first_line": "info: Version 4.2.3 of elan is available! Use `elan self update` to update.",
+        "stdout_first_line": null,
+        "timed_out": true
+      },
+      "display_name": "Lake",
+      "executable": "/home/barberb/.elan/bin/lake",
+      "name": "lake",
+      "required_for_lane": false,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "lake"
+      ],
+      "status": "error",
+      "version": null,
+      "version_raw": "info: Version 4.2.3 of elan is available! Use `elan self update` to update."
+    },
+    "lean": {
+      "command": [
+        "/home/barberb/.elan/bin/lean",
+        "--version"
+      ],
+      "command_result": {
+        "error": "timeout",
+        "exit_code": null,
+        "stderr_first_line": "info: Version 4.2.3 of elan is available! Use `elan self update` to update.",
+        "stdout_first_line": null,
+        "timed_out": true
+      },
+      "display_name": "Lean",
+      "executable": "/home/barberb/.elan/bin/lean",
+      "name": "lean",
+      "required_for_lane": true,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "lean"
+      ],
+      "status": "error",
+      "version": null,
+      "version_raw": "info: Version 4.2.3 of elan is available! Use `elan self update` to update."
+    }
+  }
+}

@@ -154,7 +154,7 @@ def test_live_taskboard_parser_finds_portal_cxtp_087() -> None:
 
     assert 'PORTAL-CXTP-087' in by_id
     task = by_id['PORTAL-CXTP-087']
-    assert task.status == 'todo'
+    assert task.status == 'completed'
     assert task.metadata['track'] == 'quality'
     assert 'scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py' in task.outputs
 
