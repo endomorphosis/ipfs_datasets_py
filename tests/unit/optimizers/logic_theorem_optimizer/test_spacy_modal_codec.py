@@ -51,6 +51,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_003166_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005666_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_006897_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_006902_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002296_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS,
@@ -240,6 +241,44 @@ def test_packet_007144_registry_refines_modal_family_cue_policy() -> None:
                 target_family,
             )
             >= margin_floors[(predicted_family, target_family)]
+        )
+
+
+def test_packet_006902_registry_exposes_modal_ambiguity_policy() -> None:
+    expected_pairs = {
+        ("conditional_normative", "deontic"),
+        ("frame", "conditional_normative"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_006902_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_006902_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
         )
 
 
