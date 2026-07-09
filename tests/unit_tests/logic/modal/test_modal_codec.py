@@ -45871,6 +45871,114 @@ def test_decompiler_reconstructs_packet_002071_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_003768_residual_uscode_surfaces() -> None:
+    cases = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "12 U.S.C. 1749bbb-10a: National Insurance Development "
+                    "Program. Part C - Federal Insurance Against Burglary and "
+                    "Theft. The Secretary may provide crime insurance subject "
+                    "to this part."
+                ),
+                predicate="federal_burglary_insurance_program",
+            ),
+            {
+                "insurance_development_program",
+                "federal_burglary_insurance",
+                "burglary_theft_insurance",
+                "crime_insurance",
+            },
+            {"frame->conditional_normative", "frame->frame", "frame->deontic"},
+            "federal burglary insurance",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "16 U.S.C. 450ss-1: National and International Monuments "
+                    "and Memorials. The National Park Service shall administer "
+                    "the monument and memorial under this section."
+                ),
+                predicate="monument_memorial_administration",
+            ),
+            {
+                "monument_memorial_administration",
+                "national_park_resource",
+                "national_park_service_administration",
+            },
+            {"frame->conditional_normative", "frame->frame", "frame->deontic"},
+            "monument memorial administration",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "42 U.S.C. 8522. Energy Emergency Preparedness. The "
+                    "Secretary shall coordinate energy supply and environmental "
+                    "coordination activities under this chapter."
+                ),
+                predicate="energy_emergency_preparedness",
+            ),
+            {
+                "energy_emergency_preparedness",
+                "energy_supply_environmental_coordination",
+            },
+            {"deontic->conditional_normative", "deontic->deontic"},
+            "energy emergency preparedness",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "25 U.S.C. 2434. Indian energy resource development. A "
+                    "tribe may enter into a tribal energy resource agreement "
+                    "subject to approval."
+                ),
+                predicate="tribal_energy_resource_agreement",
+            ),
+            {
+                "indian_energy_resource_development",
+                "tribal_energy_resource_agreement",
+            },
+            {"frame->conditional_normative", "frame->frame", "frame->deontic"},
+            "tribal energy resource agreement",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_fragment in cases:
+        document.formulas[0].metadata[
+            "fallback_rule"
+        ] = "uscode_residual_span_fallback"
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert {"CEC.native", "knowledge_graphs.neo4j_compat"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert expected_fragment in structural_text
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

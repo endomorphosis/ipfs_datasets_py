@@ -1079,16 +1079,43 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("non federal cost sharing", "non_federal_cost_share"),
     ("amendments", "statutory_amendment"),
     ("amendment", "statutory_amendment"),
+    ("national insurance development program", "insurance_development_program"),
+    ("federal insurance against burglary", "federal_burglary_insurance"),
+    ("burglary and theft insurance", "burglary_theft_insurance"),
+    ("crime insurance", "crime_insurance"),
+    (
+        "national and international monuments and memorials",
+        "monument_memorial_administration",
+    ),
+    ("national monuments and memorials", "monument_memorial_administration"),
+    ("international monuments and memorials", "monument_memorial_administration"),
+    ("national park service", "national_park_service_administration"),
+    ("energy emergency preparedness", "energy_emergency_preparedness"),
+    (
+        "energy supply and environmental coordination",
+        "energy_supply_environmental_coordination",
+    ),
+    ("indian energy resource development", "indian_energy_resource_development"),
+    ("tribal energy resource agreement", "tribal_energy_resource_agreement"),
 )
 _PROGRAM_RECONSTRUCTION_ATOMS = frozenset(
     {
         "advanced_automotive_technology_conference",
+        "crime_insurance",
+        "energy_emergency_preparedness",
+        "energy_supply_environmental_coordination",
+        "federal_burglary_insurance",
         "higher_education_student_assistance",
+        "indian_energy_resource_development",
+        "insurance_development_program",
         "international_education_program",
+        "monument_memorial_administration",
+        "national_park_service_administration",
         "program_activity_implementation",
         "public_technology_conference",
         "sustainable_chemistry_activity_support",
         "technology_innovation_program",
+        "tribal_energy_resource_agreement",
     }
 )
 _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS = frozenset(
@@ -15708,8 +15735,11 @@ def _typed_decompiler_bridge_target_families(
             add(bridge_family)
     for bridge_family in _doxastic_bridge_families_from_text(text):
         add(bridge_family)
-    if family == "frame" and _uscode_residual_fallback_decompiler_cues(formula):
+    if family in {"deontic", "frame"} and _uscode_residual_fallback_decompiler_cues(
+        formula
+    ):
         add("conditional_normative")
+    if family == "frame" and _uscode_residual_fallback_decompiler_cues(formula):
         add("epistemic")
     return targets
 
