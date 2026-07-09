@@ -82,7 +82,7 @@ def test_xaman_wallet_auth_facts_schema_and_source_pin() -> None:
     coverage = _load_json(COVERAGE_PATH)
 
     assert facts['schema_version'] == 'xaman-wallet-auth-facts/v1'
-    assert facts['task_id'] == 'PORTAL-CXTP-041'
+    assert facts['task_id'] == 'PORTAL-CXTP-064'
     assert facts['corpus'] == 'xaman-app'
     assert facts['source']['repo_url'] == manifest['source']['repo_url']
     assert facts['source']['commit_sha'] == manifest['source']['commit_sha']
@@ -213,7 +213,7 @@ def test_xaman_wallet_auth_document_covers_artifact_and_gaps() -> None:
     doc = DOC_PATH.read_text(encoding='utf-8')
     facts = _load_json(FACTS_PATH)
 
-    assert 'PORTAL-CXTP-041' in doc
+    assert 'PORTAL-CXTP-064' in doc
     assert 'security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json' in doc
     assert facts['source']['commit_sha'] in doc
     assert 'NOT_MODELED' in doc

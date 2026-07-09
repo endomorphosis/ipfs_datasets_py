@@ -7,6 +7,7 @@ from .python_ast_extractor import PythonASTExtractor
 from .source_code_extractor import SourceCodeExtractor
 from .typescript_schema import TypeScriptSchemaEmitter
 from .ucan_policy_extractor import UCANPolicyExtractor
+from .xaman_runtime_trace_ingestor import XamanRuntimeTraceIngestor
 from .xaman_source_extractor import XamanSourceExtractor
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     'SourceCodeExtractor',
     'TypeScriptSchemaEmitter',
     'UCANPolicyExtractor',
+    'XamanRuntimeTraceIngestor',
     'XamanSourceExtractor',
 ]

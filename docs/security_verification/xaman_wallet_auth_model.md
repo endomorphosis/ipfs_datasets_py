@@ -1,6 +1,6 @@
 # Xaman Wallet Authentication Model
 
-Task: `PORTAL-CXTP-041`
+Task: `PORTAL-CXTP-064`
 
 This model records reviewed account, vault, storage, authentication, custody, and signing facts for the pinned Xaman React Native source corpus. The machine-readable artifact is `security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json`.
 

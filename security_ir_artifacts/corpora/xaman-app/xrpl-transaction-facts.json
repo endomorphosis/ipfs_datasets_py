@@ -1,0 +1,1291 @@
+{
+  "schema_version": "xaman-xrpl-transaction-facts/v1",
+  "task_id": "PORTAL-CXTP-066",
+  "corpus": "xaman-app",
+  "source": {
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
+    "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "coverage_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+    "coverage_schema_version": "xaman-source-coverage/v1"
+  },
+  "review": {
+    "review_status": "reviewed",
+    "reviewed_at": "2026-07-08",
+    "review_scope": [
+      "account",
+      "destination",
+      "amount",
+      "fee",
+      "sequence",
+      "network",
+      "memo",
+      "issued_currency",
+      "trustline",
+      "multisign",
+      "transaction_type"
+    ],
+    "model_boundary": "Source-backed React Native and TypeScript XRPL transaction semantics at the pinned Xaman-App commit. This artifact models the common and per-type transaction field shapes, amount/issued-currency/trustline handling, network and fee/sequence signing preconditions, multisign branching, and transaction-type dispatch needed for XRPL signing safety claims. Authoritative rippled rule enforcement, external multisign signature collection, and deployed runtime equivalence are outside this artifact unless explicitly modeled."
+  },
+  "source_inputs": [
+    {
+      "path": "src/common/libs/ledger/transactions/common.ts",
+      "sha256": "c12cbb86b12c144312111e5f24b86d491eb34bf9cd6776f86d849051015f76f2",
+      "size_bytes": 4097,
+      "categories": [
+        "account",
+        "fee",
+        "sequence",
+        "network",
+        "memo",
+        "multisign",
+        "transaction_type"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/base.ts",
+      "sha256": "09aa36e25a031c17c109e528bcdfe93bf66591bfc41732dd271ac5db828e1e88",
+      "size_bytes": 2409,
+      "categories": [
+        "transaction_type"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.class.ts",
+      "sha256": "0f72817b039a682a5b9d61f14c056f905634eb52d50d12275463603a6b7a8ceb",
+      "size_bytes": 3056,
+      "categories": [
+        "destination",
+        "amount"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+      "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5",
+      "size_bytes": 7568,
+      "categories": [
+        "amount",
+        "trustline",
+        "issued_currency"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.class.ts",
+      "sha256": "76b8777ecc79019ca4200a38745b9863574acec900048fc58c21f2485c8763b9",
+      "size_bytes": 1734,
+      "categories": [
+        "trustline",
+        "issued_currency"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.validation.ts",
+      "sha256": "76bdc38f0f636475f1aa2b2ecfb1749014492209d8915b025884132e258eab6a",
+      "size_bytes": 568,
+      "categories": [
+        "trustline"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.class.ts",
+      "sha256": "f3bb21b149f905e7c73b3f0223c428ed807c69a05b11b4e626524743c9b94e88",
+      "size_bytes": 1420,
+      "categories": [
+        "multisign"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.validation.ts",
+      "sha256": "86ddb07ac40ebd179f03a4282b20f4a2c7b91aecc134bd9f659925edcc330d99",
+      "size_bytes": 593,
+      "categories": [
+        "multisign"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+      "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+      "size_bytes": 16501,
+      "categories": [
+        "account",
+        "fee",
+        "sequence",
+        "network",
+        "multisign",
+        "transaction_type"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/common/amount.ts",
+      "sha256": "e2e37ffc8aff7251346d11ac98ea28d737e2915f737df2a9cf2def6f30531233",
+      "size_bytes": 1916,
+      "categories": [
+        "amount",
+        "issued_currency"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/common/memo.ts",
+      "sha256": "2d3600dde2b488094a2657a225bba77f48c13fce7af1d09c62f48f18b1118825",
+      "size_bytes": 3031,
+      "categories": [
+        "memo"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/fields/Issue.ts",
+      "sha256": "be65a4b539747ad5adfef46b34d04a1336bd75e03f8139d5a2bb403f429c2ddb",
+      "size_bytes": 573,
+      "categories": [
+        "issued_currency"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/fields/Amount.ts",
+      "sha256": "16359e4911e15337ad876807928657f85babacce9f84ab690fb0dbeb3c5334e0",
+      "size_bytes": 1755,
+      "categories": [
+        "amount",
+        "issued_currency"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/fields/AccountID.ts",
+      "sha256": "9cc40ce4be372ff1094ef897bb548ac089ad9f31ab33882d446baea1182cf0db",
+      "size_bytes": 587,
+      "categories": [
+        "account"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/fields/UInt32.ts",
+      "sha256": "8b07505db58f52d7bc0bfd22a708e839e805736a4ff03d2f85a42746e6a2c552",
+      "size_bytes": 518,
+      "categories": [
+        "sequence",
+        "network"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/fields/TransactionType.ts",
+      "sha256": "75e7dba1ed96fa454843c8fb3c1051b658a399cf9a7832a302752f391081784f",
+      "size_bytes": 692,
+      "categories": [
+        "transaction_type"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/types.ts",
+      "sha256": "b7f4bd8f80021faa2f313a7905e8d27ad01c6d3311afdd05e5ae36748484a9bb",
+      "size_bytes": 1894,
+      "categories": [
+        "amount",
+        "issued_currency"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/factory/validation.ts",
+      "sha256": "b8a17fd95ab06f5d06ff149aa0cad1449c69827ce295c811c046f0510a7e9690",
+      "size_bytes": 2020,
+      "categories": [
+        "transaction_type"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/factory/transaction.ts",
+      "sha256": "284e514ea6855dcf867d48744232e7499793a3e93fbec38d82509a38aa45048e",
+      "size_bytes": 5199,
+      "categories": [
+        "transaction_type"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/types/methods/submitMultisigned.ts",
+      "sha256": "eb0e6f3053969d440237ad05e40b5a83a7ae0f6bdf49c9dbc16e2880b4b6aab2",
+      "size_bytes": 1619,
+      "categories": [
+        "multisign"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/payload/object.ts",
+      "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+      "size_bytes": 13295,
+      "categories": [
+        "multisign"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+      "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+      "size_bytes": 30280,
+      "categories": [
+        "account",
+        "multisign"
+      ],
+      "coverage_parse_status": "not_in_xaman_source_coverage_roots"
+    },
+    {
+      "path": "src/services/NetworkService.ts",
+      "sha256": "1a30eda14158243fcae78d4b3dacae6a97dbeee6918920c69c4e453d03ef9eda",
+      "size_bytes": 27157,
+      "categories": [
+        "network"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/services/LedgerService.ts",
+      "sha256": "e741414bf3b3a4dc28bc385249abb825c20f0e68552254fcf6f135e8dd86c74a",
+      "size_bytes": 21813,
+      "categories": [
+        "sequence",
+        "trustline"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    }
+  ],
+  "field_model": {
+    "common_fields": {
+      "required": [
+        "hash",
+        "TransactionType",
+        "Account",
+        "Sequence",
+        "LastLedgerSequence"
+      ],
+      "optional": [
+        "SourceTag",
+        "Memos",
+        "Flags",
+        "Signers",
+        "Fee",
+        "TicketSequence",
+        "NetworkID",
+        "FirstLedgerSequence",
+        "OperationLimit",
+        "SigningPubKey",
+        "TxnSignature",
+        "HookParameters",
+        "AccountTxnID",
+        "PreviousTxnID"
+      ]
+    },
+    "payment_fields": {
+      "required": [
+        "Amount",
+        "Destination"
+      ],
+      "optional": [
+        "DestinationTag",
+        "InvoiceID",
+        "SendMax",
+        "DeliverMin",
+        "Paths",
+        "CredentialIDs"
+      ]
+    },
+    "trustset_fields": {
+      "required": [
+        "LimitAmount"
+      ],
+      "optional": [
+        "QualityIn",
+        "QualityOut"
+      ]
+    },
+    "signerlistset_fields": {
+      "required": [],
+      "optional": [
+        "SignerQuorum",
+        "SignerEntries"
+      ]
+    },
+    "amount_shapes": {
+      "native": {
+        "representation": "drops_string_on_ledger_wire",
+        "display_unit": "native_asset_from_network_service"
+      },
+      "issued_currency": {
+        "representation": "object",
+        "fields": [
+          "currency",
+          "value",
+          "issuer"
+        ]
+      }
+    },
+    "network_binding": {
+      "legacy_network_id_threshold": 1024,
+      "network_id_populated_when_gt_threshold": true,
+      "transaction_type_checked_against": "network_definitions.transactionNames"
+    },
+    "multisign_binding": {
+      "flag_source": "payload.meta.multisign",
+      "skips_autofill_and_prep": true,
+      "excluded_from_should_submit": true,
+      "ledger_command": "submit_multisigned"
+    }
+  },
+  "modeled_facts": [
+    {
+      "id": "xaman-xrpl-transaction:fact:account-field-requires-valid-classic-address",
+      "status": "MODELED",
+      "category": "account",
+      "summary": "The Account field setter rejects any value that is not a valid XRPL classic address before it is stored on the transaction instance.",
+      "normalized_fact": {
+        "field": "Account",
+        "required": true,
+        "validated_by": "xrpl-accountlib.utils.isValidAddress",
+        "rejects_invalid_address": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/fields/AccountID.ts",
+          "sha256": "9cc40ce4be372ff1094ef897bb548ac089ad9f31ab33882d446baea1182cf0db",
+          "line_start": 10,
+          "line_end": 17,
+          "review_status": "reviewed",
+          "notes": "AccountID setter throws if xrpl-accountlib reports the address as invalid."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:signing-account-defaults-to-selected-account-unless-multisign-or-import",
+      "status": "MODELED",
+      "category": "account",
+      "summary": "When the user picks a signing account, the review modal writes it into the transaction Account field unless the payload is multisign or the transaction is Import; Sign.mixin also fills Account from the chosen account if it was never set.",
+      "normalized_fact": {
+        "autofill_source": "account.address",
+        "skipped_when_multisign": true,
+        "skipped_when_import": true,
+        "sign_mixin_fallback": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 598,
+          "line_end": 614,
+          "review_status": "reviewed",
+          "notes": "setSource assigns transaction.Account = account.address unless payload.isMultiSign() or TransactionTypes.Import."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 219,
+          "line_end": 222,
+          "review_status": "reviewed",
+          "notes": "sign() sets this.Account = account.address when Account is undefined."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:payment-destination-is-a-required-accountid-field",
+      "status": "MODELED",
+      "category": "destination",
+      "summary": "Payment.Fields declares Destination as a required AccountID field, so Payment transactions carry a validated recipient address distinct from Account.",
+      "normalized_fact": {
+        "field": "Destination",
+        "required": true,
+        "field_type": "AccountID",
+        "declared_on": "Payment"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.class.ts",
+          "sha256": "0f72817b039a682a5b9d61f14c056f905634eb52d50d12275463603a6b7a8ceb",
+          "line_start": 20,
+          "line_end": 29,
+          "review_status": "reviewed",
+          "notes": "Payment.Fields marks Destination required with the AccountID type."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:amount-field-represents-native-drops-or-issued-currency-object",
+      "status": "MODELED",
+      "category": "amount",
+      "summary": "The Amount field codec normalizes ledger values into a common AmountType: native amounts are drops converted to the display asset, issued currency amounts keep currency, value, and issuer.",
+      "normalized_fact": {
+        "native_representation": "drops_string_converted_to_native",
+        "issued_representation": {
+          "fields": [
+            "currency",
+            "value",
+            "issuer"
+          ]
+        },
+        "setter_requires_issuer_for_non_native_currency": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/fields/Amount.ts",
+          "sha256": "16359e4911e15337ad876807928657f85babacce9f84ab690fb0dbeb3c5334e0",
+          "line_start": 8,
+          "line_end": 53,
+          "review_status": "reviewed",
+          "notes": "Amount getter/setter branch on NetworkService.getNativeAsset() to distinguish native drops from issued currency objects."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:payment-amount-must-be-present-and-nonzero-unless-paths-set",
+      "status": "MODELED",
+      "category": "amount",
+      "summary": "PaymentValidation rejects a missing Amount, a missing Amount.value, or an Amount.value of \"0\", unless the transaction already carries Paths (in which case validation is skipped).",
+      "normalized_fact": {
+        "skips_validation_when_paths_present": true,
+        "rejects_missing_amount": true,
+        "rejects_zero_amount_value": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+          "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5",
+          "line_start": 20,
+          "line_end": 30,
+          "review_status": "reviewed",
+          "notes": "PaymentValidation resolves immediately if tx.Paths is set, otherwise rejects missing/zero Amount."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:amount-parser-enforces-whole-drop-integers-and-numeric-strings",
+      "status": "MODELED",
+      "category": "amount",
+      "summary": "AmountParser validates numeric string input, rejects fractional drop amounts, and provides drop/native conversion helpers used throughout amount handling.",
+      "normalized_fact": {
+        "rejects_non_numeric_strings": true,
+        "rejects_fractional_drops": true,
+        "conversions": [
+          "dropsToNative",
+          "nativeToDrops",
+          "withTransferRate"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/common/amount.ts",
+          "sha256": "e2e37ffc8aff7251346d11ac98ea28d737e2915f737df2a9cf2def6f30531233",
+          "line_start": 4,
+          "line_end": 43,
+          "review_status": "reviewed",
+          "notes": "AmountParser constructor validates numeric format and whole-drop constraint; conversion methods scale by 1,000,000."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:fee-is-an-optional-amount-typed-common-field",
+      "status": "MODELED",
+      "category": "fee",
+      "summary": "Fee is declared on BaseTransaction.CommonFields using the Amount field type, so every genuine and pseudo transaction shares the same fee representation.",
+      "normalized_fact": {
+        "field": "Fee",
+        "required": false,
+        "field_type": "Amount",
+        "declared_on": "BaseTransaction.CommonFields"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/common.ts",
+          "sha256": "c12cbb86b12c144312111e5f24b86d491eb34bf9cd6776f86d849051015f76f2",
+          "line_start": 23,
+          "line_end": 44,
+          "review_status": "reviewed",
+          "notes": "CommonFields declares Fee with the Amount field type alongside other shared transaction fields."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:signing-requires-fee-to-be-explicitly-set-before-prepare-completes",
+      "status": "MODELED",
+      "category": "fee",
+      "summary": "Sign.mixin.prepare() throws before continuing if Fee is undefined, ensuring the client never signs a genuine transaction without a fee that was shown to the user.",
+      "normalized_fact": {
+        "skipped_for_pseudo_transactions": true,
+        "throws_when_fee_undefined": true,
+        "error_key": "global.transactionFeeIsNotSet"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 95,
+          "line_end": 116,
+          "review_status": "reviewed",
+          "notes": "prepare() throws global.transactionFeeIsNotSet when this.Fee is undefined, before touching Sequence."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:sequence-is-a-required-uint32-common-field",
+      "status": "MODELED",
+      "category": "sequence",
+      "summary": "Sequence is declared required on BaseTransaction.CommonFields using the UInt32 field type, alongside LastLedgerSequence and TicketSequence for replay-window control.",
+      "normalized_fact": {
+        "field": "Sequence",
+        "required": true,
+        "field_type": "UInt32",
+        "related_fields": [
+          "LastLedgerSequence",
+          "TicketSequence"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/common.ts",
+          "sha256": "c12cbb86b12c144312111e5f24b86d491eb34bf9cd6776f86d849051015f76f2",
+          "line_start": 23,
+          "line_end": 44,
+          "review_status": "reviewed",
+          "notes": "CommonFields marks Sequence and LastLedgerSequence required with UInt32, and TicketSequence optional."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:signing-auto-fills-missing-sequence-from-live-account-sequence",
+      "status": "MODELED",
+      "category": "sequence",
+      "summary": "If Sequence is undefined when prepare() runs, the client fetches the live account sequence from LedgerService before signing; failure to fetch aborts signing.",
+      "normalized_fact": {
+        "autofill_source": "LedgerService.getAccountSequence",
+        "throws_on_fetch_failure": true,
+        "error_key": "global.unableToSetAccountSequence"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 109,
+          "line_end": 116,
+          "review_status": "reviewed",
+          "notes": "prepare() calls LedgerService.getAccountSequence(this.Account) when this.Sequence is undefined."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/LedgerService.ts",
+          "sha256": "e741414bf3b3a4dc28bc385249abb825c20f0e68552254fcf6f135e8dd86c74a",
+          "line_start": 403,
+          "line_end": 427,
+          "review_status": "reviewed",
+          "notes": "getAccountSequence reads account_data.Sequence from a fresh getAccountInfo response."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:networkid-is-an-optional-uint32-common-field",
+      "status": "MODELED",
+      "category": "network",
+      "summary": "NetworkID is declared as an optional UInt32 common field, letting any transaction pin itself to a specific XRPL network id.",
+      "normalized_fact": {
+        "field": "NetworkID",
+        "required": false,
+        "field_type": "UInt32"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/common.ts",
+          "sha256": "c12cbb86b12c144312111e5f24b86d491eb34bf9cd6776f86d849051015f76f2",
+          "line_start": 23,
+          "line_end": 44,
+          "review_status": "reviewed",
+          "notes": "CommonFields declares NetworkID with the UInt32 type as an optional field."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:network-id-is-auto-populated-for-non-legacy-networks-above-1024",
+      "status": "MODELED",
+      "category": "network",
+      "summary": "populateFields() sets NetworkID from the connected network only when the network id is greater than 1024, matching the XRPL rule that legacy networks below that threshold must omit NetworkID from signed transactions.",
+      "normalized_fact": {
+        "legacy_network_threshold": 1024,
+        "sets_network_id_when_gt_threshold": true,
+        "skipped_when_already_set": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 166,
+          "line_end": 176,
+          "review_status": "reviewed",
+          "notes": "populateFields() only assigns this.NetworkID when NetworkService.getNetworkId() > 1024."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/NetworkService.ts",
+          "sha256": "1a30eda14158243fcae78d4b3dacae6a97dbeee6918920c69c4e453d03ef9eda",
+          "line_start": 285,
+          "line_end": 291,
+          "review_status": "reviewed",
+          "notes": "getNetworkId() returns the connected NetworkModel networkId used for the threshold check."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:signing-rejects-transaction-types-unsupported-by-connected-network-definitions",
+      "status": "MODELED",
+      "category": "network",
+      "summary": "Before opening the signing overlay, sign() checks the active network XrplDefinitions.transactionNames and rejects signing if the transaction type is not in that list, preventing users from signing amendment-gated transaction types their connected network does not support.",
+      "normalized_fact": {
+        "checked_against": "NetworkService.getNetworkDefinitions().transactionNames",
+        "rejects_unsupported_transaction_type": true,
+        "skipped_for_pseudo_transactions": false
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 200,
+          "line_end": 217,
+          "review_status": "reviewed",
+          "notes": "sign() rejects with an explicit error if this.TransactionType is not included in definitions.transactionNames."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/NetworkService.ts",
+          "sha256": "1a30eda14158243fcae78d4b3dacae6a97dbeee6918920c69c4e453d03ef9eda",
+          "line_start": 304,
+          "line_end": 324,
+          "review_status": "reviewed",
+          "notes": "getNetworkDefinitions() builds an XrplDefinitions instance from the connected network or falls back to binary.DEFAULT_DEFINITIONS."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:memos-field-is-an-starray-of-memo-entries",
+      "status": "MODELED",
+      "category": "memo",
+      "summary": "Memos is declared as an optional STArray common field using the Memos codec, so every transaction type can carry an array of memo entries with the same shape.",
+      "normalized_fact": {
+        "field": "Memos",
+        "required": false,
+        "field_type": "STArray",
+        "codec": "Memos"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/common.ts",
+          "sha256": "c12cbb86b12c144312111e5f24b86d491eb34bf9cd6776f86d849051015f76f2",
+          "line_start": 23,
+          "line_end": 44,
+          "review_status": "reviewed",
+          "notes": "CommonFields declares Memos with STArray type and the Memos codec."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:memo-encoder-classifies-hex-blob-vs-plain-text-before-hex-encoding",
+      "status": "MODELED",
+      "category": "memo",
+      "summary": "MemoParser.Encode detects a hex-looking binary blob with a regex and tags it application/x-binary, otherwise it hex-encodes the input as text/plain, always hex-encoding MemoType and MemoFormat.",
+      "normalized_fact": {
+        "binary_detection_regex": "^[ \\t]*(0x)?([a-f0-9]{20,})[ \\t]*$",
+        "binary_format_tag": "application/x-binary",
+        "default_format_tag": "text/plain"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/common/memo.ts",
+          "sha256": "2d3600dde2b488094a2657a225bba77f48c13fce7af1d09c62f48f18b1118825",
+          "line_start": 17,
+          "line_end": 39,
+          "review_status": "reviewed",
+          "notes": "Encode() tests MemoParser.BinaryRegex to choose application/x-binary vs text/plain hex-encoded memo fields."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:memo-decoder-reverses-format-specific-encodings-for-display",
+      "status": "MODELED",
+      "category": "memo",
+      "summary": "MemoParser.Decode reads the declared MemoFormat and reverses hex, utf8, hexasint, and int encodings for display, leaving application/x-binary payloads untouched.",
+      "normalized_fact": {
+        "supported_formats": [
+          "hex",
+          "utf8",
+          "hexasint",
+          "int",
+          "application/x-binary"
+        ],
+        "default_fallback": "utf8_decode"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/common/memo.ts",
+          "sha256": "2d3600dde2b488094a2657a225bba77f48c13fce7af1d09c62f48f18b1118825",
+          "line_start": 41,
+          "line_end": 89,
+          "review_status": "reviewed",
+          "notes": "Decode() switches on the decoded MemoFormat header to determine how MemoData is converted for display."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:issued-currency-amount-requires-currency-and-issuer-when-non-native",
+      "status": "MODELED",
+      "category": "issued_currency",
+      "summary": "The Amount setter only stores a value for a non-native currency when an issuer is present, and AmountType always carries an optional issuer alongside currency and value.",
+      "normalized_fact": {
+        "requires_issuer_for_non_native": true,
+        "amount_type_fields": [
+          "value",
+          "currency",
+          "issuer"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/fields/Amount.ts",
+          "sha256": "16359e4911e15337ad876807928657f85babacce9f84ab690fb0dbeb3c5334e0",
+          "line_start": 33,
+          "line_end": 53,
+          "review_status": "reviewed",
+          "notes": "Amount setter only assigns self[name] = value for non-native currency when value.issuer is present."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/types.ts",
+          "sha256": "b7f4bd8f80021faa2f313a7905e8d27ad01c6d3311afdd05e5ae36748484a9bb",
+          "line_start": 20,
+          "line_end": 24,
+          "review_status": "reviewed",
+          "notes": "AmountType interface declares value, currency, and optional issuer."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:issue-type-pairs-currency-and-issuer-for-trustline-lookups",
+      "status": "MODELED",
+      "category": "issued_currency",
+      "summary": "IssueType pairs a required currency and issuer, and is used as the peer parameter when the client looks up a specific trust line via LedgerService.",
+      "normalized_fact": {
+        "issue_type_fields": [
+          "currency",
+          "issuer"
+        ],
+        "used_by": "LedgerService.getFilteredAccountLine"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/fields/Issue.ts",
+          "sha256": "be65a4b539747ad5adfef46b34d04a1336bd75e03f8139d5a2bb403f429c2ddb",
+          "line_start": 4,
+          "line_end": 20,
+          "review_status": "reviewed",
+          "notes": "Issue field getter/setter pass through an IssueType value unchanged."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/types.ts",
+          "sha256": "b7f4bd8f80021faa2f313a7905e8d27ad01c6d3311afdd05e5ae36748484a9bb",
+          "line_start": 26,
+          "line_end": 29,
+          "review_status": "reviewed",
+          "notes": "IssueType interface requires currency and issuer."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:trustset-transaction-declares-limitamount-quality-in-and-quality-out",
+      "status": "MODELED",
+      "category": "trustline",
+      "summary": "TrustSet.Fields requires LimitAmount (an issued-currency Amount) and allows optional QualityIn/QualityOut, and exposes Currency/Issuer/Limit convenience getters derived from LimitAmount.",
+      "normalized_fact": {
+        "required_field": "LimitAmount",
+        "optional_fields": [
+          "QualityIn",
+          "QualityOut"
+        ],
+        "derived_getters": [
+          "Currency",
+          "Issuer",
+          "Limit"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.class.ts",
+          "sha256": "76b8777ecc79019ca4200a38745b9863574acec900048fc58c21f2485c8763b9",
+          "line_start": 16,
+          "line_end": 43,
+          "review_status": "reviewed",
+          "notes": "TrustSet.Fields declares LimitAmount required with Amount type; Currency/Issuer/Limit getters read from LimitAmount."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:payment-requires-recipient-trustline-for-non-native-non-issuer-delivery",
+      "status": "MODELED",
+      "category": "trustline",
+      "summary": "PaymentValidation blocks sending an issued currency to a destination that is not the issuer unless the destination already has a trust line with a nonzero limit or balance for that currency and issuer.",
+      "normalized_fact": {
+        "checked_when": "currency_not_native_and_issuer_not_destination",
+        "requires_destination_trustline": true,
+        "rejects_zero_limit_and_zero_balance_trustline": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+          "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5",
+          "line_start": 32,
+          "line_end": 47,
+          "review_status": "reviewed",
+          "notes": "PaymentValidation fetches LedgerService.getFilteredAccountLine(tx.Destination, ...) and rejects if it is missing or has zero limit and zero balance."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:payment-checks-sender-trustline-balance-freeze-and-limit-before-sending-issued-currency",
+      "status": "MODELED",
+      "category": "trustline",
+      "summary": "When the sender is not the issuer, PaymentValidation checks the source trust line balance and freeze_peer flag; when the sender is the issuer, it checks that the new obligation would not exceed the counterparty limit_peer.",
+      "normalized_fact": {
+        "non_issuer_sender_checks": [
+          "trustline_exists",
+          "not_frozen_by_issuer",
+          "balance_covers_amount"
+        ],
+        "issuer_sender_checks": [
+          "trustline_exists",
+          "obligation_within_limit_peer"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+          "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5",
+          "line_start": 90,
+          "line_end": 166,
+          "review_status": "reviewed",
+          "notes": "IOUAmount branch checks freeze_peer and balance when sender is not issuer, and limit_peer headroom when sender is issuer."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:trustline-lookup-uses-ripple-state-ledger-entry-with-reserve-flag-check",
+      "status": "MODELED",
+      "category": "trustline",
+      "summary": "getFilteredAccountLine resolves a specific trust line by requesting the ripple_state ledger entry for the account/peer/currency triple and only returns a trust line when the relevant reserve flag (lsfLowReserve/lsfHighReserve) is set on the node.",
+      "normalized_fact": {
+        "ledger_entry_type": "ripple_state",
+        "requires_reserve_flag_set": true,
+        "returns_undefined_on_default_state": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/services/LedgerService.ts",
+          "sha256": "e741414bf3b3a4dc28bc385249abb825c20f0e68552254fcf6f135e8dd86c74a",
+          "line_start": 453,
+          "line_end": 490,
+          "review_status": "reviewed",
+          "notes": "getFilteredAccountLine requests a ripple_state ledger entry and checks lsfLowReserve/lsfHighReserve before converting to a trust line."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:signerlistset-declares-signer-quorum-and-weighted-signer-entries",
+      "status": "MODELED",
+      "category": "multisign",
+      "summary": "SignerListSet.Fields declares optional SignerQuorum (UInt32) and SignerEntries (STArray with the SignerEntries codec), modeling the on-ledger structure that establishes a multisign quorum and its weighted signers.",
+      "normalized_fact": {
+        "fields": [
+          "SignerQuorum",
+          "SignerEntries"
+        ],
+        "signer_entries_codec": "SignerEntries"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.class.ts",
+          "sha256": "f3bb21b149f905e7c73b3f0223c428ed807c69a05b11b4e626524743c9b94e88",
+          "line_start": 16,
+          "line_end": 19,
+          "review_status": "reviewed",
+          "notes": "SignerListSet.Fields declares SignerQuorum and SignerEntries with their field types and codec."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:multisign-flag-is-derived-from-payload-meta-multisign",
+      "status": "MODELED",
+      "category": "multisign",
+      "summary": "Payload.isMultiSign() is a boolean coercion of the backend-provided meta.multisign flag, and is the single source of truth the client uses to branch sign, validation, and submission logic.",
+      "normalized_fact": {
+        "source_field": "meta.multisign",
+        "coercion": "double_negation_boolean"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 286,
+          "line_end": 291,
+          "review_status": "reviewed",
+          "notes": "isMultiSign() returns !!this.meta.multisign."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:multisign-transactions-skip-account-autofill-sequence-fee-prep-and-client-validation",
+      "status": "MODELED",
+      "category": "multisign",
+      "summary": "For multisign payloads, the review modal does not overwrite Account with the selected signer, skips the account-activation live check, and skips client-side transaction validation; Sign.mixin.sign() also skips prepare() (fee/sequence population) when multiSign is true.",
+      "normalized_fact": {
+        "skips_account_autofill": true,
+        "skips_activation_check": true,
+        "skips_client_validation": true,
+        "skips_prepare_fee_sequence_population": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 606,
+          "line_end": 614,
+          "review_status": "reviewed",
+          "notes": "setSource only writes transaction.Account when !payload.isMultiSign() && transaction.Type !== Import."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 264,
+          "line_end": 272,
+          "review_status": "reviewed",
+          "notes": "Account-activation live check is skipped when payload.isMultiSign() is true."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 305,
+          "line_end": 311,
+          "review_status": "reviewed",
+          "notes": "Client-side transaction validation only runs when !payload.isMultiSign() && payload.shouldSubmit()."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 184,
+          "line_end": 228,
+          "review_status": "reviewed",
+          "notes": "sign(account, multiSign) only calls this.prepare(account) when multiSign is false."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:multisign-transactions-are-excluded-from-automatic-ledger-submission",
+      "status": "MODELED",
+      "category": "multisign",
+      "summary": "Payload.shouldSubmit() is false whenever isMultiSign() is true, and the review modal submit() records the signing account under a \"multisigned\" patch field instead of dispatching to the ledger for multisign payloads.",
+      "normalized_fact": {
+        "should_submit_excludes_multisign": true,
+        "multisigned_patch_field_set_for_multisign_only": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 278,
+          "line_end": 284,
+          "review_status": "reviewed",
+          "notes": "shouldSubmit() returns this.meta.submit && !this.isPseudoTransaction() && !this.isMultiSign()."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da",
+          "line_start": 660,
+          "line_end": 673,
+          "review_status": "reviewed",
+          "notes": "submit() builds payloadPatch.multisigned = payload.isMultiSign() ? transaction.SignerAccount : \"\"."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:submit-multisigned-request-requires-signer-weights-meeting-signerlist-quorum",
+      "status": "MODELED",
+      "category": "multisign",
+      "summary": "The submit_multisigned request/response types document that XRPL only accepts the transaction when the combined weights of the Signers array meet or exceed the SignerList quorum, binding the client-side SignerListSet model to the ledger-side multisign acceptance rule.",
+      "normalized_fact": {
+        "command": "submit_multisigned",
+        "requires_tx_json_signers_array": true,
+        "quorum_rule": "sum_of_signer_weights_gte_signerlist_quorum"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submitMultisigned.ts",
+          "sha256": "eb0e6f3053969d440237ad05e40b5a83a7ae0f6bdf49c9dbc16e2880b4b6aab2",
+          "line_start": 11,
+          "line_end": 24,
+          "review_status": "reviewed",
+          "notes": "SubmitMultisignedRequest documents tx_json with Signers whose weights must meet or exceed the SignerList quorum."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:transactiontype-is-a-required-common-field-set-by-each-transaction-class",
+      "status": "MODELED",
+      "category": "transaction_type",
+      "summary": "TransactionType is required on BaseTransaction.CommonFields, and every concrete transaction class (e.g., Payment, TrustSet, SignerListSet) sets this.TransactionType to its own static Type in its constructor.",
+      "normalized_fact": {
+        "field": "TransactionType",
+        "required": true,
+        "set_by_constructor": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/common.ts",
+          "sha256": "c12cbb86b12c144312111e5f24b86d491eb34bf9cd6776f86d849051015f76f2",
+          "line_start": 23,
+          "line_end": 44,
+          "review_status": "reviewed",
+          "notes": "CommonFields marks TransactionType required with the TransactionType field type."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.class.ts",
+          "sha256": "0f72817b039a682a5b9d61f14c056f905634eb52d50d12275463603a6b7a8ceb",
+          "line_start": 40,
+          "line_end": 45,
+          "review_status": "reviewed",
+          "notes": "Payment constructor sets this.TransactionType = Payment.Type."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:unknown-transaction-types-fall-back-to-fallback-transaction-class",
+      "status": "MODELED",
+      "category": "transaction_type",
+      "summary": "TransactionFactory.getTransaction requires TransactionType to be present in the input JSON and, for a type not registered in TransactionClasses, instantiates a generic FallbackTransaction instead of throwing.",
+      "normalized_fact": {
+        "throws_when_transaction_type_missing": true,
+        "unregistered_type_uses_fallback": true,
+        "fallback_class": "FallbackTransaction"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/factory/transaction.ts",
+          "sha256": "284e514ea6855dcf867d48744232e7499793a3e93fbec38d82509a38aa45048e",
+          "line_start": 69,
+          "line_end": 91,
+          "review_status": "reviewed",
+          "notes": "getTransaction throws if type is undefined, otherwise selects TransactionClasses[type] or falls back to FallbackTransaction."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:validation-dispatch-requires-a-matching-typevalidation-export-or-throws",
+      "status": "MODELED",
+      "category": "transaction_type",
+      "summary": "ValidationFactory.fromTransaction resolves a `${item.Type}Validation` export from either the genuine or pseudo transaction module and throws if no matching validation function is found, so every registered transaction type must ship a validation function (even if it is a no-op stub).",
+      "normalized_fact": {
+        "lookup_pattern": "${Type}Validation",
+        "throws_when_validation_missing": true,
+        "fallback_transaction_uses_dedicated_validation": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/factory/validation.ts",
+          "sha256": "b8a17fd95ab06f5d06ff149aa0cad1449c69827ce295c811c046f0510a7e9690",
+          "line_start": 18,
+          "line_end": 47,
+          "review_status": "reviewed",
+          "notes": "fromTransaction builds ValidtionInstanceName and throws \"Explainer ... not found\" if no export matches."
+        }
+      ]
+    }
+  ],
+  "not_modeled_gaps": [
+    {
+      "id": "xaman-xrpl-transaction:gap:trustset-and-signerlistset-client-validation-not-implemented",
+      "status": "NOT_MODELED",
+      "category": "trustline",
+      "summary": "TrustSetValidation and SignerListSetValidation are unimplemented stubs that always resolve, so the reviewed client source provides no additional client-side trust-line or signer-list safety checks (such as rippling limits, quality edge cases, or duplicate signer entries) beyond field typing for these two transaction types.",
+      "required_evidence_to_model": [
+        "A completed TrustSetValidation implementation with rippling and quality edge-case coverage, or an explicit accepted-risk decision",
+        "A completed SignerListSetValidation implementation checking signer entry uniqueness, weight sums, and quorum feasibility",
+        "Server-side XRPL tec-code behavior for malformed TrustSet/SignerListSet submissions"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.validation.ts",
+          "sha256": "76bdc38f0f636475f1aa2b2ecfb1749014492209d8915b025884132e258eab6a",
+          "line_start": 6,
+          "line_end": 12,
+          "review_status": "reviewed",
+          "notes": "TrustSetValidation always resolves; the body is a \"TODO: add validation\" stub."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.validation.ts",
+          "sha256": "86ddb07ac40ebd179f03a4282b20f4a2c7b91aecc134bd9f659925edcc330d99",
+          "line_start": 6,
+          "line_end": 12,
+          "review_status": "reviewed",
+          "notes": "SignerListSetValidation always resolves; the body is a \"TODO: add validation\" stub."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:gap:xrpl-server-side-transaction-rule-enforcement-not-modeled",
+      "status": "NOT_MODELED",
+      "category": "transaction_type",
+      "summary": "This artifact models client-side field shapes, pre-submit checks, and the submit/submit_multisigned request/response boundary, but not the authoritative XRPL server-side enforcement of amount, fee, sequence, reserve, freeze, or rippling rules (tec/tem/tef result codes and their triggering conditions).",
+      "required_evidence_to_model": [
+        "rippled transaction processing source or formal XRPL transaction-results specification",
+        "Test vectors reproducing tec/tem/tef outcomes for each modeled transaction type",
+        "Consensus and validator behavior for rule enforcement across the network"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submitMultisigned.ts",
+          "sha256": "eb0e6f3053969d440237ad05e40b5a83a7ae0f6bdf49c9dbc16e2880b4b6aab2",
+          "line_start": 1,
+          "line_end": 48,
+          "review_status": "reviewed",
+          "notes": "submit_multisigned models only the client request/response boundary, not rippled internal rule enforcement."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/services/LedgerService.ts",
+          "sha256": "e741414bf3b3a4dc28bc385249abb825c20f0e68552254fcf6f135e8dd86c74a",
+          "line_start": 453,
+          "line_end": 490,
+          "review_status": "reviewed",
+          "notes": "getFilteredAccountLine reads current ledger state but does not model the rule engine that produced it."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:gap:external-multisign-signature-collection-not-modeled",
+      "status": "NOT_MODELED",
+      "category": "multisign",
+      "summary": "The reviewed source shows how the client skips autofill/validation for multisign payloads and how a single signature is patched back, but not the external process, device coordination, or storage by which the full set of required signer shares are collected, combined, and later assembled into a submit_multisigned request meeting quorum.",
+      "required_evidence_to_model": [
+        "Backend or workflow source describing multisign share collection and combination across signers",
+        "Evidence for how/when submit_multisigned is actually invoked once quorum is reached",
+        "Hardware and multi-device signer coordination behavior"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submitMultisigned.ts",
+          "sha256": "eb0e6f3053969d440237ad05e40b5a83a7ae0f6bdf49c9dbc16e2880b4b6aab2",
+          "line_start": 11,
+          "line_end": 24,
+          "review_status": "reviewed",
+          "notes": "The request type documents the quorum requirement but not how signer shares are collected before this request is built."
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/payload/object.ts",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "line_start": 286,
+          "line_end": 291,
+          "review_status": "reviewed",
+          "notes": "isMultiSign() only reports a boolean flag; it does not model multi-party signature collection."
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:gap:deployed-runtime-equivalence",
+      "status": "NOT_MODELED",
+      "category": "network",
+      "summary": "This artifact models pinned source behavior for XRPL transaction semantics, not compiled app binaries, mobile OS runtime behavior, production network/node configuration, or backend deployment equivalence.",
+      "required_evidence_to_model": [
+        "Reproducible build attestation for the reviewed commit",
+        "Runtime traces for signing, network-id population, and multisign flows against production nodes",
+        "Production network definitions and node endpoint configuration evidence"
+      ],
+      "evidence": [
+        {
+          "kind": "source_manifest",
+          "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+          "sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+          "line_start": 1,
+          "line_end": 1,
+          "review_status": "reviewed",
+          "notes": "The source manifest pins source content but not deployed runtime equivalence."
+        }
+      ]
+    }
+  ],
+  "derived_security_boundary": {
+    "claimed": [
+      "Account, Sequence, Fee, NetworkID, Memos, and Signers share one common field model across all transaction types.",
+      "Account address values are validated as XRPL classic addresses before being stored on a transaction instance.",
+      "Missing Fee blocks signing; missing Sequence is auto-filled from a live account-sequence lookup before signing.",
+      "NetworkID is auto-populated for non-legacy networks and unsupported transaction types are rejected before signing.",
+      "Issued-currency amounts require an issuer, and Payment validation checks recipient and sender trust lines, freeze state, and limits before allowing an IOU payment.",
+      "Multisign payloads skip client-side account autofill, activation checks, validation, and fee/sequence prep, and are excluded from automatic ledger submission.",
+      "Unknown transaction types fall back to a generic transaction class instead of crashing, and validation dispatch requires an explicit per-type validation export."
+    ],
+    "not_claimed": [
+      "TrustSet and SignerListSet client-side validation beyond field typing (both validation functions are unimplemented stubs).",
+      "Authoritative XRPL server-side (rippled) enforcement of amount, fee, sequence, reserve, freeze, or rippling rules and their tec/tem/tef result codes.",
+      "External multisign signature collection, device coordination, or the process by which a submit_multisigned request is actually assembled once quorum is reached.",
+      "Deployed mobile binary, production backend, or production network/node configuration equivalence to the reviewed source."
+    ]
+  }
+}

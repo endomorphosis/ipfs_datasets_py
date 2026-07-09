@@ -1,0 +1,984 @@
+{
+  "claims": [
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:native-vault-cryptographic-confidentiality",
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "vault",
+      "evidence_refs": [
+        {
+          "kind": "source_code",
+          "line_end": 68,
+          "line_start": 44,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:account-secret-vaulted-for-full-access.",
+          "path": "src/store/repositories/account.ts",
+          "review_status": "human_reviewed",
+          "sha256": "475f4e00545de9fef217a76e6f2916c2e65bc8d68c328944705d54f47b69b1b1"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 39,
+          "line_start": 29,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:account-secret-vaulted-for-full-access.",
+          "path": "src/common/libs/vault.ts",
+          "review_status": "human_reviewed",
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 365,
+          "line_start": 286,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:software-private-key-signing-requires-vault-open-with-encryption-key.",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 36,
+          "line_start": 22,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:tangem-physical-signing-uses-card-session-not-local-vault-secret.",
+          "path": "src/screens/Overlay/Vault/Methods/Tangem/TangemMethod.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "ac405fb65c02b4f4542c05c39fdc2ddf33f86510133f197d5b609443800b2108"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 440,
+          "line_start": 375,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:tangem-physical-signing-uses-card-session-not-local-vault-secret.",
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569"
+        },
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "blocking",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreihgi44rnjhtiz4thkv5lrglkmca7t5uxj5yghqjpbvlqq4dlrde7i",
+        "assertion_count": 4,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_custody-software-private-key-not-available-without-authorized-vault-path.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "custody"
+    },
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:passcode-kdf-and-secret-protection",
+        "xaman-security:assumption:biometric-native-binding",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:authentication-gates-vault-and-signing",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "auth_component",
+      "evidence_refs": [
+        {
+          "kind": "source_code",
+          "line_end": 49,
+          "line_start": 45,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:authenticate-overlay-allows-passcode-or-enabled-biometrics.",
+          "path": "src/screens/Overlay/Authenticate/AuthenticateOverlay.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "2546924c36ebdc4da92a2fe4298694a944fc26543f98a41333b20630e85b0c25"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 244,
+          "line_start": 215,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:authenticate-overlay-allows-passcode-or-enabled-biometrics.",
+          "path": "src/screens/Overlay/Authenticate/AuthenticateOverlay.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "2546924c36ebdc4da92a2fe4298694a944fc26543f98a41333b20630e85b0c25"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 276,
+          "line_start": 265,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:authenticate-overlay-allows-passcode-or-enabled-biometrics.",
+          "path": "src/screens/Overlay/Authenticate/AuthenticateOverlay.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "2546924c36ebdc4da92a2fe4298694a944fc26543f98a41333b20630e85b0c25"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 190,
+          "line_start": 176,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:passcode-authentication-hashes-and-throttles.",
+          "path": "src/services/AuthenticationService.ts",
+          "review_status": "human_reviewed",
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 213,
+          "line_start": 197,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:passcode-authentication-hashes-and-throttles.",
+          "path": "src/services/AuthenticationService.ts",
+          "review_status": "human_reviewed",
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 255,
+          "line_start": 221,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:passcode-authentication-hashes-and-throttles.",
+          "path": "src/services/AuthenticationService.ts",
+          "review_status": "human_reviewed",
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 323,
+          "line_start": 294,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:passcode-authentication-hashes-and-throttles.",
+          "path": "src/services/AuthenticationService.ts",
+          "review_status": "human_reviewed",
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 127,
+          "line_start": 91,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:transaction-signing-preconditions-before-vault-overlay.",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "review_status": "human_reviewed",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 240,
+          "line_start": 184,
+          "notes": "Reviewed source evidence for xaman-wallet-auth:fact:transaction-signing-preconditions-before-vault-overlay.",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "review_status": "human_reviewed",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+        },
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:authentication-gates-vault-and-signing.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "blocking",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreia26q3wbd5k77a4oxmagrhz6frosuieaaygdvzzdvwrxgatwzrz6a",
+        "assertion_count": 4,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_authentication-gates-vault-and-signing.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "authentication"
+    },
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:payload-integrity-before-review-and-signing",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "payload",
+      "evidence_refs": [
+        {
+          "kind": "source_code",
+          "line_end": 139,
+          "line_start": 119,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest.",
+          "path": "src/common/libs/payload/object.ts",
+          "review_status": "human_reviewed",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 184,
+          "line_start": 173,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest.",
+          "path": "src/common/libs/payload/object.ts",
+          "review_status": "human_reviewed",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 70,
+          "line_start": 27,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest.",
+          "path": "src/common/libs/payload/digest/serialize.ts",
+          "review_status": "human_reviewed",
+          "sha256": "3ab28229751274e665ec810f3f183e9b6e416abe670d7037c2f08b6e9d0d46a4"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 276,
+          "line_start": 271,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing.",
+          "path": "src/common/libs/payload/object.ts",
+          "review_status": "human_reviewed",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 256,
+          "line_start": 216,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing.",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 328,
+          "line_start": 264,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing.",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 133,
+          "line_start": 79,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control.",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Review/ReviewStep.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "dcf465bf1641a3c2ce3f630b6e8ddd715c84e766680ad862144fa4c6678620c3"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 224,
+          "line_start": 155,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control.",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Review/ReviewStep.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "dcf465bf1641a3c2ce3f630b6e8ddd715c84e766680ad862144fa4c6678620c3"
+        },
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:payload-integrity-before-review-and-signing.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "high",
+      "severity": "high",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreigupsxfaoevz42pfmjxy4xu2kue6bnz3v57o7j74z7kgpciuyxk4q",
+        "assertion_count": 4,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_payload-integrity-before-review-and-signing.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "payload_integrity"
+    },
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:payload-replay-prevention-is-single-use",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "payload",
+      "evidence_refs": [
+        {
+          "kind": "source_code",
+          "line_end": 198,
+          "line_start": 188,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads.",
+          "path": "src/common/libs/payload/object.ts",
+          "review_status": "human_reviewed",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 276,
+          "line_start": 271,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing.",
+          "path": "src/common/libs/payload/object.ts",
+          "review_status": "human_reviewed",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 256,
+          "line_start": 216,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing.",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 328,
+          "line_start": 264,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing.",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 402,
+          "line_start": 352,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:ledger-submit-has-local-single-submit-and-abort-guards.",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "review_status": "human_reviewed",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+        },
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:payload-replay-prevention-is-single-use.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "blocking",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreiaou2uqfvk6helxz4sr4rwq4iw7up4c4culyfz4h7pzkk4agv36zu",
+        "assertion_count": 3,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_payload-replay-prevention-is-single-use.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "replay_prevention"
+    },
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:network-binding-prevents-cross-network-signing",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "ledger",
+      "evidence_refs": [
+        {
+          "kind": "source_code",
+          "line_end": 276,
+          "line_start": 237,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing.",
+          "path": "src/screens/Modal/Scan/ScanModal.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "3b3f28345569ddbc3bee9a80653f989d07265035110455eeb1f27899830e96d3"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 464,
+          "line_start": 428,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing.",
+          "path": "src/services/LinkingService.ts",
+          "review_status": "human_reviewed",
+          "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 175,
+          "line_start": 167,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing.",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "review_status": "human_reviewed",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 217,
+          "line_start": 201,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing.",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "review_status": "human_reviewed",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 176,
+          "line_start": 166,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:network-id-is-auto-populated-for-non-legacy-networks-above-1024.",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "review_status": "human_reviewed",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 291,
+          "line_start": 285,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:network-id-is-auto-populated-for-non-legacy-networks-above-1024.",
+          "path": "src/services/NetworkService.ts",
+          "review_status": "human_reviewed",
+          "sha256": "1a30eda14158243fcae78d4b3dacae6a97dbeee6918920c69c4e453d03ef9eda"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 217,
+          "line_start": 200,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:signing-rejects-transaction-types-unsupported-by-connected-network-definitions.",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "review_status": "human_reviewed",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 324,
+          "line_start": 304,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:signing-rejects-transaction-types-unsupported-by-connected-network-definitions.",
+          "path": "src/services/NetworkService.ts",
+          "review_status": "human_reviewed",
+          "sha256": "1a30eda14158243fcae78d4b3dacae6a97dbeee6918920c69c4e453d03ef9eda"
+        },
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:network-binding-prevents-cross-network-signing.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "high",
+      "severity": "high",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreieshwdnmbabdq767sk7mdfo3m7yrwlsxwklmlkfjo6nvxwjdxiqn4",
+        "assertion_count": 3,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_network-binding-prevents-cross-network-signing.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "network_binding"
+    },
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:trustset-and-signerlist-client-validation",
+        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
+        "xaman-security:assumption:external-multisign-coordination",
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "ledger",
+      "evidence_refs": [
+        {
+          "kind": "source_code",
+          "line_end": 17,
+          "line_start": 10,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:account-field-requires-valid-classic-address.",
+          "path": "src/common/libs/ledger/parser/fields/AccountID.ts",
+          "review_status": "human_reviewed",
+          "sha256": "9cc40ce4be372ff1094ef897bb548ac089ad9f31ab33882d446baea1182cf0db"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 29,
+          "line_start": 20,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:payment-destination-is-a-required-accountid-field.",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.class.ts",
+          "review_status": "human_reviewed",
+          "sha256": "0f72817b039a682a5b9d61f14c056f905634eb52d50d12275463603a6b7a8ceb"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 30,
+          "line_start": 20,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:payment-amount-must-be-present-and-nonzero-unless-paths-set.",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+          "review_status": "human_reviewed",
+          "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 116,
+          "line_start": 95,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:signing-requires-fee-to-be-explicitly-set-before-prepare-completes.",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "review_status": "human_reviewed",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 47,
+          "line_start": 32,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:payment-requires-recipient-trustline-for-non-native-non-issuer-delivery.",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+          "review_status": "human_reviewed",
+          "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 24,
+          "line_start": 11,
+          "notes": "Reviewed source evidence for xaman-xrpl-transaction:fact:submit-multisigned-request-requires-signer-weights-meeting-signerlist-quorum.",
+          "path": "src/common/libs/ledger/types/methods/submitMultisigned.ts",
+          "review_status": "human_reviewed",
+          "sha256": "eb0e6f3053969d440237ad05e40b5a83a7ae0f6bdf49c9dbc16e2880b4b6aab2"
+        },
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "high",
+      "severity": "high",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreig4jsgvl6kcmkr27uhqefw6hcrbt2tulvkquhkhu4pprv4zbs4ae4",
+        "assertion_count": 6,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_xrpl-transaction-semantics-match-reviewed-signing-intent.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "transaction_semantics"
+    },
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
+        "xaman-security:assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "service",
+      "evidence_refs": [
+        {
+          "kind": "source_code",
+          "line_end": 245,
+          "line_start": 219,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:signed-payload-is-patched-before-optional-ledger-broadcast.",
+          "path": "src/common/libs/payload/object.ts",
+          "review_status": "human_reviewed",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 677,
+          "line_start": 645,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:signed-payload-is-patched-before-optional-ledger-broadcast.",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 269,
+          "line_start": 247,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:rejection-patches-backend-for-user-or-app-decline.",
+          "path": "src/common/libs/payload/object.ts",
+          "review_status": "human_reviewed",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 214,
+          "line_start": 159,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:rejection-patches-backend-for-user-or-app-decline.",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 744,
+          "line_start": 684,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:dispatch-result-is-patched-after-ledger-submit.",
+          "path": "src/screens/Modal/ReviewTransaction/ReviewTransactionModal.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "aee45be504469008f05eb45cdca08a848c665b6df85d5be06ea3c72d24f184da"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 78,
+          "line_start": 36,
+          "notes": "Reviewed source evidence for xaman-payload-lifecycle:fact:dispatch-result-is-patched-after-ledger-submit.",
+          "path": "src/screens/Modal/ReviewTransaction/Steps/Submitting/SubmittingStep.tsx",
+          "review_status": "human_reviewed",
+          "sha256": "c399f10440ded8f7113db76c0a7ac819a9664b2d7022e0685c325b6f86735505"
+        },
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "blocking",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreiczenuu7joxxn76xuzqa7or5lwyj3lxx6hv7lljl6xfeb63tq6ira",
+        "assertion_count": 3,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_backend-trust-boundary-is-safe-for-payload-resolution.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "backend_trust"
+    },
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:deployed-runtime-equivalence",
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence"
+      ],
+      "claim_id": "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "e2e_flow",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "blocking",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreiadwuymzzwnxmbb2x3ym2cfjfxmwstvrmj5ra7sqsl4s6bhyjvdxu",
+        "assertion_count": 3,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_reviewed-source-is-equivalent-to-deployed-runtime.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "runtime_equivalence"
+    },
+    {
+      "agreement": true,
+      "blocked_by_assumptions": [
+        "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
+      ],
+      "claim_id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
+      "claim_version": "1.0",
+      "classification": "blocked",
+      "classification_reason": "claim has blocking assumptions that prevent production proof acceptance",
+      "disagreement": false,
+      "domain": "service",
+      "evidence_refs": [
+        {
+          "kind": "policy_doc",
+          "notes": "Fail-closed security decision policy.",
+          "path": "security_ir_artifacts/policies/security-decision-policy.json",
+          "review_status": "human_reviewed"
+        },
+        {
+          "kind": "policy_doc",
+          "notes": "Proof receipt consumer policy.",
+          "path": "docs/security_verification/proof_receipt_consumer_policy.md",
+          "review_status": "human_reviewed"
+        },
+        {
+          "kind": "manual_review",
+          "notes": "Claim declaration for xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed"
+        }
+      ],
+      "risk": "blocking",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreid4rtbgozxfekqj7f2dshy2fwoxicvlcznsbzyfeapo27vh33rn2q",
+        "assertion_count": 2,
+        "logic": "QF_LIA",
+        "path": "smtlib/xaman-security_claim_proof-consumers-fail-closed-for-xaman-security-claims.smt2",
+        "query_kind": "xaman_blocking_acceptance_satisfiability"
+      },
+      "solver_results": {
+        "cvc5": {
+          "prover": "cvc5",
+          "reason_unknown": null,
+          "returncode": 0,
+          "solver_result": "sat",
+          "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "stderr": "",
+          "stdout": "sat\n"
+        },
+        "z3": {
+          "prover": "z3",
+          "reason_unknown": null,
+          "returncode": null,
+          "solver_result": "sat",
+          "solver_version": "4.16.0.0",
+          "stderr": "",
+          "stdout": ""
+        }
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "xaman_category": "proof_consumer_policy"
+    }
+  ],
+  "classification_vocabulary": [
+    "proved",
+    "disproved",
+    "unknown",
+    "blocked"
+  ],
+  "disagreement_rejections": [],
+  "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+  "model_id": "xaman-app-security-model-ir-baseline",
+  "model_schema_version": "security-model-ir/v1",
+  "report_cid": "bafkreie2hbjmu67lep7xy7yqkflxxhnzjgf4cxzhpnnzpn4ifixnbgy7eu",
+  "schema_version": "xaman-z3-cvc5-differential/v1",
+  "selected_provers": [
+    "z3",
+    "cvc5"
+  ],
+  "smtlib_manifest_cid": "bafkreihi72gnhiuc7itz7b4yvnn5m2mx7hgf67adir6xe352intckasuba",
+  "smtlib_manifest_path": "security_ir_artifacts/corpora/xaman-app/smtlib/manifest.json",
+  "summary": {
+    "agreements": 9,
+    "blocked": 9,
+    "claim_count": 9,
+    "critical_claim_count": 9,
+    "disagreements": 0,
+    "disproved": 0,
+    "proved": 0,
+    "release_ready": false,
+    "unknown": 0,
+    "unsupported_theory_rejections": 0
+  },
+  "supported_smtlib_logics": [
+    "QF_LIA"
+  ],
+  "task_id": "PORTAL-CXTP-069",
+  "timeout_ms": 5000,
+  "unsupported_theory_rejections": []
+}

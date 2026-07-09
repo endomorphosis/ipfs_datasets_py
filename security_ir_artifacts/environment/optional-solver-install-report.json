@@ -1,0 +1,520 @@
+{
+  "acceptance_policy": {
+    "missing_optional_solver_effect": "degraded proof lane on supported platforms; missing-solver outcome for any claim that requires that lane",
+    "release_claim_rule": "Do not claim solver-backed coverage unless the corresponding proof_lane.status is ready and the proof artifacts were produced.",
+    "silent_success_allowed": false,
+    "unsupported_platform_effect": "blocked proof lane until rerun on a supported Linux/macOS worker"
+  },
+  "blockers": [
+    {
+      "code": "OPTIONAL_SOLVER_UNUSABLE",
+      "component": "lean",
+      "lane_id": "lean_proof_consumer_invariants",
+      "remediation": "Fix the Lean executable or version probe and keep the lane blocked until it reports a usable version.",
+      "status": "blocked"
+    }
+  ],
+  "commands_executed_by_default": "version probes only",
+  "default_mode": "probe-and-plan-only",
+  "dependency_probe_document": "docs/security_verification/solver_dependency_bootstrap.md",
+  "generated_at_utc": "2026-07-08T21:32:44Z",
+  "overall_status": "blocked",
+  "platform": {
+    "machine": "x86_64",
+    "machine_key": "x86_64",
+    "support_level": "native",
+    "supported": true,
+    "system": "Linux",
+    "system_key": "linux",
+    "unsupported_reason": null
+  },
+  "policy_document": "docs/security_verification/optional_solver_installation.md",
+  "proof_lanes": [
+    {
+      "lane_id": "tla_apalache_state_machine",
+      "missing_solver_outcome": "missing-solver",
+      "name": "TLA+/Apalache temporal state-machine checks",
+      "operator_action": "Run a reviewed install command for Apalache, rerun the installer report, and keep the lane degraded until the probe is present.",
+      "release_effect": "degraded-optional-coverage",
+      "required_for_global_release": false,
+      "security_decision": "DEGRADE_OPTIONAL_SOLVER_LANE_MISSING_SOLVER",
+      "status": "degraded"
+    },
+    {
+      "lane_id": "tamarin_symbolic_protocol",
+      "missing_solver_outcome": "missing-solver",
+      "name": "Tamarin symbolic protocol checks",
+      "operator_action": "Run a reviewed install command for Tamarin Prover, rerun the installer report, and keep the lane degraded until the probe is present.",
+      "release_effect": "degraded-optional-coverage",
+      "required_for_global_release": false,
+      "security_decision": "DEGRADE_OPTIONAL_SOLVER_LANE_MISSING_SOLVER",
+      "status": "degraded"
+    },
+    {
+      "lane_id": "proverif_symbolic_protocol",
+      "missing_solver_outcome": "missing-solver",
+      "name": "ProVerif symbolic protocol checks",
+      "operator_action": "Run a reviewed install command for ProVerif, rerun the installer report, and keep the lane degraded until the probe is present.",
+      "release_effect": "degraded-optional-coverage",
+      "required_for_global_release": false,
+      "security_decision": "DEGRADE_OPTIONAL_SOLVER_LANE_MISSING_SOLVER",
+      "status": "degraded"
+    },
+    {
+      "lane_id": "lean_proof_consumer_invariants",
+      "missing_solver_outcome": "missing-solver",
+      "name": "Lean proof-consumer invariant checks",
+      "operator_action": "Fix the Lean executable or version probe and keep the lane blocked until it reports a usable version.",
+      "release_effect": "blocked-proof-lane",
+      "required_for_global_release": false,
+      "security_decision": "BLOCK_OPTIONAL_SOLVER_LANE",
+      "status": "blocked"
+    },
+    {
+      "lane_id": "coq_proof_consumer_invariants",
+      "missing_solver_outcome": "missing-solver",
+      "name": "Coq proof-consumer invariant checks",
+      "operator_action": "Run a reviewed install command for Coq, rerun the installer report, and keep the lane degraded until the probe is present.",
+      "release_effect": "degraded-optional-coverage",
+      "required_for_global_release": false,
+      "security_decision": "DEGRADE_OPTIONAL_SOLVER_LANE_MISSING_SOLVER",
+      "status": "degraded"
+    }
+  ],
+  "repo_root": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets",
+  "schema_version": "crypto-exchange-optional-solver-install-report/v1",
+  "security_decision": "BLOCK_OPTIONAL_SOLVER_INSTALLATION_LANES",
+  "solvers": [
+    {
+      "blocker": null,
+      "capability": "Temporal workflow and interleaving model checking for withdrawal, reservation, freeze, signing, and broadcast states.",
+      "category": "model_checker",
+      "dependency_probe": {
+        "blocking": false,
+        "capability": "Optional TLA+ workflow and interleaving model-checking coverage.",
+        "capability_gap": true,
+        "category": "model_checker",
+        "command": null,
+        "display_name": "Apalache",
+        "executable": null,
+        "minimum_version": null,
+        "name": "apalache",
+        "required": false,
+        "resolved_by_env_var": null,
+        "searched_names": [
+          "apalache-mc",
+          "apalache"
+        ],
+        "status": "missing",
+        "version": null,
+        "version_raw": null
+      },
+      "display_name": "Apalache",
+      "executable_names": [
+        "apalache-mc",
+        "apalache"
+      ],
+      "install_commands": [
+        {
+          "command": "conda install -c conda-forge openjdk=17",
+          "destructive": false,
+          "purpose": "Install a user-scoped OpenJDK 17 runtime when this proof worker uses conda.",
+          "requires_network": true,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-jvm-conda"
+        },
+        {
+          "command": "install -d \"$HOME/.local/opt/apalache\" \"$HOME/.local/bin\" && tar -xzf \"$APALACHE_TGZ\" -C \"$HOME/.local/opt/apalache\" --strip-components=1 && ln -sf \"$HOME/.local/opt/apalache/bin/apalache-mc\" \"$HOME/.local/bin/apalache-mc\"",
+          "destructive": false,
+          "purpose": "Install a previously downloaded, checksum-reviewed Apalache prebuilt archive from $APALACHE_TGZ.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-reviewed-prebuilt"
+        }
+      ],
+      "name": "apalache",
+      "platform_supported": true,
+      "probe_commands": [
+        {
+          "command": "java -version",
+          "destructive": false,
+          "purpose": "Confirm the JVM required by the Apalache launcher is available.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": false,
+          "step": "probe-java"
+        },
+        {
+          "command": "apalache-mc version",
+          "destructive": false,
+          "purpose": "Confirm the Apalache launcher resolves and reports a version.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": false,
+          "step": "probe-apalache"
+        }
+      ],
+      "proof_lane": {
+        "lane_id": "tla_apalache_state_machine",
+        "missing_solver_outcome": "missing-solver",
+        "name": "TLA+/Apalache temporal state-machine checks",
+        "operator_action": "Run a reviewed install command for Apalache, rerun the installer report, and keep the lane degraded until the probe is present.",
+        "release_effect": "degraded-optional-coverage",
+        "required_for_global_release": false,
+        "security_decision": "DEGRADE_OPTIONAL_SOLVER_LANE_MISSING_SOLVER",
+        "status": "degraded"
+      },
+      "source_url": "https://apalache-mc.org/docs/apalache/installation/index.html",
+      "unsupported_platforms": []
+    },
+    {
+      "blocker": null,
+      "capability": "Symbolic protocol proof coverage for key custody, signing authority, replay, and capability flows.",
+      "category": "protocol_prover",
+      "dependency_probe": {
+        "blocking": false,
+        "capability": "Optional protocol proof coverage for key custody and signing authority.",
+        "capability_gap": true,
+        "category": "protocol_prover",
+        "command": null,
+        "display_name": "Tamarin Prover",
+        "executable": null,
+        "minimum_version": null,
+        "name": "tamarin",
+        "required": false,
+        "resolved_by_env_var": null,
+        "searched_names": [
+          "tamarin-prover"
+        ],
+        "status": "missing",
+        "version": null,
+        "version_raw": null
+      },
+      "display_name": "Tamarin Prover",
+      "executable_names": [
+        "tamarin-prover"
+      ],
+      "install_commands": [
+        {
+          "command": "brew install tamarin-prover/tap/tamarin-prover",
+          "destructive": false,
+          "purpose": "Install the upstream Homebrew-packaged Tamarin release on Linuxbrew/Homebrew.",
+          "requires_network": true,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-homebrew"
+        },
+        {
+          "command": "nix-env -iA nixpkgs.tamarin-prover",
+          "destructive": false,
+          "purpose": "Install Tamarin from Nixpkgs when the proof worker is Nix-managed.",
+          "requires_network": true,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-nix"
+        }
+      ],
+      "name": "tamarin",
+      "platform_supported": true,
+      "probe_commands": [
+        {
+          "command": "tamarin-prover --version",
+          "destructive": false,
+          "purpose": "Confirm the Tamarin executable resolves and reports a version.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": false,
+          "step": "probe-tamarin"
+        }
+      ],
+      "proof_lane": {
+        "lane_id": "tamarin_symbolic_protocol",
+        "missing_solver_outcome": "missing-solver",
+        "name": "Tamarin symbolic protocol checks",
+        "operator_action": "Run a reviewed install command for Tamarin Prover, rerun the installer report, and keep the lane degraded until the probe is present.",
+        "release_effect": "degraded-optional-coverage",
+        "required_for_global_release": false,
+        "security_decision": "DEGRADE_OPTIONAL_SOLVER_LANE_MISSING_SOLVER",
+        "status": "degraded"
+      },
+      "source_url": "https://tamarin-prover.com/manual/master/book/002_installation.html",
+      "unsupported_platforms": []
+    },
+    {
+      "blocker": null,
+      "capability": "Cryptographic protocol reachability and secrecy checks for payload, session, and secret-flow models.",
+      "category": "protocol_prover",
+      "dependency_probe": {
+        "blocking": false,
+        "capability": "Optional protocol proof coverage for replay and secrecy properties.",
+        "capability_gap": true,
+        "category": "protocol_prover",
+        "command": null,
+        "display_name": "ProVerif",
+        "executable": null,
+        "minimum_version": null,
+        "name": "proverif",
+        "required": false,
+        "resolved_by_env_var": null,
+        "searched_names": [
+          "proverif"
+        ],
+        "status": "missing",
+        "version": null,
+        "version_raw": null
+      },
+      "display_name": "ProVerif",
+      "executable_names": [
+        "proverif"
+      ],
+      "install_commands": [
+        {
+          "command": "opam update && opam install -y proverif",
+          "destructive": false,
+          "purpose": "Install ProVerif into the active OPAM switch.",
+          "requires_network": true,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-opam"
+        },
+        {
+          "command": "conda install -c conda-forge opam ocaml",
+          "destructive": false,
+          "purpose": "Provision OPAM/OCaml without system package-manager privileges when conda owns the worker environment.",
+          "requires_network": true,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-conda-opam-prereq"
+        }
+      ],
+      "name": "proverif",
+      "platform_supported": true,
+      "probe_commands": [
+        {
+          "command": "proverif -version",
+          "destructive": false,
+          "purpose": "Confirm the ProVerif executable resolves and reports a version.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": false,
+          "step": "probe-proverif"
+        }
+      ],
+      "proof_lane": {
+        "lane_id": "proverif_symbolic_protocol",
+        "missing_solver_outcome": "missing-solver",
+        "name": "ProVerif symbolic protocol checks",
+        "operator_action": "Run a reviewed install command for ProVerif, rerun the installer report, and keep the lane degraded until the probe is present.",
+        "release_effect": "degraded-optional-coverage",
+        "required_for_global_release": false,
+        "security_decision": "DEGRADE_OPTIONAL_SOLVER_LANE_MISSING_SOLVER",
+        "status": "degraded"
+      },
+      "source_url": "https://bblanche.gitlabpages.inria.fr/proverif/",
+      "unsupported_platforms": []
+    },
+    {
+      "blocker": {
+        "code": "OPTIONAL_SOLVER_UNUSABLE",
+        "component": "lean",
+        "lane_id": "lean_proof_consumer_invariants",
+        "remediation": "Fix the Lean executable or version probe and keep the lane blocked until it reports a usable version.",
+        "status": "blocked"
+      },
+      "capability": "Proof receipt, canonicalization, and proof-consumer invariant checking.",
+      "category": "proof_assistant",
+      "dependency_probe": {
+        "blocking": false,
+        "capability": "Optional proof-consumer invariant checking in Lean.",
+        "capability_gap": true,
+        "category": "proof_assistant",
+        "command": [
+          "/home/barberb/.elan/bin/lean",
+          "--version"
+        ],
+        "command_result": {
+          "error": "timeout",
+          "exit_code": null,
+          "stderr_first_line": "b'info: Version 4.2.3 of elan is available! Use `elan self update` to update.\\ninfo: downloading https://releases.lean-lang.org/lean4/v4.31.0/lean-4.31.0-linux.tar.zst\\n'",
+          "stdout_first_line": null,
+          "timed_out": true
+        },
+        "display_name": "Lean",
+        "executable": "/home/barberb/.elan/bin/lean",
+        "minimum_version": null,
+        "name": "lean",
+        "required": false,
+        "resolved_by_env_var": null,
+        "searched_names": [
+          "lean"
+        ],
+        "status": "error",
+        "version": "4.2.3",
+        "version_raw": "b'info: Version 4.2.3 of elan is available! Use `elan self update` to update.\\ninfo: downloading https://releases.lean-lang.org/lean4/v4.31.0/lean-4.31.0-linux.tar.zst\\n'"
+      },
+      "display_name": "Lean",
+      "executable_names": [
+        "lean",
+        "lake"
+      ],
+      "install_commands": [
+        {
+          "command": "curl -fsSLo /tmp/elan-init.sh https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh && sh /tmp/elan-init.sh -y --default-toolchain leanprover/lean4:stable",
+          "destructive": false,
+          "purpose": "Install Lean through elan after reviewing the fetched installer script.",
+          "requires_network": true,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-elan-reviewed-script"
+        },
+        {
+          "command": "export PATH=\"$HOME/.elan/bin:$PATH\"",
+          "destructive": false,
+          "purpose": "Expose elan-managed lean and lake executables to the current shell.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "activate-elan-path"
+        }
+      ],
+      "name": "lean",
+      "platform_supported": true,
+      "probe_commands": [
+        {
+          "command": "lean --version",
+          "destructive": false,
+          "purpose": "Confirm Lean resolves and reports a version.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": false,
+          "step": "probe-lean"
+        },
+        {
+          "command": "lake --version",
+          "destructive": false,
+          "purpose": "Confirm Lake resolves for Lean project checks.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": false,
+          "step": "probe-lake"
+        }
+      ],
+      "proof_lane": {
+        "lane_id": "lean_proof_consumer_invariants",
+        "missing_solver_outcome": "missing-solver",
+        "name": "Lean proof-consumer invariant checks",
+        "operator_action": "Fix the Lean executable or version probe and keep the lane blocked until it reports a usable version.",
+        "release_effect": "blocked-proof-lane",
+        "required_for_global_release": false,
+        "security_decision": "BLOCK_OPTIONAL_SOLVER_LANE",
+        "status": "blocked"
+      },
+      "source_url": "https://lean-lang.org/install/",
+      "unsupported_platforms": []
+    },
+    {
+      "blocker": null,
+      "capability": "Independent proof receipt and proof-consumer invariant checking.",
+      "category": "proof_assistant",
+      "dependency_probe": {
+        "blocking": false,
+        "capability": "Optional proof-consumer invariant checking in Coq.",
+        "capability_gap": true,
+        "category": "proof_assistant",
+        "command": null,
+        "display_name": "Coq",
+        "executable": null,
+        "minimum_version": null,
+        "name": "coq",
+        "required": false,
+        "resolved_by_env_var": null,
+        "searched_names": [
+          "coqc"
+        ],
+        "status": "missing",
+        "version": null,
+        "version_raw": null
+      },
+      "display_name": "Coq",
+      "executable_names": [
+        "coqc",
+        "coqtop"
+      ],
+      "install_commands": [
+        {
+          "command": "conda install -c conda-forge coq",
+          "destructive": false,
+          "purpose": "Install Coq in a user-scoped conda proof environment.",
+          "requires_network": true,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-conda"
+        },
+        {
+          "command": "opam update && opam install -y coq",
+          "destructive": false,
+          "purpose": "Install Coq into the active OPAM switch.",
+          "requires_network": true,
+          "requires_privilege": false,
+          "review_required": true,
+          "step": "install-opam"
+        },
+        {
+          "command": "sudo apt-get update && sudo apt-get install -y coq",
+          "destructive": false,
+          "purpose": "Install the distribution-packaged Coq compiler on Debian/Ubuntu after OS-owner approval.",
+          "requires_network": true,
+          "requires_privilege": true,
+          "review_required": true,
+          "step": "install-apt-reviewed"
+        }
+      ],
+      "name": "coq",
+      "platform_supported": true,
+      "probe_commands": [
+        {
+          "command": "coqc --version",
+          "destructive": false,
+          "purpose": "Confirm the Coq compiler resolves and reports a version.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": false,
+          "step": "probe-coqc"
+        },
+        {
+          "command": "coqtop --version",
+          "destructive": false,
+          "purpose": "Confirm the Coq toplevel resolves and reports a version.",
+          "requires_network": false,
+          "requires_privilege": false,
+          "review_required": false,
+          "step": "probe-coqtop"
+        }
+      ],
+      "proof_lane": {
+        "lane_id": "coq_proof_consumer_invariants",
+        "missing_solver_outcome": "missing-solver",
+        "name": "Coq proof-consumer invariant checks",
+        "operator_action": "Run a reviewed install command for Coq, rerun the installer report, and keep the lane degraded until the probe is present.",
+        "release_effect": "degraded-optional-coverage",
+        "required_for_global_release": false,
+        "security_decision": "DEGRADE_OPTIONAL_SOLVER_LANE_MISSING_SOLVER",
+        "status": "degraded"
+      },
+      "source_url": "https://rocq-prover.org/doc/V8.17.1/refman/practical-tools/utilities.html",
+      "unsupported_platforms": []
+    }
+  ],
+  "summary": {
+    "blocked_lane_count": 1,
+    "degraded_lane_count": 4,
+    "missing_solver_count": 4,
+    "ready_lane_count": 0,
+    "solver_count": 5,
+    "unsupported_platform_count": 0,
+    "unusable_solver_count": 1
+  },
+  "task_id": "PORTAL-CXTP-086"
+}
