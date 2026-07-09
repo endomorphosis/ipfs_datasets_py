@@ -55,6 +55,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_004828_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     ModalLogicFamily,
     compiler_refined_modal_family_cue_margin_buffer,
@@ -154,6 +155,58 @@ def test_packet_003002_registry_refines_modal_family_cue_policy() -> None:
         ("frame", "epistemic"): 0.34,
     }
     for predicted_family, target_family in COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= margin_floors[(predicted_family, target_family)]
+        )
+
+
+def test_packet_007144_registry_refines_modal_family_cue_policy() -> None:
+    expected_pairs = {
+        ("deontic", "frame"),
+        ("deontic", "temporal"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS) == expected_pairs
+    margin_floors = {
+        ("deontic", "frame"): 0.22,
+        ("deontic", "temporal"): 0.36,
+        ("frame", "deontic"): 0.54,
+        ("frame", "temporal"): 0.68,
+    }
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert target_family in compiler_required_adaptive_ambiguity_targets(
             predicted_family
