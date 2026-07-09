@@ -44161,6 +44161,85 @@ def test_decompiler_emits_policy_view_reconstruction_for_frame_policy_residuals(
     assert "knowledge graph legal relations" in structural_text
 
 
+def test_decompiler_emits_target_view_clause_for_frame_conditional_residuals() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Public policy exception. Nothing in this chapter prevents a court "
+            "from refusing recognition if the action is manifestly contrary "
+            "to public policy."
+        ),
+        predicate="court_refuse_recognition_public_policy_exception",
+        conditions=["if the action is manifestly contrary to public policy"],
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "predicted_family": "frame",
+            "target_family": "conditional_normative",
+            "target_view": "TDFOL.prover",
+            "legal_ir_underrepresented_components": [
+                "TDFOL.prover",
+                "CEC.native",
+            ],
+        }
+    ]
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    target_clauses = slot_texts["typed_ir_target_view_semantic_clause"]
+
+    assert any(
+        "legal frame reconstructs conditional obligation" in value
+        and "if the action is manifestly contrary to public policy" in value
+        and "typed first order prover obligations" in value
+        for value in target_clauses
+    )
+    assert any(
+        "legal frame reconstructs deontic duty" in value
+        and "legal duty" in value
+        and "event calculus native legal events" in value
+        for value in target_clauses
+    )
+
+
+def test_decompiler_emits_target_view_clause_for_deontic_temporal_residuals() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "The Administrator shall promulgate regulations to carry out the "
+            "requirements of this section within 1 year after November 15, 1990."
+        ),
+        predicate="administrator_promulgate_regulations",
+        conditions=["within 1 year after November 15, 1990"],
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "predicted_family": "frame",
+            "target_family": "temporal",
+            "target_view": "deontic.ir",
+            "legal_ir_underrepresented_components": [
+                "deontic.ir",
+                "TDFOL.prover",
+            ],
+        }
+    ]
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    target_clauses = slot_texts["typed_ir_target_view_semantic_clause"]
+
+    assert any(
+        "deontic duty reconstructs temporal deadline" in value
+        and "within 1 year after November 15, 1990" in value
+        and "deadline period" in value
+        for value in target_clauses
+    )
+
+
 def test_decompiler_reconstructs_timber_cutting_forest_temporal_slots() -> None:
     document = _single_formula_document(
         family="frame",

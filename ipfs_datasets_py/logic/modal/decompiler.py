@@ -3627,6 +3627,29 @@ def _typed_ir_reconstruction_phrases(
                         provenance_only=provenance_only,
                     )
                 )
+            target_view_clause = _typed_ir_target_view_semantic_clause_text(
+                source_family=family,
+                target_family=target,
+                force=force,
+                polarity=polarity,
+                predicate_text=predicate_text,
+                roles=roles,
+                condition_values=condition_values,
+                exception_values=exception_values,
+                semantic_atoms=semantic_atoms,
+                legal_ir_view_support=legal_ir_view_support,
+                support_values=support_values,
+                max_tokens=44,
+            )
+            if target_view_clause:
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=target_view_clause,
+                        slot="typed_ir_target_view_semantic_clause",
+                        spans=spans,
+                        provenance_only=provenance_only,
+                    )
+                )
     return phrases
 
 
@@ -4033,6 +4056,125 @@ def _typed_ir_policy_view_semantic_reconstruction_text(
     if len(parts) <= 2:
         return ""
     return _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+
+
+def _typed_ir_target_view_semantic_clause_text(
+    *,
+    source_family: str,
+    target_family: str,
+    force: str,
+    polarity: str,
+    predicate_text: str,
+    roles: Mapping[str, str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    semantic_atoms: Sequence[str],
+    legal_ir_view_support: Sequence[str],
+    support_values: Sequence[str],
+    max_tokens: int,
+) -> str:
+    """Render target-view legal semantics as a compact clause."""
+    source = _clean_text(source_family).lower()
+    target = _clean_text(target_family).lower()
+    if not source or target not in {
+        "conditional_normative",
+        "deontic",
+        "frame",
+        "temporal",
+    }:
+        return ""
+
+    parts: List[str] = []
+
+    def add(value: str) -> None:
+        cleaned = _humanize_typed_ir_value(value)
+        if cleaned:
+            parts.append(cleaned)
+
+    pair_label = (
+        _typed_ir_family_pair_bridge_label(source, target)
+        or _typed_ir_family_pair_reconstruction_label(source, target)
+    )
+    add(pair_label)
+
+    subject = roles.get("subject", "")
+    action = roles.get("action", "")
+    object_value = roles.get("object", "")
+    temporal = roles.get("temporal", "")
+    predicate_head = _typed_decompiler_predicate_head_text(predicate_text)
+
+    if target == "conditional_normative":
+        first_condition = (
+            _clean_text(condition_values[0]).lower() if condition_values else ""
+        )
+        if not first_condition.startswith(
+            ("if ", "unless ", "except ", "provided ", "subject to ")
+        ):
+            add("if")
+        for condition in condition_values[:2]:
+            add(condition)
+        for exception in exception_values[:2]:
+            add("except")
+            add(exception)
+            add(subject)
+    elif target == "temporal":
+        first_temporal = _clean_text(
+            temporal or (condition_values[0] if condition_values else "")
+        ).lower()
+        if not first_temporal.startswith(
+            (
+                "after ",
+                "before ",
+                "by ",
+                "no later ",
+                "not later ",
+                "until ",
+                "when ",
+                "within ",
+            )
+        ):
+            add("when")
+        add(temporal)
+        for condition in condition_values[:2]:
+            add(condition)
+        add("deadline period")
+        add(subject)
+    elif target == "deontic":
+        add(subject)
+        if force == "permission":
+            add("may")
+        elif force == "prohibition" or polarity == "negative_scope":
+            add("must not")
+        elif force == "obligation":
+            add("shall")
+        else:
+            add("legal duty")
+    elif target == "frame":
+        add("legal frame")
+        add(subject)
+
+    add(action)
+    add(object_value)
+    if not (subject or action or object_value):
+        add(predicate_head or predicate_text)
+
+    if force in {"obligation", "permission", "prohibition"}:
+        add(force)
+    if polarity == "negative_scope":
+        add("negative scope")
+
+    for atom in semantic_atoms[:6]:
+        add(atom)
+    for view in _typed_decompiler_family_pair_legal_ir_views(source, target):
+        add(_legal_ir_view_semantic_label(view))
+    for view_label in legal_ir_view_support[:4]:
+        add(view_label)
+    for value in support_values[:4]:
+        add(value)
+
+    if len(parts) <= 2:
+        return ""
+    return _bounded_surface_text(parts, max_tokens=max_tokens)
 
 
 def _typed_ir_reconstruction_cue_support_values(
