@@ -45561,6 +45561,50 @@ def test_decompiler_reconstructs_packet_4166_modal_ir_semantic_slots() -> None:
     assert "receiver duty" in receivership_structural_text
 
 
+def test_decompiler_reconstructs_inventory_study_report_temporal_bridge_slots() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "Within 1 year after October 24, 1992, the Secretary shall submit "
+            "to the Congress a study and report that includes a comprehensive "
+            "inventory of all Government owned uranium or uranium equivalents."
+        ),
+        predicate="secretary_submit_uranium_inventory_study_report",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert {
+        "congressional_report_duty",
+        "inventory_study_report",
+        "report_contents",
+        "study_report_duty",
+        "uranium_inventory_study",
+    }.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
+    assert {"deontic->frame", "deontic->temporal"}.issubset(
+        set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "uranium_inventory_study:deontic->temporal" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert "deontic duty reconstructs temporal deadline" in slot_texts[
+        "typed_ir_family_pair_semantic_bridge"
+    ]
+    assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(slot_texts["legal_ir_view_prototype"])
+    )
+    assert "uranium inventory study" in structural_text
+    assert "temporal deadline period" in structural_text
+
+
 def test_decompiler_reconstructs_packet_001953_frame_semantic_slots() -> None:
     judicial_review = _single_formula_document(
         family="frame",

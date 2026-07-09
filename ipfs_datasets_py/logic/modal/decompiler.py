@@ -1131,7 +1131,15 @@ _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS = frozenset(
 )
 _TEMPORAL_STATUTORY_RECONSTRUCTION_ATOMS = frozenset(
     {
+        "annual_report_duty",
+        "congressional_report_duty",
+        "deadline_report_duty",
         "effective_date_transition",
+        "inventory_study_report",
+        "report_contents",
+        "report_duty",
+        "study_report_duty",
+        "uranium_inventory_study",
     }
 )
 _RESEARCH_ADMINISTRATION_RECONSTRUCTION_ATOMS = frozenset(
@@ -3957,6 +3965,9 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
         "deontic->conditional_normative": (
             "deontic duty reconstructs conditioned legal obligation"
         ),
+        "deontic->deontic": "deontic duty preserves legal obligation",
+        "deontic->frame": "deontic duty reconstructs legal frame",
+        "deontic->temporal": "deontic duty reconstructs temporal deadline",
         "frame->conditional_normative": (
             "legal frame reconstructs conditional obligation"
         ),
@@ -4742,7 +4753,7 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("report_duty")
     if re.search(
-        r"\breports?\b.{0,80}\b(?:contents?|discussion|actions?\s+taken|include)\b",
+        r"\breports?\b.{0,80}\b(?:contents?|discussion|actions?\s+taken|includes?)\b",
         normalized,
     ):
         add("report_contents")
