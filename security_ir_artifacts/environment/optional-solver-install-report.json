@@ -5,20 +5,12 @@
     "silent_success_allowed": false,
     "unsupported_platform_effect": "blocked proof lane until rerun on a supported Linux/macOS worker"
   },
-  "blockers": [
-    {
-      "code": "OPTIONAL_SOLVER_UNUSABLE",
-      "component": "lean",
-      "lane_id": "lean_proof_consumer_invariants",
-      "remediation": "Fix the Lean executable or version probe and keep the lane blocked until it reports a usable version.",
-      "status": "blocked"
-    }
-  ],
+  "blockers": [],
   "commands_executed_by_default": "version probes only",
   "default_mode": "probe-and-plan-only",
   "dependency_probe_document": "docs/security_verification/solver_dependency_bootstrap.md",
-  "generated_at_utc": "2026-07-08T21:32:44Z",
-  "overall_status": "blocked",
+  "generated_at_utc": "2026-07-10T05:22:42Z",
+  "overall_status": "degraded",
   "platform": {
     "machine": "x86_64",
     "machine_key": "x86_64",
@@ -62,13 +54,13 @@
     },
     {
       "lane_id": "lean_proof_consumer_invariants",
-      "missing_solver_outcome": "missing-solver",
+      "missing_solver_outcome": null,
       "name": "Lean proof-consumer invariant checks",
-      "operator_action": "Fix the Lean executable or version probe and keep the lane blocked until it reports a usable version.",
-      "release_effect": "blocked-proof-lane",
+      "operator_action": "Lean is available; this optional proof lane may claim coverage after proofs run.",
+      "release_effect": "coverage-available",
       "required_for_global_release": false,
-      "security_decision": "BLOCK_OPTIONAL_SOLVER_LANE",
-      "status": "blocked"
+      "security_decision": "OPTIONAL_SOLVER_LANE_READY",
+      "status": "ready"
     },
     {
       "lane_id": "coq_proof_consumer_invariants",
@@ -83,7 +75,7 @@
   ],
   "repo_root": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets",
   "schema_version": "crypto-exchange-optional-solver-install-report/v1",
-  "security_decision": "BLOCK_OPTIONAL_SOLVER_INSTALLATION_LANES",
+  "security_decision": "OPTIONAL_SOLVER_INSTALLATION_HAS_DEGRADED_LANES",
   "solvers": [
     {
       "blocker": null,
@@ -316,30 +308,24 @@
       "unsupported_platforms": []
     },
     {
-      "blocker": {
-        "code": "OPTIONAL_SOLVER_UNUSABLE",
-        "component": "lean",
-        "lane_id": "lean_proof_consumer_invariants",
-        "remediation": "Fix the Lean executable or version probe and keep the lane blocked until it reports a usable version.",
-        "status": "blocked"
-      },
+      "blocker": null,
       "capability": "Proof receipt, canonicalization, and proof-consumer invariant checking.",
       "category": "proof_assistant",
       "dependency_probe": {
         "blocking": false,
         "capability": "Optional proof-consumer invariant checking in Lean.",
-        "capability_gap": true,
+        "capability_gap": false,
         "category": "proof_assistant",
         "command": [
           "/home/barberb/.elan/bin/lean",
           "--version"
         ],
         "command_result": {
-          "error": "timeout",
-          "exit_code": null,
-          "stderr_first_line": "b'info: Version 4.2.3 of elan is available! Use `elan self update` to update.\\ninfo: downloading https://releases.lean-lang.org/lean4/v4.31.0/lean-4.31.0-linux.tar.zst\\n'",
-          "stdout_first_line": null,
-          "timed_out": true
+          "error": null,
+          "exit_code": 0,
+          "stderr_first_line": null,
+          "stdout_first_line": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+          "timed_out": false
         },
         "display_name": "Lean",
         "executable": "/home/barberb/.elan/bin/lean",
@@ -350,9 +336,9 @@
         "searched_names": [
           "lean"
         ],
-        "status": "error",
-        "version": "4.2.3",
-        "version_raw": "b'info: Version 4.2.3 of elan is available! Use `elan self update` to update.\\ninfo: downloading https://releases.lean-lang.org/lean4/v4.31.0/lean-4.31.0-linux.tar.zst\\n'"
+        "status": "present",
+        "version": "4.31.0",
+        "version_raw": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
       },
       "display_name": "Lean",
       "executable_names": [
@@ -403,13 +389,13 @@
       ],
       "proof_lane": {
         "lane_id": "lean_proof_consumer_invariants",
-        "missing_solver_outcome": "missing-solver",
+        "missing_solver_outcome": null,
         "name": "Lean proof-consumer invariant checks",
-        "operator_action": "Fix the Lean executable or version probe and keep the lane blocked until it reports a usable version.",
-        "release_effect": "blocked-proof-lane",
+        "operator_action": "Lean is available; this optional proof lane may claim coverage after proofs run.",
+        "release_effect": "coverage-available",
         "required_for_global_release": false,
-        "security_decision": "BLOCK_OPTIONAL_SOLVER_LANE",
-        "status": "blocked"
+        "security_decision": "OPTIONAL_SOLVER_LANE_READY",
+        "status": "ready"
       },
       "source_url": "https://lean-lang.org/install/",
       "unsupported_platforms": []
@@ -508,13 +494,13 @@
     }
   ],
   "summary": {
-    "blocked_lane_count": 1,
+    "blocked_lane_count": 0,
     "degraded_lane_count": 4,
     "missing_solver_count": 4,
-    "ready_lane_count": 0,
+    "ready_lane_count": 1,
     "solver_count": 5,
     "unsupported_platform_count": 0,
-    "unusable_solver_count": 1
+    "unusable_solver_count": 0
   },
   "task_id": "PORTAL-CXTP-086"
 }

@@ -6,24 +6,11 @@
     "silent_success_allowed": false,
     "unusable_lean_effect": "blocked proof-consumer lane until lean --version and kernel compile checks succeed"
   },
-  "blockers": [
-    {
-      "code": "LEAN_EXECUTABLE_UNUSABLE",
-      "component": "lean",
-      "remediation": "Fix the Lean executable, active toolchain, Lake executable, or proof-kernel compile error before claiming Lean proof-consumer coverage.",
-      "status": "blocked"
-    },
-    {
-      "code": "LAKE_EXECUTABLE_UNUSABLE",
-      "component": "lake",
-      "remediation": "Fix the Lean executable, active toolchain, Lake executable, or proof-kernel compile error before claiming Lean proof-consumer coverage.",
-      "status": "blocked"
-    }
-  ],
+  "blockers": [],
   "commands_executed_by_default": "Lean/Lake/elan version probes and Lean proof-kernel compile check only",
   "default_mode": "probe-only",
   "degraded_reasons": [],
-  "generated_at_utc": "2026-07-09T15:25:08Z",
+  "generated_at_utc": "2026-07-10T05:22:47Z",
   "installation_guidance": {
     "commands": [
       {
@@ -68,7 +55,7 @@
     "source_url": "https://lean-lang.org/install/"
   },
   "optional_installer_document": "docs/security_verification/optional_solver_installation.md",
-  "overall_status": "blocked",
+  "overall_status": "ready",
   "platform": {
     "machine": "x86_64",
     "machine_key": "x86_64",
@@ -128,56 +115,108 @@
   ],
   "proof_consumer_claims": {
     "claim_id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
-    "claim_status": "blocked",
+    "claim_status": "claimable-with-lean-receipt",
     "missing_lean_receipt_outcome": "missing-solver",
     "proof_consumer_report": {
-      "proof_consumer_report_exists": false,
+      "artifact_cid": "bafkreieufo2hjjcczbjlp72e6y6vbz7nvfnixgoyqkedf2v35kssxmxagy",
+      "claim_id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
+      "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
+      "proof_consumer_report_exists": true,
       "proof_consumer_report_path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
-      "proof_consumer_report_sha256": null
+      "proof_consumer_report_sha256": "ee0112d83509732a7c1718ca46bb38a7dd82706c055753ae9e160717992ac2d8",
+      "proof_kernel_cid": "bafkreidz3dtzwtt6wcpr7wjapojtivumtzgnv6batq2jcwiql2yawpoyvu",
+      "rejected_fixture_count": 7,
+      "rejected_fixture_outcomes": [
+        "DISPROVED",
+        "MISMATCHED_REPORT_CID",
+        "MISSING_SOLVER",
+        "NOT_MODELED",
+        "STALE_ENVIRONMENT_PROBE",
+        "UNACCEPTED_ASSUMPTION",
+        "UNKNOWN"
+      ],
+      "schema_version": "xaman-proof-consumer-report/v1"
     },
-    "receipt_acceptance": "blocked-or-degraded-no-lean-receipt",
+    "receipt_acceptance": "allowed-only-after-matching-lean-kernel-check",
     "silent_acceptance_allowed": false,
     "xaman_rejected_fixture_outcome": "MISSING_SOLVER"
   },
   "proof_consumer_document": "docs/security_verification/xaman_proof_consumer_invariants.md",
   "proof_kernel_check": {
-    "command": null,
-    "exists": false,
+    "command": [
+      "/home/barberb/.elan/bin/lean",
+      "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean"
+    ],
+    "command_result": {
+      "error": null,
+      "exit_code": 0,
+      "stderr_first_line": null,
+      "stdout_first_line": null,
+      "timed_out": false
+    },
+    "exists": true,
     "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
     "path_absolute": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
-    "reason": "Lean executable is not available.",
-    "sha256": null,
-    "status": "missing-lean"
+    "sha256": "d6cebfe8ef14e23b8326feb4d6f3ca49dd3829fb7e47c8b19fbb44f9833e3fc0",
+    "status": "checked"
   },
   "proof_lane": {
     "lane_id": "lean_proof_consumer_invariants",
-    "missing_solver_outcome": "missing-solver",
+    "missing_solver_outcome": null,
     "name": "Lean proof-consumer invariant checks",
-    "operator_action": "Fix the Lean executable, active toolchain, Lake executable, or proof-kernel compile error before claiming Lean proof-consumer coverage.",
-    "release_effect": "blocked-proof-lane",
+    "operator_action": "Lean and Lake are available and the Lean proof kernel compile-checks; receipt coverage may be claimed only with this report and matching proof artifacts.",
+    "release_effect": "coverage-available",
     "required_for_global_release": false,
-    "security_decision": "BLOCK_OPTIONAL_SOLVER_LANE",
-    "status": "blocked"
+    "security_decision": "OPTIONAL_SOLVER_LANE_READY",
+    "status": "ready"
   },
   "repo_root": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets",
   "schema_version": "crypto-exchange-lean-solver-lane-report/v1",
-  "security_decision": "BLOCK_OPTIONAL_SOLVER_LANE",
+  "security_decision": "OPTIONAL_SOLVER_LANE_READY",
   "summary": {
-    "blocked_lane_count": 1,
+    "blocked_lane_count": 0,
     "degraded_lane_count": 0,
     "elan_present": true,
-    "lake_present": false,
-    "lean_present": false,
-    "proof_kernel_checked": false,
-    "ready_lane_count": 0,
+    "lake_present": true,
+    "lean_present": true,
+    "proof_kernel_checked": true,
+    "ready_lane_count": 1,
     "silent_success_allowed": false
   },
   "task_id": "PORTAL-CXTP-090",
   "toolchain_paths": {
     "elan_toolchains_root": "/home/barberb/.elan/toolchains",
     "lake_executable": "/home/barberb/.elan/bin/lake",
-    "lean_libdir": null,
-    "lean_prefix": null
+    "lean_libdir": {
+      "command": [
+        "/home/barberb/.elan/bin/lean",
+        "--print-libdir"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.31.0/lib/lean",
+        "timed_out": false
+      },
+      "status": "present",
+      "value": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.31.0/lib/lean"
+    },
+    "lean_prefix": {
+      "command": [
+        "/home/barberb/.elan/bin/lean",
+        "--print-prefix"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.31.0",
+        "timed_out": false
+      },
+      "status": "present",
+      "value": "/home/barberb/.elan/toolchains/leanprover--lean4---v4.31.0"
+    }
   },
   "tools": {
     "elan": {
@@ -210,11 +249,11 @@
         "--version"
       ],
       "command_result": {
-        "error": "timeout",
-        "exit_code": null,
-        "stderr_first_line": "info: Version 4.2.3 of elan is available! Use `elan self update` to update.",
-        "stdout_first_line": null,
-        "timed_out": true
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "Lake version 5.0.0-src+68218e8 (Lean version 4.31.0)",
+        "timed_out": false
       },
       "display_name": "Lake",
       "executable": "/home/barberb/.elan/bin/lake",
@@ -224,9 +263,9 @@
       "searched_names": [
         "lake"
       ],
-      "status": "error",
-      "version": null,
-      "version_raw": "info: Version 4.2.3 of elan is available! Use `elan self update` to update."
+      "status": "present",
+      "version": "5.0.0",
+      "version_raw": "Lake version 5.0.0-src+68218e8 (Lean version 4.31.0)"
     },
     "lean": {
       "command": [
@@ -234,11 +273,11 @@
         "--version"
       ],
       "command_result": {
-        "error": "timeout",
-        "exit_code": null,
-        "stderr_first_line": "info: Version 4.2.3 of elan is available! Use `elan self update` to update.",
-        "stdout_first_line": null,
-        "timed_out": true
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+        "timed_out": false
       },
       "display_name": "Lean",
       "executable": "/home/barberb/.elan/bin/lean",
@@ -248,9 +287,9 @@
       "searched_names": [
         "lean"
       ],
-      "status": "error",
-      "version": null,
-      "version_raw": "info: Version 4.2.3 of elan is available! Use `elan self update` to update."
+      "status": "present",
+      "version": "4.31.0",
+      "version_raw": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
     }
   }
 }
