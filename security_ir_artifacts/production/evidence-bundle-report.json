@@ -1,0 +1,17 @@
+{
+  "blockers": [
+    {
+      "code": "BUNDLE_FILE_MISSING",
+      "path": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/production/evidence-bundle.json"
+    }
+  ],
+  "checked_at_utc": "2026-07-10T05:22:41Z",
+  "overall_status": "blocked",
+  "production_release_blocked": true,
+  "schema_version": "production-evidence-bundle/v1",
+  "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE",
+  "summary": {
+    "blocker_count": 1
+  },
+  "task_id": "PORTAL-CXTP-085"
+}
