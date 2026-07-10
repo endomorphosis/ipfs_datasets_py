@@ -123,7 +123,7 @@
         "error": null,
         "exit_code": 0,
         "stderr_first_line": null,
-        "stdout_first_line": "Version 5.6.3",
+        "stdout_first_line": "Version 5.5.4",
         "timed_out": false
       },
       "display_name": "TypeScript compiler",
@@ -136,8 +136,8 @@
         "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc"
       ],
       "status": "present",
-      "version": "5.6.3",
-      "version_raw": "Version 5.6.3"
+      "version": "5.5.4",
+      "version_raw": "Version 5.5.4"
     },
     {
       "blocking": false,
@@ -258,18 +258,18 @@
     {
       "blocking": false,
       "capability": "Optional proof-consumer invariant checking in Lean.",
-      "capability_gap": true,
+      "capability_gap": false,
       "category": "proof_assistant",
       "command": [
         "/home/barberb/.elan/bin/lean",
         "--version"
       ],
       "command_result": {
-        "error": "timeout",
-        "exit_code": null,
-        "stderr_first_line": "b'info: Version 4.2.3 of elan is available! Use `elan self update` to update.\\ninfo: downloading https://releases.lean-lang.org/lean4/v4.31.0/lean-4.31.0-linux.tar.zst\\n'",
-        "stdout_first_line": null,
-        "timed_out": true
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+        "timed_out": false
       },
       "display_name": "Lean",
       "executable": "/home/barberb/.elan/bin/lean",
@@ -280,9 +280,9 @@
       "searched_names": [
         "lean"
       ],
-      "status": "error",
-      "version": "4.2.3",
-      "version_raw": "b'info: Version 4.2.3 of elan is available! Use `elan self update` to update.\\ninfo: downloading https://releases.lean-lang.org/lean4/v4.31.0/lean-4.31.0-linux.tar.zst\\n'"
+      "status": "present",
+      "version": "4.31.0",
+      "version_raw": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
     },
     {
       "blocking": false,
@@ -306,14 +306,14 @@
   ],
   "environment_variables": [
     {
-      "entry_count": 32,
-      "length": 1067,
+      "entry_count": 28,
+      "length": 930,
       "name": "PATH",
       "present": true,
       "purpose": "Executable discovery path for Python, Node, SMT solvers, and proof assistants.",
       "required": true,
       "status": "present",
-      "value_sha256": "331d2cb8ea154ba8173e733827a3ce5ab199b42ca2d6cfc3f2319207d9184e3d"
+      "value_sha256": "fc306bca6d08c89cf100ce87b3d3d61abcbb0fe48f00265b61aa0d9bda964915"
     },
     {
       "entry_count": 1,
@@ -406,7 +406,7 @@
       "status": "missing"
     }
   ],
-  "generated_at_utc": "2026-07-08T20:11:22Z",
+  "generated_at_utc": "2026-07-10T06:23:49Z",
   "optional_capability_gaps": [
     {
       "capability": "Optional TLA+ workflow and interleaving model-checking coverage.",
@@ -434,15 +434,6 @@
       "display_name": "ProVerif",
       "impact": "Capability unavailable; do not claim this prover coverage for release evidence.",
       "status": "missing"
-    },
-    {
-      "capability": "Optional proof-consumer invariant checking in Lean.",
-      "category": "proof_assistant",
-      "code": "OPTIONAL_DEPENDENCY_UNUSABLE",
-      "component": "lean",
-      "display_name": "Lean",
-      "impact": "Capability unavailable; do not claim this prover coverage for release evidence.",
-      "status": "error"
     },
     {
       "capability": "Optional proof-consumer invariant checking in Coq.",
@@ -477,8 +468,8 @@
   "summary": {
     "blocking_evidence_count": 0,
     "dependency_count": 11,
-    "env_var_count": 13,
-    "optional_capability_gap_count": 5,
+    "env_var_count": 12,
+    "optional_capability_gap_count": 4,
     "present_required_dependency_count": 6,
     "required_dependency_count": 6,
     "required_env_var_count": 2

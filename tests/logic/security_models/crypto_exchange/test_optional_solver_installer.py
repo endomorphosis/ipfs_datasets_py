@@ -1,230 +1,106 @@
-"""Tests for PORTAL-CXTP-086 optional theorem-solver installer."""
-
-from __future__ import annotations
-
 import importlib.util
 import json
 from pathlib import Path
+import os
 import sys
-from typing import Sequence
+from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-SCRIPT_PATH = (
-    REPO_ROOT
-    / 'scripts'
-    / 'ops'
-    / 'security_verification'
-    / 'install_optional_theorem_solvers.py'
-)
+SCRIPT_PATH = REPO_ROOT / 'scripts' / 'ops' / 'security_verification' / 'install_optional_theorem_solvers.py'
 DOC_PATH = REPO_ROOT / 'docs' / 'security_verification' / 'optional_solver_installation.md'
-ARTIFACT_PATH = (
-    REPO_ROOT
-    / 'security_ir_artifacts'
-    / 'environment'
-    / 'optional-solver-install-report.json'
-)
 
 
-def _load_script_module():
-    spec = importlib.util.spec_from_file_location(
-        'install_optional_theorem_solvers',
-        SCRIPT_PATH,
-    )
-    if spec is None or spec.loader is None:  # pragma: no cover
-        raise AssertionError('failed to load optional solver installer')
+def _load_module() -> Any:
+    spec = importlib.util.spec_from_file_location('install_optional_theorem_solvers', SCRIPT_PATH)
+    assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
 
-def _fake_runner(command: Sequence[str], timeout_seconds: int) -> dict[str, object]:
-    executable = Path(command[0]).name
-    outputs = {
-        'apalache-mc': 'Apalache 0.50.0',
-        'tamarin-prover': 'tamarin-prover 1.10.0',
-        'proverif': 'ProVerif 2.05',
-        'lean': 'Lean (version 4.12.0, x86_64-unknown-linux-gnu)',
-        'coqc': 'The Coq Proof Assistant, version 8.20.0',
-    }
-    return {
-        'exit_code': 0,
-        'stdout': outputs.get(executable, f'{executable} version 1.0.0'),
-        'stderr': '',
-        'timed_out': False,
-        'error': None,
-    }
+def _fake_executable(directory: Path, name: str, output: str) -> None:
+    path = directory / name
+    path.write_text(f'#!/usr/bin/env sh\necho "{output}"\n', encoding='utf-8')
+    path.chmod(path.stat().st_mode | 0o111)
 
 
-def test_build_report_records_safe_commands_for_every_optional_solver() -> None:
-    module = _load_script_module()
-    report = module.build_report(
-        repo_root=REPO_ROOT,
-        environ={'PATH': '/usr/bin', 'PYTHONPATH': '.'},
-        runner=_fake_runner,
-        which=lambda candidate: None,
-        generated_at_utc='2026-07-08T00:00:00Z',
-        platform_system='Linux',
-        platform_machine='x86_64',
-    )
+def test_optional_solver_installer_reports_all_expected_lanes_with_plan_only_mode(tmp_path: Path) -> None:
+    module = _load_module()
 
-    assert report['schema_version'] == 'crypto-exchange-optional-solver-install-report/v1'
+    report = module.build_report(repo_root=tmp_path, solver_probe_path=tmp_path / 'missing.json', path_env='')
+
+    assert report['schema_version'] == 'optional-theorem-solver-install-report/v1'
     assert report['task_id'] == 'PORTAL-CXTP-086'
-    assert report['default_mode'] == 'probe-and-plan-only'
-    assert report['commands_executed_by_default'] == 'version probes only'
-    assert report['overall_status'] == 'degraded'
-    assert report['security_decision'] == 'OPTIONAL_SOLVER_INSTALLATION_HAS_DEGRADED_LANES'
-    assert report['acceptance_policy']['silent_success_allowed'] is False
-
-    solvers = {solver['name']: solver for solver in report['solvers']}
-    assert set(solvers) == {'apalache', 'tamarin', 'proverif', 'lean', 'coq'}
-    for name, solver in solvers.items():
-        assert solver['platform_supported'] is True
-        assert solver['install_commands'], name
-        assert solver['probe_commands'], name
-        assert all(command['review_required'] for command in solver['install_commands'])
-        assert all(command['destructive'] is False for command in solver['install_commands'])
-        assert solver['proof_lane']['status'] == 'degraded'
-        assert solver['proof_lane']['missing_solver_outcome'] == 'missing-solver'
-        assert solver['proof_lane']['release_effect'] == 'degraded-optional-coverage'
+    assert report['installer_mode'] == 'plan_only'
+    assert {lane['name'] for lane in report['lanes']} == {'apalache', 'tamarin', 'proverif', 'lean', 'coq'}
+    assert report['proof_acceptance_blocked'] is False
+    assert report['security_decision'] == 'OPTIONAL_SOLVER_LANES_EXPLICITLY_BLOCKED_OR_READY'
+    assert all(lane['install_plan']['commands'] for lane in report['lanes'])
 
 
-def test_present_solvers_make_corresponding_lanes_ready() -> None:
-    module = _load_script_module()
-    available = {
-        'apalache-mc': '/opt/apalache/bin/apalache-mc',
-        'tamarin-prover': '/usr/local/bin/tamarin-prover',
-        'proverif': '/usr/local/bin/proverif',
-        'lean': '/home/me/.elan/bin/lean',
-        'coqc': '/home/me/.opam/default/bin/coqc',
-    }
+def test_optional_solver_installer_blocks_missing_optional_lanes(tmp_path: Path) -> None:
+    module = _load_module()
 
-    report = module.build_report(
-        repo_root=REPO_ROOT,
-        environ={'PATH': '/usr/bin', 'PYTHONPATH': '.'},
-        runner=_fake_runner,
-        which=lambda candidate: available.get(candidate),
-        generated_at_utc='2026-07-08T00:00:00Z',
-        platform_system='Linux',
-        platform_machine='x86_64',
-    )
+    report = module.build_report(repo_root=tmp_path, solver_probe_path=tmp_path / 'missing.json', path_env='')
+    lanes = {lane['name']: lane for lane in report['lanes']}
 
-    assert report['overall_status'] == 'ready'
-    assert report['security_decision'] == 'OPTIONAL_SOLVER_INSTALLATION_READY'
-    assert report['summary']['ready_lane_count'] == 5
-    assert report['summary']['degraded_lane_count'] == 0
-    assert report['blockers'] == []
-    assert {
-        lane['security_decision'] for lane in report['proof_lanes']
-    } == {'OPTIONAL_SOLVER_LANE_READY'}
+    assert lanes['apalache']['status'] == 'blocked_optional_lane'
+    assert lanes['tamarin']['proof_acceptance_policy'] == 'do_not_accept_reports_for_missing_solver_lane'
+    assert report['overall_status'] == 'ready_with_blocked_optional_lanes'
+    assert report['missing_or_degraded_lane_count'] == 5
 
 
-def test_unsupported_platform_blocks_lanes_and_records_remediation() -> None:
-    module = _load_script_module()
+def test_optional_solver_installer_marks_lean_ready_only_when_lean_and_lake_exist(tmp_path: Path) -> None:
+    module = _load_module()
+    bin_dir = tmp_path / 'bin'
+    bin_dir.mkdir()
+    _fake_executable(bin_dir, 'lean', 'Lean version 4.31.0')
+    _fake_executable(bin_dir, 'lake', 'Lake version 5.0.0')
 
-    report = module.build_report(
-        repo_root=REPO_ROOT,
-        environ={'PATH': '/usr/bin', 'PYTHONPATH': '.'},
-        runner=_fake_runner,
-        which=lambda candidate: None,
-        generated_at_utc='2026-07-08T00:00:00Z',
-        platform_system='Windows',
-        platform_machine='AMD64',
-    )
+    report = module.build_report(repo_root=tmp_path, solver_probe_path=tmp_path / 'missing.json', path_env=str(bin_dir))
+    lean = {lane['name']: lane for lane in report['lanes']}['lean']
 
-    assert report['overall_status'] == 'blocked'
-    assert report['security_decision'] == 'BLOCK_OPTIONAL_SOLVER_INSTALLATION_LANES'
-    assert report['platform']['support_level'] == 'unsupported-native'
-    assert report['summary']['unsupported_platform_count'] == 5
-    assert report['summary']['blocked_lane_count'] == 5
-    assert {
-        blocker['code'] for blocker in report['blockers']
-    } == {'OPTIONAL_SOLVER_PLATFORM_UNSUPPORTED'}
-    assert all(solver['unsupported_platforms'] for solver in report['solvers'])
-    assert all(lane['release_effect'] == 'blocked-proof-lane' for lane in report['proof_lanes'])
+    assert lean['status'] == 'ready'
+    assert {item['name'] for item in lean['executables']} == {'lean', 'lake'}
+    assert all(item['status'] == 'present' for item in lean['executables'])
+    assert lean['proof_acceptance_policy'] == 'may_accept_reports_after_lane_specific_validation'
 
 
-def test_unusable_discovered_solver_blocks_that_lane() -> None:
-    module = _load_script_module()
+def test_optional_solver_installer_marks_lean_degraded_when_lake_missing(tmp_path: Path) -> None:
+    module = _load_module()
+    bin_dir = tmp_path / 'bin'
+    bin_dir.mkdir()
+    _fake_executable(bin_dir, 'lean', 'Lean version 4.31.0')
 
-    def failing_runner(command: Sequence[str], timeout_seconds: int) -> dict[str, object]:
-        return {
-            'exit_code': 1,
-            'stdout': '',
-            'stderr': 'broken install',
-            'timed_out': False,
-            'error': None,
-        }
+    report = module.build_report(repo_root=tmp_path, solver_probe_path=tmp_path / 'missing.json', path_env=str(bin_dir))
+    lean = {lane['name']: lane for lane in report['lanes']}['lean']
 
-    report = module.build_report(
-        repo_root=REPO_ROOT,
-        environ={'PATH': '/usr/bin', 'PYTHONPATH': '.'},
-        runner=failing_runner,
-        which=lambda candidate: '/usr/local/bin/apalache-mc' if candidate == 'apalache-mc' else None,
-        generated_at_utc='2026-07-08T00:00:00Z',
-        platform_system='Linux',
-        platform_machine='x86_64',
-        solvers=('apalache',),
-    )
-
-    assert report['overall_status'] == 'blocked'
-    assert report['summary']['blocked_lane_count'] == 1
-    assert report['solvers'][0]['dependency_probe']['status'] == 'error'
-    assert report['solvers'][0]['blocker']['code'] == 'OPTIONAL_SOLVER_UNUSABLE'
-    assert report['proof_lanes'][0]['security_decision'] == 'BLOCK_OPTIONAL_SOLVER_LANE'
+    assert lean['status'] == 'degraded_optional_lane'
+    assert lean['proof_acceptance_policy'] == 'do_not_accept_reports_until_all_required_tools_are_present'
 
 
-def test_cli_writes_report_and_stays_zero_for_degraded_supported_platform(tmp_path: Path) -> None:
-    module = _load_script_module()
-    out_path = tmp_path / 'optional-solvers.json'
+def test_optional_solver_installer_cli_writes_report(tmp_path: Path) -> None:
+    module = _load_module()
+    out = tmp_path / 'optional-solver-install-report.json'
 
-    rc = module.main(
-        [
-            '--repo-root',
-            REPO_ROOT.as_posix(),
-            '--out',
-            out_path.as_posix(),
-            '--platform-system',
-            'Linux',
-            '--platform-machine',
-            'x86_64',
-            '--timeout-seconds',
-            '1',
-        ]
-    )
+    rc = module.main(['--repo-root', str(REPO_ROOT), '--out', str(out)])
 
-    report = json.loads(out_path.read_text(encoding='utf-8'))
     assert rc == 0
-    assert report['schema_version'] == 'crypto-exchange-optional-solver-install-report/v1'
-    assert report['task_id'] == 'PORTAL-CXTP-086'
-    assert {solver['name'] for solver in report['solvers']} == {
-        'apalache',
-        'tamarin',
-        'proverif',
-        'lean',
-        'coq',
-    }
+    report = json.loads(out.read_text(encoding='utf-8'))
+    assert report['schema_version'] == 'optional-theorem-solver-install-report/v1'
+    assert report['lanes']
 
 
-def test_checked_in_artifact_and_doc_cover_required_outputs() -> None:
-    report = json.loads(ARTIFACT_PATH.read_text(encoding='utf-8'))
+def test_optional_solver_installation_doc_covers_blocked_lanes_and_commands() -> None:
     doc = DOC_PATH.read_text(encoding='utf-8')
 
-    assert report['schema_version'] == 'crypto-exchange-optional-solver-install-report/v1'
-    assert report['task_id'] == 'PORTAL-CXTP-086'
-    assert report['policy_document'] == 'docs/security_verification/optional_solver_installation.md'
-    assert isinstance(report['proof_lanes'], list)
-    assert report['acceptance_policy']['silent_success_allowed'] is False
-
-    solvers = {solver['name']: solver for solver in report['solvers']}
-    for name in ('apalache', 'tamarin', 'proverif', 'lean', 'coq'):
-        assert name in solvers
-        assert solvers[name]['install_commands']
-        assert solvers[name]['probe_commands']
-        assert solvers[name]['proof_lane']['status'] in {'ready', 'degraded', 'blocked'}
-        assert name.capitalize() in doc or solvers[name]['display_name'] in doc
-
-    assert 'missing-solver' in doc
-    assert 'degraded' in doc
-    assert 'blocked' in doc
+    assert 'PORTAL-CXTP-086' in doc
+    assert 'Apalache' in doc
+    assert 'Tamarin' in doc
+    assert 'ProVerif' in doc
+    assert 'Lean' in doc
+    assert 'Coq' in doc
+    assert 'blocked_optional_lane' in doc
+    assert 'plan_only' in doc

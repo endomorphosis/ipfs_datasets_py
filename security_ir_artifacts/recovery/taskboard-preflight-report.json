@@ -1,865 +1,102 @@
 {
+  "blocker_count": 0,
   "blockers": [],
-  "checked_at_utc": "2026-07-10T05:22:29Z",
-  "ci_gate": "pass",
-  "overall_status": "pass",
-  "production_release_acceptable": false,
-  "production_release_decision": "blocked-production",
-  "proof_acceptance_blocked": false,
-  "release_policy_path": "security_ir_artifacts/policies/security-decision-policy.json",
-  "repo_root": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets",
-  "restoration_runbook": {
-    "preflight_ci": "docs/security_verification/taskboard_preflight_ci.md",
-    "retention_policy": "docs/security_verification/taskboard_artifact_retention_policy.md",
-    "supervisor_recovery": "scripts/ops/security_verification/restore_crypto_exchange_security_tree.py"
-  },
-  "retention_baseline_path": "security_ir_artifacts/recovery/artifact-retention-baseline.json",
-  "schema_version": "crypto-exchange-taskboard-preflight/v1",
-  "security_decision": "CRYPTO_EXCHANGE_TASKBOARD_PREFLIGHT_PASS",
-  "summary": {
-    "blocked_production_task_count": 8,
-    "blocked_production_tasks": [
+  "generated_at_utc": "2026-07-10T07:43:35Z",
+  "overall_status": "ready",
+  "production_blocker_policy": {
+    "incomplete_production_blockers": [
+      "PORTAL-CXTP-077",
+      "PORTAL-CXTP-078",
+      "PORTAL-CXTP-079",
+      "PORTAL-CXTP-080",
+      "PORTAL-CXTP-081",
+      "PORTAL-CXTP-082",
+      "PORTAL-CXTP-083",
+      "PORTAL-CXTP-084"
+    ],
+    "production_reports": [
       {
-        "blocked_reason": "Requires deployed wallet and exchange environment details, host/container images, HSM or custody configuration, chain node endpoints, CI/CD attestations, and runtime policies that are not present in this repository.",
-        "line": 289,
-        "task_id": "PORTAL-CXTP-077",
-        "title": "Collect production environment evidence"
+        "exists": true,
+        "overall_status": "blocked",
+        "path": "security_ir_artifacts/production/evidence-bundle-report.json",
+        "production_release_blocked": true,
+        "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
       },
       {
-        "blocked_reason": "Requires production wallet/exchange source repositories or immutable source snapshots and API schemas that are not present in this repository.",
-        "line": 301,
-        "task_id": "PORTAL-CXTP-078",
-        "title": "Inventory deployed wallet, exchange, API, and policy sources"
-      },
-      {
-        "blocked_reason": "Requires production source inventory, environment profile, deployed runtime traces, and named reviewer signoff before a production model can be trusted.",
-        "line": 313,
-        "task_id": "PORTAL-CXTP-079",
-        "title": "Generate reviewed production SecurityModelIR candidate"
-      },
-      {
-        "blocked_reason": "Requires the reviewed production SecurityModelIR candidate and production claim owners.",
-        "line": 325,
-        "task_id": "PORTAL-CXTP-080",
-        "title": "Enforce required production domains and claim minimums"
-      },
-      {
-        "blocked_reason": "Requires reviewed production SecurityModelIR, solver dependency probe, source evidence, and environment evidence.",
-        "line": 337,
-        "task_id": "PORTAL-CXTP-081",
-        "title": "Run production fail-closed proof baseline"
-      },
-      {
-        "blocked_reason": "Requires reviewed production claims, model, disproof vectors, and solver availability.",
-        "line": 349,
-        "task_id": "PORTAL-CXTP-082",
-        "title": "Run production disproof and mutation suite"
-      },
-      {
-        "blocked_reason": "Requires sanitized production runtime traces, e2e traces, schemas, stream names, and owner-approved freshness windows.",
-        "line": 361,
-        "task_id": "PORTAL-CXTP-083",
-        "title": "Wire production runtime trace evidence"
-      },
-      {
-        "blocked_reason": "Requires all production source, environment, runtime, proof, disproof, and reviewer inputs.",
-        "line": 373,
-        "task_id": "PORTAL-CXTP-084",
-        "title": "Refresh production blockers and handoff checklist"
+        "exists": true,
+        "overall_status": "blocked",
+        "path": "security_ir_artifacts/production/blocker-status-update-report.json",
+        "production_release_blocked": true,
+        "security_decision": "BLOCK_PRODUCTION_BLOCKER_STATUS_UPDATE"
       }
     ],
-    "blocker_count": 0,
-    "production_task_count": 16,
-    "task_count": 41,
-    "task_status_counts": {
-      "blocked": 8,
-      "completed": 28,
-      "todo": 5,
-      "unrecognized": 0
-    }
+    "required_blocker_tasks": [
+      "PORTAL-CXTP-077",
+      "PORTAL-CXTP-078",
+      "PORTAL-CXTP-079",
+      "PORTAL-CXTP-080",
+      "PORTAL-CXTP-081",
+      "PORTAL-CXTP-082",
+      "PORTAL-CXTP-083",
+      "PORTAL-CXTP-084"
+    ]
   },
-  "supervisor_preflight_gate": "allowed",
+  "schema_version": "crypto-exchange-taskboard-preflight/v1",
+  "security_decision": "TASKBOARD_PREFLIGHT_READY",
+  "supervisor_state": {
+    "active_task_id": "",
+    "exists": true,
+    "path": "data/crypto_exchange_theorem_prover/state/cxtp_task_state.json",
+    "task_count": 63
+  },
   "task_id": "PORTAL-CXTP-087",
-  "taskboard_path": "docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md",
-  "tasks": [
+  "taskboard": {
+    "exists": true,
+    "path": "docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md",
+    "status_counts": {
+      "blocked": 19,
+      "completed": 35,
+      "waiting": 9
+    },
+    "task_count": 63
+  },
+  "warning_count": 9,
+  "warnings": [
     {
-      "depends_on": [],
-      "is_production_task": false,
-      "line": 36,
-      "outputs": [
-        "docs/security_verification/crypto_exchange_recovery_report.md",
-        "security_ir_artifacts/recovery/crypto-exchange-source-audit.json",
-        "scripts/ops/security_verification/audit_crypto_exchange_source_tree.py",
-        "tests/logic/security_models/crypto_exchange/test_crypto_exchange_source_tree_recovery.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-056",
-      "title": "Recover crypto_exchange source and verification artifact tree",
-      "track": "ops"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-056"
     },
     {
-      "depends_on": [
-        "PORTAL-CXTP-056"
-      ],
-      "is_production_task": false,
-      "line": 47,
-      "outputs": [
-        "docs/security_verification/taskboard_artifact_retention_policy.md",
-        "scripts/ops/security_verification/check_crypto_exchange_artifact_retention.py",
-        "security_ir_artifacts/recovery/artifact-retention-baseline.json",
-        "tests/logic/security_models/crypto_exchange/test_crypto_exchange_artifact_retention.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-057",
-      "title": "Protect theorem-prover taskboard and artifact retention",
-      "track": "ops"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-057"
     },
     {
-      "depends_on": [
-        "PORTAL-CXTP-056"
-      ],
-      "is_production_task": false,
-      "line": 58,
-      "outputs": [
-        "docs/security_verification/solver_dependency_bootstrap.md",
-        "scripts/ops/security_verification/probe_theorem_prover_environment.py",
-        "security_ir_artifacts/environment/solver-dependency-probe.json",
-        "tests/logic/security_models/crypto_exchange/test_solver_dependency_probe.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-058",
-      "title": "Build solver dependency bootstrap and environment probe",
-      "track": "ops"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-058"
     },
     {
-      "depends_on": [
-        "PORTAL-CXTP-056",
-        "PORTAL-CXTP-057",
-        "PORTAL-CXTP-058"
-      ],
-      "is_production_task": false,
-      "line": 69,
-      "outputs": [
-        "docs/security_verification/supervisor_recovery_stability_runbook.md",
-        "scripts/ops/security_verification/restore_crypto_exchange_security_tree.py",
-        "security_ir_artifacts/recovery/supervisor-stability-report.json",
-        "tests/logic/security_models/crypto_exchange/test_supervisor_recovery_stability.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-088",
-      "title": "Stabilize recovered tree across supervisor commit cleanup",
-      "track": "ops"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-088"
     },
     {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-088"
-      ],
-      "is_production_task": false,
-      "line": 80,
-      "outputs": [
-        "docs/security_verification/typescript_solver_dependency_remediation.md",
-        "scripts/ops/security_verification/provision_required_typescript_toolchain.py",
-        "security_ir_artifacts/environment/typescript-remediation-report.json",
-        "tests/logic/security_models/crypto_exchange/test_typescript_dependency_remediation.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-089",
-      "title": "Remediate required TypeScript compiler dependency",
-      "track": "ops"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-059"
     },
     {
-      "depends_on": [
-        "PORTAL-CXTP-056",
-        "PORTAL-CXTP-088"
-      ],
-      "is_production_task": true,
-      "line": 91,
-      "outputs": [
-        "docs/security_verification/production_release_decision_policy.md",
-        "security_ir_artifacts/policies/security-decision-policy.json",
-        "tests/logic/security_models/crypto_exchange/test_release_decision_policy.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-059",
-      "title": "Freeze proof-boundary and security decision policy",
-      "track": "ops"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-062"
     },
     {
-      "depends_on": [
-        "PORTAL-CXTP-057",
-        "PORTAL-CXTP-059"
-      ],
-      "is_production_task": false,
-      "line": 102,
-      "outputs": [
-        "docs/security_verification/xaman_corpus_profile.md",
-        "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
-        "scripts/ops/security_verification/fetch_xaman_corpus.py",
-        "tests/logic/security_models/crypto_exchange/test_xaman_corpus_manifest.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-060",
-      "title": "Acquire and pin Xaman App corpus",
-      "track": "ops"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-069"
     },
     {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-060",
-        "PORTAL-CXTP-089"
-      ],
-      "is_production_task": false,
-      "line": 113,
-      "outputs": [
-        "docs/security_verification/xaman_environment_assumptions.md",
-        "scripts/ops/security_verification/probe_xaman_environment.py",
-        "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_environment_probe.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-061",
-      "title": "Build Xaman dependency and build-environment probe",
-      "track": "ops"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-075"
     },
     {
-      "depends_on": [
-        "PORTAL-CXTP-056",
-        "PORTAL-CXTP-059",
-        "PORTAL-CXTP-088"
-      ],
-      "is_production_task": true,
-      "line": 124,
-      "outputs": [
-        "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/schema.py",
-        "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/canonicalize.py",
-        "docs/security_verification/code_to_ir_evidence_matrix.md",
-        "tests/logic/security_models/crypto_exchange/test_ir_schema.py",
-        "tests/logic/security_models/crypto_exchange/test_code_to_ir_coverage.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-062",
-      "title": "Restore SecurityModelIR schema and source coverage gates",
-      "track": "platform"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-060",
-        "PORTAL-CXTP-062"
-      ],
-      "is_production_task": false,
-      "line": 135,
-      "outputs": [
-        "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/xaman_source_extractor.py",
-        "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_source_extractor.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-063",
-      "title": "Extend extractor for Xaman React Native TypeScript corpus",
-      "track": "platform"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-060",
-        "PORTAL-CXTP-063"
-      ],
-      "is_production_task": false,
-      "line": 146,
-      "outputs": [
-        "docs/security_verification/xaman_wallet_auth_model.md",
-        "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_wallet_auth_model.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-064",
-      "title": "Model Xaman account, vault, storage, and authentication facts",
-      "track": "wallet"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-060",
-        "PORTAL-CXTP-063"
-      ],
-      "is_production_task": false,
-      "line": 157,
-      "outputs": [
-        "docs/security_verification/xaman_payload_lifecycle_model.md",
-        "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_payload_lifecycle.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-065",
-      "title": "Model Xaman payload and sign-request lifecycle",
-      "track": "wallet"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-060",
-        "PORTAL-CXTP-063"
-      ],
-      "is_production_task": false,
-      "line": 168,
-      "outputs": [
-        "docs/security_verification/xaman_xrpl_transaction_model.md",
-        "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_xrpl_transaction_model.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-066",
-      "title": "Model XRPL transaction semantics from Xaman ledger code",
-      "track": "ledger"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-064",
-        "PORTAL-CXTP-065",
-        "PORTAL-CXTP-066"
-      ],
-      "is_production_task": false,
-      "line": 179,
-      "outputs": [
-        "docs/security_verification/xaman_security_claims.md",
-        "security_ir_artifacts/corpora/xaman-app/security-claims.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_security_claims.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-067",
-      "title": "Define Xaman XRPL security claims and assumptions",
-      "track": "wallet"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-062",
-        "PORTAL-CXTP-067"
-      ],
-      "is_production_task": false,
-      "line": 190,
-      "outputs": [
-        "security_ir_artifacts/corpora/xaman-app/security-model-ir.json",
-        "security_ir_artifacts/corpora/xaman-app/security-model-ir.cid",
-        "docs/security_verification/xaman_security_model_ir.md",
-        "tests/logic/security_models/crypto_exchange/test_xaman_security_model_ir.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-068",
-      "title": "Generate Xaman SecurityModelIR baseline",
-      "track": "platform"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-068",
-        "PORTAL-CXTP-089"
-      ],
-      "is_production_task": false,
-      "line": 201,
-      "outputs": [
-        "ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/to_smtlib.py",
-        "ipfs_datasets_py/logic/security_models/crypto_exchange/runners/cvc5_runner.py",
-        "security_ir_artifacts/corpora/xaman-app/smtlib/manifest.json",
-        "security_ir_artifacts/corpora/xaman-app/proof-reports/z3-cvc5-differential.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_smt_differential.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-069",
-      "title": "Emit SMT-LIB and run Z3/CVC5 differential proofs",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-067",
-        "PORTAL-CXTP-068"
-      ],
-      "is_production_task": false,
-      "line": 212,
-      "outputs": [
-        "security_ir_artifacts/corpora/xaman-app/disproof-vectors.json",
-        "security_ir_artifacts/corpora/xaman-app/counterexample-report.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_disproof_vectors.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-070",
-      "title": "Build mutation and disproof counterexample suite",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-065",
-        "PORTAL-CXTP-067",
-        "PORTAL-CXTP-086"
-      ],
-      "is_production_task": false,
-      "line": 223,
-      "outputs": [
-        "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla",
-        "security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json",
-        "docs/security_verification/xaman_tla_workflow.md",
-        "tests/logic/security_models/crypto_exchange/test_xaman_tla_workflow.py"
-      ],
-      "priority": "P1",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-071",
-      "title": "Add TLA/Apalache workflow checks for Xaman signing",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-065",
-        "PORTAL-CXTP-067",
-        "PORTAL-CXTP-086"
-      ],
-      "is_production_task": false,
-      "line": 234,
-      "outputs": [
-        "security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.spthy",
-        "security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json",
-        "docs/security_verification/xaman_protocol_model.md",
-        "tests/logic/security_models/crypto_exchange/test_xaman_protocol_projection.py"
-      ],
-      "priority": "P1",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-072",
-      "title": "Add Tamarin/ProVerif protocol checks for payload flow",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-067",
-        "PORTAL-CXTP-086"
-      ],
-      "is_production_task": false,
-      "line": 245,
-      "outputs": [
-        "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
-        "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
-        "docs/security_verification/xaman_proof_consumer_invariants.md",
-        "tests/logic/security_models/crypto_exchange/test_xaman_proof_consumer_invariants.py"
-      ],
-      "priority": "P1",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-073",
-      "title": "Add Lean/Coq proof-consumer invariants",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-061",
-        "PORTAL-CXTP-065",
-        "PORTAL-CXTP-066"
-      ],
-      "is_production_task": false,
-      "line": 256,
-      "outputs": [
-        "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/xaman_runtime_trace_ingestor.py",
-        "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json",
-        "docs/security_verification/xaman_runtime_trace_assumptions.md",
-        "tests/logic/security_models/crypto_exchange/test_xaman_runtime_trace_ingestor.py"
-      ],
-      "priority": "P1",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-074",
-      "title": "Ingest Xaman e2e and runtime traces",
-      "track": "runtime"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-069",
-        "PORTAL-CXTP-070",
-        "PORTAL-CXTP-071",
-        "PORTAL-CXTP-072",
-        "PORTAL-CXTP-073",
-        "PORTAL-CXTP-074"
-      ],
-      "is_production_task": false,
-      "line": 267,
-      "outputs": [
-        "security_ir_artifacts/corpora/xaman-app/assurance-packet.json",
-        "docs/security_verification/xaman_assurance_packet.md",
-        "docs/security_verification/xaman_release_decision.md",
-        "tests/logic/security_models/crypto_exchange/test_xaman_assurance_packet.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-075",
-      "title": "Produce Xaman assurance packet and release decision",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-075"
-      ],
-      "is_production_task": true,
-      "line": 278,
-      "outputs": [
-        "docs/security_verification/xaman_to_production_blocker_bridge.md",
-        "security_ir_artifacts/corpora/xaman-app/production-blocker-bridge.json",
-        "tests/logic/security_models/crypto_exchange/test_xaman_production_blocker_bridge.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-076",
-      "title": "Bridge Xaman artifacts into production-blocker removal",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-059"
-      ],
-      "is_production_task": true,
-      "line": 289,
-      "outputs": [
-        "docs/security_verification/production_environment_profile.md",
-        "security_ir_artifacts/production/environment-profile.json"
-      ],
-      "priority": "P0",
-      "status": "blocked",
-      "task_id": "PORTAL-CXTP-077",
-      "title": "Collect production environment evidence",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-059"
-      ],
-      "is_production_task": true,
-      "line": 301,
-      "outputs": [
-        "docs/security_verification/production_source_inventory.md",
-        "security_ir_artifacts/production/source-inventory.json"
-      ],
-      "priority": "P0",
-      "status": "blocked",
-      "task_id": "PORTAL-CXTP-078",
-      "title": "Inventory deployed wallet, exchange, API, and policy sources",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-077",
-        "PORTAL-CXTP-078"
-      ],
-      "is_production_task": true,
-      "line": 313,
-      "outputs": [
-        "security_ir_artifacts/production/security-model-ir.json",
-        "security_ir_artifacts/production/security-model-ir.cid",
-        "docs/security_verification/production_security_model_ir.md"
-      ],
-      "priority": "P0",
-      "status": "blocked",
-      "task_id": "PORTAL-CXTP-079",
-      "title": "Generate reviewed production SecurityModelIR candidate",
-      "track": "platform"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-079"
-      ],
-      "is_production_task": true,
-      "line": 325,
-      "outputs": [
-        "docs/security_verification/production_claim_gate.md",
-        "security_ir_artifacts/production/claim-gate-report.json"
-      ],
-      "priority": "P0",
-      "status": "blocked",
-      "task_id": "PORTAL-CXTP-080",
-      "title": "Enforce required production domains and claim minimums",
-      "track": "quality"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-080",
-        "PORTAL-CXTP-089"
-      ],
-      "is_production_task": true,
-      "line": 337,
-      "outputs": [
-        "security_ir_artifacts/production/proof-reports/baseline.json",
-        "docs/security_verification/production_proof_baseline.md"
-      ],
-      "priority": "P0",
-      "status": "blocked",
-      "task_id": "PORTAL-CXTP-081",
-      "title": "Run production fail-closed proof baseline",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-080",
-        "PORTAL-CXTP-081"
-      ],
-      "is_production_task": true,
-      "line": 349,
-      "outputs": [
-        "security_ir_artifacts/production/disproof-report.json",
-        "docs/security_verification/production_disproof_suite.md"
-      ],
-      "priority": "P0",
-      "status": "blocked",
-      "task_id": "PORTAL-CXTP-082",
-      "title": "Run production disproof and mutation suite",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-077",
-        "PORTAL-CXTP-079"
-      ],
-      "is_production_task": true,
-      "line": 361,
-      "outputs": [
-        "docs/security_verification/runtime_event_mapping.md",
-        "security_ir_artifacts/production/runtime-trace-report.json"
-      ],
-      "priority": "P0",
-      "status": "blocked",
-      "task_id": "PORTAL-CXTP-083",
-      "title": "Wire production runtime trace evidence",
-      "track": "runtime"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-077",
-        "PORTAL-CXTP-078",
-        "PORTAL-CXTP-079",
-        "PORTAL-CXTP-080",
-        "PORTAL-CXTP-081",
-        "PORTAL-CXTP-082",
-        "PORTAL-CXTP-083"
-      ],
-      "is_production_task": true,
-      "line": 373,
-      "outputs": [
-        "docs/security_verification/production_security_handoff_checklist.md",
-        "security_ir_artifacts/production/release-blockers.json"
-      ],
-      "priority": "P0",
-      "status": "blocked",
-      "task_id": "PORTAL-CXTP-084",
-      "title": "Refresh production blockers and handoff checklist",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-056",
-        "PORTAL-CXTP-059",
-        "PORTAL-CXTP-088"
-      ],
-      "is_production_task": true,
-      "line": 385,
-      "outputs": [
-        "docs/security_verification/production_evidence_intake.md",
-        "scripts/ops/security_verification/validate_production_evidence_bundle.py",
-        "security_ir_artifacts/production/evidence-bundle.schema.json",
-        "tests/logic/security_models/crypto_exchange/test_production_evidence_intake.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-085",
-      "title": "Build production evidence intake scaffold",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-088"
-      ],
-      "is_production_task": false,
-      "line": 396,
-      "outputs": [
-        "docs/security_verification/optional_solver_installation.md",
-        "scripts/ops/security_verification/install_optional_theorem_solvers.py",
-        "security_ir_artifacts/environment/optional-solver-install-report.json",
-        "tests/logic/security_models/crypto_exchange/test_optional_solver_installer.py"
-      ],
-      "priority": "P1",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-086",
-      "title": "Build optional solver installer and blocker remover",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-057",
-        "PORTAL-CXTP-088"
-      ],
-      "is_production_task": true,
-      "line": 407,
-      "outputs": [
-        ".github/workflows/crypto-exchange-security-verification.yml",
-        "scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py",
-        "docs/security_verification/taskboard_preflight_ci.md",
-        "tests/logic/security_models/crypto_exchange/test_taskboard_preflight.py"
-      ],
-      "priority": "P1",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-087",
-      "title": "Wire taskboard integrity into CI and supervisor preflight",
-      "track": "quality"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-086",
-        "PORTAL-CXTP-096"
-      ],
-      "is_production_task": false,
-      "line": 418,
-      "outputs": [
-        "docs/security_verification/lean_proof_consumer_solver_lane.md",
-        "scripts/ops/security_verification/probe_lean_solver_lane.py",
-        "security_ir_artifacts/environment/lean-solver-lane-report.json",
-        "tests/logic/security_models/crypto_exchange/test_lean_solver_lane.py"
-      ],
-      "priority": "P1",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-090",
-      "title": "Remediate Lean optional proof-consumer solver lane",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-086",
-        "PORTAL-CXTP-096"
-      ],
-      "is_production_task": false,
-      "line": 430,
-      "outputs": [
-        "docs/security_verification/apalache_tla_solver_lane.md",
-        "scripts/ops/security_verification/probe_apalache_solver_lane.py",
-        "security_ir_artifacts/environment/apalache-solver-lane-report.json",
-        "tests/logic/security_models/crypto_exchange/test_apalache_solver_lane.py"
-      ],
-      "priority": "P1",
-      "status": "todo",
-      "task_id": "PORTAL-CXTP-091",
-      "title": "Provision Apalache TLA model-checker lane",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-086",
-        "PORTAL-CXTP-096"
-      ],
-      "is_production_task": false,
-      "line": 441,
-      "outputs": [
-        "docs/security_verification/protocol_solver_lanes.md",
-        "scripts/ops/security_verification/probe_protocol_solver_lanes.py",
-        "security_ir_artifacts/environment/protocol-solver-lane-report.json",
-        "tests/logic/security_models/crypto_exchange/test_protocol_solver_lanes.py"
-      ],
-      "priority": "P1",
-      "status": "todo",
-      "task_id": "PORTAL-CXTP-092",
-      "title": "Provision Tamarin and ProVerif protocol solver lanes",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-058",
-        "PORTAL-CXTP-086",
-        "PORTAL-CXTP-096"
-      ],
-      "is_production_task": false,
-      "line": 452,
-      "outputs": [
-        "docs/security_verification/coq_proof_kernel_solver_lane.md",
-        "scripts/ops/security_verification/probe_coq_solver_lane.py",
-        "security_ir_artifacts/environment/coq-solver-lane-report.json",
-        "tests/logic/security_models/crypto_exchange/test_coq_solver_lane.py"
-      ],
-      "priority": "P1",
-      "status": "todo",
-      "task_id": "PORTAL-CXTP-093",
-      "title": "Provision Coq proof-kernel solver lane",
-      "track": "solver"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-077",
-        "PORTAL-CXTP-078",
-        "PORTAL-CXTP-085",
-        "PORTAL-CXTP-096"
-      ],
-      "is_production_task": true,
-      "line": 463,
-      "outputs": [
-        "docs/security_verification/production_blocker_evidence_packets.md",
-        "scripts/ops/security_verification/generate_production_blocker_packets.py",
-        "security_ir_artifacts/production/blocker-packets.json",
-        "tests/logic/security_models/crypto_exchange/test_production_blocker_packets.py"
-      ],
-      "priority": "P0",
-      "status": "todo",
-      "task_id": "PORTAL-CXTP-094",
-      "title": "Generate production evidence packets for each remaining blocker",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-085",
-        "PORTAL-CXTP-094",
-        "PORTAL-CXTP-096"
-      ],
-      "is_production_task": true,
-      "line": 474,
-      "outputs": [
-        "docs/security_verification/production_blocker_status_updater.md",
-        "scripts/ops/security_verification/update_production_blocker_status.py",
-        "security_ir_artifacts/production/blocker-status-update-report.json",
-        "tests/logic/security_models/crypto_exchange/test_production_blocker_status_updater.py"
-      ],
-      "priority": "P0",
-      "status": "todo",
-      "task_id": "PORTAL-CXTP-095",
-      "title": "Build guarded production blocker status updater",
-      "track": "ops"
-    },
-    {
-      "depends_on": [
-        "PORTAL-CXTP-057",
-        "PORTAL-CXTP-087",
-        "PORTAL-CXTP-088"
-      ],
-      "is_production_task": true,
-      "line": 485,
-      "outputs": [
-        "docs/security_verification/appended_task_retention_runbook.md",
-        "scripts/ops/security_verification/check_appended_cxtp_tasks.py",
-        "security_ir_artifacts/recovery/appended-task-retention-report.json",
-        "tests/logic/security_models/crypto_exchange/test_appended_cxtp_task_retention.py"
-      ],
-      "priority": "P0",
-      "status": "completed",
-      "task_id": "PORTAL-CXTP-096",
-      "title": "Protect appended solver and production unblocker tasks",
-      "track": "quality"
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-076"
     }
   ]
 }

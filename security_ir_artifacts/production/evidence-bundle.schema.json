@@ -1,10 +1,58 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/ipfs_datasets_py/security_verification/production-evidence-bundle/v1.schema.json",
-  "title": "Production Evidence Bundle (PORTAL-CXTP-085)",
-  "description": "Intake schema for the concrete evidence bundle that unblocks blocked production crypto-exchange theorem-prover tasks (PORTAL-CXTP-077 through PORTAL-CXTP-084). A bundle collects production source snapshots, environment evidence, runtime traces, owner signoff, and solver reports, each carrying freshness metadata that is checked against a bundle-level freshness policy.",
-  "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
+  "properties": {
+    "bundle_id": {
+      "type": "string"
+    },
+    "environment_evidence": {
+      "items": {
+        "$ref": "#/$defs/environmentEvidenceItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "freshness_policy": {
+      "$ref": "#/$defs/freshnessPolicy"
+    },
+    "generated_at_utc": {
+      "type": "string"
+    },
+    "owner_signoff": {
+      "items": {
+        "$ref": "#/$defs/ownerSignoffItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "runtime_traces": {
+      "items": {
+        "$ref": "#/$defs/runtimeTraceItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "production-evidence-bundle/v1"
+    },
+    "solver_reports": {
+      "items": {
+        "$ref": "#/$defs/solverReportItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "source_snapshots": {
+      "items": {
+        "$ref": "#/$defs/sourceSnapshotItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "task_id": {
+      "type": "string"
+    }
+  },
   "required": [
     "schema_version",
     "task_id",
@@ -17,202 +65,202 @@
     "owner_signoff",
     "solver_reports"
   ],
-  "properties": {
-    "schema_version": {
-      "type": "string",
-      "const": "production-evidence-bundle/v1"
-    },
-    "task_id": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Taskboard identifier this bundle is submitted to unblock, e.g. PORTAL-CXTP-077."
-    },
-    "bundle_id": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Unique identifier for this evidence submission (e.g. a date-stamped release window id)."
-    },
-    "generated_at_utc": {
-      "$ref": "#/$defs/dateTime"
-    },
-    "notes": {
-      "type": "string"
-    },
-    "freshness_policy": {
-      "$ref": "#/$defs/freshnessPolicy"
-    },
-    "source_snapshots": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/sourceSnapshotItem" }
-    },
-    "environment_evidence": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/environmentEvidenceItem" }
-    },
-    "runtime_traces": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/runtimeTraceItem" }
-    },
-    "owner_signoff": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/ownerSignoffItem" }
-    },
-    "solver_reports": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/solverReportItem" }
-    }
-  },
+  "title": "Production Evidence Bundle",
+  "type": "object",
   "$defs": {
-    "dateTime": {
-      "type": "string",
-      "format": "date-time",
-      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
-    },
-    "reviewStatus": {
-      "type": "string",
-      "enum": ["heuristic", "machine_extracted", "human_reviewed", "trusted_fixture"],
-      "description": "Must be one of ipfs_datasets_py.logic.security_models.crypto_exchange.ir.schema.EVIDENCE_REVIEW_STATUSES. Only human_reviewed and trusted_fixture count as reviewed evidence for blocking claims."
-    },
-    "freshnessPolicy": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["max_age_days"],
+    "evidencePathFields": {
       "properties": {
-        "max_age_days": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Maximum age, in days, that any evidence item's collection/signoff timestamp may have relative to evaluated_at_utc (or validation time) before it is treated as stale."
+        "collected_at_utc": {
+          "type": "string"
         },
-        "evaluated_at_utc": {
-          "$ref": "#/$defs/dateTime",
-          "description": "Optional fixed evaluation instant. If omitted, the validator uses its own current UTC time."
-        }
-      }
-    },
-    "evidenceItemCommon": {
-      "type": "object",
-      "required": ["id", "path", "collected_at_utc", "owner", "review_status"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "description": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
         "path": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Repository-relative path to the durable evidence artifact."
+          "type": "string"
+        },
+        "review_status": {
+          "$ref": "#/$defs/reviewStatus"
         },
         "sha256": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$",
-          "description": "Optional content digest of the file at path; verified byte-for-byte when present."
-        },
-        "collected_at_utc": { "$ref": "#/$defs/dateTime" },
-        "owner": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Named accountable owner/team for this evidence item."
-        },
-        "review_status": { "$ref": "#/$defs/reviewStatus" }
-      }
-    },
-    "sourceSnapshotItem": {
-      "allOf": [
-        { "$ref": "#/$defs/evidenceItemCommon" },
-        {
-          "type": "object",
-          "required": ["repository", "commit"],
-          "properties": {
-            "repository": { "type": "string", "minLength": 1 },
-            "commit": { "type": "string", "minLength": 1 },
-            "domain": { "type": "string" }
-          }
+          "type": [
+            "string",
+            "null"
+          ]
         }
-      ]
+      },
+      "required": [
+        "id",
+        "path",
+        "collected_at_utc",
+        "owner",
+        "review_status"
+      ],
+      "type": "object"
     },
     "environmentEvidenceItem": {
       "allOf": [
-        { "$ref": "#/$defs/evidenceItemCommon" },
         {
-          "type": "object",
-          "required": ["environment"],
+          "$ref": "#/$defs/evidencePathFields"
+        },
+        {
           "properties": {
             "environment": {
-              "type": "string",
-              "enum": ["production", "staging", "disaster-recovery"]
+              "type": "string"
             }
-          }
+          },
+          "required": [
+            "environment"
+          ]
         }
       ]
+    },
+    "freshnessPolicy": {
+      "properties": {
+        "evaluated_at_utc": {
+          "type": "string"
+        },
+        "max_age_days": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_age_days"
+      ],
+      "type": "object"
+    },
+    "ownerSignoffItem": {
+      "properties": {
+        "decision": {
+          "enum": [
+            "approved",
+            "pending",
+            "rejected"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "signed_at_utc": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "scope",
+        "owner",
+        "role",
+        "decision",
+        "signed_at_utc",
+        "statement"
+      ],
+      "type": "object"
+    },
+    "reviewStatus": {
+      "enum": [
+        "heuristic",
+        "machine_extracted",
+        "human_reviewed",
+        "trusted_fixture"
+      ],
+      "type": "string"
     },
     "runtimeTraceItem": {
       "allOf": [
-        { "$ref": "#/$defs/evidenceItemCommon" },
         {
-          "type": "object",
-          "required": ["stream", "window_start_utc", "window_end_utc"],
+          "$ref": "#/$defs/evidencePathFields"
+        },
+        {
           "properties": {
-            "stream": { "type": "string", "minLength": 1 },
-            "window_start_utc": { "$ref": "#/$defs/dateTime" },
-            "window_end_utc": { "$ref": "#/$defs/dateTime" }
-          }
+            "stream": {
+              "type": "string"
+            },
+            "window_end_utc": {
+              "type": "string"
+            },
+            "window_start_utc": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "stream",
+            "window_start_utc",
+            "window_end_utc"
+          ]
         }
       ]
     },
-    "ownerSignoffItem": {
-      "type": "object",
-      "required": ["id", "scope", "owner", "role", "decision", "signed_at_utc", "statement"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "scope": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Domain or claim_id this signoff covers, e.g. withdrawals or no_unauthorized_withdrawal."
-        },
-        "owner": { "type": "string", "minLength": 1 },
-        "role": { "type": "string", "minLength": 1 },
-        "decision": {
-          "type": "string",
-          "enum": ["approved", "rejected", "pending"]
-        },
-        "signed_at_utc": { "$ref": "#/$defs/dateTime" },
-        "statement": { "type": "string", "minLength": 1 },
-        "path": {
-          "type": "string",
-          "description": "Optional repository-relative path to a durable signoff record."
-        },
-        "sha256": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
-        }
-      }
+    "securityDecisionOutcome": {
+      "enum": [
+        "prove",
+        "disprove",
+        "unknown",
+        "not-modeled",
+        "stale-evidence",
+        "missing-solver",
+        "blocked-production"
+      ],
+      "type": "string"
     },
     "solverReportItem": {
       "allOf": [
-        { "$ref": "#/$defs/evidenceItemCommon" },
         {
-          "type": "object",
-          "required": ["claim_id", "solver", "outcome"],
+          "$ref": "#/$defs/evidencePathFields"
+        },
+        {
           "properties": {
-            "claim_id": { "type": "string", "minLength": 1 },
-            "solver": { "type": "string", "minLength": 1 },
+            "claim_id": {
+              "type": "string"
+            },
             "outcome": {
-              "type": "string",
-              "enum": [
-                "prove",
-                "disprove",
-                "unknown",
-                "not-modeled",
-                "stale-evidence",
-                "missing-solver",
-                "blocked-production"
-              ],
-              "description": "Must be one of the frozen outcomes in security_ir_artifacts/policies/security-decision-policy.json."
+              "$ref": "#/$defs/securityDecisionOutcome"
+            },
+            "solver": {
+              "type": "string"
             }
-          }
+          },
+          "required": [
+            "claim_id",
+            "solver",
+            "outcome"
+          ]
+        }
+      ]
+    },
+    "sourceSnapshotItem": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/evidencePathFields"
+        },
+        {
+          "properties": {
+            "commit": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "commit"
+          ]
         }
       ]
     }

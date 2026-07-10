@@ -1,0 +1,84 @@
+{
+  "artifact_cid": "sha256:2b0550d39a4367e8ee716cf2b2930e93e88aa3604cef51a0a3e5b63b2095563f",
+  "blockers": [
+    {
+      "code": "APALACHE_EXECUTABLE_MISSING",
+      "message": "Neither apalache-mc nor apalache is available on PATH",
+      "missing": [
+        "apalache-mc",
+        "apalache"
+      ]
+    }
+  ],
+  "executables": [
+    {
+      "name": "apalache-mc",
+      "path": null,
+      "present": false,
+      "version": ""
+    },
+    {
+      "name": "apalache",
+      "path": null,
+      "present": false,
+      "version": ""
+    }
+  ],
+  "generated_at": "2026-07-10T07:14:05Z",
+  "install_plan": {
+    "commands": [
+      "cs install apalache",
+      "nix profile install nixpkgs#apalache",
+      "docker pull ghcr.io/apalache-mc/apalache:latest"
+    ],
+    "policy": "Install Apalache outside this probe, rerun with --run-model-check, and commit exact version/output evidence."
+  },
+  "model_check": {
+    "command": [
+      "apalache-mc",
+      "check",
+      "--inv=SigningGateInvariant",
+      "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla"
+    ],
+    "returncode": null,
+    "status": "not-run",
+    "stderr": "Model check not run because solver is unavailable or run_model_check is false",
+    "stdout": ""
+  },
+  "overall_status": "blocked_optional_lane",
+  "production_release_blocked_by_apalache_lane": true,
+  "schema_version": "crypto-exchange-apalache-solver-lane-report/v1",
+  "security_decision": "BLOCK_APALACHE_SOLVER_LANE_UNAVAILABLE",
+  "selected_executable": null,
+  "summary": {
+    "apalache_present": false,
+    "blocker_count": 1,
+    "model_check_passed": false,
+    "model_check_run": false,
+    "tla_model_present": true,
+    "warning_count": 0
+  },
+  "task_id": "PORTAL-CXTP-091",
+  "tla_model": {
+    "exists": true,
+    "path": "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla",
+    "sha256": "sha256:045a2f11c9b1f28b34848d19428a5de73a21294fbc0efa71ee60b133bb154b40"
+  },
+  "warnings": [],
+  "xaman_tla_report": {
+    "exists": true,
+    "invariants": [
+      "NoSignWithoutDigest",
+      "NoSignWithoutAuthentication",
+      "NoSignWithoutVault",
+      "NoSignWithoutNetworkBinding",
+      "NoBroadcastWithoutSignature",
+      "NoBroadcastAfterReject",
+      "SigningGateInvariant"
+    ],
+    "overall_status": "blocked_optional_lane",
+    "path": "security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json",
+    "security_decision": "BLOCK_TLA_APALACHE_MISSING_SOLVER",
+    "sha256": "sha256:792bb1deda05857e0cbaae04bb77cd914a111569b6c7df8c8ec46530f5e15977"
+  }
+}

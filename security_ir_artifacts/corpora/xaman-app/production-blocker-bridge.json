@@ -1,1574 +1,230 @@
 {
-  "artifact_cid": "bafkreia7mnvt6rqak2lxligdecw55xmm3fghgymrk33qbwbfm66kyag5km",
-  "blocker_mappings": [
+  "artifact_cid": "sha256:ce76d6b651018c8a264b807ab4010df154011e3c067f93752bbf12da489042bb",
+  "blocked_task_count": 8,
+  "blocked_tasks": [
     {
-      "blocked_claim_ids": [
-        "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path"
+      "acceptance_files": [
+        "docs/security_verification/production_environment_profile.md",
+        "security_ir_artifacts/production/environment-profile.json"
       ],
-      "category": "custody",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Native VaultManagerModule source review for iOS and Android.",
-            "Keychain/Keystore access-control, encryption, migration, and backup policy evidence.",
-            "Runtime or binary-equivalence evidence proving the reviewed native module is deployed."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Reproducible-build, signed-binary, deployment digest, CI/CD attestation, or binary-to-source provenance for the release artifact.",
-          "domain": "production_build",
-          "source_packet_requirements": [
-            "Native VaultManagerModule source review for iOS and Android.",
-            "Keychain/Keystore access-control, encryption, migration, and backup policy evidence.",
-            "Runtime or binary-equivalence evidence proving the reviewed native module is deployed."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Native VaultManagerModule source review for iOS and Android.",
-            "Keychain/Keystore access-control, encryption, migration, and backup policy evidence.",
-            "Runtime or binary-equivalence evidence proving the reviewed native module is deployed."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Native VaultManagerModule source review for iOS and Android.",
-            "Keychain/Keystore access-control, encryption, migration, and backup policy evidence.",
-            "Runtime or binary-equivalence evidence proving the reviewed native module is deployed."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Native VaultManagerModule source review for iOS and Android.",
-            "Keychain/Keystore access-control, encryption, migration, and backup policy evidence.",
-            "Runtime or binary-equivalence evidence proving the reviewed native module is deployed."
-          ],
-          "status": "missing"
-        }
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
       ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-native-vault-cryptographic-confidentiality",
-      "reason": "The reviewed artifact only models the TypeScript vault facade, not the native implementation or platform keychain/keystore policy.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Native VaultManagerModule source review for iOS and Android.",
-        "Keychain/Keystore access-control, encryption, migration, and backup policy evidence.",
-        "Runtime or binary-equivalence evidence proving the reviewed native module is deployed."
+      "required_evidence": [
+        "deployment target identifiers, versions, chain/network targets, and build provenance",
+        "wallet vault/native runtime configuration and trust boundaries",
+        "backend payload API, signing, and broadcast service endpoints with owners",
+        "proof-consumer deployment mode and trust-anchor or canonical-CID policy"
       ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_build",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-native-vault-cryptographic-confidentiality",
-      "type": "blocking_assumption"
+      "task_id": "PORTAL-CXTP-077",
+      "title": "Collect production environment evidence",
+      "unblocks": [
+        "PORTAL-CXTP-079",
+        "PORTAL-CXTP-083",
+        "PORTAL-CXTP-084"
+      ]
     },
     {
-      "blocked_claim_ids": [
-        "xaman-security:claim:authentication-gates-vault-and-signing"
+      "acceptance_files": [
+        "docs/security_verification/production_source_inventory.md",
+        "security_ir_artifacts/production/source-inventory.json"
       ],
-      "category": "authentication",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Reviewed KDF implementation and parameter evidence.",
-            "Evidence that stored passcode material is encrypted or hardware-bound.",
-            "Attack-cost analysis for the supported passcode policy."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Reviewed KDF implementation and parameter evidence.",
-            "Evidence that stored passcode material is encrypted or hardware-bound.",
-            "Attack-cost analysis for the supported passcode policy."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Reviewed KDF implementation and parameter evidence.",
-            "Evidence that stored passcode material is encrypted or hardware-bound.",
-            "Attack-cost analysis for the supported passcode policy."
-          ],
-          "status": "missing"
-        }
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
       ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-passcode-kdf-and-secret-protection",
-      "reason": "The reviewed source facts show passcode hashing and throttling, but not the KDF algorithm, salt handling, parameters, or stored-hash protection.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Reviewed KDF implementation and parameter evidence.",
-        "Evidence that stored passcode material is encrypted or hardware-bound.",
-        "Attack-cost analysis for the supported passcode policy."
+      "required_evidence": [
+        "reviewed production repositories, commits, packages, and generated artifacts",
+        "wallet, exchange, API, policy, HSM/vault, and runtime monitor source ownership",
+        "line-level mappings from source to each blocking/high production claim",
+        "explicit out-of-scope rationale for any Xaman-only artifact not deployed in production"
       ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-passcode-kdf-and-secret-protection",
-      "type": "blocking_assumption"
+      "task_id": "PORTAL-CXTP-078",
+      "title": "Inventory deployed wallet, exchange, API, and policy sources",
+      "unblocks": [
+        "PORTAL-CXTP-079",
+        "PORTAL-CXTP-084"
+      ]
     },
     {
-      "blocked_claim_ids": [
-        "xaman-security:claim:authentication-gates-vault-and-signing"
+      "acceptance_files": [
+        "security_ir_artifacts/production/security-model-ir.json",
+        "security_ir_artifacts/production/security-model-ir.cid",
+        "docs/security_verification/production_security_model_ir.md"
       ],
-      "category": "authentication",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Native biometric prompt and enrollment-binding source review.",
-            "Platform security policy for biometric unlock fallback and revocation.",
-            "Runtime tests for enrollment change and inactive-app rejection."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Native biometric prompt and enrollment-binding source review.",
-            "Platform security policy for biometric unlock fallback and revocation.",
-            "Runtime tests for enrollment change and inactive-app rejection."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Native biometric prompt and enrollment-binding source review.",
-            "Platform security policy for biometric unlock fallback and revocation.",
-            "Runtime tests for enrollment change and inactive-app rejection."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Native biometric prompt and enrollment-binding source review.",
-            "Platform security policy for biometric unlock fallback and revocation.",
-            "Runtime tests for enrollment change and inactive-app rejection."
-          ],
-          "status": "missing"
-        }
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "COUNTEREXAMPLES_FOUND"
       ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-biometric-native-binding",
-      "reason": "The reviewed facts cover app-level biometric checks, not native prompt integrity, secure hardware binding, enrollment-change enforcement, or spoof resistance.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Native biometric prompt and enrollment-binding source review.",
-        "Platform security policy for biometric unlock fallback and revocation.",
-        "Runtime tests for enrollment change and inactive-app rejection."
+      "required_evidence": [
+        "production environment profile from PORTAL-CXTP-077",
+        "production source inventory from PORTAL-CXTP-078",
+        "reviewed assumption registry with owner, evidence, expiry, and acceptance status",
+        "production claim set mapped into SecurityModelIR domains and proof obligations"
       ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "high",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-biometric-native-binding",
-      "type": "blocking_assumption"
+      "task_id": "PORTAL-CXTP-079",
+      "title": "Generate reviewed production SecurityModelIR candidate",
+      "unblocks": [
+        "PORTAL-CXTP-080",
+        "PORTAL-CXTP-083",
+        "PORTAL-CXTP-084"
+      ]
     },
     {
-      "blocked_claim_ids": [
-        "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
-        "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent"
+      "acceptance_files": [
+        "docs/security_verification/production_claim_gate.md",
+        "security_ir_artifacts/production/claim-gate-report.json"
       ],
-      "category": "custody",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "XRPL signing test vectors for supported signing paths.",
-            "Dependency and SDK version review.",
-            "Tangem firmware and SDK attestation or reviewed vendor evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "XRPL signing test vectors for supported signing paths.",
-            "Dependency and SDK version review.",
-            "Tangem firmware and SDK attestation or reviewed vendor evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "XRPL signing test vectors for supported signing paths.",
-            "Dependency and SDK version review.",
-            "Tangem firmware and SDK attestation or reviewed vendor evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "XRPL signing test vectors for supported signing paths.",
-            "Dependency and SDK version review.",
-            "Tangem firmware and SDK attestation or reviewed vendor evidence."
-          ],
-          "status": "missing"
-        }
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
       ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-third-party-signing-correctness",
-      "reason": "The reviewed artifact records signing preconditions and callback shape, but not library, SDK, firmware, or cryptographic signing correctness.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "XRPL signing test vectors for supported signing paths.",
-        "Dependency and SDK version review.",
-        "Tangem firmware and SDK attestation or reviewed vendor evidence."
+      "required_evidence": [
+        "minimum required wallet, custody, payload, ledger, runtime, and proof-consumer domains",
+        "claim completeness gate for every blocking/high production claim",
+        "fail-closed report for missing domains, missing assumptions, or unreviewed evidence"
       ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-third-party-signing-correctness",
-      "type": "blocking_assumption"
+      "task_id": "PORTAL-CXTP-080",
+      "title": "Enforce required production domains and claim minimums",
+      "unblocks": [
+        "PORTAL-CXTP-081",
+        "PORTAL-CXTP-082",
+        "PORTAL-CXTP-084"
+      ]
     },
     {
-      "blocked_claim_ids": [
-        "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-        "xaman-security:claim:payload-integrity-before-review-and-signing",
-        "xaman-security:claim:payload-replay-prevention-is-single-use"
+      "acceptance_files": [
+        "security_ir_artifacts/production/proof-reports/baseline.json",
+        "docs/security_verification/production_proof_baseline.md"
       ],
-      "category": "backend_trust",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Backend payload API source and deployment review.",
-            "Atomic storage or transaction evidence for single-use resolution.",
-            "Cross-device replay tests and PATCH conflict traces."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Backend payload API source and deployment review.",
-            "Atomic storage or transaction evidence for single-use resolution.",
-            "Cross-device replay tests and PATCH conflict traces."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Backend payload API source and deployment review.",
-            "Atomic storage or transaction evidence for single-use resolution.",
-            "Cross-device replay tests and PATCH conflict traces."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Backend payload API source and deployment review.",
-            "Atomic storage or transaction evidence for single-use resolution.",
-            "Cross-device replay tests and PATCH conflict traces."
-          ],
-          "status": "missing"
-        }
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "APALACHE_NOT_RUN",
+        "PROTOCOL_SOLVERS_NOT_RUN",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
       ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-      "reason": "Backend authorization, atomic resolution, cross-device replay prevention, and PATCH conflict behavior are explicitly outside the reviewed client source model.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Backend payload API source and deployment review.",
-        "Atomic storage or transaction evidence for single-use resolution.",
-        "Cross-device replay tests and PATCH conflict traces."
+      "required_evidence": [
+        "Z3/CVC5 production baseline for every blocking/high claim",
+        "solver unavailability recorded as UNKNOWN or blocked, never accepted",
+        "proof-consumer policy applied to reject non-PROVED and uncleared-assumption reports"
       ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-      "type": "blocking_assumption"
+      "task_id": "PORTAL-CXTP-081",
+      "title": "Run production fail-closed proof baseline",
+      "unblocks": [
+        "PORTAL-CXTP-082",
+        "PORTAL-CXTP-084"
+      ]
     },
     {
-      "blocked_claim_ids": [
-        "xaman-security:claim:payload-integrity-before-review-and-signing"
+      "acceptance_files": [
+        "security_ir_artifacts/production/disproof-report.json",
+        "docs/security_verification/production_disproof_suite.md"
       ],
-      "category": "payload_integrity",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Native camera and OS-linking behavior review.",
-            "Malformed QR/deep-link fuzzing traces.",
-            "Push-notification authenticity and routing evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Native camera and OS-linking behavior review.",
-            "Malformed QR/deep-link fuzzing traces.",
-            "Push-notification authenticity and routing evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Native camera and OS-linking behavior review.",
-            "Malformed QR/deep-link fuzzing traces.",
-            "Push-notification authenticity and routing evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Native camera and OS-linking behavior review.",
-            "Malformed QR/deep-link fuzzing traces.",
-            "Push-notification authenticity and routing evidence."
-          ],
-          "status": "missing"
-        }
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
       ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-intake-decoder-and-os-delivery-integrity",
-      "reason": "The reviewed model covers client branches after payload-reference detection, not third-party string decoder, native camera parser, OS deep-link delivery, clipboard, or malformed-input runtime behavior.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Native camera and OS-linking behavior review.",
-        "Malformed QR/deep-link fuzzing traces.",
-        "Push-notification authenticity and routing evidence."
+      "required_evidence": [
+        "production counterexample suite for known-bad wallet, payload, ledger, runtime, and proof-consumer cases",
+        "mutation checks proving gates fail closed when source or assumptions are weakened",
+        "all expected bad cases produce DISPROVED, UNKNOWN, NOT_MODELED, or blocked as appropriate"
       ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "high",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-intake-decoder-and-os-delivery-integrity",
-      "type": "blocking_assumption"
+      "task_id": "PORTAL-CXTP-082",
+      "title": "Run production disproof and mutation suite",
+      "unblocks": [
+        "PORTAL-CXTP-084"
+      ]
     },
     {
-      "blocked_claim_ids": [
-        "xaman-security:claim:network-binding-prevents-cross-network-signing",
-        "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime"
+      "acceptance_files": [
+        "docs/security_verification/runtime_event_mapping.md",
+        "security_ir_artifacts/production/runtime-trace-report.json"
       ],
-      "category": "network_binding",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reproducible-build, signed-binary, deployment digest, CI/CD attestation, or binary-to-source provenance for the release artifact.",
-          "domain": "production_build",
-          "source_packet_requirements": [
-            "Deployed network configuration artifact and owner review.",
-            "Runtime traces binding selected network, node URI, NetworkID, and payload force_network.",
-            "Binary-to-source or reproducible-build evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Deployed network configuration artifact and owner review.",
-            "Runtime traces binding selected network, node URI, NetworkID, and payload force_network.",
-            "Binary-to-source or reproducible-build evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Deployed network configuration artifact and owner review.",
-            "Runtime traces binding selected network, node URI, NetworkID, and payload force_network.",
-            "Binary-to-source or reproducible-build evidence."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Deployed network configuration artifact and owner review.",
-            "Runtime traces binding selected network, node URI, NetworkID, and payload force_network.",
-            "Binary-to-source or reproducible-build evidence."
-          ],
-          "status": "missing"
-        }
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "UNRESOLVED_XAMAN_ASSUMPTIONS"
       ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-deployed-network-and-node-config-equivalence",
-      "reason": "Node endpoint configuration, backend deployment, app-store binary, and runtime traces are not modeled by the source-fact artifacts.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Deployed network configuration artifact and owner review.",
-        "Runtime traces binding selected network, node URI, NetworkID, and payload force_network.",
-        "Binary-to-source or reproducible-build evidence."
+      "required_evidence": [
+        "real-device trace bundle for payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast outcomes",
+        "runtime event mapping from production monitor names to SecurityModelIR events",
+        "trace review status, collection environment, device/build provenance, and expiry metadata"
       ],
-      "required_production_evidence_domains": [
-        "production_build",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-deployed-network-and-node-config-equivalence",
-      "type": "blocking_assumption"
+      "task_id": "PORTAL-CXTP-083",
+      "title": "Wire production runtime trace evidence",
+      "unblocks": [
+        "PORTAL-CXTP-084"
+      ]
     },
     {
-      "blocked_claim_ids": [
-        "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent"
+      "acceptance_files": [
+        "docs/security_verification/production_security_handoff_checklist.md",
+        "security_ir_artifacts/production/release-blockers.json"
       ],
-      "category": "transaction_semantics",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Implemented TrustSet and SignerListSet validation source review, or explicit policy excluding those transactions from the claim.",
-            "Regression tests for signer quorum, trust-line limit, issuer, and freeze edge cases."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Implemented TrustSet and SignerListSet validation source review, or explicit policy excluding those transactions from the claim.",
-            "Regression tests for signer quorum, trust-line limit, issuer, and freeze edge cases."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Implemented TrustSet and SignerListSet validation source review, or explicit policy excluding those transactions from the claim.",
-            "Regression tests for signer quorum, trust-line limit, issuer, and freeze edge cases."
-          ],
-          "status": "missing"
-        }
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE",
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "APALACHE_NOT_RUN",
+        "PROTOCOL_SOLVERS_NOT_RUN",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
       ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-trustset-and-signerlist-client-validation",
-      "reason": "The reviewed client source has TrustSetValidation and SignerListSetValidation stubs that always resolve.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Implemented TrustSet and SignerListSet validation source review, or explicit policy excluding those transactions from the claim.",
-        "Regression tests for signer quorum, trust-line limit, issuer, and freeze edge cases."
+      "required_evidence": [
+        "all PORTAL-CXTP-077 through PORTAL-CXTP-083 outputs present and internally consistent",
+        "release-blockers report preserving every unresolved blocker",
+        "handoff checklist showing owner, evidence, next action, and acceptance policy for each blocker"
       ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_runtime",
-        "human_review"
-      ],
-      "severity": "high",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-trustset-and-signerlist-client-validation",
-      "type": "blocking_assumption"
-    },
-    {
-      "blocked_claim_ids": [
-        "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent"
-      ],
-      "category": "transaction_semantics",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "XRPL/rippled version and network rule evidence.",
-            "Node trust and quorum/finality model.",
-            "Result-code handling and ledger-inclusion traces."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "XRPL/rippled version and network rule evidence.",
-            "Node trust and quorum/finality model.",
-            "Result-code handling and ledger-inclusion traces."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "XRPL/rippled version and network rule evidence.",
-            "Node trust and quorum/finality model.",
-            "Result-code handling and ledger-inclusion traces."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-xrpl-server-rule-enforcement-and-consensus",
-      "reason": "The reviewed artifacts explicitly do not model rippled authoritative enforcement, consensus safety, node honesty, mempool behavior, or final ledger inclusion.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "XRPL/rippled version and network rule evidence.",
-        "Node trust and quorum/finality model.",
-        "Result-code handling and ledger-inclusion traces."
-      ],
-      "required_production_evidence_domains": [
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-xrpl-server-rule-enforcement-and-consensus",
-      "type": "blocking_assumption"
-    },
-    {
-      "blocked_claim_ids": [
-        "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent"
-      ],
-      "category": "transaction_semantics",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Multisign coordination protocol and storage review.",
-            "Trace evidence that combined signatures bind to the intended transaction.",
-            "Quorum and signer-weight tests."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Multisign coordination protocol and storage review.",
-            "Trace evidence that combined signatures bind to the intended transaction.",
-            "Quorum and signer-weight tests."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Multisign coordination protocol and storage review.",
-            "Trace evidence that combined signatures bind to the intended transaction.",
-            "Quorum and signer-weight tests."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Multisign coordination protocol and storage review.",
-            "Trace evidence that combined signatures bind to the intended transaction.",
-            "Quorum and signer-weight tests."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-external-multisign-coordination",
-      "reason": "The reviewed source excludes multisign payloads from automatic submit and does not model the external coordination process that collects and combines signer shares.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Multisign coordination protocol and storage review.",
-        "Trace evidence that combined signatures bind to the intended transaction.",
-        "Quorum and signer-weight tests."
-      ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "high",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-external-multisign-coordination",
-      "type": "blocking_assumption"
-    },
-    {
-      "blocked_claim_ids": [
-        "xaman-security:claim:authentication-gates-vault-and-signing",
-        "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-        "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
-        "xaman-security:claim:network-binding-prevents-cross-network-signing",
-        "xaman-security:claim:payload-integrity-before-review-and-signing",
-        "xaman-security:claim:payload-replay-prevention-is-single-use",
-        "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime",
-        "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent"
-      ],
-      "category": "runtime_equivalence",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Reproducible build or signed binary provenance for deployed app builds.",
-            "Native module and backend deployment digests.",
-            "Release-window runtime traces for authentication, payload review, signing, patch, network, and submit transitions."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Reproducible-build, signed-binary, deployment digest, CI/CD attestation, or binary-to-source provenance for the release artifact.",
-          "domain": "production_build",
-          "source_packet_requirements": [
-            "Reproducible build or signed binary provenance for deployed app builds.",
-            "Native module and backend deployment digests.",
-            "Release-window runtime traces for authentication, payload review, signing, patch, network, and submit transitions."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Reproducible build or signed binary provenance for deployed app builds.",
-            "Native module and backend deployment digests.",
-            "Release-window runtime traces for authentication, payload review, signing, patch, network, and submit transitions."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Reproducible build or signed binary provenance for deployed app builds.",
-            "Native module and backend deployment digests.",
-            "Release-window runtime traces for authentication, payload review, signing, patch, network, and submit transitions."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Reproducible build or signed binary provenance for deployed app builds.",
-            "Native module and backend deployment digests.",
-            "Release-window runtime traces for authentication, payload review, signing, patch, network, and submit transitions."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-deployed-runtime-equivalence",
-      "reason": "The dependency models are source-backed and explicitly do not prove deployed binary, backend, native runtime, or real-device trace equivalence.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Reproducible build or signed binary provenance for deployed app builds.",
-        "Native module and backend deployment digests.",
-        "Release-window runtime traces for authentication, payload review, signing, patch, network, and submit transitions."
-      ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_build",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-      "type": "blocking_assumption"
-    },
-    {
-      "blocked_claim_ids": [
-        "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims"
-      ],
-      "category": "proof_consumer_policy",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Production proof-consumer implementation test proving canonical CID recomputation or trusted signature validation.",
-            "Release-packet evidence binding model CID, report CID, receipt CID, claim ID, and accepted assumptions."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Reproducible-build, signed-binary, deployment digest, CI/CD attestation, or binary-to-source provenance for the release artifact.",
-          "domain": "production_build",
-          "source_packet_requirements": [
-            "Production proof-consumer implementation test proving canonical CID recomputation or trusted signature validation.",
-            "Release-packet evidence binding model CID, report CID, receipt CID, claim ID, and accepted assumptions."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Production proof-consumer implementation test proving canonical CID recomputation or trusted signature validation.",
-            "Release-packet evidence binding model CID, report CID, receipt CID, claim ID, and accepted assumptions."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Production proof-consumer implementation test proving canonical CID recomputation or trusted signature validation.",
-            "Release-packet evidence binding model CID, report CID, receipt CID, claim ID, and accepted assumptions."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Production proof-consumer implementation test proving canonical CID recomputation or trusted signature validation.",
-            "Release-packet evidence binding model CID, report CID, receipt CID, claim ID, and accepted assumptions."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-assumption-xaman-security-assumption-proof-receipt-cid-or-signature-validation",
-      "reason": "The proof receipt consumer policy states proof-critical mode fails closed until canonical CID recomputation or trusted signature verification is available in the runtime.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Production proof-consumer implementation test proving canonical CID recomputation or trusted signature validation.",
-        "Release-packet evidence binding model CID, report CID, receipt CID, claim ID, and accepted assumptions."
-      ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_build",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:assumption:xaman-security-assumption-proof-receipt-cid-or-signature-validation",
-      "type": "blocking_assumption"
-    },
-    {
-      "blocked_claim_ids": [
-        "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
-        "xaman-security:claim:authentication-gates-vault-and-signing",
-        "xaman-security:claim:payload-integrity-before-review-and-signing",
-        "xaman-security:claim:payload-replay-prevention-is-single-use",
-        "xaman-security:claim:network-binding-prevents-cross-network-signing",
-        "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent",
-        "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-        "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime",
-        "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims"
-      ],
-      "category": "proof_gap",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-          "domain": "production_source",
-          "source_packet_requirements": [
-            "Resolve blocking assumptions for each critical claim.",
-            "Regenerate SMT/TLA/protocol proof reports with accepted solver output.",
-            "Bind accepted proof reports to receipts or trusted signatures."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Reproducible-build, signed-binary, deployment digest, CI/CD attestation, or binary-to-source provenance for the release artifact.",
-          "domain": "production_build",
-          "source_packet_requirements": [
-            "Resolve blocking assumptions for each critical claim.",
-            "Regenerate SMT/TLA/protocol proof reports with accepted solver output.",
-            "Bind accepted proof reports to receipts or trusted signatures."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Resolve blocking assumptions for each critical claim.",
-            "Regenerate SMT/TLA/protocol proof reports with accepted solver output.",
-            "Bind accepted proof reports to receipts or trusted signatures."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Resolve blocking assumptions for each critical claim.",
-            "Regenerate SMT/TLA/protocol proof reports with accepted solver output.",
-            "Bind accepted proof reports to receipts or trusted signatures."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Resolve blocking assumptions for each critical claim.",
-            "Regenerate SMT/TLA/protocol proof reports with accepted solver output.",
-            "Bind accepted proof reports to receipts or trusted signatures."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-proof-no-critical-claim-proved",
-      "reason": "0 of 9 critical claims have a PROVED release outcome.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Resolve blocking assumptions for each critical claim.",
-        "Regenerate SMT/TLA/protocol proof reports with accepted solver output.",
-        "Bind accepted proof reports to receipts or trusted signatures."
-      ],
-      "required_production_evidence_domains": [
-        "production_source",
-        "production_build",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:proof:no-critical-claim-proved",
-      "type": "proof_gap"
-    },
-    {
-      "blocked_claim_ids": [],
-      "category": "apalache",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-solver-apalache",
-      "reason": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED."
-      ],
-      "required_production_evidence_domains": [
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:solver:apalache",
-      "type": "missing_solver"
-    },
-    {
-      "blocked_claim_ids": [],
-      "category": "proverif",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Install proverif and rerun the XamanPayloadProtocol protocol checks before promoting any protocol property to PROVED."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Install proverif and rerun the XamanPayloadProtocol protocol checks before promoting any protocol property to PROVED."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-solver-proverif",
-      "reason": "proverif executable was not available when this protocol report was generated; symbolic protocol checks are solver-blocked and must not be accepted as proved.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Install proverif and rerun the XamanPayloadProtocol protocol checks before promoting any protocol property to PROVED."
-      ],
-      "required_production_evidence_domains": [
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:solver:proverif",
-      "type": "missing_solver"
-    },
-    {
-      "blocked_claim_ids": [],
-      "category": "tamarin-prover",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Install tamarin-prover and rerun the XamanPayloadProtocol protocol checks before promoting any protocol property to PROVED."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Install tamarin-prover and rerun the XamanPayloadProtocol protocol checks before promoting any protocol property to PROVED."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-solver-tamarin-prover",
-      "reason": "tamarin-prover executable was not available when this protocol report was generated; symbolic protocol checks are solver-blocked and must not be accepted as proved.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Install tamarin-prover and rerun the XamanPayloadProtocol protocol checks before promoting any protocol property to PROVED."
-      ],
-      "required_production_evidence_domains": [
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:solver:tamarin-prover",
-      "type": "missing_solver"
-    },
-    {
-      "blocked_claim_ids": [],
-      "category": "runtime_equivalence_gap",
-      "deployed_app_evidence_status": "missing",
-      "domain_requirements": [
-        {
-          "description": "Reproducible-build, signed-binary, deployment digest, CI/CD attestation, or binary-to-source provenance for the release artifact.",
-          "domain": "production_build",
-          "source_packet_requirements": [
-            "Release-window iOS and Android real-device traces covering payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast.",
-            "Trace metadata binding app build identifier, commit, backend environment, node URI, device OS, and capture time.",
-            "Binary provenance or reproducible-build evidence proving the traced app matches the reviewed source commit."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-          "domain": "production_runtime",
-          "source_packet_requirements": [
-            "Release-window iOS and Android real-device traces covering payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast.",
-            "Trace metadata binding app build identifier, commit, backend environment, node URI, device OS, and capture time.",
-            "Binary provenance or reproducible-build evidence proving the traced app matches the reviewed source commit."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-          "domain": "production_environment",
-          "source_packet_requirements": [
-            "Release-window iOS and Android real-device traces covering payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast.",
-            "Trace metadata binding app build identifier, commit, backend environment, node URI, device OS, and capture time.",
-            "Binary provenance or reproducible-build evidence proving the traced app matches the reviewed source commit."
-          ],
-          "status": "missing"
-        },
-        {
-          "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-          "domain": "human_review",
-          "source_packet_requirements": [
-            "Release-window iOS and Android real-device traces covering payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast.",
-            "Trace metadata binding app build identifier, commit, backend environment, node URI, device OS, and capture time.",
-            "Binary provenance or reproducible-build evidence proving the traced app matches the reviewed source commit."
-          ],
-          "status": "missing"
-        }
-      ],
-      "id": "bridge:blocker-runtime-real-device-traces-absent",
-      "reason": "Release-window real-device runtime traces are absent.",
-      "release_effect": "blocked-production",
-      "removal_status": "blocked_missing_production_evidence",
-      "required_evidence_to_close_from_packet": [
-        "Release-window iOS and Android real-device traces covering payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast.",
-        "Trace metadata binding app build identifier, commit, backend environment, node URI, device OS, and capture time.",
-        "Binary provenance or reproducible-build evidence proving the traced app matches the reviewed source commit."
-      ],
-      "required_production_evidence_domains": [
-        "production_build",
-        "production_runtime",
-        "production_environment",
-        "human_review"
-      ],
-      "severity": "blocking",
-      "source_corpus_evidence_status": "mapped-but-insufficient-for-production",
-      "source_packet_blocker_id": "blocker:runtime:real-device-traces-absent",
-      "type": "runtime_equivalence_gap"
+      "task_id": "PORTAL-CXTP-084",
+      "title": "Refresh production blockers and handoff checklist",
+      "unblocks": []
     }
   ],
-  "claim_blocker_map": [
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-native-vault-cryptographic-confidentiality",
-        "blocker:assumption:xaman-security-assumption-third-party-signing-correctness",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "blocking",
-      "remaining_production_blocker_count": 4,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    },
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-biometric-native-binding",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-passcode-kdf-and-secret-protection",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:authentication-gates-vault-and-signing",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "blocking",
-      "remaining_production_blocker_count": 4,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    },
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-intake-decoder-and-os-delivery-integrity",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:payload-integrity-before-review-and-signing",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "high",
-      "remaining_production_blocker_count": 4,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    },
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:payload-replay-prevention-is-single-use",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "blocking",
-      "remaining_production_blocker_count": 3,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    },
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-deployed-network-and-node-config-equivalence",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:network-binding-prevents-cross-network-signing",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "high",
-      "remaining_production_blocker_count": 3,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    },
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-external-multisign-coordination",
-        "blocker:assumption:xaman-security-assumption-third-party-signing-correctness",
-        "blocker:assumption:xaman-security-assumption-trustset-and-signerlist-client-validation",
-        "blocker:assumption:xaman-security-assumption-xrpl-server-rule-enforcement-and-consensus",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "high",
-      "remaining_production_blocker_count": 6,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    },
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "blocking",
-      "remaining_production_blocker_count": 3,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    },
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-deployed-network-and-node-config-equivalence",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "blocking",
-      "remaining_production_blocker_count": 3,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    },
-    {
-      "blocked_by_packet_blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-proof-receipt-cid-or-signature-validation",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "claim_id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
-      "consumer_outcome": "stale-evidence",
-      "release_gate": "blocking",
-      "remaining_production_blocker_count": 2,
-      "secure_for_release": false,
-      "source_status": "BLOCKED_BY_ASSUMPTIONS"
-    }
-  ],
-  "corpus": "xaman-app",
-  "document_path": "docs/security_verification/xaman_to_production_blocker_bridge.md",
-  "evidence_scope": {
-    "deployed_app": {
-      "accepted_evidence": [],
-      "accepted_evidence_count": 0,
-      "missing_evidence": [
-        {
-          "domain": "production_source",
-          "evidence_type": "production_source_inventory",
-          "required_before_blocker_removal": true,
-          "status": "missing"
-        },
-        {
-          "domain": "production_build",
-          "evidence_type": "production_build_provenance",
-          "required_before_blocker_removal": true,
-          "status": "missing"
-        },
-        {
-          "domain": "production_runtime",
-          "evidence_type": "release_window_real_device_traces",
-          "required_before_blocker_removal": true,
-          "status": "missing"
-        },
-        {
-          "domain": "production_environment",
-          "evidence_type": "production_environment_profile",
-          "required_before_blocker_removal": true,
-          "status": "missing"
-        },
-        {
-          "domain": "human_review",
-          "evidence_type": "production_owner_signoff",
-          "required_before_blocker_removal": true,
-          "status": "missing"
-        }
-      ],
-      "production_release_ready": false,
-      "real_device_trace_count": 0,
-      "scope": "deployed_app",
-      "status": "absent"
-    },
-    "source_corpus": {
-      "accepted_for_deployed_app_release": false,
-      "evidence": [
-        {
-          "aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
-          "artifact_cid": "bafkreiei6bzr7ziihvbe4ueyfzkxspj7xijuoufqkn5jbqj2i7pzbdlkj4",
-          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
-          "evidence_type": "source_manifest",
-          "id": "source-corpus:pinned-source-manifest",
-          "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
-          "production_blocker_effect": "context-only-does-not-close-production-blockers",
-          "scope": "source_corpus",
-          "status": "reviewed"
-        },
-        {
-          "artifact_cid": "bafkreiedkn5arho2olipkfvpo6apwfx4khuup6hsigpz2jyth23bopkowu",
-          "coverage_summary": {
-            "content_unavailable_files": 643,
-            "manifest_files": 3444,
-            "parse_error_files": 0,
-            "parsed_coverage_percent": 0.0,
-            "parsed_files": 0,
-            "reviewed_gap_count": 721,
-            "security_relevant_files": 711,
-            "unsupported_files": 68
-          },
-          "evidence_type": "source_coverage",
-          "id": "source-corpus:source-coverage",
-          "path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
-          "production_blocker_effect": "context-only-does-not-close-production-blockers",
-          "scope": "source_corpus",
-          "status": "reviewed"
-        },
-        {
-          "blocking_assumption_ids": [
-            "xaman-security:assumption:native-vault-cryptographic-confidentiality",
-            "xaman-security:assumption:passcode-kdf-and-secret-protection",
-            "xaman-security:assumption:biometric-native-binding",
-            "xaman-security:assumption:third-party-signing-correctness",
-            "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-            "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
-            "xaman-security:assumption:deployed-network-and-node-config-equivalence",
-            "xaman-security:assumption:trustset-and-signerlist-client-validation",
-            "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
-            "xaman-security:assumption:external-multisign-coordination",
-            "xaman-security:assumption:deployed-runtime-equivalence",
-            "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
-          ],
-          "evidence_type": "security_claims",
-          "evidenced_assumption_ids": [
-            "xaman-security:assumption:pinned-source-corpus-integrity",
-            "xaman-security:assumption:software-account-private-key-storage-path",
-            "xaman-security:assumption:authentication-overlay-gates-vault-signing",
-            "xaman-security:assumption:payload-client-integrity-and-revalidation",
-            "xaman-security:assumption:client-replay-guards-before-submit",
-            "xaman-security:assumption:network-binding-is-client-enforced",
-            "xaman-security:assumption:xrpl-transaction-field-semantics",
-            "xaman-security:assumption:proof-consumer-fail-closed-policy"
-          ],
-          "id": "source-corpus:security-claims-and-assumptions",
-          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
-          "production_blocker_effect": "records-open-blockers-does-not-close-them",
-          "scope": "source_corpus",
-          "status": "partially-evidenced"
-        },
-        {
-          "assumption_count": 20,
-          "claim_count": 9,
-          "evidence_type": "security_model",
-          "id": "source-corpus:security-model-ir",
-          "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
-          "path": "security_ir_artifacts/corpora/xaman-app/security-model-ir.json",
-          "production_blocker_effect": "model-input-only",
-          "scope": "source_corpus",
-          "status": "modeled"
-        },
-        {
-          "evidence_type": "proof_reports",
-          "id": "source-corpus:proof-reports",
-          "paths": [
-            "security_ir_artifacts/corpora/xaman-app/proof-reports/z3-cvc5-differential.json",
-            "security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json",
-            "security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json",
-            "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json"
-          ],
-          "production_blocker_effect": "no-critical-claim-proved",
-          "release_effects": {
-            "xaman-proof-consumer-invariants": "no-release-unblock",
-            "xaman-smt-z3-cvc5-differential": "no-release-unblock",
-            "xaman-symbolic-protocol": "missing-solver",
-            "xaman-tla-apalache-workflow": "missing-solver"
-          },
-          "scope": "source_corpus",
-          "status": "blocked"
-        },
-        {
-          "evidence_type": "disproof_reports",
-          "id": "source-corpus:disproof-reports",
-          "paths": [
-            "security_ir_artifacts/corpora/xaman-app/disproof-vectors.json",
-            "security_ir_artifacts/corpora/xaman-app/counterexample-report.json"
-          ],
-          "production_blocker_effect": "negative-fixtures-preserved",
-          "release_effects": {
-            "xaman-counterexample-report": "disproof-gate-passed",
-            "xaman-disproof-vectors": "counterexamples-preserved-and-blocked-cases-recorded"
-          },
-          "scope": "source_corpus",
-          "status": "archived"
-        },
-        {
-          "artifact_cid": "bafkreie3vgmwlyktfe57jr7qi7eulk5jvlbp7mqroerwkssf2phg37bgxy",
-          "e2e_feature_count": 6,
-          "evidence_type": "source_or_e2e_runtime_monitors",
-          "id": "source-corpus:source-and-e2e-runtime-monitors",
-          "monitor_fact_count": 20,
-          "path": "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json",
-          "production_blocker_effect": "real-device-runtime-equivalence-still-missing",
-          "real_device_trace_count": 0,
-          "scope": "source_corpus",
-          "status": "not-deployed-runtime-equivalent"
-        },
-        {
-          "evidence_type": "proof_consumer_fixture",
-          "id": "source-corpus:proof-consumer-fixture",
-          "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
-          "production_blocker_effect": "policy-fixture-only-production-validation-still-missing",
-          "scope": "source_corpus",
-          "status": "fixture-accepted"
-        }
-      ],
-      "evidence_count": 8,
-      "evidence_types": [
-        "source_manifest",
-        "source_coverage",
-        "security_claims",
-        "security_model",
-        "proof_reports",
-        "disproof_reports",
-        "source_or_e2e_runtime_monitors",
-        "proof_consumer_fixture"
-      ],
-      "scope": "source_corpus",
-      "status": "available_for_review_context"
-    }
-  },
-  "generated_at_utc": "2026-07-08T22:30:00Z",
-  "production_blocker_removal_policy": {
-    "decision": "blocked-production",
-    "may_remove_any_blocker": false,
-    "production_environment_profile_doc": "docs/security_verification/production_environment_profile.md",
-    "production_evidence_intake_doc": "docs/security_verification/production_evidence_intake.md",
-    "required_before_removal": [
-      "Every mapped blocker has current evidence for each listed production evidence domain.",
-      "Deployed-app evidence is separated from source-corpus evidence and reviewed independently.",
-      "Every blocking/high claim has an accepted PROVED outcome bound to the release packet.",
-      "Human owners accept freshness, scope, and residual risk for each blocker removal."
-    ]
-  },
-  "production_evidence_domains": [
-    {
-      "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-      "domain": "production_source",
-      "status": "missing"
-    },
-    {
-      "description": "Reproducible-build, signed-binary, deployment digest, CI/CD attestation, or binary-to-source provenance for the release artifact.",
-      "domain": "production_build",
-      "status": "missing"
-    },
-    {
-      "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-      "domain": "production_runtime",
-      "status": "missing"
-    },
-    {
-      "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-      "domain": "production_environment",
-      "status": "missing"
-    },
-    {
-      "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-      "domain": "human_review",
-      "status": "missing"
-    }
-  ],
-  "remaining_blockers_by_domain": {
-    "human_review": {
-      "blocker_count": 17,
-      "blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-native-vault-cryptographic-confidentiality",
-        "blocker:assumption:xaman-security-assumption-passcode-kdf-and-secret-protection",
-        "blocker:assumption:xaman-security-assumption-biometric-native-binding",
-        "blocker:assumption:xaman-security-assumption-third-party-signing-correctness",
-        "blocker:assumption:xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-        "blocker:assumption:xaman-security-assumption-intake-decoder-and-os-delivery-integrity",
-        "blocker:assumption:xaman-security-assumption-deployed-network-and-node-config-equivalence",
-        "blocker:assumption:xaman-security-assumption-trustset-and-signerlist-client-validation",
-        "blocker:assumption:xaman-security-assumption-xrpl-server-rule-enforcement-and-consensus",
-        "blocker:assumption:xaman-security-assumption-external-multisign-coordination",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-proof-receipt-cid-or-signature-validation",
-        "blocker:proof:no-critical-claim-proved",
-        "blocker:solver:apalache",
-        "blocker:solver:proverif",
-        "blocker:solver:tamarin-prover",
-        "blocker:runtime:real-device-traces-absent"
-      ],
-      "description": "Named owner or security review accepting the evidence, freshness, scope, and residual risk for the blocker.",
-      "status": "missing"
-    },
-    "production_build": {
-      "blocker_count": 6,
-      "blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-native-vault-cryptographic-confidentiality",
-        "blocker:assumption:xaman-security-assumption-deployed-network-and-node-config-equivalence",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-proof-receipt-cid-or-signature-validation",
-        "blocker:proof:no-critical-claim-proved",
-        "blocker:runtime:real-device-traces-absent"
-      ],
-      "description": "Reproducible-build, signed-binary, deployment digest, CI/CD attestation, or binary-to-source provenance for the release artifact.",
-      "status": "missing"
-    },
-    "production_environment": {
-      "blocker_count": 16,
-      "blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-native-vault-cryptographic-confidentiality",
-        "blocker:assumption:xaman-security-assumption-passcode-kdf-and-secret-protection",
-        "blocker:assumption:xaman-security-assumption-biometric-native-binding",
-        "blocker:assumption:xaman-security-assumption-third-party-signing-correctness",
-        "blocker:assumption:xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-        "blocker:assumption:xaman-security-assumption-intake-decoder-and-os-delivery-integrity",
-        "blocker:assumption:xaman-security-assumption-deployed-network-and-node-config-equivalence",
-        "blocker:assumption:xaman-security-assumption-xrpl-server-rule-enforcement-and-consensus",
-        "blocker:assumption:xaman-security-assumption-external-multisign-coordination",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-proof-receipt-cid-or-signature-validation",
-        "blocker:proof:no-critical-claim-proved",
-        "blocker:solver:apalache",
-        "blocker:solver:proverif",
-        "blocker:solver:tamarin-prover",
-        "blocker:runtime:real-device-traces-absent"
-      ],
-      "description": "Production environment, custody, solver, node, platform, backend, or operational configuration evidence.",
-      "status": "missing"
-    },
-    "production_runtime": {
-      "blocker_count": 13,
-      "blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-native-vault-cryptographic-confidentiality",
-        "blocker:assumption:xaman-security-assumption-biometric-native-binding",
-        "blocker:assumption:xaman-security-assumption-third-party-signing-correctness",
-        "blocker:assumption:xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-        "blocker:assumption:xaman-security-assumption-intake-decoder-and-os-delivery-integrity",
-        "blocker:assumption:xaman-security-assumption-deployed-network-and-node-config-equivalence",
-        "blocker:assumption:xaman-security-assumption-trustset-and-signerlist-client-validation",
-        "blocker:assumption:xaman-security-assumption-xrpl-server-rule-enforcement-and-consensus",
-        "blocker:assumption:xaman-security-assumption-external-multisign-coordination",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-proof-receipt-cid-or-signature-validation",
-        "blocker:proof:no-critical-claim-proved",
-        "blocker:runtime:real-device-traces-absent"
-      ],
-      "description": "Release-window runtime traces, real-device traces, integration tests, or ledger/backend execution traces bound to the deployed build.",
-      "status": "missing"
-    },
-    "production_source": {
-      "blocker_count": 11,
-      "blocker_ids": [
-        "blocker:assumption:xaman-security-assumption-native-vault-cryptographic-confidentiality",
-        "blocker:assumption:xaman-security-assumption-passcode-kdf-and-secret-protection",
-        "blocker:assumption:xaman-security-assumption-biometric-native-binding",
-        "blocker:assumption:xaman-security-assumption-third-party-signing-correctness",
-        "blocker:assumption:xaman-security-assumption-backend-payload-api-single-use-and-authorization",
-        "blocker:assumption:xaman-security-assumption-intake-decoder-and-os-delivery-integrity",
-        "blocker:assumption:xaman-security-assumption-trustset-and-signerlist-client-validation",
-        "blocker:assumption:xaman-security-assumption-external-multisign-coordination",
-        "blocker:assumption:xaman-security-assumption-deployed-runtime-equivalence",
-        "blocker:assumption:xaman-security-assumption-proof-receipt-cid-or-signature-validation",
-        "blocker:proof:no-critical-claim-proved"
-      ],
-      "description": "Reviewed production source, dependency, native module, backend, policy, or vendor evidence for the exact release boundary.",
-      "status": "missing"
-    }
-  },
+  "generated_at": "2026-07-10T07:19:04Z",
+  "overall_status": "ready_blocker_bridge_generated",
+  "production_release_blocked": true,
   "schema_version": "xaman-production-blocker-bridge/v1",
-  "source_packet": {
-    "artifact_cid": "bafkreigzheeseiw36a5rqy3aggw4ia5gdkmzxlcmvmlnfluomr67ssjhzq",
-    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
-    "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
-    "open_blocker_count": 17,
-    "path": "security_ir_artifacts/corpora/xaman-app/assurance-packet.json",
-    "release_decision": "blocked-production",
-    "schema_version": "xaman-assurance-packet/v1",
-    "task_id": "PORTAL-CXTP-075"
-  },
-  "summary": {
-    "decision": "blocked-production",
-    "deployed_app_accepted_evidence_count": 0,
-    "domain_blocker_counts": {
-      "human_review": 17,
-      "production_build": 6,
-      "production_environment": 16,
-      "production_runtime": 13,
-      "production_source": 11
-    },
-    "open_blocker_count": 17,
-    "release_ready": false,
-    "remaining_domain_count": 5,
-    "source_corpus_evidence_count": 8,
-    "source_packet_open_blocker_count": 17
-  },
+  "security_decision": "PRODUCTION_BLOCKERS_MAPPED_RELEASE_REMAINS_BLOCKED",
+  "supervisor_policy": "Keep PORTAL-CXTP-077 through PORTAL-CXTP-084 blocked until their listed acceptance files exist and validate.",
   "task_id": "PORTAL-CXTP-076",
-  "validation": {
-    "command": "PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_production_blocker_bridge.py -q",
-    "test_path": "tests/logic/security_models/crypto_exchange/test_xaman_production_blocker_bridge.py"
-  }
+  "task_ids": [
+    "PORTAL-CXTP-077",
+    "PORTAL-CXTP-078",
+    "PORTAL-CXTP-079",
+    "PORTAL-CXTP-080",
+    "PORTAL-CXTP-081",
+    "PORTAL-CXTP-082",
+    "PORTAL-CXTP-083",
+    "PORTAL-CXTP-084"
+  ],
+  "xaman_assurance_packet": {
+    "artifact_cid": "sha256:e6b499f1171052a3a8d7438808aed5f6af5480dbb9b87b9a7337a367b3c20eee",
+    "blocker_count": 8,
+    "path": "security_ir_artifacts/corpora/xaman-app/assurance-packet.json",
+    "release_decision": "reject_release",
+    "security_decision": "BLOCK_XAMAN_RELEASE_ASSURANCE_PACKET",
+    "sha256": "sha256:ec996614c9756b4c7e3fe4523bbb5f69c341dab60599780b3d87a9ab70f4693f"
+  },
+  "xaman_blocker_codes": [
+    "UNRESOLVED_XAMAN_ASSUMPTIONS",
+    "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+    "COUNTEREXAMPLES_FOUND",
+    "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE",
+    "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+    "APALACHE_NOT_RUN",
+    "PROTOCOL_SOLVERS_NOT_RUN",
+    "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
+  ]
 }

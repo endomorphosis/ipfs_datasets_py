@@ -1,494 +1,119 @@
 {
-  "artifact_cid": "bafkreighj6n7d5lwuxxztcfzz7gxi6ozu7ikaibzr4qqv2jcupxpyxb3yq",
-  "blocked": [
-    {
-      "blocked_reason": {
-        "claim_blocking_assumptions": [
-          "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
-        ],
-        "expected_blockers": [
-          "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
-        ],
-        "mutation": {
-          "forged_result": "PROVED",
-          "removed_solver": "cvc5",
-          "solver_name": "z3",
-          "solver_version": "below-required-baseline"
-        },
-        "reason": "fail_closed_until_required_assumptions_and_solver_packet_are_evidenced"
-      },
-      "claim_id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
-      "mutation_class": "downgraded_solver",
-      "proof_or_trace_cid": "bafkreib3275qyvyv25r562tohplsmxf4aru5cydtf6p5vw7ip7bdxmwiim",
-      "scenario_id": "downgraded-solver-proof-packet"
-    },
-    {
-      "blocked_reason": {
-        "claim_blocking_assumptions": [
-          "xaman-security:assumption:trustset-and-signerlist-client-validation",
-          "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
-          "xaman-security:assumption:external-multisign-coordination",
-          "xaman-security:assumption:third-party-signing-correctness",
-          "xaman-security:assumption:deployed-runtime-equivalence"
-        ],
-        "expected_blockers": [
-          "xaman-security:assumption:trustset-and-signerlist-client-validation",
-          "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus"
-        ],
-        "mutation": {
-          "client_validation": "stubbed_or_not_implemented",
-          "requires_server_rule_semantics": true,
-          "transaction_types": [
-            "TrustSet",
-            "SignerListSet"
-          ]
-        },
-        "reason": "fail_closed_until_required_assumptions_and_solver_packet_are_evidenced"
-      },
-      "claim_id": "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent",
-      "mutation_class": "unsupported_xrpl_semantics",
-      "proof_or_trace_cid": "bafkreihoh3q4vldlzzed45zz2j4igwkcstc3kstn2pzo3g5pkigoshnbpa",
-      "scenario_id": "unsupported-xrpl-semantics"
-    }
-  ],
-  "counterexamples": [
-    {
-      "claim_id": "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
-      "counterexample": {
-        "mutation": {
-          "assumption_id": "xaman-security:assumption:native-vault-cryptographic-confidentiality",
-          "field": "acceptance_status",
-          "from": "BLOCKING",
-          "removed_fields": [
-            "blocking_reason",
-            "required_evidence_to_accept"
-          ],
-          "to": "EVIDENCED"
-        },
-        "mutation_class": "mutated_assumption",
-        "trace": [
-          {
-            "assumption_id": "xaman-security:assumption:native-vault-cryptographic-confidentiality",
-            "event": "assumption_acceptance_status_mutated",
-            "event_id": "event:xaman:mutated-assumption-promoted",
-            "from": "BLOCKING",
-            "to": "EVIDENCED"
-          },
-          {
-            "authorized_vault_path": false,
-            "event": "software_private_key_material_available",
-            "event_id": "event:xaman:unaudited-vault-secret-read",
-            "required_evidence_present": false
-          }
-        ],
-        "violated_category": "custody",
-        "violated_claim_id": "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
-        "violated_invariant": "No transition from review approval to signed blob may read or use a software private key except through a successful vault-open path for the selected signer, and all signing output must bind to the reviewed XRPL transaction bytes.",
-        "violating_event_ids": [
-          "event:xaman:mutated-assumption-promoted",
-          "event:xaman:unaudited-vault-secret-read"
-        ],
-        "witness": {
-          "baseline_blocking_assumptions": [
-            "xaman-security:assumption:native-vault-cryptographic-confidentiality",
-            "xaman-security:assumption:third-party-signing-correctness",
-            "xaman-security:assumption:deployed-runtime-equivalence"
-          ],
-          "claim_risk": "blocking",
-          "claim_source_status": "BLOCKED_BY_ASSUMPTIONS",
-          "consumer_policy": "fail_closed_until_all_blocking_assumptions_evidenced_and_proved"
-        }
-      },
-      "mutation_class": "mutated_assumption",
-      "proof_or_trace_cid": "bafkreih2cw4lefj23belv5k6cn4w72tt6tnfauy7w7bajdc76jrzgyytgy",
-      "scenario_id": "assumption-promotion-without-evidence"
-    },
-    {
-      "claim_id": "xaman-security:claim:authentication-gates-vault-and-signing",
-      "counterexample": {
-        "mutation": {
-          "inserted_terminal_event": "xaman_transaction_signed",
-          "removed_preconditions": [
-            "fresh_passcode_or_biometric_authorization",
-            "vault_opened_with_encryption_key"
-          ]
-        },
-        "mutation_class": "auth_precondition_removed",
-        "trace": [
-          {
-            "event": "xaman_payload_reviewed",
-            "event_id": "event:xaman:payload-reviewed",
-            "payload_uuid": "payload:auth-precondition-counterexample"
-          },
-          {
-            "auth_success_seen": false,
-            "event": "xaman_transaction_signed",
-            "event_id": "event:xaman:transaction-signed-without-auth",
-            "vault_opened_seen": false
-          }
-        ],
-        "violated_category": "authentication",
-        "violated_claim_id": "xaman-security:claim:authentication-gates-vault-and-signing",
-        "violated_invariant": "Every signing transition must have a preceding successful authentication event that is valid for the selected account encryption level and is not bypassed by inactive-app, stale-unlock, or enrollment-change conditions.",
-        "violating_event_ids": [
-          "event:xaman:payload-reviewed",
-          "event:xaman:transaction-signed-without-auth"
-        ],
-        "witness": {
-          "baseline_blocking_assumptions": [
-            "xaman-security:assumption:passcode-kdf-and-secret-protection",
-            "xaman-security:assumption:biometric-native-binding",
-            "xaman-security:assumption:deployed-runtime-equivalence"
-          ],
-          "claim_risk": "blocking",
-          "claim_source_status": "BLOCKED_BY_ASSUMPTIONS",
-          "consumer_policy": "fail_closed_until_all_blocking_assumptions_evidenced_and_proved"
-        }
-      },
-      "mutation_class": "auth_precondition_removed",
-      "proof_or_trace_cid": "bafkreia5ljybnlevass4mrezffi5pc3vxn5hxltbm44rhz2zx54slwkvja",
-      "scenario_id": "auth-precondition-removed-signing"
-    },
-    {
-      "claim_id": "xaman-security:claim:payload-integrity-before-review-and-signing",
-      "counterexample": {
-        "mutation": {
-          "field": "evidence_expires_at",
-          "from": "2027-01-08T00:00:00Z",
-          "release_window_date": "2026-07-08",
-          "to": "2026-01-01T00:00:00Z"
-        },
-        "mutation_class": "stale_evidence",
-        "trace": [
-          {
-            "event": "evidence_expired",
-            "event_id": "event:xaman:evidence-aged-out",
-            "evidence_expires_at": "2026-01-01T00:00:00Z",
-            "release_window_date": "2026-07-08"
-          },
-          {
-            "event": "claim_accepted_with_stale_evidence",
-            "event_id": "event:xaman:stale-evidence-accepted",
-            "freshness_checked": false
-          }
-        ],
-        "violated_category": "payload_integrity",
-        "violated_claim_id": "xaman-security:claim:payload-integrity-before-review-and-signing",
-        "violated_invariant": "A payload reference may reach the approval transition only after digest-matched fetch, visible review of the same transaction fields, and successful validation refresh of unresolved, unexpired backend state.",
-        "violating_event_ids": [
-          "event:xaman:evidence-aged-out",
-          "event:xaman:stale-evidence-accepted"
-        ],
-        "witness": {
-          "baseline_blocking_assumptions": [
-            "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
-            "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-            "xaman-security:assumption:deployed-runtime-equivalence"
-          ],
-          "claim_risk": "high",
-          "claim_source_status": "BLOCKED_BY_ASSUMPTIONS",
-          "consumer_policy": "fail_closed_until_all_blocking_assumptions_evidenced_and_proved"
-        }
-      },
-      "mutation_class": "stale_evidence",
-      "proof_or_trace_cid": "bafkreihhfsot4j7xre5q43edddm6plpqqapn6kv7lhzhpxn2fstoirrnky",
-      "scenario_id": "stale-evidence-accepted"
-    },
-    {
-      "claim_id": "xaman-security:claim:network-binding-prevents-cross-network-signing",
-      "counterexample": {
-        "mutation": {
-          "active_app_network": "xrpl-testnet",
-          "payload_force_network": "xrpl-mainnet",
-          "populated_network_id": 1,
-          "submit_node_network": "xrpl-testnet"
-        },
-        "mutation_class": "wrong_network",
-        "trace": [
-          {
-            "active_app_network": "xrpl-testnet",
-            "event": "xaman_payload_reviewed",
-            "event_id": "event:xaman:wrong-network-reviewed",
-            "payload_force_network": "xrpl-mainnet"
-          },
-          {
-            "event": "xaman_ledger_submit_requested",
-            "event_id": "event:xaman:wrong-network-submitted",
-            "network_binding_consistent": false,
-            "submit_node_network": "xrpl-testnet"
-          }
-        ],
-        "violated_category": "network_binding",
-        "violated_claim_id": "xaman-security:claim:network-binding-prevents-cross-network-signing",
-        "violated_invariant": "For every approved transaction, payload force_network, active app network, populated NetworkID, patch environment, and submit node must be mutually consistent.",
-        "violating_event_ids": [
-          "event:xaman:wrong-network-reviewed",
-          "event:xaman:wrong-network-submitted"
-        ],
-        "witness": {
-          "baseline_blocking_assumptions": [
-            "xaman-security:assumption:deployed-network-and-node-config-equivalence",
-            "xaman-security:assumption:deployed-runtime-equivalence"
-          ],
-          "claim_risk": "high",
-          "claim_source_status": "BLOCKED_BY_ASSUMPTIONS",
-          "consumer_policy": "fail_closed_until_runtime_network_binding_is_evidenced"
-        }
-      },
-      "mutation_class": "wrong_network",
-      "proof_or_trace_cid": "bafkreidudhjxr7isnojrcunb4dqfpwh77dn3lcg4soyxxsqf6xwwr5ttfi",
-      "scenario_id": "wrong-network-submit"
-    },
-    {
-      "claim_id": "xaman-security:claim:payload-replay-prevention-is-single-use",
-      "counterexample": {
-        "mutation": {
-          "backend_atomic_resolution": false,
-          "payload_uuid": "payload:replay-counterexample",
-          "terminal_transitions": [
-            "signed_patch",
-            "submitted_patch"
-          ]
-        },
-        "mutation_class": "replay_payload",
-        "trace": [
-          {
-            "client_id": "client:a",
-            "event": "xaman_payload_resolved_patch",
-            "event_id": "event:xaman:payload-signed-client-a",
-            "payload_uuid": "payload:replay-counterexample",
-            "terminal_transition": "signed_patch"
-          },
-          {
-            "client_id": "client:b",
-            "event": "xaman_payload_resolved_patch",
-            "event_id": "event:xaman:payload-submitted-client-b",
-            "payload_uuid": "payload:replay-counterexample",
-            "terminal_transition": "submitted_patch"
-          }
-        ],
-        "violated_category": "replay_prevention",
-        "violated_claim_id": "xaman-security:claim:payload-replay-prevention-is-single-use",
-        "violated_invariant": "No two successful signed or submitted terminal transitions may consume the same remote payload UUID, including concurrent clients and repeated PATCH attempts.",
-        "violating_event_ids": [
-          "event:xaman:payload-signed-client-a",
-          "event:xaman:payload-submitted-client-b"
-        ],
-        "witness": {
-          "baseline_blocking_assumptions": [
-            "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-            "xaman-security:assumption:deployed-runtime-equivalence"
-          ],
-          "claim_risk": "blocking",
-          "claim_source_status": "BLOCKED_BY_ASSUMPTIONS",
-          "consumer_policy": "fail_closed_until_backend_atomic_single_use_is_evidenced"
-        }
-      },
-      "mutation_class": "replay_payload",
-      "proof_or_trace_cid": "bafkreigaw7a2gcdmfdsrkrcgohsbcscahwlyxqr2d4thy5m2rh7uwg4v3a",
-      "scenario_id": "remote-payload-replay-race"
-    },
-    {
-      "claim_id": "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-      "counterexample": {
-        "mutation": {
-          "accepted_terminal_state": "signed",
-          "backend_authorized": false,
-          "patch_conflict_rejected": false,
-          "payload_uuid_bound_to_requester": false
-        },
-        "mutation_class": "backend_trust_failure",
-        "trace": [
-          {
-            "backend_authorized": false,
-            "event": "xaman_payload_resolved_patch",
-            "event_id": "event:xaman:backend-forged-patch",
-            "payload_uuid_bound_to_requester": false
-          },
-          {
-            "accepted_terminal_state": "signed",
-            "event": "payload_resolution_accepted",
-            "event_id": "event:xaman:backend-forged-state-accepted",
-            "patch_conflict_rejected": false
-          }
-        ],
-        "violated_category": "backend_trust",
-        "violated_claim_id": "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-        "violated_invariant": "Backend create, fetch, validate, reject, signed-patch, and dispatch-patch transitions must be authorized, atomic where required, and bound to the same payload UUID and signer constraints.",
-        "violating_event_ids": [
-          "event:xaman:backend-forged-patch",
-          "event:xaman:backend-forged-state-accepted"
-        ],
-        "witness": {
-          "baseline_blocking_assumptions": [
-            "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-            "xaman-security:assumption:deployed-runtime-equivalence"
-          ],
-          "claim_risk": "blocking",
-          "claim_source_status": "BLOCKED_BY_ASSUMPTIONS",
-          "consumer_policy": "fail_closed_until_backend_source_and_runtime_evidence_are_reviewed"
-        }
-      },
-      "mutation_class": "backend_trust_failure",
-      "proof_or_trace_cid": "bafkreibv3fzz47pwq62envd6a4eehbtzffl3ckvlpzun7fznvmoyc2lhcy",
-      "scenario_id": "backend-trust-forged-resolution"
-    }
-  ],
-  "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
-  "model_id": "xaman-app-security-model-ir-baseline",
-  "scenarios": [
-    {
-      "blocking_assumptions": [
-        "xaman-security:assumption:native-vault-cryptographic-confidentiality",
-        "xaman-security:assumption:third-party-signing-correctness",
-        "xaman-security:assumption:deployed-runtime-equivalence"
-      ],
-      "claim_id": "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
-      "counterexample_found": true,
-      "expected_blockers": [],
-      "expected_detection": "counterexample_found",
-      "explicitly_blocked": false,
-      "mutation_class": "mutated_assumption",
-      "proof_or_trace_cid": "bafkreih2cw4lefj23belv5k6cn4w72tt6tnfauy7w7bajdc76jrzgyytgy",
-      "scenario_id": "assumption-promotion-without-evidence",
-      "status": "DISPROVED"
-    },
-    {
-      "blocking_assumptions": [
-        "xaman-security:assumption:passcode-kdf-and-secret-protection",
-        "xaman-security:assumption:biometric-native-binding",
-        "xaman-security:assumption:deployed-runtime-equivalence"
-      ],
-      "claim_id": "xaman-security:claim:authentication-gates-vault-and-signing",
-      "counterexample_found": true,
-      "expected_blockers": [],
-      "expected_detection": "counterexample_found",
-      "explicitly_blocked": false,
-      "mutation_class": "auth_precondition_removed",
-      "proof_or_trace_cid": "bafkreia5ljybnlevass4mrezffi5pc3vxn5hxltbm44rhz2zx54slwkvja",
-      "scenario_id": "auth-precondition-removed-signing",
-      "status": "DISPROVED"
-    },
-    {
-      "blocking_assumptions": [
-        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
-        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-        "xaman-security:assumption:deployed-runtime-equivalence"
-      ],
-      "claim_id": "xaman-security:claim:payload-integrity-before-review-and-signing",
-      "counterexample_found": true,
-      "expected_blockers": [],
-      "expected_detection": "counterexample_found",
-      "explicitly_blocked": false,
-      "mutation_class": "stale_evidence",
-      "proof_or_trace_cid": "bafkreihhfsot4j7xre5q43edddm6plpqqapn6kv7lhzhpxn2fstoirrnky",
-      "scenario_id": "stale-evidence-accepted",
-      "status": "DISPROVED"
-    },
-    {
-      "blocking_assumptions": [
-        "xaman-security:assumption:deployed-network-and-node-config-equivalence",
-        "xaman-security:assumption:deployed-runtime-equivalence"
-      ],
-      "claim_id": "xaman-security:claim:network-binding-prevents-cross-network-signing",
-      "counterexample_found": true,
-      "expected_blockers": [],
-      "expected_detection": "counterexample_found",
-      "explicitly_blocked": false,
-      "mutation_class": "wrong_network",
-      "proof_or_trace_cid": "bafkreidudhjxr7isnojrcunb4dqfpwh77dn3lcg4soyxxsqf6xwwr5ttfi",
-      "scenario_id": "wrong-network-submit",
-      "status": "DISPROVED"
-    },
-    {
-      "blocking_assumptions": [
-        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-        "xaman-security:assumption:deployed-runtime-equivalence"
-      ],
-      "claim_id": "xaman-security:claim:payload-replay-prevention-is-single-use",
-      "counterexample_found": true,
-      "expected_blockers": [],
-      "expected_detection": "counterexample_found",
-      "explicitly_blocked": false,
-      "mutation_class": "replay_payload",
-      "proof_or_trace_cid": "bafkreigaw7a2gcdmfdsrkrcgohsbcscahwlyxqr2d4thy5m2rh7uwg4v3a",
-      "scenario_id": "remote-payload-replay-race",
-      "status": "DISPROVED"
-    },
-    {
-      "blocking_assumptions": [
-        "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
-      ],
-      "claim_id": "xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims",
-      "counterexample_found": false,
-      "expected_blockers": [
-        "xaman-security:assumption:proof-receipt-cid-or-signature-validation"
-      ],
-      "expected_detection": "blocked_fail_closed",
-      "explicitly_blocked": true,
-      "mutation_class": "downgraded_solver",
-      "proof_or_trace_cid": "bafkreib3275qyvyv25r562tohplsmxf4aru5cydtf6p5vw7ip7bdxmwiim",
-      "scenario_id": "downgraded-solver-proof-packet",
-      "status": "EXPLICITLY_BLOCKED"
-    },
-    {
-      "blocking_assumptions": [
-        "xaman-security:assumption:trustset-and-signerlist-client-validation",
-        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
-        "xaman-security:assumption:external-multisign-coordination",
-        "xaman-security:assumption:third-party-signing-correctness",
-        "xaman-security:assumption:deployed-runtime-equivalence"
-      ],
-      "claim_id": "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent",
-      "counterexample_found": false,
-      "expected_blockers": [
-        "xaman-security:assumption:trustset-and-signerlist-client-validation",
-        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus"
-      ],
-      "expected_detection": "blocked_fail_closed",
-      "explicitly_blocked": true,
-      "mutation_class": "unsupported_xrpl_semantics",
-      "proof_or_trace_cid": "bafkreihoh3q4vldlzzed45zz2j4igwkcstc3kstn2pzo3g5pkigoshnbpa",
-      "scenario_id": "unsupported-xrpl-semantics",
-      "status": "EXPLICITLY_BLOCKED"
-    },
-    {
-      "blocking_assumptions": [
-        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-        "xaman-security:assumption:deployed-runtime-equivalence"
-      ],
-      "claim_id": "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-      "counterexample_found": true,
-      "expected_blockers": [],
-      "expected_detection": "counterexample_found",
-      "explicitly_blocked": false,
-      "mutation_class": "backend_trust_failure",
-      "proof_or_trace_cid": "bafkreibv3fzz47pwq62envd6a4eehbtzffl3ckvlpzun7fznvmoyc2lhcy",
-      "scenario_id": "backend-trust-forged-resolution",
-      "status": "DISPROVED"
-    }
-  ],
   "schema_version": "xaman-counterexample-report/v1",
-  "summary": {
-    "counterexample_count": 6,
-    "explicitly_blocked_count": 2,
-    "mutation_class_counts": {
-      "auth_precondition_removed": 1,
-      "backend_trust_failure": 1,
-      "downgraded_solver": 1,
-      "mutated_assumption": 1,
-      "replay_payload": 1,
-      "stale_evidence": 1,
-      "unsupported_xrpl_semantics": 1,
-      "wrong_network": 1
-    },
-    "scenario_failures": 0,
-    "status_counts": {
-      "DISPROVED": 6,
-      "EXPLICITLY_BLOCKED": 2
-    },
-    "vector_count": 8
-  },
   "task_id": "PORTAL-CXTP-070",
-  "vectors_artifact_cid": "bafkreidn4w5fknj7hbwp5qmyyt4iagt27xvok77i2m3q2diecckjejt7ie"
+  "model": {
+    "path": "security_ir_artifacts/corpora/xaman-app/security-model-ir.json",
+    "cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d"
+  },
+  "results": [
+    {
+      "vector_id": "xaman-disproof:assumption-mutation-native-vault",
+      "claim_id": "xaman-claim:software-custody-requires-vault-authentication",
+      "result": "counterexample_found",
+      "counterexample": {
+        "cleared_assumption_without_evidence": "xaman-assumption:native-vault-crypto-and-biometric-security",
+        "violated_policy": "blocking assumptions cannot be cleared without evidence"
+      },
+      "release_policy": "block"
+    },
+    {
+      "vector_id": "xaman-disproof:auth-precondition-removal",
+      "claim_id": "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+      "result": "counterexample_found",
+      "counterexample": {
+        "removed_precondition": "auth_or_vault_overlay",
+        "invalid_path": "review_acceptance_to_signed_blob_without_auth"
+      },
+      "release_policy": "block"
+    },
+    {
+      "vector_id": "xaman-disproof:stale-evidence-acceptance",
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "result": "counterexample_found",
+      "counterexample": {
+        "receipt_result": "proved",
+        "evidence_status": "stale_evidence",
+        "expected_consumer_action": "reject"
+      },
+      "release_policy": "block"
+    },
+    {
+      "vector_id": "xaman-disproof:wrong-network-signing",
+      "claim_id": "xaman-claim:network-binding-prevents-wrong-network-signing",
+      "result": "counterexample_found",
+      "counterexample": {
+        "payload_force_network": "mainnet",
+        "active_network": "testnet",
+        "mutated_guard": "force_network_check_removed"
+      },
+      "release_policy": "block"
+    },
+    {
+      "vector_id": "xaman-disproof:replay-resolved-payload",
+      "claim_id": "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+      "result": "counterexample_found",
+      "counterexample": {
+        "payload_state": "resolved_at_present",
+        "mutated_guard": "resolved_or_expired_check_removed"
+      },
+      "release_policy": "block"
+    },
+    {
+      "vector_id": "xaman-disproof:downgraded-solver-result",
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "result": "counterexample_found",
+      "counterexample": {
+        "solver_lane": "blocked_optional_lane",
+        "mutated_consumer_action": "accept_report"
+      },
+      "release_policy": "block"
+    },
+    {
+      "vector_id": "xaman-disproof:unsupported-xrpl-semantics",
+      "claim_id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
+      "result": "counterexample_found",
+      "counterexample": {
+        "transaction_classes": [
+          "TrustSet",
+          "OfferCreate",
+          "SignerListSet"
+        ],
+        "validation_status": "TODO_RESOLVES_WITHOUT_CHECKS"
+      },
+      "release_policy": "block"
+    },
+    {
+      "vector_id": "xaman-disproof:backend-double-use",
+      "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
+      "result": "blocked_by_missing_evidence",
+      "counterexample": null,
+      "missing_evidence": [
+        "backend source snapshot",
+        "single-use enforcement trace",
+        "PATCH conflict behavior"
+      ],
+      "release_policy": "block"
+    },
+    {
+      "vector_id": "xaman-disproof:runtime-equivalence-missing",
+      "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
+      "result": "blocked_by_missing_evidence",
+      "counterexample": null,
+      "missing_evidence": [
+        "real-device trace bundle",
+        "build provenance",
+        "runtime environment snapshot"
+      ],
+      "release_policy": "block"
+    }
+  ],
+  "summary": {
+    "vector_count": 9,
+    "counterexample_found_count": 7,
+    "blocked_count": 2,
+    "release_acceptable_count": 0
+  },
+  "overall_status": "blocked",
+  "production_release_blocked": true,
+  "security_decision": "BLOCK_COUNTEREXAMPLES_AND_MISSING_EVIDENCE"
 }

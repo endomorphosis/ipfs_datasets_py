@@ -1,8 +1,8 @@
-# Xaman XRPL Transaction Semantics Model
+# Xaman XRPL Transaction Model
 
 Task: `PORTAL-CXTP-066`
 
-This model records reviewed XRPL transaction-semantics facts for the pinned Xaman React Native source corpus. The machine-readable artifact is `security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json`.
+This model records reviewed XRPL transaction semantics from the pinned Xaman React Native source corpus. The machine-readable artifact is `security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json`.
 
 ## Source Boundary
 
@@ -13,72 +13,57 @@ This model records reviewed XRPL transaction-semantics facts for the pinned Xama
 - Manifest aggregate SHA-256: `575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460`
 - Coverage artifact: `security_ir_artifacts/corpora/xaman-app/source-coverage.json`
 
-The checked-in coverage artifact is manifest-bound but content-unavailable for most ledger/transaction files and does not include the review modal root. This task reviewed the manifest-pinned Xaman source at the exact commit and bound each fact to source path, line range, and SHA-256 evidence.
+This artifact models client-side semantics from the reviewed TypeScript source. It does not prove XRPL consensus, complete amendment coverage, node honesty, runtime service freshness, or deployed binary equivalence.
 
-## Field Model Summary
+## Common Transaction Fields
 
-`BaseTransaction.CommonFields` (`src/common/libs/ledger/transactions/common.ts`) defines the fields shared by every transaction type: required `hash`, `TransactionType`, `Account`, `Sequence`, `LastLedgerSequence`, plus optional `SourceTag`, `Memos`, `Flags`, `Signers`, `Fee`, `TicketSequence`, `NetworkID`, `FirstLedgerSequence`, `OperationLimit`, `SigningPubKey`, `TxnSignature`, `HookParameters`, `AccountTxnID`, `PreviousTxnID`. Concrete transaction classes extend this with their own `Fields`:
+`src/common/libs/ledger/transactions/common.ts` defines the common transaction surface. The model treats `TransactionType`, `Account`, `Sequence`, and `LastLedgerSequence` as required common fields. It also records optional common fields that affect safety claims: `Fee`, `Memos`, `Signers`, `NetworkID`, `TicketSequence`, signing public key fields, and hook parameters.
 
-- `Payment`: required `Amount`, `Destination`; optional `DestinationTag`, `InvoiceID`, `SendMax`, `DeliverMin`, `Paths`, `CredentialIDs`.
-- `TrustSet`: required `LimitAmount`; optional `QualityIn`, `QualityOut`.
-- `SignerListSet`: optional `SignerQuorum`, `SignerEntries`.
+`TransactionFactory` reads `TransactionType`, rejects missing transaction types, dispatches to matching transaction classes, and otherwise creates `FallbackTransaction`. Ledger-sourced transactions are not allowed to receive the signing mixin.
 
-`Amount`-typed fields normalize to a common shape: native amounts are drops converted to the connected network's native asset; issued-currency amounts keep `currency`, `value`, and an `issuer`. `NetworkID` is only auto-populated for non-legacy networks (network id greater than 1024).
+## Payment Semantics
 
-## Modeled Facts
+The `Payment` class requires `Amount` and `Destination`, models optional destination tag, invoice ID, pathfinding fields, `SendMax`, `DeliverMin`, and credentials, and derives delivered amount from metadata. Native delivered amounts are converted from drops to the network native asset.
 
-### Account
+Payment validation rejects missing or zero amounts, checks native payments against fresh available balance, checks issued-currency destination trustlines, checks issuer freezes, checks sender IOU balances, and checks issuer obligation limits when the source account is the issuer. The model records that path payments skip these client-side checks.
 
-`AccountID.ts` validates every assigned account value as a real XRPL classic address using `xrpl-accountlib`, rejecting invalid addresses before they are stored. When the user selects a signing account, `ReviewTransactionModal.setSource` writes it into `transaction.Account` unless the payload is multisign or the transaction type is `Import`; `Sign.mixin.ts` independently fills `Account` from the chosen account if it was never set.
+## Issued Currency And Trustlines
 
-### Destination
+Issued-currency semantics are modeled for Payment and TrustSet boundaries. `TrustSet` exposes `LimitAmount`, currency, issuer, and numeric limit, but its validation function is a TODO pass-through. That gap is marked `NOT_MODELED` and must be treated as blocking for claims that depend on TrustSet user-intent validation.
 
-`Payment.Fields` declares `Destination` as a required `AccountID` field, so every Payment transaction carries a validated recipient address that is distinct from and independently typed alongside `Account`.
+`OfferCreate` similarly models `TakerPays`, `TakerGets`, rate, expiration, offer ID, and offer-status inference, but its validation is also a TODO pass-through.
 
-### Amount
+## Multisign
 
-The `Amount` field codec (`parser/fields/Amount.ts`) branches on the network's native asset: native values are drops converted for display, issued-currency values keep `currency`, `value`, and `issuer`. `PaymentValidation` rejects a missing or zero `Amount.value` unless the transaction already carries `Paths`. `AmountParser` (`parser/common/amount.ts`) validates numeric string input and rejects fractional drop amounts.
+`SignerListSet` models `SignerQuorum` and `SignerEntries` through the `SignerEntries` codec. Its validation is a TODO pass-through, so signer quorum and signer-entry safety are not proved by this artifact. `Sign.mixin.ts` also records that multisign skips the normal `prepare` path.
 
-### Fee
+## Network And Signing Bounds
 
-`Fee` is an optional `Amount`-typed common field. `Sign.mixin.prepare()` throws `global.transactionFeeIsNotSet` if `Fee` is undefined before any further signing preparation happens, guaranteeing a fee is always shown to the user before signing.
+`Sign.mixin.ts` is the signing boundary for fee, sequence, ledger-window, and network constraints. It requires an account parameter, rejects already-signed transactions, rejects unsupported transaction types for the current network definitions, requires a fee before prepare, sets account sequence when missing, populates `LastLedgerSequence`, writes `NetworkID` only for non-legacy network IDs greater than 1024, rejects aborted transactions, and requires signed blob, signer public key, and sign method from the vault callback.
 
-### Sequence
+These checks depend on `LedgerService` and `NetworkService`. Their freshness, endpoint authenticity, and runtime configuration are `NOT_MODELED` here.
 
-`Sequence` is required on `CommonFields` with the `UInt32` type, alongside `LastLedgerSequence` (also required) and optional `TicketSequence`. If `Sequence` is undefined when `prepare()` runs, the client fetches the live account sequence via `LedgerService.getAccountSequence`, which reads `account_data.Sequence` from a fresh account-info response; a fetch failure aborts signing.
+## Memo And Amount Parsing
 
-### Network
+`AmountParser` normalizes amounts through `BigNumber`, rejects fractional drops, converts drops to native units by dividing by 1,000,000, and converts native units to drops by multiplying by 1,000,000 and rounding to whole drops.
 
-`NetworkID` is an optional `UInt32` common field. `populateFields()` sets it from the connected network only when the network id is greater than 1024 (the legacy-network threshold). Before opening the signing overlay, `sign()` checks `NetworkService.getNetworkDefinitions().transactionNames` and rejects signing if the transaction type is unsupported by the connected network.
+`MemoParser` treats long hex-like values as `application/x-binary` reference memos and otherwise hex-encodes `text/plain` description memos. Binary memo decode preserves raw memo data.
 
-### Memo
+## Broadcast Boundary
 
-`Memos` is an optional `STArray` common field using the `Memos` codec. `MemoParser.Encode` detects hex-looking binary blobs with a regex and tags them `application/x-binary`; otherwise it hex-encodes the input as `text/plain`. `MemoParser.Decode` reverses `hex`, `utf8`, `hexasint`, and `int` format encodings for display.
+The broadcast boundary is the XRPL `submit` request with a signed `tx_blob`. `SubmitResponse` fields are preliminary node state: `accepted`, `applied`, `broadcast`, `kept`, and `queued`, plus sequence and ledger-index values. `Sign.mixin.ts` locally blocks submission without a signed blob, blocks duplicate submit attempts, and sets `fail_hard` for `AccountDelete`.
 
-### Issued Currency
-
-The `Amount` setter only stores a value for a non-native currency when an `issuer` is present, and `AmountType` always declares an optional `issuer` alongside `currency` and `value`. `IssueType` pairs a required `currency` and `issuer` and is used as the peer parameter for trust-line lookups via `LedgerService.getFilteredAccountLine`.
-
-### Trustline
-
-`TrustSet.Fields` requires `LimitAmount` (an issued-currency `Amount`) and allows optional `QualityIn`/`QualityOut`, exposing `Currency`/`Issuer`/`Limit` convenience getters. `PaymentValidation` blocks sending an issued currency to a destination that is not the issuer unless the destination already has a trust line with a nonzero limit or balance; it also checks the sender's trust line balance and `freeze_peer` flag (non-issuer sender) or obligation headroom against `limit_peer` (issuer sender) before allowing the payment. `LedgerService.getFilteredAccountLine` resolves a specific trust line by requesting the `ripple_state` ledger entry and only returns a trust line when the relevant reserve flag is set.
-
-### Multisign
-
-`SignerListSet.Fields` declares optional `SignerQuorum` and `SignerEntries` (with the `SignerEntries` codec), modeling the on-ledger multisign quorum structure. `Payload.isMultiSign()` is a boolean coercion of the backend-provided `meta.multisign` flag and is the single source of truth the client uses to branch behavior: `ReviewTransactionModal.setSource` does not overwrite `Account` for multisign payloads, the account-activation live check and client-side validation are both skipped, and `Sign.mixin.sign()` skips `prepare()` (fee/sequence population) when `multiSign` is true. `Payload.shouldSubmit()` is false whenever `isMultiSign()` is true, and `submit()` records the signing account under a `multisigned` patch field instead of auto-dispatching to the ledger. The `submit_multisigned` request/response types document that XRPL only accepts the transaction when the combined weights of the `Signers` array meet or exceed the `SignerList` quorum.
-
-### Transaction Type
-
-`TransactionType` is required on `CommonFields`, and every concrete transaction class sets `this.TransactionType` to its own static `Type` in its constructor. `TransactionFactory.getTransaction` requires `TransactionType` to be present in the input JSON and falls back to a generic `FallbackTransaction` for unregistered types instead of throwing. `ValidationFactory.fromTransaction` resolves a `${item.Type}Validation` export and throws if no matching validation function is found, so every registered transaction type must ship a validation function (even a no-op stub).
+This is not finality. XRPL consensus, validated-ledger inclusion, queue behavior, mempool behavior, and honest peer-server broadcast are `NOT_MODELED`.
 
 ## NOT_MODELED Gaps
 
-The artifact marks the following as `NOT_MODELED`:
+The artifact marks these blocking gaps:
 
-- `TrustSetValidation` and `SignerListSetValidation` are unimplemented stubs that always resolve, so the reviewed client source provides no additional client-side trust-line or signer-list safety checks beyond field typing for these two transaction types.
-- Authoritative XRPL server-side (rippled) enforcement of amount, fee, sequence, reserve, freeze, or rippling rules, and the tec/tem/tef result codes that enforcement produces.
-- The external process, device coordination, or storage by which the full set of required multisign signer shares are collected and combined into a `submit_multisigned` request meeting quorum.
-- Deployed app binary, backend deployment, node endpoint configuration, and runtime trace equivalence to the reviewed source.
+- `TrustSet`, `OfferCreate`, and `SignerListSet` validations resolve without semantic checks.
+- Complete XRPL transaction-class and amendment coverage is not established.
+- `LedgerService` and `NetworkService` freshness, endpoint authenticity, and runtime configuration are not proved.
+- XRPL consensus, finality, queue, mempool, and peer broadcast behavior are not proved.
+- Deployed runtime equivalence to the reviewed source commit is not proved.
 
 ## Validation
 
@@ -88,4 +73,4 @@ Run:
 PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_xrpl_transaction_model.py -q
 ```
 
-The tests validate required transaction-semantics categories, manifest-bound evidence hashes, required modeled facts, the field model, trustline/issued-currency/multisign constraint details, transaction-type dispatch behavior, explicit `NOT_MODELED` gaps, and documentation references.
+The tests validate manifest-bound evidence hashes, required modeled categories, payment and trustline semantics, signing and network guards, memo and amount parsing, submit boundaries, explicit `NOT_MODELED` gaps, and documentation coverage.

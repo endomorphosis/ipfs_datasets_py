@@ -1,1139 +1,431 @@
 {
-  "blocking_runtime_equivalence": {
-    "absent_real_device_traces": true,
-    "blocking_gap_ids": [
-      "xaman-runtime-trace:gap:real-device-runtime-traces-absent"
-    ],
-    "required_evidence": [
-      "Release-window iOS and Android real-device traces covering payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast.",
-      "Trace metadata binding app build identifier, commit, backend environment, node URI, device OS, and capture time.",
-      "Binary provenance or reproducible-build evidence proving the traced app matches the reviewed source commit."
-    ],
-    "status": "BLOCKING"
-  },
-  "claim_bindings": [
+  "artifact_cid": "sha256:af47ba043c89c6d7971ed9f4a16f31c90c5fef572ffed84e70632ef38c13221c",
+  "blocker_count": 2,
+  "blocking_gaps": [
     {
-      "claim_category": "custody",
-      "claim_id": "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path",
-      "monitor_categories": [
-        "auth",
-        "signing"
-      ],
-      "runtime_equivalence_required": false
-    },
-    {
-      "claim_category": "authentication",
-      "claim_id": "xaman-security:claim:authentication-gates-vault-and-signing",
-      "monitor_categories": [
-        "auth",
-        "signing"
-      ],
-      "runtime_equivalence_required": false
-    },
-    {
-      "claim_category": "payload_integrity",
-      "claim_id": "xaman-security:claim:payload-integrity-before-review-and-signing",
-      "monitor_categories": [
+      "code": "REAL_DEVICE_TRACE_BUNDLE_MISSING",
+      "path": null,
+      "required_categories": [
         "payload_intake",
         "review",
+        "auth",
+        "signing",
+        "rejection",
+        "expiration",
+        "network_binding",
+        "broadcast",
+        "runtime_equivalence"
+      ]
+    },
+    {
+      "code": "RUNTIME_EQUIVALENCE_NOT_PROVED",
+      "reason": "Source and e2e feature facts are monitor specifications, not deployed-device execution evidence."
+    }
+  ],
+  "e2e_features": [
+    {
+      "categories": [
+        "runtime_setup"
+      ],
+      "path": "e2e/01_setup.feature",
+      "review_status": "reviewed",
+      "sha256": "665186bcc977f62af1140281eab5e1b5d7596b0a2a010621b2a2d6cbd1e22816",
+      "size_bytes": 1455
+    },
+    {
+      "categories": [
+        "auth",
         "signing"
       ],
-      "runtime_equivalence_required": false
+      "path": "e2e/02_generate_account.feature",
+      "review_status": "reviewed",
+      "sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1",
+      "size_bytes": 6858
     },
     {
-      "claim_category": "replay_prevention",
-      "claim_id": "xaman-security:claim:payload-replay-prevention-is-single-use",
-      "monitor_categories": [
-        "expiration",
-        "signing",
-        "broadcast"
+      "categories": [
+        "auth",
+        "signing"
       ],
-      "runtime_equivalence_required": false
+      "path": "e2e/03_import_account.feature",
+      "review_status": "reviewed",
+      "sha256": "6cd8e22cb78bc03815288349f6d97667d36e181bbca0e459633fd151eeb0f9b1",
+      "size_bytes": 9887
     },
     {
-      "claim_category": "network_binding",
-      "claim_id": "xaman-security:claim:network-binding-prevents-cross-network-signing",
-      "monitor_categories": [
-        "network_binding",
-        "signing",
-        "broadcast"
+      "categories": [
+        "auth"
       ],
-      "runtime_equivalence_required": false
+      "path": "e2e/04_upgrade_account.feature",
+      "review_status": "reviewed",
+      "sha256": "bb036b7ea71919606c7cb3c99ce6a3399879402afbfb59341e1c71b7b8d9307a",
+      "size_bytes": 5356
     },
     {
-      "claim_category": "transaction_semantics",
-      "claim_id": "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent",
-      "monitor_categories": [
-        "review",
-        "signing",
+      "categories": [
+        "auth"
+      ],
+      "path": "e2e/05_auth.feature",
+      "review_status": "reviewed",
+      "sha256": "dab626d3a24295df716760c7feae634d180a16f4eba1b027e181353a5c6c3493",
+      "size_bytes": 3356
+    },
+    {
+      "categories": [
+        "payload_intake",
         "network_binding"
       ],
-      "runtime_equivalence_required": false
-    },
-    {
-      "claim_category": "backend_trust",
-      "claim_id": "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-      "monitor_categories": [
-        "rejection",
-        "broadcast"
-      ],
-      "runtime_equivalence_required": false
-    },
-    {
-      "claim_category": "runtime_equivalence",
-      "claim_id": "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime",
-      "monitor_categories": [
-        "payload_intake",
-        "review",
-        "auth",
-        "signing",
-        "rejection",
-        "expiration",
-        "network_binding",
-        "broadcast"
-      ],
-      "runtime_equivalence_required": true
+      "path": "e2e/06_linking.feature",
+      "review_status": "reviewed",
+      "sha256": "78ddf03c8de658577ced649c1ce765826f1f023ed990162a8ab39ec3850a2169",
+      "size_bytes": 2754
     }
   ],
-  "corpus": "xaman-app",
-  "dependency_artifacts": [
-    {
-      "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
-      "document_path": "docs/security_verification/xaman_wallet_auth_model.md",
-      "schema_version": "xaman-wallet-auth-facts/v1",
-      "task_id": "PORTAL-CXTP-064"
-    },
-    {
-      "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
-      "document_path": "docs/security_verification/xaman_payload_lifecycle_model.md",
-      "schema_version": "xaman-payload-lifecycle-facts/v1",
-      "task_id": "PORTAL-CXTP-065"
-    },
-    {
-      "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
-      "document_path": "docs/security_verification/xaman_xrpl_transaction_model.md",
-      "schema_version": "xaman-xrpl-transaction-facts/v1",
-      "task_id": "PORTAL-CXTP-066"
-    },
-    {
-      "artifact_path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
-      "schema_version": "xaman-security-claims/v1",
-      "task_id": "PORTAL-CXTP-067"
-    }
-  ],
-  "monitor_coverage": {
-    "complete_for_source_and_e2e_inputs": true,
-    "covered_categories": [
-      "auth",
-      "broadcast",
-      "expiration",
-      "network_binding",
-      "payload_intake",
-      "rejection",
-      "review",
-      "signing"
-    ],
-    "missing_categories": [],
-    "required_categories": [
-      "payload_intake",
-      "review",
-      "auth",
-      "signing",
-      "rejection",
-      "expiration",
-      "network_binding",
-      "broadcast"
-    ]
+  "environment_probe": {
+    "kind": "environment_probe",
+    "overall_status": "ready",
+    "path": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
+    "review_status": "reviewed",
+    "schema_version": "xaman-environment-probe/v1"
   },
+  "generated_at_utc": "2026-07-10T06:42:18Z",
   "monitor_facts": [
     {
-      "category": "auth",
-      "device_class": "not_runtime_trace",
-      "event_count": 0,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Reviewed source fact projected into the runtime monitor vocabulary.",
-          "path": "src/screens/Overlay/Authenticate/AuthenticateOverlay.tsx",
-          "review_status": "reviewed",
-          "sha256": "2546924c36ebdc4da92a2fe4298694a944fc26543f98a41333b20630e85b0c25"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:auth-monitor-from-reviewed-source",
-      "monitor_event": "xaman_auth_gate_satisfied",
-      "normalized_fact": {
-        "category": "auth",
-        "monitor_event": "xaman_auth_gate_satisfied",
-        "real_device_required_for_runtime_equivalence": true,
-        "required_runtime_fields": [
-          "account",
-          "auth_method",
-          "auth_result"
-        ],
-        "source_fact_ids": [
-          "xaman-wallet-auth:fact:authenticate-overlay-allows-passcode-or-enabled-biometrics",
-          "xaman-wallet-auth:fact:passcode-authentication-hashes-and-throttles"
-        ]
-      },
-      "source_kind": "reviewed_source_fact",
-      "status": "MONITOR_FACT",
-      "summary": "Monitor biometric or passcode authentication before vault-backed signing.",
-      "trace_id": null
-    },
-    {
-      "category": "broadcast",
-      "device_class": "not_runtime_trace",
-      "event_count": 0,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 89,
-          "line_start": 41,
-          "notes": "Reviewed source fact projected into the runtime monitor vocabulary.",
-          "path": "src/common/libs/ledger/types/methods/submit.ts",
-          "review_status": "reviewed",
-          "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:broadcast-monitor-from-reviewed-source",
-      "monitor_event": "xaman_ledger_broadcast_attempted",
-      "normalized_fact": {
-        "category": "broadcast",
-        "monitor_event": "xaman_ledger_broadcast_attempted",
-        "real_device_required_for_runtime_equivalence": true,
-        "required_runtime_fields": [
-          "payload_uuid",
-          "txid",
-          "node_uri",
-          "engine_result"
-        ],
-        "source_fact_ids": [
-          "xaman-payload-lifecycle:fact:broadcast-only-when-submit-true-non-pseudo-and-not-multisign",
-          "xaman-payload-lifecycle:fact:ledger-submit-has-local-single-submit-and-abort-guards"
-        ]
-      },
-      "source_kind": "reviewed_source_fact",
-      "status": "MONITOR_FACT",
-      "summary": "Monitor optional ledger broadcast after signed payload patch and submit guards.",
-      "trace_id": null
-    },
-    {
-      "category": "network_binding",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/01_setup.feature",
-          "review_status": "reviewed",
-          "sha256": "665186bcc977f62af1140281eab5e1b5d7596b0a2a010621b2a2d6cbd1e22816"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-01-setup-feature-52eaa71a-network_binding",
-      "monitor_event": "xaman_network_binding_applied",
-      "normalized_fact": {
-        "category": "network_binding",
-        "monitor_event": "xaman_network_binding_applied",
-        "observed_event_names": [
-          "xaman_network_binding_applied"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/01_setup.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed network_binding monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-01-setup-feature-52eaa71a"
-    },
-    {
-      "category": "auth",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/02_generate_account.feature",
-          "review_status": "reviewed",
-          "sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-02-generate-account-feature-9da1c00b-auth",
-      "monitor_event": "xaman_auth_gate_satisfied",
-      "normalized_fact": {
-        "category": "auth",
-        "monitor_event": "xaman_auth_gate_satisfied",
-        "observed_event_names": [
-          "xaman_auth_gate_satisfied"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/02_generate_account.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed auth monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-02-generate-account-feature-9da1c00b"
-    },
-    {
-      "category": "signing",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/02_generate_account.feature",
-          "review_status": "reviewed",
-          "sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-02-generate-account-feature-9da1c00b-signing",
-      "monitor_event": "xaman_transaction_signed",
-      "normalized_fact": {
-        "category": "signing",
-        "monitor_event": "xaman_transaction_signed",
-        "observed_event_names": [
-          "xaman_transaction_signed"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/02_generate_account.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed signing monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-02-generate-account-feature-9da1c00b"
-    },
-    {
-      "category": "auth",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/03_import_account.feature",
-          "review_status": "reviewed",
-          "sha256": "6cd8e22cb78bc03815288349f6d97667d36e181bbca0e459633fd151eeb0f9b1"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-03-import-account-feature-497f8674-auth",
-      "monitor_event": "xaman_auth_gate_satisfied",
-      "normalized_fact": {
-        "category": "auth",
-        "monitor_event": "xaman_auth_gate_satisfied",
-        "observed_event_names": [
-          "xaman_auth_gate_satisfied"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/03_import_account.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed auth monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-03-import-account-feature-497f8674"
-    },
-    {
-      "category": "signing",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/03_import_account.feature",
-          "review_status": "reviewed",
-          "sha256": "6cd8e22cb78bc03815288349f6d97667d36e181bbca0e459633fd151eeb0f9b1"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-03-import-account-feature-497f8674-signing",
-      "monitor_event": "xaman_transaction_signed",
-      "normalized_fact": {
-        "category": "signing",
-        "monitor_event": "xaman_transaction_signed",
-        "observed_event_names": [
-          "xaman_transaction_signed"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/03_import_account.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed signing monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-03-import-account-feature-497f8674"
-    },
-    {
-      "category": "auth",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/04_upgrade_account.feature",
-          "review_status": "reviewed",
-          "sha256": "bb036b7ea71919606c7cb3c99ce6a3399879402afbfb59341e1c71b7b8d9307a"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-04-upgrade-account-feature-bb7e1b9d-auth",
-      "monitor_event": "xaman_auth_gate_satisfied",
-      "normalized_fact": {
-        "category": "auth",
-        "monitor_event": "xaman_auth_gate_satisfied",
-        "observed_event_names": [
-          "xaman_auth_gate_satisfied"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/04_upgrade_account.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed auth monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-04-upgrade-account-feature-bb7e1b9d"
-    },
-    {
-      "category": "signing",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/04_upgrade_account.feature",
-          "review_status": "reviewed",
-          "sha256": "bb036b7ea71919606c7cb3c99ce6a3399879402afbfb59341e1c71b7b8d9307a"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-04-upgrade-account-feature-bb7e1b9d-signing",
-      "monitor_event": "xaman_transaction_signed",
-      "normalized_fact": {
-        "category": "signing",
-        "monitor_event": "xaman_transaction_signed",
-        "observed_event_names": [
-          "xaman_transaction_signed"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/04_upgrade_account.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed signing monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-04-upgrade-account-feature-bb7e1b9d"
-    },
-    {
-      "category": "auth",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/05_auth.feature",
-          "review_status": "reviewed",
-          "sha256": "dab626d3a24295df716760c7feae634d180a16f4eba1b027e181353a5c6c3493"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-05-auth-feature-0432e2b4-auth",
-      "monitor_event": "xaman_auth_gate_satisfied",
-      "normalized_fact": {
-        "category": "auth",
-        "monitor_event": "xaman_auth_gate_satisfied",
-        "observed_event_names": [
-          "xaman_auth_gate_satisfied"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/05_auth.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed auth monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-05-auth-feature-0432e2b4"
-    },
-    {
-      "category": "signing",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/05_auth.feature",
-          "review_status": "reviewed",
-          "sha256": "dab626d3a24295df716760c7feae634d180a16f4eba1b027e181353a5c6c3493"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-05-auth-feature-0432e2b4-signing",
-      "monitor_event": "xaman_transaction_signed",
-      "normalized_fact": {
-        "category": "signing",
-        "monitor_event": "xaman_transaction_signed",
-        "observed_event_names": [
-          "xaman_transaction_signed"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/05_auth.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed signing monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-05-auth-feature-0432e2b4"
-    },
-    {
-      "category": "network_binding",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/06_linking.feature",
-          "review_status": "reviewed",
-          "sha256": "78ddf03c8de658577ced649c1ce765826f1f023ed990162a8ab39ec3850a2169"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-06-linking-feature-3ef26f77-network_binding",
-      "monitor_event": "xaman_network_binding_applied",
-      "normalized_fact": {
-        "category": "network_binding",
-        "monitor_event": "xaman_network_binding_applied",
-        "observed_event_names": [
-          "xaman_network_binding_applied"
-        ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/06_linking.feature"
-      },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed network_binding monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-06-linking-feature-3ef26f77"
-    },
-    {
       "category": "payload_intake",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
       "evidence": [
         {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
+          "kind": "source_manifest_file",
           "path": "e2e/06_linking.feature",
           "review_status": "reviewed",
-          "sha256": "78ddf03c8de658577ced649c1ce765826f1f023ed990162a8ab39ec3850a2169"
+          "sha256": "78ddf03c8de658577ced649c1ce765826f1f023ed990162a8ab39ec3850a2169",
+          "size_bytes": 2754
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "review_status": "reviewed",
+          "schema_version": "xaman-payload-lifecycle-facts/v1"
         }
       ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-06-linking-feature-3ef26f77-payload_intake",
-      "monitor_event": "xaman_payload_intake_seen",
+      "id": "xaman-runtime:monitor:payload-intake-routes-to-review",
       "normalized_fact": {
-        "category": "payload_intake",
-        "monitor_event": "xaman_payload_intake_seen",
-        "observed_event_names": [
-          "xaman_payload_intake_seen"
+        "expected_events": [
+          "link_opened",
+          "payload_reference_detected",
+          "review_modal_opened"
         ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/06_linking.feature"
+        "real_device_trace_required": false,
+        "source_model": "payload_lifecycle"
       },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed payload_intake monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-06-linking-feature-3ef26f77"
+      "status": "MODELED_FROM_E2E_AND_SOURCE",
+      "summary": "E2E linking coverage and payload lifecycle facts provide monitor hooks for payload intake into review."
     },
     {
       "category": "review",
-      "device_class": "simulator_or_declared_e2e",
-      "event_count": 1,
       "evidence": [
         {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "E2e feature converted to monitor fact; simulator/e2e coverage is not real-device equivalence.",
-          "path": "e2e/06_linking.feature",
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
           "review_status": "reviewed",
-          "sha256": "78ddf03c8de658577ced649c1ce765826f1f023ed990162a8ab39ec3850a2169"
+          "schema_version": "xaman-payload-lifecycle-facts/v1"
         }
       ],
-      "id": "xaman-runtime-trace:fact:e2e-feature-4253a865-e2e-06-linking-feature-3ef26f77-review",
-      "monitor_event": "xaman_review_displayed",
+      "id": "xaman-runtime:monitor:review-ui-is-source-modeled",
       "normalized_fact": {
-        "category": "review",
-        "monitor_event": "xaman_review_displayed",
-        "observed_event_names": [
-          "xaman_review_displayed"
+        "expected_events": [
+          "review_preflight_started",
+          "review_displayed",
+          "accept_control_ready"
         ],
-        "real_device_required_for_runtime_equivalence": true,
-        "trace_source_path": "e2e/06_linking.feature"
+        "real_device_trace_required": true,
+        "source_model": "payload_lifecycle"
       },
-      "source_kind": "e2e_feature",
-      "status": "MONITOR_FACT",
-      "summary": "Observed review monitor event from e2e_feature input.",
-      "trace_id": "xaman-e2e:e2e-06-linking-feature-3ef26f77"
+      "status": "MODELED_FROM_SOURCE",
+      "summary": "Payload lifecycle facts model review preflight, review UI display, and accept-control boundaries."
     },
     {
-      "category": "expiration",
-      "device_class": "not_runtime_trace",
-      "event_count": 0,
+      "category": "auth",
       "evidence": [
         {
-          "kind": "source_code",
-          "line_end": 198,
-          "line_start": 173,
-          "notes": "Reviewed source fact projected into the runtime monitor vocabulary.",
-          "path": "src/common/libs/payload/object.ts",
+          "kind": "source_manifest_file",
+          "path": "e2e/02_generate_account.feature",
           "review_status": "reviewed",
-          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+          "sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1",
+          "size_bytes": 6858
+        },
+        {
+          "kind": "source_manifest_file",
+          "path": "e2e/03_import_account.feature",
+          "review_status": "reviewed",
+          "sha256": "6cd8e22cb78bc03815288349f6d97667d36e181bbca0e459633fd151eeb0f9b1",
+          "size_bytes": 9887
+        },
+        {
+          "kind": "source_manifest_file",
+          "path": "e2e/05_auth.feature",
+          "review_status": "reviewed",
+          "sha256": "dab626d3a24295df716760c7feae634d180a16f4eba1b027e181353a5c6c3493",
+          "size_bytes": 3356
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "review_status": "reviewed",
+          "schema_version": "xaman-wallet-auth-facts/v1"
         }
       ],
-      "id": "xaman-runtime-trace:fact:expiration-monitor-from-reviewed-source",
-      "monitor_event": "xaman_expired_or_resolved_payload_blocked",
+      "id": "xaman-runtime:monitor:auth-flows-have-e2e-and-wallet-model-hooks",
       "normalized_fact": {
-        "category": "expiration",
-        "monitor_event": "xaman_expired_or_resolved_payload_blocked",
-        "real_device_required_for_runtime_equivalence": true,
-        "required_runtime_fields": [
-          "payload_uuid",
-          "resolved_at",
-          "expired"
+        "expected_events": [
+          "auth_prompt_opened",
+          "passcode_or_biometric_accepted",
+          "vault_overlay_opened"
         ],
-        "source_fact_ids": [
-          "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads"
-        ]
+        "real_device_trace_required": true,
+        "source_model": "wallet_auth"
       },
-      "source_kind": "reviewed_source_fact",
-      "status": "MONITOR_FACT",
-      "summary": "Monitor already-resolved or expired payloads as blocked before review and signing.",
-      "trace_id": null
+      "status": "MODELED_FROM_E2E_AND_SOURCE",
+      "summary": "Authentication e2e features and wallet-auth source facts provide monitor hooks for account setup, import, upgrade, and auth overlays."
     },
     {
-      "category": "network_binding",
-      "device_class": "not_runtime_trace",
-      "event_count": 0,
+      "category": "signing",
       "evidence": [
         {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Reviewed source fact projected into the runtime monitor vocabulary.",
-          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "kind": "source_manifest_file",
+          "path": "e2e/02_generate_account.feature",
           "review_status": "reviewed",
-          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
-        }
-      ],
-      "id": "xaman-runtime-trace:fact:network_binding-monitor-from-reviewed-source",
-      "monitor_event": "xaman_network_binding_applied",
-      "normalized_fact": {
-        "category": "network_binding",
-        "monitor_event": "xaman_network_binding_applied",
-        "real_device_required_for_runtime_equivalence": true,
-        "required_runtime_fields": [
-          "payload_uuid",
-          "network",
-          "node_uri",
-          "network_id"
-        ],
-        "source_fact_ids": [
-          "xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing",
-          "xaman-xrpl-transaction:fact:network-id-is-auto-populated-for-non-legacy-networks-above-1024"
-        ]
-      },
-      "source_kind": "reviewed_source_fact",
-      "status": "MONITOR_FACT",
-      "summary": "Monitor forced network, selected node, and NetworkID binding before signing and broadcast.",
-      "trace_id": null
-    },
-    {
-      "category": "payload_intake",
-      "device_class": "not_runtime_trace",
-      "event_count": 0,
-      "evidence": [
+          "sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1",
+          "size_bytes": 6858
+        },
         {
-          "kind": "source_code",
-          "line_end": 518,
-          "line_start": 513,
-          "notes": "Reviewed source fact projected into the runtime monitor vocabulary.",
-          "path": "src/services/LinkingService.ts",
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
           "review_status": "reviewed",
-          "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0"
+          "schema_version": "xaman-wallet-auth-facts/v1"
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "review_status": "reviewed",
+          "schema_version": "xaman-payload-lifecycle-facts/v1"
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "review_status": "reviewed",
+          "schema_version": "xaman-xrpl-transaction-facts/v1"
         }
       ],
-      "id": "xaman-runtime-trace:fact:payload_intake-monitor-from-reviewed-source",
-      "monitor_event": "xaman_payload_intake_seen",
+      "id": "xaman-runtime:monitor:signing-has-wallet-payload-and-xrpl-hooks",
       "normalized_fact": {
-        "category": "payload_intake",
-        "monitor_event": "xaman_payload_intake_seen",
-        "real_device_required_for_runtime_equivalence": true,
-        "required_runtime_fields": [
-          "payload_uuid",
-          "origin",
-          "request_json_hash"
+        "expected_events": [
+          "payload_approved",
+          "vault_signed",
+          "signed_blob_created"
         ],
-        "source_fact_ids": [
-          "xaman-payload-lifecycle:fact:qr-payload-reference-intake-fetches-and-routes-to-review",
-          "xaman-payload-lifecycle:fact:deep-link-payload-reference-intake-fetches-and-routes-to-review",
-          "xaman-payload-lifecycle:fact:event-list-loads-pending-payloads-and-opens-review"
+        "real_device_trace_required": true,
+        "source_models": [
+          "wallet_auth",
+          "payload_lifecycle",
+          "xrpl_transaction"
         ]
       },
-      "source_kind": "reviewed_source_fact",
-      "status": "MONITOR_FACT",
-      "summary": "Monitor payload intake from QR, deep-link, push, and event-list sources before review.",
-      "trace_id": null
+      "status": "MODELED_FROM_E2E_AND_SOURCE",
+      "summary": "Signing monitor facts bind wallet custody, payload approval, and XRPL signing preconditions."
     },
     {
       "category": "rejection",
-      "device_class": "not_runtime_trace",
-      "event_count": 0,
       "evidence": [
         {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Reviewed source fact projected into the runtime monitor vocabulary.",
-          "path": "src/common/libs/payload/object.ts",
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
           "review_status": "reviewed",
-          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581"
+          "schema_version": "xaman-payload-lifecycle-facts/v1"
         }
       ],
-      "id": "xaman-runtime-trace:fact:rejection-monitor-from-reviewed-source",
-      "monitor_event": "xaman_payload_rejected",
+      "id": "xaman-runtime:monitor:rejection-and-expiration-are-source-modeled",
       "normalized_fact": {
-        "category": "rejection",
-        "monitor_event": "xaman_payload_rejected",
-        "real_device_required_for_runtime_equivalence": true,
-        "required_runtime_fields": [
-          "payload_uuid",
-          "reject_initiator",
-          "origin"
+        "expected_events": [
+          "payload_declined",
+          "backend_rejection_patched",
+          "expired_payload_blocked"
         ],
-        "source_fact_ids": [
-          "xaman-payload-lifecycle:fact:rejection-patches-backend-for-user-or-app-decline"
-        ]
+        "expiration_category_also_covered": true,
+        "real_device_trace_required": true
       },
-      "source_kind": "reviewed_source_fact",
-      "status": "MONITOR_FACT",
-      "summary": "Monitor user and app rejection as a terminal path before signing.",
-      "trace_id": null
+      "status": "MODELED_FROM_SOURCE",
+      "summary": "Payload lifecycle facts model rejection patching plus resolved and expired payload blocking."
     },
     {
-      "category": "review",
-      "device_class": "not_runtime_trace",
-      "event_count": 0,
+      "category": "expiration",
       "evidence": [
         {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Reviewed source fact projected into the runtime monitor vocabulary.",
-          "path": "src/screens/Modal/ReviewTransaction/Steps/Review/ReviewStep.tsx",
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
           "review_status": "reviewed",
-          "sha256": "dcf465bf1641a3c2ce3f630b6e8ddd715c84e766680ad862144fa4c6678620c3"
+          "schema_version": "xaman-payload-lifecycle-facts/v1"
         }
       ],
-      "id": "xaman-runtime-trace:fact:review-monitor-from-reviewed-source",
-      "monitor_event": "xaman_review_displayed",
+      "id": "xaman-runtime:monitor:expiration-replay-controls-are-source-modeled",
       "normalized_fact": {
-        "category": "review",
-        "monitor_event": "xaman_review_displayed",
-        "real_device_required_for_runtime_equivalence": true,
-        "required_runtime_fields": [
-          "payload_uuid",
-          "account",
-          "transaction_type",
-          "accept_enabled"
+        "expected_events": [
+          "digest_checked",
+          "resolved_or_expired_blocked",
+          "pre_sign_revalidation"
         ],
-        "source_fact_ids": [
-          "xaman-payload-lifecycle:fact:review-preflight-binds-forced-network-and-signer",
-          "xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control"
-        ]
+        "real_device_trace_required": true,
+        "source_model": "payload_lifecycle"
       },
-      "source_kind": "reviewed_source_fact",
-      "status": "MONITOR_FACT",
-      "summary": "Monitor review display after preflight and before approval or rejection.",
-      "trace_id": null
+      "status": "MODELED_FROM_SOURCE",
+      "summary": "Payload lifecycle facts model digest checks, resolved-at checks, expired meta checks, and pre-sign revalidation."
     },
     {
-      "category": "signing",
-      "device_class": "not_runtime_trace",
-      "event_count": 0,
+      "category": "network_binding",
       "evidence": [
         {
-          "kind": "source_code",
-          "line_end": 349,
-          "line_start": 318,
-          "notes": "Reviewed source fact projected into the runtime monitor vocabulary.",
-          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "kind": "source_manifest_file",
+          "path": "e2e/06_linking.feature",
           "review_status": "reviewed",
-          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098"
+          "sha256": "78ddf03c8de658577ced649c1ce765826f1f023ed990162a8ab39ec3850a2169",
+          "size_bytes": 2754
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "review_status": "reviewed",
+          "schema_version": "xaman-payload-lifecycle-facts/v1"
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "review_status": "reviewed",
+          "schema_version": "xaman-xrpl-transaction-facts/v1"
         }
       ],
-      "id": "xaman-runtime-trace:fact:signing-monitor-from-reviewed-source",
-      "monitor_event": "xaman_transaction_signed",
+      "id": "xaman-runtime:monitor:network-binding-has-linking-payload-and-xrpl-hooks",
       "normalized_fact": {
-        "category": "signing",
-        "monitor_event": "xaman_transaction_signed",
-        "real_device_required_for_runtime_equivalence": true,
-        "required_runtime_fields": [
-          "payload_uuid",
-          "account",
-          "txid",
-          "sign_method"
+        "expected_events": [
+          "network_checked",
+          "force_network_matched",
+          "unsupported_type_rejected"
         ],
-        "source_fact_ids": [
-          "xaman-wallet-auth:fact:software-private-key-signing-requires-vault-open-with-encryption-key",
-          "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing"
+        "real_device_trace_required": true,
+        "source_models": [
+          "payload_lifecycle",
+          "xrpl_transaction"
         ]
       },
-      "source_kind": "reviewed_source_fact",
-      "status": "MONITOR_FACT",
-      "summary": "Monitor that signing occurs only after review approval, validation, and vault access.",
-      "trace_id": null
-    }
-  ],
-  "not_modeled_gaps": [
+      "status": "MODELED_FROM_E2E_AND_SOURCE",
+      "summary": "Linking e2e coverage plus payload and XRPL transaction facts model network binding checks before signing."
+    },
     {
-      "blocking": true,
+      "category": "broadcast",
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "review_status": "reviewed",
+          "schema_version": "xaman-payload-lifecycle-facts/v1"
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "review_status": "reviewed",
+          "schema_version": "xaman-xrpl-transaction-facts/v1"
+        }
+      ],
+      "id": "xaman-runtime:monitor:broadcast-boundary-is-source-modeled",
+      "normalized_fact": {
+        "expected_events": [
+          "signed_payload_patched",
+          "submit_attempted",
+          "dispatch_result_patched"
+        ],
+        "real_device_trace_required": true,
+        "source_models": [
+          "payload_lifecycle",
+          "xrpl_transaction"
+        ]
+      },
+      "status": "MODELED_FROM_SOURCE",
+      "summary": "Payload and XRPL transaction facts model signed payload patching and optional submit of a signed blob."
+    },
+    {
       "category": "runtime_equivalence",
       "evidence": [
         {
-          "kind": "source_manifest",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Pinned source manifest for 942f43876265a7af44f233288ad2b1d00841d5fa contains e2e declarations but no real-device trace artifacts.",
-          "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+          "exists": false,
+          "kind": "runtime_trace_bundle",
+          "path": null,
+          "review_status": "missing",
+          "trace_file_count": 0
+        },
+        {
+          "kind": "environment_probe",
+          "overall_status": "ready",
+          "path": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
           "review_status": "reviewed",
-          "sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460"
+          "schema_version": "xaman-environment-probe/v1"
         }
       ],
-      "id": "xaman-runtime-trace:gap:real-device-runtime-traces-absent",
-      "required_evidence_to_model": [
-        "Release-window iOS and Android real-device traces covering payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast.",
-        "Trace metadata binding app build identifier, commit, backend environment, node URI, device OS, and capture time.",
-        "Binary provenance or reproducible-build evidence proving the traced app matches the reviewed source commit."
-      ],
-      "status": "NOT_MODELED",
-      "summary": "No real-device runtime traces are present in the checked-in Xaman corpus, so e2e declarations and reviewed source facts cannot discharge deployed runtime equivalence."
+      "id": "xaman-runtime:monitor:real-device-runtime-equivalence-is-absent",
+      "normalized_fact": {
+        "real_device_trace_required": true,
+        "runtime_equivalence_proved": false,
+        "trace_file_count": 0
+      },
+      "status": "BLOCKED",
+      "summary": "No real-device runtime trace bundle is present, so source and e2e-derived monitor facts cannot prove deployed runtime equivalence."
     }
   ],
-  "review": {
-    "model_boundary": "E2e feature declarations and optional runtime event files are normalized into monitor facts. Source-backed monitor facts are not accepted as real-device runtime equivalence without release-window device traces.",
-    "review_scope": [
-      "payload_intake",
-      "review",
-      "auth",
-      "signing",
-      "rejection",
-      "expiration",
-      "network_binding",
-      "broadcast",
-      "runtime_equivalence"
-    ],
-    "review_status": "reviewed",
-    "reviewed_at": "2026-07-08"
+  "overall_status": "blocked",
+  "policy_document": "docs/security_verification/xaman_runtime_trace_assumptions.md",
+  "production_release_blocked": true,
+  "runtime_trace_bundle": {
+    "category_counts": {},
+    "event_count": 0,
+    "files": [],
+    "path": null,
+    "provided": false,
+    "trace_file_count": 0
   },
-  "runtime_traces": [
-    {
-      "conformance_status": "source_declared_not_runtime_equivalent",
-      "device_class": "simulator_or_declared_e2e",
-      "events": [
-        {
-          "category": "network_binding",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_network_binding_applied",
-          "index": 0,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/01_setup.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/01_setup.feature",
-          "trace_id": "xaman-e2e:e2e-01-setup-feature-52eaa71a"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Pinned Xaman e2e feature manifest entry converted into monitor-event classes.",
-          "path": "e2e/01_setup.feature",
-          "review_status": "reviewed",
-          "sha256": "665186bcc977f62af1140281eab5e1b5d7596b0a2a010621b2a2d6cbd1e22816"
-        }
-      ],
-      "id": "xaman-e2e:e2e-01-setup-feature-52eaa71a",
-      "manifest_sha256": "665186bcc977f62af1140281eab5e1b5d7596b0a2a010621b2a2d6cbd1e22816",
-      "source_kind": "e2e_feature",
-      "source_path": "e2e/01_setup.feature"
-    },
-    {
-      "conformance_status": "source_declared_not_runtime_equivalent",
-      "device_class": "simulator_or_declared_e2e",
-      "events": [
-        {
-          "category": "auth",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_auth_gate_satisfied",
-          "index": 0,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/02_generate_account.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/02_generate_account.feature",
-          "trace_id": "xaman-e2e:e2e-02-generate-account-feature-9da1c00b"
-        },
-        {
-          "category": "signing",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_transaction_signed",
-          "index": 1,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/02_generate_account.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/02_generate_account.feature",
-          "trace_id": "xaman-e2e:e2e-02-generate-account-feature-9da1c00b"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Pinned Xaman e2e feature manifest entry converted into monitor-event classes.",
-          "path": "e2e/02_generate_account.feature",
-          "review_status": "reviewed",
-          "sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1"
-        }
-      ],
-      "id": "xaman-e2e:e2e-02-generate-account-feature-9da1c00b",
-      "manifest_sha256": "8963835cc33b9a7c6b0e4ffa520b7c2934d1516c5aad70cfcc9c4c1708c23ec1",
-      "source_kind": "e2e_feature",
-      "source_path": "e2e/02_generate_account.feature"
-    },
-    {
-      "conformance_status": "source_declared_not_runtime_equivalent",
-      "device_class": "simulator_or_declared_e2e",
-      "events": [
-        {
-          "category": "auth",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_auth_gate_satisfied",
-          "index": 0,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/03_import_account.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/03_import_account.feature",
-          "trace_id": "xaman-e2e:e2e-03-import-account-feature-497f8674"
-        },
-        {
-          "category": "signing",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_transaction_signed",
-          "index": 1,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/03_import_account.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/03_import_account.feature",
-          "trace_id": "xaman-e2e:e2e-03-import-account-feature-497f8674"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Pinned Xaman e2e feature manifest entry converted into monitor-event classes.",
-          "path": "e2e/03_import_account.feature",
-          "review_status": "reviewed",
-          "sha256": "6cd8e22cb78bc03815288349f6d97667d36e181bbca0e459633fd151eeb0f9b1"
-        }
-      ],
-      "id": "xaman-e2e:e2e-03-import-account-feature-497f8674",
-      "manifest_sha256": "6cd8e22cb78bc03815288349f6d97667d36e181bbca0e459633fd151eeb0f9b1",
-      "source_kind": "e2e_feature",
-      "source_path": "e2e/03_import_account.feature"
-    },
-    {
-      "conformance_status": "source_declared_not_runtime_equivalent",
-      "device_class": "simulator_or_declared_e2e",
-      "events": [
-        {
-          "category": "auth",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_auth_gate_satisfied",
-          "index": 0,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/04_upgrade_account.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/04_upgrade_account.feature",
-          "trace_id": "xaman-e2e:e2e-04-upgrade-account-feature-bb7e1b9d"
-        },
-        {
-          "category": "signing",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_transaction_signed",
-          "index": 1,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/04_upgrade_account.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/04_upgrade_account.feature",
-          "trace_id": "xaman-e2e:e2e-04-upgrade-account-feature-bb7e1b9d"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Pinned Xaman e2e feature manifest entry converted into monitor-event classes.",
-          "path": "e2e/04_upgrade_account.feature",
-          "review_status": "reviewed",
-          "sha256": "bb036b7ea71919606c7cb3c99ce6a3399879402afbfb59341e1c71b7b8d9307a"
-        }
-      ],
-      "id": "xaman-e2e:e2e-04-upgrade-account-feature-bb7e1b9d",
-      "manifest_sha256": "bb036b7ea71919606c7cb3c99ce6a3399879402afbfb59341e1c71b7b8d9307a",
-      "source_kind": "e2e_feature",
-      "source_path": "e2e/04_upgrade_account.feature"
-    },
-    {
-      "conformance_status": "source_declared_not_runtime_equivalent",
-      "device_class": "simulator_or_declared_e2e",
-      "events": [
-        {
-          "category": "auth",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_auth_gate_satisfied",
-          "index": 0,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/05_auth.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/05_auth.feature",
-          "trace_id": "xaman-e2e:e2e-05-auth-feature-0432e2b4"
-        },
-        {
-          "category": "signing",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_transaction_signed",
-          "index": 1,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/05_auth.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/05_auth.feature",
-          "trace_id": "xaman-e2e:e2e-05-auth-feature-0432e2b4"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Pinned Xaman e2e feature manifest entry converted into monitor-event classes.",
-          "path": "e2e/05_auth.feature",
-          "review_status": "reviewed",
-          "sha256": "dab626d3a24295df716760c7feae634d180a16f4eba1b027e181353a5c6c3493"
-        }
-      ],
-      "id": "xaman-e2e:e2e-05-auth-feature-0432e2b4",
-      "manifest_sha256": "dab626d3a24295df716760c7feae634d180a16f4eba1b027e181353a5c6c3493",
-      "source_kind": "e2e_feature",
-      "source_path": "e2e/05_auth.feature"
-    },
-    {
-      "conformance_status": "source_declared_not_runtime_equivalent",
-      "device_class": "simulator_or_declared_e2e",
-      "events": [
-        {
-          "category": "payload_intake",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_payload_intake_seen",
-          "index": 0,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/06_linking.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/06_linking.feature",
-          "trace_id": "xaman-e2e:e2e-06-linking-feature-3ef26f77"
-        },
-        {
-          "category": "review",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_review_displayed",
-          "index": 1,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/06_linking.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/06_linking.feature",
-          "trace_id": "xaman-e2e:e2e-06-linking-feature-3ef26f77"
-        },
-        {
-          "category": "network_binding",
-          "device_class": "simulator_or_declared_e2e",
-          "event": "xaman_network_binding_applied",
-          "index": 2,
-          "line_start": 1,
-          "raw_event": "manifest-declared e2e/06_linking.feature",
-          "source_kind": "e2e_feature",
-          "source_path": "e2e/06_linking.feature",
-          "trace_id": "xaman-e2e:e2e-06-linking-feature-3ef26f77"
-        }
-      ],
-      "evidence": [
-        {
-          "kind": "source_code",
-          "line_end": 1,
-          "line_start": 1,
-          "notes": "Pinned Xaman e2e feature manifest entry converted into monitor-event classes.",
-          "path": "e2e/06_linking.feature",
-          "review_status": "reviewed",
-          "sha256": "78ddf03c8de658577ced649c1ce765826f1f023ed990162a8ab39ec3850a2169"
-        }
-      ],
-      "id": "xaman-e2e:e2e-06-linking-feature-3ef26f77",
-      "manifest_sha256": "78ddf03c8de658577ced649c1ce765826f1f023ed990162a8ab39ec3850a2169",
-      "source_kind": "e2e_feature",
-      "source_path": "e2e/06_linking.feature"
-    }
-  ],
   "schema_version": "xaman-runtime-trace-report/v1",
+  "security_decision": "BLOCK_RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
   "source": {
     "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
-    "coverage_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
-    "coverage_schema_version": "xaman-source-coverage/v1",
     "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
     "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
     "manifest_schema_version": "xaman-corpus-source-manifest/v1",
     "repo_url": "https://github.com/XRPL-Labs/Xaman-App"
   },
-  "task_id": "PORTAL-CXTP-074",
-  "trace_inputs": {
-    "e2e_feature_count": 6,
-    "real_device_trace_count": 0,
-    "runtime_paths": [],
-    "runtime_trace_count": 0,
-    "source_paths": [
-      "e2e/01_setup.feature",
-      "e2e/02_generate_account.feature",
-      "e2e/03_import_account.feature",
-      "e2e/04_upgrade_account.feature",
-      "e2e/05_auth.feature",
-      "e2e/06_linking.feature"
-    ]
-  }
+  "source_models": {
+    "payload_lifecycle": {
+      "exists": true,
+      "gap_count": 4,
+      "modeled_fact_count": 19,
+      "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "review_status": "reviewed",
+      "schema_version": "xaman-payload-lifecycle-facts/v1",
+      "status": "ready"
+    },
+    "wallet_auth": {
+      "exists": true,
+      "gap_count": 6,
+      "modeled_fact_count": 22,
+      "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "review_status": "reviewed",
+      "schema_version": "xaman-wallet-auth-facts/v1",
+      "status": "ready"
+    },
+    "xrpl_transaction": {
+      "exists": true,
+      "gap_count": 5,
+      "modeled_fact_count": 13,
+      "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "review_status": "reviewed",
+      "schema_version": "xaman-xrpl-transaction-facts/v1",
+      "status": "ready"
+    }
+  },
+  "task_id": "PORTAL-CXTP-074"
 }

@@ -2,47 +2,56 @@
 
 Task: `PORTAL-CXTP-074`
 
-The machine-readable runtime trace report is `security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json`.
+The runtime trace report is `security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json`.
 
-## Source Boundary
+## Purpose
 
-- Corpus: `xaman-app`
-- Repository: `https://github.com/XRPL-Labs/Xaman-App`
-- Commit: `942f43876265a7af44f233288ad2b1d00841d5fa`
-- Manifest: `security_ir_artifacts/corpora/xaman-app/source-manifest.json`
-- Manifest aggregate SHA-256: `575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460`
-- Coverage artifact: `security_ir_artifacts/corpora/xaman-app/source-coverage.json`
+The ingestor converts the pinned Xaman e2e feature inventory and reviewed source-model artifacts into monitor facts for:
 
-The report ingests the manifest-pinned e2e feature declarations and projects reviewed source facts from `PORTAL-CXTP-061`, `PORTAL-CXTP-065`, and `PORTAL-CXTP-066` into monitor facts. It also accepts optional JSON or NDJSON runtime traces through `XamanRuntimeTraceIngestor` and normalizes them to the same monitor vocabulary.
+- payload intake;
+- review;
+- auth;
+- signing;
+- rejection;
+- expiration;
+- network binding;
+- broadcast;
+- runtime equivalence.
 
-## Monitor Vocabulary
+The monitor facts are useful for proof obligations, but they are not production runtime evidence by themselves.
 
-The runtime monitor facts cover these categories:
+## Inputs
 
-- `payload_intake`: QR, deep-link, push, and event-list payload reference intake.
-- `review`: review preflight and user-visible transaction review.
-- `auth`: passcode or biometric authentication before vault-backed signing.
-- `signing`: approved transaction signing and signed payload patching.
-- `rejection`: user or app rejection before signing.
-- `expiration`: expired or already-resolved payload blocking.
-- `network_binding`: forced network, node, and NetworkID binding.
-- `broadcast`: optional XRPL submit after signed payload patch and submit guards.
+- Source manifest: `security_ir_artifacts/corpora/xaman-app/source-manifest.json`
+- Environment probe: `security_ir_artifacts/corpora/xaman-app/environment-probe.json`
+- Payload lifecycle model: `security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json`
+- XRPL transaction model: `security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json`
+- Wallet auth model: `security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json`
+- Optional real-device trace directory passed with `--trace-dir`
 
-The checked-in report contains monitor facts for all eight categories. E2e feature declarations are marked `source_declared_not_runtime_equivalent`; reviewed source facts are marked as monitor facts but carry `real_device_required_for_runtime_equivalence: true`.
+## Fail-Closed Runtime Policy
 
-## Blocking Runtime Equivalence
+When no real-device trace bundle is supplied, the ingestor must keep the report blocked with:
 
-The checked-in Xaman corpus does not include real-device runtime traces. Because of that, the report sets:
+- `REAL_DEVICE_TRACE_BUNDLE_MISSING`
+- `RUNTIME_EQUIVALENCE_NOT_PROVED`
 
-`blocking_runtime_equivalence.status = BLOCKING`
+These blockers mean the package has monitor specifications and reviewed source evidence, but it has not proved that the deployed runtime executes the reviewed flows.
 
-and records the gap:
+## NOT_MODELED Runtime Evidence
 
-`xaman-runtime-trace:gap:real-device-runtime-traces-absent`
+The report marks runtime equivalence as `NOT_MODELED` until real-device traces are supplied for the required categories. A sufficient trace bundle must contain reviewed events for payload intake, review display, auth gate, signing, rejection, expiration, network binding, and broadcast or no-broadcast outcome.
 
-This blocks acceptance of `xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime`. E2e feature declarations and source review can define the expected monitor facts, but they do not prove app-store binary behavior, native module behavior, mobile OS delivery, backend deployment, node endpoint configuration, or release-window device behavior.
+The trace bundle must also bind:
 
-To discharge the gap, the release packet needs iOS and Android real-device traces that cover payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast. Each trace must bind app build identifier, source commit, backend environment, node URI, device OS, capture time, and binary provenance or reproducible-build evidence.
+- Xaman source commit;
+- device or simulator identity;
+- app build provenance;
+- environment probe;
+- ledger endpoint or network configuration;
+- timestamp and monotonic event order;
+- signed payload or transaction identifiers when present;
+- rejection or expiration result when applicable.
 
 ## Validation
 
@@ -50,6 +59,7 @@ Run:
 
 ```bash
 PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_runtime_trace_ingestor.py -q
+PYTHONPATH=. /home/barberb/miniforge3/bin/python -m ipfs_datasets_py.logic.security_models.crypto_exchange.extractors.xaman_runtime_trace_ingestor --out security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json
 ```
 
-The tests validate report regeneration, source and manifest binding, e2e feature ingestion, runtime event normalization, monitor coverage, explicit `BLOCKING` runtime-equivalence status, and documentation coverage.
+The expected current state is blocked until real-device traces are provided.

@@ -1,464 +1,75 @@
 {
-  "android_native_assumptions": {
-    "android_gradle_plugin_version": "7.4.0",
-    "app_build_gradle_path": "android/app/build.gradle",
-    "app_version": {
-      "canonical_version_code": 123,
-      "canonical_version_name": "4.2.1"
+  "artifact_cid": "sha256:69c7ca855cf057da873312dab0ec44dc8541b81b8cbb6faf03c1f3fc3ff9a8ad",
+  "assumptions": {
+    "detox_e2e": {
+      "detox_config": true,
+      "e2e_directory": true,
+      "workflow": true
     },
-    "applied_plugins": [
-      "com.android.application",
-      "org.jetbrains.kotlin.android",
-      "com.facebook.react",
-      "com.google.gms.google-services",
-      "com.google.firebase.crashlytics"
-    ],
-    "build_gradle_path": "android/build.gradle",
-    "build_host_requirement": "Java Development Kit and Android SDK/NDK; Gradle wrapper is vendored at android/gradlew.",
-    "build_tools_version": "34.0.0",
-    "compile_sdk_version": 34,
-    "gradle_properties_hermes_enabled_raw": "true",
-    "gradle_properties_new_arch_enabled_raw": "false",
-    "kotlin_version": "1.9.24",
-    "min_sdk_version": 26,
-    "ndk_version": "26.1.10909125",
-    "security_disclosure_file_present": true,
-    "status": "parsed",
-    "target_sdk_version": 35
-  },
-  "blocking_evidence": [],
-  "content_inspection": {
-    "error": null,
-    "mode": "live_checkout",
-    "requested_paths": [
-      "package.json",
-      "tsconfig.json",
-      "tsconfig.jest.json",
-      ".detoxrc.js",
-      "jest.config.js",
-      "android/build.gradle",
-      "android/app/build.gradle",
-      "android/gradle.properties",
-      "ios/Podfile",
-      ".ruby-version",
-      ".watchmanconfig"
-    ],
-    "resolved_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
-  },
-  "corpus": {
-    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
-    "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
-    "manifest_file_count": 3444,
-    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
-    "name": "xaman-app",
-    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
-    "requested_ref": "942f43876265a7af44f233288ad2b1d00841d5fa"
-  },
-  "corpus_manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
-  "dependency_lockfiles": [
-    {
-      "path": "Gemfile.lock",
-      "sha256": "584c22420eb3969297a9ec35a946c8a809ca8f421ea1db14cff1c323738342a4",
-      "size_bytes": 2382
+    "native_android": {
+      "build_gradle": true,
+      "present": true,
+      "security_native_sources": 22
     },
-    {
-      "path": "ios/Podfile.lock",
-      "sha256": "cc3f2f4efc8d7efcc3435ef25c16702c512e656df549edaa34f8ce1797c5e886",
-      "size_bytes": 53080
+    "native_ios": {
+      "podfile_lock": true,
+      "present": true,
+      "xctest_plan": true
     },
-    {
-      "path": "package-lock.json",
-      "sha256": "f27be60a558a178d6fefec5fb0cab13ff4c196d13b96c3406d600f32277b458a",
-      "size_bytes": 497783
-    }
-  ],
-  "detox_e2e_assumptions": {
-    "apps": [
-      {
-        "name": "xaman.ios",
-        "type": "ios.app"
-      },
-      {
-        "name": "xaman.android",
-        "type": "android.apk"
-      },
-      {
-        "name": "ios.simulator",
-        "type": "ios.simulator"
-      },
-      {
-        "name": "android.emulator",
-        "type": "android.apk"
-      },
-      {
-        "name": "android.attached",
-        "type": "android.attached"
-      }
-    ],
-    "configurations": [
-      "ios.simulator+xaman.ios",
-      "android.emulator+xaman.android",
-      "android.attached+xaman.android"
-    ],
-    "cucumber_dev_dependency_version": "10.3.1",
-    "detox_dev_dependency_version": "20.32.0",
-    "detoxrc_path": ".detoxrc.js",
-    "detoxrc_present": true,
-    "e2e_feature_file_count": 6,
-    "e2e_feature_files": [
-      "e2e/01_setup.feature",
-      "e2e/02_generate_account.feature",
-      "e2e/03_import_account.feature",
-      "e2e/04_upgrade_account.feature",
-      "e2e/05_auth.feature",
-      "e2e/06_linking.feature"
-    ],
-    "e2e_helpers_present": true,
-    "e2e_step_definitions_present": true,
-    "e2e_support_present": true,
-    "jest_config": {
-      "preset": "react-native",
-      "uses_ts_jest": true
-    },
-    "references_android": true,
-    "references_ios": true,
-    "status": "parsed"
-  },
-  "generated_at_utc": "2026-07-08T20:29:12Z",
-  "ios_native_assumptions": {
-    "build_host_requirement": "macOS with Xcode command line tools; iOS builds are not reproducible on Linux hosts.",
-    "ios_platform_version": "13.4",
-    "new_architecture_referenced": false,
-    "pinned_pods": [
-      "Firebase",
-      "FirebaseCore",
-      "FirebaseCoreExtension",
-      "FirebaseCoreInternal",
-      "FirebaseInstallations",
-      "GoogleDataTransport",
-      "GoogleUtilities",
-      "nanopb"
-    ],
-    "podfile_lock_path": "ios/Podfile.lock",
-    "podfile_lock_present": true,
-    "podfile_lock_sha256": "cc3f2f4efc8d7efcc3435ef25c16702c512e656df549edaa34f8ce1797c5e886",
-    "podfile_path": "ios/Podfile",
-    "ruby_version_pin": "2.7.4",
-    "security_disclosure_file_present": true,
-    "status": "parsed",
-    "targets": [
-      "Xaman"
-    ],
-    "use_frameworks_referenced": true
-  },
-  "local_native_toolchain_probe": [
-    {
-      "blocks": [
-        "ios_pod_install"
-      ],
-      "display_name": "Ruby",
-      "executable": null,
-      "name": "ruby",
-      "purpose": "Run CocoaPods to install iOS dependencies declared in ios/Podfile.",
-      "status": "missing",
-      "version": null,
-      "version_raw": null
-    },
-    {
-      "blocks": [
-        "ios_pod_install"
-      ],
-      "display_name": "CocoaPods",
-      "executable": null,
-      "name": "pod",
-      "purpose": "Resolve and install the pinned ios/Podfile.lock dependency graph.",
-      "status": "missing",
-      "version": null,
-      "version_raw": null
-    },
-    {
-      "blocks": [
-        "android_build"
-      ],
-      "display_name": "Java",
-      "executable": "/usr/bin/java",
-      "name": "java",
-      "purpose": "Run the Gradle wrapper used by android/build.gradle and android/app/build.gradle.",
+    "node_runtime": {
+      "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/node",
+      "required_for": "React Native package and proof-consumer schema tooling",
       "status": "present",
-      "version": "1.8.0",
-      "version_raw": "openjdk version \"1.8.0_492\""
+      "version": "24.18.0"
     },
-    {
-      "blocks": [
-        "ios_build",
-        "ios_detox_e2e"
-      ],
-      "display_name": "Xcode command line tools",
-      "executable": null,
-      "name": "xcodebuild",
-      "purpose": "Compile the iOS app and Detox iOS e2e binaries (macOS + Xcode only).",
-      "status": "missing",
-      "version": null,
-      "version_raw": null
+    "npm_runtime": {
+      "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/npm",
+      "required_for": "package-lock based dependency resolution",
+      "status": "present",
+      "version": "11.16.0"
     },
-    {
-      "blocks": [
-        "metro_bundler"
-      ],
-      "display_name": "Watchman",
-      "executable": null,
-      "name": "watchman",
-      "purpose": "Filesystem watcher recommended by React Native Metro bundler and .watchmanconfig.",
-      "status": "missing",
-      "version": null,
-      "version_raw": null
+    "react_native_config": {
+      "babel_config": true,
+      "metro_config": true,
+      "package_json": true,
+      "package_lock": true
     },
-    {
-      "blocks": [
-        "android_detox_e2e"
-      ],
-      "display_name": "Android Debug Bridge",
-      "executable": null,
-      "name": "adb",
-      "purpose": "Deploy and drive Android Detox e2e builds against an emulator or device.",
-      "status": "missing",
-      "version": null,
-      "version_raw": null
-    },
-    {
-      "blocks": [
-        "detox_e2e_orchestration"
-      ],
-      "display_name": "Detox CLI",
-      "executable": null,
-      "name": "detox_cli",
-      "purpose": "Orchestrate Detox e2e test runs across the configurations in .detoxrc.js.",
-      "status": "missing",
-      "version": null,
-      "version_raw": null
-    }
-  ],
-  "missing_dependency_blockers": [
-    {
-      "blocking": false,
-      "blocks": [
-        "ios_pod_install"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "ruby",
-      "detail": "Run CocoaPods to install iOS dependencies declared in ios/Podfile.",
-      "remediation": "Install Ruby to enable: ios_pod_install.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "ios_pod_install"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "pod",
-      "detail": "Resolve and install the pinned ios/Podfile.lock dependency graph.",
-      "remediation": "Install CocoaPods to enable: ios_pod_install.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "ios_build",
-        "ios_detox_e2e"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "xcodebuild",
-      "detail": "Compile the iOS app and Detox iOS e2e binaries (macOS + Xcode only).",
-      "remediation": "Install Xcode command line tools to enable: ios_build, ios_detox_e2e.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "metro_bundler"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "watchman",
-      "detail": "Filesystem watcher recommended by React Native Metro bundler and .watchmanconfig.",
-      "remediation": "Install Watchman to enable: metro_bundler.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "android_detox_e2e"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "adb",
-      "detail": "Deploy and drive Android Detox e2e builds against an emulator or device.",
-      "remediation": "Install Android Debug Bridge to enable: android_detox_e2e.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "detox_e2e_orchestration"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "detox_cli",
-      "detail": "Orchestrate Detox e2e test runs across the configurations in .detoxrc.js.",
-      "remediation": "Install Detox CLI to enable: detox_e2e_orchestration.",
-      "required": false,
-      "status": "missing"
-    }
-  ],
-  "node_npm_requirements": {
-    "app_name": "xaman",
-    "app_version": "4.1.3",
-    "node_requirement": ">=18",
-    "npm_requirement": null,
-    "package_json_path": "package.json",
-    "package_manager_field": null,
-    "status": "parsed"
-  },
-  "optional_capability_gaps": [
-    {
-      "blocking": false,
-      "blocks": [
-        "ios_pod_install"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "ruby",
-      "detail": "Run CocoaPods to install iOS dependencies declared in ios/Podfile.",
-      "remediation": "Install Ruby to enable: ios_pod_install.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "ios_pod_install"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "pod",
-      "detail": "Resolve and install the pinned ios/Podfile.lock dependency graph.",
-      "remediation": "Install CocoaPods to enable: ios_pod_install.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "ios_build",
-        "ios_detox_e2e"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "xcodebuild",
-      "detail": "Compile the iOS app and Detox iOS e2e binaries (macOS + Xcode only).",
-      "remediation": "Install Xcode command line tools to enable: ios_build, ios_detox_e2e.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "metro_bundler"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "watchman",
-      "detail": "Filesystem watcher recommended by React Native Metro bundler and .watchmanconfig.",
-      "remediation": "Install Watchman to enable: metro_bundler.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "android_detox_e2e"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "adb",
-      "detail": "Deploy and drive Android Detox e2e builds against an emulator or device.",
-      "remediation": "Install Android Debug Bridge to enable: android_detox_e2e.",
-      "required": false,
-      "status": "missing"
-    },
-    {
-      "blocking": false,
-      "blocks": [
-        "detox_e2e_orchestration"
-      ],
-      "category": "native_build_toolchain",
-      "code": "NATIVE_TOOLCHAIN_DEPENDENCY_MISSING",
-      "component": "detox_cli",
-      "detail": "Orchestrate Detox e2e test runs across the configurations in .detoxrc.js.",
-      "remediation": "Install Detox CLI to enable: detox_e2e_orchestration.",
-      "required": false,
-      "status": "missing"
-    }
-  ],
-  "overall_status": "ready",
-  "policy_document": "docs/security_verification/xaman_environment_assumptions.md",
-  "probe_script": "scripts/ops/security_verification/probe_xaman_environment.py",
-  "proof_acceptance_blocked": false,
-  "react_native_build_assumptions": {
-    "babel_preset_dev_dependency_version": "0.74.84",
-    "detox_dev_dependency_version": "20.32.0",
-    "hermes_enabled": true,
-    "metro_config_dev_dependency_version": "0.74.84",
-    "new_architecture_enabled": false,
-    "react_native_version": "0.74.2",
-    "react_version": "18.2.0",
-    "status": "parsed",
-    "typescript_dev_dependency_version": "5.4.3"
-  },
-  "schema_version": "xaman-environment-probe/v1",
-  "security_decision": "XAMAN_ENVIRONMENT_READY_WITH_CAPABILITY_GAPS",
-  "solver_paths": {
-    "overall_status": "ready",
-    "proof_acceptance_blocked": false,
-    "resolved_executables": {
+    "solver_paths": {
+      "apalache": {
+        "executable": null,
+        "required": false,
+        "status": "missing",
+        "version": null
+      },
+      "coq": {
+        "executable": null,
+        "required": false,
+        "status": "missing",
+        "version": null
+      },
       "cvc5": {
         "executable": "/home/barberb/.local/bin/cvc5",
         "required": true,
         "status": "present",
         "version": "1.3.2"
       },
-      "node": {
-        "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/node",
-        "required": true,
+      "lean": {
+        "executable": "/home/barberb/.elan/bin/lean",
+        "required": false,
         "status": "present",
-        "version": "24.18.0"
+        "version": "4.31.0"
       },
-      "npm": {
-        "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/npm",
-        "required": true,
-        "status": "present",
-        "version": "11.16.0"
+      "proverif": {
+        "executable": null,
+        "required": false,
+        "status": "missing",
+        "version": null
       },
-      "python": {
-        "executable": "/home/barberb/miniforge3/bin/python",
-        "required": true,
-        "status": "present",
-        "version": "3.12.12"
-      },
-      "typescript": {
-        "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
-        "required": true,
-        "status": "present",
-        "version": "5.6.3"
+      "tamarin": {
+        "executable": null,
+        "required": false,
+        "status": "missing",
+        "version": null
       },
       "z3": {
         "executable": "/home/barberb/miniforge3/bin/z3",
@@ -467,49 +78,77 @@
         "version": "4.16.0"
       }
     },
-    "schema_version": "crypto-exchange-solver-dependency-probe/v1",
-    "solver_probe_found": true,
-    "solver_probe_path": "security_ir_artifacts/environment/solver-dependency-probe.json"
+    "typescript_compiler": {
+      "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+      "required_for": "TypeScript/TSX source parsing and proof-consumer schema checks",
+      "status": "present",
+      "version": "5.5.4"
+    },
+    "typescript_config": {
+      "tsconfig": true,
+      "tsconfig_jest": true
+    }
+  },
+  "blockers": [],
+  "corpus_manifest": {
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "dependency_lockfiles": [
+      "Gemfile.lock",
+      "ios/Podfile.lock",
+      "package-lock.json"
+    ],
+    "exists": true,
+    "file_count": 3444,
+    "license_files": [
+      "LICENSE"
+    ],
+    "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "repository_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "schema_version": "xaman-corpus-source-manifest/v1",
+    "security_disclosure_files": [
+      "RESPONSIBLE-DISCLOSURE.md",
+      "android/app/src/main/assets/security.txt",
+      "ios/security.txt"
+    ]
+  },
+  "generated_at_utc": "2026-07-10T06:30:43Z",
+  "overall_status": "ready",
+  "policy_document": "docs/security_verification/xaman_environment_assumptions.md",
+  "schema_version": "xaman-environment-probe/v1",
+  "security_decision": "XAMAN_ENVIRONMENT_PROBE_READY",
+  "solver_probe": {
+    "exists": true,
+    "overall_status": "ready",
+    "path": "security_ir_artifacts/environment/solver-dependency-probe.json",
+    "proof_acceptance_blocked": false
   },
   "summary": {
-    "blocking_evidence_count": 0,
-    "dependency_lockfile_count": 3,
-    "e2e_feature_file_count": 6,
-    "native_toolchain_count": 7,
-    "native_toolchain_present_count": 1,
-    "optional_capability_gap_count": 6
+    "blocker_count": 0,
+    "detox_e2e_present": true,
+    "file_count": 3444,
+    "lockfile_count": 3,
+    "native_android_present": true,
+    "native_ios_present": true,
+    "typescript_ready": true,
+    "warning_count": 4
   },
   "task_id": "PORTAL-CXTP-061",
-  "typescript_config": {
-    "compiler_options": {
-      "baseUrl": "src",
-      "esModuleInterop": true,
-      "isolatedModules": true,
-      "jsx": "react-native",
-      "module": "es2015",
-      "moduleResolution": "bundler",
-      "noEmit": true,
-      "resolveJsonModule": true,
-      "skipLibCheck": true,
-      "strict": true,
-      "target": "esnext"
+  "warnings": [
+    {
+      "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
+      "solver": "apalache"
     },
-    "exclude_pattern_count": 7,
-    "include_pattern_count": 3,
-    "locally_resolved_tsc_executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
-    "locally_resolved_tsc_version": "5.6.3",
-    "path_alias_count": 14,
-    "pinned_typescript_version": "5.4.3",
-    "remediation_toolchain_pinned_version": "5.6.3",
-    "status": "parsed",
-    "tsconfig_path": "tsconfig.json"
-  },
-  "typescript_remediation": {
-    "overall_status": "remediated",
-    "pinned_typescript_version": "5.6.3",
-    "proof_acceptance_blocked": false,
-    "remediation_report_found": true,
-    "remediation_report_path": "security_ir_artifacts/environment/typescript-remediation-report.json",
-    "toolchain_dir": "security_ir_artifacts/environment/typescript_toolchain"
-  }
+    {
+      "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
+      "solver": "tamarin"
+    },
+    {
+      "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
+      "solver": "proverif"
+    },
+    {
+      "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
+      "solver": "coq"
+    }
+  ]
 }

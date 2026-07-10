@@ -1,78 +1,37 @@
-# Taskboard Preflight CI
+# Crypto Exchange Taskboard Preflight CI
 
-- Task: `PORTAL-CXTP-087`
-- Script: `scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py`
-- Workflow: `.github/workflows/crypto-exchange-security-verification.yml`
-- Report schema: `crypto-exchange-taskboard-preflight/v1`
+Task: `PORTAL-CXTP-087`
 
-## Purpose
+The preflight script is `scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py`.
 
-The crypto-exchange theorem-prover taskboard is a supervisor control plane. CI
-and supervisor workers must fail before downstream proof work starts when the
-taskboard cannot be parsed, protected source paths disappear, required artifacts
-are absent, task statuses contradict evidence, or release policy text would let a
-production blocker look acceptable.
+## What It Checks
 
-The preflight intentionally separates two decisions:
+The preflight fails closed when:
 
-- `overall_status` / `ci_gate`: taskboard integrity. `blocked` exits nonzero.
-- `production_release_acceptable`: release readiness. This remains `false`
-  while production evidence tasks are explicitly blocked, even when taskboard
-  integrity passes.
+- the taskboard has no parseable `PORTAL-CXTP-*` tasks;
+- a task status is invalid;
+- a completed task has no completion evidence;
+- a completed task declares an output artifact that is missing;
+- supervisor state task counts or statuses contradict the taskboard;
+- production blocker tasks `PORTAL-CXTP-077` through `PORTAL-CXTP-084` are incomplete while a production report claims release acceptance.
 
-## Checks
+Blocked production evidence is allowed only when the report keeps `production_release_blocked: true` or uses a `BLOCK*` security decision.
 
-The script performs these fail-closed checks:
+## CI Entry Point
 
-1. Parse `## PORTAL-CXTP-...` task entries and required metadata fields.
-2. Load the `PORTAL-CXTP-057` retention baseline and verify protected files are
-   still present, including taskboard, source files, release-policy documents,
-   solver artifacts, assurance packets, Xaman manifests, model facts, and
-   recovery artifacts.
-3. Require every `completed` task output path listed in `- Outputs:` to exist.
-4. Require every `blocked` task to carry `- Blocked reason:`.
-5. Reject completed tasks that still carry a blocked reason.
-6. Reject blocked production tasks that contain release-acceptable metadata.
-7. Verify `security_ir_artifacts/policies/security-decision-policy.json` keeps
-   every non-`prove` blocking outcome non-secure and `blocked-production`.
-
-## Local use
-
-Run the same command used by CI:
+`.github/workflows/crypto-exchange-security-verification.yml` runs:
 
 ```bash
-PYTHONPATH=. /home/barberb/miniforge3/bin/python \
-  scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py \
-  --out taskboard-preflight-report.json
+PYTHONPATH=. python scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py \
+  --taskboard docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md \
+  --state data/crypto_exchange_theorem_prover/state/cxtp_task_state.json \
+  --out security_ir_artifacts/recovery/taskboard-preflight-report.json
+
+PYTHONPATH=. python -m pytest tests/logic/security_models/crypto_exchange/test_taskboard_preflight.py -q
 ```
 
-Exit code `0` means the taskboard is parseable and internally consistent. Exit
-code `2` means supervisor and CI gates must stop.
+## Current Expected Behavior
 
-When the report shows retained artifacts missing, run the recovery preflight
-first:
+If recovered source or evidence artifacts disappear, the script must fail. That is intentional: the supervisor should not continue proof or production-release work from a contradictory board.
 
-```bash
-PYTHONPATH=. /home/barberb/miniforge3/bin/python \
-  scripts/ops/security_verification/restore_crypto_exchange_security_tree.py \
-  --verify-only \
-  --report security_ir_artifacts/recovery/supervisor-stability-report.json
-```
-
-Use restore mode only when the supervisor is allowed to recover missing files
-from durable git history.
-
-## Report fields
-
-- `overall_status`: `pass` or `blocked`.
-- `ci_gate`: `pass` or `fail`.
-- `supervisor_preflight_gate`: `allowed` or `blocked`.
-- `production_release_acceptable`: `false` whenever production blocker tasks
-  remain blocked or integrity failed.
-- `production_release_decision`: `eligible-for-acceptance` only when integrity
-  passes and no production blocker tasks remain.
-- `blockers`: machine-readable fail-closed findings with stable `code` values.
-
-CI writes these fields to the GitHub step summary and preserves the JSON report
-as a workflow artifact for supervisor handoff.
-
+The generated report records `BLOCK_TASKBOARD_PREFLIGHT` when blockers are found and `TASKBOARD_PREFLIGHT_READY` only when no blockers remain.

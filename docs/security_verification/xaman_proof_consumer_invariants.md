@@ -1,124 +1,60 @@
 # Xaman Proof-Consumer Invariants
 
-Date: 2026-07-08
+Task: `PORTAL-CXTP-073`
 
-Scope: PORTAL-CXTP-073 proof-consumer checks for the Xaman blocking/high-risk
-claim set.
+This artifact defines the proof-consumer conditions that must hold before a theorem-prover report can be accepted for Xaman release evidence. The checked kernel is intentionally narrow: it proves that the consumer rejects non-`PROVED` statuses and rejects missing trust, stale assumptions, solver disagreement, counterexamples, unreviewed evidence, and mismatched proof bindings.
 
-This artifact adds a small proof-kernel specification and a checked JSON report
-for proof consumers that read Xaman proof receipts. It does not prove the full
-Xaman wallet or backend secure. It proves and checks the consumer-side invariant:
-a receipt can be accepted only when it binds the exact proof report, model,
-claim, solver, assumptions, reviewed evidence, source corpus, and fresh
-environment probe.
+## Kernel Artifact
 
-## Artifacts
+- Lean file: `security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean`
+- Report: `security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json`
+- Bound model CID: `sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d`
+- Xaman claim: `xaman-claim:proof-consumer-must-reject-non-proved-results`
 
-- Lean proof kernel: `security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean`
-- Checked report: `security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json`
-- Generator: `scripts/ops/security_verification/generate_xaman_proof_consumer_report.py`
-- Runtime checker: `ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_proof_consumer`
+The Lean kernel models two records:
 
-The checked report is generated from:
+- `ProofReport`: claim ID, model CID, proof status, assumption status, evidence review, solver agreement, and counterexample absence.
+- `ProofReceipt`: claim ID, model CID, report-CID match, trust anchor, assumption freshness, and prover allowlist status.
 
-- `security_ir_artifacts/corpora/xaman-app/security-model-ir.json`
-- `security_ir_artifacts/corpora/xaman-app/security-model-ir.cid`
-- `security_ir_artifacts/corpora/xaman-app/environment-probe.json`
-- `security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean`
+`canAccept` returns true only when all proof-critical checks hold.
 
-## Acceptance Predicate
+## Checked Rejection Invariants
 
-The production proof-consumer predicate accepts only a packet with all of these
-properties:
+The Lean file proves rejection for:
 
-- The report status is `PROVED`.
-- The receipt `model_cid` and report `model_cid` equal the selected Xaman
-  `SecurityModelIR` CID.
-- The receipt `claim_id` and report `claim_id` equal
-  `xaman-security:claim:proof-consumers-fail-closed-for-xaman-security-claims`.
-- The receipt `proof_report_cid` equals the report CID.
-- The receipt report schema version equals the report schema version.
-- The solver identity is complete and present in the fresh environment probe or
-  explicit proof-kernel allowlist.
-- The report assumptions exactly match the required claim assumptions and the
-  receipt accepts exactly those assumptions.
-- Every required evidence reference is reviewed and includes the proof kernel,
-  source manifest, security claims, proof-consumer policy, release policy, and
-  environment probe.
-- The receipt metadata binds the corpus commit
-  `942f43876265a7af44f233288ad2b1d00841d5fa` and source manifest digest
-  `575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460`.
-- The environment probe is `ready`, does not block proof acceptance, and is no
-  older than 24 hours at the report release window.
+- `DISPROVED` reports.
+- `UNKNOWN` reports.
+- `NOT_MODELED` reports.
+- Uncleared assumptions.
+- Unreviewed evidence.
+- Solver disagreement.
+- Attached or known counterexample evidence.
+- Report CID mismatch.
+- Missing trusted signature or canonical CID verification.
+- Stale accepted assumptions.
+- Unsupported prover.
 
-## Fail-Closed Outcomes
+The file also contains a positive example showing that a fully bound, fully reviewed, `PROVED` report can be accepted by the modeled consumer.
 
-The checker rejects these non-secure outcomes:
+## Toolchain Result
 
-- `DISPROVED`
-- `UNKNOWN`
-- `NOT_MODELED`
-- missing solver identity or unavailable solver
-- stale environment probe
-- mismatched model CID, claim ID, report CID, or schema binding
-- missing or extra accepted assumptions
-- missing or unreviewed source evidence
-- mismatched corpus commit or manifest digest
+The local verifier compiled the Lean file with:
 
-The checked JSON report includes negative fixtures for the required outcome
-classes and records the rejection reason for each.
+```bash
+lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean
+```
 
-## Lean Kernel
+The current report records Lean as compiled and Coq as unavailable because `coqc` is not installed. No production evidence may claim Coq-checked proof-consumer coverage until a Coq artifact is added and compiled.
 
-`XamanReceipt.lean` defines:
+## Release Interpretation
 
-- `Outcome`
-- `ReceiptBindings`
-- `Receipt`
-- `AllBindings`
-- `Accepts`
-
-The theorem set proves acceptance implies the required bindings:
-
-- `acceptedBindsModelCID`
-- `acceptedBindsClaimID`
-- `acceptedBindsReportCID`
-- `acceptedBindsSolverIdentity`
-- `acceptedBindsAssumptions`
-- `acceptedBindsReviewedEvidence`
-- `acceptedBindsCorpusCommit`
-- `acceptedBindsFreshEnvironment`
-
-It also proves:
-
-- `rejectsDisprovedUnknownNotModeled`
-- `rejectsMissingSolver`
-
-Lean/Coq executables are not required by the current CI path. The checked-in
-Lean file is the proof-kernel specification; the Python proof-consumer checker
-executes the equivalent predicate against the canonical Xaman artifact packet
-and fail-closed mutations.
+This kernel does not prove the Xaman app secure. It proves a consumer-side guard: non-proved or incompletely bound proof evidence must be rejected. The release remains blocked until this kernel is wired into the production proof-consumer runtime and the remaining Xaman assumptions are cleared with reviewed evidence.
 
 ## Regeneration
 
-Run:
+After editing the kernel, rerun:
 
 ```bash
-PYTHONPATH=. /home/barberb/miniforge3/bin/python \
-  scripts/ops/security_verification/generate_xaman_proof_consumer_report.py
+lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean
+PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_proof_consumer_invariants.py -q
 ```
-
-Validate:
-
-```bash
-PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest \
-  tests/logic/security_models/crypto_exchange/test_xaman_proof_consumer_invariants.py -q
-```
-
-## Production Boundary
-
-This artifact satisfies the proof-consumer invariant check for PORTAL-CXTP-073.
-It does not change the broader Xaman production release decision. The Xaman
-security model still remains blocked until the other blocking assumptions
-identified in `security_ir_artifacts/corpora/xaman-app/security-claims.json`
-receive reviewed production evidence.

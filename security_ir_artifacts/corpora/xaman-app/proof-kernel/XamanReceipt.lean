@@ -1,130 +1,113 @@
-/-!
-Xaman proof-consumer receipt invariants.
-
-This file is a small Lean 4 proof-kernel specification for the checked
-consumer predicate used by PORTAL-CXTP-073.  It does not model XRPL protocol
-semantics; it proves that a consumer acceptance decision logically entails the
-receipt/report bindings required by the Xaman release gate and excludes the
-non-secure outcomes that must fail closed.
--/
-
 namespace XamanReceipt
 
-inductive Outcome where
+inductive ProofStatus where
   | proved
   | disproved
   | unknown
   | notModeled
-  | missingSolver
   deriving DecidableEq, Repr
 
-structure ReceiptBindings where
-  modelCID : Prop
-  claimID : Prop
-  reportCID : Prop
-  solverIdentity : Prop
-  assumptions : Prop
-  reviewedEvidence : Prop
-  corpusCommit : Prop
-  freshEnvironment : Prop
+structure ProofReport where
+  claimId : String
+  modelCid : String
+  status : ProofStatus
+  assumptionsCleared : Bool
+  evidenceReviewed : Bool
+  solverAgreement : Bool
+  noCounterexample : Bool
+  deriving Repr
 
-structure Receipt where
-  outcome : Outcome
-  bindings : ReceiptBindings
-  solverPresent : Prop
-  sourceReviewed : Prop
-  environmentFresh : Prop
+structure ProofReceipt where
+  claimId : String
+  modelCid : String
+  reportCidMatches : Bool
+  trustedSignatureOrCanonicalCid : Bool
+  acceptedAssumptionsCurrent : Bool
+  supportedProver : Bool
+  deriving Repr
 
-def AllBindings (b : ReceiptBindings) : Prop :=
-  b.modelCID
-    /\ b.claimID
-    /\ b.reportCID
-    /\ b.solverIdentity
-    /\ b.assumptions
-    /\ b.reviewedEvidence
-    /\ b.corpusCommit
-    /\ b.freshEnvironment
+def bindingMatches (report : ProofReport) (receipt : ProofReceipt) : Bool :=
+  report.claimId == receipt.claimId && report.modelCid == receipt.modelCid
 
-def Accepts (r : Receipt) : Prop :=
-  r.outcome = Outcome.proved
-    /\ AllBindings r.bindings
-    /\ r.solverPresent
-    /\ r.sourceReviewed
-    /\ r.environmentFresh
+def canAccept (report : ProofReport) (receipt : ProofReceipt) : Bool :=
+  report.status == ProofStatus.proved
+    && bindingMatches report receipt
+    && report.assumptionsCleared
+    && report.evidenceReviewed
+    && report.solverAgreement
+    && report.noCounterexample
+    && receipt.reportCidMatches
+    && receipt.trustedSignatureOrCanonicalCid
+    && receipt.acceptedAssumptionsCurrent
+    && receipt.supportedProver
 
-theorem acceptedBindsModelCID {r : Receipt} (h : Accepts r) :
-    r.bindings.modelCID := by
-  rcases h with ⟨_, hbindings, _, _, _⟩
-  rcases hbindings with ⟨hmodel, _, _, _, _, _, _, _⟩
-  exact hmodel
+theorem reject_disproved_status (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept { report with status := ProofStatus.disproved } receipt = false := by
+  simp [canAccept]
 
-theorem acceptedBindsClaimID {r : Receipt} (h : Accepts r) :
-    r.bindings.claimID := by
-  rcases h with ⟨_, hbindings, _, _, _⟩
-  rcases hbindings with ⟨_, hclaim, _, _, _, _, _, _⟩
-  exact hclaim
+theorem reject_unknown_status (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept { report with status := ProofStatus.unknown } receipt = false := by
+  simp [canAccept]
 
-theorem acceptedBindsReportCID {r : Receipt} (h : Accepts r) :
-    r.bindings.reportCID := by
-  rcases h with ⟨_, hbindings, _, _, _⟩
-  rcases hbindings with ⟨_, _, hreport, _, _, _, _, _⟩
-  exact hreport
+theorem reject_not_modeled_status (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept { report with status := ProofStatus.notModeled } receipt = false := by
+  simp [canAccept]
 
-theorem acceptedBindsSolverIdentity {r : Receipt} (h : Accepts r) :
-    r.bindings.solverIdentity := by
-  rcases h with ⟨_, hbindings, _, _, _⟩
-  rcases hbindings with ⟨_, _, _, hsolver, _, _, _, _⟩
-  exact hsolver
+theorem reject_uncleared_assumptions (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept { report with assumptionsCleared := false } receipt = false := by
+  simp [canAccept]
 
-theorem acceptedBindsAssumptions {r : Receipt} (h : Accepts r) :
-    r.bindings.assumptions := by
-  rcases h with ⟨_, hbindings, _, _, _⟩
-  rcases hbindings with ⟨_, _, _, _, hassumptions, _, _, _⟩
-  exact hassumptions
+theorem reject_unreviewed_evidence (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept { report with evidenceReviewed := false } receipt = false := by
+  simp [canAccept]
 
-theorem acceptedBindsReviewedEvidence {r : Receipt} (h : Accepts r) :
-    r.bindings.reviewedEvidence := by
-  rcases h with ⟨_, hbindings, _, _, _⟩
-  rcases hbindings with ⟨_, _, _, _, _, hevidence, _, _⟩
-  exact hevidence
+theorem reject_solver_disagreement (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept { report with solverAgreement := false } receipt = false := by
+  simp [canAccept]
 
-theorem acceptedBindsCorpusCommit {r : Receipt} (h : Accepts r) :
-    r.bindings.corpusCommit := by
-  rcases h with ⟨_, hbindings, _, _, _⟩
-  rcases hbindings with ⟨_, _, _, _, _, _, hcorpus, _⟩
-  exact hcorpus
+theorem reject_counterexample (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept { report with noCounterexample := false } receipt = false := by
+  simp [canAccept]
 
-theorem acceptedBindsFreshEnvironment {r : Receipt} (h : Accepts r) :
-    r.bindings.freshEnvironment /\ r.environmentFresh := by
-  rcases h with ⟨_, hbindings, _, _, hfresh⟩
-  rcases hbindings with ⟨_, _, _, _, _, _, _, hboundFresh⟩
-  exact ⟨hboundFresh, hfresh⟩
+theorem reject_report_cid_mismatch (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept report { receipt with reportCidMatches := false } = false := by
+  simp [canAccept]
 
-theorem rejectsDisprovedUnknownNotModeled {r : Receipt}
-    (hbad :
-      r.outcome = Outcome.disproved
-        \/ r.outcome = Outcome.unknown
-        \/ r.outcome = Outcome.notModeled) :
-    Not (Accepts r) := by
-  intro haccept
-  rcases haccept with ⟨hproved, _, _, _, _⟩
-  rcases hbad with hdisproved | hrest
-  · rw [hdisproved] at hproved
-    contradiction
-  · rcases hrest with hunknown | hnotModeled
-    · rw [hunknown] at hproved
-      contradiction
-    · rw [hnotModeled] at hproved
-      contradiction
+theorem reject_missing_trust_anchor (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept report { receipt with trustedSignatureOrCanonicalCid := false } = false := by
+  simp [canAccept]
 
-theorem rejectsMissingSolver {r : Receipt}
-    (hmissing : r.outcome = Outcome.missingSolver \/ Not r.solverPresent) :
-    Not (Accepts r) := by
-  intro haccept
-  rcases haccept with ⟨hproved, _, hsolver, _, _⟩
-  rcases hmissing with hmissingOutcome | hsolverAbsent
-  · rw [hmissingOutcome] at hproved
-    contradiction
-  · exact hsolverAbsent hsolver
+theorem reject_stale_assumptions (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept report { receipt with acceptedAssumptionsCurrent := false } = false := by
+  simp [canAccept]
+
+theorem reject_unsupported_prover (report : ProofReport) (receipt : ProofReceipt) :
+    canAccept report { receipt with supportedProver := false } = false := by
+  simp [canAccept]
+
+def acceptedExampleReport : ProofReport := {
+  claimId := "xaman-claim:proof-consumer-must-reject-non-proved-results"
+  modelCid := "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d"
+  status := ProofStatus.proved
+  assumptionsCleared := true
+  evidenceReviewed := true
+  solverAgreement := true
+  noCounterexample := true
+}
+
+def acceptedExampleReceipt : ProofReceipt := {
+  claimId := "xaman-claim:proof-consumer-must-reject-non-proved-results"
+  modelCid := "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d"
+  reportCidMatches := true
+  trustedSignatureOrCanonicalCid := true
+  acceptedAssumptionsCurrent := true
+  supportedProver := true
+}
+
+example : canAccept acceptedExampleReport acceptedExampleReceipt = true := by
+  native_decide
+
+example : canAccept { acceptedExampleReport with status := ProofStatus.unknown } acceptedExampleReceipt = false := by
+  native_decide
 
 end XamanReceipt

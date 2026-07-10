@@ -2,79 +2,56 @@
 
 Task: `PORTAL-CXTP-075`
 
-This packet is the fail-closed assurance bundle for the reviewed Xaman source
-corpus. It aggregates the model CID, pinned corpus commit, source manifest,
-environment probe, proof reports, disproof reports, solver matrix, runtime
-trace report, assumptions, open blockers, and release decision into:
+The assurance packet is the roll-up artifact for the Xaman theorem-prover work. It collects the reviewed source facts, SecurityModelIR, solver outputs, disproof vectors, runtime trace status, and proof-consumer kernel evidence into a single release decision input.
 
-`security_ir_artifacts/corpora/xaman-app/assurance-packet.json`
+## Artifact
 
-## Packet Identity
+- Packet: `security_ir_artifacts/corpora/xaman-app/assurance-packet.json`
+- Bound model CID: `sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d`
 
-- Schema: `xaman-assurance-packet/v1`
-- Artifact CID: `bafkreigzheeseiw36a5rqy3aggw4ia5gdkmzxlcmvmlnfluomr67ssjhzq`
-- Model CID: `bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e`
-- Corpus commit: `942f43876265a7af44f233288ad2b1d00841d5fa`
-- Manifest aggregate SHA-256: `575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460`
-- Environment probe: `security_ir_artifacts/corpora/xaman-app/environment-probe.json`
+## Included Evidence
 
-## Bundled Evidence
+The packet indexes:
 
-The packet binds these artifact lanes:
+- Xaman source manifest and source coverage.
+- Wallet authentication facts.
+- Payload lifecycle facts.
+- XRPL transaction facts.
+- Security claims and Xaman `SecurityModelIR`.
+- Z3/CVC5 SMT differential report.
+- Counterexample/disproof report.
+- TLA/Apalache workflow report.
+- Tamarin/ProVerif protocol projection report.
+- Runtime trace report.
+- Lean proof-consumer kernel report.
 
-| Lane | Artifact |
-| --- | --- |
-| Source manifest | `security_ir_artifacts/corpora/xaman-app/source-manifest.json` |
-| Source coverage | `security_ir_artifacts/corpora/xaman-app/source-coverage.json` |
-| Security model | `security_ir_artifacts/corpora/xaman-app/security-model-ir.json` |
-| Claims and assumptions | `security_ir_artifacts/corpora/xaman-app/security-claims.json` |
-| SMT manifest | `security_ir_artifacts/corpora/xaman-app/smtlib/manifest.json` |
-| Z3/CVC5 differential | `security_ir_artifacts/corpora/xaman-app/proof-reports/z3-cvc5-differential.json` |
-| Disproof vectors | `security_ir_artifacts/corpora/xaman-app/disproof-vectors.json` |
-| Counterexamples | `security_ir_artifacts/corpora/xaman-app/counterexample-report.json` |
-| TLA+/Apalache workflow | `security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json` |
-| Tamarin/ProVerif protocol | `security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json` |
-| Proof consumer invariants | `security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json` |
-| Runtime traces | `security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json` |
+## Result
 
-## Evidence Summary
+The packet is intentionally fail-closed:
 
-- Critical claims: 9 blocking or high-risk claims.
-- Proved critical claims: 0.
-- Assumptions: 20 total, 8 evidenced and 12 blocking.
-- SMT differential: 9 claims classified as blocked, 0 proved, 0 solver disagreements.
-- Disproof suite: 6 expected counterexamples and 2 explicitly blocked vectors, with `scenario_failures: 0`.
-- TLA workflow: 10 modeled properties blocked because Apalache is unavailable.
-- Protocol model: 9 modeled properties blocked because Tamarin and ProVerif are unavailable.
-- Runtime traces: 6 source/e2e traces and 20 monitor facts, but 0 real-device release-window traces.
-- Open blockers: 17 total, covering blocking assumptions, proof gaps, missing solvers, and runtime equivalence.
+- `overall_status: blocked`
+- `release_decision: reject_release`
+- `security_decision: BLOCK_XAMAN_RELEASE_ASSURANCE_PACKET`
 
-## Solver Matrix
+The packet does not prove Xaman secure. It records that the current evidence is enough to identify blocked assumptions, counterexamples, missing runtime evidence, and unavailable solver lanes.
 
-The configured environment has `z3`, `cvc5`, `python`, `node`, `npm`, and
-`typescript` available. The packet also records independent solver blockers
-for `apalache`, `proverif`, and `tamarin-prover`; those lanes cannot be
-accepted as proved until the solvers are installed and the corresponding
-reports are regenerated.
+## Main Blockers
 
-## Decision
+- Unresolved Xaman assumptions across blocking/high claims.
+- SMT differential lane blocks all claims because assumptions remain uncleared.
+- Counterexamples exist in the disproof suite.
+- Some disproof vectors are blocked by missing evidence.
+- Runtime equivalence lacks real-device traces.
+- Apalache has not run.
+- Tamarin/ProVerif have not run.
+- The Lean proof-consumer kernel is checked but not integrated into production.
 
-The packet decision is `blocked-production`.
+## Next Evidence
 
-This is intentional and fail-closed. The reviewed corpus establishes useful
-source-backed facts and negative fixtures, but it does not provide a production
-release proof because blocking assumptions remain open, temporal and symbolic
-protocol solvers are missing, proof outcomes are not `PROVED`, and real-device
-runtime equivalence evidence is absent.
+The packet points the production lane toward:
 
-## Regeneration And Validation
-
-Validate the packet with:
-
-```bash
-PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_assurance_packet.py -q
-```
-
-The test regenerates `assurance-packet.json` from the bound inputs and checks
-the artifact CID, source commit, model CID, proof/disproof/runtime bundle,
-solver matrix, open blockers, assumptions, and fail-closed release decision.
+- `PORTAL-CXTP-077`: production environment profile.
+- `PORTAL-CXTP-078`: production source inventory.
+- Real-device runtime trace bundle.
+- Solver installation or explicit scoping for Apalache, Tamarin, ProVerif, and Coq.
+- Production integration evidence for the Lean proof-consumer kernel.

@@ -1,549 +1,72 @@
 {
   "apalache": {
-    "available": false,
-    "blocker": {
-      "kind": "missing_solver",
-      "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-      "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-      "solver": "apalache"
-    },
-    "executable": null,
-    "solver": "apalache",
-    "status": "BLOCKED",
-    "version": null
+    "executables": [
+      {
+        "name": "apalache-mc",
+        "path": null,
+        "present": false,
+        "version": ""
+      },
+      {
+        "name": "apalache",
+        "path": null,
+        "present": false,
+        "version": ""
+      }
+    ],
+    "missing_executables": [
+      "apalache-mc",
+      "apalache"
+    ],
+    "model_check_command": "apalache-mc check --inv=SigningGateInvariant security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla",
+    "run_status": "not-run"
   },
-  "artifact_cid": "bafkreigeg2i26ygbxflhfsqydnmzz4fkeenvfu3ojjo42ynsgarr5ut2yi",
-  "corpus": {
-    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
-    "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
-    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
-    "name": "xaman-app",
-    "repo_url": "https://github.com/XRPL-Labs/Xaman-App"
-  },
-  "missing_evidence_fact_ids": [],
-  "model_cid": "bafkreicugppxuacf5kxjsor7lqhwa3y44rrbsetiid2e65utlwgyablr5e",
-  "model_id": "xaman-app-security-model-ir-baseline",
-  "properties": [
+  "artifact_cid": "sha256:f6f80c83f4feb5d9c42183c548a97825c19fbd0b348af54619de73a13025cbce",
+  "blockers": [
     {
-      "apalache_command": [
+      "code": "APALACHE_EXECUTABLE_MISSING",
+      "message": "apalache-mc/apalache executable is not available on PATH",
+      "missing": [
         "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.FetchSafety",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
-        "xaman-security:assumption:payload-client-integrity-and-revalidation"
-      ],
-      "category": "fetch",
-      "claim_ids": [
-        "xaman-security:claim:payload-integrity-before-review-and-signing"
-      ],
-      "classification": "BLOCKED",
-      "description": "Fetched remote payloads must be marked fetched and digest-verified before any review transition can consume them.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest"
-      ],
-      "id": "xaman-tla:property:fetch-verifies-payload-before-review",
-      "modeled": true,
-      "operator": "FetchSafety",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "Fetch",
-        "FetchWrongNetwork"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.ReviewRequiresVerifiedFetch",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:deployed-network-and-node-config-equivalence",
-        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
-        "xaman-security:assumption:network-binding-is-client-enforced",
-        "xaman-security:assumption:payload-client-integrity-and-revalidation"
-      ],
-      "category": "review",
-      "claim_ids": [
-        "xaman-security:claim:network-binding-prevents-cross-network-signing",
-        "xaman-security:claim:payload-integrity-before-review-and-signing"
-      ],
-      "classification": "BLOCKED",
-      "description": "The review UI is reachable only after verified fetch and network preflight binding.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:review-preflight-binds-forced-network-and-signer",
-        "xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control"
-      ],
-      "id": "xaman-tla:property:review-requires-verified-network-bound-fetch",
-      "modeled": true,
-      "operator": "ReviewRequiresVerifiedFetch",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "Review"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.ApprovalRequiresReview",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
-        "xaman-security:assumption:payload-client-integrity-and-revalidation"
-      ],
-      "category": "approval",
-      "claim_ids": [
-        "xaman-security:claim:payload-integrity-before-review-and-signing"
-      ],
-      "classification": "BLOCKED",
-      "description": "Approval cannot precede the displayed transaction review state.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control"
-      ],
-      "id": "xaman-tla:property:approval-requires-review",
-      "modeled": true,
-      "operator": "ApprovalRequiresReview",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "Approve"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.RevalidationPrecedesSigning",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:client-replay-guards-before-submit",
-        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
-        "xaman-security:assumption:payload-client-integrity-and-revalidation"
-      ],
-      "category": "revalidation",
-      "claim_ids": [
-        "xaman-security:claim:payload-integrity-before-review-and-signing",
-        "xaman-security:claim:payload-replay-prevention-is-single-use"
-      ],
-      "classification": "BLOCKED",
-      "description": "Remote payload approval must revalidate immediately before the signing boundary.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing"
-      ],
-      "id": "xaman-tla:property:revalidation-precedes-signing",
-      "modeled": true,
-      "operator": "RevalidationPrecedesSigning",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "Revalidate",
-        "Sign"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.SigningRequiresFreshNetworkBoundPayload",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:authentication-overlay-gates-vault-signing",
-        "xaman-security:assumption:biometric-native-binding",
-        "xaman-security:assumption:deployed-network-and-node-config-equivalence",
-        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity",
-        "xaman-security:assumption:native-vault-cryptographic-confidentiality",
-        "xaman-security:assumption:network-binding-is-client-enforced",
-        "xaman-security:assumption:passcode-kdf-and-secret-protection",
-        "xaman-security:assumption:payload-client-integrity-and-revalidation",
-        "xaman-security:assumption:software-account-private-key-storage-path",
-        "xaman-security:assumption:third-party-signing-correctness"
-      ],
-      "category": "signing",
-      "claim_ids": [
-        "xaman-security:claim:authentication-gates-vault-and-signing",
-        "xaman-security:claim:network-binding-prevents-cross-network-signing",
-        "xaman-security:claim:payload-integrity-before-review-and-signing"
-      ],
-      "classification": "BLOCKED",
-      "description": "Signing requires revalidated, unexpired, network-bound payload state and consumes the payload UUID locally.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:approval-enters-vault-signing-boundary",
-        "xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing"
-      ],
-      "id": "xaman-tla:property:signing-requires-fresh-network-bound-payload",
-      "modeled": true,
-      "operator": "SigningRequiresFreshNetworkBoundPayload",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "Sign"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.RejectionIsTerminalAndUnsigned",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:backend-payload-api-single-use-and-authorization"
-      ],
-      "category": "rejection",
-      "claim_ids": [
-        "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution"
-      ],
-      "classification": "BLOCKED",
-      "description": "Rejected payloads terminate without a signature or ledger broadcast.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:rejection-patches-backend-for-user-or-app-decline"
-      ],
-      "id": "xaman-tla:property:rejection-is-terminal-and-unsigned",
-      "modeled": true,
-      "operator": "RejectionIsTerminalAndUnsigned",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "Reject"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.ExpirationBlocksSigningAndBroadcast",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:client-replay-guards-before-submit"
-      ],
-      "category": "expiration",
-      "claim_ids": [
-        "xaman-security:claim:payload-replay-prevention-is-single-use"
-      ],
-      "classification": "BLOCKED",
-      "description": "Expired or already-resolved payloads terminate before signing and broadcast.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads"
-      ],
-      "id": "xaman-tla:property:expiration-blocks-signing-and-broadcast",
-      "modeled": true,
-      "operator": "ExpirationBlocksSigningAndBroadcast",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "Expire"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.ReplayIsBlocked",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-        "xaman-security:assumption:client-replay-guards-before-submit"
-      ],
-      "category": "replay",
-      "claim_ids": [
-        "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-        "xaman-security:claim:payload-replay-prevention-is-single-use"
-      ],
-      "classification": "BLOCKED",
-      "description": "A consumed UUID can only move to the replay-blocked state, not to a second signing path.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:ledger-submit-has-local-single-submit-and-abort-guards"
-      ],
-      "id": "xaman-tla:property:replay-attempt-is-blocked",
-      "modeled": true,
-      "operator": "ReplayIsBlocked",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "ReplayAttempt"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.NetworkBindingSafety",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:deployed-network-and-node-config-equivalence",
-        "xaman-security:assumption:network-binding-is-client-enforced"
-      ],
-      "category": "network_binding",
-      "claim_ids": [
-        "xaman-security:claim:network-binding-prevents-cross-network-signing"
-      ],
-      "classification": "BLOCKED",
-      "description": "Review, signing, and broadcast cannot occur on a payload whose forced network mismatches the active app network.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:review-preflight-binds-forced-network-and-signer",
-        "xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing"
-      ],
-      "id": "xaman-tla:property:network-binding-before-review-sign-and-broadcast",
-      "modeled": true,
-      "operator": "NetworkBindingSafety",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "NetworkMismatchBlock",
-        "Review",
-        "Sign",
-        "Broadcast"
-      ]
-    },
-    {
-      "apalache_command": [
-        "apalache-mc",
-        "check",
-        "--init=XamanSigning.Init",
-        "--next=XamanSigning.Next",
-        "--inv=XamanSigning.TypeOK",
-        "--inv=XamanSigning.BroadcastAfterSignedPatch",
-        "XamanSigning.tla"
-      ],
-      "assumption_ids": [
-        "xaman-security:assumption:backend-payload-api-single-use-and-authorization",
-        "xaman-security:assumption:external-multisign-coordination",
-        "xaman-security:assumption:trustset-and-signerlist-client-validation",
-        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus",
-        "xaman-security:assumption:xrpl-transaction-field-semantics"
-      ],
-      "category": "broadcast",
-      "claim_ids": [
-        "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
-        "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent"
-      ],
-      "classification": "BLOCKED",
-      "description": "Ledger broadcast is reachable only after the signed payload patch and submit-request branch.",
-      "evidence_fact_ids": [
-        "xaman-payload-lifecycle:fact:signed-payload-is-patched-before-optional-ledger-broadcast",
-        "xaman-payload-lifecycle:fact:broadcast-only-when-submit-true-non-pseudo-and-not-multisign",
-        "xaman-payload-lifecycle:fact:dispatch-result-is-patched-after-ledger-submit"
-      ],
-      "id": "xaman-tla:property:broadcast-after-signed-patch",
-      "modeled": true,
-      "operator": "BroadcastAfterSignedPatch",
-      "solver_blocker": {
-        "kind": "missing_solver",
-        "message": "Apalache executable was not available when this workflow report was generated; temporal checks are solver-blocked and must not be accepted as proved.",
-        "required_action": "Install Apalache and rerun the XamanSigning.tla checks before promoting any property to PROVED.",
-        "solver": "apalache"
-      },
-      "solver_status": "BLOCKED",
-      "transition_actions": [
-        "PatchSigned",
-        "PatchSignedNoSubmit",
-        "Broadcast",
-        "DispatchPatch"
+        "apalache"
       ]
     }
   ],
-  "schema_version": "xaman-tla-workflow-report/v1",
-  "summary": {
-    "apalache_available": false,
-    "blocked_property_count": 10,
-    "checked_property_count": 0,
-    "missing_evidence_count": 0,
-    "modeled_property_count": 10,
-    "property_count": 10,
-    "release_ready": false
+  "corpus": "xaman-app",
+  "covered_claim_ids": [
+    "xaman-claim:software-custody-requires-vault-authentication",
+    "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+    "xaman-claim:payload-integrity-is-digest-checked-and-revalidated",
+    "xaman-claim:network-binding-prevents-wrong-network-signing"
+  ],
+  "generated_at": "2026-07-10T07:11:49Z",
+  "install_plan": {
+    "commands": [
+      "cs install apalache",
+      "nix profile install nixpkgs#apalache",
+      "docker pull ghcr.io/apalache-mc/apalache:latest"
+    ],
+    "policy": "After installing Apalache, rerun the model check and update this report with exact version and result evidence."
   },
+  "model_cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
+  "overall_status": "blocked_optional_lane",
+  "production_release_blocked_by_tla_lane": true,
+  "schema_version": "xaman-tla-apalache-report/v1",
+  "security_decision": "BLOCK_TLA_APALACHE_MISSING_SOLVER",
   "task_id": "PORTAL-CXTP-071",
-  "tla_module": {
-    "artifact_cid": "bafkreib24i6kyuaa4cm2ktjwontavh5ez7p2e3dvuvdqggbd6oditdst5u",
-    "line_count": 313,
-    "module_name": "XamanSigning",
+  "tla_model": {
+    "invariants": [
+      "NoSignWithoutDigest",
+      "NoSignWithoutAuthentication",
+      "NoSignWithoutVault",
+      "NoSignWithoutNetworkBinding",
+      "NoBroadcastWithoutSignature",
+      "NoBroadcastAfterReject",
+      "SigningGateInvariant"
+    ],
+    "module": "XamanSigning",
     "path": "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla",
-    "required_operators": [
-      "Init",
-      "Fetch",
-      "FetchWrongNetwork",
-      "Review",
-      "Approve",
-      "Revalidate",
-      "Sign",
-      "Reject",
-      "Expire",
-      "ReplayAttempt",
-      "NetworkMismatchBlock",
-      "PatchSigned",
-      "PatchSignedNoSubmit",
-      "Broadcast",
-      "DispatchPatch",
-      "Next",
-      "Spec",
-      "TypeOK",
-      "FetchSafety",
-      "ReviewRequiresVerifiedFetch",
-      "ApprovalRequiresReview",
-      "RevalidationPrecedesSigning",
-      "SigningRequiresFreshNetworkBoundPayload",
-      "RejectionIsTerminalAndUnsigned",
-      "ExpirationBlocksSigningAndBroadcast",
-      "ReplayIsBlocked",
-      "NetworkBindingSafety",
-      "BroadcastAfterSignedPatch"
-    ],
-    "transition_categories": [
-      "fetch",
-      "review",
-      "approval",
-      "revalidation",
-      "signing",
-      "rejection",
-      "expiration",
-      "replay",
-      "network_binding",
-      "broadcast"
-    ]
-  },
-  "workflow_model": {
-    "approval_path": [
-      "referenced_remote",
-      "fetched_verified",
-      "review_preflight",
-      "review_displayed",
-      "approved_revalidated",
-      "signed",
-      "patched_signed",
-      "submitted",
-      "dispatch_patched",
-      "result_displayed"
-    ],
-    "non_broadcast_path": [
-      "referenced_remote",
-      "fetched_verified",
-      "review_preflight",
-      "review_displayed",
-      "approved_revalidated",
-      "signed",
-      "patched_signed",
-      "result_displayed"
-    ],
-    "rejection_path": [
-      "referenced_remote",
-      "fetched_verified",
-      "review_preflight",
-      "review_displayed",
-      "declined"
-    ],
-    "source_state_machine_id": "state_machine:xaman_payload_signing",
-    "states": [
-      "created_local",
-      "referenced_remote",
-      "fetched_verified",
-      "review_preflight",
-      "review_displayed",
-      "declined",
-      "approved_revalidated",
-      "signed",
-      "patched_signed",
-      "submitted",
-      "dispatch_patched",
-      "result_displayed",
-      "expired_or_resolved_blocked",
-      "aborted"
-    ],
-    "terminal_states": [
-      "declined",
-      "result_displayed",
-      "expired_or_resolved_blocked",
-      "aborted"
-    ],
-    "tla_terminal_states": [
-      "Rejected",
-      "Expired",
-      "ReplayBlocked",
-      "NetworkMismatchBlocked",
-      "ResultDisplayed"
-    ]
+    "sha256": "sha256:045a2f11c9b1f28b34848d19428a5de73a21294fbc0efa71ee60b133bb154b40",
+    "spec": "Spec"
   }
 }
