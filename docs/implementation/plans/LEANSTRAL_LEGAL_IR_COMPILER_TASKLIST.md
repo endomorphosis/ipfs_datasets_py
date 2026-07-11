@@ -168,7 +168,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-010 Aggregate verified audits into bounded compiler rule-gap reports
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: synthesis
