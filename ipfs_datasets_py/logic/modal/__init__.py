@@ -61,6 +61,16 @@ from .synthesis import (
     synthesis_hints_from_autoencoder_introspection,
     synthesis_hints_from_autoencoder_introspections,
 )
+from .introspection_export import (
+    INTROSPECTION_EXPORT_CONFIG_VERSION,
+    INTROSPECTION_EXPORT_SCHEMA_VERSION,
+    IntrospectionPacketExportConfig,
+    LegalIRDisagreementPacket,
+    export_autoencoder_disagreement_packet,
+    export_introspection_packet,
+    export_prioritized_disagreement_packets,
+    packet_to_json,
+)
 
 __all__ = [
     "DecodedModalPhrase",
@@ -69,7 +79,11 @@ __all__ = [
     "DeterministicModalCompiler",
     "DeterministicModalLogicCodec",
     "FrameLogicPatchValidation",
+    "INTROSPECTION_EXPORT_CONFIG_VERSION",
+    "INTROSPECTION_EXPORT_SCHEMA_VERSION",
+    "IntrospectionPacketExportConfig",
     "LegalModalAutoencoderLoop",
+    "LegalIRDisagreementPacket",
     "LegalIRLeanTask",
     "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
     "CompilerChangeSpec",
@@ -92,6 +106,9 @@ __all__ = [
     "decode_modal_ir_document",
     "decode_modal_ir_text",
     "decoded_modal_phrase_slot_text_map",
+    "export_autoencoder_disagreement_packet",
+    "export_introspection_packet",
+    "export_prioritized_disagreement_packets",
     "flogic_ontology_to_dict",
     "flogic_triples_to_graph_data",
     "flogic_triples_to_ontology",
@@ -99,6 +116,7 @@ __all__ = [
     "import_modal_ir_to_graph_engine",
     "modal_formula_to_text",
     "modal_text_token_similarity",
+    "packet_to_json",
     "modal_ir_to_flogic_triples",
     "modal_ir_to_neo4j_graph_data",
     "synthesis_hints_from_autoencoder_introspection",
