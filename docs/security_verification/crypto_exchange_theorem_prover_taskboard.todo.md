@@ -1108,7 +1108,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-144 Refresh the pinned Xaman public-source and Testnet assessment baseline
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: source
