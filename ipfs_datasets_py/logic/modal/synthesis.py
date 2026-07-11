@@ -586,38 +586,92 @@ def synthesis_hints_from_leanstral_rule_gaps(
         if not action or not target_component:
             continue
         validation_set = dict(gap_data.get("validation_set") or {})
-        support = list(gap_data.get("supporting_evidence") or [])
-        conflicts = list(gap_data.get("conflicting_evidence") or [])
+        support = _mapping_items(gap_data.get("supporting_evidence") or [])
+        conflicts = _mapping_items(gap_data.get("conflicting_evidence") or [])
         surface = dict(target_surface)
+        gap_id = str(gap_data.get("gap_id") or "").strip()
+        normalized_rule_key = str(gap_data.get("normalized_rule_key") or "").strip()
+        proof_obligation_ids = _dedupe_string_values(
+            [
+                *[
+                    value
+                    for evidence in support
+                    for value in list(evidence.get("proof_obligation_ids") or [])
+                ],
+                *list(validation_set.get("proof_obligation_ids") or []),
+            ]
+        )
+        theorem_templates = _dedupe_string_values(
+            surface.get("theorem_templates")
+            or validation_set.get("formal_validity_checks")
+            or ()
+        )
+        allowed_paths = _dedupe_string_values(
+            surface.get("allowed_paths")
+            or validation_set.get("allowed_paths")
+            or ()
+        )
+        target_metrics = _dedupe_string_values(
+            surface.get("target_metrics")
+            or validation_set.get("held_out_compiler_ir_metrics")
+            or ()
+        )
+        counterexamples = _rule_gap_counterexamples(
+            support,
+            conflicts,
+            validation_set=validation_set,
+        )
+        evidence_ids = _dedupe_string_values(
+            evidence.get("evidence_id") for evidence in support
+        )
+        supporting_verification_outcomes = _dedupe_string_values(
+            evidence.get("verification_outcome") for evidence in support
+        )
+        conflicting_evidence_ids = _dedupe_string_values(
+            evidence.get("evidence_id") for evidence in conflicts
+        )
+        proof_ids = _dedupe_string_values([*proof_obligation_ids, *theorem_templates])
+        leanstral_verified = bool(support) and all(
+            str(evidence.get("verification_outcome") or "").strip() == "accepted"
+            for evidence in support
+        )
+        dedupe_key = _leanstral_rule_gap_dedup_key(
+            gap_id=gap_id,
+            normalized_rule_key=normalized_rule_key,
+            target_component=target_component,
+            action=action,
+        )
         evidence = {
-            "gap_id": gap_data.get("gap_id", ""),
-            "missing_semantic_rule": dict(gap_data.get("missing_semantic_rule") or {}),
-            "normalized_rule_key": gap_data.get("normalized_rule_key", ""),
-            "supporting_evidence_count": len(support),
+            "allowed_paths": allowed_paths,
+            "counterexamples": counterexamples,
             "conflicting_evidence_count": len(conflicts),
+            "conflicting_evidence_ids": conflicting_evidence_ids,
+            "dedupe_key": dedupe_key,
+            "evidence_ids": evidence_ids,
+            "gap_id": gap_id,
+            "leanstral_dedup_key": dedupe_key,
+            "leanstral_report_only": False,
+            "leanstral_source": "verified_rule_gap_report",
+            "leanstral_verified": leanstral_verified,
+            "missing_semantic_rule": dict(gap_data.get("missing_semantic_rule") or {}),
+            "normalized_rule_key": normalized_rule_key,
+            "proof_ids": proof_ids,
+            "proof_obligation_ids": proof_obligation_ids,
+            "spec_id": gap_id or normalized_rule_key,
+            "spec_ids": _dedupe_string_values([gap_id, normalized_rule_key]),
+            "supporting_evidence_count": len(support),
+            "supporting_evidence_ids": evidence_ids,
             "supporting_examples": _rule_gap_examples(support),
+            "supporting_verification_outcomes": supporting_verification_outcomes,
             "validation_set": validation_set,
-            "allowed_paths": list(
-                surface.get("allowed_paths")
-                or validation_set.get("allowed_paths")
-                or ()
-            ),
             "target_file_lane": surface.get("target_file_lane")
             or validation_set.get("target_file_lane")
             or _target_file_lane(target_component, action),
-            "target_metrics": list(
-                surface.get("target_metrics")
-                or validation_set.get("held_out_compiler_ir_metrics")
-                or ()
-            ),
-            "theorem_templates": list(
-                surface.get("theorem_templates")
-                or validation_set.get("formal_validity_checks")
-                or ()
-            ),
+            "target_metrics": target_metrics,
+            "theorem_templates": theorem_templates,
         }
         hint = _hint(
-            str(gap_data.get("gap_id", "")),
+            gap_id,
             action=action,
             target_component=target_component,
             rationale=str(gap_data.get("title") or "Verified Leanstral rule gap."),
@@ -667,6 +721,77 @@ def _rule_gap_examples(
             if isinstance(example, Mapping):
                 examples.append(dict(example))
     return examples[:8]
+
+
+def _mapping_items(value: Any) -> List[Dict[str, Any]]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        return []
+    items: List[Dict[str, Any]] = []
+    for item in value:
+        if hasattr(item, "to_dict"):
+            item = item.to_dict()
+        if isinstance(item, Mapping):
+            items.append(dict(item))
+    return items
+
+
+def _dedupe_string_values(values: Iterable[Any]) -> List[str]:
+    seen: set[str] = set()
+    result: List[str] = []
+    for value in values:
+        text = str(value or "").strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
+def _leanstral_rule_gap_dedup_key(
+    *,
+    gap_id: str,
+    normalized_rule_key: str,
+    target_component: str,
+    action: str,
+) -> str:
+    payload = {
+        "action": action,
+        "gap_id": gap_id,
+        "normalized_rule_key": normalized_rule_key,
+        "target_component": target_component,
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:20]
+    return f"leanstral-rule-gap:{digest}"
+
+
+def _rule_gap_counterexamples(
+    supporting: Sequence[Mapping[str, Any]],
+    conflicting: Sequence[Mapping[str, Any]],
+    *,
+    validation_set: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    examples: List[Dict[str, Any]] = []
+    for example in validation_set.get("regression_examples", []) or []:
+        if isinstance(example, Mapping):
+            examples.append({"role": "regression", **dict(example)})
+    for example in _rule_gap_examples(supporting):
+        examples.append({"role": "supporting", **dict(example)})
+    for example in _rule_gap_examples(conflicting):
+        examples.append({"role": "conflicting", **dict(example)})
+
+    deduped: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for example in examples:
+        key = json.dumps(example, ensure_ascii=True, sort_keys=True, default=str)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(example)
+        if len(deduped) >= 8:
+            break
+    return deduped
 
 
 def _logic_view_hint(
@@ -1029,4 +1154,6 @@ __all__ = [
     "route_autoencoder_residual",
     "synthesis_hints_from_autoencoder_introspection",
     "synthesis_hints_from_autoencoder_introspections",
+    "synthesis_hints_from_leanstral_rule_gap_report",
+    "synthesis_hints_from_leanstral_rule_gaps",
 ]
