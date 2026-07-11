@@ -140,7 +140,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-008 Add structured Leanstral audit requests, responses, and content-addressed caching
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: proof
