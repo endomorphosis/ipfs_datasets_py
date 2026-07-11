@@ -1141,7 +1141,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-147 Run a reconciled multi-solver public-source Testnet proof portfolio
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: solver
