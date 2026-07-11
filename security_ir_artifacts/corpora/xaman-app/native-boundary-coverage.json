@@ -1,0 +1,446 @@
+{
+  "artifact_cid": "sha256:0f568f32a9eeecf84cee05276a50e1ff03331a6cbeb39c0adfd8b69e7e939514",
+  "boundaries": [
+    {
+      "boundary_id": "xaman-native-boundary:backend-payload-service",
+      "category": "backend_behavior",
+      "evidence_location_count": 2,
+      "evidence_locations": [
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "b8598ef26b675be2bb4cbe37842d649c5aaf2aa7",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 198,
+          "line_start": 173,
+          "notes": "Client fetch checks backend fields but backend enforcement is outside this source file.",
+          "path": "src/common/libs/payload/object.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "27f10108e4fce53eda24a6ce9b96dda59dd484f6a2e57643d1cfd695505ae581",
+          "size_bytes": 13295,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/common/libs/payload/object.ts#L173-L198"
+        },
+        {
+          "kind": "source_model_artifact",
+          "line_end": 1,
+          "line_start": 1,
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "review_status": "reviewed",
+          "sha256": "sha256:f3079afc2be3ff21c81381922d1b4e29023b472624dd795a4d426443869d3d0c"
+        }
+      ],
+      "production_release_approval": false,
+      "public_source_support": "not_modeled_no_backend_source_or_formal_contract",
+      "required_evidence_to_model": [
+        "Xaman backend payload API source or formal API contract",
+        "server-side tests for payload UUID authorization, resolved_at atomicity, expiration enforcement, and duplicate PATCH rejection",
+        "runtime traces showing backend response behavior under replay races"
+      ],
+      "source_claim_ids": [
+        "xaman-payload-lifecycle:gap:backend-payload-creation-auth-and-single-use"
+      ],
+      "status": "NOT_MODELED",
+      "summary": "Client fetch, validate, patch, and reject calls are modeled, but backend authorization, atomic single-use, replay races, and PATCH conflict behavior are not proved.",
+      "title": "Backend payload service behavior"
+    },
+    {
+      "boundary_id": "xaman-native-boundary:biometric-policy",
+      "category": "biometrics",
+      "evidence_location_count": 2,
+      "evidence_locations": [
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "321746c8fdf48ad302a223068282b5fd79d31dba",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 439,
+          "line_start": 382,
+          "path": "src/services/AuthenticationService.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "21982a9ed44a69422cbb1066a2bfd6b56de1683ee012e80ae0d3c139910535c5",
+          "size_bytes": 14970,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/services/AuthenticationService.ts#L382-L439"
+        },
+        {
+          "kind": "source_model_artifact",
+          "line_end": 1,
+          "line_start": 1,
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "review_status": "reviewed",
+          "sha256": "sha256:76442f29dda8ca8d073e334fdf3289e29a82977d79223337685fead148beaec4"
+        }
+      ],
+      "production_release_approval": false,
+      "public_source_support": "not_modeled_no_native_biometric_source",
+      "required_evidence_to_model": [
+        "native biometric module implementation",
+        "platform biometric policy configuration",
+        "device enrollment-change tests"
+      ],
+      "source_claim_ids": [
+        "xaman-wallet-auth:gap:biometric-native-security-properties"
+      ],
+      "status": "NOT_MODELED",
+      "summary": "The app models calls into the biometric helper, not platform prompt policy, enrollment binding, secure-enclave behavior, or spoof resistance.",
+      "title": "Native biometric policy"
+    },
+    {
+      "boundary_id": "xaman-native-boundary:native-firebase-packaging",
+      "category": "native_packaging",
+      "evidence_location_count": 1,
+      "evidence_locations": [
+        {
+          "kind": "native_boundary_report",
+          "line_end": 395,
+          "line_start": 395,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/native-firebase-boundary-report.json",
+          "review_status": "reviewed",
+          "sha256": "sha256:d5726635e104d8b3bf63d8d737d7f5fd2c8032ac25fefed8443a2c42be374731"
+        }
+      ],
+      "production_release_approval": false,
+      "public_source_support": "runtime_apk_boundary_report_blocks_full_disable_claim",
+      "required_evidence_to_model": [
+        "APK with native Firebase manifest components removed",
+        "startup trace proving no native Firebase initialization"
+      ],
+      "source_claim_ids": [],
+      "status": "BLOCKED_NATIVE_PACKAGING_PRESENT",
+      "summary": "JavaScript Firebase calls may be stubbed, but the inspected APK or startup evidence still shows native Firebase initialization and/or Crashlytics artifacts; the Testnet device trial cannot be labeled fully Firebase-disabled.",
+      "title": "Native Firebase packaging"
+    },
+    {
+      "boundary_id": "xaman-native-boundary:native-keystore-behavior",
+      "category": "native_keystore_behavior",
+      "evidence_location_count": 2,
+      "evidence_locations": [
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "fc11d50b7be87eaa12117b781288242b26245e8a",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 14,
+          "line_start": 8,
+          "path": "src/common/libs/vault.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "size_bytes": 6302,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/common/libs/vault.ts#L8-L14"
+        },
+        {
+          "kind": "source_model_artifact",
+          "line_end": 1,
+          "line_start": 1,
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "review_status": "reviewed",
+          "sha256": "sha256:76442f29dda8ca8d073e334fdf3289e29a82977d79223337685fead148beaec4"
+        }
+      ],
+      "production_release_approval": false,
+      "public_source_support": "not_modeled_no_keystore_keychain_source",
+      "required_evidence_to_model": [
+        "android native VaultManagerModule implementation",
+        "ios native VaultManagerModule implementation",
+        "keychain/keystore accessibility and hardware-backed settings",
+        "cipher and migration tests"
+      ],
+      "source_claim_ids": [
+        "xaman-wallet-auth:gap:native-vault-manager-cryptographic-implementation"
+      ],
+      "status": "NOT_MODELED",
+      "summary": "Native keychain and Android keystore storage class, accessibility, hardware-backed settings, and migration behavior are not modeled.",
+      "title": "Native keystore/keychain behavior"
+    },
+    {
+      "boundary_id": "xaman-native-boundary:qr-camera-and-os-link-dispatch",
+      "category": "native_intake",
+      "evidence_location_count": 3,
+      "evidence_locations": [
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "e036d0dfc175661b8886a1887e2d61be47a88473",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 660,
+          "line_start": 558,
+          "notes": "ScanModal dispatches decoded types but decoder/native correctness is external.",
+          "path": "src/screens/Modal/Scan/ScanModal.tsx",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "3b3f28345569ddbc3bee9a80653f989d07265035110455eeb1f27899830e96d3",
+          "size_bytes": 31286,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/screens/Modal/Scan/ScanModal.tsx#L558-L660"
+        },
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "e2a9eb5c79ff40e943e4d27136ee461b68ff776f",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 518,
+          "line_start": 513,
+          "notes": "LinkingService receives OS URLs but OS delivery semantics are not modeled.",
+          "path": "src/services/LinkingService.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "ef00978f1323c55dc26bacc71c619dbcc122f105850444422e6d5894b58f39b0",
+          "size_bytes": 18959,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/services/LinkingService.ts#L513-L518"
+        },
+        {
+          "kind": "source_model_artifact",
+          "line_end": 1,
+          "line_start": 1,
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "review_status": "reviewed",
+          "sha256": "sha256:f3079afc2be3ff21c81381922d1b4e29023b472624dd795a4d426443869d3d0c"
+        }
+      ],
+      "production_release_approval": false,
+      "public_source_support": "not_modeled_native_intake_integrity_gap",
+      "required_evidence_to_model": [
+        "Audited xumm-string-decode implementation and test vectors",
+        "Native camera and OS linking behavior evidence",
+        "End-to-end QR/deep-link runtime traces for malformed, spoofed, and boundary inputs"
+      ],
+      "source_claim_ids": [
+        "xaman-payload-lifecycle:gap:string-decoder-and-native-intake-integrity"
+      ],
+      "status": "NOT_MODELED",
+      "summary": "Client dispatch after decoder output is modeled, but native camera parsing, OS link dispatch, clipboard, and decoder correctness are not proved.",
+      "title": "QR camera and OS deep-link dispatch"
+    },
+    {
+      "boundary_id": "xaman-native-boundary:third-party-signing-and-tangem",
+      "category": "signing_cryptography",
+      "evidence_location_count": 3,
+      "evidence_locations": [
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "dad7aa688ab7eeccbb811a90b60a9b1e38f6fe43",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 365,
+          "line_start": 334,
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "size_bytes": 18940,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/screens/Overlay/Vault/VaultOverlay.tsx#L334-L365"
+        },
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "dad7aa688ab7eeccbb811a90b60a9b1e38f6fe43",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 440,
+          "line_start": 390,
+          "path": "src/screens/Overlay/Vault/VaultOverlay.tsx",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "b251b70283799fc3644cf00613afb5a60dad6cdf8753e8f904bf2d0d9cc78569",
+          "size_bytes": 18940,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/screens/Overlay/Vault/VaultOverlay.tsx#L390-L440"
+        },
+        {
+          "kind": "source_model_artifact",
+          "line_end": 1,
+          "line_start": 1,
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "review_status": "reviewed",
+          "sha256": "sha256:76442f29dda8ca8d073e334fdf3289e29a82977d79223337685fead148beaec4"
+        }
+      ],
+      "production_release_approval": false,
+      "public_source_support": "not_modeled_third_party_signing_correctness_gap",
+      "required_evidence_to_model": [
+        "xrpl-accountlib source and version pin review",
+        "Tangem SDK source/version and firmware attestation model",
+        "XRPL transaction signing test vectors"
+      ],
+      "source_claim_ids": [
+        "xaman-wallet-auth:gap:third-party-signing-library-correctness"
+      ],
+      "status": "NOT_MODELED",
+      "summary": "Source facts record when signing libraries are called, but do not prove accountlib signing correctness, Tangem firmware behavior, or SDK attestation.",
+      "title": "Third-party signing libraries and Tangem SDK"
+    },
+    {
+      "boundary_id": "xaman-native-boundary:vault-cryptography",
+      "category": "vault_cryptography",
+      "evidence_location_count": 2,
+      "evidence_locations": [
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "fc11d50b7be87eaa12117b781288242b26245e8a",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 14,
+          "line_start": 8,
+          "path": "src/common/libs/vault.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "size_bytes": 6302,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/common/libs/vault.ts#L8-L14"
+        },
+        {
+          "kind": "source_model_artifact",
+          "line_end": 1,
+          "line_start": 1,
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "review_status": "reviewed",
+          "sha256": "sha256:76442f29dda8ca8d073e334fdf3289e29a82977d79223337685fead148beaec4"
+        }
+      ],
+      "production_release_approval": false,
+      "public_source_support": "not_modeled_no_native_crypto_source",
+      "required_evidence_to_model": [
+        "android native VaultManagerModule implementation",
+        "ios native VaultManagerModule implementation",
+        "keychain/keystore accessibility and hardware-backed settings",
+        "cipher and migration tests"
+      ],
+      "source_claim_ids": [
+        "xaman-wallet-auth:gap:native-vault-manager-cryptographic-implementation"
+      ],
+      "status": "NOT_MODELED",
+      "summary": "Cipher mode, hardware backing, key migration, keychain/keystore accessibility, and memory handling are not proved by the TypeScript facade.",
+      "title": "Vault cryptography"
+    },
+    {
+      "boundary_id": "xaman-native-boundary:vault-manager-js-bridge",
+      "category": "native_bridge",
+      "evidence_location_count": 5,
+      "evidence_locations": [
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "fc11d50b7be87eaa12117b781288242b26245e8a",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 14,
+          "line_start": 8,
+          "path": "src/common/libs/vault.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "size_bytes": 6302,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/common/libs/vault.ts#L8-L14"
+        },
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "fc11d50b7be87eaa12117b781288242b26245e8a",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 59,
+          "line_start": 31,
+          "path": "src/common/libs/vault.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "size_bytes": 6302,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/common/libs/vault.ts#L31-L59"
+        },
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "fc11d50b7be87eaa12117b781288242b26245e8a",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 191,
+          "line_start": 142,
+          "path": "src/common/libs/vault.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "size_bytes": 6302,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/common/libs/vault.ts#L142-L191"
+        },
+        {
+          "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "git_blob_sha1": "fc11d50b7be87eaa12117b781288242b26245e8a",
+          "git_mode": "100644",
+          "kind": "source_code",
+          "line_end": 14,
+          "line_start": 8,
+          "path": "src/common/libs/vault.ts",
+          "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+          "review_status": "reviewed",
+          "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8",
+          "size_bytes": 6302,
+          "url": "https://github.com/XRPL-Labs/Xaman-App/blob/942f43876265a7af44f233288ad2b1d00841d5fa/src/common/libs/vault.ts#L8-L14"
+        },
+        {
+          "kind": "source_model_artifact",
+          "line_end": 1,
+          "line_start": 1,
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "review_status": "reviewed",
+          "sha256": "sha256:76442f29dda8ca8d073e334fdf3289e29a82977d79223337685fead148beaec4"
+        }
+      ],
+      "production_release_approval": false,
+      "public_source_support": "js_bridge_source_supported_native_impl_not_modeled",
+      "required_evidence_to_model": [
+        "android native VaultManagerModule implementation",
+        "ios native VaultManagerModule implementation",
+        "keychain/keystore accessibility and hardware-backed settings",
+        "cipher and migration tests"
+      ],
+      "source_claim_ids": [
+        "xaman-wallet-auth:fact:vault-access-is-through-native-module",
+        "xaman-wallet-auth:gap:native-vault-manager-cryptographic-implementation"
+      ],
+      "status": "MODELED_JS_BRIDGE_NATIVE_IMPLEMENTATION_NOT_MODELED",
+      "summary": "The TypeScript vault facade calls VaultManagerModule, but the Android/iOS native implementation is outside the public source model.",
+      "title": "VaultManagerModule JavaScript bridge"
+    }
+  ],
+  "corpus": "xaman-app",
+  "coverage_policy": {
+    "backend_behavior_requires_backend_source_or_formal_contract": true,
+    "native_crypto_requires_native_source_or_vendor_evidence": true,
+    "not_modeled_blocks_production_release": true
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "inputs": [
+    {
+      "artifact_cid": "sha256:dce3d70731109f4ad0d9b3e9dd75116ad73bdd9b09fb683dec75eed01aac9345",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/native-firebase-boundary-report.json",
+      "role": "native_firebase_boundary_report",
+      "schema_version": "xaman-native-firebase-boundary/v1",
+      "sha256": "sha256:d5726635e104d8b3bf63d8d737d7f5fd2c8032ac25fefed8443a2c42be374731",
+      "task_id": "PORTAL-CXTP-126"
+    },
+    {
+      "artifact_cid": "sha256:5e6b544850f56b69bd0fb91f2a93febb9a0d76baccc8957a20e777e9ac22e5be",
+      "path": "security_ir_artifacts/corpora/xaman-app/public-source-refresh.json",
+      "role": "public_source_refresh",
+      "schema_version": "xaman-public-source-refresh/v1",
+      "sha256": "sha256:70e6bd30da887888af7a4fefc400a707f9fd81934ddbf3a59e80acc44f0fdfe5",
+      "task_id": "PORTAL-CXTP-144"
+    }
+  ],
+  "overall_status": "blocked",
+  "production_release_blocked": true,
+  "required_not_modeled_boundaries": {
+    "backend_behavior": "NOT_MODELED",
+    "biometrics": "NOT_MODELED",
+    "native_keystore_behavior": "NOT_MODELED",
+    "vault_cryptography": "NOT_MODELED"
+  },
+  "schema_version": "xaman-native-boundary-coverage/v1",
+  "security_decision": "BLOCK_NATIVE_BACKEND_BOUNDARY_CLAIMS_WITHOUT_SOURCE_SUPPORTED_EVIDENCE",
+  "source_claim_map_path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
+  "summary": {
+    "blocked_native_packaging_count": 1,
+    "boundary_count": 8,
+    "modeled_js_bridge_count": 1,
+    "not_modeled_count": 6,
+    "production_release_approval_count": 0,
+    "required_not_modeled_count": 4
+  },
+  "task_id": "PORTAL-CXTP-145"
+}

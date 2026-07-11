@@ -1,0 +1,1006 @@
+{
+  "artifact_cid": "bafkreidhzfswgtj5igs3dpraq526z7bonrdnv37f6vb7yinrclcp3a6xxe",
+  "claim_evidence": [
+    {
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "network_binding"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreibtwsmmhc4asroia4srnmv67jvxcvje7ome5jcqrit4out2uyvdme",
+        "evidence_ref_count": 3,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 123,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-network-selection-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "dad91f0a1e0b02bf698ef557e460d6f188ef3a4f4e3eb856fb7a84cfe2fbaba0"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 223,
+            "line_start": 205,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "high",
+      "status": "MODELED_WITH_TESTNET_SCOPE"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "account_provenance"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreicuv4uteepzr665xdmdtqhnczb7yybf2l7vqttc3fyblc2s7uwquu",
+        "evidence_ref_count": 3,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 75,
+            "line_start": 2,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-device-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "79c0f0ab40d8ef2658254a0c784e2153d67eb72b452ef660264818cd437171ca"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 38,
+            "line_start": 24,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "MODELED_WITH_TESTNET_SCOPE"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "review_auth"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreif663jqb2m6qwm7hqi2gt6hc7vwdmyltcpidw4r5cjxsopqw3vka4",
+        "evidence_ref_count": 3,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 108,
+            "line_start": 27,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 351,
+            "line_start": 224,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "MODELED_WITH_TESTNET_SCOPE"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "signing"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreihmpsqszotmdfwqhx5zgsjk7zrw7mpbo7tb46vzmkozkq5a6tfltu",
+        "evidence_ref_count": 3,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 108,
+            "line_start": 27,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 351,
+            "line_start": 224,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "submission"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreidiwpmw2gq72edeowy3g6zwvph7k6zkpfuo2rdojqv4rsk4styciq",
+        "evidence_ref_count": 3,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 108,
+            "line_start": 27,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 351,
+            "line_start": 224,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "payload"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreieiwsk4zwwgqybjvw5emnd4glxoxi4jegltxggd5nixrkicei4cxe",
+        "evidence_ref_count": 3,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 108,
+            "line_start": 27,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 351,
+            "line_start": 224,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "refusal"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreidvuaqae5dhvgfpupmfj3tuxaqven3vxu7iycrmppx3eukz7jnw3q",
+        "evidence_ref_count": 2,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 17,
+            "line_start": 2,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "replay"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreidcbeb2t7b4tryonl2uhwom2mcmk3sxamlecbdyaqfkmkpvradvqe",
+        "evidence_ref_count": 2,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 108,
+            "line_start": 27,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "expiry"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreicuiak6tewvc2g6i3vaj2qg5esjextunbov3x2rjq72smt2vi3vsi",
+        "evidence_ref_count": 2,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 17,
+            "line_start": 2,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "cancellation"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreigqwtat5jpvi35k6ayluc4h7xuvoqanw3dnqjht2e73k3kdmicegu",
+        "evidence_ref_count": 2,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 17,
+            "line_start": 2,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "broadcast"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreiejgseqs4qubnauceqwz23zifomwgqvgyzyqqqbg3l24h7v46xf6u",
+        "evidence_ref_count": 2,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 198,
+            "line_start": 181,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+      "claim_version": "1.0",
+      "coverage_tags": [
+        "audit_boundaries"
+      ],
+      "evidence_digest_set": {
+        "all_human_reviewed": true,
+        "digest_set_cid": "bafkreie2urqguj37avxo4wxtwgamw2emxb6gbdvurgivonsvwsj27abduq",
+        "evidence_ref_count": 3,
+        "refs": [
+          {
+            "kind": "manual_review",
+            "line_end": 108,
+            "line_start": 27,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+            "review_status": "human_reviewed",
+            "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 351,
+            "line_start": 224,
+            "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+            "review_status": "human_reviewed",
+            "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+          },
+          {
+            "kind": "manual_review",
+            "line_end": 359,
+            "line_start": 1,
+            "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+            "review_status": "human_reviewed",
+            "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+          }
+        ],
+        "reviewer_statuses": [
+          "human_reviewed"
+        ]
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "severity": "blocking",
+      "status": "MODELED_WITH_TESTNET_SCOPE"
+    }
+  ],
+  "corpus": "xaman-app",
+  "dependency_artifacts": [
+    {
+      "artifact_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "exists": true,
+      "kind": "security_model_ir",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+      "schema_version": "security-model-ir/xaman/v1",
+      "task_id": null
+    },
+    {
+      "artifact_cid": "sha256:8c8a821eb8970a0b0635714a23eda7a9420711de7875010a909df2de0a99ec52",
+      "exists": true,
+      "kind": "assumptions",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json",
+      "schema_version": "xaman-testnet-assumptions/v1",
+      "task_id": "PORTAL-CXTP-131"
+    },
+    {
+      "artifact_cid": "sha256:b286dfd3d62fff34aa33f5f49ddcda332476a025c6dc099d2e792af3fc4d636d",
+      "exists": true,
+      "kind": "claim_trace_map",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json",
+      "schema_version": "xaman-testnet-claim-trace-map/v1",
+      "task_id": "PORTAL-CXTP-131"
+    },
+    {
+      "artifact_cid": "bafkreiei6bzr7ziihvbe4ueyfzkxspj7xijuoufqkn5jbqj2i7pzbdlkj4",
+      "exists": true,
+      "kind": "source_manifest",
+      "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+      "schema_version": "xaman-corpus-source-manifest/v1",
+      "task_id": null
+    },
+    {
+      "artifact_cid": "sha256:230b50365fb5810c3ceadb96bb96dae191a653f14e188c968c4df0879c093dd9",
+      "exists": true,
+      "kind": "source_claim_map",
+      "path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
+      "schema_version": "xaman-source-claim-map/v1",
+      "task_id": "PORTAL-CXTP-145"
+    },
+    {
+      "artifact_cid": "sha256:3afcf320e04094a6b39cca1952c9c8a68351cc0c4b1f5ed26880a017d0914beb",
+      "exists": true,
+      "kind": "xrpl_transaction_coverage",
+      "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json",
+      "schema_version": "xaman-xrpl-transaction-coverage/v1",
+      "task_id": "PORTAL-CXTP-146"
+    },
+    {
+      "artifact_cid": "bafkreiaasfo7mccpw6ezrxcek2dum62jws4p4d46vpgh5zvjopnz5bmt7q",
+      "exists": true,
+      "kind": "disproof_vectors",
+      "model_cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
+      "path": "security_ir_artifacts/corpora/xaman-app/disproof-vectors.json",
+      "schema_version": "xaman-disproof-vectors/v1",
+      "task_id": "PORTAL-CXTP-070"
+    }
+  ],
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "lane_inventory": [
+    {
+      "artifact_cid": "bafkreigkihwu5t2cbwaz5vmdxruo7hu5mmsg6pea3e53y7rqmw2cwbbdxy",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+      "available": true,
+      "command_digest": "sha256:175199ee81f8ddf57ece6bc3ac8fe1abeabc3c1577eff5ef88d6fd5da511899a",
+      "commands": [
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_network-binding-is-testnet-only.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_network-binding-is-testnet-only.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_account-provenance-is-fresh-testnet-only.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_account-provenance-is-fresh-testnet-only.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_review-auth-sequence-observed.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_review-auth-sequence-observed.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_signing-decision-is-observed-but-crypto-output-is-not-modeled.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_signing-decision-is-observed-but-crypto-output-is-not-modeled.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_submission-ui-attempt-and-result-are-observed.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_submission-ui-attempt-and-result-are-observed.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_payload-intake-is-categorical-only.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_payload-intake-is-categorical-only.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_refusal-path-is-not-modeled.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_refusal-path-is-not-modeled.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_replay-controls-are-not-modeled.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_replay-controls-are-not-modeled.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_expiry-path-is-not-modeled.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_expiry-path-is-not-modeled.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_cancellation-path-is-not-modeled.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_cancellation-path-is-not-modeled.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_broadcast-and-ledger-finality-are-not-modeled.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_broadcast-and-ledger-finality-are-not-modeled.smt2"
+        ],
+        [
+          "python:z3-solver",
+          "--timeout-ms=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_audit-redaction-boundary-is-preserved.smt2"
+        ],
+        [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--tlimit-per=5000",
+          "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_audit-redaction-boundary-is-preserved.smt2"
+        ]
+      ],
+      "executable_versions_recorded": true,
+      "fail_closed_result_for_unavailable_or_disagreeing_lane": "INCOMPLETE",
+      "lane_id": "z3_cvc5_differential",
+      "required": true,
+      "reviewer_status": "human_reviewed",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES",
+      "solvers": [
+        {
+          "executable": "python:z3-solver",
+          "executable_sha256": null,
+          "name": "z3",
+          "version": "4.16.0.0"
+        },
+        {
+          "executable": "/home/barberb/.local/bin/cvc5",
+          "executable_sha256": "sha256:328fc7fe349226fa5ce868166b87e80aa6074abd5e30d94e4b785485d4fd9397",
+          "name": "cvc5",
+          "version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]"
+        }
+      ],
+      "status": "non_secure_with_counterexamples",
+      "theory": "SMT-LIB QF_LIA blocking-acceptance satisfiability",
+      "timeout_seconds": 5.0
+    },
+    {
+      "artifact_cid": "bafkreicsmp6lcpcfn4c54aqstv5ssgheiungvgfcyefpvteh6x376aw4qi",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json",
+      "available": true,
+      "command_digest": "sha256:1c2c1aab5b33245cb3996d82d2fe736bc46ba7fa349e33dd02df15292ddf58b9",
+      "commands": [
+        [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=TypeOK",
+          "XamanTestnetPayload.tla"
+        ],
+        [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=AtMostOneSubmittedResolution",
+          "XamanTestnetPayload.tla"
+        ],
+        [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=ResolvedPayloadIsTerminal",
+          "XamanTestnetPayload.tla"
+        ],
+        [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=TerminalStateHasResolutionKind",
+          "XamanTestnetPayload.tla"
+        ],
+        [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=NoReviewWithoutTestnetBinding",
+          "XamanTestnetPayload.tla"
+        ],
+        [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=ResolutionRequiresPriorReview",
+          "XamanTestnetPayload.tla"
+        ],
+        [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=DuplicateClientCannotResolveAfterTerminal",
+          "XamanTestnetPayload.tla"
+        ]
+      ],
+      "executable_versions_recorded": true,
+      "fail_closed_result_for_unavailable_or_disagreeing_lane": "REQUIRED_UNAVAILABLE",
+      "lane_id": "apalache_state",
+      "required": true,
+      "reviewer_status": "human_reviewed",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+      "solvers": [
+        {
+          "executable": "/home/barberb/.local/bin/apalache-mc",
+          "executable_sha256": "sha256:f34aba5af361cb7c1d3afbc03817ebfac623247f4841b907d1c5eb1e0f589db3",
+          "name": "apalache",
+          "version": "0.58.3"
+        }
+      ],
+      "status": "checked_with_unresolved_threat_model_gaps",
+      "theory": "TLA+ finite Testnet payload-resolution state checks",
+      "timeout_seconds": 120
+    },
+    {
+      "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+      "available": true,
+      "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
+      "commands": [
+        [
+          "/home/barberb/.local/bin/tamarin-prover",
+          "--prove",
+          "security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy"
+        ]
+      ],
+      "executable_versions_recorded": true,
+      "fail_closed_result_for_unavailable_or_disagreeing_lane": "NOT_RUN",
+      "lane_id": "tamarin_protocol",
+      "required": true,
+      "reviewer_status": "human_reviewed",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+      "solvers": [
+        {
+          "executable": "/home/barberb/.local/bin/tamarin-prover",
+          "executable_sha256": "sha256:03c4e139a1385be0f76904274e4c9d4809dc9fc0baa595eeaa46766c15a16dd9",
+          "name": "tamarin-prover",
+          "version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
+        }
+      ],
+      "status": "not-run",
+      "theory": "Tamarin remote-payload protocol lemmas",
+      "timeout_seconds": 120
+    },
+    {
+      "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+      "available": true,
+      "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
+      "commands": [
+        [
+          "/home/barberb/.local/bin/proverif",
+          "security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv"
+        ]
+      ],
+      "executable_versions_recorded": false,
+      "fail_closed_result_for_unavailable_or_disagreeing_lane": "REQUIRED_MISSING_ARTIFACT",
+      "lane_id": "proverif_protocol",
+      "required": true,
+      "reviewer_status": "human_reviewed",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+      "solvers": [
+        {
+          "executable": "/home/barberb/.local/bin/proverif",
+          "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
+          "name": "proverif",
+          "version": null
+        }
+      ],
+      "status": "not-run",
+      "theory": "ProVerif remote-payload protocol queries",
+      "timeout_seconds": 120
+    },
+    {
+      "artifact_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
+      "available": true,
+      "command_digest": "sha256:b428d084bf966879f015e71a764dbe7120b2521f639733e1a99707b42956c27f",
+      "commands": [
+        [
+          "/home/barberb/.elan/bin/lean",
+          "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean"
+        ]
+      ],
+      "executable_versions_recorded": true,
+      "fail_closed_result_for_unavailable_or_disagreeing_lane": "INCOMPLETE",
+      "lane_id": "lean_kernel",
+      "required": true,
+      "reviewer_status": "human_reviewed",
+      "security_decision": "LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY",
+      "solvers": [
+        {
+          "executable": "/home/barberb/.elan/bin/lean",
+          "executable_sha256": "sha256:df25409ddea390271687e3296ffae15d2efbae339b58f78f7aca023917ee354f",
+          "name": "lean",
+          "version": ""
+        }
+      ],
+      "status": "checked_with_scope_limits",
+      "theory": "Lean 4 kernel checks for formalized Boolean invariants",
+      "timeout_seconds": 90
+    },
+    {
+      "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
+      "available": true,
+      "command_digest": "sha256:ed6ca69b4c4af4b99575648a84e00ddbaad9f321294d7ccdece7ef0aa10be484",
+      "commands": [
+        [
+          "/home/barberb/.local/bin/coqc",
+          "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v"
+        ]
+      ],
+      "executable_versions_recorded": true,
+      "fail_closed_result_for_unavailable_or_disagreeing_lane": "REQUIRED_MISSING_ARTIFACT",
+      "lane_id": "rocq_kernel",
+      "required": true,
+      "reviewer_status": "not_recorded",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+      "solvers": [
+        {
+          "executable": "/home/barberb/.local/bin/coqc",
+          "executable_sha256": "sha256:b61226cedcef88da2861829e8e88e01d8810936d3b7860ec5595d410a033cd40",
+          "name": "rocq/coq",
+          "version": "The Rocq Prover, version 9.1.1"
+        }
+      ],
+      "status": "coverage_gap_required_independent_kernel_missing",
+      "theory": "Rocq/Coq independent kernel coverage decision",
+      "timeout_seconds": 90
+    },
+    {
+      "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+      "available": true,
+      "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
+      "commands": [
+        [
+          "/home/barberb/miniforge3/bin/python",
+          "scripts/ops/security_verification/run_xaman_testnet_fuzzing.py"
+        ]
+      ],
+      "executable_versions_recorded": true,
+      "fail_closed_result_for_unavailable_or_disagreeing_lane": "INCOMPLETE",
+      "lane_id": "fuzz_consumption",
+      "required": true,
+      "reviewer_status": "not_recorded",
+      "security_decision": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+      "solvers": [
+        {
+          "executable": "/home/barberb/miniforge3/bin/python",
+          "executable_sha256": "sha256:61aa9d13666a7df3fb6fdfca2b084f348489873c8b9b4c14692388bbe95bcbcc",
+          "name": "deterministic-structural-mutator",
+          "version": "python-json-structural-oracle"
+        }
+      ],
+      "status": "passed",
+      "theory": "bounded deterministic Testnet fuzz-result consumption",
+      "timeout_seconds": 300
+    }
+  ],
+  "model": {
+    "artifact_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "claim_count": 12,
+    "claim_ids": [
+      "xaman-testnet-claim:network-binding-is-testnet-only",
+      "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "xaman-testnet-claim:review-auth-sequence-observed",
+      "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+    ],
+    "frozen_model_required_for_every_claim": true,
+    "model_id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "policy": {
+    "only_applicable_lanes_are_consumed_for_claim_results": true,
+    "proof_promotion_rule": "A claim may be promoted only when every applicable required lane is accepted, no applicable lane reports counterevidence, all evidence refs are reviewed, and the frozen model CID and evidence digest set match this manifest.",
+    "raw_sensitive_material_recorded": false,
+    "required_reviewer_status": "human_reviewed",
+    "solver_theory_fit_required": true,
+    "unavailable_disagreeing_timeout_or_missing_required_lane_fails_closed": true
+  },
+  "schema_version": "xaman-testnet-solver-portfolio-manifest/v1",
+  "scope": {
+    "claim_selection": "all frozen Testnet blocking/high claims in security-model-ir",
+    "network": "XRPL Testnet",
+    "network_id": 1,
+    "production_security_result": false,
+    "public_source_only": true
+  },
+  "source": {
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "public_source_only": true,
+    "repository": "XRPL-Labs/Xaman-App",
+    "source_claim_map_artifact_cid": "sha256:230b50365fb5810c3ceadb96bb96dae191a653f14e188c968c4df0879c093dd9",
+    "source_claim_map_path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
+    "source_manifest_artifact_cid": "bafkreiei6bzr7ziihvbe4ueyfzkxspj7xijuoufqkn5jbqj2i7pzbdlkj4"
+  },
+  "task_id": "PORTAL-CXTP-147"
+}
