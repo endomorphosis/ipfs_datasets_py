@@ -18,6 +18,7 @@ from ipfs_datasets_py.logic.modal.synthesis import (
     ModalProgramSynthesisHint,
     residual_signature_for_hint,
     synthesis_hints_from_autoencoder_introspections,
+    synthesis_hints_from_leanstral_rule_gap_report,
 )
 from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_scope_for_component
 
@@ -326,6 +327,42 @@ class ModalOptimizerPolicy:
 
     def is_trainable(self, todo: "ModalTodo") -> bool:
         return _todo_optimizer_role(todo) == self.autoencoder_role
+
+
+@dataclass(frozen=True)
+class LeanstralTodoProjectionConfig:
+    """Bounds for projecting verified Leanstral rule gaps into the TODO queue."""
+
+    max_todos_per_cycle: int = 5
+    max_todos_per_scope: int = 2
+    require_verified_support: bool = True
+
+
+@dataclass(frozen=True)
+class LeanstralTodoProjectionResult:
+    """Summary of one Leanstral report projection into the existing queue."""
+
+    seeded_todo_ids: List[str]
+    deduped_count: int
+    budget_skipped_count: int
+    report_only_count: int
+    scope_counts: Dict[str, int]
+    report_only_audits: List[Dict[str, Any]]
+
+    @property
+    def seeded_count(self) -> int:
+        return len(self.seeded_todo_ids)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "budget_skipped_count": int(self.budget_skipped_count),
+            "deduped_count": int(self.deduped_count),
+            "report_only_audits": [dict(item) for item in self.report_only_audits],
+            "report_only_count": int(self.report_only_count),
+            "scope_counts": dict(sorted(self.scope_counts.items())),
+            "seeded_count": self.seeded_count,
+            "seeded_todo_ids": list(self.seeded_todo_ids),
+        }
 
 
 @dataclass(frozen=True)
@@ -1471,6 +1508,133 @@ class ModalProgramSynthesisTodoGenerator:
             todos.append(todo)
         return sorted(todos, key=lambda todo: (-todo.priority, todo.todo_id))
 
+    def generate_from_leanstral_rule_gap_report(
+        self,
+        report: Any,
+        *,
+        require_verified_support: bool = True,
+    ) -> List[ModalTodo]:
+        """Create existing queue TODOs from verified Leanstral rule-gap reports."""
+        if not self.policy.enable_program_synthesis_todos:
+            return []
+        hints = synthesis_hints_from_leanstral_rule_gap_report(report)
+        todos: List[ModalTodo] = []
+        for hint in hints:
+            evidence = dict(hint.evidence or {})
+            if require_verified_support and not bool(evidence.get("leanstral_verified")):
+                continue
+            if evidence.get("leanstral_report_only"):
+                continue
+            action = str(hint.action or "").strip()
+            target_component = str(hint.target_component or "").strip()
+            if not action or not target_component:
+                continue
+            program_synthesis_scope = _program_synthesis_scope(
+                action=action,
+                target_component=target_component,
+            )
+            sample_ids = _leanstral_hint_sample_ids(evidence)
+            citations = _leanstral_hint_citations(evidence)
+            dedupe_signature = str(
+                evidence.get("leanstral_dedup_key")
+                or evidence.get("dedupe_key")
+                or ""
+            ).strip()
+            if not dedupe_signature:
+                dedupe_signature = _program_todo_signature(
+                    action=action,
+                    target_component=target_component,
+                    sample_ids=sample_ids or [str(evidence.get("gap_id") or hint.hint_id)],
+                )
+            target_metrics = _unique_preserve_order(
+                [
+                    *[
+                        str(metric)
+                        for metric in _as_list(evidence.get("target_metrics"))
+                    ],
+                    *_program_synthesis_target_metrics(
+                        action=action,
+                        target_component=target_component,
+                    ),
+                ]
+            )
+            validation_commands = _program_synthesis_validation_commands(
+                action=action,
+                target_component=target_component,
+                program_synthesis_scope=program_synthesis_scope,
+            )
+            compact_evidence = _compact_hint_evidence(hint)
+            metadata = {
+                **self.policy.metadata_for(
+                    action=action,
+                    loss_name="leanstral_verified_rule_gap",
+                ),
+                "allowed_paths": _unique_preserve_order(
+                    str(path) for path in _as_list(evidence.get("allowed_paths"))
+                ),
+                "counterexamples": _leanstral_counterexamples(evidence),
+                "dedupe_signature": dedupe_signature,
+                "evidence_ids": _unique_preserve_order(
+                    str(value) for value in _as_list(evidence.get("evidence_ids"))
+                ),
+                "hint_evidence": [compact_evidence],
+                "hint_ids": [hint.hint_id],
+                "leanstral_dedup_key": dedupe_signature,
+                "leanstral_gap_id": str(evidence.get("gap_id") or ""),
+                "leanstral_projection": True,
+                "leanstral_report_only": False,
+                "leanstral_verified": bool(evidence.get("leanstral_verified")),
+                "normalized_rule_key": str(evidence.get("normalized_rule_key") or ""),
+                "program_synthesis_scope": program_synthesis_scope,
+                "proof_ids": _unique_preserve_order(
+                    str(value) for value in _as_list(evidence.get("proof_ids"))
+                ),
+                "proof_obligation_ids": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("proof_obligation_ids"))
+                ),
+                "semantic_bundle_key": dedupe_signature,
+                "source": "leanstral_rule_gap_projection_v1",
+                "spec_id": str(evidence.get("spec_id") or evidence.get("gap_id") or ""),
+                "spec_ids": _unique_preserve_order(
+                    str(value) for value in _as_list(evidence.get("spec_ids"))
+                ),
+                "support_count": int(evidence.get("supporting_evidence_count") or 0),
+                "supporting_verification_outcomes": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(
+                        evidence.get("supporting_verification_outcomes")
+                    )
+                ),
+                "target_component": target_component,
+                "target_metric_goals": _leanstral_target_metric_goals(target_metrics),
+                "target_metrics": target_metrics,
+                "theorem_templates": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("theorem_templates"))
+                ),
+                "validation_commands": validation_commands,
+                "validation_set": dict(evidence.get("validation_set") or {}),
+            }
+            if evidence.get("conflicting_evidence_ids"):
+                metadata["conflicting_evidence_ids"] = _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("conflicting_evidence_ids"))
+                )
+            todo = ModalTodo(
+                todo_id=_leanstral_program_todo_id(dedupe_signature),
+                action=action,
+                objective=_leanstral_objective(hint, evidence),
+                sample_ids=sample_ids,
+                citations=citations,
+                loss_name="leanstral_verified_rule_gap",
+                loss_value=round(max(0.0, float(hint.priority)), 12),
+                priority=round((max(0.0, float(hint.priority)) * 100.0) + 50.0, 6),
+                metadata=metadata,
+            )
+            todos.append(todo)
+        return sorted(todos, key=lambda todo: (-todo.priority, todo.todo_id))
+
 
 class ModalTodoQueue:
     """Small JSONL-friendly queue that can claim multiple TODOs at once."""
@@ -2313,6 +2477,41 @@ class ModalTodoSupervisor:
         todos = self._bounded_new_todos(todos, track_program_deduped=True)
         self.queue.add_many(todos)
         return todos
+
+    def seed_program_synthesis_from_leanstral_rule_gap_report(
+        self,
+        report: Any,
+        *,
+        config: Optional[LeanstralTodoProjectionConfig] = None,
+    ) -> LeanstralTodoProjectionResult:
+        """Project verified Leanstral rule gaps into the existing Codex TODO queue."""
+        cfg = config or LeanstralTodoProjectionConfig()
+        self.last_program_synthesis_deduped_count = 0
+        report_only_audits = _leanstral_report_only_audits(report)
+        candidates = self.program_synthesis_generator.generate_from_leanstral_rule_gap_report(
+            report,
+            require_verified_support=bool(cfg.require_verified_support),
+        )
+        selected, budget_skipped_count, scope_counts = _apply_leanstral_projection_budgets(
+            candidates,
+            max_todos_per_cycle=max(0, int(cfg.max_todos_per_cycle)),
+            max_todos_per_scope=max(0, int(cfg.max_todos_per_scope)),
+        )
+        selected = self._bounded_new_todos(selected, track_program_deduped=True)
+        added = self.queue.add_many(selected)
+        deduped_count = int(self.last_program_synthesis_deduped_count) + max(
+            0,
+            len(selected) - added,
+        )
+        self.last_program_synthesis_deduped_count = deduped_count
+        return LeanstralTodoProjectionResult(
+            seeded_todo_ids=[todo.todo_id for todo in selected if self.queue.get(todo.todo_id)],
+            deduped_count=deduped_count,
+            budget_skipped_count=budget_skipped_count,
+            report_only_count=len(report_only_audits),
+            scope_counts=scope_counts,
+            report_only_audits=report_only_audits,
+        )
 
     def seed_failed_validation_rescue_todos(
         self,
@@ -3521,6 +3720,168 @@ def _program_todo_id(
     return f"program-{digest}"
 
 
+def _leanstral_program_todo_id(dedupe_signature: str) -> str:
+    digest = hashlib.sha256(
+        str(dedupe_signature or "").encode("utf-8")
+    ).hexdigest()[:16]
+    return f"program-leanstral-{digest}"
+
+
+def _leanstral_hint_sample_ids(evidence: Mapping[str, Any]) -> List[str]:
+    sample_ids: List[str] = []
+    for example in _leanstral_counterexamples(evidence):
+        for key in ("sample_id", "document_id", "source_id"):
+            value = str(example.get(key) or "").strip()
+            if value:
+                sample_ids.append(value)
+                break
+    if not sample_ids:
+        sample_id = str(evidence.get("sample_id") or evidence.get("gap_id") or "").strip()
+        if sample_id:
+            sample_ids.append(sample_id)
+    return _unique_preserve_order(sample_ids)[:16]
+
+
+def _leanstral_hint_citations(evidence: Mapping[str, Any]) -> List[str]:
+    citations: List[str] = []
+    for example in _leanstral_counterexamples(evidence):
+        for key in ("citation", "source_citation", "span_citation"):
+            value = str(example.get(key) or "").strip()
+            if value:
+                citations.append(value)
+                break
+    return _unique_preserve_order(citations)[:16]
+
+
+def _leanstral_counterexamples(evidence: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    examples: List[Dict[str, Any]] = []
+    for key in ("counterexamples", "supporting_examples"):
+        for item in _as_list(evidence.get(key)):
+            if isinstance(item, Mapping):
+                examples.append(dict(item))
+    validation_set = evidence.get("validation_set")
+    if isinstance(validation_set, Mapping):
+        for item in _as_list(validation_set.get("regression_examples")):
+            if isinstance(item, Mapping):
+                examples.append({"role": "regression", **dict(item)})
+    deduped: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for example in examples:
+        key = json.dumps(example, ensure_ascii=True, sort_keys=True, default=str)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(example)
+        if len(deduped) >= 8:
+            break
+    return deduped
+
+
+def _leanstral_target_metric_goals(metrics: Sequence[str]) -> List[Dict[str, Any]]:
+    goals: List[Dict[str, Any]] = []
+    for metric in _unique_preserve_order(str(metric) for metric in metrics if str(metric)):
+        goals.append(
+            {
+                "metric": metric,
+                "target_delta": _metric_target_delta(metric),
+                "target_value": _metric_target_value(metric),
+                "direction": _metric_improvement_direction(metric),
+            }
+        )
+    return goals
+
+
+def _metric_improvement_direction(metric: str) -> str:
+    normalized = str(metric or "").lower()
+    if "cosine_similarity" in normalized or normalized.endswith("_recall"):
+        return "increase"
+    if normalized.endswith("_precision") or normalized.endswith("_coverage"):
+        return "increase"
+    return "decrease"
+
+
+def _metric_target_delta(metric: str) -> float:
+    return 0.01 if _metric_improvement_direction(metric) == "increase" else -0.01
+
+
+def _metric_target_value(metric: str) -> float:
+    return 1.0 if _metric_improvement_direction(metric) == "increase" else 0.0
+
+
+def _leanstral_objective(
+    hint: ModalProgramSynthesisHint,
+    evidence: Mapping[str, Any],
+) -> str:
+    rule = evidence.get("missing_semantic_rule")
+    rule_text = ""
+    if isinstance(rule, Mapping) and rule:
+        rule_text = json.dumps(rule, ensure_ascii=True, sort_keys=True)
+    elif rule:
+        rule_text = str(rule)
+    objective = str(hint.rationale or "Implement verified Leanstral rule gap.").strip()
+    if rule_text:
+        objective = f"{objective} Missing semantic rule: {rule_text}"
+    return objective[:1200]
+
+
+def _apply_leanstral_projection_budgets(
+    todos: Sequence[ModalTodo],
+    *,
+    max_todos_per_cycle: int,
+    max_todos_per_scope: int,
+) -> tuple[List[ModalTodo], int, Dict[str, int]]:
+    if max_todos_per_cycle < 1 or max_todos_per_scope < 1:
+        return [], len(todos), {}
+    selected: List[ModalTodo] = []
+    scope_counts: Dict[str, int] = {}
+    skipped = 0
+    for todo in sorted(todos, key=_todo_priority_key):
+        if len(selected) >= max_todos_per_cycle:
+            skipped += 1
+            continue
+        scope = _program_todo_scope(todo)
+        if scope_counts.get(scope, 0) >= max_todos_per_scope:
+            skipped += 1
+            continue
+        selected.append(todo)
+        scope_counts[scope] = scope_counts.get(scope, 0) + 1
+    return selected, skipped, dict(sorted(scope_counts.items()))
+
+
+def _leanstral_report_only_audits(report: Any) -> List[Dict[str, Any]]:
+    data = report.to_dict() if hasattr(report, "to_dict") else dict(report or {})
+    audits: List[Dict[str, Any]] = []
+    for item in _as_list(data.get("rejected_audits")):
+        if not isinstance(item, Mapping):
+            continue
+        audit = dict(item)
+        audit["report_only_state"] = "unverified_or_rejected"
+        audits.append(audit)
+    for gap in _as_list(data.get("gaps")):
+        if hasattr(gap, "to_dict"):
+            gap = gap.to_dict()
+        if not isinstance(gap, Mapping):
+            continue
+        gap_id = str(gap.get("gap_id") or "")
+        for item in _as_list(gap.get("supporting_evidence")):
+            if not isinstance(item, Mapping):
+                continue
+            if str(item.get("verification_outcome") or "").strip() == "accepted":
+                continue
+            audit = dict(item)
+            audit["gap_id"] = gap_id
+            audit["report_only_state"] = "unverified_support"
+            audits.append(audit)
+        for item in _as_list(gap.get("conflicting_evidence")):
+            if not isinstance(item, Mapping):
+                continue
+            audit = dict(item)
+            audit["gap_id"] = gap_id
+            audit["report_only_state"] = "conflicting_or_unverified"
+            audits.append(audit)
+    return audits[:128]
+
+
 def _failed_validation_rescue_todos(
     todos: Sequence[ModalTodo],
     *,
@@ -4529,9 +4890,17 @@ def _merge_program_todo_evidence(target: ModalTodo, duplicate: ModalTodo) -> Non
     if evidence:
         target.metadata["hint_evidence"] = evidence
     for key, limit in (
+        ("allowed_paths", 16),
+        ("conflicting_evidence_ids", 32),
+        ("evidence_ids", 64),
+        ("proof_ids", 64),
+        ("proof_obligation_ids", 64),
+        ("supporting_verification_outcomes", 16),
         ("target_metrics", 32),
+        ("theorem_templates", 32),
         ("validation_commands", 16),
         ("residual_signatures", 32),
+        ("spec_ids", 32),
     ):
         merged_values = _merge_jsonish_metadata_values(
             target.metadata.get(key, []),
@@ -4548,6 +4917,21 @@ def _merge_program_todo_evidence(target: ModalTodo, duplicate: ModalTodo) -> Non
     )
     if metric_payloads:
         target.metadata["metric_sample_payloads"] = metric_payloads
+    counterexamples = _merge_jsonish_metadata_values(
+        target.metadata.get("counterexamples", []),
+        duplicate.metadata.get("counterexamples", []),
+        limit=16,
+    )
+    if counterexamples:
+        target.metadata["counterexamples"] = counterexamples
+    target_metric_goals = _merge_jsonish_metadata_values(
+        target.metadata.get("target_metric_goals", []),
+        duplicate.metadata.get("target_metric_goals", []),
+        limit=32,
+        identity_key="metric",
+    )
+    if target_metric_goals:
+        target.metadata["target_metric_goals"] = target_metric_goals
     if target.sample_ids:
         target.metadata["support_count"] = max(
             int(target.metadata.get("support_count", 0) or 0),
@@ -4756,27 +5140,43 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
         "priority": hint.priority,
     }
     for key in (
+        "allowed_paths",
         "bridge_failure_name",
         "cosine_loss",
         "cosine_similarity",
+        "counterexamples",
+        "dedupe_key",
+        "evidence_ids",
         "family_margin",
         "frame_features",
+        "gap_id",
         "generic_bridge_priority_backoff",
+        "leanstral_dedup_key",
+        "missing_semantic_rule",
+        "normalized_rule_key",
         "legal_ir_component_gaps",
         "legal_ir_underrepresented_components",
         "pipeline_stage_diagnostics",
         "pipeline_stage_focus",
         "predicted_family",
         "predicted_view",
+        "proof_ids",
+        "proof_obligation_ids",
         "primary_pipeline_stage",
         "reconstruction_loss",
         "sample_id",
         "source_decompiled_text_embedding_cosine_loss",
         "source_decompiled_text_token_loss",
+        "spec_id",
+        "spec_ids",
+        "supporting_evidence_ids",
+        "supporting_verification_outcomes",
         "target_file_lane",
         "target_family",
+        "target_metrics",
         "target_probability",
         "target_view",
+        "theorem_templates",
         "top_embedding_features",
         "top_family_features",
     ):
@@ -5066,6 +5466,8 @@ def _metric_value(evaluation: AutoencoderEvaluation, name: str) -> Optional[floa
 
 
 __all__ = [
+    "LeanstralTodoProjectionConfig",
+    "LeanstralTodoProjectionResult",
     "LossSnapshot",
     "ModalLossTodoGenerator",
     "ModalOptimizerPolicy",

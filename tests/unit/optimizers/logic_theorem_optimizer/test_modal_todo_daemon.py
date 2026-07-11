@@ -30,6 +30,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_todo_daemon as daemon
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+    LeanstralTodoProjectionConfig,
     LossSnapshot,
     ModalLossTodoGenerator,
     ModalOptimizerPolicy,
@@ -60,6 +61,103 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     resolve_codex_worktree_repo_root,
     run_tests,
 )
+
+
+def _leanstral_gap(
+    gap_id: str,
+    *,
+    component: str,
+    action: str,
+    priority: float,
+    sample_id: str,
+    citation: str,
+    rule_key: str,
+) -> dict:
+    return {
+        "action": action,
+        "gap_id": gap_id,
+        "missing_semantic_rule": {
+            "kind": rule_key.split(":", 1)[0],
+            "cue": rule_key.split(":", 1)[-1],
+        },
+        "normalized_rule_key": rule_key,
+        "priority": priority,
+        "supporting_evidence": [
+            {
+                "affected_ir_families": ["deontic"],
+                "classification": "missing_semantic_rule",
+                "confidence": priority,
+                "evidence_id": f"evidence-{gap_id}",
+                "examples": [
+                    {
+                        "sample_id": sample_id,
+                        "citation": citation,
+                        "source_span_hash": f"span-{gap_id}",
+                        "counterexample": f"counterexample for {gap_id}",
+                    }
+                ],
+                "proof_obligation_ids": [f"proof-{gap_id}"],
+                "request_id": f"request-{gap_id}",
+                "response_hash": f"response-{gap_id}",
+                "role": "supporting",
+                "verification_outcome": "accepted",
+                "verified_by": ["local-lean"],
+            }
+        ],
+        "conflicting_evidence": [
+            {
+                "evidence_id": f"conflict-{gap_id}",
+                "examples": [
+                    {
+                        "sample_id": f"conflict-{sample_id}",
+                        "citation": citation,
+                        "counterexample": f"conflict for {gap_id}",
+                    }
+                ],
+                "proof_obligation_ids": [f"conflict-proof-{gap_id}"],
+                "request_id": f"conflict-request-{gap_id}",
+                "response_hash": f"conflict-response-{gap_id}",
+                "role": "conflicting",
+                "verification_outcome": "rejected",
+            }
+        ],
+        "target_component": component,
+        "target_surface": {
+            "action": action,
+            "allowed_paths": [f"ipfs_datasets_py/logic/modal/{'compiler' if component == 'modal.compiler' else 'decompiler'}.py"],
+            "component": component,
+            "target_file_lane": "compiler_parser"
+            if component == "modal.compiler"
+            else "ir_decompiler",
+            "target_metrics": ["modal_ir_formula_recall"]
+            if component == "modal.compiler"
+            else ["reconstruction_loss"],
+            "theorem_templates": ["modal_operator_preserved"]
+            if component == "modal.compiler"
+            else ["decompiler_round_trip"],
+        },
+        "title": f"Verified rule gap {gap_id}",
+        "validation_set": {
+            "allowed_paths": [f"ipfs_datasets_py/logic/modal/{'compiler' if component == 'modal.compiler' else 'decompiler'}.py"],
+            "formal_validity_checks": ["modal_operator_preserved"]
+            if component == "modal.compiler"
+            else ["decompiler_round_trip"],
+            "held_out_compiler_ir_metrics": ["modal_ir_formula_recall"]
+            if component == "modal.compiler"
+            else ["reconstruction_loss"],
+            "proof_obligation_ids": [f"proof-{gap_id}"],
+            "regression_examples": [
+                {
+                    "sample_id": sample_id,
+                    "citation": citation,
+                    "source_span_hash": f"span-{gap_id}",
+                }
+            ],
+            "target_file_lane": "compiler_parser"
+            if component == "modal.compiler"
+            else "ir_decompiler",
+        },
+    }
 
 
 def test_loss_generator_turns_high_losses_into_actionable_todos() -> None:
@@ -508,6 +606,148 @@ def test_queue_add_many_merges_program_synthesis_duplicate_metric_evidence() -> 
         payload["sample_id"]
         for payload in representative.metadata["metric_sample_payloads"]
     ] == ["a", "b"]
+
+
+def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue() -> None:
+    report = {
+        "gaps": [
+            _leanstral_gap(
+                "gap-decompiler-a",
+                component="modal.ir_decompiler",
+                action="refine_typed_ir_or_decompiler_slots",
+                priority=0.91,
+                sample_id="sample-a",
+                citation="5 U.S.C. 552",
+                rule_key="exception_scope:unless",
+            ),
+            _leanstral_gap(
+                "gap-compiler-a",
+                component="modal.compiler",
+                action="add_deterministic_parser_rule",
+                priority=0.83,
+                sample_id="sample-b",
+                citation="18 U.S.C. 1001",
+                rule_key="modal_cue:shall_not",
+            ),
+            _leanstral_gap(
+                "gap-decompiler-b",
+                component="modal.ir_decompiler",
+                action="refine_semantic_decompiler_reconstruction",
+                priority=0.82,
+                sample_id="sample-c",
+                citation="42 U.S.C. 1983",
+                rule_key="deadline:within_days",
+            ),
+        ],
+        "rejected_audits": [
+            {
+                "audit_id": "audit-unverified",
+                "reasons": ["verification_outcome_rejected"],
+                "request_id": "request-unverified",
+            }
+        ],
+    }
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+
+    result = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        report,
+        config=LeanstralTodoProjectionConfig(
+            max_todos_per_cycle=2,
+            max_todos_per_scope=1,
+        ),
+    )
+
+    assert result.seeded_count == 2
+    assert result.budget_skipped_count == 1
+    assert result.scope_counts == {"compiler_parser": 1, "ir_decompiler": 1}
+    assert result.report_only_count == 4
+    pending = supervisor.queue.pending(optimizer_role="program_synthesis")
+    assert len(pending) == 2
+    decompiler = next(
+        todo
+        for todo in pending
+        if todo.metadata["program_synthesis_scope"] == "ir_decompiler"
+    )
+    assert decompiler.metadata["source"] == "leanstral_rule_gap_projection_v1"
+    assert decompiler.metadata["leanstral_projection"] is True
+    assert decompiler.metadata["allowed_paths"] == [
+        "ipfs_datasets_py/logic/modal/decompiler.py"
+    ]
+    assert decompiler.metadata["evidence_ids"] == ["evidence-gap-decompiler-a"]
+    assert decompiler.metadata["spec_ids"] == [
+        "gap-decompiler-a",
+        "exception_scope:unless",
+    ]
+    assert decompiler.metadata["proof_obligation_ids"] == ["proof-gap-decompiler-a"]
+    assert decompiler.metadata["proof_ids"] == [
+        "proof-gap-decompiler-a",
+        "decompiler_round_trip",
+    ]
+    assert decompiler.metadata["counterexamples"][0]["sample_id"] == "sample-a"
+    assert decompiler.metadata["target_metric_goals"][0] == {
+        "direction": "decrease",
+        "metric": "reconstruction_loss",
+        "target_delta": -0.01,
+        "target_value": 0.0,
+    }
+    assert decompiler.metadata["validation_commands"]
+    assert decompiler.metadata["dedupe_signature"].startswith("leanstral-rule-gap:")
+    assert all(
+        item.get("report_only_state")
+        for item in result.report_only_audits
+    )
+
+    repeated = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        report,
+        config=LeanstralTodoProjectionConfig(
+            max_todos_per_cycle=2,
+            max_todos_per_scope=1,
+        ),
+    )
+
+    assert repeated.seeded_count == 0
+    assert repeated.deduped_count == 2
+    assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 2
+
+
+def test_supervisor_keeps_unverified_leanstral_report_in_report_only_state() -> None:
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+    unverified_gap = _leanstral_gap(
+        "gap-unverified",
+        component="modal.ir_decompiler",
+        action="refine_typed_ir_or_decompiler_slots",
+        priority=0.9,
+        sample_id="sample-unverified",
+        citation="5 U.S.C. 706",
+        rule_key="scope:unless",
+    )
+    unverified_gap["supporting_evidence"][0]["verification_outcome"] = "rejected"
+
+    result = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        {
+            "gaps": [unverified_gap],
+            "rejected_audits": [
+                {
+                    "audit_id": "audit-rejected",
+                    "reasons": ["missing_local_proof_confirmation"],
+                    "request_id": "request-rejected",
+                }
+            ],
+        }
+    )
+
+    assert result.seeded_count == 0
+    assert result.report_only_count == 3
+    assert result.report_only_audits[0]["report_only_state"] == "unverified_or_rejected"
+    assert {
+        audit["report_only_state"]
+        for audit in result.report_only_audits
+    } == {
+        "conflicting_or_unverified",
+        "unverified_or_rejected",
+        "unverified_support",
+    }
+    assert supervisor.queue.pending(optimizer_role="program_synthesis") == []
 
 
 def test_queue_semantic_dedupe_rejects_completed_bundle_duplicates() -> None:
