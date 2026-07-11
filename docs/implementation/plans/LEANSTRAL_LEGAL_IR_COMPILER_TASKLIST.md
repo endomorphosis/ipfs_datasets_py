@@ -84,7 +84,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-004 Freeze the introspection metric schema and stratified canary baseline
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: quality
@@ -275,3 +275,16 @@ PYTHONPATH=../ipfs_accelerate_py:. python -m ipfs_accelerate_py.agent_supervisor
 
 Use `--once --no-implement` first to inspect dependency readiness without
 starting an implementation worker.
+
+## PORTAL-016 Resolve 1 preflight-conflicting backlogged worktree merges
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: ops
+- Fingerprint: cc6ea8fa964cffa02a91a118f2fcc26179e41d2c
+- Dedupe key: reconciliation_guardrail:preflight_merge_conflict
+- Depends on:
+- Outputs: /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery, docs/implementation/plans/LEANSTRAL_LEGAL_IR_COMPILER_TASKLIST.md
+- Validation: test -f /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery/2026-07-11-portal-016-reconciliation-cc6ea8fa964c.md
+- Acceptance: Reconciliation guardrail filed this because 1 branch or worktree cleanup candidates are blocked by preflight_merge_conflict. Use evidence and the machine-readable reconciliation plan in /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery/2026-07-11-portal-016-reconciliation-cc6ea8fa964c.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
