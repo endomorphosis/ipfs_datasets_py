@@ -1,0 +1,615 @@
+{
+  "acceptance_summary": {
+    "exact_source_commit_revalidated": true,
+    "known_unmodeled_domain_count": 17,
+    "lockfile_digest_count": 3,
+    "proof_corpus_changed": false,
+    "public_build_digest_count": 12,
+    "repo_url_revalidated": true,
+    "responsible_disclosure_path_present": true,
+    "testnet_only_scope_preserved": true
+  },
+  "artifact_cid": "sha256:5e6b544850f56b69bd0fb91f2a93febb9a0d76baccc8957a20e777e9ac22e5be",
+  "assessment_baseline": {
+    "assessment_path": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json",
+    "assessment_result": "blocked_public_source_assessment",
+    "assurance_packet_decision": "BLOCK_XAMAN_RELEASE_ASSURANCE_PACKET",
+    "assurance_packet_path": "security_ir_artifacts/corpora/xaman-app/assurance-packet.json",
+    "release_approval": false,
+    "security_decision": "BLOCK_PUBLIC_SOURCE_ASSESSMENT_NOT_RELEASE_APPROVAL"
+  },
+  "corpus": "xaman-app",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "input_artifacts": [
+    {
+      "kind": "source_manifest",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+      "schema_version": "xaman-corpus-source-manifest/v1",
+      "security_decision": null,
+      "sha256": "sha256:a269b91c526132771a8c931dfe94ef57a78c0cf2f0acf4c9a439437ce8795ec3",
+      "task_id": null
+    },
+    {
+      "kind": "source_coverage",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+      "schema_version": "xaman-source-coverage/v1",
+      "security_decision": null,
+      "sha256": "sha256:a3e7cc820d831e26e03a77504de7713d85b83e9bc04f94af848b6fc6897da5c2",
+      "task_id": null
+    },
+    {
+      "artifact_cid": "sha256:e6b499f1171052a3a8d7438808aed5f6af5480dbb9b87b9a7337a367b3c20eee",
+      "kind": "assurance_packet",
+      "overall_status": "blocked",
+      "path": "security_ir_artifacts/corpora/xaman-app/assurance-packet.json",
+      "schema_version": "xaman-assurance-packet/v1",
+      "security_decision": "BLOCK_XAMAN_RELEASE_ASSURANCE_PACKET",
+      "sha256": "sha256:ec996614c9756b4c7e3fe4523bbb5f69c341dab60599780b3d87a9ab70f4693f",
+      "task_id": "PORTAL-CXTP-075"
+    },
+    {
+      "artifact_cid": "bafkreidstcp4wwsnzjbb3y2bplhtpkvn5ivpoclq23zn4a4oa57pascamm",
+      "kind": "testnet_assurance_bundle",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/assurance-bundle.json",
+      "schema_version": "xaman-testnet-assurance-bundle/v1",
+      "security_decision": null,
+      "sha256": "sha256:447ea6688e423403ec92e982ee7bbcd463526e0061db38532fea8fd0f92eb3c6",
+      "task_id": "PORTAL-CXTP-139"
+    },
+    {
+      "artifact_cid": "bafkreihqhyoavkcefrlwwdal3qph4wxmyk4ld2wptohltre2luz36dhakq",
+      "kind": "testnet_assurance_verdict",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/assurance-verdict.json",
+      "schema_version": "xaman-testnet-assurance-verdict/v1",
+      "security_decision": null,
+      "sha256": "sha256:45bb4db938fb5af3840cd4d1914dd9cc0eda0c753728b91aec29a4fd8126659d",
+      "task_id": "PORTAL-CXTP-139"
+    },
+    {
+      "artifact_cid": "sha256:30cfd9e40195fb837a646a45f4bce600928a417e7278c6232ed6396f5d52c5c3",
+      "kind": "testnet_device_trial",
+      "overall_status": "executed_with_boundaries",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-device-trial-report.json",
+      "schema_version": "xaman-testnet-device-trial/v1",
+      "security_decision": "TESTNET_DEVICE_TRIAL_EXECUTED_JS_FIREBASE_STUBBED_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "sha256:79c0f0ab40d8ef2658254a0c784e2153d67eb72b452ef660264818cd437171ca",
+      "task_id": "PORTAL-CXTP-121"
+    },
+    {
+      "artifact_cid": "sha256:d69014363ca696757b7673bc8cd22b50a4d5a3628df43500650587d4a6237ee3",
+      "kind": "testnet_transaction_trial",
+      "overall_status": "executed_with_coverage_gaps",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+      "schema_version": "xaman-testnet-transaction-lifecycle-trial/v1",
+      "security_decision": "TESTNET_TRANSACTION_LIFECYCLE_REVIEWED_WITH_COVERAGE_GAPS_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "sha256:8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36",
+      "task_id": "PORTAL-CXTP-130"
+    },
+    {
+      "artifact_cid": "sha256:601c466c62b85221e158007d0667125889fe0b7e2f27818914b40c9131352dbd",
+      "kind": "testnet_network_selection",
+      "overall_status": "verified",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-network-selection-report.json",
+      "schema_version": "xaman-testnet-network-selection/v1",
+      "security_decision": "TESTNET_NETWORK_SELECTION_VERIFIED_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "sha256:dad91f0a1e0b02bf698ef557e460d6f188ef3a4f4e3eb856fb7a84cfe2fbaba0",
+      "task_id": "PORTAL-CXTP-125"
+    },
+    {
+      "artifact_cid": "sha256:ee11d41c8f6c2d6ca2de0d623ece01d08fcb58fda09d051182c4403908238f1d",
+      "kind": "testnet_telemetry",
+      "overall_status": "captured_testnet_events",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-telemetry-report.json",
+      "schema_version": "xaman-firebase-disabled-testnet-telemetry/v1",
+      "security_decision": "TESTNET_FIREBASE_DISABLED_TELEMETRY_CAPTURED_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "sha256:c43c46cf610b1eea65a4319385c510343a3bf9673a702a28909ab0b8c2ce2fb8",
+      "task_id": "PORTAL-CXTP-120"
+    },
+    {
+      "kind": "release_r8_dependency_report",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json",
+      "schema_version": "xaman-release-r8-dependency-report/v1",
+      "security_decision": null,
+      "sha256": "sha256:8f0cded14677f0b297fe00a996113a5e7033c1ebf5c7f29809b7622ead1f7624",
+      "task_id": "PORTAL-CXTP-124"
+    }
+  ],
+  "known_unmodeled_domains": [
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "category": "vault_access",
+      "id": "xaman-wallet-auth:gap:native-vault-manager-cryptographic-implementation",
+      "required_evidence_to_model": [
+        "android native VaultManagerModule implementation",
+        "ios native VaultManagerModule implementation",
+        "keychain/keystore accessibility and hardware-backed settings",
+        "cipher and migration tests"
+      ],
+      "severity": "blocking_for_native_key_custody_claims",
+      "source_model": "wallet_auth",
+      "status": "NOT_MODELED",
+      "summary": "The TypeScript facade proves that VaultManagerModule is called, but this artifact does not model the Android or iOS native implementation, keychain accessibility class, cipher mode, hardware-backed storage, migration behavior, or memory-zeroization guarantees."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "category": "biometric_gate",
+      "id": "xaman-wallet-auth:gap:biometric-native-security-properties",
+      "required_evidence_to_model": [
+        "native biometric module implementation",
+        "platform biometric policy configuration",
+        "device enrollment-change tests"
+      ],
+      "severity": "blocking_for_biometric_strength_claims",
+      "source_model": "wallet_auth",
+      "status": "NOT_MODELED",
+      "summary": "This artifact models calls to the biometric helper and the app's fallback behavior, but not the native biometric prompt policy, biometric enrollment binding, device secure-enclave behavior, or spoof-resistance properties."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "category": "passcode_gate",
+      "id": "xaman-wallet-auth:gap:passcode-hash-kdf-strength",
+      "required_evidence_to_model": [
+        "CoreRepository.hashPasscode implementation",
+        "core settings schema and persistence protection",
+        "KDF parameter review"
+      ],
+      "severity": "blocking_for_offline_passcode_attack_claims",
+      "source_model": "wallet_auth",
+      "status": "NOT_MODELED",
+      "summary": "The reviewed authentication service calls CoreRepository.hashPasscode and compares the result, but this artifact does not model the hash or KDF algorithm, salt handling, parameter strength, or stored-passcode protection."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "category": "signing_precondition",
+      "id": "xaman-wallet-auth:gap:third-party-signing-library-correctness",
+      "required_evidence_to_model": [
+        "xrpl-accountlib source and version pin review",
+        "Tangem SDK source/version and firmware attestation model",
+        "XRPL transaction signing test vectors"
+      ],
+      "severity": "blocking_for_cryptographic_correctness_claims",
+      "source_model": "wallet_auth",
+      "status": "NOT_MODELED",
+      "summary": "This artifact models when Xaman calls xrpl-accountlib and Tangem SDK signing paths, but not the correctness of transaction canonicalization, signature generation, raw signing completion, Tangem firmware, or SDK attestation."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "category": "authentication_overlay",
+      "id": "xaman-wallet-auth:gap:source-coverage-extractor-vault-overlay-root",
+      "required_evidence_to_model": [
+        "extended Xaman source coverage extractor roots for src/screens/Overlay/Vault",
+        "parsed coverage for VaultOverlay and Vault Methods files"
+      ],
+      "severity": "blocking_for_extractor_completeness_claims",
+      "source_model": "wallet_auth",
+      "status": "NOT_MODELED",
+      "summary": "The checked-in source coverage artifact does not classify src/screens/Overlay/Vault/** even though signing authentication methods live there. This wallet-auth artifact reviewed the manifest-pinned files directly, but extractor completeness for those files remains a separate gap."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "category": "account_storage",
+      "id": "xaman-wallet-auth:gap:runtime-and-deployed-binary-behavior",
+      "required_evidence_to_model": [
+        "reproducible mobile build evidence",
+        "native runtime traces for vault and signing flows",
+        "deployed binary provenance"
+      ],
+      "severity": "blocking_for_production_release_claims",
+      "source_model": "wallet_auth",
+      "status": "NOT_MODELED",
+      "summary": "The artifact binds source facts at a commit, but does not prove that an app-store binary, build environment, backend dependency, native runtime trace, or device configuration matches these source facts."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "category": "replay_control",
+      "id": "xaman-payload-lifecycle:gap:backend-payload-creation-auth-and-single-use",
+      "required_evidence_to_model": [
+        "Xaman backend payload API source or formal API contract",
+        "server-side tests for payload UUID authorization, resolved_at atomicity, expiration enforcement, and duplicate PATCH rejection",
+        "runtime traces showing backend response behavior under replay races"
+      ],
+      "severity": "blocking",
+      "source_model": "payload_lifecycle",
+      "status": "NOT_MODELED",
+      "summary": "The client source shows fetch, validate, patch, reject, and expired/resolved checks, but does not prove backend authorization, payload creation policy, atomic single-use resolution, replay resistance across devices, or PATCH conflict handling."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "category": "qr_intake",
+      "id": "xaman-payload-lifecycle:gap:string-decoder-and-native-intake-integrity",
+      "required_evidence_to_model": [
+        "Audited xumm-string-decode implementation and test vectors",
+        "Native camera and OS linking behavior evidence",
+        "End-to-end QR/deep-link runtime traces for malformed, spoofed, and boundary inputs"
+      ],
+      "severity": "blocking",
+      "source_model": "payload_lifecycle",
+      "status": "NOT_MODELED",
+      "summary": "The model uses client dispatch after StringTypeDetector/StringDecoder output, but does not prove the third-party decoder, native camera module, OS deep-link dispatcher, clipboard, or QR image parsing integrity."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "category": "broadcast_boundary",
+      "id": "xaman-payload-lifecycle:gap:ledger-consensus-and-node-honesty",
+      "required_evidence_to_model": [
+        "LedgerService implementation and node trust policy review",
+        "XRPL consensus assumptions and validator/network model",
+        "Runtime traces for submit, queued, failed, and verified ledger outcomes"
+      ],
+      "severity": "blocking",
+      "source_model": "payload_lifecycle",
+      "status": "NOT_MODELED",
+      "summary": "The model covers client submit and verify calls plus typed submit response fields, but not XRPL consensus safety, node honesty, mempool behavior, or final ledger inclusion beyond the app's verify response."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "category": "review_ui",
+      "id": "xaman-payload-lifecycle:gap:deployed-runtime-equivalence",
+      "required_evidence_to_model": [
+        "Reproducible build attestation for the reviewed commit",
+        "Runtime telemetry or e2e traces for QR/deep-link/review/approval/rejection/expiration/replay/broadcast paths",
+        "Production backend and node endpoint configuration evidence"
+      ],
+      "severity": "blocking",
+      "source_model": "payload_lifecycle",
+      "status": "NOT_MODELED",
+      "summary": "This artifact models pinned source behavior, not compiled app binaries, mobile OS runtime behavior, production configuration, or backend deployment equivalence."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "category": "issued_currency_trustline",
+      "id": "xaman-xrpl-transaction:gap:trustset-offercreate-signerlistset-validation-is-todo",
+      "required_evidence_to_model": [
+        "Implemented validation functions for TrustSet, OfferCreate, and SignerListSet",
+        "Tests showing rejection of malformed limits, offer amounts, signer quorum, and signer entries",
+        "Proof obligations that classify unresolved TODO validation as blocking"
+      ],
+      "severity": "blocking",
+      "source_model": "xrpl_transaction",
+      "status": "NOT_MODELED",
+      "summary": "TrustSet, OfferCreate, and SignerListSet validation functions resolve without semantic checks, so their user-intent safety cannot be proved from these validators."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "category": "transaction_type_dispatch",
+      "id": "xaman-xrpl-transaction:gap:complete-xrpl-amendment-and-transaction-class-coverage",
+      "required_evidence_to_model": [
+        "Inventory of every transaction export reachable from TransactionFactory",
+        "Per-class source facts and validation semantics for all supported amendments",
+        "Solver obligations generated for every high-risk transaction class"
+      ],
+      "severity": "blocking",
+      "source_model": "xrpl_transaction",
+      "status": "NOT_MODELED",
+      "summary": "The artifact reviews representative transaction classes and dispatch mechanics, but it does not model every transaction class, pseudo transaction, parser field, or amendment-specific XRPL rule."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "category": "fee_sequence_network",
+      "id": "xaman-xrpl-transaction:gap:ledger-service-network-service-runtime-trust",
+      "required_evidence_to_model": [
+        "Reviewed LedgerService and NetworkService source facts",
+        "Runtime traces showing fresh ledger status, balances, trustlines, and network definitions",
+        "Assumptions or proofs for node endpoint authenticity and freshness"
+      ],
+      "severity": "blocking",
+      "source_model": "xrpl_transaction",
+      "status": "NOT_MODELED",
+      "summary": "The signing and Payment validation paths rely on LedgerService and NetworkService for sequence, last ledger, network definitions, balances, account lines, and submit behavior; this artifact does not prove those runtime services are honest or fresh."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "category": "broadcast_submit",
+      "id": "xaman-xrpl-transaction:gap:ledger-consensus-finality-and-mempool-semantics",
+      "required_evidence_to_model": [
+        "XRPL consensus and finality assumptions",
+        "Validated-ledger verification traces after submit",
+        "A solver model that separates preliminary submit results from final ledger inclusion"
+      ],
+      "severity": "blocking",
+      "source_model": "xrpl_transaction",
+      "status": "NOT_MODELED",
+      "summary": "SubmitResponse fields are preliminary node results; this artifact does not prove transaction finality, consensus inclusion, queue behavior, mempool behavior, or honest peer-server broadcast."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "category": "transaction_type_dispatch",
+      "id": "xaman-xrpl-transaction:gap:deployed-runtime-equivalence",
+      "required_evidence_to_model": [
+        "Build provenance tying source commit to deployed artifacts",
+        "Runtime configuration snapshot for ledger endpoints and feature flags",
+        "Production trace evidence for representative signing and submit flows"
+      ],
+      "severity": "blocking",
+      "source_model": "xrpl_transaction",
+      "status": "NOT_MODELED",
+      "summary": "The facts are bound to reviewed source at one commit, not to an installed mobile binary, runtime configuration, backend release, or production node endpoint set."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json",
+      "category": "runtime_equivalence",
+      "id": "xaman-runtime:gap:real-device-trace-bundle-missing",
+      "required_evidence_to_model": [
+        "payload_intake",
+        "review",
+        "auth",
+        "signing",
+        "rejection",
+        "expiration",
+        "network_binding",
+        "broadcast",
+        "runtime_equivalence"
+      ],
+      "severity": "blocking",
+      "source_model": "runtime_trace",
+      "status": "NOT_MODELED",
+      "summary": "Missing runtime evidence for REAL_DEVICE_TRACE_BUNDLE_MISSING."
+    },
+    {
+      "artifact_path": "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json",
+      "category": "runtime_equivalence",
+      "id": "xaman-runtime:gap:runtime-equivalence-not-proved",
+      "required_evidence_to_model": [],
+      "severity": "blocking",
+      "source_model": "runtime_trace",
+      "status": "NOT_MODELED",
+      "summary": "Source and e2e feature facts are monitor specifications, not deployed-device execution evidence."
+    }
+  ],
+  "lockfile_baseline": {
+    "all_required_lockfiles_present": true,
+    "dependency_lockfiles": [
+      {
+        "git_blob_sha1": "5cd4b48265b0aca3151a7d012a9868b9794e82f1",
+        "path": "Gemfile.lock",
+        "sha256": "584c22420eb3969297a9ec35a946c8a809ca8f421ea1db14cff1c323738342a4",
+        "size_bytes": 2382
+      },
+      {
+        "git_blob_sha1": "a64d81526516eec84ca5e5be17f948391a64c9b8",
+        "path": "ios/Podfile.lock",
+        "sha256": "cc3f2f4efc8d7efcc3435ef25c16702c512e656df549edaa34f8ce1797c5e886",
+        "size_bytes": 53080
+      },
+      {
+        "git_blob_sha1": "295cea1d7bc15f937770dec1c566c07a14f2a916",
+        "path": "package-lock.json",
+        "sha256": "f27be60a558a178d6fefec5fb0cab13ff4c196d13b96c3406d600f32277b458a",
+        "size_bytes": 497783
+      }
+    ],
+    "required_dependency_lockfiles": [
+      "package-lock.json"
+    ]
+  },
+  "public_build_digests": [
+    {
+      "kind": "testnet_debug_verifier_apk",
+      "path_label": "app-x86_64-debug.apk",
+      "production_usable": false,
+      "sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "size_bytes": 233121825
+    },
+    {
+      "digest_matches_device_report": true,
+      "kind": "testnet_transaction_trial_apk",
+      "path_label": "app-x86_64-debug.apk",
+      "production_usable": false,
+      "sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "size_bytes": 233121825
+    },
+    {
+      "artifact_cid": "sha256:b036f7221ee476c16a1b817cb1bb26c5c6de71d1ea4e040f875a9b9889422544",
+      "kind": "firebase_disabled_testnet_build_kit_manifest",
+      "production_usable": false,
+      "schema_version": "xaman-firebase-disabled-testnet-build/v1",
+      "sha256": "638c63ad73d0dc7756e058c49bf425c52add7588961dc4e85b4802bab359002f",
+      "task_id": "PORTAL-CXTP-119"
+    },
+    {
+      "artifact_cid": "sha256:ee11d41c8f6c2d6ca2de0d623ece01d08fcb58fda09d051182c4403908238f1d",
+      "build_provenance_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "kind": "testnet_telemetry_report",
+      "production_usable": false,
+      "schema_version": "xaman-firebase-disabled-testnet-telemetry/v1",
+      "sha256": "c43c46cf610b1eea65a4319385c510343a3bf9673a702a28909ab0b8c2ce2fb8",
+      "task_id": "PORTAL-CXTP-120"
+    },
+    {
+      "abi": null,
+      "file": "app-universal-release.apk",
+      "kind": "release_r8_verifier_apk",
+      "production_signing_claim": false,
+      "sha256": "5d485fb0e2cf1fb186455e4c3cefeffb4e0c012cdd72479b485302a1e097dfc8",
+      "size_bytes": 576500929,
+      "type": "UNIVERSAL",
+      "version_code": 30123,
+      "version_name": "4.2.1"
+    },
+    {
+      "abi": "arm64-v8a",
+      "file": "app-arm64-v8a-release.apk",
+      "kind": "release_r8_verifier_apk",
+      "production_signing_claim": false,
+      "sha256": "e4a1c142ed65f4ff230dfc8b2341fe79bffe13fef38cdffd7d0e5a13c8056fe4",
+      "size_bytes": 189269112,
+      "type": "ONE_OF_MANY",
+      "version_code": 3175851,
+      "version_name": "4.2.1"
+    },
+    {
+      "abi": "armeabi-v7a",
+      "file": "app-armeabi-v7a-release.apk",
+      "kind": "release_r8_verifier_apk",
+      "production_signing_claim": false,
+      "sha256": "fa36681dd5259c7f57186150ed73c98ba569cff0a31d723ec70f50d4a0fd0215",
+      "size_bytes": 158775468,
+      "type": "ONE_OF_MANY",
+      "version_code": 1078699,
+      "version_name": "4.2.1"
+    },
+    {
+      "abi": "x86",
+      "file": "app-x86-release.apk",
+      "kind": "release_r8_verifier_apk",
+      "production_signing_claim": false,
+      "sha256": "6cb9b856cf5d6ed6dc941620fb8bca67e4c9e0515b7e6ae4e768ee884f8f8185",
+      "size_bytes": 177478192,
+      "type": "ONE_OF_MANY",
+      "version_code": 2127275,
+      "version_name": "4.2.1"
+    },
+    {
+      "abi": "x86_64",
+      "file": "app-x86_64-release.apk",
+      "kind": "release_r8_verifier_apk",
+      "production_signing_claim": false,
+      "sha256": "51766dcbcb4965c338c515aca06e283ede7466e9f030d7c2bd8c604d8d73a35b",
+      "size_bytes": 190104596,
+      "type": "ONE_OF_MANY",
+      "version_code": 4224427,
+      "version_name": "4.2.1"
+    },
+    {
+      "kind": "release_r8_output_metadata",
+      "path_label": "android/app/build/outputs/apk/release/output-metadata.json",
+      "production_signing_claim": false,
+      "sha256": "a92ad6ac0a69754eb95934bd8e2bdd7998bd888a6d50ec173f25b8b688560efa",
+      "size_bytes": 1512
+    },
+    {
+      "kind": "mapping_txt",
+      "path_label": "mapping_txt.txt",
+      "production_signing_claim": false,
+      "sha256": "66c18a5f43bc1577c61831921c41932806f30a8232bb2b4d647e0e0c989589dc"
+    },
+    {
+      "kind": "configuration_txt",
+      "path_label": "configuration_txt.txt",
+      "production_signing_claim": false,
+      "sha256": "b1005a7052523b35c03abfd55f6a6e8cfe8db3c65c8a78f76227c06e62bd5958"
+    }
+  ],
+  "responsible_disclosure": {
+    "primary_path": "RESPONSIBLE-DISCLOSURE.md",
+    "primary_path_present": true,
+    "required_paths": [
+      "RESPONSIBLE-DISCLOSURE.md"
+    ],
+    "security_disclosure_files": [
+      {
+        "git_blob_sha1": "24e4d0dbd1a243ced73fe6f8500b8a8512565689",
+        "path": "RESPONSIBLE-DISCLOSURE.md",
+        "sha256": "25a9925179c86ab2e7118a0480a9efcfd30638b0130ef111b6912631ee167562",
+        "size_bytes": 124
+      },
+      {
+        "git_blob_sha1": "08d871fc45f0bcee858195afccdce8d27113c60b",
+        "path": "android/app/src/main/assets/security.txt",
+        "sha256": "4c52ac6e1b0e953d143610d98c0c60ae66463cd36c1b1b5616846c0271e0c488",
+        "size_bytes": 209
+      },
+      {
+        "git_blob_sha1": "1d131a02092d1431de29dd8a0521845f8078e159",
+        "path": "ios/security.txt",
+        "sha256": "32e3bbeaa5cadd813b41e64bd0b39ab82987360ca0e2a0d61a656f3152a65000",
+        "size_bytes": 187
+      }
+    ]
+  },
+  "schema_version": "xaman-public-source-refresh/v1",
+  "source_coverage": {
+    "acceptance_note": "Manifest-only coverage is retained as reviewed gaps until source content is present in the verifier corpus.",
+    "aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "analysis_mode": "manifest_only",
+    "artifact_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+    "blocking_gap_count": 653,
+    "categories_with_gaps": [
+      "auth_component",
+      "e2e_flow",
+      "ledger",
+      "path_alias",
+      "payload",
+      "service",
+      "store",
+      "vault"
+    ],
+    "coverage_gap_count": 721,
+    "parsed_source_available": false,
+    "review_status": "heuristic",
+    "summary": {
+      "content_unavailable_files": 643,
+      "manifest_files": 3444,
+      "parse_error_files": 0,
+      "parsed_coverage_percent": 0.0,
+      "parsed_files": 0,
+      "reviewed_gap_count": 721,
+      "security_relevant_files": 711,
+      "unsupported_files": 68
+    }
+  },
+  "source_pin": {
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "exact_commit_required": true,
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "manifest_sha256": "sha256:a269b91c526132771a8c931dfe94ef57a78c0cf2f0acf4c9a439437ce8795ec3",
+    "proof_corpus_changed_by_refresh": false,
+    "proof_corpus_pin_preserved": true,
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "requested_ref": "942f43876265a7af44f233288ad2b1d00841d5fa"
+  },
+  "task_id": "PORTAL-CXTP-144",
+  "testnet_scope": {
+    "assurance_verdict": "TESTNET_SCOPE_NOT_SECURE",
+    "device_trial_scope": {
+      "account_policy": "fresh_testnet_only_no_import_or_persistence_of_account_material",
+      "device_trial_label": "firebase_js_stubbed_only",
+      "full_firebase_disabled_label_blocked": true,
+      "network": "XRPL_TESTNET",
+      "network_id": 1,
+      "production_usable": false,
+      "real_assets_allowed": false
+    },
+    "fresh_testnet_accounts_only": true,
+    "network": "XRPL Testnet",
+    "network_id": 1,
+    "network_selection_decision": "TESTNET_NETWORK_SELECTION_VERIFIED_NOT_PRODUCTION_EVIDENCE",
+    "not_a_production_security_result": true,
+    "production_security_result": false,
+    "production_usable": false,
+    "real_assets_allowed": false,
+    "trial_scope": {
+      "account_policy": "fresh_testnet_only_no_import_or_persistence_of_account_material",
+      "native_firebase_packaged_apk_fully_disabled_label_blocked": true,
+      "network": "XRPL_TESTNET",
+      "network_id": 1,
+      "production_usable": false,
+      "real_assets_allowed": false,
+      "verifier_apk_only": true
+    }
+  },
+  "upstream_drift": {
+    "action": "record_no_drift_and_keep_existing_proof_corpus",
+    "checked_at_utc": "2026-07-11T00:00:00Z",
+    "default_branch": "master",
+    "drift_detected": false,
+    "head_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "head_matches_pin": true,
+    "head_ref": "HEAD",
+    "latest_version_tag": {
+      "commit_sha": "bfb4207b0cca173efe7c8fee6425ca7f6634b4d8",
+      "name": "v3.3.0",
+      "selection_rule": "highest semver tag observed in git ls-remote output"
+    },
+    "main_ref_present": false,
+    "master_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "master_matches_pin": true,
+    "method": "git ls-remote https://github.com/XRPL-Labs/Xaman-App HEAD refs/heads/master refs/heads/main refs/tags/*",
+    "pinned_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+  }
+}

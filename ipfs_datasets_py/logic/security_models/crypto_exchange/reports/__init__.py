@@ -14,6 +14,10 @@ from .xaman_testnet_assurance_verdict import (
     build_xaman_testnet_assurance_bundle,
     build_xaman_testnet_assurance_verdict,
 )
+from .xaman_testnet_solver_portfolio import (
+    build_xaman_testnet_solver_portfolio_manifest,
+    build_xaman_testnet_solver_portfolio_report,
+)
 
 __all__ = [
     'CounterexampleReport',
@@ -25,5 +29,7 @@ __all__ = [
     'build_xaman_proof_consumer_report',
     'build_xaman_testnet_assurance_bundle',
     'build_xaman_testnet_assurance_verdict',
+    'build_xaman_testnet_solver_portfolio_manifest',
+    'build_xaman_testnet_solver_portfolio_report',
     'validate_xaman_proof_consumer_packet',
 ]
