@@ -1119,7 +1119,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-145 Build a claim-to-source map for wallet, payload, native bridge, and deep-link boundaries
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: model
