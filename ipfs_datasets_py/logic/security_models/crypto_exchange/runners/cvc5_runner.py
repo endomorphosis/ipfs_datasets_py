@@ -101,6 +101,15 @@ class CVC5Runner(BaseSecurityRunner):
             resolved = shutil.which(candidate) if os.path.basename(candidate) == candidate else candidate
             if resolved and os.path.isfile(resolved) and os.access(resolved, os.X_OK):
                 return resolved
+        if explicit is None:
+            from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+                ensure_prover_executable,
+            )
+
+            return ensure_prover_executable(
+                'cvc5',
+                reason='CVC5 SMT-LIB differential execution',
+            )
         return None
 
     def _executable_path(self) -> str | None:

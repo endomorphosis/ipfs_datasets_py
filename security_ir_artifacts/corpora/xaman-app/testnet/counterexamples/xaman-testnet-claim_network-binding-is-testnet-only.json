@@ -1,0 +1,65 @@
+{
+  "acceptance_decision": "REJECT_PROOF_PROMOTION",
+  "artifact_cid": "bafkreiatibsr6bdqni3fetjdxokvcgumfqbsdthlupe2dqsidx2f5vr45y",
+  "blocked_by_assumptions": [
+    "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+    "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved"
+  ],
+  "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+  "claim_version": "1.0",
+  "counterexample_kind": "blocking_acceptance_counterexample",
+  "domain": "ledger",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "owner_actions": [
+    {
+      "action": "production runtime network trace; endpoint authenticity model; fresh server_info evidence",
+      "assumption_id": "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+      "description": "Network binding is limited to the reviewed Testnet verifier run, endpoint digest, server_info digest, and network_id 1 observation.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "ledger-verification",
+      "required_evidence_to_clear": [
+        "production runtime network trace",
+        "endpoint authenticity model",
+        "fresh server_info evidence"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "action": "production build provenance; real-device trace bundle; runtime equivalence review",
+      "assumption_id": "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved",
+      "description": "The verifier APK and emulator trace do not prove deployed production runtime equivalence.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "release-security",
+      "required_evidence_to_clear": [
+        "production build provenance",
+        "real-device trace bundle",
+        "runtime equivalence review"
+      ],
+      "status": "BLOCKING"
+    }
+  ],
+  "raw_sensitive_material_recorded": false,
+  "result": "COUNTEREXAMPLE",
+  "schema_version": "xaman-testnet-smt-counterexample/v1",
+  "security_result": "NON_SECURE_TESTNET_RESULT",
+  "severity": "high",
+  "smtlib_artifact": {
+    "artifact_cid": "bafkreidfxxri74q5e2z2zc2ktn2g2gifhks4lneruipkevarchn6et574a",
+    "assertion_count": 3,
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_network-binding-is-testnet-only.smt2"
+  },
+  "solver_blockers": [],
+  "solver_tuple": {
+    "agreement": true,
+    "cvc5": "sat",
+    "z3": "sat"
+  },
+  "soundness_notes": [
+    "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+    "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+  ],
+  "task_id": "PORTAL-CXTP-133",
+  "worker_classification": "blocked_assumption",
+  "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+}

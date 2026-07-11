@@ -1,0 +1,63 @@
+{
+  "acceptance_decision": "REJECT_PROOF_PROMOTION",
+  "artifact_cid": "bafkreievp7ofapcfgkgzyqeb2mtbhpg7nlwnstowtouuafxo6youkyz2ve",
+  "blocked_by_assumptions": [
+    "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+    "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved"
+  ],
+  "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+  "claim_version": "1.0",
+  "counterexample_kind": "blocking_acceptance_counterexample",
+  "domain": "auth_component",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "owner_actions": [
+    {
+      "action": "reviewer signoff and replacement evidence bundle",
+      "assumption_id": "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+      "description": "Lifecycle action order is based on the reviewed operator UI trial, not on raw device automation logs or production telemetry.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "action": "native vault audit; signature-byte binding trace; cryptographic signing proof",
+      "assumption_id": "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+      "description": "Native vault, biometric/passcode, keychain, and signing cryptography behavior is not proved by the reviewed Testnet lifecycle evidence.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "wallet-key-management",
+      "required_evidence_to_clear": [
+        "native vault audit",
+        "signature-byte binding trace",
+        "cryptographic signing proof"
+      ],
+      "status": "BLOCKING"
+    }
+  ],
+  "raw_sensitive_material_recorded": false,
+  "result": "COUNTEREXAMPLE",
+  "schema_version": "xaman-testnet-smt-counterexample/v1",
+  "security_result": "NON_SECURE_TESTNET_RESULT",
+  "severity": "blocking",
+  "smtlib_artifact": {
+    "artifact_cid": "bafkreiahiodpgemzd7w52dh3ul2644ysklxgoutxpiluehe4j52u2kewva",
+    "assertion_count": 3,
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_review-auth-sequence-observed.smt2"
+  },
+  "solver_blockers": [],
+  "solver_tuple": {
+    "agreement": true,
+    "cvc5": "sat",
+    "z3": "sat"
+  },
+  "soundness_notes": [
+    "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+    "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+  ],
+  "task_id": "PORTAL-CXTP-133",
+  "worker_classification": "blocked_assumption",
+  "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+}

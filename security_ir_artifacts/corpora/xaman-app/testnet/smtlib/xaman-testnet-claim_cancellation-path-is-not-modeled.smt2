@@ -1,0 +1,16 @@
+; crypto-exchange SMT-LIB2 artifact
+; cxtp.schema_version: crypto-exchange-smtlib/v1
+; cxtp.model_id: xaman-app-testnet-transaction-lifecycle-security-model-ir
+; cxtp.model_cid: sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43
+; cxtp.claim_id: xaman-testnet-claim:cancellation-path-is-not-modeled
+; cxtp.claim_version: 1.0
+; cxtp.modeled: true
+; cxtp.metadata: {"assertion_count":2,"blocking_assumption_ids":["xaman-testnet-assumption:decline-cancel-expiry-not-exercised"],"claim_description":"Cancellation behavior was not exercised in the reviewed trial and remains an explicit NOT_MODELED boundary.","claim_id":"xaman-testnet-claim:cancellation-path-is-not-modeled","claim_version":"1.0","compiler_artifact":{"blocker_symbols":[{"assumption_id":"xaman-testnet-assumption:decline-cancel-expiry-not-exercised","symbol":"xaman_blocking_assumption_0"}],"blocking_assumption_ids":["xaman-testnet-assumption:decline-cancel-expiry-not-exercised"],"claim_id":"xaman-testnet-claim:cancellation-path-is-not-modeled","claim_source_status":null,"consumer_policy":null,"evidence_fact_ids":[],"proof_obligation_statement":null,"query_semantics":"sat iff at least one blocking assumption prevents production acceptance","required_assumptions":["xaman-testnet-assumption:decline-cancel-expiry-not-exercised"]},"compiler_artifact_cid":"bafkreifgdh3w5v5ehg56bpbfsfcray2agxage4qaoxzmgrkahvs56ohwnu","domain":"e2e_flow","evidence_refs":[{"kind":"manual_review","line_end":17,"line_start":2,"path":"security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json","review_status":"human_reviewed","sha256":"62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"},{"kind":"manual_review","line_end":359,"line_start":1,"notes":"Baseline Xaman claim registry used only as reviewed context.","path":"security_ir_artifacts/corpora/xaman-app/security-claims.json","review_status":"human_reviewed","sha256":"648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"}],"logic":"QF_LIA","model_cid":"sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43","model_id":"xaman-app-testnet-transaction-lifecycle-security-model-ir","model_schema_version":"security-model-ir/xaman/v1","modeled":true,"not_modeled_reason":null,"query_kind":"xaman_blocking_acceptance_satisfiability","required_assumptions":["xaman-testnet-assumption:decline-cancel-expiry-not-exercised"],"risk":"blocking","schema_version":"crypto-exchange-smtlib/v1","severity":"blocking","soundness_notes":["This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.","A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."],"supported_theories":["QF_LIA"],"violation_scope_explanation":"Blocking assumption satisfiability query for Xaman release-gate claims.","xaman_category":null}
+(set-info :smt-lib-version 2.6)
+(set-info :source "ipfs_datasets_py crypto_exchange SMT-LIB2 compiler")
+(set-logic QF_LIA)
+; blocking_assumption: xaman-testnet-assumption:decline-cancel-expiry-not-exercised
+(declare-fun xaman_blocking_assumption_0 () Bool)
+(assert xaman_blocking_assumption_0)
+(assert (or xaman_blocking_assumption_0))
+(check-sat)

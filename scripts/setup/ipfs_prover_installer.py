@@ -1,4 +1,4 @@
-"""Lightweight, side-effect-free installer for external theorem provers (Lean/Coq).
+"""Compatibility installer for optional external theorem provers.
 
 This module intentionally does NOT import `ipfs_datasets_py` to avoid heavy import-time
 side effects during installation or CLI execution.
@@ -6,6 +6,10 @@ side effects during installation or CLI execution.
 Usage:
 - `python -m ipfs_prover_installer --yes --lean`
 - `python -m ipfs_prover_installer --yes --coq`
+
+For Apalache, Tamarin, Maude, ProVerif, and the CVC5 CLI this script delegates
+to the unified user-local installer in ``ipfs_datasets_py``. That import occurs
+only after the user explicitly selects one of those solver flags.
 
 See also: setup.py env vars:
 - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1
@@ -642,11 +646,18 @@ def ensure_symbolicai(*, yes: bool, strict: bool) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Best-effort installer for Z3/CVC5/Lean/Coq/SymbolicAI")
+    parser = argparse.ArgumentParser(description="Best-effort installer for optional theorem provers")
     parser.add_argument("--z3", action="store_true", help="Install/ensure Z3")
     parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean 4")
-    parser.add_argument("--coq", action="store_true", help="Install/ensure Coq")
+    parser.add_argument("--coq", "--rocq", action="store_true", help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)")
+    parser.add_argument("--apalache", action="store_true", help="Install/ensure Apalache")
+    parser.add_argument("--tamarin", action="store_true", help="Install/ensure Tamarin and Maude")
+    parser.add_argument("--maude", action="store_true", help="Install/ensure Maude")
+    parser.add_argument("--proverif", action="store_true", help="Install/ensure headless ProVerif")
+    parser.add_argument("--cvc5-cli", action="store_true", help="Install/ensure the CVC5 CLI")
+    parser.add_argument("--check-updates", action="store_true", help="Report managed solver version drift")
+    parser.add_argument("--update", action="store_true", help="Manually refresh selected managed solvers")
     parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
     parser.add_argument("--yes", action="store_true", help="Non-interactive / accept defaults")
     parser.add_argument(
@@ -661,6 +672,42 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
+
+    native_flags = {
+        "--apalache": args.apalache,
+        "--tamarin": args.tamarin,
+        "--maude": args.maude,
+        "--proverif": args.proverif,
+        "--cvc5-cli": args.cvc5_cli,
+    }
+    if any(native_flags.values()) or args.check_updates or args.update:
+        repo_root = Path(__file__).resolve().parents[2]
+        if str(repo_root) not in sys.path:
+            sys.path.insert(0, str(repo_root))
+        from ipfs_datasets_py.logic.integration.bridges.prover_installer import main as unified_main
+
+        delegated = [flag for flag, selected in native_flags.items() if selected]
+        if args.z3:
+            delegated.append("--z3")
+        if args.cvc5:
+            delegated.append("--cvc5")
+        if args.lean:
+            delegated.append("--lean")
+        if args.coq:
+            delegated.append("--coq")
+        if args.symbolicai:
+            delegated.append("--symbolicai")
+        if args.yes:
+            delegated.append("--yes")
+        if args.allow_sudo:
+            delegated.append("--allow-sudo")
+        if args.strict:
+            delegated.append("--strict")
+        if args.check_updates:
+            delegated.append("--check-updates")
+        if args.update:
+            delegated.append("--update")
+        return unified_main(delegated)
 
     want_z3 = bool(args.z3)
     want_cvc5 = bool(args.cvc5)

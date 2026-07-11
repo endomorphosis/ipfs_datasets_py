@@ -1,0 +1,507 @@
+{
+  "artifact_cid": "sha256:d69014363ca696757b7673bc8cd22b50a4d5a3628df43500650587d4a6237ee3",
+  "blocking_gaps": [],
+  "coverage_gaps": [
+    {
+      "action": "decline",
+      "category": "decline",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "314a4abaab2d00c11cc1d563acbd39bd7c470504f007aaa7760705e6ba20943b"
+    },
+    {
+      "action": "cancel",
+      "category": "cancel",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "eb00ed3e1e2b20504a0e9ed7bac7e634d236188371d6633d83249d77ffb64680"
+    },
+    {
+      "action": "expiry",
+      "category": "expiry",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "3d4702552580ee2cf5372f4f73df605d74767d51078fd77e119284ee5154c1f1"
+    }
+  ],
+  "device_profile": {
+    "device_report_fresh_account_boundary": {
+      "account_material_recorded": false,
+      "boundary": "testnet_only_no_imported_or_persisted_account_material",
+      "fresh_account_created": true,
+      "imported_account": false,
+      "production_account": false
+    },
+    "fresh_testnet_account_boundary": {
+      "account_material_recorded": false,
+      "boundary": "testnet_only_no_imported_or_persisted_account_material",
+      "fresh_account_created": true,
+      "imported_account": false,
+      "production_account": false
+    },
+    "isolated_android_emulator": {
+      "path_label": "ipfs_xaman_api34_testnet.avd",
+      "present": true,
+      "profile_name": "ipfs_xaman_api34_testnet.avd",
+      "selected_file_records": {
+        "bootcompleted.ini": {
+          "path_label": "bootcompleted.ini",
+          "present": true,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "config.ini": {
+          "path_label": "config.ini",
+          "present": true,
+          "sha256": "a21ffbb4c7334afaae6220efc68a3ce605acda6ce53636b970021cfbdd6f2b12",
+          "size_bytes": 3834
+        },
+        "emu-launch-params.txt": {
+          "path_label": "emu-launch-params.txt",
+          "present": true,
+          "sha256": "fc17aec5444cd4a0cbfb1a9849c2fbfadb18d3e7e368e7f3fb6e31dcdc2ac180",
+          "size_bytes": 274
+        },
+        "hardware-qemu.ini": {
+          "path_label": "hardware-qemu.ini",
+          "present": true,
+          "sha256": "7312f8bd8529de9d79dbb104e89b8315cdc363c4465c3747af1bbc4ede91e6c0",
+          "size_bytes": 4508
+        }
+      }
+    }
+  },
+  "evidence_inputs": {
+    "device_trial_report": {
+      "artifact_cid": "sha256:30cfd9e40195fb837a646a45f4bce600928a417e7278c6232ed6396f5d52c5c3",
+      "artifact_cid_valid": true,
+      "expected_schema_version": "xaman-testnet-device-trial/v1",
+      "expected_task_id": "PORTAL-CXTP-121",
+      "path_label": "testnet-device-trial-report.json",
+      "present": true,
+      "schema_matches_expected": true,
+      "schema_version": "xaman-testnet-device-trial/v1",
+      "sha256": "79c0f0ab40d8ef2658254a0c784e2153d67eb72b452ef660264818cd437171ca",
+      "size_bytes": 17215,
+      "task_id": "PORTAL-CXTP-121",
+      "task_matches_expected": true
+    },
+    "lifecycle_evidence_sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc",
+    "lifecycle_evidence_size_bytes": 4148,
+    "native_firebase_boundary_report": {
+      "artifact_cid": "sha256:dce3d70731109f4ad0d9b3e9dd75116ad73bdd9b09fb683dec75eed01aac9345",
+      "artifact_cid_valid": true,
+      "expected_schema_version": "xaman-native-firebase-boundary/v1",
+      "expected_task_id": "PORTAL-CXTP-126",
+      "path_label": "native-firebase-boundary-report.json",
+      "present": true,
+      "schema_matches_expected": true,
+      "schema_version": "xaman-native-firebase-boundary/v1",
+      "sha256": "d5726635e104d8b3bf63d8d737d7f5fd2c8032ac25fefed8443a2c42be374731",
+      "size_bytes": 19322,
+      "task_id": "PORTAL-CXTP-126",
+      "task_matches_expected": true
+    },
+    "network_selection_report": {
+      "artifact_cid": "sha256:601c466c62b85221e158007d0667125889fe0b7e2f27818914b40c9131352dbd",
+      "artifact_cid_valid": true,
+      "expected_schema_version": "xaman-testnet-network-selection/v1",
+      "expected_task_id": "PORTAL-CXTP-125",
+      "path_label": "testnet-network-selection-report.json",
+      "present": true,
+      "schema_matches_expected": true,
+      "schema_version": "xaman-testnet-network-selection/v1",
+      "sha256": "dad91f0a1e0b02bf698ef557e460d6f188ef3a4f4e3eb856fb7a84cfe2fbaba0",
+      "size_bytes": 5333,
+      "task_id": "PORTAL-CXTP-125",
+      "task_matches_expected": true
+    }
+  },
+  "firebase_boundary": {
+    "classification": "firebase_js_stubbed_only",
+    "native_boundary": {
+      "blocker_codes": [
+        "NATIVE_FIREBASE_MANIFEST_COMPONENTS_PRESENT",
+        "NATIVE_FIREBASE_APK_BINARY_MANIFEST_INDICATORS_PRESENT",
+        "FIREBASE_COMPONENT_REGISTRARS_PRESENT",
+        "FIREBASE_DEX_CLASSES_PRESENT",
+        "CRASHLYTICS_NATIVE_LIBRARIES_PRESENT",
+        "FIREBASE_PACKAGED_RESOURCES_PRESENT"
+      ],
+      "device_trial_label_allowed": "firebase_js_stubbed_only",
+      "native_firebase_evidence_present": true,
+      "native_firebase_fully_disabled": false,
+      "native_packaging_present": true,
+      "overall_status": "blocked",
+      "record": {
+        "artifact_cid": "sha256:dce3d70731109f4ad0d9b3e9dd75116ad73bdd9b09fb683dec75eed01aac9345",
+        "artifact_cid_valid": true,
+        "expected_schema_version": "xaman-native-firebase-boundary/v1",
+        "expected_task_id": "PORTAL-CXTP-126",
+        "path_label": "native-firebase-boundary-report.json",
+        "present": true,
+        "schema_matches_expected": true,
+        "schema_version": "xaman-native-firebase-boundary/v1",
+        "sha256": "d5726635e104d8b3bf63d8d737d7f5fd2c8032ac25fefed8443a2c42be374731",
+        "size_bytes": 19322,
+        "task_id": "PORTAL-CXTP-126",
+        "task_matches_expected": true
+      },
+      "run_id": "xaman-native-firebase-boundary-20260710",
+      "security_decision": "BLOCK_TESTNET_FULL_FIREBASE_DISABLED_LABEL_NATIVE_FIREBASE_PACKAGED",
+      "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+    },
+    "native_firebase_evidence_present": true,
+    "native_firebase_fully_disabled": false
+  },
+  "generated_at_utc": "2026-07-10T23:30:00Z",
+  "overall_status": "executed_with_coverage_gaps",
+  "production_release_blocked": true,
+  "redaction_boundary": {
+    "account_addresses_recorded": false,
+    "credentials_recorded": false,
+    "raw_payloads_recorded": false,
+    "raw_request_bodies_recorded": false,
+    "raw_server_info_response_recorded": false,
+    "raw_xrpl_endpoint_recorded": false,
+    "redaction_failure": false,
+    "seeds_recorded": false,
+    "stored_values": [
+      "required_action_names",
+      "event_categories",
+      "categorical_outcomes",
+      "source_sha256",
+      "redaction_sha256",
+      "coverage_gap_reason_codes",
+      "apk_sha256",
+      "endpoint_key",
+      "endpoint_sha256",
+      "server_info_digest",
+      "emulator_profile_file_sha256"
+    ],
+    "transaction_blobs_recorded": false
+  },
+  "residual_boundaries": [
+    {
+      "code": "PRODUCTION_ACCEPTANCE_BLOCKED",
+      "reason": "This is public-Testnet verifier evidence only and cannot approve production release behavior."
+    },
+    {
+      "code": "RUNTIME_EQUIVALENCE_NOT_PROVED",
+      "reason": "The verifier APK and emulator trial do not prove equivalence to a production runtime."
+    },
+    {
+      "active": true,
+      "code": "FULL_FIREBASE_DISABLED_LABEL_BLOCKED",
+      "reason": "Native Firebase packaging remains present in the inspected APK."
+    },
+    {
+      "code": "RAW_TRANSACTION_MATERIAL_EXCLUDED",
+      "reason": "The report cannot be used to reconstruct payload JSON, signatures, transaction blobs, or account identifiers."
+    }
+  ],
+  "run_id": "xaman-testnet-transaction-lifecycle-20260710",
+  "runtime_equivalence_status": "not_proved",
+  "schema_version": "xaman-testnet-transaction-lifecycle-trial/v1",
+  "security_decision": "TESTNET_TRANSACTION_LIFECYCLE_REVIEWED_WITH_COVERAGE_GAPS_NOT_PRODUCTION_EVIDENCE",
+  "task_id": "PORTAL-CXTP-130",
+  "testnet_network_binding": {
+    "endpoint_allow_list_decision": {
+      "allow_list_version": "xrpl-public-testnet-2026-07-10",
+      "allowed": true,
+      "allowed_endpoint_count": 2,
+      "matched_endpoint_key": "ripple_altnet_testnet",
+      "matched_endpoint_sha256": "a81289bc29208d10634e2b0c40a94ec0c664f0c3bb1574d742ce8054b7f9abca"
+    },
+    "network_key": "TESTNET",
+    "xrpl_server_info_binding": {
+      "network_id": 1,
+      "network_id_verified": true,
+      "raw_request_body_recorded": false,
+      "raw_response_recorded": false,
+      "request_category": "xrpl_server_info",
+      "request_sha256": "6a1a5cf3644551cf735838bfa1ada32fe420c979bac41dd497fbc13f229070c3",
+      "response_sha256": "bfc4e47cbb178e827319d943dd7f6d7eb3d6093b02b2f38ff42058abb5d76ef9"
+    }
+  },
+  "transaction_lifecycle": {
+    "action_coverage": [
+      {
+        "action": "payload_intake",
+        "category": "payload_intake",
+        "coverage_gap": null,
+        "outcome": "accepted",
+        "redaction_sha256": "96116668f11401072b8489485259abcb2e56466a7705d41e15e95b5408c5ca8b",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "fbca32456147129349901d0cbe8a3d9c3160d96b5261a4d4b34d4df2054c78be",
+        "status": "observed"
+      },
+      {
+        "action": "review",
+        "category": "payload_review",
+        "coverage_gap": null,
+        "outcome": "reviewed",
+        "redaction_sha256": "70651242c2e8b8588411fe35a71beb63a10aedcacdf6c972f79d3e0f02b1e610",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "984e8306a11b4e9fccd1cbc1816bcce6b8d02bb16c396bab6c0a6c5f2d78b8c4",
+        "status": "observed"
+      },
+      {
+        "action": "auth_decision",
+        "category": "auth_decision",
+        "coverage_gap": null,
+        "outcome": "authorized",
+        "redaction_sha256": "4005b055b666f4f296fdab466d2c71b96be420d1401271b72675b63e2a3e6927",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "29c9e094bc0d997e539918cb3c65927a213eb382404a8872cba4d8af85f7cc8e",
+        "status": "observed"
+      },
+      {
+        "action": "signing_decision",
+        "category": "signing_decision",
+        "coverage_gap": null,
+        "outcome": "signed",
+        "redaction_sha256": "480b1622ba935f6b49feab2f92b9caa5a10868c14c8420780896ccb22f1642f5",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "f6d5656a0c83728b06fdc96e138b169115a9cc97ed607f970824bb019e340e66",
+        "status": "observed"
+      },
+      {
+        "action": "submit_attempt",
+        "category": "submit_attempt",
+        "coverage_gap": null,
+        "outcome": "submitted",
+        "redaction_sha256": "223765be8420ebaca78009f4c1ef4aba4749c2db7c53fe67b11840b745bb1368",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "e0f3362055b2e4aa0dceaf1781d45bd3b4af5a8b731bd8c4eddf7879774477c4",
+        "status": "observed"
+      },
+      {
+        "action": "submit_result",
+        "category": "submit_result",
+        "coverage_gap": null,
+        "outcome": "succeeded",
+        "redaction_sha256": "4068f7fe654e7901b0a3bb7ad05d960206276d0efcf7cfdfb30755afc02f343b",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "93ab4d1852d7b8242ae6fc6b30463dc2858c515d71d1a744f5aa58725a1d313f",
+        "status": "observed"
+      },
+      {
+        "action": "decline",
+        "category": "decline",
+        "coverage_gap": {
+          "action": "decline",
+          "category": "decline",
+          "reason_code": "not_exercised_in_reviewed_trial",
+          "reviewer_note_sha256": "314a4abaab2d00c11cc1d563acbd39bd7c470504f007aaa7760705e6ba20943b"
+        },
+        "outcome": null,
+        "redaction_sha256": null,
+        "source_kind": null,
+        "source_sha256": null,
+        "status": "not_observed"
+      },
+      {
+        "action": "cancel",
+        "category": "cancel",
+        "coverage_gap": {
+          "action": "cancel",
+          "category": "cancel",
+          "reason_code": "not_exercised_in_reviewed_trial",
+          "reviewer_note_sha256": "eb00ed3e1e2b20504a0e9ed7bac7e634d236188371d6633d83249d77ffb64680"
+        },
+        "outcome": null,
+        "redaction_sha256": null,
+        "source_kind": null,
+        "source_sha256": null,
+        "status": "not_observed"
+      },
+      {
+        "action": "expiry",
+        "category": "expiry",
+        "coverage_gap": {
+          "action": "expiry",
+          "category": "expiry",
+          "reason_code": "not_exercised_in_reviewed_trial",
+          "reviewer_note_sha256": "3d4702552580ee2cf5372f4f73df605d74767d51078fd77e119284ee5154c1f1"
+        },
+        "outcome": null,
+        "redaction_sha256": null,
+        "source_kind": null,
+        "source_sha256": null,
+        "status": "not_observed"
+      },
+      {
+        "action": "reconnect",
+        "category": "reconnect",
+        "coverage_gap": null,
+        "outcome": "reconnected",
+        "redaction_sha256": "e4430c84025a6f297c1fdf81c2e35804e52efbd0c12110f0b9ae3193c3868331",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "7f4d1f75434f3d52f0afef2cd3bc64d998713abc27db055f9a3ef86a2664a086",
+        "status": "observed"
+      },
+      {
+        "action": "network_switch",
+        "category": "network_switch",
+        "coverage_gap": null,
+        "outcome": "switched_to_testnet",
+        "redaction_sha256": "6e1137d504a93d5f242ca1dae9802aced9c81bb87e7957d16a29d3398d68925a",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "6c7e93add2a617b4c29678631f1628ba0f0a2445b069a91b26f00215306800eb",
+        "status": "observed"
+      }
+    ],
+    "categorical_events": [
+      {
+        "action": "payload_intake",
+        "category": "payload_intake",
+        "ordinal": 1,
+        "outcome": "accepted",
+        "raw_material_recorded": false,
+        "redaction_sha256": "96116668f11401072b8489485259abcb2e56466a7705d41e15e95b5408c5ca8b",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "fbca32456147129349901d0cbe8a3d9c3160d96b5261a4d4b34d4df2054c78be"
+      },
+      {
+        "action": "review",
+        "category": "payload_review",
+        "ordinal": 2,
+        "outcome": "reviewed",
+        "raw_material_recorded": false,
+        "redaction_sha256": "70651242c2e8b8588411fe35a71beb63a10aedcacdf6c972f79d3e0f02b1e610",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "984e8306a11b4e9fccd1cbc1816bcce6b8d02bb16c396bab6c0a6c5f2d78b8c4"
+      },
+      {
+        "action": "auth_decision",
+        "category": "auth_decision",
+        "ordinal": 3,
+        "outcome": "authorized",
+        "raw_material_recorded": false,
+        "redaction_sha256": "4005b055b666f4f296fdab466d2c71b96be420d1401271b72675b63e2a3e6927",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "29c9e094bc0d997e539918cb3c65927a213eb382404a8872cba4d8af85f7cc8e"
+      },
+      {
+        "action": "signing_decision",
+        "category": "signing_decision",
+        "ordinal": 4,
+        "outcome": "signed",
+        "raw_material_recorded": false,
+        "redaction_sha256": "480b1622ba935f6b49feab2f92b9caa5a10868c14c8420780896ccb22f1642f5",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "f6d5656a0c83728b06fdc96e138b169115a9cc97ed607f970824bb019e340e66"
+      },
+      {
+        "action": "submit_attempt",
+        "category": "submit_attempt",
+        "ordinal": 5,
+        "outcome": "submitted",
+        "raw_material_recorded": false,
+        "redaction_sha256": "223765be8420ebaca78009f4c1ef4aba4749c2db7c53fe67b11840b745bb1368",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "e0f3362055b2e4aa0dceaf1781d45bd3b4af5a8b731bd8c4eddf7879774477c4"
+      },
+      {
+        "action": "submit_result",
+        "category": "submit_result",
+        "ordinal": 6,
+        "outcome": "succeeded",
+        "raw_material_recorded": false,
+        "redaction_sha256": "4068f7fe654e7901b0a3bb7ad05d960206276d0efcf7cfdfb30755afc02f343b",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "93ab4d1852d7b8242ae6fc6b30463dc2858c515d71d1a744f5aa58725a1d313f"
+      },
+      {
+        "action": "reconnect",
+        "category": "reconnect",
+        "ordinal": 7,
+        "outcome": "reconnected",
+        "raw_material_recorded": false,
+        "redaction_sha256": "e4430c84025a6f297c1fdf81c2e35804e52efbd0c12110f0b9ae3193c3868331",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "7f4d1f75434f3d52f0afef2cd3bc64d998713abc27db055f9a3ef86a2664a086"
+      },
+      {
+        "action": "network_switch",
+        "category": "network_switch",
+        "ordinal": 8,
+        "outcome": "switched_to_testnet",
+        "raw_material_recorded": false,
+        "redaction_sha256": "6e1137d504a93d5f242ca1dae9802aced9c81bb87e7957d16a29d3398d68925a",
+        "source_kind": "reviewed_ui",
+        "source_sha256": "6c7e93add2a617b4c29678631f1628ba0f0a2445b069a91b26f00215306800eb"
+      }
+    ],
+    "coverage_gap_count": 3,
+    "coverage_gaps": [
+      {
+        "action": "decline",
+        "category": "decline",
+        "reason_code": "not_exercised_in_reviewed_trial",
+        "reviewer_note_sha256": "314a4abaab2d00c11cc1d563acbd39bd7c470504f007aaa7760705e6ba20943b"
+      },
+      {
+        "action": "cancel",
+        "category": "cancel",
+        "reason_code": "not_exercised_in_reviewed_trial",
+        "reviewer_note_sha256": "eb00ed3e1e2b20504a0e9ed7bac7e634d236188371d6633d83249d77ffb64680"
+      },
+      {
+        "action": "expiry",
+        "category": "expiry",
+        "reason_code": "not_exercised_in_reviewed_trial",
+        "reviewer_note_sha256": "3d4702552580ee2cf5372f4f73df605d74767d51078fd77e119284ee5154c1f1"
+      }
+    ],
+    "evidence_type": "reviewed_operator_trial",
+    "fresh_account_boundary": {
+      "account_material_recorded": false,
+      "boundary": "testnet_only_no_imported_or_persisted_account_material",
+      "fresh_account_created": true,
+      "imported_account": false,
+      "production_account": false
+    },
+    "fresh_emulator_profile": true,
+    "network_key": "TESTNET",
+    "observed_action_count": 8,
+    "required_actions": [
+      "payload_intake",
+      "review",
+      "auth_decision",
+      "signing_decision",
+      "submit_attempt",
+      "submit_result",
+      "decline",
+      "cancel",
+      "expiry",
+      "reconnect",
+      "network_switch"
+    ],
+    "reviewed_at_utc": "2026-07-10T23:00:00Z"
+  },
+  "trial_scope": {
+    "account_policy": "fresh_testnet_only_no_import_or_persistence_of_account_material",
+    "native_firebase_packaged_apk_fully_disabled_label_blocked": true,
+    "network": "XRPL_TESTNET",
+    "network_id": 1,
+    "production_usable": false,
+    "real_assets_allowed": false,
+    "verifier_apk_only": true
+  },
+  "verifier_artifact": {
+    "apk": {
+      "path_label": "app-x86_64-debug.apk",
+      "present": true,
+      "sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "size_bytes": 233121825
+    },
+    "apk_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+    "device_report_apk": {
+      "path_label": "app-x86_64-debug.apk",
+      "present": true,
+      "sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "size_bytes": 233121825
+    },
+    "digest_matches_device_report": true
+  },
+  "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+}

@@ -1,0 +1,302 @@
+{
+  "apalache": {
+    "available": true,
+    "executable": "/home/barberb/.local/bin/apalache-mc",
+    "required": true,
+    "runs": [
+      {
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=TypeOK",
+          "XamanTestnetPayload.tla"
+        ],
+        "exit_code": 0,
+        "invariant": "TypeOK",
+        "output_retained": false,
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass"
+      },
+      {
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=AtMostOneSubmittedResolution",
+          "XamanTestnetPayload.tla"
+        ],
+        "exit_code": 0,
+        "invariant": "AtMostOneSubmittedResolution",
+        "output_retained": false,
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass"
+      },
+      {
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=ResolvedPayloadIsTerminal",
+          "XamanTestnetPayload.tla"
+        ],
+        "exit_code": 0,
+        "invariant": "ResolvedPayloadIsTerminal",
+        "output_retained": false,
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass"
+      },
+      {
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=TerminalStateHasResolutionKind",
+          "XamanTestnetPayload.tla"
+        ],
+        "exit_code": 0,
+        "invariant": "TerminalStateHasResolutionKind",
+        "output_retained": false,
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass"
+      },
+      {
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=NoReviewWithoutTestnetBinding",
+          "XamanTestnetPayload.tla"
+        ],
+        "exit_code": 0,
+        "invariant": "NoReviewWithoutTestnetBinding",
+        "output_retained": false,
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass"
+      },
+      {
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=ResolutionRequiresPriorReview",
+          "XamanTestnetPayload.tla"
+        ],
+        "exit_code": 0,
+        "invariant": "ResolutionRequiresPriorReview",
+        "output_retained": false,
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass"
+      },
+      {
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=DuplicateClientCannotResolveAfterTerminal",
+          "XamanTestnetPayload.tla"
+        ],
+        "exit_code": 0,
+        "invariant": "DuplicateClientCannotResolveAfterTerminal",
+        "output_retained": false,
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass"
+      }
+    ],
+    "solver": "apalache",
+    "unavailable_blocks_testnet_assurance": true,
+    "version": "0.58.3"
+  },
+  "claim_coverage": [
+    {
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "modeled_by_invariants": [
+        "TypeOK",
+        "AtMostOneSubmittedResolution",
+        "ResolvedPayloadIsTerminal",
+        "TerminalStateHasResolutionKind",
+        "NoReviewWithoutTestnetBinding",
+        "ResolutionRequiresPriorReview",
+        "DuplicateClientCannotResolveAfterTerminal"
+      ],
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "modeled_by_invariants": [
+        "TypeOK",
+        "AtMostOneSubmittedResolution",
+        "ResolvedPayloadIsTerminal",
+        "TerminalStateHasResolutionKind",
+        "NoReviewWithoutTestnetBinding",
+        "ResolutionRequiresPriorReview",
+        "DuplicateClientCannotResolveAfterTerminal"
+      ],
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "modeled_by_invariants": [
+        "TypeOK",
+        "AtMostOneSubmittedResolution",
+        "ResolvedPayloadIsTerminal",
+        "TerminalStateHasResolutionKind",
+        "NoReviewWithoutTestnetBinding",
+        "ResolutionRequiresPriorReview",
+        "DuplicateClientCannotResolveAfterTerminal"
+      ],
+      "severity": "blocking",
+      "status": "NOT_MODELED"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "modeled_by_invariants": [
+        "TypeOK",
+        "AtMostOneSubmittedResolution",
+        "ResolvedPayloadIsTerminal",
+        "TerminalStateHasResolutionKind",
+        "NoReviewWithoutTestnetBinding",
+        "ResolutionRequiresPriorReview",
+        "DuplicateClientCannotResolveAfterTerminal"
+      ],
+      "severity": "blocking",
+      "status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
+    }
+  ],
+  "coverage_decision": {
+    "claim_scope": "finite client-visible Testnet payload-resolution interleavings",
+    "covered_claim_ids": [
+      "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+    ],
+    "decision": "required",
+    "not_modeled": [
+      "backend atomic single-use implementation",
+      "remote payload service serialization internals",
+      "raw payload JSON or signature bytes",
+      "XRPL mempool, queue, validated-ledger inclusion, or finality"
+    ],
+    "reason": "The approved Testnet model retains blocking replay, duplicate submission, backend atomic single-use, expiry, cancellation, and conflict-handling gaps; therefore payload-resolution concurrency is in scope and an unavailable Apalache lane blocks the Testnet assurance verdict.",
+    "required_by_assumption_ids": [
+      "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+      "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+    ],
+    "unavailable_apalache_blocks_testnet_assurance": true
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "inputs": {
+    "assumptions": {
+      "artifact_cid": "sha256:8c8a821eb8970a0b0635714a23eda7a9420711de7875010a909df2de0a99ec52",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    "claim_trace_map": {
+      "artifact_cid": "sha256:b286dfd3d62fff34aa33f5f49ddcda332476a025c6dc099d2e792af3fc4d636d",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json"
+    }
+  },
+  "missing_assumption_ids": [],
+  "missing_claim_ids": [],
+  "model": {
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "overall_status": "checked_with_unresolved_threat_model_gaps",
+  "production_release_blocked": true,
+  "report_cid": "bafkreicsmp6lcpcfn4c54aqstv5ssgheiungvgfcyefpvteh6x376aw4qi",
+  "schema_version": "xaman-testnet-apalache-report/v1",
+  "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+  "summary": {
+    "all_required_invariants_checked": true,
+    "assumption_count": 2,
+    "checked_invariant_count": 7,
+    "claim_count": 4,
+    "invariant_count": 7,
+    "run_failure_count": 0,
+    "unresolved_required_assumption_count": 2
+  },
+  "task_id": "PORTAL-CXTP-134",
+  "testnet_assurance_blocked": true,
+  "tla_model": {
+    "artifact_cid": "bafkreihpsbfizxdemt77zlbfltajt5zvd7fzgxebiki7anrew2l23uzjg4",
+    "checked_invariants": [
+      "TypeOK",
+      "AtMostOneSubmittedResolution",
+      "ResolvedPayloadIsTerminal",
+      "TerminalStateHasResolutionKind",
+      "NoReviewWithoutTestnetBinding",
+      "ResolutionRequiresPriorReview",
+      "DuplicateClientCannotResolveAfterTerminal"
+    ],
+    "line_count": 215,
+    "module_name": "XamanTestnetPayload",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/tla/XamanTestnetPayload.tla",
+    "required_operators": [
+      "Init",
+      "Fetch",
+      "Review",
+      "Approve",
+      "AcquireResolutionLock",
+      "SignResolve",
+      "DeclineResolve",
+      "ExpireResolve",
+      "CancelResolve",
+      "DuplicateResolveBlocked",
+      "ReplayBlocked",
+      "Next",
+      "Spec",
+      "TypeOK",
+      "AtMostOneSubmittedResolution",
+      "ResolvedPayloadIsTerminal",
+      "TerminalStateHasResolutionKind",
+      "NoReviewWithoutTestnetBinding",
+      "ResolutionRequiresPriorReview",
+      "DuplicateClientCannotResolveAfterTerminal"
+    ],
+    "sha256": "sha256:d8919afb0bd0b91a2e8504b62fef3fbfadc7c329a32b4ebf9ad5855b000570fc"
+  },
+  "unresolved_required_assumptions": [
+    {
+      "description": "Replay, backend atomic single-use, duplicate submission, expiration enforcement, and conflict handling were not exercised by the reviewed trial.",
+      "id": "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+      "required_evidence_to_clear": [
+        "duplicate-submit negative trace",
+        "backend atomic single-use evidence",
+        "expiration enforcement trace"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Decline/refusal, cancellation, and expiry actions appear only as reviewed coverage gaps and are not modeled as successful runtime paths.",
+      "id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "required_evidence_to_clear": [
+        "reviewed decline trace",
+        "reviewed cancel trace",
+        "reviewed expiry trace"
+      ],
+      "status": "BLOCKING"
+    }
+  ]
+}

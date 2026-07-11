@@ -427,17 +427,21 @@ def ensure_project_venv(original_argv: list[str], *, venv_dir: Path, disable_boo
 
 
 def ensure_logic_provers() -> None:
-    """Best-effort install of external provers (Z3/CVC5/Lean/Coq).
+    """Optionally pre-install external provers through the unified installer.
 
     This script is what users commonly run for setup; setup.py hooks do not run
     in all pip install modes (e.g. wheels/PEP517), so we also run the installer here.
 
-    Controlled via env vars (defaults ON):
+    Controlled via env vars (disabled unless explicitly enabled):
     - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS
     - IPFS_DATASETS_PY_AUTO_INSTALL_Z3
     - IPFS_DATASETS_PY_AUTO_INSTALL_CVC5
     - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN
     - IPFS_DATASETS_PY_AUTO_INSTALL_COQ
+    - IPFS_DATASETS_PY_AUTO_INSTALL_APALACHE
+    - IPFS_DATASETS_PY_AUTO_INSTALL_TAMARIN
+    - IPFS_DATASETS_PY_AUTO_INSTALL_MAUDE
+    - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERIF
     - IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI
     """
 
@@ -445,15 +449,15 @@ def ensure_logic_provers() -> None:
         value = os.environ.get(name, default)
         return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
 
-    if not env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "1"):
+    if not env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "0"):
         return
 
-    repo_root = Path(__file__).resolve().parents[2]
-    installer = repo_root / "scripts" / "setup" / "ipfs_prover_installer.py"
-    if not installer.exists():
-        return
-
-    args = [sys.executable, str(installer), "--yes"]
+    args = [
+        sys.executable,
+        "-m",
+        "ipfs_datasets_py.logic.integration.bridges.prover_installer",
+        "--yes",
+    ]
     if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_Z3", "1"):
         args.append("--z3")
     if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_CVC5", "1"):
@@ -462,10 +466,18 @@ def ensure_logic_provers() -> None:
         args.append("--lean")
     if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_COQ", "1"):
         args.append("--coq")
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_APALACHE", "1"):
+        args.append("--apalache")
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_TAMARIN", "1"):
+        args.append("--tamarin")
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_MAUDE", "1"):
+        args.append("--maude")
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERIF", "1"):
+        args.append("--proverif")
     if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI", "1"):
         args.append("--symbolicai")
 
-    print("\n🧠 Installing theorem provers (best-effort)...")
+    print("\nInstalling explicitly requested theorem provers (best-effort)...")
     subprocess.run(args, check=False, text=True)
 
 def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:

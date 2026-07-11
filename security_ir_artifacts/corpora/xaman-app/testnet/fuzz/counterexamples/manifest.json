@@ -1,0 +1,20 @@
+{
+  "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
+  "counterexample_count": 11,
+  "counterexamples": [
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-gap-promoted.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-decline-gap-promoted.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-gap-promoted.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-forged-broadcast-finality.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-imported-production-account.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-payload-material.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-signature-blob.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-resolution.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signing-before-auth.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-submit-result-removed.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-wrong-network.json"
+  ],
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "schema_version": "xaman-testnet-fuzz-counterexample-manifest/v1",
+  "task_id": "PORTAL-CXTP-138"
+}

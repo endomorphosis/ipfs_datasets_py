@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from copy import deepcopy
+from itertools import combinations
 import json
 from pathlib import Path
 import random
@@ -215,9 +216,19 @@ def _mutate_missing_audit(model: SecurityModelIR) -> None:
         principal='principal:exchange_signer',
         critical=True,
     )
-    model.events = [
-        event for event in model.events if event.get('event') != 'audit_logged'
-    ]
+    removed_event_ids = {
+        str(event['id'])
+        for event in model.events
+        if event.get('event') == 'audit_logged' and isinstance(event.get('id'), str)
+    }
+    model.events = [event for event in model.events if event.get('event') != 'audit_logged']
+    # Runtime-trace entries are IR references, not a second copy of events.
+    # Remove only the deleted audit references so the attack model remains
+    # valid and the solver can report the intended missing-audit disproof.
+    for runtime_trace in model.runtime_traces:
+        event_ids = runtime_trace.get('events')
+        if isinstance(event_ids, list):
+            runtime_trace['events'] = [event_id for event_id in event_ids if event_id not in removed_event_ids]
 
 
 def _mutate_multi_asset_conservation_gap(model: SecurityModelIR) -> None:
@@ -689,9 +700,14 @@ def _render_scenario(
     return payload, matched_claims == sorted(expected_claims)
 
 
-def _fuzzed_mutator_names(seed: int, rounds: int) -> list[list[str]]:
+def _fuzzed_mutator_names(
+    seed: int,
+    rounds: int,
+    *,
+    available: list[str] | None = None,
+) -> list[list[str]]:
     rng = random.Random(seed)
-    available = sorted(SCENARIO_REGISTRY)
+    available = sorted(available or SCENARIO_REGISTRY)
     fuzzed: list[list[str]] = []
     for _ in range(rounds):
         if len(available) == 1:
@@ -700,6 +716,39 @@ def _fuzzed_mutator_names(seed: int, rounds: int) -> list[list[str]]:
             width = rng.randint(1, min(2, len(available)))
         fuzzed.append(sorted(rng.sample(available, k=width)))
     return fuzzed
+
+
+def _exhaustive_mutator_names(
+    *,
+    available: list[str],
+    max_mutators: int,
+    max_scenarios: int,
+) -> list[list[str]]:
+    """Enumerate a finite mutation grammar without silently truncating it.
+
+    Single-mutator cases are already included in the named scenario baseline,
+    so this function starts at pairs.  A caller that asks for a larger grammar
+    must either raise ``max_scenarios`` intentionally or reduce the declared
+    bound; a partial enumeration must never be presented as exhaustive.
+    """
+    if max_mutators < 0:
+        raise ValueError('fuzz exhaustive max mutators must be non-negative')
+    if max_mutators > len(available):
+        raise ValueError('fuzz exhaustive max mutators exceeds the available mutation grammar')
+    requested_count = sum(
+        sum(1 for _ in combinations(available, size))
+        for size in range(2, max_mutators + 1)
+    )
+    if requested_count > max_scenarios:
+        raise ValueError(
+            'fuzz exhaustive scenario count exceeds --fuzz-max-scenarios; '
+            'raise the limit explicitly or reduce --fuzz-exhaustive-max-mutators'
+        )
+    return [
+        list(mutators)
+        for size in range(2, max_mutators + 1)
+        for mutators in combinations(available, size)
+    ]
 
 
 def _counterexample_vectors(scenario: dict[str, object]) -> list[dict[str, object]]:
@@ -809,6 +858,21 @@ def main(argv: list[str] | None = None) -> int:
         default=0,
         help='Seed for deterministic fuzzed mutation selection',
     )
+    parser.add_argument(
+        '--fuzz-exhaustive-max-mutators',
+        type=int,
+        default=0,
+        help=(
+            'Exhaustively enumerate every registered mutation combination up '
+            'to this size; named singletons are always already executed'
+        ),
+    )
+    parser.add_argument(
+        '--fuzz-max-scenarios',
+        type=int,
+        default=512,
+        help='Maximum additional exhaustive fuzz scenarios; prevents accidental combinatorial runs',
+    )
     args = parser.parse_args(argv)
     selected_inputs = (
         args.example,
@@ -821,6 +885,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.fuzz_rounds < 0:
         parser.error('--fuzz-rounds must be non-negative')
+    if args.fuzz_exhaustive_max_mutators < 0:
+        parser.error('--fuzz-exhaustive-max-mutators must be non-negative')
+    if args.fuzz_max_scenarios < 0:
+        parser.error('--fuzz-max-scenarios must be non-negative')
 
     if not Z3Runner.is_available():
         print(
@@ -837,15 +905,28 @@ def main(argv: list[str] | None = None) -> int:
     )
     runner = Z3Runner()
 
+    selected_mutators = sorted(args.strategy or SCENARIO_REGISTRY)
     scenario_specs: list[tuple[str, list[str]]] = [
         (strategy_name, [strategy_name])
-        for strategy_name in (args.strategy or sorted(SCENARIO_REGISTRY))
+        for strategy_name in selected_mutators
     ]
     for index, fuzzed_mutators in enumerate(
-        _fuzzed_mutator_names(args.seed, args.fuzz_rounds)
+        _fuzzed_mutator_names(args.seed, args.fuzz_rounds, available=selected_mutators)
     ):
         scenario_specs.append(
             (f'fuzz:{index}:{"+".join(fuzzed_mutators)}', fuzzed_mutators)
+        )
+    try:
+        exhaustive_mutator_sets = _exhaustive_mutator_names(
+            available=selected_mutators,
+            max_mutators=args.fuzz_exhaustive_max_mutators,
+            max_scenarios=args.fuzz_max_scenarios,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
+    for index, exhaustive_mutators in enumerate(exhaustive_mutator_sets):
+        scenario_specs.append(
+            (f'fuzz-exhaustive:{index}:{"+".join(exhaustive_mutators)}', exhaustive_mutators)
         )
 
     rendered_scenarios: list[dict[str, object]] = []
@@ -870,6 +951,25 @@ def main(argv: list[str] | None = None) -> int:
     payload = {
         'model_id': base_model.model_id,
         'seed': args.seed,
+        'input_space': {
+            'kind': 'bounded_registered_mutation_grammar',
+            'registered_mutators': selected_mutators,
+            'named_singleton_count': len(selected_mutators),
+            'random_mutation_rounds': args.fuzz_rounds,
+            'exhaustive_combination_max_mutators': args.fuzz_exhaustive_max_mutators,
+            'exhaustive_combination_count': len(exhaustive_mutator_sets),
+            'exhaustive_max_scenarios': args.fuzz_max_scenarios,
+            'coverage_statement': (
+                'All combinations of the selected registered mutation grammar '
+                f'from size 1 through {args.fuzz_exhaustive_max_mutators} were executed.'
+                if args.fuzz_exhaustive_max_mutators > 0
+                else 'Named singleton mutations plus requested random mutation combinations were executed.'
+            ),
+            'outside_scope': [
+                'Unbounded production inputs and behaviors outside the registered mutation grammar.',
+                'Production code paths that have not been translated into SecurityModelIR facts.',
+            ],
+        },
         'scenarios': rendered_scenarios,
         'summary': {
             'scenario_count': len(rendered_scenarios),

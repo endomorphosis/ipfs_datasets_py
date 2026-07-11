@@ -1,0 +1,137 @@
+{
+  "coverage": {
+    "covered_claim_ids": [
+      "xaman-testnet-claim:network-binding-is-testnet-only",
+      "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "xaman-testnet-claim:review-auth-sequence-observed",
+      "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+    ],
+    "missing_claim_ids": [],
+    "rejected_scope_claim_ids": [
+      "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+    ],
+    "result_policy": {
+      "accepted_kernel_results": [
+        "proved"
+      ],
+      "blocking_assumptions_clearance_required_for_assurance": true,
+      "claim_status_required": "MODELED_WITH_TESTNET_SCOPE",
+      "frozen_claim_membership_required": true,
+      "human_reviewed_evidence_required": true,
+      "independent_kernel_required_for_assurance": true,
+      "model_cid_match_required": true,
+      "rejected_kernel_results": [
+        "counterexample",
+        "incomplete"
+      ],
+      "runtime_equivalence_required_for_assurance": true
+    },
+    "scope_statement": "Lean evidence is accepted only for the Boolean predicates formalized in XamanTestnet.lean. It does not prove native vault cryptography, raw payload semantics, backend single-use, XRPL finality, deployed runtime equivalence, or production security."
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "inputs": {
+    "assumptions": {
+      "artifact_cid": "sha256:8c8a821eb8970a0b0635714a23eda7a9420711de7875010a909df2de0a99ec52",
+      "blocking_assumption_count": 14,
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    "claim_trace_map": {
+      "artifact_cid": "sha256:b286dfd3d62fff34aa33f5f49ddcda332476a025c6dc099d2e792af3fc4d636d",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json"
+    },
+    "reviewed_testnet_plan": {
+      "coq_decision_rule": "Coq is required when the reviewed threat model requires an independent kernel.",
+      "path": "docs/security_verification/xaman_xrpl_testnet_theorem_prover_assurance_plan.md"
+    }
+  },
+  "kernel": {
+    "artifact_cid": "sha256:19e25f364b4bc63e13849eb587cc982c6714d1f74acb0f34bdcd9325316dc60f",
+    "contains_admit": false,
+    "contains_sorry": false,
+    "formalized_invariants": [
+      "testnetNetworkBoundary",
+      "freshAccountBoundary",
+      "observedLifecycleOrder",
+      "auditRedactionBoundary",
+      "formalizedInvariantHolds",
+      "canUseLeanEvidenceForClaim",
+      "canCloseTestnetAssurance"
+    ],
+    "language": "Lean 4",
+    "line_count": 316,
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean",
+    "theorems": [
+      "reject_counterexample_result",
+      "reject_incomplete_result",
+      "reject_not_modeled_claim",
+      "reject_blocking_not_modeled_boundary",
+      "reject_model_cid_mismatch",
+      "reject_claim_outside_frozen_model",
+      "reject_unreviewed_evidence",
+      "reject_wrong_network_key",
+      "reject_wrong_network_id",
+      "reject_non_allowlisted_endpoint",
+      "reject_imported_or_production_account",
+      "reject_account_material_retained",
+      "reject_missing_payload_intake",
+      "reject_missing_review",
+      "reject_missing_auth",
+      "reject_missing_signing_decision",
+      "reject_missing_submit_result",
+      "reject_misordered_lifecycle",
+      "reject_raw_payload_retained",
+      "reject_raw_signature_blob_retained",
+      "reject_redaction_failure",
+      "missing_assumptions_prevent_assurance",
+      "missing_runtime_equivalence_prevents_assurance",
+      "missing_independent_kernel_prevents_assurance"
+    ]
+  },
+  "lean": {
+    "compile": {
+      "command": [
+        "/home/barberb/.elan/bin/lean",
+        "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "",
+      "stdout": ""
+    },
+    "executable": "/home/barberb/.elan/bin/lean",
+    "status": "compiled",
+    "version": ""
+  },
+  "model": {
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "overall_status": "checked_with_scope_limits",
+  "production_release_blocked": true,
+  "report_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+  "schema_version": "xaman-testnet-lean-kernel-report/v1",
+  "security_decision": "LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY",
+  "summary": {
+    "blocking_assumption_count": 14,
+    "covered_claim_count": 4,
+    "formalized_invariant_count": 7,
+    "lean_kernel_checked": true,
+    "missing_claim_count": 0,
+    "rejected_scope_claim_count": 8,
+    "theorem_count": 24
+  },
+  "task_id": "PORTAL-CXTP-136",
+  "testnet_assurance_blocked": true
+}

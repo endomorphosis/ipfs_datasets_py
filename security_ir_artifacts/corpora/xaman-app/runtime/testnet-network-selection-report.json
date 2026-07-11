@@ -1,0 +1,123 @@
+{
+  "artifact_cid": "sha256:601c466c62b85221e158007d0667125889fe0b7e2f27818914b40c9131352dbd",
+  "blocking_gaps": [],
+  "build_provenance_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+  "endpoint_allow_list_decision": {
+    "allow_list_version": "xrpl-public-testnet-2026-07-10",
+    "allowed": true,
+    "allowed_endpoint_count": 2,
+    "matched_endpoint_key": "ripple_altnet_testnet",
+    "matched_endpoint_sha256": "a81289bc29208d10634e2b0c40a94ec0c664f0c3bb1574d742ce8054b7f9abca"
+  },
+  "evidence_inputs": {
+    "build_kit_manifest": {
+      "artifact_cid": "sha256:b036f7221ee476c16a1b817cb1bb26c5c6de71d1ea4e040f875a9b9889422544",
+      "schema_version": "xaman-firebase-disabled-testnet-build/v1",
+      "sha256": "638c63ad73d0dc7756e058c49bf425c52add7588961dc4e85b4802bab359002f",
+      "task_id": "PORTAL-CXTP-119"
+    },
+    "react_native_navigation_compat_overlay": {
+      "package_local_unset_references": 7,
+      "react_text_shadow_node_unset_references": 0,
+      "reviewed_two_reference_replacement_present": true,
+      "sha256": "c7ea6acd4300e8645644facc9f5c31dd8e601d29b890d6b7c0e55fffcd318f99",
+      "task_id": "PORTAL-CXTP-123"
+    },
+    "selection_evidence_sha256": "9c975d2d9d8e0f5e3686c7186e5ddb5ccdca21620d6b40541e11d0f1cbb0518d",
+    "selection_evidence_size_bytes": 612,
+    "server_info_request_sha256": "6a1a5cf3644551cf735838bfa1ada32fe420c979bac41dd497fbc13f229070c3",
+    "server_info_response_sha256": "bfc4e47cbb178e827319d943dd7f6d7eb3d6093b02b2f38ff42058abb5d76ef9",
+    "server_info_response_size_bytes": 1177,
+    "server_info_response_source": "live_websocket_server_info",
+    "testnet_telemetry_report": {
+      "accepted_event_count": 4,
+      "artifact_cid": "sha256:ee11d41c8f6c2d6ca2de0d623ece01d08fcb58fda09d051182c4403908238f1d",
+      "build_provenance_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "firebase_mode": "disabled",
+      "rejected_event_count": 0,
+      "schema_version": "xaman-firebase-disabled-testnet-telemetry/v1",
+      "security_decision": "TESTNET_FIREBASE_DISABLED_TELEMETRY_CAPTURED_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "c43c46cf610b1eea65a4319385c510343a3bf9673a702a28909ab0b8c2ce2fb8",
+      "task_id": "PORTAL-CXTP-120",
+      "telemetry_sink": "duckdb",
+      "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+    }
+  },
+  "fresh_account_boundary": {
+    "account_material_recorded": false,
+    "boundary": "testnet_only_no_imported_or_persisted_account_material",
+    "fresh_account_created": true,
+    "imported_account": false,
+    "production_account": false
+  },
+  "generated_at_utc": "2026-07-10T21:00:00Z",
+  "overall_status": "verified",
+  "production_release_blocked": true,
+  "redaction_boundary": {
+    "account_addresses_recorded": false,
+    "credentials_recorded": false,
+    "payloads_recorded": false,
+    "raw_request_bodies_recorded": false,
+    "raw_server_info_response_recorded": false,
+    "records_only_event_categories_network_key_endpoint_decision_and_digests": true,
+    "seeds_recorded": false,
+    "transaction_blobs_recorded": false
+  },
+  "residual_boundaries": [
+    {
+      "code": "RUNTIME_EQUIVALENCE_NOT_PROVED",
+      "reason": "A Testnet network-selection proof is verifier-only evidence, not production or runtime-equivalence proof."
+    }
+  ],
+  "run_id": "xaman-testnet-network-selection-20260710",
+  "runtime_equivalence_status": "not_proved",
+  "schema_version": "xaman-testnet-network-selection/v1",
+  "security_decision": "TESTNET_NETWORK_SELECTION_VERIFIED_NOT_PRODUCTION_EVIDENCE",
+  "selected_endpoint_source_binding": {
+    "selected_endpoint_key": "ripple_altnet_testnet",
+    "selected_endpoint_sha256": "a81289bc29208d10634e2b0c40a94ec0c664f0c3bb1574d742ce8054b7f9abca",
+    "source_nodes_include_selected_endpoint": true
+  },
+  "selection": {
+    "event_categories": [
+      "deterministic_testnet_local_state",
+      "fresh_emulator_profile",
+      "fresh_testnet_account_boundary",
+      "fresh_testnet_account_created",
+      "xaman_network_selected",
+      "xrpl_server_info_observed"
+    ],
+    "evidence_type": "deterministic_local_state",
+    "fresh_emulator_profile": true,
+    "network_key": "TESTNET"
+  },
+  "source_network_definition": {
+    "blocker": null,
+    "nodes_match_allow_list": true,
+    "source_endpoint_count": 2,
+    "source_endpoint_keys": [
+      "ripple_altnet_testnet",
+      "xrpl_labs_testnet"
+    ],
+    "source_endpoint_sha256": [
+      "4fec7353473e20acda0ecff414da21a36766437c2a79db6332c135233b776d3a",
+      "a81289bc29208d10634e2b0c40a94ec0c664f0c3bb1574d742ce8054b7f9abca"
+    ],
+    "source_network_id": 1,
+    "source_network_key": "TESTNET",
+    "source_sha256": "b8d14c5fb6ced73a57ac038f31fb217c97885cf52613d288131ab0196adabe83",
+    "status": "pass",
+    "testnet_marker_present": true
+  },
+  "task_id": "PORTAL-CXTP-125",
+  "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+  "xrpl_server_info_binding": {
+    "network_id": 1,
+    "network_id_verified": true,
+    "raw_request_body_recorded": false,
+    "raw_response_recorded": false,
+    "request_category": "xrpl_server_info",
+    "request_sha256": "6a1a5cf3644551cf735838bfa1ada32fe420c979bac41dd497fbc13f229070c3",
+    "response_sha256": "bfc4e47cbb178e827319d943dd7f6d7eb3d6093b02b2f38ff42058abb5d76ef9"
+  }
+}

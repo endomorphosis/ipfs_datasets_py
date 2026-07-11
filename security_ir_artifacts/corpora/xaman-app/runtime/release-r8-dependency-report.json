@@ -1,0 +1,371 @@
+{
+  "schema_version": "xaman-release-r8-dependency-report/v1",
+  "task_id": "PORTAL-CXTP-124",
+  "title": "Resolve or formally classify Xaman release R8 ML Kit dependency mismatch",
+  "generated_at_utc": "2026-07-11T08:19:54Z",
+  "status": "resolved_for_release_r8_verifier_build",
+  "decision": "COMPATIBLE_ML_KIT_DEPENDENCIES_RESTORED",
+  "acceptance_summary": {
+    "compatible_mlkit_dependencies_restored": true,
+    "reachability_argument_required_for_original_mlkit_classes": false,
+    "release_variant_built": true,
+    "release_r8_built_without_broad_warning_suppression": true,
+    "testnet_debug_artifact_isolated": true,
+    "production_conclusions_isolated": true
+  },
+  "scope": {
+    "xaman_checkout": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app",
+    "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "variant": "release",
+    "taskboard_path": "docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md",
+    "taskboard_source_line": 832,
+    "primary_plan_document": {
+      "path": "docs/211_SERVICE_NAVIGATION_PORTAL_PLAN.md",
+      "read_status": "not_found_in_repository"
+    },
+    "result_boundaries": [
+      "This report resolves the release R8 dependency mismatch for the pinned verifier checkout only.",
+      "The final APKs were signed with a verifier-only release keystore provided by the temporary verifier init script.",
+      "Google Services and Crashlytics Gradle tasks were disabled only to avoid requiring absent production Firebase secrets in the verifier environment.",
+      "No Testnet debug APK conclusion is imported into this release R8 result.",
+      "No production release-readiness conclusion is derived from this verifier build."
+    ]
+  },
+  "source_hashes": {
+    "android_app_build_gradle_sha256": "afd34e9e4fef16a507b31428c2fbd3da32763e3274ce938a0c11e8fb93f7131e",
+    "android_app_proguard_rules_sha256": "c758e22123561558bdb060b0b0f1ef41a49ad4ff0baa2864dae6588dc6666370",
+    "react_native_camera_build_gradle_sha256": "a2a08b88604f00dc506436f921386fb4f6082358e5a7d7b1a3f4a965127c8e90",
+    "react_native_camera_rn_barcode_detector_java_sha256": "d47a6b2e806184f11e53110b434a01109e25cae4e2fd360df5b810a0a2e6bbf7",
+    "react_native_camera_text_recognizer_async_task_java_sha256": "91deb7489089f31b6c108a3cda3439f38b39a6e786948edc9b00596f10500fe3"
+  },
+  "original_failure": {
+    "build_stage": ":app:minifyReleaseWithR8",
+    "classification": "dependency_graph_mismatch",
+    "missing_classes_reported_before_restoration": [
+      {
+        "class_name": "com.google.mlkit.vision.barcode.Barcode",
+        "referenced_by": [
+          "org.reactnative.barcodedetector.BarcodeFormatUtils",
+          "org.reactnative.barcodedetector.RNBarcodeDetector",
+          "org.reactnative.camera.tasks.BarcodeDetectorAsyncTask"
+        ],
+        "cause": "The release graph selected com.google.mlkit:barcode-scanning:17.2.0, which pulls play-services-mlkit-barcode-scanning:18.3.0; that provider no longer contains the legacy Barcode model class expected by react-native-camera."
+      },
+      {
+        "class_name": "com.google.mlkit.vision.text.TextRecognizerOptions",
+        "referenced_by": [
+          "org.reactnative.camera.tasks.TextRecognizerAsyncTask"
+        ],
+        "cause": "The release graph selected com.google.android.gms:play-services-mlkit-text-recognition:19.0.0 through com.google.mlkit:text-recognition:16.0.0; that provider moved TextRecognizerOptions under the latin package and no longer provides the legacy class expected by react-native-camera."
+      },
+      {
+        "class_name": "com.google.mlkit.vision.common.internal.Detector",
+        "referenced_by": [
+          "restored legacy ML Kit barcode/text providers during the verifier restoration run"
+        ],
+        "cause": "After restoring the barcode and text providers, R8 also needed the legacy vision-common provider that still contains Detector."
+      }
+    ],
+    "generated_missing_rules_assessment": {
+      "broad_dontwarn_suppression_accepted": false,
+      "reason": "R8-generated -dontwarn rules would silence dependency defects without proving the referenced react-native-camera ML Kit paths unreachable."
+    }
+  },
+  "dependency_graph_before_restoration": {
+    "observed_conflicts": [
+      {
+        "module": "com.google.mlkit:barcode-scanning",
+        "react_native_camera_requested": "16.2.0",
+        "app_declared": [
+          "17.1.0",
+          "17.2.0"
+        ],
+        "selected": "17.2.0"
+      },
+      {
+        "module": "com.google.android.gms:play-services-mlkit-text-recognition",
+        "react_native_camera_requested": "16.3.0",
+        "transitive_from_app_text_recognition": "19.0.0",
+        "selected": "19.0.0"
+      },
+      {
+        "module": "com.google.mlkit:vision-common",
+        "legacy_detector_provider": "16.5.0",
+        "selected_before_detector_restoration": "17.3.0"
+      }
+    ],
+    "relevant_xaman_gradle_declarations": [
+      "missingDimensionStrategy 'react-native-camera', 'mlkit'",
+      "com.google.mlkit:common:18.7.0",
+      "com.google.mlkit:barcode-scanning:17.1.0",
+      "com.google.mlkit:barcode-scanning:17.2.0",
+      "com.google.mlkit:vision-common:17.3.0",
+      "com.google.mlkit:text-recognition:16.0.0",
+      "com.google.mlkit:barcode-scanning-common:17.0.0",
+      "com.google.mlkit:face-detection:16.1.5"
+    ],
+    "relevant_react_native_camera_gradle_declarations": [
+      "mlkitImplementation com.google.mlkit:barcode-scanning:16.2.0",
+      "implementation com.google.android.gms:play-services-mlkit-text-recognition:16.3.0",
+      "mlkitImplementation com.google.mlkit:face-detection:16.1.2"
+    ]
+  },
+  "restored_release_runtime_graph": [
+    {
+      "module": "com.google.mlkit:barcode-scanning",
+      "requested_or_declared": [
+        "16.2.0",
+        "17.1.0",
+        "17.2.0"
+      ],
+      "selected_for_verifier_release": "16.2.0"
+    },
+    {
+      "module": "com.google.android.gms:play-services-mlkit-barcode-scanning",
+      "selected_for_verifier_release": "16.2.0"
+    },
+    {
+      "module": "com.google.android.gms:play-services-mlkit-text-recognition",
+      "requested_or_declared": [
+        "16.3.0",
+        "19.0.0"
+      ],
+      "selected_for_verifier_release": "16.3.0"
+    },
+    {
+      "module": "com.google.mlkit:vision-common",
+      "requested_or_declared": [
+        "16.5.0",
+        "17.0.0",
+        "17.2.0",
+        "17.3.0"
+      ],
+      "selected_for_verifier_release": "16.5.0"
+    },
+    {
+      "module": "com.google.mlkit:common",
+      "selected_for_verifier_release": "18.8.0",
+      "note": "This common artifact remained on the graph-selected newer version; R8 succeeded because the removed types were restored by the legacy provider artifacts above."
+    }
+  ],
+  "restoration": {
+    "method": "temporary_verifier_release_init_script_dependency_resolution_strategy",
+    "restored_versions": [
+      {
+        "module": "com.google.mlkit:barcode-scanning",
+        "version": "16.2.0",
+        "reason": "Matches react-native-camera's ML Kit variant request and restores the legacy barcode API surface."
+      },
+      {
+        "module": "com.google.android.gms:play-services-mlkit-barcode-scanning",
+        "version": "16.2.0",
+        "reason": "Provides com.google.mlkit.vision.barcode.Barcode and related scanner classes required by react-native-camera."
+      },
+      {
+        "module": "com.google.android.gms:play-services-mlkit-text-recognition",
+        "version": "16.3.0",
+        "reason": "Provides com.google.mlkit.vision.text.TextRecognizerOptions required by react-native-camera."
+      },
+      {
+        "module": "com.google.mlkit:vision-common",
+        "version": "16.5.0",
+        "reason": "Provides com.google.mlkit.vision.common.internal.Detector after restoring the legacy barcode provider."
+      }
+    ],
+    "no_broad_warning_suppression": true,
+    "r8_missing_rules_file_after_success": {
+      "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/build/outputs/mapping/release/missing_rules.txt",
+      "exists": false
+    },
+    "final_r8_configuration_check": {
+      "configuration_txt_sha256": "b1005a7052523b35c03abfd55f6a6e8cfe8db3c65c8a78f76227c06e62bd5958",
+      "mlkit_dontwarn_entries_found": false,
+      "observed_mlkit_entry": "-keep class com.google.mlkit.vision.common.internal.Detector { *; }"
+    },
+    "non_mlkit_compatibility_overlay": {
+      "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/firebase-disabled-testnet-kit/react-native-navigation-compat/ReactTypefaceUtils.java",
+      "sha256": "c7ea6acd4300e8645644facc9f5c31dd8e601d29b890d6b7c0e55fffcd318f99",
+      "purpose": "Restores the known React Native Navigation ReactTypefaceUtils class required for release R8. This is not part of the ML Kit mismatch."
+    },
+    "tangem_local_dependency_inputs": [
+      {
+        "artifact": "com.github.Tangem.tangem-sdk-android:android:3.7.2",
+        "sha256": "ae26e4e42888fab9965cf820d2402e4fd270015637383d60b51ca1c8e22d9546"
+      },
+      {
+        "artifact": "com.github.Tangem.tangem-sdk-android:core:3.7.2",
+        "sha256": "a8b975060387e0808bbc78cacef377b46a93d54e34fa00f13c3e3d75d4bdc2f2"
+      }
+    ]
+  },
+  "class_presence_evidence": [
+    {
+      "module": "com.google.android.gms:play-services-mlkit-barcode-scanning:16.2.0",
+      "aar_sha256": "2cd37384f19ceb4ff8936668d62e227cb499ae144a4407f5a208e0eebaa709b9",
+      "required_classes_present": [
+        "com/google/mlkit/vision/barcode/Barcode.class",
+        "com/google/mlkit/vision/barcode/Barcode$Address.class",
+        "com/google/mlkit/vision/barcode/Barcode$CalendarDateTime.class",
+        "com/google/mlkit/vision/barcode/Barcode$CalendarEvent.class",
+        "com/google/mlkit/vision/barcode/Barcode$ContactInfo.class",
+        "com/google/mlkit/vision/barcode/Barcode$DriverLicense.class",
+        "com/google/mlkit/vision/barcode/Barcode$Email.class",
+        "com/google/mlkit/vision/barcode/Barcode$GeoPoint.class",
+        "com/google/mlkit/vision/barcode/Barcode$PersonName.class",
+        "com/google/mlkit/vision/barcode/Barcode$Phone.class",
+        "com/google/mlkit/vision/barcode/Barcode$Sms.class",
+        "com/google/mlkit/vision/barcode/Barcode$UrlBookmark.class",
+        "com/google/mlkit/vision/barcode/Barcode$WiFi.class",
+        "com/google/mlkit/vision/barcode/BarcodeScanner.class",
+        "com/google/mlkit/vision/barcode/BarcodeScannerOptions.class",
+        "com/google/mlkit/vision/barcode/BarcodeScanning.class"
+      ]
+    },
+    {
+      "module": "com.google.android.gms:play-services-mlkit-text-recognition:16.3.0",
+      "aar_sha256": "dc3d7e19f17f2a9654108cac9ec5f8e6d029655d69bc3d49f2cddf976f76c9cd",
+      "required_classes_present": [
+        "com/google/mlkit/vision/text/TextRecognizerOptions.class"
+      ]
+    },
+    {
+      "module": "com.google.mlkit:vision-common:16.5.0",
+      "aar_sha256": "dcfe5d33cbeb0480436d5c6d42902fa738a163eb6c0acab081895c908419570a",
+      "required_classes_present": [
+        "com/google/mlkit/vision/common/internal/Detector.class"
+      ]
+    },
+    {
+      "module": "com.google.mlkit:barcode-scanning:16.2.0",
+      "aar_sha256": "c8548f71d68398cab2d27a3397de04c4c9bd4a5b8e3a04bce8a84fae6df31daf",
+      "role": "Coordinates the legacy barcode-scanning dependency set requested by react-native-camera."
+    }
+  ],
+  "build_environment": {
+    "java_home": "/home/barberb/.local/jdks/jdk-17.0.18+8",
+    "android_home": "/home/barberb/lift_coding/.tools/android-sdk",
+    "ci_environment": false,
+    "release_signing": {
+      "type": "verifier_only_release_keystore",
+      "keystore_path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/release-r8-verifier.keystore",
+      "keystore_sha256": "c2db8de29d6c655674916a72a8142917774e207895ff3576aed4395e4b266c6f",
+      "validity_days": 1,
+      "production_signing_claim": false
+    },
+    "disabled_tasks_due_to_absent_production_secrets": [
+      "Google Services processing tasks",
+      "Crashlytics upload/mapping tasks"
+    ],
+    "notes": [
+      "The successful final app:assembleRelease command was run without CI=1 so Xaman's CI debug-signing substitution did not fire.",
+      "The temporary verifier init script did not add generated ML Kit -dontwarn rules."
+    ]
+  },
+  "build_evidence": [
+    {
+      "target": "app:packageRelease",
+      "command": "JAVA_HOME=/home/barberb/.local/jdks/jdk-17.0.18+8 ANDROID_HOME=/home/barberb/lift_coding/.tools/android-sdk ./gradlew app:packageRelease --warning-mode=all --stacktrace --init-script /tmp/tmp.MOkdk0ydMv/xaman-release-r8-dependency-restore-assemble-signed.init.gradle",
+      "result": "success",
+      "duration": "1m 58s",
+      "gradle_summary": "BUILD SUCCESSFUL; 285 actionable tasks: 30 executed, 255 up-to-date",
+      "r8_task_state": ":app:minifyReleaseWithR8 executed",
+      "broad_dontwarn_rules_applied": false
+    },
+    {
+      "target": "app:assembleRelease",
+      "command": "JAVA_HOME=/home/barberb/.local/jdks/jdk-17.0.18+8 ANDROID_HOME=/home/barberb/lift_coding/.tools/android-sdk ./gradlew app:assembleRelease --warning-mode=all --init-script /tmp/tmp.MOkdk0ydMv/xaman-release-r8-dependency-restore-assemble-signed.init.gradle",
+      "result": "success",
+      "duration": "18s",
+      "gradle_summary": "BUILD SUCCESSFUL; 445 actionable tasks: 16 executed, 429 up-to-date",
+      "r8_task_state": ":app:minifyReleaseWithR8 UP-TO-DATE from the successful packageRelease run"
+    }
+  ],
+  "release_mapping_outputs": {
+    "mapping_txt_sha256": "66c18a5f43bc1577c61831921c41932806f30a8232bb2b4d647e0e0c989589dc",
+    "configuration_txt_sha256": "b1005a7052523b35c03abfd55f6a6e8cfe8db3c65c8a78f76227c06e62bd5958",
+    "files": [
+      {
+        "name": "configuration.txt",
+        "size_bytes": 124137,
+        "mtime_local": "2026-07-11T01:16:46.685436712-07:00"
+      },
+      {
+        "name": "mapping.txt",
+        "size_bytes": 60694561,
+        "mtime_local": "2026-07-11T01:16:45.176436666-07:00"
+      },
+      {
+        "name": "seeds.txt",
+        "sha256": "8ccab965137d6f13de861967b17f5e23c057bf0b26d55150be7da2af5d58f296",
+        "size_bytes": 7651300,
+        "mtime_local": "2026-07-11T01:15:50.415434994-07:00"
+      },
+      {
+        "name": "usage.txt",
+        "sha256": "d4ac3e0ae2978d425fe7adf9ee37ec9a41b23bd06e08ca400e52a653a697bfd4",
+        "size_bytes": 4889659,
+        "mtime_local": "2026-07-11T01:16:21.276435936-07:00"
+      }
+    ]
+  },
+  "release_apks": [
+    {
+      "file": "app-universal-release.apk",
+      "type": "UNIVERSAL",
+      "abi": null,
+      "version_code": 30123,
+      "version_name": "4.2.1",
+      "size_bytes": 576500929,
+      "sha256": "5d485fb0e2cf1fb186455e4c3cefeffb4e0c012cdd72479b485302a1e097dfc8"
+    },
+    {
+      "file": "app-arm64-v8a-release.apk",
+      "type": "ONE_OF_MANY",
+      "abi": "arm64-v8a",
+      "version_code": 3175851,
+      "version_name": "4.2.1",
+      "size_bytes": 189269112,
+      "sha256": "e4a1c142ed65f4ff230dfc8b2341fe79bffe13fef38cdffd7d0e5a13c8056fe4"
+    },
+    {
+      "file": "app-armeabi-v7a-release.apk",
+      "type": "ONE_OF_MANY",
+      "abi": "armeabi-v7a",
+      "version_code": 1078699,
+      "version_name": "4.2.1",
+      "size_bytes": 158775468,
+      "sha256": "fa36681dd5259c7f57186150ed73c98ba569cff0a31d723ec70f50d4a0fd0215"
+    },
+    {
+      "file": "app-x86-release.apk",
+      "type": "ONE_OF_MANY",
+      "abi": "x86",
+      "version_code": 2127275,
+      "version_name": "4.2.1",
+      "size_bytes": 177478192,
+      "sha256": "6cb9b856cf5d6ed6dc941620fb8bca67e4c9e0515b7e6ae4e768ee884f8f8185"
+    },
+    {
+      "file": "app-x86_64-release.apk",
+      "type": "ONE_OF_MANY",
+      "abi": "x86_64",
+      "version_code": 4224427,
+      "version_name": "4.2.1",
+      "size_bytes": 190104596,
+      "sha256": "51766dcbcb4965c338c515aca06e283ede7466e9f030d7c2bd8c604d8d73a35b"
+    }
+  ],
+  "output_metadata": {
+    "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/build/outputs/apk/release/output-metadata.json",
+    "sha256": "a92ad6ac0a69754eb95934bd8e2bdd7998bd888a6d50ec173f25b8b688560efa",
+    "size_bytes": 1512
+  },
+  "isolation": {
+    "testnet_debug_artifact_reused": false,
+    "testnet_debug_artifact_conclusion_changed": false,
+    "production_release_claimed": false,
+    "production_firebase_configuration_used": false,
+    "production_signing_used": false,
+    "reason": "The release result uses a pinned verifier checkout and verifier-only overlays to prove dependency compatibility through R8. It does not assert production signing, production Firebase configuration, native runtime equivalence, or any conclusion about the existing Testnet debug artifact."
+  }
+}

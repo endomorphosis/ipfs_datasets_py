@@ -130,6 +130,13 @@ def build_coq_solver_lane_report(
     proof_payload = _load_json(proof_report)
 
     coqc = shutil.which('coqc')
+    if coqc is None and coq_kernel.is_file():
+        from ipfs_datasets_py.logic.external_provers.lazy_installer import ensure_prover_executable
+
+        coqc = ensure_prover_executable(
+            'coq',
+            reason='Xaman Coq solver-lane kernel execution',
+        )
     coqtop = shutil.which('coqtop')
     opam = shutil.which('opam')
     blockers: list[dict[str, str]] = []

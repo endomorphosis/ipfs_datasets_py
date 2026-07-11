@@ -2,6 +2,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[4]
@@ -146,3 +148,73 @@ def test_disproof_suite_finds_expected_counterexamples_and_fuzzed_mutations(
     ) in vector_keys
     assert all(vector['status'] == 'DISPROVED' for vector in vectors)
     assert all(isinstance(vector['counterexample'], dict) for vector in vectors)
+    assert payload['input_space']['kind'] == 'bounded_registered_mutation_grammar'
+    assert payload['input_space']['random_mutation_rounds'] == 2
+    assert payload['input_space']['exhaustive_combination_count'] == 0
+
+
+def test_disproof_suite_exhaustively_covers_declared_bounded_mutator_pairs(
+    tmp_path: Path,
+) -> None:
+    module = _load_script_module()
+    output_path = tmp_path / 'exhaustive-disproof-report.json'
+
+    assert (
+        module.main(
+            [
+                '--example',
+                '--strategy',
+                'unauthorized_withdrawal_policy_gap',
+                '--strategy',
+                'double_spend_reservation_gap',
+                '--fuzz-exhaustive-max-mutators',
+                '2',
+                '--out',
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(output_path.read_text(encoding='utf-8'))
+    input_space = payload['input_space']
+    assert input_space['registered_mutators'] == [
+        'double_spend_reservation_gap',
+        'unauthorized_withdrawal_policy_gap',
+    ]
+    assert input_space['named_singleton_count'] == 2
+    assert input_space['exhaustive_combination_max_mutators'] == 2
+    assert input_space['exhaustive_combination_count'] == 1
+    assert input_space['coverage_statement'] == (
+        'All combinations of the selected registered mutation grammar from size 1 through 2 were executed.'
+    )
+    scenarios = {scenario['name']: scenario for scenario in payload['scenarios']}
+    exhaustive = scenarios['fuzz-exhaustive:0:double_spend_reservation_gap+unauthorized_withdrawal_policy_gap']
+    assert exhaustive['matched_claims'] == [
+        'no_over_reserved_internal_account',
+        'no_unauthorized_withdrawal',
+    ]
+
+
+def test_disproof_suite_refuses_partial_exhaustive_enumeration(tmp_path: Path) -> None:
+    module = _load_script_module()
+
+    with pytest.raises(SystemExit) as error:
+        module.main(
+            [
+                '--example',
+                '--strategy',
+                'unauthorized_withdrawal_policy_gap',
+                '--strategy',
+                'double_spend_reservation_gap',
+                '--fuzz-exhaustive-max-mutators',
+                '2',
+                '--fuzz-max-scenarios',
+                '0',
+                '--out',
+                str(tmp_path / 'must-not-exist.json'),
+            ]
+        )
+
+    assert error.value.code == 2
+    assert not (tmp_path / 'must-not-exist.json').exists()

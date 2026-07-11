@@ -320,15 +320,20 @@ setup(
         'ffmpeg-python>=0.2.0',
         # Keep OpenCV on the NumPy 1.x-compatible line used by the rest of this package.
         'opencv-python>=4.8.1.78,<4.12.0',
-        # SymbolicAI is imported as `symai`; keep it in base installs so the
-        # logic/proof stack does not silently drop to fallback mode.
-        'symbolicai>=1.14.0,<2.0.0',
     ],
     extras_require={
         # Logic integration / legal reasoning
         # SymbolicAI is imported as `symai` but distributed on PyPI as `symbolicai`.
         'logic': [
             'nltk>=3.8.1',
+            'symbolicai>=1.14.0,<2.0.0',
+        ],
+        # Python bindings for theorem-prover integrations. Apalache, Tamarin,
+        # Maude, Lean, Coq, and ProVerif are installed lazily and user-locally
+        # only when their execution path is requested.
+        'theorem-provers': [
+            'z3-solver>=4.12.0,<5.0.0',
+            'cvc5>=1.0.0,<2.0.0',
             'symbolicai>=1.14.0,<2.0.0',
         ],
         # API server extras for the logic module (FastAPI + uvicorn for api_server.py)

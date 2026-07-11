@@ -1,16 +1,29 @@
+"""Tests for PORTAL-CXTP-140 reconciled Apalache solver lane."""
+
 from __future__ import annotations
 
 import importlib.util
 import json
-import stat
 from pathlib import Path
+
+from ipfs_datasets_py.logic.security_models.crypto_exchange.ir.cid import calculate_artifact_cid
+from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_tla_workflow import (
+    APALACHE_REPORT_PATH,
+    APALACHE_SOLVER_LANE_REPORT_PATH,
+    CHECKED_INVARIANTS,
+    REQUIRED_APALACHE_VERSION,
+    SCOPE_STATEMENT,
+    TASK_ID,
+    TLA_ARTIFACT_PATH,
+    build_apalache_solver_lane_report,
+)
 
 
 ROOT = Path(__file__).resolve().parents[4]
 SCRIPT_PATH = ROOT / 'scripts/ops/security_verification/probe_apalache_solver_lane.py'
-REPORT_PATH = ROOT / 'security_ir_artifacts/environment/apalache-solver-lane-report.json'
-TLA_MODEL_PATH = ROOT / 'security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla'
-TLA_REPORT_PATH = ROOT / 'security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json'
+TLA_MODEL_PATH = ROOT / TLA_ARTIFACT_PATH
+TLA_REPORT_PATH = ROOT / APALACHE_REPORT_PATH
+REPORT_PATH = ROOT / APALACHE_SOLVER_LANE_REPORT_PATH
 DOC_PATH = ROOT / 'docs/security_verification/apalache_tla_solver_lane.md'
 
 
@@ -26,60 +39,60 @@ def _json(path: Path) -> dict:
     return json.loads(path.read_text(encoding='utf-8'))
 
 
-def _fake_executable(directory: Path, name: str, output: str = 'apalache fixture') -> Path:
-    executable = directory / name
-    executable.write_text(
-        '#!/bin/sh\n'
-        f'printf "%s\\n" "{output}"\n',
-        encoding='utf-8',
-    )
-    executable.chmod(executable.stat().st_mode | stat.S_IXUSR)
-    return executable
+def _cid_without(payload: dict, key: str) -> str:
+    return calculate_artifact_cid({item_key: item for item_key, item in payload.items() if item_key != key})
 
 
-def test_apalache_solver_lane_probe_blocks_when_solver_is_missing() -> None:
+def test_persisted_apalache_solver_lane_report_reuses_xaman_tla_evidence() -> None:
+    lane = _json(REPORT_PATH)
+    tla_report = _json(TLA_REPORT_PATH)
+    tla_sha = tla_report['tla_model']['sha256']
+
+    assert lane['task_id'] == TASK_ID
+    assert lane['schema_version'] == 'crypto-exchange-apalache-solver-lane-report/v1'
+    assert lane['depends_on'] == ['PORTAL-CXTP-071', 'PORTAL-CXTP-091']
+    assert lane['scope']['statement'] == SCOPE_STATEMENT
+    assert lane['tla_model']['path'] == TLA_ARTIFACT_PATH
+    assert lane['tla_model']['sha256'] == tla_sha
+    assert lane['tla_model']['generator_matches_checked_source'] is True
+    assert lane['xaman_tla_report']['path'] == APALACHE_REPORT_PATH
+    assert lane['xaman_tla_report']['reported_tla_sha256'] == tla_sha
+    assert lane['xaman_tla_report']['source_matches_report'] is True
+    assert lane['xaman_tla_report']['scope_statement'] == SCOPE_STATEMENT
+    assert lane['artifact_cid'] == _cid_without(lane, 'artifact_cid')
+
+    assert lane['selected_executable']['version'] == REQUIRED_APALACHE_VERSION
+    assert lane['model_check']['version'] == REQUIRED_APALACHE_VERSION
+    assert lane['model_check']['version_output'] == REQUIRED_APALACHE_VERSION
+    assert lane['model_check']['checked_invariants'] == list(CHECKED_INVARIANTS)
+    assert lane['model_check']['runs'] == tla_report['apalache']['runs']
+    assert lane['summary']['model_check_passed'] is True
+    assert lane['summary']['source_reconciled'] is True
+    assert lane['summary']['report_source_bound'] is True
+    assert lane['summary']['scope_statement'] == SCOPE_STATEMENT
+    assert lane['overall_status'] == 'ready_bounded_model_only'
+    assert lane['security_decision'] == 'APALACHE_0583_BOUNDED_MODEL_OUTPUT_BOUND'
+    assert lane['blockers'] == []
+
+
+def test_probe_builder_reports_ready_from_persisted_evidence() -> None:
     module = _module()
-
-    report = module.build_apalache_solver_lane_report(repo_root=ROOT)
-
-    codes = {blocker['code'] for blocker in report['blockers']}
-    assert report['task_id'] == 'PORTAL-CXTP-091'
-    assert report['schema_version'] == 'crypto-exchange-apalache-solver-lane-report/v1'
-    assert report['overall_status'] == 'blocked_optional_lane'
-    assert report['security_decision'] == 'BLOCK_APALACHE_SOLVER_LANE_UNAVAILABLE'
-    assert 'APALACHE_EXECUTABLE_MISSING' in codes
-    assert report['summary']['tla_model_present'] is True
-    assert report['summary']['model_check_passed'] is False
-    assert report['production_release_blocked_by_apalache_lane'] is True
-    assert report['artifact_cid'].startswith('sha256:')
-
-
-def test_apalache_solver_lane_can_report_ready_with_fake_checker(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    module = _module()
-    bin_dir = tmp_path / 'bin'
-    bin_dir.mkdir()
-    _fake_executable(bin_dir, 'apalache-mc', 'apalache version fixture')
-    monkeypatch.setenv('PATH', bin_dir.as_posix())
 
     report = module.build_apalache_solver_lane_report(
         repo_root=ROOT,
         tla_model_path=TLA_MODEL_PATH,
         tla_report_path=TLA_REPORT_PATH,
-        run_model_check=True,
+        run_model_check=False,
     )
 
-    assert report['overall_status'] == 'ready'
-    assert report['security_decision'] == 'APALACHE_SOLVER_LANE_READY'
-    assert report['summary']['apalache_present'] is True
-    assert report['summary']['model_check_run'] is True
+    persisted = _json(REPORT_PATH)
+    assert report['overall_status'] == persisted['overall_status']
+    assert report['security_decision'] == persisted['security_decision']
+    assert report['model_check']['runs'] == persisted['model_check']['runs']
     assert report['summary']['model_check_passed'] is True
-    assert report['blockers'] == []
 
 
-def test_apalache_solver_lane_cli_writes_report(tmp_path: Path) -> None:
+def test_probe_cli_writes_reconciled_lane_report(tmp_path: Path) -> None:
     module = _module()
     out = tmp_path / 'apalache-solver-lane-report.json'
 
@@ -87,27 +100,39 @@ def test_apalache_solver_lane_cli_writes_report(tmp_path: Path) -> None:
 
     assert exit_code == 0
     payload = _json(out)
-    assert payload['task_id'] == 'PORTAL-CXTP-091'
-    assert payload['overall_status'] in {'ready', 'blocked_optional_lane'}
+    assert payload['task_id'] == TASK_ID
+    assert payload['overall_status'] == 'ready_bounded_model_only'
+    assert payload['security_decision'] == 'APALACHE_0583_BOUNDED_MODEL_OUTPUT_BOUND'
 
 
-def test_persisted_apalache_solver_lane_report_is_fail_closed() -> None:
-    report = _json(REPORT_PATH)
+def test_lane_builder_blocks_when_checked_source_drifts_from_generator() -> None:
+    tla_report = _json(TLA_REPORT_PATH)
+    source = TLA_MODEL_PATH.read_text(encoding='utf-8')
 
-    assert report['task_id'] == 'PORTAL-CXTP-091'
-    assert report['overall_status'] == 'blocked_optional_lane'
-    assert report['security_decision'] == 'BLOCK_APALACHE_SOLVER_LANE_UNAVAILABLE'
-    assert report['summary']['blocker_count'] >= 1
-    assert report['summary']['tla_model_present'] is True
-    assert report['model_check']['status'] == 'not-run'
-    assert report['xaman_tla_report']['overall_status'] == 'blocked_optional_lane'
+    lane = build_apalache_solver_lane_report(
+        repo_root=ROOT,
+        tla_source=source + '\\* drift\\n',
+        xaman_tla_report=tla_report,
+        apalache_executable=tla_report['apalache']['executable'],
+        apalache_version=tla_report['apalache']['version_output'],
+        apalache_runs=tla_report['apalache']['runs'],
+    )
+
+    blocker_codes = {blocker['code'] for blocker in lane['blockers']}
+    assert 'TLA_GENERATOR_SOURCE_MISMATCH' in blocker_codes
+    assert 'XAMAN_TLA_REPORT_SOURCE_SHA_MISMATCH' in blocker_codes
+    assert lane['overall_status'] == 'blocked_reconciliation'
+    assert lane['security_decision'] == 'BLOCK_APALACHE_TLA_RECONCILIATION'
+    assert lane['summary']['model_check_passed'] is False
 
 
-def test_apalache_solver_lane_documentation_includes_remediation_and_scope() -> None:
+def test_apalache_solver_lane_documentation_includes_evidence_and_scope() -> None:
     doc = DOC_PATH.read_text(encoding='utf-8')
 
-    assert 'PORTAL-CXTP-091' in doc
-    assert 'blocked_optional_lane' in doc
-    assert 'SigningGateInvariant' in doc
-    assert 'cs install apalache' in doc
+    assert TASK_ID in doc
+    assert TLA_ARTIFACT_PATH in doc
+    assert APALACHE_REPORT_PATH in doc
+    assert REQUIRED_APALACHE_VERSION in doc
+    assert SCOPE_STATEMENT in doc
+    assert 'APALACHE_0583_BOUNDED_MODEL_OUTPUT_BOUND' in doc
     assert 'not a proof' in doc

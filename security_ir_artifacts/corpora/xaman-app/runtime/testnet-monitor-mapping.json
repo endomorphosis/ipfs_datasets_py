@@ -1,0 +1,523 @@
+{
+  "schema_version": "xaman-testnet-monitor-mapping/v1",
+  "task_id": "PORTAL-CXTP-122",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "overall_status": "mapped_with_gaps_not_production_evidence",
+  "security_decision": "TESTNET_TELEMETRY_MAPPED_TO_RUNTIME_MONITORS_WITH_GAPS_NOT_PRODUCTION_OR_RUNTIME_EQUIVALENCE_EVIDENCE",
+  "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+  "production_release_blocked": true,
+  "runtime_equivalence_status": "not_proved",
+  "mapping_scope": {
+    "network": "XRPL_TESTNET",
+    "network_id": 1,
+    "telemetry_boundary": "approved_redacted_categorical_public_testnet_only",
+    "verifier_artifact_boundary": "debug_verifier_apk_only",
+    "firebase_boundary": "firebase_js_stubbed_only_native_firebase_packaging_present",
+    "real_assets_allowed": false,
+    "production_usable": false
+  },
+  "source_evidence": [
+    {
+      "artifact_cid": "sha256:af47ba043c89c6d7971ed9f4a16f31c90c5fef572ffed84e70632ef38c13221c",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json",
+      "role": "runtime_monitor_baseline",
+      "schema_version": "xaman-runtime-trace-report/v1",
+      "sha256": "d63ce5376265e6de3e068a5d1dbbbaea0c1bd4f3b77c58086218f6e3fd2fd46c",
+      "task_id": "PORTAL-CXTP-074"
+    },
+    {
+      "artifact_cid": "sha256:ee11d41c8f6c2d6ca2de0d623ece01d08fcb58fda09d051182c4403908238f1d",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-telemetry-report.json",
+      "role": "approved_redacted_firebase_stub_telemetry",
+      "schema_version": "xaman-firebase-disabled-testnet-telemetry/v1",
+      "security_decision": "TESTNET_FIREBASE_DISABLED_TELEMETRY_CAPTURED_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "c43c46cf610b1eea65a4319385c510343a3bf9673a702a28909ab0b8c2ce2fb8",
+      "task_id": "PORTAL-CXTP-120"
+    },
+    {
+      "artifact_cid": "sha256:30cfd9e40195fb837a646a45f4bce600928a417e7278c6232ed6396f5d52c5c3",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-device-trial-report.json",
+      "role": "approved_public_testnet_device_trial_boundary",
+      "schema_version": "xaman-testnet-device-trial/v1",
+      "security_decision": "TESTNET_DEVICE_TRIAL_EXECUTED_JS_FIREBASE_STUBBED_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "79c0f0ab40d8ef2658254a0c784e2153d67eb72b452ef660264818cd437171ca",
+      "task_id": "PORTAL-CXTP-121"
+    },
+    {
+      "artifact_cid": "sha256:601c466c62b85221e158007d0667125889fe0b7e2f27818914b40c9131352dbd",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-network-selection-report.json",
+      "role": "approved_redacted_testnet_network_selection",
+      "schema_version": "xaman-testnet-network-selection/v1",
+      "security_decision": "TESTNET_NETWORK_SELECTION_VERIFIED_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "dad91f0a1e0b02bf698ef557e460d6f188ef3a4f4e3eb856fb7a84cfe2fbaba0",
+      "task_id": "PORTAL-CXTP-125"
+    },
+    {
+      "artifact_cid": "sha256:d69014363ca696757b7673bc8cd22b50a4d5a3628df43500650587d4a6237ee3",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+      "role": "approved_redacted_testnet_transaction_lifecycle",
+      "schema_version": "xaman-testnet-transaction-lifecycle-trial/v1",
+      "security_decision": "TESTNET_TRANSACTION_LIFECYCLE_REVIEWED_WITH_COVERAGE_GAPS_NOT_PRODUCTION_EVIDENCE",
+      "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36",
+      "task_id": "PORTAL-CXTP-130"
+    }
+  ],
+  "admission_rules": {
+    "accepted_sources_only": true,
+    "required_redaction": "raw_material_recorded_false_or_digest_only",
+    "allowed_event_material": [
+      "event_category",
+      "action_name",
+      "categorical_outcome",
+      "ordinal",
+      "source_sha256",
+      "redaction_sha256",
+      "reviewer_note_sha256",
+      "aggregate_count",
+      "network_key",
+      "endpoint_key",
+      "endpoint_sha256",
+      "request_response_sha256",
+      "apk_sha256",
+      "file_sha256"
+    ],
+    "rejected_material": [
+      "seeds",
+      "private_keys",
+      "passcodes",
+      "credentials",
+      "bearer_or_jwt_tokens",
+      "account_addresses",
+      "raw_payload_json",
+      "transaction_blobs",
+      "signed_transactions",
+      "raw_xrpl_endpoint_urls",
+      "raw_request_bodies",
+      "raw_response_bodies",
+      "firebase_event_attributes"
+    ],
+    "wallet_or_xrpl_activity_inferred_from_firebase_stub_events": false
+  },
+  "approved_redacted_events": {
+    "firebase_stub_events": [
+      {
+        "category": "firebase_disabled",
+        "event_name": "messaging_operation",
+        "outcome": "stubbed",
+        "raw_attributes_recorded": false,
+        "source_report": "testnet-device-trial-report.json"
+      },
+      {
+        "category": "firebase_disabled",
+        "event_name": "firebase_analytics_operation",
+        "outcome": "stubbed",
+        "raw_attributes_recorded": false,
+        "source_report": "testnet-device-trial-report.json"
+      },
+      {
+        "category": "firebase_disabled",
+        "event_name": "messaging_has_permission",
+        "outcome": "stubbed",
+        "raw_attributes_recorded": false,
+        "source_report": "testnet-device-trial-report.json"
+      },
+      {
+        "category": "firebase_disabled",
+        "event_name": "firebase_analytics_operation",
+        "outcome": "stubbed",
+        "raw_attributes_recorded": false,
+        "source_report": "testnet-device-trial-report.json"
+      }
+    ],
+    "network_selection_events": [
+      {
+        "category": "deterministic_testnet_local_state",
+        "outcome": "observed",
+        "raw_material_recorded": false,
+        "source_report": "testnet-network-selection-report.json"
+      },
+      {
+        "category": "fresh_emulator_profile",
+        "outcome": "observed",
+        "raw_material_recorded": false,
+        "source_report": "testnet-network-selection-report.json"
+      },
+      {
+        "category": "fresh_testnet_account_boundary",
+        "outcome": "observed",
+        "raw_material_recorded": false,
+        "source_report": "testnet-network-selection-report.json"
+      },
+      {
+        "category": "fresh_testnet_account_created",
+        "outcome": "observed",
+        "raw_material_recorded": false,
+        "source_report": "testnet-network-selection-report.json"
+      },
+      {
+        "category": "xaman_network_selected",
+        "outcome": "TESTNET",
+        "raw_material_recorded": false,
+        "source_report": "testnet-network-selection-report.json"
+      },
+      {
+        "category": "xrpl_server_info_observed",
+        "network_id": 1,
+        "outcome": "network_id_verified",
+        "raw_material_recorded": false,
+        "request_sha256": "6a1a5cf3644551cf735838bfa1ada32fe420c979bac41dd497fbc13f229070c3",
+        "response_sha256": "bfc4e47cbb178e827319d943dd7f6d7eb3d6093b02b2f38ff42058abb5d76ef9",
+        "source_report": "testnet-network-selection-report.json"
+      }
+    ],
+    "transaction_lifecycle_events": [
+      {
+        "action": "payload_intake",
+        "category": "payload_intake",
+        "ordinal": 1,
+        "outcome": "accepted",
+        "raw_material_recorded": false,
+        "redaction_sha256": "96116668f11401072b8489485259abcb2e56466a7705d41e15e95b5408c5ca8b",
+        "source_kind": "reviewed_ui",
+        "source_report": "testnet-transaction-trial-report.json",
+        "source_sha256": "fbca32456147129349901d0cbe8a3d9c3160d96b5261a4d4b34d4df2054c78be"
+      },
+      {
+        "action": "review",
+        "category": "payload_review",
+        "ordinal": 2,
+        "outcome": "reviewed",
+        "raw_material_recorded": false,
+        "redaction_sha256": "70651242c2e8b8588411fe35a71beb63a10aedcacdf6c972f79d3e0f02b1e610",
+        "source_kind": "reviewed_ui",
+        "source_report": "testnet-transaction-trial-report.json",
+        "source_sha256": "984e8306a11b4e9fccd1cbc1816bcce6b8d02bb16c396bab6c0a6c5f2d78b8c4"
+      },
+      {
+        "action": "auth_decision",
+        "category": "auth_decision",
+        "ordinal": 3,
+        "outcome": "authorized",
+        "raw_material_recorded": false,
+        "redaction_sha256": "4005b055b666f4f296fdab466d2c71b96be420d1401271b72675b63e2a3e6927",
+        "source_kind": "reviewed_ui",
+        "source_report": "testnet-transaction-trial-report.json",
+        "source_sha256": "29c9e094bc0d997e539918cb3c65927a213eb382404a8872cba4d8af85f7cc8e"
+      },
+      {
+        "action": "signing_decision",
+        "category": "signing_decision",
+        "ordinal": 4,
+        "outcome": "signed",
+        "raw_material_recorded": false,
+        "redaction_sha256": "480b1622ba935f6b49feab2f92b9caa5a10868c14c8420780896ccb22f1642f5",
+        "source_kind": "reviewed_ui",
+        "source_report": "testnet-transaction-trial-report.json",
+        "source_sha256": "f6d5656a0c83728b06fdc96e138b169115a9cc97ed607f970824bb019e340e66"
+      },
+      {
+        "action": "submit_attempt",
+        "category": "submit_attempt",
+        "ordinal": 5,
+        "outcome": "submitted",
+        "raw_material_recorded": false,
+        "redaction_sha256": "223765be8420ebaca78009f4c1ef4aba4749c2db7c53fe67b11840b745bb1368",
+        "source_kind": "reviewed_ui",
+        "source_report": "testnet-transaction-trial-report.json",
+        "source_sha256": "e0f3362055b2e4aa0dceaf1781d45bd3b4af5a8b731bd8c4eddf7879774477c4"
+      },
+      {
+        "action": "submit_result",
+        "category": "submit_result",
+        "ordinal": 6,
+        "outcome": "succeeded",
+        "raw_material_recorded": false,
+        "redaction_sha256": "4068f7fe654e7901b0a3bb7ad05d960206276d0efcf7cfdfb30755afc02f343b",
+        "source_kind": "reviewed_ui",
+        "source_report": "testnet-transaction-trial-report.json",
+        "source_sha256": "93ab4d1852d7b8242ae6fc6b30463dc2858c515d71d1a744f5aa58725a1d313f"
+      },
+      {
+        "action": "reconnect",
+        "category": "reconnect",
+        "ordinal": 7,
+        "outcome": "reconnected",
+        "raw_material_recorded": false,
+        "redaction_sha256": "e4430c84025a6f297c1fdf81c2e35804e52efbd0c12110f0b9ae3193c3868331",
+        "source_kind": "reviewed_ui",
+        "source_report": "testnet-transaction-trial-report.json",
+        "source_sha256": "7f4d1f75434f3d52f0afef2cd3bc64d998713abc27db055f9a3ef86a2664a086"
+      },
+      {
+        "action": "network_switch",
+        "category": "network_switch",
+        "ordinal": 8,
+        "outcome": "switched_to_testnet",
+        "raw_material_recorded": false,
+        "redaction_sha256": "6e1137d504a93d5f242ca1dae9802aced9c81bb87e7957d16a29d3398d68925a",
+        "source_kind": "reviewed_ui",
+        "source_report": "testnet-transaction-trial-report.json",
+        "source_sha256": "6c7e93add2a617b4c29678631f1628ba0f0a2445b069a91b26f00215306800eb"
+      }
+    ]
+  },
+  "monitor_mappings": [
+    {
+      "category": "payload_intake",
+      "monitor_fact_id": "xaman-runtime:monitor:payload-intake-routes-to-review",
+      "mapping_status": "observed_testnet_categorical",
+      "mapped_events": [
+        {
+          "action": "payload_intake",
+          "category": "payload_intake",
+          "outcome": "accepted",
+          "source_report": "testnet-transaction-trial-report.json"
+        }
+      ],
+      "gaps": [
+        "Raw payload JSON, digest-to-payload binding, and payload semantic validation were not recorded."
+      ],
+      "proof_effect": "supports_testnet_monitor_projection_only"
+    },
+    {
+      "category": "review",
+      "monitor_fact_id": "xaman-runtime:monitor:review-ui-is-source-modeled",
+      "mapping_status": "observed_testnet_categorical",
+      "mapped_events": [
+        {
+          "action": "review",
+          "category": "payload_review",
+          "outcome": "reviewed",
+          "source_report": "testnet-transaction-trial-report.json"
+        }
+      ],
+      "gaps": [
+        "The display content and raw payload fields are not present in the redacted evidence."
+      ],
+      "proof_effect": "supports_testnet_monitor_projection_only"
+    },
+    {
+      "category": "auth",
+      "monitor_fact_id": "xaman-runtime:monitor:auth-flows-have-e2e-and-wallet-model-hooks",
+      "mapping_status": "partial_observed_testnet_categorical",
+      "mapped_events": [
+        {
+          "action": "auth_decision",
+          "category": "auth_decision",
+          "outcome": "authorized",
+          "source_report": "testnet-transaction-trial-report.json"
+        },
+        {
+          "category": "fresh_testnet_account_boundary",
+          "outcome": "observed",
+          "source_report": "testnet-network-selection-report.json"
+        },
+        {
+          "category": "fresh_testnet_account_created",
+          "outcome": "observed",
+          "source_report": "testnet-network-selection-report.json"
+        }
+      ],
+      "gaps": [
+        "No passcode, biometric, secure-enclave, vault-key, or native authentication transcript was recorded.",
+        "Imported-account and production-account auth paths are absent by design."
+      ],
+      "proof_effect": "supports_testnet_monitor_projection_only"
+    },
+    {
+      "category": "signing",
+      "monitor_fact_id": "xaman-runtime:monitor:signing-has-wallet-payload-and-xrpl-hooks",
+      "mapping_status": "partial_observed_testnet_categorical",
+      "mapped_events": [
+        {
+          "action": "signing_decision",
+          "category": "signing_decision",
+          "outcome": "signed",
+          "source_report": "testnet-transaction-trial-report.json"
+        }
+      ],
+      "gaps": [
+        "No signature bytes, signed transaction blob, native vault cryptographic output, or digest-to-signed-byte proof was recorded."
+      ],
+      "proof_effect": "supports_testnet_monitor_projection_only"
+    },
+    {
+      "category": "rejection",
+      "monitor_fact_id": "xaman-runtime:monitor:rejection-and-expiration-are-source-modeled",
+      "mapping_status": "gap_not_observed",
+      "mapped_events": [],
+      "gaps": [
+        {
+          "action": "decline",
+          "category": "decline",
+          "reason_code": "not_exercised_in_reviewed_trial",
+          "reviewer_note_sha256": "314a4abaab2d00c11cc1d563acbd39bd7c470504f007aaa7760705e6ba20943b"
+        },
+        "Backend rejection patching and refusal propagation were not observed."
+      ],
+      "proof_effect": "gap_only_no_security_claim_discharged"
+    },
+    {
+      "category": "expiration",
+      "monitor_fact_id": "xaman-runtime:monitor:expiration-replay-controls-are-source-modeled",
+      "mapping_status": "gap_not_observed",
+      "mapped_events": [],
+      "gaps": [
+        {
+          "action": "expiry",
+          "category": "expiry",
+          "reason_code": "not_exercised_in_reviewed_trial",
+          "reviewer_note_sha256": "3d4702552580ee2cf5372f4f73df605d74767d51078fd77e119284ee5154c1f1"
+        },
+        "Resolved-at checks, duplicate submit handling, backend atomic single-use, and replay controls were not observed."
+      ],
+      "proof_effect": "gap_only_no_security_claim_discharged"
+    },
+    {
+      "category": "network_binding",
+      "monitor_fact_id": "xaman-runtime:monitor:network-binding-has-linking-payload-and-xrpl-hooks",
+      "mapping_status": "partial_observed_testnet_categorical",
+      "mapped_events": [
+        {
+          "category": "xaman_network_selected",
+          "outcome": "TESTNET",
+          "source_report": "testnet-network-selection-report.json"
+        },
+        {
+          "category": "xrpl_server_info_observed",
+          "network_id": 1,
+          "outcome": "network_id_verified",
+          "source_report": "testnet-network-selection-report.json"
+        },
+        {
+          "action": "network_switch",
+          "category": "network_switch",
+          "outcome": "switched_to_testnet",
+          "source_report": "testnet-transaction-trial-report.json"
+        }
+      ],
+      "gaps": [
+        "Wrong-network refusal, unsupported transaction-type rejection, production endpoint binding, and endpoint authenticity beyond the public Testnet allow-list were not proved."
+      ],
+      "proof_effect": "supports_testnet_monitor_projection_only"
+    },
+    {
+      "category": "broadcast",
+      "monitor_fact_id": "xaman-runtime:monitor:broadcast-boundary-is-source-modeled",
+      "mapping_status": "partial_observed_testnet_categorical",
+      "mapped_events": [
+        {
+          "action": "submit_attempt",
+          "category": "submit_attempt",
+          "outcome": "submitted",
+          "source_report": "testnet-transaction-trial-report.json"
+        },
+        {
+          "action": "submit_result",
+          "category": "submit_result",
+          "outcome": "succeeded",
+          "source_report": "testnet-transaction-trial-report.json"
+        },
+        {
+          "action": "reconnect",
+          "category": "reconnect",
+          "outcome": "reconnected",
+          "source_report": "testnet-transaction-trial-report.json"
+        }
+      ],
+      "gaps": [
+        "Raw XRPL submit request material, transaction hash, mempool or queue state, validated-ledger inclusion, and ledger finality were not recorded."
+      ],
+      "proof_effect": "supports_testnet_monitor_projection_only"
+    },
+    {
+      "category": "runtime_equivalence",
+      "monitor_fact_id": "xaman-runtime:monitor:real-device-runtime-equivalence-is-absent",
+      "mapping_status": "blocked_not_proved",
+      "mapped_events": [],
+      "gaps": [
+        "The public-Testnet debug verifier APK and emulator trial do not prove production runtime equivalence.",
+        "Native Firebase packaging remains present in the inspected APK.",
+        "No production device trace bundle is present."
+      ],
+      "proof_effect": "gap_only_no_security_claim_discharged"
+    },
+    {
+      "category": "firebase_boundary",
+      "monitor_fact_id": null,
+      "mapping_status": "supplemental_boundary_only_not_wallet_monitor_fact",
+      "mapped_events": [
+        {
+          "category": "firebase_disabled",
+          "event_name": "messaging_operation",
+          "outcome": "stubbed",
+          "source_report": "testnet-device-trial-report.json"
+        },
+        {
+          "category": "firebase_disabled",
+          "event_name": "firebase_analytics_operation",
+          "outcome": "stubbed",
+          "source_report": "testnet-device-trial-report.json"
+        },
+        {
+          "category": "firebase_disabled",
+          "event_name": "messaging_has_permission",
+          "outcome": "stubbed",
+          "source_report": "testnet-device-trial-report.json"
+        }
+      ],
+      "gaps": [
+        "Firebase stub telemetry cannot be used to infer wallet, account, payload, signing, XRPL network, broadcast, or ledger-finality behavior.",
+        "The APK cannot be labeled fully Firebase-disabled because native Firebase packaging remains present."
+      ],
+      "proof_effect": "records_js_stub_boundary_only"
+    }
+  ],
+  "unmapped_or_absent_categories": [
+    {
+      "category": "cancel",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "eb00ed3e1e2b20504a0e9ed7bac7e634d236188371d6633d83249d77ffb64680"
+    },
+    {
+      "category": "decline",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "314a4abaab2d00c11cc1d563acbd39bd7c470504f007aaa7760705e6ba20943b"
+    },
+    {
+      "category": "expiry",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "3d4702552580ee2cf5372f4f73df605d74767d51078fd77e119284ee5154c1f1"
+    },
+    {
+      "category": "replay",
+      "reason_code": "no_duplicate_or_backend_single_use_trace"
+    },
+    {
+      "category": "production_runtime_equivalence",
+      "reason_code": "testnet_verifier_evidence_only"
+    },
+    {
+      "category": "native_runtime_equivalence",
+      "reason_code": "debug_apk_native_packaging_boundary_unresolved"
+    },
+    {
+      "category": "ledger_finality",
+      "reason_code": "broadcast_and_validated_ledger_finality_not_modeled"
+    }
+  ],
+  "prohibited_conclusions": [
+    "Do not conclude that public-Testnet telemetry proves production Xaman security.",
+    "Do not conclude that the debug verifier APK or emulator trace is equivalent to a production runtime.",
+    "Do not conclude that native Firebase is fully disabled; only JavaScript Firebase calls were stubbed while native packaging remains present.",
+    "Do not infer wallet, account, payload, signing, transaction, XRPL broadcast, or ledger-finality facts from Firebase stub telemetry.",
+    "Do not treat categorical submit success as proof of XRPL validated-ledger finality.",
+    "Do not reconstruct or request raw seeds, account identifiers, payloads, signatures, transaction blobs, endpoints, request bodies, or response bodies from this mapping."
+  ],
+  "acceptance_summary": {
+    "maps_only_approved_redacted_testnet_events": true,
+    "preserves_unexplained_or_absent_categories_as_gaps": true,
+    "prohibits_production_security_conclusion": true,
+    "prohibits_native_or_production_runtime_equivalence_conclusion": true
+  }
+}

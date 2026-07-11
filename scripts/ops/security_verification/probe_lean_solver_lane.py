@@ -132,6 +132,13 @@ def build_lean_solver_lane_report(
         proof_report = root / proof_report
 
     lean = shutil.which('lean')
+    if lean is None and kernel.is_file():
+        from ipfs_datasets_py.logic.external_provers.lazy_installer import ensure_prover_executable
+
+        lean = ensure_prover_executable(
+            'lean',
+            reason='Xaman Lean solver-lane kernel execution',
+        )
     lake = shutil.which('lake')
     proof_payload = _load_json(proof_report)
 

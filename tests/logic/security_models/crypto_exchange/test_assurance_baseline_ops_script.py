@@ -130,6 +130,9 @@ def test_assurance_baseline_runner_writes_reports_and_summary(tmp_path: Path, mo
     assert '--require-current-assumptions' in calls['prove']
     assert calls['disproof'][calls['disproof'].index('--seed') + 1] == '11'
     assert calls['disproof'][calls['disproof'].index('--fuzz-rounds') + 1] == '2'
+    assert calls['disproof'][calls['disproof'].index('--fuzz-exhaustive-max-mutators') + 1] == '2'
+    assert calls['disproof'][calls['disproof'].index('--fuzz-max-scenarios') + 1] == '512'
+    assert 'Exhaustive mutator combination max: `0`' in summary
 
 
 def test_assurance_baseline_runner_fails_fast_without_z3(tmp_path: Path, monkeypatch) -> None:

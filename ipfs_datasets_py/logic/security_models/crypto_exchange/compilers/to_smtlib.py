@@ -328,6 +328,8 @@ def _metadata_for_ir_claim(claim_record: Mapping[str, Any], model: SecurityModel
     severity = str(claim_record.get('severity') or claim_record.get('risk') or 'medium').strip().lower()
     required_assumptions = _string_list(claim_record.get('required_assumptions', []))
     blocking_assumption_ids = _string_list(claim_record.get('blocking_assumption_ids', []))
+    if not blocking_assumption_ids:
+        blocking_assumption_ids = list(required_assumptions)
     evidence_refs = [dict(reference) for reference in claim_record.get('evidence_refs', []) if isinstance(reference, Mapping)]
     blocker_symbols = [
         {

@@ -1,0 +1,65 @@
+{
+  "acceptance_decision": "REJECT_PROOF_PROMOTION",
+  "artifact_cid": "bafkreieoxwgalqaebecw55bdmtyds2uq55g3zinln37wgqr5patpqgxlgu",
+  "blocked_by_assumptions": [
+    "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+    "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+  ],
+  "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+  "claim_version": "1.0",
+  "counterexample_kind": "blocking_acceptance_counterexample",
+  "domain": "ledger",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "owner_actions": [
+    {
+      "action": "raw-broadcast-safe digest evidence; XRPL validated-ledger inclusion proof; finality model",
+      "assumption_id": "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+      "description": "XRPL submission is modeled as UI submit categories only; node honesty, broadcast request material, mempool, queue, inclusion, and finality are not proved.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "ledger-verification",
+      "required_evidence_to_clear": [
+        "raw-broadcast-safe digest evidence",
+        "XRPL validated-ledger inclusion proof",
+        "finality model"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "action": "native vault audit; signature-byte binding trace; cryptographic signing proof",
+      "assumption_id": "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded",
+      "description": "Raw signatures, signed transaction blobs, and account identifiers are redacted and cannot be reconstructed from this model.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "wallet-transaction-signing",
+      "required_evidence_to_clear": [
+        "native vault audit",
+        "signature-byte binding trace",
+        "cryptographic signing proof"
+      ],
+      "status": "BLOCKING"
+    }
+  ],
+  "raw_sensitive_material_recorded": false,
+  "result": "COUNTEREXAMPLE",
+  "schema_version": "xaman-testnet-smt-counterexample/v1",
+  "security_result": "NON_SECURE_TESTNET_RESULT",
+  "severity": "blocking",
+  "smtlib_artifact": {
+    "artifact_cid": "bafkreicj64ebb32ydy3r7uhulieifhaj3xincyuj5y32x7uv2olzxr2d5q",
+    "assertion_count": 3,
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_broadcast-and-ledger-finality-are-not-modeled.smt2"
+  },
+  "solver_blockers": [],
+  "solver_tuple": {
+    "agreement": true,
+    "cvc5": "sat",
+    "z3": "sat"
+  },
+  "soundness_notes": [
+    "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+    "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+  ],
+  "task_id": "PORTAL-CXTP-133",
+  "worker_classification": "blocked_assumption",
+  "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+}

@@ -81,9 +81,9 @@ class ProofExecutionEngine:
 
         self._refresh_prover_state()
 
-        # NOTE: setup.py hooks are not guaranteed to run for all install modes (e.g. wheels/PEP517).
-        # To make auto-install actually work in practice, we also attempt installation here when
-        # the engine is constructed.
+        # Keep construction side-effect free. A setup owner can pre-install via
+        # IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1; execution-specific security
+        # runners use the lazy installer when a native solver is actually needed.
         self._maybe_auto_install_provers()
         self._refresh_prover_state()
 
@@ -104,7 +104,7 @@ class ProofExecutionEngine:
         return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
 
     def _maybe_auto_install_provers(self) -> None:
-        if not self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "1"):
+        if not self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "0"):
             return
 
         # Prevent recursion / repeated nested installs.

@@ -93,6 +93,10 @@ def _disproof_args(args: argparse.Namespace, disproof_path: Path) -> list[str]:
         str(args.fuzz_rounds),
         '--seed',
         str(args.seed),
+        '--fuzz-exhaustive-max-mutators',
+        str(args.fuzz_exhaustive_max_mutators),
+        '--fuzz-max-scenarios',
+        str(args.fuzz_max_scenarios),
         '--out',
         str(disproof_path),
     ]
@@ -189,6 +193,8 @@ def _render_summary(
         '',
         f'- Seed: `{disproof_payload.get("seed", args.seed)}`',
         f'- Scenario count: `{disproof_summary.get("scenario_count", 0)}`',
+        f'- Exhaustive mutator combination max: `{disproof_payload.get("input_space", {}).get("exhaustive_combination_max_mutators", 0)}`',
+        f'- Exhaustive mutator combinations: `{disproof_payload.get("input_space", {}).get("exhaustive_combination_count", 0)}`',
         f'- Scenario failures: `{disproof_summary.get("scenario_failures", 0)}`',
         f'- Total disproved claims: `{disproof_summary.get("total_disproved_claims", 0)}`',
         '',
@@ -216,6 +222,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--summary-name', default='assurance-baseline.md', help='Markdown summary filename inside --out-dir')
     parser.add_argument('--fuzz-rounds', type=int, default=8, help='Deterministic bounded mutation-fuzz rounds')
     parser.add_argument('--seed', type=int, default=7, help='Seed for deterministic fuzzed mutation selection')
+    parser.add_argument(
+        '--fuzz-exhaustive-max-mutators',
+        type=int,
+        default=2,
+        help='Exhaustively cover registered mutation combinations through this size',
+    )
+    parser.add_argument(
+        '--fuzz-max-scenarios',
+        type=int,
+        default=512,
+        help='Maximum additional exhaustive fuzz scenarios before failing closed',
+    )
     parser.add_argument('--min-modeled-blocking-claims', type=int, default=3)
     parser.add_argument('--min-proved-blocking-claims', type=int, default=3)
     args = parser.parse_args(argv)
@@ -224,6 +242,10 @@ def main(argv: list[str] | None = None) -> int:
         parser.error('choose only one input: --example, --model, or --source-path')
     if args.fuzz_rounds < 0:
         parser.error('--fuzz-rounds must be non-negative')
+    if args.fuzz_exhaustive_max_mutators < 0:
+        parser.error('--fuzz-exhaustive-max-mutators must be non-negative')
+    if args.fuzz_max_scenarios < 0:
+        parser.error('--fuzz-max-scenarios must be non-negative')
 
     z3_version = _z3_version()
     if z3_version is None:

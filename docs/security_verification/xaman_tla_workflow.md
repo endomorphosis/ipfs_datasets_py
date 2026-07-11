@@ -1,28 +1,35 @@
 # Xaman TLA Signing Workflow
 
-Task: `PORTAL-CXTP-071`
+Task: `PORTAL-CXTP-140`
 
-This artifact projects the Xaman signing workflow into a small TLA+ model for later Apalache checking. It focuses on the release-critical ordering property: signing and broadcast must not happen unless digest, authentication, vault, and network-binding gates have succeeded.
+This artifact reconciles the generated TLA+ source, the checked-in
+`XamanSigning.tla` file, and Apalache output. The accepted scope statement is
+`bounded_model_only`: the evidence is bounded model-checking of the finite
+workflow model, not an unbounded proof of the wallet, backend, XRPL network, or
+cryptographic implementation.
 
 ## Artifacts
 
+- Generator: `scripts/ops/security_verification/generate_xaman_tla_workflow.py`
+- Source of truth: `ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_tla_workflow.py`
 - TLA model: `security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla`
 - Apalache report: `security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json`
+- Environment lane report: `security_ir_artifacts/environment/apalache-solver-lane-report.json`
 
-## Modeled Workflow
+## Reconciled Model
 
-The model begins in `received`, moves through review, and can then set independent guard facts:
+The model starts in `received`, moves through review, and records the guard facts
+that must be true before signing:
 
 - `digestChecked`
 - `authPassed`
 - `vaultOpened`
 - `networkBound`
 
-`Sign` requires all four guard facts. `Broadcast` requires `signed`. `Reject` is available before signing and must prevent later broadcast.
+`Sign` requires all four guards. `Broadcast` requires `signed`. `Reject` is only
+available before signing and is checked by `NoBroadcastAfterReject`.
 
-## Invariants
-
-The TLA model defines:
+The checked invariants are:
 
 - `NoSignWithoutDigest`
 - `NoSignWithoutAuthentication`
@@ -32,30 +39,31 @@ The TLA model defines:
 - `NoBroadcastAfterReject`
 - `SigningGateInvariant`
 
-These map to the Xaman custody, signing, payload-integrity, and network-binding claims.
+## Current Evidence
 
-## Current Solver Status
+Apalache `0.58.3` checked every required invariant with `--no-deadlock`.
+The report binds:
 
-Apalache is not currently available on `PATH`, so the report is intentionally:
+- the SHA-256 of the exact checked `XamanSigning.tla` source
+- the SHA-256 of the generator output
+- normalized Apalache output markers including `# APALACHE version: 0.58.3`,
+  `The outcome is: NoError`, and `EXITCODE: OK`
+- `scope.statement: bounded_model_only`
 
-- `overall_status: blocked_optional_lane`
-- `security_decision: BLOCK_TLA_APALACHE_MISSING_SOLVER`
+Current report status:
 
-This means the workflow model is present, but no production evidence may claim TLA/Apalache model-check coverage yet.
+- `overall_status: checked_bounded_model_only`
+- `security_decision: ACCEPT_BOUNDED_MODEL_EVIDENCE_ONLY`
 
-## Remediation
+## Fail-Closed Rule
 
-Install Apalache through one reviewed route:
+A report, generator, and checked TLA source mismatch is a blocker rather than
+proof evidence. Any mismatch must produce `TLA_GENERATOR_SOURCE_MISMATCH` or
+`XAMAN_TLA_REPORT_SOURCE_SHA_MISMATCH` before the evidence can be consumed.
+
+Regenerate with:
 
 ```bash
-cs install apalache
-nix profile install nixpkgs#apalache
-docker pull ghcr.io/apalache-mc/apalache:latest
-```
-
-Then run:
-
-```bash
-apalache-mc check --inv=SigningGateInvariant security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla
-PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_tla_workflow.py -q
+PATH=/home/barberb/.local/bin:$PATH PYTHONPATH=. /home/barberb/miniforge3/bin/python \
+  scripts/ops/security_verification/generate_xaman_tla_workflow.py
 ```

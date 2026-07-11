@@ -10,6 +10,10 @@ from .xaman_proof_consumer import (
     build_xaman_proof_consumer_report,
     validate_xaman_proof_consumer_packet,
 )
+from .xaman_testnet_assurance_verdict import (
+    build_xaman_testnet_assurance_bundle,
+    build_xaman_testnet_assurance_verdict,
+)
 
 __all__ = [
     'CounterexampleReport',
@@ -19,5 +23,7 @@ __all__ = [
     'build_xaman_assurance_packet',
     'build_xaman_production_blocker_bridge',
     'build_xaman_proof_consumer_report',
+    'build_xaman_testnet_assurance_bundle',
+    'build_xaman_testnet_assurance_verdict',
     'validate_xaman_proof_consumer_packet',
 ]

@@ -1,19 +1,27 @@
 ---- MODULE XamanSigning ----
 EXTENDS Naturals, Sequences, TLC
 
-\* Xaman signing workflow projection for PORTAL-CXTP-071.
-\* This model is intentionally small: it captures the proof obligations that
+\* PORTAL-CXTP-140 reconciled source. Scope statement: bounded_model_only.
+\* This model is intentionally finite: it captures the proof obligations that
 \* a signature or broadcast cannot occur unless review, digest, auth, vault,
 \* and network-binding gates have all succeeded.
 
 VARIABLES
+  \* @type: Str;
   phase,
+  \* @type: Bool;
   digestChecked,
+  \* @type: Bool;
   authPassed,
+  \* @type: Bool;
   vaultOpened,
+  \* @type: Bool;
   networkBound,
+  \* @type: Bool;
   signed,
+  \* @type: Bool;
   broadcasted,
+  \* @type: Bool;
   rejected
 
 vars == << phase, digestChecked, authPassed, vaultOpened, networkBound, signed, broadcasted, rejected >>

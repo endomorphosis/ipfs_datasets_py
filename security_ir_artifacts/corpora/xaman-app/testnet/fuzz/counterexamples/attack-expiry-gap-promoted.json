@@ -1,0 +1,15 @@
+{
+  "artifact_cid": "bafkreier4f6mpp2lxztadm6xqf3nflu375y2jla5mf3ditczdldpnals24",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "mutation_id": "attack-expiry-gap-promoted",
+  "payload_sha256": "0e6319900f5ad07d6ff7cbba7ef67a2b787220da5b4eb700edd4dbffef35ad47",
+  "raw_sensitive_material_recorded": false,
+  "redaction_policy": "categorical_mutation_markers_only",
+  "result": "target_claim_triggered",
+  "schema_version": "xaman-testnet-fuzz-counterexample/v1",
+  "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+  "task_id": "PORTAL-CXTP-138",
+  "triggered_claim_ids": [
+    "xaman-testnet-claim:expiry-path-is-not-modeled"
+  ]
+}

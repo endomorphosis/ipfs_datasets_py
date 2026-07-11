@@ -1,0 +1,1019 @@
+{
+  "artifact_cid": "bafkreigkihwu5t2cbwaz5vmdxruo7hu5mmsg6pea3e53y7rqmw2cwbbdxy",
+  "claims": [
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+        "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved"
+      ],
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_network-binding-is-testnet-only.json",
+      "domain": "ledger",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 123,
+          "line_start": 1,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-network-selection-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "dad91f0a1e0b02bf698ef557e460d6f188ef3a4f4e3eb856fb7a84cfe2fbaba0"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 223,
+          "line_start": 205,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "production runtime network trace; endpoint authenticity model; fresh server_info evidence",
+          "assumption_id": "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+          "description": "Network binding is limited to the reviewed Testnet verifier run, endpoint digest, server_info digest, and network_id 1 observation.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "ledger-verification",
+          "required_evidence_to_clear": [
+            "production runtime network trace",
+            "endpoint authenticity model",
+            "fresh server_info evidence"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "production build provenance; real-device trace bundle; runtime equivalence review",
+          "assumption_id": "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved",
+          "description": "The verifier APK and emulator trace do not prove deployed production runtime equivalence.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "release-security",
+          "required_evidence_to_clear": [
+            "production build provenance",
+            "real-device trace bundle",
+            "runtime equivalence review"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "high",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreidfxxri74q5e2z2zc2ktn2g2gifhks4lneruipkevarchn6et574a",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_network-binding-is-testnet-only.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_account-provenance-is-fresh-testnet-only.json",
+      "domain": "store",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 75,
+          "line_start": 2,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-device-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "79c0f0ab40d8ef2658254a0c784e2153d67eb72b452ef660264818cd437171ca"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 38,
+          "line_start": 24,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "reviewed wallet provenance trace with allowed account identifiers redacted by policy",
+          "assumption_id": "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+          "description": "Fresh account provenance is accepted only as reviewed categorical verifier evidence; no account address, seed, or credential material is retained.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "wallet-verification",
+          "required_evidence_to_clear": [
+            "reviewed wallet provenance trace with allowed account identifiers redacted by policy"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "reviewer signoff and replacement evidence bundle",
+          "assumption_id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+          "description": "The artifacts retain categorical outcomes, source digests, and redaction digests only; raw security material is intentionally excluded.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "security-verification",
+          "required_evidence_to_clear": [
+            "reviewer signoff and replacement evidence bundle"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreihpxuiz4dl47rwh3gt2kttdez42dbhbrs2oicbs2y5zfdakjole74",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_account-provenance-is-fresh-testnet-only.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved"
+      ],
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_review-auth-sequence-observed.json",
+      "domain": "auth_component",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 108,
+          "line_start": 27,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 351,
+          "line_start": 224,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "reviewer signoff and replacement evidence bundle",
+          "assumption_id": "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+          "description": "Lifecycle action order is based on the reviewed operator UI trial, not on raw device automation logs or production telemetry.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "runtime-verification",
+          "required_evidence_to_clear": [
+            "reviewer signoff and replacement evidence bundle"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "native vault audit; signature-byte binding trace; cryptographic signing proof",
+          "assumption_id": "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+          "description": "Native vault, biometric/passcode, keychain, and signing cryptography behavior is not proved by the reviewed Testnet lifecycle evidence.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "wallet-key-management",
+          "required_evidence_to_clear": [
+            "native vault audit",
+            "signature-byte binding trace",
+            "cryptographic signing proof"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreiahiodpgemzd7w52dh3ul2644ysklxgoutxpiluehe4j52u2kewva",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_review-auth-sequence-observed.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+        "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+      ],
+      "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_signing-decision-is-observed-but-crypto-output-is-not-modeled.json",
+      "domain": "vault",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 108,
+          "line_start": 27,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 351,
+          "line_start": 224,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "native vault audit; signature-byte binding trace; cryptographic signing proof",
+          "assumption_id": "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+          "description": "Native vault, biometric/passcode, keychain, and signing cryptography behavior is not proved by the reviewed Testnet lifecycle evidence.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "wallet-key-management",
+          "required_evidence_to_clear": [
+            "native vault audit",
+            "signature-byte binding trace",
+            "cryptographic signing proof"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "native vault audit; signature-byte binding trace; cryptographic signing proof",
+          "assumption_id": "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded",
+          "description": "Raw signatures, signed transaction blobs, and account identifiers are redacted and cannot be reconstructed from this model.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "wallet-transaction-signing",
+          "required_evidence_to_clear": [
+            "native vault audit",
+            "signature-byte binding trace",
+            "cryptographic signing proof"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreidh53fxyw6hisxqogrukoieabwijsea5mqpiyvsh5x37d3g5eywhy",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_signing-decision-is-observed-but-crypto-output-is-not-modeled.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_submission-ui-attempt-and-result-are-observed.json",
+      "domain": "ledger",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 108,
+          "line_start": 27,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 351,
+          "line_start": 224,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "raw-broadcast-safe digest evidence; XRPL validated-ledger inclusion proof; finality model",
+          "assumption_id": "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+          "description": "XRPL submission is modeled as UI submit categories only; node honesty, broadcast request material, mempool, queue, inclusion, and finality are not proved.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "ledger-verification",
+          "required_evidence_to_clear": [
+            "raw-broadcast-safe digest evidence",
+            "XRPL validated-ledger inclusion proof",
+            "finality model"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "reviewer signoff and replacement evidence bundle",
+          "assumption_id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+          "description": "The artifacts retain categorical outcomes, source digests, and redaction digests only; raw security material is intentionally excluded.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "security-verification",
+          "required_evidence_to_clear": [
+            "reviewer signoff and replacement evidence bundle"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreief3ld3niawpknwk7va5bfeuzbawaqqsi4lyjmt4x6hqqegcjevai",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_submission-ui-attempt-and-result-are-observed.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:raw-payload-material-excluded",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_payload-intake-is-categorical-only.json",
+      "domain": "payload",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 108,
+          "line_start": 27,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 351,
+          "line_start": 224,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "reviewer signoff and replacement evidence bundle",
+          "assumption_id": "xaman-testnet-assumption:raw-payload-material-excluded",
+          "description": "Raw payload JSON, request bodies, payload semantics, and digest-to-signed-byte reconstruction are outside this reviewed evidence set.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "payload-verification",
+          "required_evidence_to_clear": [
+            "reviewer signoff and replacement evidence bundle"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "reviewer signoff and replacement evidence bundle",
+          "assumption_id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+          "description": "The artifacts retain categorical outcomes, source digests, and redaction digests only; raw security material is intentionally excluded.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "security-verification",
+          "required_evidence_to_clear": [
+            "reviewer signoff and replacement evidence bundle"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreieokmonrnmoy4ek6icfriterpzp3xkxnznobziwylvfmkwy46gbhy",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_payload-intake-is-categorical-only.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+      ],
+      "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_refusal-path-is-not-modeled.json",
+      "domain": "e2e_flow",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 17,
+          "line_start": 2,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "reviewed decline trace; reviewed cancel trace; reviewed expiry trace",
+          "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+          "description": "Decline/refusal, cancellation, and expiry actions appear only as reviewed coverage gaps and are not modeled as successful runtime paths.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "runtime-verification",
+          "required_evidence_to_clear": [
+            "reviewed decline trace",
+            "reviewed cancel trace",
+            "reviewed expiry trace"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreib7zc4bjor7crq5o24ff2qxqgghv4qcutqdwwixv6bsjoi3pdn5yi",
+        "assertion_count": 2,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_refusal-path-is-not-modeled.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_replay-controls-are-not-modeled.json",
+      "domain": "payload",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 108,
+          "line_start": 27,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "duplicate-submit negative trace; backend atomic single-use evidence; expiration enforcement trace",
+          "assumption_id": "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+          "description": "Replay, backend atomic single-use, duplicate submission, expiration enforcement, and conflict handling were not exercised by the reviewed trial.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "payload-backend-verification",
+          "required_evidence_to_clear": [
+            "duplicate-submit negative trace",
+            "backend atomic single-use evidence",
+            "expiration enforcement trace"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreicojrijcynngqazugducuvex3pp6hfcvjpfqmtsij6c4mwnselqs4",
+        "assertion_count": 2,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_replay-controls-are-not-modeled.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_expiry-path-is-not-modeled.json",
+      "domain": "payload",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 17,
+          "line_start": 2,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "reviewed decline trace; reviewed cancel trace; reviewed expiry trace",
+          "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+          "description": "Decline/refusal, cancellation, and expiry actions appear only as reviewed coverage gaps and are not modeled as successful runtime paths.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "runtime-verification",
+          "required_evidence_to_clear": [
+            "reviewed decline trace",
+            "reviewed cancel trace",
+            "reviewed expiry trace"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "duplicate-submit negative trace; backend atomic single-use evidence; expiration enforcement trace",
+          "assumption_id": "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+          "description": "Replay, backend atomic single-use, duplicate submission, expiration enforcement, and conflict handling were not exercised by the reviewed trial.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "payload-backend-verification",
+          "required_evidence_to_clear": [
+            "duplicate-submit negative trace",
+            "backend atomic single-use evidence",
+            "expiration enforcement trace"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreibbzhwce7vb3nfqqfmwgoue42kctn2cyrjgmpmojz3ftevqogrqmu",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_expiry-path-is-not-modeled.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+      ],
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_cancellation-path-is-not-modeled.json",
+      "domain": "e2e_flow",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 17,
+          "line_start": 2,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "reviewed decline trace; reviewed cancel trace; reviewed expiry trace",
+          "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+          "description": "Decline/refusal, cancellation, and expiry actions appear only as reviewed coverage gaps and are not modeled as successful runtime paths.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "runtime-verification",
+          "required_evidence_to_clear": [
+            "reviewed decline trace",
+            "reviewed cancel trace",
+            "reviewed expiry trace"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreifobppkmrx7mrmjzonlgja74yfidh3ppj2npv3g34jtyh42gs25jy",
+        "assertion_count": 2,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_cancellation-path-is-not-modeled.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+      ],
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_broadcast-and-ledger-finality-are-not-modeled.json",
+      "domain": "ledger",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 198,
+          "line_start": 181,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "raw-broadcast-safe digest evidence; XRPL validated-ledger inclusion proof; finality model",
+          "assumption_id": "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+          "description": "XRPL submission is modeled as UI submit categories only; node honesty, broadcast request material, mempool, queue, inclusion, and finality are not proved.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "ledger-verification",
+          "required_evidence_to_clear": [
+            "raw-broadcast-safe digest evidence",
+            "XRPL validated-ledger inclusion proof",
+            "finality model"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "native vault audit; signature-byte binding trace; cryptographic signing proof",
+          "assumption_id": "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded",
+          "description": "Raw signatures, signed transaction blobs, and account identifiers are redacted and cannot be reconstructed from this model.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "wallet-transaction-signing",
+          "required_evidence_to_clear": [
+            "native vault audit",
+            "signature-byte binding trace",
+            "cryptographic signing proof"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreicj64ebb32ydy3r7uhulieifhaj3xincyuj5y32x7uv2olzxr2d5q",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_broadcast-and-ledger-finality-are-not-modeled.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    },
+    {
+      "blocked_by_assumptions": [
+        "xaman-testnet-assumption:redacted-categorical-evidence-only",
+        "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence"
+      ],
+      "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+      "claim_version": "1.0",
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_audit-redaction-boundary-is-preserved.json",
+      "domain": "audit",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "line_end": 108,
+          "line_start": 27,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-lifecycle-evidence.json",
+          "review_status": "human_reviewed",
+          "sha256": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 351,
+          "line_start": 224,
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+          "review_status": "human_reviewed",
+          "sha256": "8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36"
+        },
+        {
+          "kind": "manual_review",
+          "line_end": 359,
+          "line_start": 1,
+          "notes": "Baseline Xaman claim registry used only as reviewed context.",
+          "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+          "review_status": "human_reviewed",
+          "sha256": "648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+        }
+      ],
+      "owner_actions": [
+        {
+          "action": "reviewer signoff and replacement evidence bundle",
+          "assumption_id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+          "description": "The artifacts retain categorical outcomes, source digests, and redaction digests only; raw security material is intentionally excluded.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "security-verification",
+          "required_evidence_to_clear": [
+            "reviewer signoff and replacement evidence bundle"
+          ],
+          "status": "BLOCKING"
+        },
+        {
+          "action": "reviewer signoff and replacement evidence bundle",
+          "assumption_id": "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence",
+          "description": "The Testnet verifier APK and emulator trial are public-Testnet evidence only and cannot approve production release behavior.",
+          "evidence_expires_at": "2027-01-11T00:00:00Z",
+          "owner": "security-verification",
+          "required_evidence_to_clear": [
+            "reviewer signoff and replacement evidence bundle"
+          ],
+          "status": "BLOCKING"
+        }
+      ],
+      "proof_promotion_allowed": false,
+      "result": "COUNTEREXAMPLE",
+      "security_result": "NON_SECURE_TESTNET_RESULT",
+      "severity": "blocking",
+      "smtlib_artifact": {
+        "artifact_cid": "bafkreidscw7pxknz4mqwwngd2psojjaloirhbh6n2d3bemxkhprsuh63ky",
+        "assertion_count": 3,
+        "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_audit-redaction-boundary-is-preserved.smt2"
+      },
+      "solver_blockers": [],
+      "solver_tuple": {
+        "agreement": true,
+        "cvc5": "sat",
+        "z3": "sat"
+      },
+      "soundness_notes": [
+        "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+        "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+      ],
+      "unsupported_theory": false,
+      "worker_classification": "blocked_assumption",
+      "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+    }
+  ],
+  "counterexamples": {
+    "directory": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples",
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/manifest.json"
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "inputs": {
+    "assumptions": {
+      "artifact_cid": "bafkreief2eknqggwzavzp7ifzx2k4g3qoepsvs2wughwqrvc26xrgoxt54",
+      "blocking_assumption_count": 14,
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    "claim_trace_map": {
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json",
+      "required_by_predecessor_task": "PORTAL-CXTP-131"
+    },
+    "cvc5_runner_report": {
+      "overall_status": "blocked_by_unresolved_assumptions",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/cvc5-runner-report.json",
+      "report_cid": "bafkreiaxnghrvo3eh5ix2o4nqbnxe6vs3aunylw5quai2q7bu7yzh4utvm",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_ASSUMPTIONS"
+    },
+    "proof_worker_lock": {
+      "lock_cid": "bafkreihf3ja4v4z2bykldmotrzukh2peewwlsbmrdv6v6enakn4apuk2yq",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-worker-lock.json",
+      "worker_id": "xaman-testnet-smt-proof-worker"
+    },
+    "security_model_ir": {
+      "artifact_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
+    }
+  },
+  "model": {
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "overall_status": "non_secure_with_counterexamples",
+  "production_release_blocked": true,
+  "proof_policy": {
+    "non_secure_rule": "Any SAT counterexample, solver blocker, incomplete lane, or unresolved assumption remains a NON_SECURE_TESTNET_RESULT with an owner/action.",
+    "proved_rule": "A claim/model/assumption tuple is PROVED only when Z3 and CVC5 both return unsat for the locked query, agree, and have no solver, unsupported-theory, counterexample, or blocking-assumption witness.",
+    "required_smt_lanes": [
+      "z3",
+      "cvc5"
+    ]
+  },
+  "schema_version": "xaman-testnet-z3-cvc5-differential-report/v1",
+  "security_decision": "BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES",
+  "summary": {
+    "claim_count": 12,
+    "counterexample_count": 12,
+    "incomplete_count": 0,
+    "non_secure_testnet_result_count": 12,
+    "overall_status": "non_secure_with_counterexamples",
+    "owner_action_count": 21,
+    "proof_promotion_allowed_count": 0,
+    "proved_count": 0,
+    "security_decision": "BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES",
+    "solver_blocker_count": 0,
+    "unsupported_theory_count": 0,
+    "z3_cvc5_agreement_failure_count": 0
+  },
+  "task_id": "PORTAL-CXTP-133",
+  "testnet_assurance_blocked": true
+}

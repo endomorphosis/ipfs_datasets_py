@@ -1,9 +1,10 @@
 """Xaman e2e/runtime trace ingestor.
 
 The checked-in Xaman corpus is manifest-pinned, while real device traces may be
-absent in CI.  This ingestor converts available e2e feature inventory and
-reviewed source-model artifacts into monitor facts, then fails closed until a
-real runtime trace bundle is supplied.
+absent in CI. This ingestor converts available e2e feature inventory and
+reviewed source-model artifacts into monitor facts. It can also consume the
+redacted, loopback-only DuckDB Firebase-mock schema as supplemental telemetry,
+then fails closed until a real runtime trace bundle is supplied.
 """
 
 from __future__ import annotations
@@ -213,6 +214,116 @@ def _runtime_event_summary(trace_files: list[Path], root: Path) -> dict[str, Any
     }
 
 
+def _firebase_mock_summary(
+    database_path: Path | None,
+    run_id: str | None,
+    root: Path,
+) -> dict[str, Any]:
+    """Read the redacted Firebase-mock schema without retaining event bodies.
+
+    The database is evidence of the replaced JavaScript telemetry boundary only.
+    It is deliberately not converted into wallet, signing, or XRPL monitor
+    events and cannot satisfy the real-device trace requirement.
+    """
+    summary: dict[str, Any] = {
+        'provided': database_path is not None or run_id is not None,
+        'database_path': _relative(root, database_path) if database_path is not None else None,
+        'database_sha256': hashlib.sha256(database_path.read_bytes()).hexdigest()
+        if database_path is not None and database_path.is_file()
+        else None,
+        'run_id': run_id,
+        'status': 'not_provided',
+        'storage': 'duckdb',
+        'coverage': 'firebase_js_stub_telemetry_only',
+        'event_count': 0,
+        'rejected_event_count': 0,
+        'event_type_counts': [],
+        'rejection_reason_counts': [],
+        'provenance': None,
+        'error_code': None,
+    }
+    if database_path is None and run_id is None:
+        return summary
+    if database_path is None or run_id is None:
+        summary.update({'status': 'invalid_input', 'error_code': 'FIREBASE_MOCK_DATABASE_AND_RUN_ID_REQUIRED'})
+        return summary
+    if not database_path.is_file():
+        summary.update({'status': 'missing', 'error_code': 'FIREBASE_MOCK_DATABASE_MISSING'})
+        return summary
+
+    try:
+        import duckdb  # type: ignore
+    except ImportError:
+        summary.update({'status': 'unavailable', 'error_code': 'FIREBASE_MOCK_DUCKDB_DEPENDENCY_MISSING'})
+        return summary
+
+    try:
+        connection = duckdb.connect(str(database_path), read_only=True)
+        try:
+            run = connection.execute(
+                '''
+                SELECT xaman_commit, build_provenance_sha256, ledger_network, ledger_endpoint,
+                       firebase_mode, accepted_event_count, rejected_event_count
+                FROM xaman_firebase_mock_runs WHERE run_id = ?
+                ''',
+                [run_id],
+            ).fetchone()
+            if run is None:
+                summary.update({'status': 'run_missing', 'error_code': 'FIREBASE_MOCK_RUN_MISSING'})
+                return summary
+            event_types = connection.execute(
+                '''
+                SELECT category, event_name, outcome, COUNT(*)
+                FROM xaman_firebase_mock_events WHERE run_id = ?
+                GROUP BY category, event_name, outcome
+                ORDER BY category, event_name, outcome
+                ''',
+                [run_id],
+            ).fetchall()
+            rejection_reasons = connection.execute(
+                '''
+                SELECT reason_code, COUNT(*)
+                FROM xaman_firebase_mock_rejections WHERE run_id = ?
+                GROUP BY reason_code ORDER BY reason_code
+                ''',
+                [run_id],
+            ).fetchall()
+        finally:
+            connection.close()
+    except Exception:
+        summary.update({'status': 'unreadable', 'error_code': 'FIREBASE_MOCK_DATABASE_UNREADABLE'})
+        return summary
+
+    observed_events = sum(int(row[3]) for row in event_types)
+    observed_rejections = sum(int(row[1]) for row in rejection_reasons)
+    summary.update(
+        {
+            'status': 'loaded',
+            'event_count': observed_events,
+            'rejected_event_count': observed_rejections,
+            'event_type_counts': [
+                {'category': row[0], 'event_name': row[1], 'outcome': row[2], 'count': int(row[3])}
+                for row in event_types
+            ],
+            'rejection_reason_counts': [
+                {'reason_code': row[0], 'count': int(row[1])} for row in rejection_reasons
+            ],
+            'provenance': {
+                'xaman_commit': run[0],
+                'build_provenance_sha256': run[1],
+                'ledger_network': run[2],
+                'ledger_endpoint': run[3],
+                'firebase_mode': run[4],
+                'declared_accepted_event_count': int(run[5]),
+                'declared_rejected_event_count': int(run[6]),
+            },
+        }
+    )
+    if observed_events != int(run[5]) or observed_rejections != int(run[6]):
+        summary.update({'status': 'count_mismatch', 'error_code': 'FIREBASE_MOCK_EVENT_COUNT_MISMATCH'})
+    return summary
+
+
 def _monitor_fact(
     *,
     fact_id: str,
@@ -241,6 +352,8 @@ def build_report(
     xrpl_facts_path: Path | str = DEFAULT_XRPL_FACTS_PATH,
     wallet_facts_path: Path | str = DEFAULT_WALLET_FACTS_PATH,
     trace_dir: Path | str | None = None,
+    firebase_mock_database_path: Path | str | None = None,
+    firebase_mock_run_id: str | None = None,
     generated_at_utc: str | None = None,
 ) -> dict[str, Any]:
     root = Path(repo_root) if repo_root is not None else _repo_root()
@@ -250,6 +363,9 @@ def build_report(
     xrpl_abs = _resolve(root, xrpl_facts_path)
     wallet_abs = _resolve(root, wallet_facts_path)
     trace_abs = _resolve(root, trace_dir) if trace_dir is not None else None
+    firebase_mock_database_abs = (
+        _resolve(root, firebase_mock_database_path) if firebase_mock_database_path is not None else None
+    )
 
     manifest = _read_json(manifest_abs)
     environment = _read_json(environment_abs)
@@ -259,6 +375,7 @@ def build_report(
     files = _manifest_files(manifest)
     trace_files = _runtime_trace_files(trace_abs)
     trace_summary = _runtime_event_summary(trace_files, root)
+    firebase_mock = _firebase_mock_summary(firebase_mock_database_abs, firebase_mock_run_id, root)
 
     e2e_features = [
         {
@@ -397,6 +514,35 @@ def build_report(
             },
         ),
         _monitor_fact(
+            fact_id='xaman-runtime:monitor:firebase-mock-telemetry-is-supplemental',
+            category='firebase_mock',
+            status=(
+                'SUPPLEMENTAL_REDACTED_TELEMETRY'
+                if firebase_mock['status'] == 'loaded' and firebase_mock['event_count'] > 0
+                else 'NOT_PROVIDED_OR_INVALID'
+            ),
+            summary=(
+                'DuckDB Firebase-mock telemetry is available only as redacted JavaScript-stub evidence.'
+                if firebase_mock['status'] == 'loaded' and firebase_mock['event_count'] > 0
+                else 'No usable DuckDB Firebase-mock telemetry was provided.'
+            ),
+            evidence=[
+                {
+                    'kind': 'duckdb_firebase_mock',
+                    'path': firebase_mock['database_path'],
+                    'sha256': firebase_mock['database_sha256'],
+                    'run_id': firebase_mock['run_id'],
+                    'status': firebase_mock['status'],
+                }
+            ],
+            normalized_fact={
+                'event_count': firebase_mock['event_count'],
+                'coverage': firebase_mock['coverage'],
+                'runtime_equivalence_proved': False,
+                'wallet_or_xrpl_events_inferred': False,
+            },
+        ),
+        _monitor_fact(
             fact_id='xaman-runtime:monitor:real-device-runtime-equivalence-is-absent',
             category='runtime_equivalence',
             status='BLOCKED',
@@ -408,6 +554,13 @@ def build_report(
                     'exists': bool(trace_abs and trace_abs.is_dir()),
                     'trace_file_count': trace_summary['trace_file_count'],
                     'review_status': 'missing' if trace_summary['trace_file_count'] == 0 else 'provided',
+                },
+                {
+                    'kind': 'duckdb_firebase_mock',
+                    'path': firebase_mock['database_path'],
+                    'run_id': firebase_mock['run_id'],
+                    'status': firebase_mock['status'],
+                    'coverage': firebase_mock['coverage'],
                 },
                 env_evidence,
             ],
@@ -438,6 +591,35 @@ def build_report(
     missing_e2e = [path for path in E2E_FEATURE_CATEGORIES if path not in files]
     if missing_e2e:
         blockers.append({'code': 'E2E_FEATURES_MISSING_FROM_MANIFEST', 'paths': missing_e2e})
+    if firebase_mock['provided']:
+        if firebase_mock['status'] != 'loaded':
+            blockers.append({'code': firebase_mock['error_code'] or 'FIREBASE_MOCK_INPUT_INVALID'})
+        else:
+            provenance = firebase_mock['provenance'] or {}
+            if provenance.get('xaman_commit') != PINNED_XAMAN_COMMIT:
+                blockers.append(
+                    {
+                        'code': 'FIREBASE_MOCK_XAMAN_COMMIT_MISMATCH',
+                        'expected': PINNED_XAMAN_COMMIT,
+                        'actual': provenance.get('xaman_commit'),
+                    }
+                )
+            if provenance.get('ledger_network') != 'testnet':
+                blockers.append(
+                    {
+                        'code': 'FIREBASE_MOCK_LEDGER_NETWORK_INVALID',
+                        'actual': provenance.get('ledger_network'),
+                    }
+                )
+            if firebase_mock['event_count'] == 0:
+                blockers.append({'code': 'FIREBASE_MOCK_NO_ACCEPTED_EVENTS'})
+            if firebase_mock['rejected_event_count']:
+                blockers.append(
+                    {
+                        'code': 'FIREBASE_MOCK_REJECTED_EVENTS_PRESENT',
+                        'count': firebase_mock['rejected_event_count'],
+                    }
+                )
     if trace_summary['trace_file_count'] == 0 or trace_summary['event_count'] == 0:
         blockers.append(
             {
@@ -475,6 +657,7 @@ def build_report(
             'provided': trace_abs is not None,
             **trace_summary,
         },
+        'firebase_mock': firebase_mock,
         'monitor_facts': monitor_facts,
         'blocking_gaps': blockers,
         'blocker_count': len(blockers),
@@ -490,6 +673,21 @@ def build_report(
     return report
 
 
+class XamanRuntimeTraceIngestor:
+    """Class adapter for the Xaman runtime-trace report builder.
+
+    The public extractor package historically exported this name, but the
+    module only exposed functions. Keeping a small adapter preserves that
+    package contract while allowing callers to provide DuckDB mock evidence.
+    """
+
+    def build_report(self, **kwargs: Any) -> dict[str, Any]:
+        return build_report(**kwargs)
+
+    def ingest(self, **kwargs: Any) -> dict[str, Any]:
+        return self.build_report(**kwargs)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Build Xaman runtime trace monitor report.')
     parser.add_argument('--manifest', default=str(DEFAULT_MANIFEST_PATH))
@@ -498,6 +696,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--xrpl-facts', default=str(DEFAULT_XRPL_FACTS_PATH))
     parser.add_argument('--wallet-facts', default=str(DEFAULT_WALLET_FACTS_PATH))
     parser.add_argument('--trace-dir')
+    parser.add_argument('--firebase-mock-database')
+    parser.add_argument('--firebase-mock-run-id')
     parser.add_argument('--out', default=str(DEFAULT_OUT_PATH))
     args = parser.parse_args(argv)
 
@@ -510,6 +710,8 @@ def main(argv: list[str] | None = None) -> int:
         xrpl_facts_path=args.xrpl_facts,
         wallet_facts_path=args.wallet_facts,
         trace_dir=args.trace_dir,
+        firebase_mock_database_path=args.firebase_mock_database,
+        firebase_mock_run_id=args.firebase_mock_run_id,
     )
     _write_json(report, _resolve(root, args.out))
     print(

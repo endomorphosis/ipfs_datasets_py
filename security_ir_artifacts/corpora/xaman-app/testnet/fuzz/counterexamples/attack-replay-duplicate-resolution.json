@@ -1,0 +1,15 @@
+{
+  "artifact_cid": "bafkreihednoq6mhkgwwluuhebwkje3qecmjwst3vtf6yvlzbyzjc7sn7ea",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "mutation_id": "attack-replay-duplicate-resolution",
+  "payload_sha256": "d32f93e991ef36b0047f2aedfdc8fb97acf31fdb1ce260e9217c272edad0280d",
+  "raw_sensitive_material_recorded": false,
+  "redaction_policy": "categorical_mutation_markers_only",
+  "result": "target_claim_triggered",
+  "schema_version": "xaman-testnet-fuzz-counterexample/v1",
+  "target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+  "task_id": "PORTAL-CXTP-138",
+  "triggered_claim_ids": [
+    "xaman-testnet-claim:replay-controls-are-not-modeled"
+  ]
+}

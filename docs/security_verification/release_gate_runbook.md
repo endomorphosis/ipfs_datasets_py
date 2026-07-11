@@ -39,6 +39,8 @@ PYTHONPATH=. python scripts/ops/security_verification/run_security_ir_assurance_
   --example \
   --out-dir security_ir_artifacts/assurance-run \
   --fuzz-rounds 8 \
+  --fuzz-exhaustive-max-mutators 2 \
+  --fuzz-max-scenarios 512 \
   --seed 7 \
   --min-modeled-blocking-claims 3 \
   --min-proved-blocking-claims 3
@@ -89,6 +91,8 @@ PYTHONPATH=. python scripts/ops/security_verification/run_security_ir_disproof_s
   --model security_ir_artifacts/production/production-security-model.json \
   --out security_ir_artifacts/production/disproof-report.json \
   --fuzz-rounds 128 \
+  --fuzz-exhaustive-max-mutators 2 \
+  --fuzz-max-scenarios 512 \
   --seed 7 \
   --emit-counterexamples-dir security_ir_artifacts/production/counterexample-vectors
 ```
@@ -108,6 +112,8 @@ PYTHONPATH=. python scripts/ops/security_verification/run_security_ir_assurance_
   --model security_ir_artifacts/production/production-security-model.json \
   --out-dir security_ir_artifacts/production-baseline \
   --fuzz-rounds 64 \
+  --fuzz-exhaustive-max-mutators 2 \
+  --fuzz-max-scenarios 512 \
   --seed 7 \
   --min-modeled-blocking-claims 3 \
   --min-proved-blocking-claims 3
@@ -134,6 +140,12 @@ The release is blocked when:
 - a critical transition lacks audit evidence.
 
 Runtime violations must be stored as counterexample evidence.
+
+## Bounded Fuzz Coverage
+
+The disproof suite runs every named attack mutation once and can add seeded random combinations with `--fuzz-rounds`. `--fuzz-exhaustive-max-mutators N` additionally executes every combination of the selected registered mutation grammar from size one through `N`; it fails before execution if the full finite matrix exceeds `--fuzz-max-scenarios`.
+
+This is exhaustive only for the declared, finite SecurityModelIR mutation grammar. It does not establish coverage of unbounded production requests, unmodeled ledger semantics, native wallet code, or code paths absent from the source-to-IR mapping. Preserve those limits in the release evidence and treat missing model coverage as a blocker rather than an implicit pass.
 
 ## Proof Receipt Consumer Gate
 

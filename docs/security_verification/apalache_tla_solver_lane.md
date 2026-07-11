@@ -1,44 +1,56 @@
 # Apalache TLA Solver Lane
 
-Task: `PORTAL-CXTP-091`
+Task: `PORTAL-CXTP-140`
 
-This lane records whether the Xaman TLA signing workflow can be checked by Apalache. It depends on the TLA model from `PORTAL-CXTP-071` and converts missing Apalache tooling into explicit solver evidence rather than silent acceptance.
+This lane records the Apalache evidence for the Xaman signing TLA workflow and
+keeps it tied to the same source SHA-256 as
+`security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json`.
 
 ## Inputs
 
 - TLA model: `security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla`
 - TLA workflow report: `security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json`
+- Generator: `scripts/ops/security_verification/generate_xaman_tla_workflow.py`
 - Probe script: `scripts/ops/security_verification/probe_apalache_solver_lane.py`
 - Lane report: `security_ir_artifacts/environment/apalache-solver-lane-report.json`
 
-## Current Expected State
+## Current State
 
-The local environment does not currently expose `apalache-mc` or `apalache` on `PATH`. The lane report should therefore use:
+The pinned local wrapper is `/home/barberb/.local/bin/apalache-mc`, which reports
+Apalache `0.58.3`. The lane report records seven successful bounded checks and
+the shared `bounded_model_only` scope statement.
 
-- `overall_status: blocked_optional_lane`
-- `security_decision: BLOCK_APALACHE_SOLVER_LANE_UNAVAILABLE`
+Current lane status:
 
-The TLA model exists, but no Xaman proof evidence may claim Apalache model-check coverage until the solver is installed and the check is rerun.
+- `overall_status: ready_bounded_model_only`
+- `security_decision: APALACHE_0583_BOUNDED_MODEL_OUTPUT_BOUND`
 
-## Remediation
+This is bounded model evidence only. It is not a proof of source/runtime
+equivalence, backend single-use semantics, XRPL ledger behavior, or wallet
+cryptographic implementation.
 
-Install Apalache through a reviewed path:
+## Required Checks
 
-```bash
-cs install apalache
-nix profile install nixpkgs#apalache
-docker pull ghcr.io/apalache-mc/apalache:latest
-```
-
-Then run:
+Each Apalache command uses:
 
 ```bash
-PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_apalache_solver_lane.py \
-  --run-model-check \
-  --out security_ir_artifacts/environment/apalache-solver-lane-report.json
-PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_apalache_solver_lane.py -q
+apalache-mc check --no-deadlock --init=Init --next=Next --inv=<invariant> \
+  security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla
 ```
 
-## Release Interpretation
+The checked invariants are `NoSignWithoutDigest`,
+`NoSignWithoutAuthentication`, `NoSignWithoutVault`,
+`NoSignWithoutNetworkBinding`, `NoBroadcastWithoutSignature`,
+`NoBroadcastAfterReject`, and `SigningGateInvariant`.
 
-This lane can only support the signing workflow claims after Apalache actually checks `SigningGateInvariant`. A report file with `blocked_optional_lane` is useful blocker evidence, not a proof.
+## Fail-Closed Policy
+
+The solver lane is blocked if:
+
+- Apalache is missing or does not report `0.58.3`
+- any required invariant is missing or fails
+- any run is bound to a different TLA SHA-256
+- the generator output and checked source differ
+- the corpus TLA report is missing or binds a different source SHA-256
+
+In those cases the report is blocker evidence, not proof evidence.

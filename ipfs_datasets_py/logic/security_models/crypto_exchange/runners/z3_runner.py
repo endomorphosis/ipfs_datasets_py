@@ -30,6 +30,15 @@ class Z3Runner(BaseSecurityRunner):
 
     @staticmethod
     def is_available() -> bool:
+        if importlib.util.find_spec('z3') is not None:
+            return True
+        from ipfs_datasets_py.logic.external_provers.lazy_installer import lazy_install_prover
+
+        lazy_install_prover(
+            'z3',
+            reason='Z3 exchange-security proof execution',
+            allow_automatic=True,
+        )
         return importlib.util.find_spec('z3') is not None
 
     def _solver(self) -> Any:

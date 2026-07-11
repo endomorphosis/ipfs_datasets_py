@@ -1,0 +1,186 @@
+{
+  "allowed_verdicts": [
+    "TESTNET_SCOPE_ASSURED",
+    "TESTNET_SCOPE_NOT_SECURE",
+    "TESTNET_SCOPE_INCONCLUSIVE"
+  ],
+  "artifact_cid": "bafkreihqhyoavkcefrlwwdal3qph4wxmyk4ld2wptohltre2luz36dhakq",
+  "bundle": {
+    "artifact_cid": "bafkreidstcp4wwsnzjbb3y2bplhtpkvn5ivpoclq23zn4a4oa57pascamm",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/assurance-bundle.json",
+    "schema_version": "xaman-testnet-assurance-bundle/v1"
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "next_decision_rule": "Advance only after all blocking owner actions are satisfied, the model CID is regenerated, Z3/CVC5 no longer emit counterexamples for required claims, Tamarin/ProVerif and required Coq evidence are accepted, and a new bundle is issued with the same non-production scope statement.",
+  "not_a_production_security_result": true,
+  "precise_evidence_or_owner_action_required_to_advance": [
+    {
+      "assumption_id": "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+      "owner": "ledger-verification",
+      "required_evidence_to_clear": [
+        "production runtime network trace",
+        "endpoint authenticity model",
+        "fresh server_info evidence"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+      "owner": "wallet-verification",
+      "required_evidence_to_clear": [
+        "reviewed wallet provenance trace with allowed account identifiers redacted by policy"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:raw-payload-material-excluded",
+      "owner": "payload-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+      "owner": "wallet-key-management",
+      "required_evidence_to_clear": [
+        "native vault audit",
+        "signature-byte binding trace",
+        "cryptographic signing proof"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded",
+      "owner": "wallet-transaction-signing",
+      "required_evidence_to_clear": [
+        "native vault audit",
+        "signature-byte binding trace",
+        "cryptographic signing proof"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+      "owner": "ledger-verification",
+      "required_evidence_to_clear": [
+        "raw-broadcast-safe digest evidence",
+        "XRPL validated-ledger inclusion proof",
+        "finality model"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+      "owner": "payload-backend-verification",
+      "required_evidence_to_clear": [
+        "duplicate-submit negative trace",
+        "backend atomic single-use evidence",
+        "expiration enforcement trace"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewed decline trace",
+        "reviewed cancel trace",
+        "reviewed expiry trace"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved",
+      "owner": "release-security",
+      "required_evidence_to_clear": [
+        "production build provenance",
+        "real-device trace bundle",
+        "runtime equivalence review"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:native-firebase-packaging-boundary",
+      "owner": "mobile-build-security",
+      "required_evidence_to_clear": [
+        "native Firebase-free APK proof or corrected label"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:source-derived-facts-must-be-reviewed",
+      "owner": "formalization-review",
+      "required_evidence_to_clear": [
+        "reviewed source-to-model trace map for every source-derived fact"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "owner": "protocol-verification",
+      "required_evidence_to_clear": [
+        "Add a reviewed ProVerif projection for the Testnet payload protocol.",
+        "Run ProVerif with pinned executable/version/digest and attach the accepted report."
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
+    },
+    {
+      "owner": "protocol-verification",
+      "required_evidence_to_clear": [
+        "Run the pinned Tamarin model against an accepted Maude runtime.",
+        "Record the command, version, executable digest, and accepted lemma results."
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
+    },
+    {
+      "owner": "formal-methods",
+      "required_evidence_to_clear": [
+        "Provide security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v.",
+        "Run coqc and bind the checked independent-kernel artifact to the Testnet model CID."
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json"
+    }
+  ],
+  "production_security_statement": "This verdict is scoped only to the reviewed XRPL Testnet evidence. It does not approve, certify, or reject the production Xaman wallet, production backend, production XRPL behavior, or real-asset custody.",
+  "rationale": {
+    "blocker_codes": [
+      "SMT_COUNTEREXAMPLES_FOUND",
+      "BLOCKING_TESTNET_ASSUMPTIONS",
+      "UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+      "REQUIRED_PROTOCOL_LANE_UNAVAILABLE",
+      "INDEPENDENT_COQ_KERNEL_MISSING",
+      "NOT_MODELED_TESTNET_CLAIMS",
+      "PRODUCTION_SECURITY_RESULT_EXCLUDED"
+    ],
+    "blocking_assumption_count": 14,
+    "counterexample_count": 12,
+    "primary_reason": "The Z3/CVC5 Testnet lane reports counterexamples for every frozen Testnet claim, so the scoped Testnet verdict is not secure."
+  },
+  "schema_version": "xaman-testnet-assurance-verdict/v1",
+  "task_id": "PORTAL-CXTP-139",
+  "verdict": "TESTNET_SCOPE_NOT_SECURE"
+}

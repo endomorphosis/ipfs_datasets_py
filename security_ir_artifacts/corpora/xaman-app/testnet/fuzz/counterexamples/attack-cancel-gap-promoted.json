@@ -1,0 +1,15 @@
+{
+  "artifact_cid": "bafkreidux5c5gdaeko3iovjxw4bu3htpwrnmpfhczqlqwhaae7rz6c5dkm",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "mutation_id": "attack-cancel-gap-promoted",
+  "payload_sha256": "ca0802a74ce5b6c04991690a59242f615c33b8f494323757eb7f1abd5a6f26f2",
+  "raw_sensitive_material_recorded": false,
+  "redaction_policy": "categorical_mutation_markers_only",
+  "result": "target_claim_triggered",
+  "schema_version": "xaman-testnet-fuzz-counterexample/v1",
+  "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+  "task_id": "PORTAL-CXTP-138",
+  "triggered_claim_ids": [
+    "xaman-testnet-claim:cancellation-path-is-not-modeled"
+  ]
+}

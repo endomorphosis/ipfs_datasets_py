@@ -2,8 +2,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+import duckdb
+
 from ipfs_datasets_py.logic.security_models.crypto_exchange.extractors.xaman_runtime_trace_ingestor import (
     REQUIRED_MONITOR_CATEGORIES,
+    XamanRuntimeTraceIngestor,
     build_report,
     main,
 )
@@ -93,6 +96,95 @@ def test_xaman_runtime_trace_absent_real_device_bundle_is_blocking() -> None:
     assert blockers['REAL_DEVICE_TRACE_BUNDLE_MISSING']['required_categories'] == REQUIRED_MONITOR_CATEGORIES
     assert report['runtime_trace_bundle']['trace_file_count'] == 0
     assert report['runtime_trace_bundle']['event_count'] == 0
+
+
+def test_xaman_runtime_trace_reads_duckdb_firebase_mock_as_supplemental_telemetry(tmp_path: Path) -> None:
+    database = tmp_path / 'firebase-mock.duckdb'
+    connection = duckdb.connect(str(database))
+    try:
+        connection.execute(
+            '''
+            CREATE TABLE xaman_firebase_mock_runs (
+                run_id VARCHAR, started_at_utc VARCHAR, last_event_at_utc VARCHAR,
+                xaman_commit VARCHAR, build_provenance_sha256 VARCHAR,
+                ledger_network VARCHAR, ledger_endpoint VARCHAR, firebase_mode VARCHAR,
+                accepted_event_count BIGINT, rejected_event_count BIGINT
+            )
+            '''
+        )
+        connection.execute(
+            '''
+            CREATE TABLE xaman_firebase_mock_events (
+                run_id VARCHAR, ordinal BIGINT, received_at_utc VARCHAR, timestamp_utc VARCHAR,
+                category VARCHAR, event_name VARCHAR, outcome VARCHAR, attributes_json VARCHAR,
+                request_sha256 VARCHAR
+            )
+            '''
+        )
+        connection.execute(
+            '''
+            CREATE TABLE xaman_firebase_mock_rejections (
+                run_id VARCHAR, ordinal BIGINT, received_at_utc VARCHAR, reason_code VARCHAR,
+                request_sha256 VARCHAR
+            )
+            '''
+        )
+        connection.execute(
+            'INSERT INTO xaman_firebase_mock_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                'testnet-runtime-mock-01',
+                '2026-07-10T00:00:00Z',
+                '2026-07-10T00:00:01Z',
+                '942f43876265a7af44f233288ad2b1d00841d5fa',
+                'a' * 64,
+                'testnet',
+                'wss://s.altnet.rippletest.net:51233',
+                'disabled_with_duckdb_firebase_mock',
+                1,
+                0,
+            ],
+        )
+        connection.execute(
+            'INSERT INTO xaman_firebase_mock_events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                'testnet-runtime-mock-01',
+                1,
+                '2026-07-10T00:00:01Z',
+                '2026-07-10T00:00:01Z',
+                'firebase_disabled',
+                'firebase_analytics_operation',
+                'stubbed',
+                '{"arg_count":1,"operation":"logScreenView"}',
+                'b' * 64,
+            ],
+        )
+    finally:
+        connection.close()
+
+    report = XamanRuntimeTraceIngestor().ingest(
+        repo_root=REPO_ROOT,
+        firebase_mock_database_path=database,
+        firebase_mock_run_id='testnet-runtime-mock-01',
+        generated_at_utc='2026-07-10T00:00:00Z',
+    )
+
+    assert report['firebase_mock']['status'] == 'loaded'
+    assert report['firebase_mock']['event_count'] == 1
+    assert report['firebase_mock']['rejected_event_count'] == 0
+    assert report['firebase_mock']['event_type_counts'] == [
+        {
+            'category': 'firebase_disabled',
+            'event_name': 'firebase_analytics_operation',
+            'outcome': 'stubbed',
+            'count': 1,
+        }
+    ]
+    facts = {fact['category']: fact for fact in report['monitor_facts']}
+    assert facts['firebase_mock']['status'] == 'SUPPLEMENTAL_REDACTED_TELEMETRY'
+    assert facts['firebase_mock']['normalized_fact']['wallet_or_xrpl_events_inferred'] is False
+    blockers = {blocker['code'] for blocker in report['blocking_gaps']}
+    assert 'REAL_DEVICE_TRACE_BUNDLE_MISSING' in blockers
+    assert 'RUNTIME_EQUIVALENCE_NOT_PROVED' in blockers
 
 
 def test_xaman_runtime_trace_cli_writes_report(tmp_path: Path) -> None:

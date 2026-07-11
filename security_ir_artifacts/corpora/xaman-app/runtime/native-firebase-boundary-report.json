@@ -1,0 +1,464 @@
+{
+  "apk_inspection": {
+    "binary_manifest_indicator_counts": {
+      "firebase_component_discovery_service": 2,
+      "firebase_init_provider": 2,
+      "firebase_instance_id_receiver": 2,
+      "firebase_messaging_service": 2,
+      "react_native_firebase_app_init_provider": 2,
+      "react_native_firebase_crashlytics_init_provider": 2,
+      "react_native_firebase_messaging_receiver": 2,
+      "react_native_firebase_messaging_service": 2
+    },
+    "crashlytics_native_libraries": [
+      {
+        "compressed_size_bytes": 794272,
+        "entry": "lib/x86_64/libcrashlytics-common.so",
+        "size_bytes": 794272
+      },
+      {
+        "compressed_size_bytes": 190456,
+        "entry": "lib/x86_64/libcrashlytics-handler.so",
+        "size_bytes": 190456
+      },
+      {
+        "compressed_size_bytes": 8768,
+        "entry": "lib/x86_64/libcrashlytics-trampoline.so",
+        "size_bytes": 8768
+      },
+      {
+        "compressed_size_bytes": 199872,
+        "entry": "lib/x86_64/libcrashlytics.so",
+        "size_bytes": 199872
+      }
+    ],
+    "crashlytics_native_library_count": 4,
+    "dex_entries_with_firebase_indicators": [
+      {
+        "entry": "classes10.dex",
+        "matched_indicators": [
+          "firebase_core_package",
+          "react_native_firebase_app_package",
+          "react_native_firebase_init_provider_generic"
+        ],
+        "sha256": "988a544c0758f39f54853c69a63e2b77a2bd2d9d75fa40372297f88a59df34df",
+        "size_bytes": 97604
+      },
+      {
+        "entry": "classes13.dex",
+        "matched_indicators": [
+          "firebase_core_package",
+          "react_native_firebase_app_init_provider",
+          "react_native_firebase_app_package",
+          "react_native_firebase_init_provider_generic"
+        ],
+        "sha256": "c00692e5159b62a1dde1821446ae3865aee42d79ee3d0ac0d8a2c2b86919ea36",
+        "size_bytes": 95748
+      },
+      {
+        "entry": "classes16.dex",
+        "matched_indicators": [
+          "firebase_core_package",
+          "firebase_crashlytics_class",
+          "react_native_firebase_crashlytics_init_provider",
+          "react_native_firebase_crashlytics_package",
+          "react_native_firebase_init_provider_generic"
+        ],
+        "sha256": "b853423d251cc2ea3cc9fc7dec168b0b57eb64496e6081283ea7513b65468a53",
+        "size_bytes": 28720
+      },
+      {
+        "entry": "classes17.dex",
+        "matched_indicators": [
+          "firebase_core_package",
+          "firebase_crashlytics_class",
+          "firebase_messaging_class",
+          "react_native_firebase_crashlytics_package",
+          "react_native_firebase_messaging_package"
+        ],
+        "sha256": "4de6e5544a050d84e430881856fed9015bff272c7621156388b004102a1130fd",
+        "size_bytes": 1071196
+      },
+      {
+        "entry": "classes2.dex",
+        "matched_indicators": [
+          "firebase_core_package",
+          "firebase_messaging_class",
+          "react_native_firebase_app_package",
+          "react_native_firebase_messaging_package"
+        ],
+        "sha256": "1f0aa053eb012a3b611eeb0e4a4c613a8d267c4c9ef0ed397b5ce4d4d4e2e4be",
+        "size_bytes": 73372
+      },
+      {
+        "entry": "classes22.dex",
+        "matched_indicators": [
+          "react_native_firebase_app_package",
+          "react_native_firebase_crashlytics_package",
+          "react_native_firebase_messaging_package"
+        ],
+        "sha256": "b0df4aadcf8f717b587ed3e0466efbc58e5507184a234f3ded2e1e1a100842a4",
+        "size_bytes": 12576
+      },
+      {
+        "entry": "classes26.dex",
+        "matched_indicators": [
+          "firebase_core_package",
+          "firebase_messaging_class"
+        ],
+        "sha256": "10d6ba536b3f991c847fef1129de9011cb90adf7a1d5b276fe58c61b1f4a34b4",
+        "size_bytes": 36124
+      },
+      {
+        "entry": "classes30.dex",
+        "matched_indicators": [
+          "firebase_core_package"
+        ],
+        "sha256": "d4be39b8637e682892d710296c4d6f1a54d4268d77a8e2e0d1c489f30e688ca5",
+        "size_bytes": 9418268
+      },
+      {
+        "entry": "classes31.dex",
+        "matched_indicators": [
+          "firebase_core_package",
+          "firebase_crashlytics_class",
+          "firebase_messaging_class"
+        ],
+        "sha256": "fd8cd60535875dfc6676b47325917c6f9116f96c8e7eb7868d672a3062133851",
+        "size_bytes": 13630248
+      },
+      {
+        "entry": "classes8.dex",
+        "matched_indicators": [
+          "firebase_core_package",
+          "react_native_firebase_app_package"
+        ],
+        "sha256": "8749ca0ffb2f8a01e3f37076d4bc25f8ab00e83344c19480f07406b1d0185039",
+        "size_bytes": 160000
+      }
+    ],
+    "dex_entry_count_with_indicators": 10,
+    "firebase_packaged_resource_count": 8,
+    "firebase_packaged_resources": [
+      {
+        "compressed_size_bytes": 54,
+        "entry": "firebase-analytics-ktx.properties",
+        "size_bytes": 82
+      },
+      {
+        "compressed_size_bytes": 50,
+        "entry": "firebase-analytics.properties",
+        "size_bytes": 74
+      },
+      {
+        "compressed_size_bytes": 54,
+        "entry": "firebase-encoders-proto.properties",
+        "size_bytes": 84
+      },
+      {
+        "compressed_size_bytes": 48,
+        "entry": "firebase-encoders.properties",
+        "size_bytes": 72
+      },
+      {
+        "compressed_size_bytes": 52,
+        "entry": "firebase-iid-interop.properties",
+        "size_bytes": 78
+      },
+      {
+        "compressed_size_bytes": 61,
+        "entry": "firebase-measurement-connector.properties",
+        "size_bytes": 98
+      },
+      {
+        "compressed_size_bytes": 187,
+        "entry": "res/raw/firebase_common_keep.xml",
+        "size_bytes": 290
+      },
+      {
+        "compressed_size_bytes": 481,
+        "entry": "res/raw/firebase_crashlytics_keep.xml",
+        "size_bytes": 768
+      }
+    ]
+  },
+  "artifact_cid": "sha256:dce3d70731109f4ad0d9b3e9dd75116ad73bdd9b09fb683dec75eed01aac9345",
+  "blockers": [
+    {
+      "code": "NATIVE_FIREBASE_MANIFEST_COMPONENTS_PRESENT",
+      "indicator_counts": {
+        "firebase_component_discovery_service": 1,
+        "firebase_init_provider": 1,
+        "firebase_instance_id_receiver": 1,
+        "firebase_messaging_service": 1,
+        "react_native_firebase_app_init_provider": 1,
+        "react_native_firebase_crashlytics_init_provider": 1,
+        "react_native_firebase_messaging_receiver": 1,
+        "react_native_firebase_messaging_service": 1
+      }
+    },
+    {
+      "code": "NATIVE_FIREBASE_APK_BINARY_MANIFEST_INDICATORS_PRESENT",
+      "indicator_counts": {
+        "firebase_component_discovery_service": 2,
+        "firebase_init_provider": 2,
+        "firebase_instance_id_receiver": 2,
+        "firebase_messaging_service": 2,
+        "react_native_firebase_app_init_provider": 2,
+        "react_native_firebase_crashlytics_init_provider": 2,
+        "react_native_firebase_messaging_receiver": 2,
+        "react_native_firebase_messaging_service": 2
+      }
+    },
+    {
+      "code": "FIREBASE_COMPONENT_REGISTRARS_PRESENT",
+      "count": 19
+    },
+    {
+      "code": "FIREBASE_DEX_CLASSES_PRESENT",
+      "dex_entry_count": 10
+    },
+    {
+      "code": "CRASHLYTICS_NATIVE_LIBRARIES_PRESENT",
+      "library_count": 4
+    },
+    {
+      "code": "FIREBASE_PACKAGED_RESOURCES_PRESENT",
+      "resource_count": 8
+    }
+  ],
+  "boundary_statement": "JavaScript Firebase calls may be stubbed, but the inspected APK or startup evidence still shows native Firebase initialization and/or Crashlytics artifacts; the Testnet device trial cannot be labeled fully Firebase-disabled.",
+  "device_trial_label_allowed": "firebase_js_stubbed_only",
+  "external_removal_assessment": {
+    "dependency_removal_overlay_present": false,
+    "manifest_removal_overlay_present": false,
+    "overlay_evidence_present": false,
+    "proof_requirement": "A verifier-only manifest/dependency overlay must be followed by this audit showing zero native Firebase manifest indicators, DEX indicators, packaged Firebase resources, and Crashlytics native libraries, plus no native Firebase startup-log indicators.",
+    "status": "not_effective_or_not_supplied"
+  },
+  "generated_at_utc": "2026-07-10T21:00:00Z",
+  "inputs": {
+    "apk": {
+      "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/build/outputs/apk/debug/app-x86_64-debug.apk",
+      "present": true,
+      "sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "size_bytes": 233121825
+    },
+    "build_kit_manifest": {
+      "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/firebase-disabled-testnet-kit/testnet-build-manifest.json",
+      "present": true,
+      "sha256": "638c63ad73d0dc7756e058c49bf425c52add7588961dc4e85b4802bab359002f",
+      "size_bytes": 2538
+    },
+    "dependency_removal_overlay": null,
+    "manifest_removal_overlay": null,
+    "merged_manifest": {
+      "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/build/intermediates/merged_manifests/debug/x86_64/AndroidManifest.xml",
+      "present": true,
+      "sha256": "05b747f85ee8ef640998fdc5ad801843da40694c6c397b9819178bfe240c46fa",
+      "size_bytes": 26638
+    },
+    "startup_log": {
+      "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-testnet-firebase-disabled-events.log",
+      "present": true,
+      "sha256": "356dccc4ed111ecb763df9c77e6e019822964719f6d7756c5d3b43a22c3b3de8",
+      "size_bytes": 1192
+    },
+    "testnet_js_telemetry_report": {
+      "path": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/runtime/testnet-telemetry-report.json",
+      "present": true,
+      "sha256": "c43c46cf610b1eea65a4319385c510343a3bf9673a702a28909ab0b8c2ce2fb8",
+      "size_bytes": 1754
+    }
+  },
+  "inspection_methods": [
+    "APK ZIP central-directory scan for DEX, packaged resources, and native libraries",
+    "raw DEX byte scan for Firebase and React Native Firebase class descriptors",
+    "Gradle merged-manifest XML parse for providers, services, receivers, and component registrars",
+    "startup-log indicator counts with raw lines omitted and line hashes retained"
+  ],
+  "inspection_scope": {
+    "android_variant": "debug",
+    "artifact_role": "testnet_verifier_apk",
+    "claim_under_test": "native Firebase initialization is absent or classified as a hard boundary",
+    "production_usable": false
+  },
+  "javascript_boundary": {
+    "accepted_stub_event_count": 4,
+    "boundary_conclusion": "javascript_calls_stubbed_only_native_packaging_separately_audited",
+    "build_manifest_present": true,
+    "firebase_gradle_tasks_disabled": true,
+    "firebase_js_modules_stubbed": [
+      "@react-native-firebase/analytics",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/messaging"
+    ],
+    "firebase_mock_loopback_only": null,
+    "status": "inspected",
+    "telemetry_report_present": true,
+    "telemetry_security_decision": "TESTNET_FIREBASE_DISABLED_TELEMETRY_CAPTURED_NOT_PRODUCTION_EVIDENCE"
+  },
+  "manifest_inspection": {
+    "firebase_component_registrars": [
+      "com.google.firebase.FirebaseCommonKtxRegistrar",
+      "com.google.firebase.analytics.connector.internal.AnalyticsConnectorRegistrar",
+      "com.google.firebase.analytics.ktx.FirebaseAnalyticsLegacyRegistrar",
+      "com.google.firebase.crashlytics.CrashlyticsRegistrar",
+      "com.google.firebase.crashlytics.FirebaseCrashlyticsKtxRegistrar",
+      "com.google.firebase.crashlytics.ndk.CrashlyticsNdkRegistrar",
+      "com.google.firebase.datatransport.TransportRegistrar",
+      "com.google.firebase.installations.FirebaseInstallationsKtxRegistrar",
+      "com.google.firebase.installations.FirebaseInstallationsRegistrar",
+      "com.google.firebase.ktx.FirebaseCommonLegacyRegistrar",
+      "com.google.firebase.messaging.FirebaseMessagingKtxRegistrar",
+      "com.google.firebase.messaging.FirebaseMessagingRegistrar",
+      "com.google.firebase.sessions.FirebaseSessionsRegistrar",
+      "com.google.mlkit.common.internal.CommonComponentRegistrar",
+      "com.google.mlkit.vision.barcode.internal.BarcodeRegistrar",
+      "com.google.mlkit.vision.common.internal.VisionCommonRegistrar",
+      "com.google.mlkit.vision.face.internal.FaceRegistrar",
+      "com.google.mlkit.vision.text.internal.TextRegistrar",
+      "io.invertase.firebase.app.ReactNativeFirebaseAppRegistrar"
+    ],
+    "firebase_metadata": [
+      "com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar",
+      "com.google.firebase.components:com.google.firebase.analytics.connector.internal.AnalyticsConnectorRegistrar",
+      "com.google.firebase.components:com.google.firebase.analytics.ktx.FirebaseAnalyticsLegacyRegistrar",
+      "com.google.firebase.components:com.google.firebase.crashlytics.CrashlyticsRegistrar",
+      "com.google.firebase.components:com.google.firebase.crashlytics.FirebaseCrashlyticsKtxRegistrar",
+      "com.google.firebase.components:com.google.firebase.crashlytics.ndk.CrashlyticsNdkRegistrar",
+      "com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar",
+      "com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar",
+      "com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar",
+      "com.google.firebase.components:com.google.firebase.ktx.FirebaseCommonLegacyRegistrar",
+      "com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar",
+      "com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar",
+      "com.google.firebase.components:com.google.firebase.sessions.FirebaseSessionsRegistrar",
+      "com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar",
+      "com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar",
+      "com.google.firebase.components:com.google.mlkit.vision.common.internal.VisionCommonRegistrar",
+      "com.google.firebase.components:com.google.mlkit.vision.face.internal.FaceRegistrar",
+      "com.google.firebase.components:com.google.mlkit.vision.text.internal.TextRegistrar",
+      "com.google.firebase.components:io.invertase.firebase.app.ReactNativeFirebaseAppRegistrar",
+      "com.google.firebase.messaging.default_notification_channel_id",
+      "com.google.firebase.messaging.default_notification_color",
+      "com.google.firebase.messaging.default_notification_icon",
+      "firebase_analytics_collection_deactivated",
+      "firebase_analytics_collection_enabled",
+      "firebase_crashlytics_collection_enabled",
+      "firebase_messaging_auto_init_enabled"
+    ],
+    "indicator_counts": {
+      "firebase_component_discovery_service": 1,
+      "firebase_init_provider": 1,
+      "firebase_instance_id_receiver": 1,
+      "firebase_messaging_service": 1,
+      "react_native_firebase_app_init_provider": 1,
+      "react_native_firebase_crashlytics_init_provider": 1,
+      "react_native_firebase_messaging_receiver": 1,
+      "react_native_firebase_messaging_service": 1
+    },
+    "providers": [
+      "androidx.startup.InitializationProvider",
+      "com.google.firebase.provider.FirebaseInitProvider",
+      "com.google.mlkit.common.internal.MlKitInitProvider",
+      "io.invertase.firebase.app.ReactNativeFirebaseAppInitProvider",
+      "io.invertase.firebase.crashlytics.ReactNativeFirebaseCrashlyticsInitProvider"
+    ],
+    "receivers": [
+      "androidx.profileinstaller.ProfileInstallReceiver",
+      "com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver",
+      "com.google.android.gms.measurement.AppMeasurementReceiver",
+      "com.google.firebase.iid.FirebaseInstanceIdReceiver",
+      "io.invertase.firebase.messaging.ReactNativeFirebaseMessagingReceiver",
+      "libs.notification.NotificationActionReceiver",
+      "libs.notification.NotificationMessageReceiver"
+    ],
+    "services": [
+      "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+      "com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService",
+      "com.google.android.gms.auth.api.signin.RevocationBoundService",
+      "com.google.android.gms.measurement.AppMeasurementJobService",
+      "com.google.android.gms.measurement.AppMeasurementService",
+      "com.google.firebase.components.ComponentDiscoveryService",
+      "com.google.firebase.messaging.FirebaseMessagingService",
+      "com.google.firebase.sessions.SessionLifecycleService",
+      "com.google.mlkit.common.internal.MlKitComponentDiscoveryService",
+      "com.veriff.sdk.camera.core.impl.MetadataHolderService",
+      "com.veriff.sdk.service.SendAuthenticationFlowDataToServerService",
+      "io.invertase.firebase.messaging.ReactNativeFirebaseMessagingHeadlessService",
+      "io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"
+    ],
+    "status": "parsed_xml"
+  },
+  "native_firebase_evidence_present": true,
+  "native_firebase_fully_disabled": false,
+  "native_packaging_present": true,
+  "native_startup_indicators_present": false,
+  "overall_status": "blocked",
+  "required_evidence": {
+    "apk_present": true,
+    "complete": true,
+    "merged_manifest_present": true,
+    "startup_log_present": true
+  },
+  "run_id": "xaman-native-firebase-boundary-20260710",
+  "schema_version": "xaman-native-firebase-boundary/v1",
+  "security_decision": "BLOCK_TESTNET_FULL_FIREBASE_DISABLED_LABEL_NATIVE_FIREBASE_PACKAGED",
+  "startup_log_inspection": {
+    "indicator_counts": {
+      "firebase": 4,
+      "js_stub_marker": 4
+    },
+    "js_stub_event_count": 4,
+    "line_count": 4,
+    "native_indicator_counts": {},
+    "redacted_match_count": 4,
+    "redacted_match_truncated": false,
+    "redacted_matches": [
+      {
+        "line_number": 1,
+        "line_sha256": "0a25119eb38a204947bc134090505b74260a3a180f49f8348c281572d6f4fc12",
+        "matched_indicators": [
+          "firebase",
+          "js_stub_marker"
+        ],
+        "redaction": "raw_line_omitted",
+        "sensitive_key_seen": false
+      },
+      {
+        "line_number": 2,
+        "line_sha256": "bf74c49ad0aae02b1848560171fa81ea8bb07f1d47784c9d00f216bbadb32d60",
+        "matched_indicators": [
+          "firebase",
+          "js_stub_marker"
+        ],
+        "redaction": "raw_line_omitted",
+        "sensitive_key_seen": false
+      },
+      {
+        "line_number": 3,
+        "line_sha256": "8e38948eef1c81c42e01dffd3c56ef5fa13b8dd72b67cdad147984cdcd4bcc4d",
+        "matched_indicators": [
+          "firebase",
+          "js_stub_marker"
+        ],
+        "redaction": "raw_line_omitted",
+        "sensitive_key_seen": false
+      },
+      {
+        "line_number": 4,
+        "line_sha256": "48dc49677b80fc868e311eb2d74275382f7d127d1129db71581a90486e785c4c",
+        "matched_indicators": [
+          "firebase",
+          "js_stub_marker"
+        ],
+        "redaction": "raw_line_omitted",
+        "sensitive_key_seen": false
+      }
+    ],
+    "status": "scanned"
+  },
+  "task_id": "PORTAL-CXTP-126",
+  "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+}

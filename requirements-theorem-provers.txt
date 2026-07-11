@@ -1,0 +1,7 @@
+# Optional Python bindings for theorem-prover integrations.
+#
+# Native solvers are installed lazily, user-locally, when an execution path
+# requests them. See docs/security_verification/lazy_theorem_prover_installation.md.
+z3-solver>=4.12.0,<5.0.0
+cvc5>=1.0.0,<2.0.0
+symbolicai>=1.14.0,<2.0.0

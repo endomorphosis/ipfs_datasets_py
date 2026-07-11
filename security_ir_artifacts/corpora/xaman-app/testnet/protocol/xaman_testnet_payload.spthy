@@ -1,0 +1,159 @@
+theory XamanTestnetPayload
+begin
+
+builtins: hashing, signing
+
+functions: xrpl_testnet/0, xrpl_mainnet/0, payload_id/1, redaction_digest/1, ui_result/1
+
+/* PORTAL-CXTP-135: Tamarin projection for the Xaman Testnet remote-payload
+   protocol claim lane.  The model intentionally keeps only reviewed
+   categorical Testnet facts.  Raw payload JSON, account material, signatures,
+   signed blobs, XRPL broadcast/finality, replay, refusal, cancellation, and
+   expiry semantics are NOT_MODELED in protocol-report.json. */
+
+rule Remote_Service_Issues_Redacted_Testnet_Payload:
+  [ Fr(~payload), Fr(~account) ]
+  --[ RemotePayloadIssued(~payload),
+      TestnetBound(~payload),
+      FreshTestnetAccountBoundary(~account),
+      AuditRedactionPreserved(~payload) ]->
+  [ Out(<xrpl_testnet, payload_id(~payload), redaction_digest(~payload)>),
+    !ReviewedTestnetPayload(payload_id(~payload), redaction_digest(~payload), ~account) ]
+
+rule Device_Intakes_Categorical_Payload:
+  [ In(<xrpl_testnet, payload_id(payload), redaction_digest(payload)>),
+    !ReviewedTestnetPayload(payload_id(payload), redaction_digest(payload), account) ]
+  --[ PayloadIntakeCategorical(payload),
+      TestnetBound(payload),
+      FreshTestnetAccountBoundary(account),
+      AuditRedactionPreserved(payload) ]->
+  [ ReviewablePayload(payload, account) ]
+
+rule Device_Reviews_Payload:
+  [ ReviewablePayload(payload, account) ]
+  --[ PayloadReviewed(payload),
+      TestnetBound(payload),
+      FreshTestnetAccountBoundary(account),
+      AuditRedactionPreserved(payload) ]->
+  [ ReviewedPayload(payload, account) ]
+
+rule Operator_Authorizes_After_Review:
+  [ ReviewedPayload(payload, account) ]
+  --[ AuthDecisionAuthorized(payload),
+      AuditRedactionPreserved(payload) ]->
+  [ AuthorizedPayload(payload, account) ]
+
+rule Device_Observes_Signing_Decision:
+  [ AuthorizedPayload(payload, account) ]
+  --[ SigningDecisionObserved(payload),
+      AuditRedactionPreserved(payload) ]->
+  [ SignedDecision(payload, account, sign(payload_id(payload), redaction_digest(payload))) ]
+
+rule Device_Observes_Submit_UI:
+  [ SignedDecision(payload, account, signature) ]
+  --[ SubmitAttemptObserved(payload),
+      SubmitResultObserved(payload),
+      AuditRedactionPreserved(payload) ]->
+  [ Out(<ui_result(payload), signature>) ]
+
+rule Preserve_Attack_Wrong_Network:
+  [ Fr(~payload) ]
+  --[ AttackTraceWrongNetwork(~payload) ]->
+  [ Out(<xrpl_mainnet, payload_id(~payload), redaction_digest(~payload)>) ]
+
+rule Preserve_Attack_Imported_Production_Account:
+  [ Fr(~account) ]
+  --[ AttackTraceImportedProductionAccount(~account) ]->
+  [ Out(~account) ]
+
+rule Preserve_Attack_Signing_Before_Auth:
+  [ Fr(~payload) ]
+  --[ AttackTraceSigningBeforeAuth(~payload) ]->
+  [ Out(<payload_id(~payload), sign(payload_id(~payload), redaction_digest(~payload))>) ]
+
+rule Preserve_Attack_Replay_Duplicate_Resolution:
+  [ Fr(~payload) ]
+  --[ AttackTraceReplayDuplicateResolution(~payload) ]->
+  [ Out(<payload_id(~payload), payload_id(~payload)>) ]
+
+rule Preserve_Attack_Raw_Payload_Material:
+  [ Fr(~payload) ]
+  --[ AttackTraceRawPayloadMaterial(~payload) ]->
+  [ Out(~payload) ]
+
+rule Preserve_Attack_Raw_Signature_Blob:
+  [ Fr(~payload) ]
+  --[ AttackTraceRawSignatureBlob(~payload) ]->
+  [ Out(sign(payload_id(~payload), redaction_digest(~payload))) ]
+
+rule Preserve_Attack_Forged_Broadcast_Finality:
+  [ Fr(~payload) ]
+  --[ AttackTraceForgedBroadcastFinality(~payload) ]->
+  [ Out(<ui_result(~payload), xrpl_mainnet>) ]
+
+rule Preserve_Attack_Decline_Gap:
+  [ Fr(~payload) ]
+  --[ AttackTraceDeclineGap(~payload) ]->
+  [ Out(<payload_id(~payload), 'decline_gap'>) ]
+
+rule Preserve_Attack_Cancel_Gap:
+  [ Fr(~payload) ]
+  --[ AttackTraceCancelGap(~payload) ]->
+  [ Out(<payload_id(~payload), 'cancel_gap'>) ]
+
+rule Preserve_Attack_Expiry_Gap:
+  [ Fr(~payload) ]
+  --[ AttackTraceExpiryGap(~payload) ]->
+  [ Out(<payload_id(~payload), 'expiry_gap'>) ]
+
+lemma review_requires_testnet_binding:
+  "All payload #i.
+    PayloadReviewed(payload) @ i
+    ==>
+    (Ex #j. TestnetBound(payload) @ j & j < i)"
+
+lemma review_requires_fresh_testnet_account:
+  "All payload #i.
+    PayloadReviewed(payload) @ i
+    ==>
+    (Ex account #j. FreshTestnetAccountBoundary(account) @ j & j < i)"
+
+lemma auth_requires_review:
+  "All payload #i.
+    AuthDecisionAuthorized(payload) @ i
+    ==>
+    (Ex #j. PayloadReviewed(payload) @ j & j < i)"
+
+lemma signing_decision_requires_review_and_auth:
+  "All payload #i.
+    SigningDecisionObserved(payload) @ i
+    ==>
+    (Ex #j #k. PayloadReviewed(payload) @ j & AuthDecisionAuthorized(payload) @ k & j < i & k < i)"
+
+lemma submit_ui_requires_signing_decision:
+  "All payload #i.
+    SubmitAttemptObserved(payload) @ i
+    ==>
+    (Ex #j. SigningDecisionObserved(payload) @ j & j < i)"
+
+lemma audit_redaction_preserved_for_modeled_events:
+  "All payload #i.
+    (PayloadIntakeCategorical(payload) @ i | PayloadReviewed(payload) @ i |
+     SigningDecisionObserved(payload) @ i | SubmitResultObserved(payload) @ i)
+    ==>
+    (Ex #j. AuditRedactionPreserved(payload) @ j & j <= i)"
+
+lemma preserved_attack_traces_are_reachable [exists-trace]:
+  "Ex payload account #i #j #k #l #m #n #o #p #q #r.
+    AttackTraceWrongNetwork(payload) @ i &
+    AttackTraceImportedProductionAccount(account) @ j &
+    AttackTraceSigningBeforeAuth(payload) @ k &
+    AttackTraceReplayDuplicateResolution(payload) @ l &
+    AttackTraceRawPayloadMaterial(payload) @ m &
+    AttackTraceRawSignatureBlob(payload) @ n &
+    AttackTraceForgedBroadcastFinality(payload) @ o &
+    AttackTraceDeclineGap(payload) @ p &
+    AttackTraceCancelGap(payload) @ q &
+    AttackTraceExpiryGap(payload) @ r"
+
+end

@@ -1,0 +1,41 @@
+{
+  "accepted_categories": [
+    "firebase_disabled"
+  ],
+  "accepted_event_count": 4,
+  "artifact_cid": "sha256:ee11d41c8f6c2d6ca2de0d623ece01d08fcb58fda09d051182c4403908238f1d",
+  "blocking_gaps": [
+    {
+      "code": "RUNTIME_EQUIVALENCE_NOT_PROVED",
+      "reason": "Testnet Firebase-disabled telemetry is not proof of production or device-runtime equivalence."
+    }
+  ],
+  "build_provenance_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+  "duckdb": {
+    "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/testnet-telemetry.duckdb",
+    "sha256": "dd2dca907d230cb42d5cbea483469bfb542d84c1f27ebc7db5265561bbd9efcb"
+  },
+  "firebase_mode": "disabled",
+  "generated_at_utc": "2026-07-10T20:08:09Z",
+  "ledger": {
+    "endpoint": "wss://s.altnet.rippletest.net:51233",
+    "network": "testnet",
+    "runtime_connection_status": "not_observed_by_firebase_stub_telemetry",
+    "target_binding_status": "declared_not_runtime_verified"
+  },
+  "overall_status": "captured_testnet_events",
+  "production_release_blocked": true,
+  "rejected_event_count": 0,
+  "rejected_events": [],
+  "run_id": "xaman-firebase-disabled-startup-20260710",
+  "runtime_equivalence_status": "not_proved",
+  "schema_version": "xaman-firebase-disabled-testnet-telemetry/v1",
+  "security_decision": "TESTNET_FIREBASE_DISABLED_TELEMETRY_CAPTURED_NOT_PRODUCTION_EVIDENCE",
+  "source_event_log": {
+    "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-testnet-firebase-disabled-events.log",
+    "sha256": "356dccc4ed111ecb763df9c77e6e019822964719f6d7756c5d3b43a22c3b3de8"
+  },
+  "task_id": "PORTAL-CXTP-120",
+  "telemetry_sink": "duckdb",
+  "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+}

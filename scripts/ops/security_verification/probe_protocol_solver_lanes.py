@@ -7,10 +7,14 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
-import shutil
 import subprocess
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+
+from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+    ensure_prover_executable,
+    find_executable,
+)
 
 
 SCHEMA_VERSION = 'crypto-exchange-protocol-solver-lane-report/v1'
@@ -139,8 +143,13 @@ def build_protocol_solver_lane_report(
         protocol_report = root / protocol_report
     protocol_payload = _load_json(protocol_report)
 
-    tamarin = shutil.which('tamarin-prover')
-    proverif = shutil.which('proverif')
+    resolver = ensure_prover_executable if run_protocol_checks else find_executable
+    if run_protocol_checks:
+        tamarin = resolver('tamarin', reason='Xaman protocol solver lane execution')
+        proverif = resolver('proverif', reason='Xaman protocol solver lane execution')
+    else:
+        tamarin = resolver('tamarin-prover')
+        proverif = resolver('proverif')
     blockers: list[dict[str, Any]] = []
     warnings: list[dict[str, str]] = []
     if tamarin is None:

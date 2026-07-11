@@ -37,8 +37,9 @@ def _fake_executable(directory: Path, name: str, output: str = 'protocol solver 
     return executable
 
 
-def test_protocol_solver_lane_blocks_when_solvers_are_missing() -> None:
+def test_protocol_solver_lane_blocks_when_solvers_are_missing(monkeypatch) -> None:
     module = _module()
+    monkeypatch.setattr(module, 'find_executable', lambda _name: None)
 
     report = module.build_protocol_solver_lane_report(repo_root=ROOT)
 
