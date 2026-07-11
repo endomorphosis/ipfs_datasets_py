@@ -26,6 +26,12 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     AdaptiveModalAutoencoder,
     ProverCompilationSignal,
 )
+from .leanstral_theorems import (
+    LEGAL_IR_THEOREM_LEAN_KERNEL,
+    LeanstralTheoremRegistry,
+    generate_legal_semantics_theorem_registry,
+    lean_theorem_proof_rejection_reasons,
+)
 
 from .leanstral_theorems import (
     LEGAL_IR_THEOREM_LEAN_KERNEL,
