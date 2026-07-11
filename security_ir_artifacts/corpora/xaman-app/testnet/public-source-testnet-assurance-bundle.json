@@ -1,0 +1,1204 @@
+{
+  "allowed_verdicts": [
+    "TESTNET_SCOPE_ASSURED",
+    "DISPROVED",
+    "UNKNOWN",
+    "NOT_MODELED",
+    "BLOCKED"
+  ],
+  "artifact_cid": "bafkreigmlreagdix2glnj3wdmmx7comxec7nlleijrubhan5fwir2qtmku",
+  "blockers": [
+    {
+      "code": "SOLVER_PORTFOLIO_COUNTEREVIDENCE",
+      "count": 12,
+      "severity": "disproof",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json"
+    },
+    {
+      "code": "ADVERSARIAL_FUZZ_COUNTEREXAMPLES",
+      "count": 25,
+      "severity": "disproof",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
+    },
+    {
+      "code": "PUBLIC_SOURCE_KNOWN_COUNTEREXAMPLES",
+      "count": 7,
+      "severity": "disproof",
+      "source": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json"
+    },
+    {
+      "code": "RUNTIME_CONFORMANCE_ASSURANCE_BLOCKS",
+      "count": 17,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/runtime-conformance-report.json"
+    },
+    {
+      "claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only",
+        "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+        "xaman-testnet-claim:review-auth-sequence-observed",
+        "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "xaman-testnet-claim:refusal-path-is-not-modeled",
+        "xaman-testnet-claim:replay-controls-are-not-modeled",
+        "xaman-testnet-claim:expiry-path-is-not-modeled",
+        "xaman-testnet-claim:cancellation-path-is-not-modeled",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "code": "REQUIRED_CLAIMS_NOT_TESTNET_SCOPE_ASSURED",
+      "count": 12,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
+    },
+    {
+      "claim_ids": [
+        "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "xaman-testnet-claim:refusal-path-is-not-modeled",
+        "xaman-testnet-claim:replay-controls-are-not-modeled",
+        "xaman-testnet-claim:expiry-path-is-not-modeled",
+        "xaman-testnet-claim:cancellation-path-is-not-modeled",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+      ],
+      "code": "ACTIVE_NOT_MODELED_BOUNDARIES",
+      "count": 8,
+      "severity": "not_modeled",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
+    },
+    {
+      "code": "PUBLIC_BUILD_NOT_VENDOR_RELEASE_EQUIVALENT",
+      "severity": "scope",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/public-build-reproduction.json"
+    },
+    {
+      "code": "PUBLIC_SOURCE_NOT_PRODUCTION_RELEASE_APPROVAL",
+      "severity": "scope",
+      "source": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json"
+    }
+  ],
+  "claim_summary": {
+    "claim_gate_counts": {
+      "blocked": 12
+    },
+    "fuzz_counterexample_count": 25,
+    "model_status_counts": {
+      "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY": 2,
+      "MODELED_WITH_TESTNET_SCOPE": 4,
+      "NOT_MODELED": 6
+    },
+    "required_claim_count": 12,
+    "runtime_reviewed_claim_count": 2,
+    "solver_accepted_claim_count": 0,
+    "source_reviewed_claim_count": 12
+  },
+  "corpus": "xaman-app",
+  "dependency_task_ids": [
+    "PORTAL-CXTP-143",
+    "PORTAL-CXTP-147",
+    "PORTAL-CXTP-148",
+    "PORTAL-CXTP-150"
+  ],
+  "evidence_artifacts": [
+    {
+      "artifact_cid": "sha256:62e3e52fdd3264eb82e9714ff0f4f50c8829882ed415509542ca8426be9cfbd5",
+      "kind": "public_source_assessment",
+      "overall_status": "blocked",
+      "path": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json",
+      "present": true,
+      "production_release_blocked": true,
+      "public_source_result": "blocked_public_source_assessment",
+      "schema_version": "xaman-public-source-assessment/v1",
+      "security_decision": "BLOCK_PUBLIC_SOURCE_ASSESSMENT_NOT_RELEASE_APPROVAL",
+      "sha256": "sha256:7544c7ff1e68f3e5b664bfdf6b9918aad21404af28703590c6b8a9c7e2b1dbd3",
+      "task_id": "PORTAL-CXTP-119"
+    },
+    {
+      "artifact_cid": "bafkreiewqlkyt4cplsxvpowswgddfxyf6eaqb44nyoloindbmc2yaydffa",
+      "kind": "public_testnet_build_reproduction",
+      "overall_status": "blocked",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/public-build-reproduction.json",
+      "present": true,
+      "schema_version": "xaman-testnet-public-build-reproduction/v1",
+      "security_decision": "BLOCK_PUBLIC_TESTNET_BUILD_REPRODUCTION_NOT_VENDOR_RELEASE_EQUIVALENT",
+      "sha256": "sha256:f44ccc9043ccf37548c00d4376851ece8f64ada4f14d75e7da25581308f9f380",
+      "task_id": "PORTAL-CXTP-149"
+    },
+    {
+      "artifact_cid": "bafkreiggmq4ijj5qwtr5h7ysfuexb6gesy63uuab4qau43n7rsdrhevpny",
+      "kind": "public_testnet_build_environment",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/public-build-environment.json",
+      "present": true,
+      "schema_version": "xaman-testnet-public-build-environment/v1",
+      "sha256": "sha256:aa0421edced3bf8167d29578b97481d94ca218e0d08ade275f1a56529c41f495",
+      "task_id": "PORTAL-CXTP-149"
+    },
+    {
+      "artifact_cid": "bafkreiezuwppychfi3l3urqc7pu4u26dl3vu3nta3kwj2vb7mafrfoxwti",
+      "kind": "testnet_solver_portfolio",
+      "overall_status": "non_secure_with_counterevidence",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json",
+      "present": true,
+      "production_release_blocked": true,
+      "schema_version": "xaman-testnet-solver-portfolio-report/v1",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_SOLVER_PORTFOLIO_COUNTEREVIDENCE",
+      "sha256": "sha256:59ddf80c2fca35d36b294e73ed4992c916c2841cb13c6f369db9429f3540cac0",
+      "task_id": "PORTAL-CXTP-147",
+      "testnet_assurance_blocked": true
+    },
+    {
+      "artifact_cid": "bafkreigkeou4xkg25hidftiynajigmy46kk53kwtvv6von4hgbwj4trgiu",
+      "kind": "adversarial_fuzz_campaign",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/campaign-manifest.json",
+      "present": true,
+      "schema_version": "xaman-testnet-adversarial-fuzz-campaign-manifest/v1",
+      "sha256": "sha256:b148fd71e07abb698c62ce3919b5b59fb1d2f48c641a9eb1afa56d9c74795b23",
+      "task_id": "PORTAL-CXTP-148"
+    },
+    {
+      "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+      "kind": "adversarial_fuzz_counterexamples",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+      "present": true,
+      "schema_version": "xaman-testnet-fuzz-counterexample-manifest/v1",
+      "sha256": "sha256:6bf746cb1ed49b171d8b51cab0588fe072226cdbc7f0b31bc154bf2e1f34378f",
+      "task_id": "PORTAL-CXTP-148"
+    },
+    {
+      "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
+      "kind": "bounded_fuzz_report",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+      "present": true,
+      "schema_version": "xaman-testnet-fuzz-report/v1",
+      "sha256": "sha256:4824d1102d6c234cfe34132e46ef3e723a491e9ba2feead5c0fd7ecb0b591fd1",
+      "task_id": "PORTAL-CXTP-138"
+    },
+    {
+      "artifact_cid": "bafkreifmr5m3rcyvksrjuxw4h5folgi4o6juzptq4zzthukbpbhej7peoe",
+      "kind": "runtime_conformance_report",
+      "overall_status": "blocked_testnet_runtime_conformance",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/runtime-conformance-report.json",
+      "present": true,
+      "production_release_blocked": true,
+      "schema_version": "xaman-testnet-runtime-conformance-report/v1",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_RUNTIME_CONFORMANCE_GAPS",
+      "sha256": "sha256:ec2455d5cc03517b2b80e1f3644b8dbd261f4341868bf1f735e9022d8dc6c985",
+      "task_id": "PORTAL-CXTP-150"
+    },
+    {
+      "artifact_cid": "bafkreibnxt3rgdnsncyohg6poi5haza52ca2d6shhrn2grcekv2dpl663i",
+      "kind": "runtime_conformance_trace_map",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/runtime-conformance-trace-map.json",
+      "present": true,
+      "schema_version": "xaman-testnet-runtime-conformance-trace-map/v1",
+      "sha256": "sha256:52f124cf189deaedefd30006487443d7b193b85b810b71b2f3d50a11e21d9ba2",
+      "task_id": "PORTAL-CXTP-150"
+    }
+  ],
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model": {
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "model_id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "required_claim_count": 12,
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "required_claims": [
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "domain": "ledger",
+      "fuzz_evidence": {
+        "counterexample_count": 2,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "MODELED_WITH_TESTNET_SCOPE",
+      "required_assumptions": [
+        "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+        "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 0,
+        "category_ids": [
+          "testnet_only_network",
+          "reconnect",
+          "network_change"
+        ],
+        "conformance_statuses": [
+          "observed"
+        ],
+        "current_reviewed": true
+      },
+      "severity": "high",
+      "solver_evidence": {
+        "applicable_lane_count": 6,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
+            "code": "ROCQ_KERNEL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "rocq_kernel",
+            "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 3,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "domain": "store",
+      "fuzz_evidence": {
+        "counterexample_count": 1,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "MODELED_WITH_TESTNET_SCOPE",
+      "required_assumptions": [
+        "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 0,
+        "category_ids": [
+          "fresh_emulator",
+          "fresh_account"
+        ],
+        "conformance_statuses": [
+          "observed"
+        ],
+        "current_reviewed": true
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 6,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
+            "code": "ROCQ_KERNEL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "rocq_kernel",
+            "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 3,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "domain": "auth_component",
+      "fuzz_evidence": {
+        "counterexample_count": 5,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "MODELED_WITH_TESTNET_SCOPE",
+      "required_assumptions": [
+        "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 1,
+        "category_ids": [
+          "review",
+          "authentication",
+          "signing_decision"
+        ],
+        "conformance_statuses": [
+          "observed",
+          "observed_with_blocking_boundary"
+        ],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 6,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
+            "code": "ROCQ_KERNEL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "rocq_kernel",
+            "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 3,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "domain": "vault",
+      "fuzz_evidence": {
+        "counterexample_count": 1,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY",
+      "required_assumptions": [
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+        "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 1,
+        "category_ids": [
+          "signing_decision"
+        ],
+        "conformance_statuses": [
+          "observed_with_blocking_boundary"
+        ],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 4,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 3,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "domain": "ledger",
+      "fuzz_evidence": {
+        "counterexample_count": 3,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY",
+      "required_assumptions": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 2,
+        "category_ids": [
+          "submit_attempt",
+          "submit_result"
+        ],
+        "conformance_statuses": [
+          "observed_with_blocking_boundary"
+        ],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 5,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json",
+            "code": "APALACHE_STATE_INCOMPLETE",
+            "fail_closed": true,
+            "lane_id": "apalache_state",
+            "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+            "result": "INCOMPLETE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 3,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "domain": "payload",
+      "fuzz_evidence": {
+        "counterexample_count": 6,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "NOT_MODELED",
+      "required_assumptions": [
+        "xaman-testnet-assumption:raw-payload-material-excluded",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 0,
+        "category_ids": [],
+        "conformance_statuses": [],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 4,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 3,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "domain": "e2e_flow",
+      "fuzz_evidence": {
+        "counterexample_count": 1,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "NOT_MODELED",
+      "required_assumptions": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 0,
+        "category_ids": [],
+        "conformance_statuses": [],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 4,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 2,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "domain": "payload",
+      "fuzz_evidence": {
+        "counterexample_count": 2,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "NOT_MODELED",
+      "required_assumptions": [
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 1,
+        "category_ids": [
+          "replay"
+        ],
+        "conformance_statuses": [
+          "blocked_missing_path"
+        ],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 5,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json",
+            "code": "APALACHE_STATE_INCOMPLETE",
+            "fail_closed": true,
+            "lane_id": "apalache_state",
+            "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+            "result": "INCOMPLETE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 2,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "domain": "payload",
+      "fuzz_evidence": {
+        "counterexample_count": 2,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "NOT_MODELED",
+      "required_assumptions": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 1,
+        "category_ids": [
+          "expiry"
+        ],
+        "conformance_statuses": [
+          "blocked_missing_path"
+        ],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 5,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json",
+            "code": "APALACHE_STATE_INCOMPLETE",
+            "fail_closed": true,
+            "lane_id": "apalache_state",
+            "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+            "result": "INCOMPLETE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 2,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "domain": "e2e_flow",
+      "fuzz_evidence": {
+        "counterexample_count": 2,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "NOT_MODELED",
+      "required_assumptions": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 1,
+        "category_ids": [
+          "cancellation"
+        ],
+        "conformance_statuses": [
+          "blocked_missing_path"
+        ],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 5,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json",
+            "code": "APALACHE_STATE_INCOMPLETE",
+            "fail_closed": true,
+            "lane_id": "apalache_state",
+            "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+            "result": "INCOMPLETE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 2,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "domain": "ledger",
+      "fuzz_evidence": {
+        "counterexample_count": 5,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "NOT_MODELED",
+      "required_assumptions": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 2,
+        "category_ids": [
+          "submit_attempt",
+          "submit_result"
+        ],
+        "conformance_statuses": [
+          "observed_with_blocking_boundary"
+        ],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 4,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 2,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    },
+    {
+      "assurance_ready_for_testnet_scope_assured": false,
+      "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+      "domain": "audit",
+      "fuzz_evidence": {
+        "counterexample_count": 4,
+        "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+        "minimized_counterexamples_required": true
+      },
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "model_status": "MODELED_WITH_TESTNET_SCOPE",
+      "required_assumptions": [
+        "xaman-testnet-assumption:redacted-categorical-evidence-only",
+        "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence"
+      ],
+      "runtime_evidence": {
+        "assurance_block_count": 3,
+        "category_ids": [
+          "fresh_emulator",
+          "testnet_only_network",
+          "fresh_account",
+          "review",
+          "authentication",
+          "signing_decision",
+          "submit_attempt",
+          "submit_result",
+          "reconnect",
+          "network_change"
+        ],
+        "conformance_statuses": [
+          "observed",
+          "observed_with_blocking_boundary"
+        ],
+        "current_reviewed": false
+      },
+      "severity": "blocking",
+      "solver_evidence": {
+        "applicable_lane_count": 6,
+        "counterevidence": [
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+            "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "z3_cvc5_differential",
+            "reason": "both solvers found unresolved blocking assumptions",
+            "result": "COUNTEREXAMPLE"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "TAMARIN_PROTOCOL_NOT_RUN",
+            "fail_closed": true,
+            "lane_id": "tamarin_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "NOT_RUN"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+            "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "proverif_protocol",
+            "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
+            "code": "ROCQ_KERNEL_REQUIRED_MISSING_ARTIFACT",
+            "fail_closed": true,
+            "lane_id": "rocq_kernel",
+            "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+            "result": "REQUIRED_MISSING_ARTIFACT"
+          },
+          {
+            "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+            "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
+            "fail_closed": true,
+            "lane_id": "fuzz_consumption",
+            "reason": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+            "result": "COUNTEREXAMPLE"
+          }
+        ],
+        "portfolio_result": "NON_SECURE_COUNTEREVIDENCE",
+        "proof_promotion_allowed": false,
+        "required_results_accepted": false
+      },
+      "source_evidence": {
+        "current_reviewed": true,
+        "evidence_ref_count": 3,
+        "review_statuses": [
+          "human_reviewed"
+        ]
+      }
+    }
+  ],
+  "schema_version": "xaman-public-source-testnet-assurance-bundle/v1",
+  "scope": {
+    "network": "XRPL Testnet",
+    "network_id": 1,
+    "production_security_result": false,
+    "public_source_only": true,
+    "statement": "This is not a production or vendor-release security decision. It is bounded to reviewed public-source and XRPL Testnet verifier evidence and cannot approve, certify, reject, or reproduce the production Xaman vendor release.",
+    "vendor_release_equivalence_claimed": false,
+    "vendor_release_security_decision": false,
+    "verifier_build_only": true
+  },
+  "source_runtime_solver_summary": {
+    "fuzz_counterexample_count": 25,
+    "public_build_security_decision": "BLOCK_PUBLIC_TESTNET_BUILD_REPRODUCTION_NOT_VENDOR_RELEASE_EQUIVALENT",
+    "public_source_production_release_approval": false,
+    "public_source_security_decision": "BLOCK_PUBLIC_SOURCE_ASSESSMENT_NOT_RELEASE_APPROVAL",
+    "runtime_conformance_overall_status": "blocked_testnet_runtime_conformance",
+    "runtime_conformance_security_decision": "BLOCK_TESTNET_ASSURANCE_RUNTIME_CONFORMANCE_GAPS",
+    "solver_portfolio_overall_status": "non_secure_with_counterevidence",
+    "solver_portfolio_security_decision": "BLOCK_TESTNET_ASSURANCE_SOLVER_PORTFOLIO_COUNTEREVIDENCE",
+    "vendor_release_equivalent": false
+  },
+  "task_id": "PORTAL-CXTP-151",
+  "testnet_scope_assured_gate": {
+    "all_required_claims_have_current_reviewed_runtime_evidence": false,
+    "all_required_claims_have_current_reviewed_source_evidence": true,
+    "all_required_claims_have_required_solver_results": false,
+    "no_active_not_modeled_boundaries": false,
+    "no_disproof_counterevidence": false,
+    "no_fuzz_counterexamples_for_required_claims": false,
+    "non_production_statement": "This is not a production or vendor-release security decision. It is bounded to reviewed public-source and XRPL Testnet verifier evidence and cannot approve, certify, reject, or reproduce the production Xaman vendor release.",
+    "production_or_vendor_release_security_decision": false,
+    "testnet_scope_assured_allowed": false
+  }
+}
