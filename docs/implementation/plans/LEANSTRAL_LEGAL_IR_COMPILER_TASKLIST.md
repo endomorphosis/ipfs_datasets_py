@@ -126,7 +126,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-007 Implement verifier-owned Lean theorem templates for legal semantics
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: proof
@@ -291,7 +291,7 @@ starting an implementation worker.
 
 ## PORTAL-017 Resolve merge retry-budget failure for PORTAL-LIRLS-007
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: ops

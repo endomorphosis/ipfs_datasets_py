@@ -27,6 +27,13 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     ProverCompilationSignal,
 )
 
+from .leanstral_theorems import (
+    LEGAL_IR_THEOREM_LEAN_KERNEL,
+    LeanstralTheoremRegistry,
+    generate_legal_semantics_theorem_registry,
+    lean_theorem_proof_rejection_reasons,
+)
+
 
 LEANSTRAL_PROPOSAL_SCHEMA_VERSION = "legal-ir-leanstral-proposal-v1"
 _LEANSTRAL_PROOF_FORBIDDEN = re.compile(
@@ -350,6 +357,7 @@ class LegalIRLeanTask:
     prover_signal: Optional[Dict[str, Any]] = None
     projection_evidence: Optional[Dict[str, Any]] = None
     compiler_change_spec: Optional[Dict[str, Any]] = None
+    theorem_registry: Optional[Dict[str, Any]] = None
 
     @classmethod
     def from_sample(
@@ -379,8 +387,9 @@ class LegalIRLeanTask:
             raise ValueError("Leanstral shadow task requires a non-empty source span")
 
         modal_formula = formula.to_dict()
-        target_statement = _well_formed_target_statement(modal_formula, source_span=span)
         modal_ir_hash = sample.modal_ir.canonical_hash()
+        theorem_registry = generate_legal_semantics_theorem_registry(sample)
+        target_statement = _well_formed_target_statement(modal_formula, source_span=span)
         projection_evidence = ProjectionEvidence.from_sample(
             sample,
             autoencoder_guidance=autoencoder_guidance,
@@ -394,6 +403,7 @@ class LegalIRLeanTask:
             "projection_evidence_id": projection_evidence.evidence_id,
             "sample_id": sample.sample_id,
             "target_statement": target_statement,
+            "theorem_registry_hash": theorem_registry.registry_hash,
         }
         task_id = "leanstral-" + hashlib.sha256(
             json.dumps(task_payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
@@ -410,6 +420,7 @@ class LegalIRLeanTask:
             prover_signal=prover_signal.to_dict() if prover_signal else None,
             projection_evidence=projection_evidence.to_dict(),
             compiler_change_spec=compiler_change_spec.to_dict(),
+            theorem_registry=theorem_registry.to_dict(),
         )
 
     @property
@@ -417,13 +428,25 @@ class LegalIRLeanTask:
         suffix = _SAFE_LEAN_IDENTIFIER.sub("_", self.task_id).strip("_")
         return f"ir_well_formed_{suffix}"
 
-    def render_lean_source(self, proof: str) -> str:
-        return (
+    def render_lean_source(
+        self,
+        proof: str,
+        *,
+        theorem_proofs: Optional[Mapping[str, str]] = None,
+    ) -> str:
+        source = (
             _LEGAL_IR_LEAN_KERNEL
             + "\nnamespace LegalIR\n\n"
             + f"theorem {self.theorem_name} : {self.target_statement} := {proof.strip()}\n\n"
             + "end LegalIR\n"
         )
+        theorem_source = _render_theorem_registry_source(
+            self.theorem_registry,
+            theorem_proofs or {},
+        )
+        if theorem_source:
+            source += "\n" + theorem_source
+        return source
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -440,6 +463,8 @@ class LeanstralProposal:
     proof: str
     python_patch: Optional[PythonPatchProposal] = None
     deterministic_rule_hints: Sequence[Dict[str, str]] = field(default_factory=tuple)
+    theorem_proofs: Mapping[str, str] = field(default_factory=dict)
+    forbidden_statement_keys: Sequence[str] = field(default_factory=tuple)
     notes: str = ""
 
     @classmethod
@@ -459,6 +484,27 @@ class LeanstralProposal:
                         ).strip(),
                     }
                 )
+        theorem_proofs = data.get("theorem_proofs", data.get("proofs", {}))
+        normalized_theorem_proofs: Dict[str, str] = {}
+        if isinstance(theorem_proofs, Mapping):
+            normalized_theorem_proofs = {
+                str(theorem_id).strip(): str(proof).strip()
+                for theorem_id, proof in theorem_proofs.items()
+                if str(theorem_id).strip()
+            }
+        forbidden_statement_keys = tuple(
+            key
+            for key in (
+                "lean_source",
+                "statement",
+                "statements",
+                "target_statement",
+                "theorem",
+                "theorem_statement",
+                "theorems",
+            )
+            if key in data
+        )
         return cls(
             schema_version=str(data.get("schema_version", "")).strip(),
             task_id=str(data.get("task_id", "")).strip(),
@@ -469,6 +515,8 @@ class LeanstralProposal:
             if isinstance(data.get("python_patch"), Mapping)
             else None,
             deterministic_rule_hints=tuple(normalized_hints),
+            theorem_proofs=normalized_theorem_proofs,
+            forbidden_statement_keys=forbidden_statement_keys,
             notes=str(data.get("notes", "")).strip(),
         )
 
@@ -482,6 +530,8 @@ class LeanstralProposal:
             "schema_version": self.schema_version,
             "target_modal_ir_hash": self.target_modal_ir_hash,
             "task_id": self.task_id,
+            "theorem_proofs": dict(sorted(self.theorem_proofs.items())),
+            "forbidden_statement_keys": list(self.forbidden_statement_keys),
         }
 
 
@@ -670,7 +720,13 @@ def validate_leanstral_proposal(
     try:
         with tempfile.TemporaryDirectory(prefix="legal-ir-leanstral-") as directory:
             source_path = Path(directory) / "Task.lean"
-            source_path.write_text(task.render_lean_source(proposal.proof), encoding="utf-8")
+            source_path.write_text(
+                task.render_lean_source(
+                    proposal.proof,
+                    theorem_proofs=proposal.theorem_proofs,
+                ),
+                encoding="utf-8",
+            )
             process = subprocess.run(
                 [executable, str(source_path)],
                 capture_output=True,
@@ -810,12 +866,21 @@ def _proposal_rejection_reasons(
     expected_spec_id = str(change_spec.get("spec_id", "")).strip()
     if proposal.compiler_change_spec_id != expected_spec_id:
         reasons.append("compiler_change_spec_mismatch")
+    if proposal.forbidden_statement_keys:
+        reasons.append("proposal_attempted_theorem_statement_override")
     if not proposal.proof.startswith("by"):
         reasons.append("proof_must_start_with_by")
     if len(proposal.proof) > 12000:
         reasons.append("proof_too_large")
     if _LEANSTRAL_PROOF_FORBIDDEN.search(proposal.proof):
         reasons.append("forbidden_proof_construct")
+    reasons.extend(
+        lean_theorem_proof_rejection_reasons(
+            task.theorem_registry,
+            proposal.theorem_proofs,
+            forbidden_pattern=_LEANSTRAL_PROOF_FORBIDDEN,
+        )
+    )
     for hint in proposal.deterministic_rule_hints:
         if not bool(change_spec.get("patchable", False)):
             reasons.append("rule_hint_for_nonpatchable_spec")
@@ -952,6 +1017,40 @@ def _well_formed_target_statement(
     )
 
 
+def _render_theorem_registry_source(
+    registry: Optional[Mapping[str, Any] | LeanstralTheoremRegistry],
+    theorem_proofs: Mapping[str, str],
+) -> str:
+    if not theorem_proofs or registry is None:
+        return ""
+    if isinstance(registry, LeanstralTheoremRegistry):
+        return registry.render_lean_source(theorem_proofs)
+    raw_theorems = registry.get("theorems", ()) if isinstance(registry, Mapping) else ()
+    if not isinstance(raw_theorems, Sequence) or isinstance(raw_theorems, (str, bytes)):
+        return ""
+    theorem_blocks: list[str] = []
+    for theorem in raw_theorems:
+        if not isinstance(theorem, Mapping):
+            continue
+        theorem_id = str(theorem.get("theorem_id", "")).strip()
+        proof = str(theorem_proofs.get(theorem_id, "")).strip()
+        if not proof:
+            continue
+        theorem_name = str(theorem.get("theorem_name", "")).strip()
+        statement = str(theorem.get("statement", "")).strip()
+        if not theorem_name or not statement:
+            continue
+        theorem_blocks.append(f"theorem {theorem_name} : {statement} := {proof}")
+    if not theorem_blocks:
+        return ""
+    return (
+        LEGAL_IR_THEOREM_LEAN_KERNEL
+        + "\nnamespace LegalIR\n\n"
+        + "\n\n".join(theorem_blocks)
+        + "\n\nend LegalIR\n"
+    )
+
+
 def _lean_string(value: Any) -> str:
     return json.dumps(str(value or ""), ensure_ascii=False)
 
@@ -962,6 +1061,8 @@ def _leanstral_prompt(task: LegalIRLeanTask) -> str:
         "instructions": [
             "Return strict JSON only.",
             "Return a Lean proof body beginning with by for the fixed theorem.",
+            "Optional theorem_proofs may map verifier theorem IDs to Lean proof bodies only.",
+            "Do not return theorem statements, Lean source files, imports, namespaces, or theorem declarations.",
             "Do not change the theorem, introduce axioms, imports, sorry, admit, or executable tactics.",
             "Rule hints are review-only and must be grounded in the supplied modal IR and source span.",
             "When compiler_change_spec.patchable is false, do not propose a code change.",
