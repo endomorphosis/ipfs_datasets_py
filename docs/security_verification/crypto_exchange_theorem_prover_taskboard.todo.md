@@ -1163,7 +1163,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-149 Reproduce the public Android Testnet verifier build with a locked environment
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: runtime
