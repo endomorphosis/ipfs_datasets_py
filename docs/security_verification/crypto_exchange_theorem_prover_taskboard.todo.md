@@ -1152,7 +1152,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-148 Expand adversarial Testnet fuzzing and formal counterexample minimization
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: disproof
