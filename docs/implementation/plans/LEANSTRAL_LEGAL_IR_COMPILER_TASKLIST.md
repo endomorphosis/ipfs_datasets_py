@@ -154,7 +154,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-009 Verify every Leanstral audit against deterministic compilers and local proof tools
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: proof
