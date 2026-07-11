@@ -1130,7 +1130,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-146 Extend XRPL transaction semantics for reachable public Xaman flows
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: model
