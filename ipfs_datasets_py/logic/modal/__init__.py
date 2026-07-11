@@ -78,6 +78,14 @@ from .leanstral_audit import (
     parse_leanstral_audit_response,
     validate_leanstral_audit_response,
 )
+from .leanstral_theorems import (
+    LEANSTRAL_THEOREM_SCHEMA_VERSION,
+    LEGAL_IR_THEOREM_LEAN_KERNEL,
+    LeanstralTheorem,
+    LeanstralTheoremRegistry,
+    generate_legal_semantics_theorem_registry,
+    lean_theorem_proof_rejection_reasons,
+)
 from .synthesis import (
     ModalProgramSynthesisHint,
     synthesis_hints_from_autoencoder_introspection,
@@ -157,6 +165,8 @@ __all__ = [
     "LegalIRLeanTask",
     "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
     "LEANSTRAL_CANARY_MANIFEST_VERSION",
+    "LEANSTRAL_THEOREM_SCHEMA_VERSION",
+    "LEGAL_IR_THEOREM_LEAN_KERNEL",
     "LeanstralCanaryManifest",
     "ALLOWED_AUDIT_CLASSIFICATIONS",
     "LEANSTRAL_AUDIT_CACHE_SCHEMA_VERSION",
@@ -194,6 +204,8 @@ __all__ = [
     "NormalizedLegalIRGap",
     "OwnedCompilerSurface",
     "OWNED_COMPILER_SURFACES",
+    "LeanstralTheorem",
+    "LeanstralTheoremRegistry",
     "PhaseTiming",
     "ProjectionEvidence",
     "PythonPatchProposal",
@@ -220,6 +232,7 @@ __all__ = [
     "flogic_ontology_to_dict",
     "flogic_triples_to_graph_data",
     "flogic_triples_to_ontology",
+    "generate_legal_semantics_theorem_registry",
     "import_graph_data_to_graph_engine",
     "import_modal_ir_to_graph_engine",
     "load_introspection_metric_record",
@@ -237,6 +250,7 @@ __all__ = [
     "target_family_for_modal_ir",
     "validate_frame_logic_patch",
     "validate_leanstral_audit_response",
+    "lean_theorem_proof_rejection_reasons",
     "validate_leanstral_proposal",
     "validate_leanstral_canary_manifest",
     "validate_python_patch_proposal",
