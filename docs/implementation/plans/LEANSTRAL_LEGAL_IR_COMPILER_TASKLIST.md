@@ -112,7 +112,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-006 Normalize and cluster LegalIR gaps by semantic family and compiler surface
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: legal-ir
