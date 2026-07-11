@@ -15,11 +15,13 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_testnet_fuzzing import (  # noqa: E402
+    CAMPAIGN_MANIFEST_PATH,
     COUNTEREXAMPLE_DIR,
     FUZZ_REPORT_PATH,
     MODEL_CID_PATH,
     MODEL_PATH,
     TRACE_MAP_PATH,
+    build_campaign_manifest,
     build_xaman_testnet_fuzz_report,
     counterexample_artifacts,
 )
@@ -52,6 +54,8 @@ def generate(repo_root: Path) -> dict[str, object]:
         shutil.rmtree(counterexample_dir)
     for rel_path, artifact in counterexample_artifacts(report).items():
         _write_json(repo_root / rel_path, artifact)
+    campaign_manifest = build_campaign_manifest(report)
+    _write_json(repo_root / CAMPAIGN_MANIFEST_PATH, campaign_manifest)
     _write_json(repo_root / FUZZ_REPORT_PATH, report)
     return report
 
@@ -63,13 +67,23 @@ def main(argv: list[str] | None = None) -> int:
         default=str(ROOT_DIR),
         help='Repository root containing security_ir_artifacts.',
     )
+    parser.add_argument(
+        '--out',
+        default=None,
+        help='Optional output path for the generated counterexample manifest.',
+    )
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
     report = generate(repo_root)
+    if args.out is not None:
+        out_path = (repo_root / args.out).resolve() if not Path(args.out).is_absolute() else Path(args.out).resolve()
+        manifest = _load_json(repo_root / COUNTEREXAMPLE_DIR / 'manifest.json')
+        _write_json(out_path, manifest)
     print(
         json.dumps(
             {
+                'campaign_manifest_path': CAMPAIGN_MANIFEST_PATH,
                 'fuzz_report_path': FUZZ_REPORT_PATH,
                 'counterexample_dir': COUNTEREXAMPLE_DIR,
                 'overall_status': report['summary']['overall_status'],

@@ -1,0 +1,231 @@
+{
+  "acceptance_coverage": {
+    "account_import_attempts": [
+      "account_import"
+    ],
+    "auth_review_bypass": [
+      "auth_review_bypass"
+    ],
+    "cancellation_expiry_reconnect_races": [
+      "cancellation_expiry_reconnect_race"
+    ],
+    "malformed_and_replayed_payloads": [
+      "malformed_payload",
+      "replayed_payload"
+    ],
+    "solver_result_tampering": [
+      "solver_result_tampering"
+    ],
+    "stale_or_downgraded_evidence": [
+      "stale_downgraded_evidence"
+    ],
+    "transaction_type_mutations": [
+      "transaction_type_mutation"
+    ],
+    "wrong_network": [
+      "wrong_network"
+    ]
+  },
+  "artifact_cid": "bafkreigkeou4xkg25hidftiynajigmy46kk53kwtvv6von4hgbwj4trgiu",
+  "counterexample_manifest_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+  "depends_on": [
+    "PORTAL-CXTP-143",
+    "PORTAL-CXTP-145",
+    "PORTAL-CXTP-146"
+  ],
+  "domain_policy": {
+    "registered_domain_count": 9,
+    "reject_unregistered_domains_as": "UNMODELED",
+    "unregistered_domain_oracle": "validate_registered_fuzz_domain"
+  },
+  "domains": [
+    {
+      "bounded_input_space": [
+        "imported_account",
+        "production_account"
+      ],
+      "case_count": 1,
+      "case_ids": [
+        "attack-imported-production-account"
+      ],
+      "description": "Imported or production account provenance at the fresh Testnet account boundary.",
+      "domain_id": "account_import",
+      "target_claim_ids": [
+        "xaman-testnet-claim:account-provenance-is-fresh-testnet-only"
+      ],
+      "unmodeled_if_unregistered": true
+    },
+    {
+      "bounded_input_space": [
+        "auth decision removed marker",
+        "review decision removed marker",
+        "signing-before-auth marker"
+      ],
+      "case_count": 2,
+      "case_ids": [
+        "attack-review-bypass",
+        "attack-signing-before-auth"
+      ],
+      "description": "Review/auth removal and signing-before-auth sequence mutations.",
+      "domain_id": "auth_review_bypass",
+      "target_claim_ids": [
+        "xaman-testnet-claim:review-auth-sequence-observed"
+      ],
+      "unmodeled_if_unregistered": true
+    },
+    {
+      "bounded_input_space": [
+        "cancel-after-submit marker",
+        "expiry-after-auth marker",
+        "reconnect-before-submit-result marker"
+      ],
+      "case_count": 7,
+      "case_ids": [
+        "attack-cancel-after-submit-race",
+        "attack-cancel-gap-promoted",
+        "attack-decline-gap-promoted",
+        "attack-expiry-after-auth-race",
+        "attack-expiry-gap-promoted",
+        "attack-reconnect-before-submit-result-race",
+        "attack-submit-result-removed"
+      ],
+      "description": "Cancellation, expiry, and reconnect ordering races over the reviewed lifecycle trace.",
+      "domain_id": "cancellation_expiry_reconnect_race",
+      "target_claim_ids": [
+        "xaman-testnet-claim:cancellation-path-is-not-modeled",
+        "xaman-testnet-claim:expiry-path-is-not-modeled",
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+      ],
+      "unmodeled_if_unregistered": true
+    },
+    {
+      "bounded_input_space": [
+        "categorical payload material marker",
+        "malformed payload shape marker"
+      ],
+      "case_count": 3,
+      "case_ids": [
+        "attack-malformed-payload-shape",
+        "attack-raw-payload-material",
+        "attack-raw-signature-blob"
+      ],
+      "description": "Malformed payload shapes and forbidden raw payload material at the payload intake boundary.",
+      "domain_id": "malformed_payload",
+      "target_claim_ids": [
+        "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "unmodeled_if_unregistered": true
+    },
+    {
+      "bounded_input_space": [
+        "duplicate payload resolution marker",
+        "duplicate submit-result marker"
+      ],
+      "case_count": 2,
+      "case_ids": [
+        "attack-replay-duplicate-resolution",
+        "attack-replay-duplicate-submit-result"
+      ],
+      "description": "Duplicate payload resolution and duplicate submit-result replay markers.",
+      "domain_id": "replayed_payload",
+      "target_claim_ids": [
+        "xaman-testnet-claim:replay-controls-are-not-modeled"
+      ],
+      "unmodeled_if_unregistered": true
+    },
+    {
+      "bounded_input_space": [
+        "solver result tampered marker",
+        "proof obligation status forged marker",
+        "ledger finality proof forged marker"
+      ],
+      "case_count": 3,
+      "case_ids": [
+        "attack-forged-broadcast-finality",
+        "attack-proof-obligation-status-forged",
+        "attack-solver-result-upgrade"
+      ],
+      "description": "Forged solver, proof-obligation, and broadcast/finality results.",
+      "domain_id": "solver_result_tampering",
+      "target_claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+      ],
+      "unmodeled_if_unregistered": true
+    },
+    {
+      "bounded_input_space": [
+        "stale evidence digest marker",
+        "review status downgrade marker"
+      ],
+      "case_count": 2,
+      "case_ids": [
+        "attack-downgraded-evidence-review",
+        "attack-stale-evidence-digest"
+      ],
+      "description": "Stale evidence digests and downgraded review status for reviewed Testnet observations.",
+      "domain_id": "stale_downgraded_evidence",
+      "target_claim_ids": [
+        "xaman-testnet-claim:review-auth-sequence-observed",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "unmodeled_if_unregistered": true
+    },
+    {
+      "bounded_input_space": [
+        "TrustSet",
+        "OfferCreate",
+        "SignerListSet",
+        "multisign",
+        "path Payment"
+      ],
+      "case_count": 4,
+      "case_ids": [
+        "attack-offercreate-transaction-type",
+        "attack-path-payment-semantics-skipped",
+        "attack-signerlistset-transaction-type",
+        "attack-trustset-transaction-type"
+      ],
+      "description": "Unsupported or partially modeled XRPL transaction-class substitutions.",
+      "domain_id": "transaction_type_mutation",
+      "target_claim_ids": [
+        "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+      ],
+      "unmodeled_if_unregistered": true
+    },
+    {
+      "bounded_input_space": [
+        "network_key",
+        "network_id"
+      ],
+      "case_count": 1,
+      "case_ids": [
+        "attack-wrong-network"
+      ],
+      "description": "Network key and network id mutations away from XRPL Testnet.",
+      "domain_id": "wrong_network",
+      "target_claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only"
+      ],
+      "unmodeled_if_unregistered": true
+    }
+  ],
+  "fuzz_report_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model": {
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "sha256": "4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43"
+  },
+  "schema_version": "xaman-testnet-adversarial-fuzz-campaign-manifest/v1",
+  "summary": {
+    "counterexample_count": 25,
+    "covered_registered_domain_count": 9,
+    "overall_status": "passed",
+    "total_case_count": 47,
+    "unregistered_domain_rejection": "pass"
+  },
+  "task_id": "PORTAL-CXTP-148"
+}
