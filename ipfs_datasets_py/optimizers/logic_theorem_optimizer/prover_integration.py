@@ -394,11 +394,14 @@ class ProverIntegrationAdapter:
                     details["proof_steps"] = list(proof_steps)
                 return ProverVerificationResult(
                     prover_name=f"modal:{route.backend or 'router'}",
-                    status=ProverStatus.VALID,
-                    is_valid=True,
-                    confidence=1.0 if theorem_valid else 0.85,
+                    status=ProverStatus.VALID if theorem_valid else ProverStatus.INVALID,
+                    is_valid=theorem_valid,
+                    confidence=1.0 if theorem_valid else 0.0,
                     proof_time=proof_time,
                     details=details,
+                    error_message=None
+                    if theorem_valid
+                    else "Modal formula compiled, but the theorem was not proved",
                 )
 
             if route.status == ModalProverStatus.UNAVAILABLE:

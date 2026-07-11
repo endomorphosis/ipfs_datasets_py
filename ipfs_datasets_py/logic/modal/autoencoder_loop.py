@@ -49,6 +49,11 @@ from .codec import (
     ModalLogicCodecResult,
 )
 from .kg_bridge import flogic_triples_to_graph_data, import_modal_ir_to_graph_engine
+from .leanstral import (
+    LeanstralConfig,
+    LeanstralShadowResult,
+    LeanstralShadowRunner,
+)
 
 LLMGenerateFn = Callable[..., str]
 _PATCH_PREDICATE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,63}$")
@@ -73,6 +78,7 @@ class ModalAutoencoderLoopConfig:
     llm_max_new_tokens: int = 2048
     llm_temperature: float = 0.0
     codex_cache_path: Optional[str] = None
+    leanstral_config: LeanstralConfig = field(default_factory=LeanstralConfig)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -90,6 +96,7 @@ class ModalAutoencoderLoopConfig:
             "llm_provider": self.llm_provider,
             "llm_temperature": self.llm_temperature,
             "llm_timeout": self.llm_timeout,
+            "leanstral_config": self.leanstral_config.to_dict(),
         }
 
 
@@ -134,6 +141,7 @@ class ModalAutoencoderLoopResult:
     llm_patch: Optional[Dict[str, Any]] = None
     llm_patch_validation: Optional["FrameLogicPatchValidation"] = None
     repaired_modal_ir: Optional[ModalIRDocument] = None
+    leanstral_shadow: Optional[LeanstralShadowResult] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -154,6 +162,9 @@ class ModalAutoencoderLoopResult:
             if self.llm_patch_validation
             else None,
             "llm_response": self.llm_response,
+            "leanstral_shadow": self.leanstral_shadow.to_dict()
+            if self.leanstral_shadow
+            else None,
             "metadata": dict(sorted(self.metadata.items())),
             "prover_signal": self.prover_signal.to_dict() if self.prover_signal else None,
             "sample": self.sample.to_dict(),
@@ -172,6 +183,7 @@ class LegalModalAutoencoderLoop:
         autoencoder: Optional[AdaptiveModalAutoencoder] = None,
         cache: Optional[CodexCallCache] = None,
         llm_generate: Optional[LLMGenerateFn] = None,
+        leanstral_generate: Optional[LLMGenerateFn] = None,
     ) -> None:
         self.config = config or ModalAutoencoderLoopConfig()
         self.cache_path = (
@@ -183,6 +195,10 @@ class LegalModalAutoencoderLoop:
         self.autoencoder = autoencoder or AdaptiveModalAutoencoder(feature_codec=self.codec)
         self.cache = cache if cache is not None else self._load_cache()
         self.llm_generate = llm_generate
+        self.leanstral_runner = LeanstralShadowRunner(
+            self.config.leanstral_config,
+            llm_generate=leanstral_generate,
+        )
 
     def run(
         self,
@@ -228,6 +244,8 @@ class LegalModalAutoencoderLoop:
         llm_patch: Optional[Dict[str, Any]] = None
         llm_patch_validation: Optional[FrameLogicPatchValidation] = None
         repaired_modal_ir: Optional[ModalIRDocument] = None
+        leanstral_shadow: Optional[LeanstralShadowResult] = None
+        leanstral_shadow_error = ""
         should_call_llm = (
             self.config.allow_llm_repair
             if allow_llm_repair is None
@@ -252,6 +270,18 @@ class LegalModalAutoencoderLoop:
             self.cache.record_local_success(decision)
             self.save_cache()
 
+        if self.config.leanstral_config.enabled:
+            try:
+                leanstral_shadow = self.leanstral_runner.run(
+                    sample,
+                    autoencoder=self.autoencoder,
+                    prover_signal=prover_signal,
+                )
+            except Exception as exc:
+                # The Leanstral lane is intentionally shadow-only. A provider
+                # issue must not interrupt deterministic compilation or Codex.
+                leanstral_shadow_error = f"{exc.__class__.__name__}: {exc}"
+
         accepted = _accepted(
             decision,
             graph_report=graph_report,
@@ -272,12 +302,14 @@ class LegalModalAutoencoderLoop:
             llm_patch=llm_patch,
             llm_patch_validation=llm_patch_validation,
             repaired_modal_ir=repaired_modal_ir,
+            leanstral_shadow=leanstral_shadow,
             metadata={
                 "llm_model": self.config.llm_model if llm_called else "",
                 "llm_provider": self.config.llm_provider if llm_called else "",
                 "loop": "legal_modal_autoencoder_loop_v1",
                 "codex_cache_path": str(self.cache_path) if self.cache_path else "",
                 "legal_ir_bridge_names": list(legal_ir_bridge_names),
+                "leanstral_shadow_error": leanstral_shadow_error,
             },
         )
 

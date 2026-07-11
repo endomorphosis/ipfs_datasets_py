@@ -13,7 +13,40 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     DataType
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import LogicalStatement
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+    ProverCompilationSignal,
+    evaluate_modal_prover_compilation,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import ProverStatus
+
+
+def test_prover_compilation_signal_distinguishes_route_health_from_proof_validity():
+    signal = ProverCompilationSignal(
+        attempted_count=1,
+        valid_count=1,
+        proved_count=0,
+    )
+
+    assert signal.compiles is True
+    assert signal.proofs_valid is False
+    assert signal.to_dict()["proved_count"] == 0
+
+
+def test_modal_compilation_keeps_route_health_separate_from_theorem_validity():
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+    )
+
+    signal = evaluate_modal_prover_compilation(sample)
+
+    assert signal.compiles is True
+    assert signal.proved_count == 0
+    assert signal.proofs_valid is False
+    assert signal.details[0]["compiled"] is True
+    assert signal.details[0]["overall_valid"] is False
 
 
 class TestProverIntegrationAdapter:
@@ -120,11 +153,12 @@ class TestProverIntegrationAdapter:
 
         verification = adapter.verify_statement(statement)
 
-        assert verification.overall_valid is True
-        assert verification.verified_by == ["modal:tdfol_modal_tableaux"]
-        assert verification.prover_results[0].status == ProverStatus.VALID
+        assert verification.overall_valid is False
+        assert verification.verified_by == []
+        assert verification.prover_results[0].status == ProverStatus.INVALID
         assert verification.prover_results[0].details["compiled_formula"] == "O(make_records_promptly_available)"
         assert verification.prover_results[0].details["modal_theorem_valid"] is False
+        assert "compiled, but the theorem was not proved" in verification.prover_results[0].error_message
 
     def test_modal_statement_reports_unavailable_router(self):
         """Unsupported modal systems should not fall through to generic SMT strings."""

@@ -98,6 +98,41 @@ def test_run_cli_command_preserves_prompt_with_quotes_in_template(monkeypatch) -
     assert captured["cmd"][-1] == 'He said "notice denied" and then filed a grievance.'
 
 
+def test_mistral_vibe_provider_passes_model_and_auth_without_prompt_interpolation(monkeypatch) -> None:
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = list(cmd)
+        captured["env"] = kwargs["env"]
+        captured["input"] = kwargs["input"]
+        return subprocess.CompletedProcess(cmd, 0, stdout="<p>proved</p>", stderr="")
+
+    monkeypatch.setattr(llm_router, "_cli_available", lambda command: True)
+    monkeypatch.setattr(llm_router.subprocess, "run", fake_run)
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD",
+        "vibe --prompt {prompt} --output text --max-turns 1",
+    )
+
+    provider = llm_router._get_mistral_vibe_provider()
+
+    assert provider is not None
+    result = provider.generate(
+        'Prove "notice".',
+        model_name="Leanstral",
+        mistral_api_key="test-key",
+        mistral_vibe_agent="lean",
+    )
+
+    assert result == "proved"
+    assert captured["cmd"][0] == "vibe"
+    assert captured["cmd"][2] == 'Prove "notice".'
+    assert captured["cmd"][-2:] == ["--agent", "lean"]
+    assert captured["input"] is None
+    assert captured["env"]["VIBE_ACTIVE_MODEL"] == "Leanstral"
+    assert captured["env"]["MISTRAL_API_KEY"] == "test-key"
+
+
 def test_copilot_cli_provider_native_mode_supports_add_dir_and_allow_all_paths(monkeypatch) -> None:
     captured = {}
 
