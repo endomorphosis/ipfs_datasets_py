@@ -1174,7 +1174,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-150 Capture and validate redacted XRPL Testnet lifecycle evidence
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: runtime
