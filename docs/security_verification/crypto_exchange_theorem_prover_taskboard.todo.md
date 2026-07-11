@@ -1185,7 +1185,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-151 Issue a bounded Xaman public-source/Testnet assurance verdict
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: assurance
