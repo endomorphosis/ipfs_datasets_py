@@ -554,6 +554,80 @@ def synthesis_hints_from_autoencoder_introspections(
     return sorted(hints.values(), key=lambda hint: (-hint.priority, hint.hint_id))
 
 
+def synthesis_hints_from_leanstral_rule_gap_report(
+    report: Any,
+) -> List[ModalProgramSynthesisHint]:
+    """Convert a Leanstral rule-gap report into typed synthesis hints."""
+
+    gaps = getattr(report, "gaps", None)
+    if gaps is None and isinstance(report, Mapping):
+        gaps = report.get("gaps", ())
+    return synthesis_hints_from_leanstral_rule_gaps(gaps or ())
+
+
+def synthesis_hints_from_leanstral_rule_gaps(
+    gaps: Iterable[Any],
+) -> List[ModalProgramSynthesisHint]:
+    """Convert accepted rule gaps into existing program-synthesis hint records."""
+
+    hints: Dict[str, ModalProgramSynthesisHint] = {}
+    for gap in gaps:
+        gap_data = gap.to_dict() if hasattr(gap, "to_dict") else dict(gap or {})
+        target_surface = gap_data.get("target_surface") or {}
+        if not isinstance(target_surface, Mapping):
+            target_surface = {}
+        target_component = str(
+            gap_data.get("target_component")
+            or target_surface.get("component", "")
+        ).strip()
+        action = str(
+            gap_data.get("action") or target_surface.get("action", "")
+        ).strip()
+        if not action or not target_component:
+            continue
+        validation_set = dict(gap_data.get("validation_set") or {})
+        support = list(gap_data.get("supporting_evidence") or [])
+        conflicts = list(gap_data.get("conflicting_evidence") or [])
+        surface = dict(target_surface)
+        evidence = {
+            "gap_id": gap_data.get("gap_id", ""),
+            "missing_semantic_rule": dict(gap_data.get("missing_semantic_rule") or {}),
+            "normalized_rule_key": gap_data.get("normalized_rule_key", ""),
+            "supporting_evidence_count": len(support),
+            "conflicting_evidence_count": len(conflicts),
+            "supporting_examples": _rule_gap_examples(support),
+            "validation_set": validation_set,
+            "allowed_paths": list(
+                surface.get("allowed_paths")
+                or validation_set.get("allowed_paths")
+                or ()
+            ),
+            "target_file_lane": surface.get("target_file_lane")
+            or validation_set.get("target_file_lane")
+            or _target_file_lane(target_component, action),
+            "target_metrics": list(
+                surface.get("target_metrics")
+                or validation_set.get("held_out_compiler_ir_metrics")
+                or ()
+            ),
+            "theorem_templates": list(
+                surface.get("theorem_templates")
+                or validation_set.get("formal_validity_checks")
+                or ()
+            ),
+        }
+        hint = _hint(
+            str(gap_data.get("gap_id", "")),
+            action=action,
+            target_component=target_component,
+            rationale=str(gap_data.get("title") or "Verified Leanstral rule gap."),
+            priority=float(gap_data.get("priority") or 0.0),
+            evidence=evidence,
+        )
+        hints[hint.hint_id] = hint
+    return sorted(hints.values(), key=lambda hint: (-hint.priority, hint.hint_id))
+
+
 def _hint(
     sample_id: str,
     *,
@@ -582,6 +656,17 @@ def _hint(
         priority=round(max(0.0, float(priority)), 12),
         evidence=evidence_dict,
     )
+
+
+def _rule_gap_examples(
+    evidence_items: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    examples: List[Dict[str, Any]] = []
+    for evidence in evidence_items:
+        for example in evidence.get("examples", []) or []:
+            if isinstance(example, Mapping):
+                examples.append(dict(example))
+    return examples[:8]
 
 
 def _logic_view_hint(
