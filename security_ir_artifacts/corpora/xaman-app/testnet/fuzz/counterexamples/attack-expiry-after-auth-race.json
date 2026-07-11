@@ -1,37 +1,38 @@
 {
-  "artifact_cid": "bafkreiayswb3ddbe4hix2psxkghjffxf5lpxopjbiftgpkukbvas2h4oba",
+  "artifact_cid": "bafkreiekmak5o2ch3iq7fhm7ej5isimgkfylquyqysilc5a3ufaz2m5i5a",
   "fuzz_domain": "cancellation_expiry_reconnect_race",
   "legacy_task_id": "PORTAL-CXTP-138",
   "minimal_counterexample": {
     "fuzz_domain": "cancellation_expiry_reconnect_race",
     "mutation_keys": [
-      "coverage_gap_promoted"
+      "race_condition"
     ],
-    "payload_sha256": "4aa931a8b10a37a00cef9dd2b9d24fcc47b35125a1c0294a5b707d8047721724",
-    "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled"
+    "payload_sha256": "b7d5ed5972d6a1998547013c3b31bf40f0f9e2878f09ef107323905df75337f9",
+    "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled"
   },
   "minimization": {
     "algorithm": "deterministic-one-domain-delta-minimizer/v1",
     "fuzz_domain": "cancellation_expiry_reconnect_race",
     "minimality_claim": "single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim",
-    "minimized_payload_sha256": "4aa931a8b10a37a00cef9dd2b9d24fcc47b35125a1c0294a5b707d8047721724",
+    "minimized_payload_sha256": "b7d5ed5972d6a1998547013c3b31bf40f0f9e2878f09ef107323905df75337f9",
     "raw_sensitive_material_recorded": false,
     "removed_mutation_keys": [],
     "retained_mutation_keys": [
-      "coverage_gap_promoted"
+      "race_condition"
     ],
     "status": "minimal"
   },
   "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
-  "mutation_id": "attack-cancel-gap-promoted",
-  "payload_sha256": "4aa931a8b10a37a00cef9dd2b9d24fcc47b35125a1c0294a5b707d8047721724",
+  "mutation_id": "attack-expiry-after-auth-race",
+  "payload_sha256": "b7d5ed5972d6a1998547013c3b31bf40f0f9e2878f09ef107323905df75337f9",
   "raw_sensitive_material_recorded": false,
   "redaction_policy": "categorical_mutation_markers_only",
   "result": "target_claim_triggered",
   "schema_version": "xaman-testnet-fuzz-counterexample/v1",
-  "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+  "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
   "task_id": "PORTAL-CXTP-148",
   "triggered_claim_ids": [
-    "xaman-testnet-claim:cancellation-path-is-not-modeled"
+    "xaman-testnet-claim:expiry-path-is-not-modeled",
+    "xaman-testnet-claim:review-auth-sequence-observed"
   ]
 }

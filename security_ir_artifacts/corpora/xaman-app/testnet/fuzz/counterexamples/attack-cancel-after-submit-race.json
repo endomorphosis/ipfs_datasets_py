@@ -1,30 +1,30 @@
 {
-  "artifact_cid": "bafkreiayswb3ddbe4hix2psxkghjffxf5lpxopjbiftgpkukbvas2h4oba",
+  "artifact_cid": "bafkreihewusmrhmcxk4wocc5ttuahwamgti46tdqow7vj7cg2kh2sclclq",
   "fuzz_domain": "cancellation_expiry_reconnect_race",
   "legacy_task_id": "PORTAL-CXTP-138",
   "minimal_counterexample": {
     "fuzz_domain": "cancellation_expiry_reconnect_race",
     "mutation_keys": [
-      "coverage_gap_promoted"
+      "race_condition"
     ],
-    "payload_sha256": "4aa931a8b10a37a00cef9dd2b9d24fcc47b35125a1c0294a5b707d8047721724",
+    "payload_sha256": "152e968f5d8465a84fe9d3027347b9fda91125ecedf569b6ab3419d9f64c428f",
     "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled"
   },
   "minimization": {
     "algorithm": "deterministic-one-domain-delta-minimizer/v1",
     "fuzz_domain": "cancellation_expiry_reconnect_race",
     "minimality_claim": "single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim",
-    "minimized_payload_sha256": "4aa931a8b10a37a00cef9dd2b9d24fcc47b35125a1c0294a5b707d8047721724",
+    "minimized_payload_sha256": "152e968f5d8465a84fe9d3027347b9fda91125ecedf569b6ab3419d9f64c428f",
     "raw_sensitive_material_recorded": false,
     "removed_mutation_keys": [],
     "retained_mutation_keys": [
-      "coverage_gap_promoted"
+      "race_condition"
     ],
     "status": "minimal"
   },
   "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
-  "mutation_id": "attack-cancel-gap-promoted",
-  "payload_sha256": "4aa931a8b10a37a00cef9dd2b9d24fcc47b35125a1c0294a5b707d8047721724",
+  "mutation_id": "attack-cancel-after-submit-race",
+  "payload_sha256": "152e968f5d8465a84fe9d3027347b9fda91125ecedf569b6ab3419d9f64c428f",
   "raw_sensitive_material_recorded": false,
   "redaction_policy": "categorical_mutation_markers_only",
   "result": "target_claim_triggered",
@@ -32,6 +32,7 @@
   "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
   "task_id": "PORTAL-CXTP-148",
   "triggered_claim_ids": [
-    "xaman-testnet-claim:cancellation-path-is-not-modeled"
+    "xaman-testnet-claim:cancellation-path-is-not-modeled",
+    "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
   ]
 }

@@ -1,37 +1,37 @@
 {
-  "artifact_cid": "bafkreigu5ofnwiw54dsz6fhygjlo4ezvxnibpgefwmgqhjzvbcqjqlr5fu",
-  "fuzz_domain": "cancellation_expiry_reconnect_race",
+  "artifact_cid": "bafkreigcqe33vo76dduot3odsqw5uzuhluxjczidvmdwgbizd4m3b7eujm",
+  "fuzz_domain": "malformed_payload",
   "legacy_task_id": "PORTAL-CXTP-138",
   "minimal_counterexample": {
-    "fuzz_domain": "cancellation_expiry_reconnect_race",
+    "fuzz_domain": "malformed_payload",
     "mutation_keys": [
-      "coverage_gap_promoted"
+      "malformed_payload_shape"
     ],
-    "payload_sha256": "447cf7e459074328fc06449ed4f60dc7c302dec9b47869d82957139af59718cd",
-    "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled"
+    "payload_sha256": "74e5eb3966567f75a21f4808a7928ec4b10697e7602cbe82f1cae1da8af2d8e7",
+    "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only"
   },
   "minimization": {
     "algorithm": "deterministic-one-domain-delta-minimizer/v1",
-    "fuzz_domain": "cancellation_expiry_reconnect_race",
+    "fuzz_domain": "malformed_payload",
     "minimality_claim": "single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim",
-    "minimized_payload_sha256": "447cf7e459074328fc06449ed4f60dc7c302dec9b47869d82957139af59718cd",
+    "minimized_payload_sha256": "74e5eb3966567f75a21f4808a7928ec4b10697e7602cbe82f1cae1da8af2d8e7",
     "raw_sensitive_material_recorded": false,
     "removed_mutation_keys": [],
     "retained_mutation_keys": [
-      "coverage_gap_promoted"
+      "malformed_payload_shape"
     ],
     "status": "minimal"
   },
   "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
-  "mutation_id": "attack-expiry-gap-promoted",
-  "payload_sha256": "447cf7e459074328fc06449ed4f60dc7c302dec9b47869d82957139af59718cd",
+  "mutation_id": "attack-malformed-payload-shape",
+  "payload_sha256": "74e5eb3966567f75a21f4808a7928ec4b10697e7602cbe82f1cae1da8af2d8e7",
   "raw_sensitive_material_recorded": false,
   "redaction_policy": "categorical_mutation_markers_only",
   "result": "target_claim_triggered",
   "schema_version": "xaman-testnet-fuzz-counterexample/v1",
-  "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+  "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
   "task_id": "PORTAL-CXTP-148",
   "triggered_claim_ids": [
-    "xaman-testnet-claim:expiry-path-is-not-modeled"
+    "xaman-testnet-claim:payload-intake-is-categorical-only"
   ]
 }

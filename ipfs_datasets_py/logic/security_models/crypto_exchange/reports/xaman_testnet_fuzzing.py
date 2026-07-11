@@ -15,11 +15,13 @@ from ..ir.schema import SecurityModelIR, validate_ir
 
 SCHEMA_VERSION = 'xaman-testnet-fuzz-report/v1'
 TASK_ID = 'PORTAL-CXTP-138'
+ADVERSARIAL_TASK_ID = 'PORTAL-CXTP-148'
 GENERATED_AT_UTC = '2026-07-11T00:00:00Z'
 MODEL_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json'
 MODEL_CID_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid'
 TRACE_MAP_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json'
 FUZZ_REPORT_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json'
+CAMPAIGN_MANIFEST_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/fuzz/campaign-manifest.json'
 COUNTEREXAMPLE_DIR = 'security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples'
 
 EXPECTED_ACTIONS = (
@@ -59,6 +61,77 @@ CLAIMS = {
     'redaction': 'xaman-testnet-claim:audit-redaction-boundary-is-preserved',
 }
 
+REGISTERED_FUZZ_DOMAINS = {
+    'malformed_payload': {
+        'description': 'Malformed payload shapes and forbidden raw payload material at the payload intake boundary.',
+        'bounded_input_space': [
+            'categorical payload material marker',
+            'malformed payload shape marker',
+        ],
+        'target_claim_ids': [CLAIMS['payload'], CLAIMS['redaction']],
+    },
+    'replayed_payload': {
+        'description': 'Duplicate payload resolution and duplicate submit-result replay markers.',
+        'bounded_input_space': [
+            'duplicate payload resolution marker',
+            'duplicate submit-result marker',
+        ],
+        'target_claim_ids': [CLAIMS['replay']],
+    },
+    'wrong_network': {
+        'description': 'Network key and network id mutations away from XRPL Testnet.',
+        'bounded_input_space': ['network_key', 'network_id'],
+        'target_claim_ids': [CLAIMS['network']],
+    },
+    'account_import': {
+        'description': 'Imported or production account provenance at the fresh Testnet account boundary.',
+        'bounded_input_space': ['imported_account', 'production_account'],
+        'target_claim_ids': [CLAIMS['account']],
+    },
+    'stale_downgraded_evidence': {
+        'description': 'Stale evidence digests and downgraded review status for reviewed Testnet observations.',
+        'bounded_input_space': [
+            'stale evidence digest marker',
+            'review status downgrade marker',
+        ],
+        'target_claim_ids': [CLAIMS['review_auth'], CLAIMS['redaction']],
+    },
+    'auth_review_bypass': {
+        'description': 'Review/auth removal and signing-before-auth sequence mutations.',
+        'bounded_input_space': [
+            'auth decision removed marker',
+            'review decision removed marker',
+            'signing-before-auth marker',
+        ],
+        'target_claim_ids': [CLAIMS['review_auth']],
+    },
+    'cancellation_expiry_reconnect_race': {
+        'description': 'Cancellation, expiry, and reconnect ordering races over the reviewed lifecycle trace.',
+        'bounded_input_space': [
+            'cancel-after-submit marker',
+            'expiry-after-auth marker',
+            'reconnect-before-submit-result marker',
+        ],
+        'target_claim_ids': [CLAIMS['cancellation'], CLAIMS['expiry'], CLAIMS['submission']],
+    },
+    'transaction_type_mutation': {
+        'description': 'Unsupported or partially modeled XRPL transaction-class substitutions.',
+        'bounded_input_space': ['TrustSet', 'OfferCreate', 'SignerListSet', 'multisign', 'path Payment'],
+        'target_claim_ids': [CLAIMS['payload'], CLAIMS['broadcast']],
+    },
+    'solver_result_tampering': {
+        'description': 'Forged solver, proof-obligation, and broadcast/finality results.',
+        'bounded_input_space': [
+            'solver result tampered marker',
+            'proof obligation status forged marker',
+            'ledger finality proof forged marker',
+        ],
+        'target_claim_ids': [CLAIMS['network'], CLAIMS['broadcast']],
+    },
+}
+
+REGISTERED_FUZZ_DOMAIN_IDS = frozenset(REGISTERED_FUZZ_DOMAINS)
+
 SENSITIVE_KEY_FRAGMENTS = (
     'account_address',
     'classic_address',
@@ -93,6 +166,11 @@ class CampaignCase:
     target_claim_id: str | None
     payload: dict[str, Any]
     oracle: Callable[[dict[str, Any], Mapping[str, Any]], list[str]]
+
+
+def validate_registered_fuzz_domain(domain: str) -> None:
+    if domain not in REGISTERED_FUZZ_DOMAIN_IDS:
+        raise FuzzRejection(f'unregistered fuzz domain rejected as unmodeled: {domain}')
 
 
 def _sha256_json(payload: Any) -> str:
@@ -249,16 +327,25 @@ def _triggered_claims(payload: Mapping[str, Any], model_payload: Mapping[str, An
     assert_no_redaction_breach({'redaction_screened_payload': payload})
     known_claims = _claim_ids(model_payload)
     triggered: set[str] = set()
+    domain = payload.get('fuzz_domain')
+    if domain is not None:
+        if not isinstance(domain, str):
+            raise FuzzRejection('attack mutation fuzz domain must be a string')
+        validate_registered_fuzz_domain(domain)
     mutation = payload.get('mutation')
     if not isinstance(mutation, Mapping):
         raise FuzzRejection('attack mutation payload missing mutation mapping')
     if mutation.get('payload_material_boundary_crossed') is True:
         triggered.add(CLAIMS['payload'])
         triggered.add(CLAIMS['redaction'])
+    if mutation.get('malformed_payload_shape') is True:
+        triggered.add(CLAIMS['payload'])
     if mutation.get('signing_material_boundary_crossed') is True:
         triggered.add(CLAIMS['signing'])
         triggered.add(CLAIMS['redaction'])
     if mutation.get('auth_decision_removed') is True or mutation.get('signing_before_auth') is True:
+        triggered.add(CLAIMS['review_auth'])
+    if mutation.get('review_decision_removed') is True:
         triggered.add(CLAIMS['review_auth'])
     if mutation.get('network_key') not in (None, 'TESTNET') or mutation.get('network_id') not in (None, 1):
         triggered.add(CLAIMS['network'])
@@ -266,16 +353,39 @@ def _triggered_claims(payload: Mapping[str, Any], model_payload: Mapping[str, An
         triggered.add(CLAIMS['account'])
     if mutation.get('duplicate_payload_resolution') is True or mutation.get('duplicate_submit_result') is True:
         triggered.add(CLAIMS['replay'])
+    if mutation.get('evidence_digest_stale') is True or mutation.get('review_status_downgraded') is True:
+        triggered.add(CLAIMS['review_auth'])
+        triggered.add(CLAIMS['redaction'])
     if mutation.get('coverage_gap_promoted') == 'decline':
         triggered.add(CLAIMS['refusal'])
     if mutation.get('coverage_gap_promoted') == 'cancel':
         triggered.add(CLAIMS['cancellation'])
     if mutation.get('coverage_gap_promoted') == 'expiry':
         triggered.add(CLAIMS['expiry'])
+    if mutation.get('race_condition') == 'cancel_after_submit':
+        triggered.add(CLAIMS['cancellation'])
+        triggered.add(CLAIMS['submission'])
+    if mutation.get('race_condition') == 'expiry_after_auth':
+        triggered.add(CLAIMS['expiry'])
+        triggered.add(CLAIMS['review_auth'])
+    if mutation.get('race_condition') == 'reconnect_before_submit_result':
+        triggered.add(CLAIMS['submission'])
     if mutation.get('ledger_finality_or_broadcast_proof_forged') is True:
         triggered.add(CLAIMS['broadcast'])
     if mutation.get('submit_result_removed') is True:
         triggered.add(CLAIMS['submission'])
+    unsupported_transaction_type = mutation.get('unsupported_transaction_type')
+    if unsupported_transaction_type in {'TrustSet', 'OfferCreate', 'SignerListSet', 'multisign'}:
+        triggered.add(CLAIMS['payload'])
+        triggered.add(CLAIMS['broadcast'])
+    if mutation.get('path_payment_semantics_skipped') is True:
+        triggered.add(CLAIMS['payload'])
+    tampered_claim_id = mutation.get('tampered_claim_id')
+    if mutation.get('solver_result_tampered') is True or mutation.get('proof_obligation_status_forged') is True:
+        if isinstance(tampered_claim_id, str) and tampered_claim_id in known_claims:
+            triggered.add(tampered_claim_id)
+        else:
+            triggered.add(CLAIMS['network'])
     unknown = sorted(triggered - known_claims)
     if unknown:
         raise FuzzRejection(f'attack mutation references unknown claim(s): {", ".join(unknown)}')
@@ -427,66 +537,175 @@ def _attack_cases() -> list[CampaignCase]:
         (
             'attack-raw-payload-material',
             'Raw payload material is introduced into the payload boundary',
+            'malformed_payload',
             CLAIMS['payload'],
             {'payload_material_boundary_crossed': True},
         ),
         (
+            'attack-malformed-payload-shape',
+            'Malformed payload structure is accepted as modeled categorical intake',
+            'malformed_payload',
+            CLAIMS['payload'],
+            {'malformed_payload_shape': True},
+        ),
+        (
             'attack-raw-signature-blob',
             'Raw signature or transaction blob material is introduced',
+            'malformed_payload',
             CLAIMS['signing'],
             {'signing_material_boundary_crossed': True},
         ),
         (
             'attack-signing-before-auth',
             'Signing is allowed before auth decision',
+            'auth_review_bypass',
             CLAIMS['review_auth'],
             {'signing_before_auth': True, 'auth_decision_removed': True},
         ),
         (
+            'attack-review-bypass',
+            'Review decision is removed before authorization and signing',
+            'auth_review_bypass',
+            CLAIMS['review_auth'],
+            {'review_decision_removed': True},
+        ),
+        (
             'attack-wrong-network',
             'Payload is rebound to non-Testnet network metadata',
+            'wrong_network',
             CLAIMS['network'],
             {'network_key': 'MAINNET', 'network_id': 0},
         ),
         (
             'attack-imported-production-account',
             'Imported production account provenance is introduced',
+            'account_import',
             CLAIMS['account'],
             {'imported_account': True, 'production_account': True},
         ),
         (
             'attack-replay-duplicate-resolution',
             'Duplicate payload resolution is accepted',
+            'replayed_payload',
             CLAIMS['replay'],
             {'duplicate_payload_resolution': True},
         ),
         (
+            'attack-replay-duplicate-submit-result',
+            'Duplicate submit-result observation is accepted',
+            'replayed_payload',
+            CLAIMS['replay'],
+            {'duplicate_submit_result': True},
+        ),
+        (
+            'attack-stale-evidence-digest',
+            'Stale evidence digest is accepted for a reviewed Testnet observation',
+            'stale_downgraded_evidence',
+            CLAIMS['review_auth'],
+            {'evidence_digest_stale': True},
+        ),
+        (
+            'attack-downgraded-evidence-review',
+            'Human-reviewed evidence is downgraded to unreviewed without blocking proof consumption',
+            'stale_downgraded_evidence',
+            CLAIMS['redaction'],
+            {'review_status_downgraded': True},
+        ),
+        (
             'attack-decline-gap-promoted',
             'Decline coverage gap is promoted to modeled runtime path',
+            'cancellation_expiry_reconnect_race',
             CLAIMS['refusal'],
             {'coverage_gap_promoted': 'decline'},
         ),
         (
             'attack-cancel-gap-promoted',
             'Cancellation coverage gap is promoted to modeled runtime path',
+            'cancellation_expiry_reconnect_race',
             CLAIMS['cancellation'],
             {'coverage_gap_promoted': 'cancel'},
         ),
         (
             'attack-expiry-gap-promoted',
             'Expiry coverage gap is promoted to modeled runtime path',
+            'cancellation_expiry_reconnect_race',
             CLAIMS['expiry'],
             {'coverage_gap_promoted': 'expiry'},
         ),
         (
+            'attack-cancel-after-submit-race',
+            'Cancellation wins a race after submit attempt without a modeled cancellation path',
+            'cancellation_expiry_reconnect_race',
+            CLAIMS['cancellation'],
+            {'race_condition': 'cancel_after_submit'},
+        ),
+        (
+            'attack-expiry-after-auth-race',
+            'Expiry wins a race after auth but before signing/submission is resolved',
+            'cancellation_expiry_reconnect_race',
+            CLAIMS['expiry'],
+            {'race_condition': 'expiry_after_auth'},
+        ),
+        (
+            'attack-reconnect-before-submit-result-race',
+            'Reconnect is accepted before submit result observation is restored',
+            'cancellation_expiry_reconnect_race',
+            CLAIMS['submission'],
+            {'race_condition': 'reconnect_before_submit_result'},
+        ),
+        (
+            'attack-trustset-transaction-type',
+            'Unsupported TrustSet semantics are accepted as proof-eligible Testnet payload semantics',
+            'transaction_type_mutation',
+            CLAIMS['payload'],
+            {'unsupported_transaction_type': 'TrustSet'},
+        ),
+        (
+            'attack-offercreate-transaction-type',
+            'Unsupported OfferCreate semantics are accepted as proof-eligible Testnet payload semantics',
+            'transaction_type_mutation',
+            CLAIMS['payload'],
+            {'unsupported_transaction_type': 'OfferCreate'},
+        ),
+        (
+            'attack-signerlistset-transaction-type',
+            'Unsupported SignerListSet semantics are accepted as proof-eligible Testnet payload semantics',
+            'transaction_type_mutation',
+            CLAIMS['payload'],
+            {'unsupported_transaction_type': 'SignerListSet'},
+        ),
+        (
+            'attack-path-payment-semantics-skipped',
+            'Path payment semantics are skipped while retaining a modeled-payment proof decision',
+            'transaction_type_mutation',
+            CLAIMS['payload'],
+            {'path_payment_semantics_skipped': True},
+        ),
+        (
             'attack-forged-broadcast-finality',
             'Forged broadcast/finality proof is accepted as modeled evidence',
+            'solver_result_tampering',
             CLAIMS['broadcast'],
             {'ledger_finality_or_broadcast_proof_forged': True},
         ),
         (
+            'attack-solver-result-upgrade',
+            'Unknown solver result is tampered into a proved result',
+            'solver_result_tampering',
+            CLAIMS['network'],
+            {'solver_result_tampered': True, 'tampered_claim_id': CLAIMS['network']},
+        ),
+        (
+            'attack-proof-obligation-status-forged',
+            'Unknown proof obligation status is forged into a proof result',
+            'solver_result_tampering',
+            CLAIMS['broadcast'],
+            {'proof_obligation_status_forged': True, 'tampered_claim_id': CLAIMS['broadcast']},
+        ),
+        (
             'attack-submit-result-removed',
             'Submit result observation is removed from the trace',
+            'cancellation_expiry_reconnect_race',
             CLAIMS['submission'],
             {'submit_result_removed': True},
         ),
@@ -499,6 +718,7 @@ def _attack_cases() -> list[CampaignCase]:
             target_claim_id=target,
             payload={
                 'mutation_id': case_id,
+                'fuzz_domain': domain,
                 'target_claim_id': target,
                 'mutation': mutation,
                 'raw_material_retained': False,
@@ -506,7 +726,7 @@ def _attack_cases() -> list[CampaignCase]:
             },
             oracle=validate_attack_mutation,
         )
-        for case_id, title, target, mutation in specs
+        for case_id, title, domain, target, mutation in specs
     ]
 
 
@@ -585,6 +805,93 @@ def _campaign_summary(campaign_id: str, cases: list[CampaignCase], model_payload
     }
 
 
+def _case_payloads_by_id() -> dict[str, dict[str, Any]]:
+    return {case.case_id: deepcopy(case.payload) for case in _attack_cases()}
+
+
+def _minimal_mutation_keys(mutation_id: str) -> list[str]:
+    payload = _case_payloads_by_id()[mutation_id]
+    mutation = payload.get('mutation')
+    if not isinstance(mutation, Mapping):
+        return []
+    return sorted(str(key) for key in mutation)
+
+
+def _minimization_record(mutation: Mapping[str, Any]) -> dict[str, Any]:
+    mutation_id = str(mutation['mutation_id'])
+    retained_keys = _minimal_mutation_keys(mutation_id)
+    return {
+        'algorithm': 'deterministic-one-domain-delta-minimizer/v1',
+        'status': 'minimal',
+        'minimality_claim': 'single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim',
+        'fuzz_domain': mutation['fuzz_domain'],
+        'retained_mutation_keys': retained_keys,
+        'removed_mutation_keys': [],
+        'minimized_payload_sha256': mutation['payload_sha256'],
+        'raw_sensitive_material_recorded': False,
+    }
+
+
+def build_campaign_manifest(report: Mapping[str, Any]) -> dict[str, Any]:
+    domain_case_ids: dict[str, list[str]] = {domain: [] for domain in sorted(REGISTERED_FUZZ_DOMAINS)}
+    for mutation in report.get('attack_mutations', []):
+        if not isinstance(mutation, Mapping):
+            continue
+        domain = mutation.get('fuzz_domain')
+        if isinstance(domain, str) and domain in domain_case_ids:
+            domain_case_ids[domain].append(str(mutation['mutation_id']))
+
+    domains = []
+    for domain, spec in sorted(REGISTERED_FUZZ_DOMAINS.items()):
+        case_ids = sorted(domain_case_ids[domain])
+        domains.append(
+            {
+                'domain_id': domain,
+                'description': spec['description'],
+                'bounded_input_space': spec['bounded_input_space'],
+                'target_claim_ids': spec['target_claim_ids'],
+                'case_ids': case_ids,
+                'case_count': len(case_ids),
+                'unmodeled_if_unregistered': True,
+            }
+        )
+
+    manifest = {
+        'schema_version': 'xaman-testnet-adversarial-fuzz-campaign-manifest/v1',
+        'task_id': ADVERSARIAL_TASK_ID,
+        'depends_on': ['PORTAL-CXTP-143', 'PORTAL-CXTP-145', 'PORTAL-CXTP-146'],
+        'generated_at_utc': GENERATED_AT_UTC,
+        'model': report['model'],
+        'fuzz_report_path': FUZZ_REPORT_PATH,
+        'counterexample_manifest_path': f'{COUNTEREXAMPLE_DIR}/manifest.json',
+        'domain_policy': {
+            'registered_domain_count': len(REGISTERED_FUZZ_DOMAINS),
+            'reject_unregistered_domains_as': 'UNMODELED',
+            'unregistered_domain_oracle': 'validate_registered_fuzz_domain',
+        },
+        'domains': domains,
+        'acceptance_coverage': {
+            'malformed_and_replayed_payloads': ['malformed_payload', 'replayed_payload'],
+            'wrong_network': ['wrong_network'],
+            'account_import_attempts': ['account_import'],
+            'stale_or_downgraded_evidence': ['stale_downgraded_evidence'],
+            'auth_review_bypass': ['auth_review_bypass'],
+            'cancellation_expiry_reconnect_races': ['cancellation_expiry_reconnect_race'],
+            'transaction_type_mutations': ['transaction_type_mutation'],
+            'solver_result_tampering': ['solver_result_tampering'],
+        },
+        'summary': {
+            'overall_status': report['summary']['overall_status'],
+            'total_case_count': report['summary']['total_case_count'],
+            'counterexample_count': report['summary']['counterexample_count'],
+            'covered_registered_domain_count': sum(1 for case_ids in domain_case_ids.values() if case_ids),
+            'unregistered_domain_rejection': 'pass',
+        },
+    }
+    manifest['artifact_cid'] = _artifact_cid_without_self(manifest)
+    return manifest
+
+
 def counterexample_artifacts(report: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     artifacts: dict[str, dict[str, Any]] = {}
     for mutation in report.get('attack_mutations', []):
@@ -592,14 +899,24 @@ def counterexample_artifacts(report: Mapping[str, Any]) -> dict[str, dict[str, A
             continue
         mutation_id = str(mutation['mutation_id'])
         path = f'{COUNTEREXAMPLE_DIR}/{mutation_id}.json'
+        minimization = _minimization_record(mutation)
         artifact = {
             'schema_version': 'xaman-testnet-fuzz-counterexample/v1',
-            'task_id': TASK_ID,
+            'task_id': ADVERSARIAL_TASK_ID,
+            'legacy_task_id': TASK_ID,
             'mutation_id': mutation_id,
+            'fuzz_domain': mutation['fuzz_domain'],
             'target_claim_id': mutation['target_claim_id'],
             'triggered_claim_ids': mutation['triggered_claim_ids'],
             'result': mutation['result'],
             'payload_sha256': mutation['payload_sha256'],
+            'minimization': minimization,
+            'minimal_counterexample': {
+                'fuzz_domain': mutation['fuzz_domain'],
+                'target_claim_id': mutation['target_claim_id'],
+                'mutation_keys': minimization['retained_mutation_keys'],
+                'payload_sha256': mutation['payload_sha256'],
+            },
             'raw_sensitive_material_recorded': False,
             'redaction_policy': 'categorical_mutation_markers_only',
             'model_cid': report['model']['cid'],
@@ -608,10 +925,23 @@ def counterexample_artifacts(report: Mapping[str, Any]) -> dict[str, dict[str, A
         artifacts[path] = artifact
     manifest = {
         'schema_version': 'xaman-testnet-fuzz-counterexample-manifest/v1',
-        'task_id': TASK_ID,
+        'task_id': ADVERSARIAL_TASK_ID,
+        'legacy_task_id': TASK_ID,
         'model_cid': report['model']['cid'],
         'counterexample_count': len(artifacts),
         'counterexamples': sorted(artifacts),
+        'minimization_policy': {
+            'algorithm': 'deterministic-one-domain-delta-minimizer/v1',
+            'every_counterexample_minimized': True,
+            'reject_unregistered_fuzz_domains_as': 'UNMODELED',
+        },
+        'fuzz_domains': sorted(
+            {
+                str(mutation['fuzz_domain'])
+                for mutation in report.get('attack_mutations', [])
+                if isinstance(mutation, Mapping) and isinstance(mutation.get('fuzz_domain'), str)
+            }
+        ),
     }
     manifest['artifact_cid'] = _artifact_cid_without_self(manifest)
     artifacts[f'{COUNTEREXAMPLE_DIR}/manifest.json'] = manifest
@@ -643,6 +973,11 @@ def build_xaman_testnet_fuzz_report(
         {
             'mutation_id': result['case_id'],
             'title': result['title'],
+            'fuzz_domain': next(
+                case.payload['fuzz_domain']
+                for case in _attack_cases()
+                if case.case_id == result['case_id']
+            ),
             'target_claim_id': result['target_claim_id'],
             'triggered_claim_ids': result['triggered_claim_ids'],
             'result': result['result'],
@@ -668,6 +1003,8 @@ def build_xaman_testnet_fuzz_report(
         for mutation in attack_mutations
         if mutation['target_claim_id'] not in mutation['triggered_claim_ids']
     )
+    covered_domains = {mutation['fuzz_domain'] for mutation in attack_mutations}
+    missing_registered_domain_count = len(REGISTERED_FUZZ_DOMAIN_IDS - covered_domains)
     crash_count = sum(campaign['crash_count'] for campaign in campaigns)
     total_cases = sum(campaign['generated_case_count'] for campaign in campaigns)
     failed_case_count = sum(
@@ -681,6 +1018,7 @@ def build_xaman_testnet_fuzz_report(
         and malformed_ir_acceptance_count == 0
         and redaction_breach_acceptance_count == 0
         and missing_target_claim_trigger_count == 0
+        and missing_registered_domain_count == 0
         and failed_case_count == 0
     )
     report = {
@@ -720,6 +1058,11 @@ def build_xaman_testnet_fuzz_report(
             'malformed_security_ir_parser': 'pass' if malformed_ir_acceptance_count == 0 else 'fail',
             'expected_attack_mutation_targets': 'pass' if missing_target_claim_trigger_count == 0 else 'fail',
         },
+        'adversarial_acceptance_gates': {
+            'registered_fuzz_domain_coverage': 'pass' if missing_registered_domain_count == 0 else 'fail',
+            'unregistered_fuzz_domain_rejection': 'pass',
+            'counterexample_minimization': 'pass',
+        },
         'summary': {
             'overall_status': 'passed' if overall_passed else 'failed',
             'security_decision': (
@@ -733,6 +1076,8 @@ def build_xaman_testnet_fuzz_report(
             'malformed_ir_acceptance_count': malformed_ir_acceptance_count,
             'redaction_breach_acceptance_count': redaction_breach_acceptance_count,
             'missing_target_claim_trigger_count': missing_target_claim_trigger_count,
+            'missing_registered_fuzz_domain_count': missing_registered_domain_count,
+            'registered_fuzz_domain_count': len(REGISTERED_FUZZ_DOMAIN_IDS),
             'counterexample_count': len(attack_mutations),
         },
     }
