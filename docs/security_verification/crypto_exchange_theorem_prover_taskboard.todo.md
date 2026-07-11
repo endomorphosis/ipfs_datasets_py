@@ -770,3 +770,449 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 - Outputs: security_ir_artifacts/production/readiness-preflight-report.json, docs/security_verification/production_readiness_preflight.md
 - Validation: test -f security_ir_artifacts/production/readiness-preflight-report.json; test -f docs/security_verification/production_readiness_preflight.md
 - Acceptance: Verify the frozen release target, evidence freshness, human review, source-to-claim and event-to-model mappings, required domain coverage, primary solver worker lock, optional-coverage decision, and collection manifest before PORTAL-CXTP-079 through PORTAL-CXTP-083 can consume production inputs; fail closed with a task-and-owner-specific gap list.
+
+## Recovered Xaman Testnet Task Records
+
+The following completed records were recovered from
+`data/crypto_exchange_theorem_prover/state/cxtp_task_state.json` and their
+durable artifacts. They are retained here so supervisor state, task history,
+and release gates use one canonical board.
+
+## PORTAL-CXTP-119 Prepare Firebase-stubbed Xaman public-source Testnet build kit
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Durable verifier-kit manifest, source assessment, and Firebase-stub test artifacts are retained in the completed supervisor state.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-060
+- Outputs: scripts/ops/security_verification/xaman_firebase_disabled_testnet.py, docs/security_verification/xaman_firebase_disabled_testnet.md, tests/logic/security_models/crypto_exchange/test_xaman_firebase_disabled_testnet.py, /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/firebase-disabled-testnet-kit/testnet-build-manifest.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_firebase_disabled_testnet.py -q
+- Acceptance: Preserve a verifier-only JavaScript Firebase-stub build boundary and classify any residual native Firebase packaging explicitly.
+
+## PORTAL-CXTP-120 Capture redacted Testnet telemetry in DuckDB
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the redacted telemetry report and local DuckDB artifact.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-119
+- Outputs: security_ir_artifacts/corpora/xaman-app/runtime/testnet-telemetry-report.json, /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/testnet-telemetry.duckdb
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/runtime/testnet-telemetry-report.json
+- Acceptance: Retain categorical, redacted Testnet telemetry only; reject secrets, addresses, payloads, transaction blobs, credentials, and raw endpoints.
+
+## PORTAL-CXTP-121 Run public-Testnet device trial
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the device-trial report, verifier APK path, and redacted telemetry dependency.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-119, PORTAL-CXTP-120
+- Outputs: security_ir_artifacts/corpora/xaman-app/runtime/testnet-device-trial-report.json, /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/build/outputs/apk/debug/app-x86_64-debug.apk, /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/testnet-telemetry.duckdb
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/runtime/testnet-device-trial-report.json
+- Acceptance: Bind fresh-emulator, fresh-Testnet-account, and redaction evidence to the verifier-only build without implying native or production equivalence.
+
+## PORTAL-CXTP-122 Map Testnet runtime telemetry to model categories
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the monitor mapping and its scope documentation.
+- Priority: P0
+- Track: model
+- Depends on: PORTAL-CXTP-120, PORTAL-CXTP-121
+- Outputs: security_ir_artifacts/corpora/xaman-app/runtime/testnet-monitor-mapping.json, docs/security_verification/xaman_testnet_runtime_mapping.md
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/runtime/testnet-monitor-mapping.json
+- Acceptance: Map only reviewed categorical Testnet events to SecurityModelIR facts and preserve raw transaction, finality, and backend semantics as not modeled.
+
+## PORTAL-CXTP-123 Repair verifier-build Android compatibility boundary
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the compatibility source and Testnet network-selection report.
+- Priority: P1
+- Track: runtime
+- Depends on: PORTAL-CXTP-119
+- Outputs: /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/firebase-disabled-testnet-kit/react-native-navigation-compat/ReactTypefaceUtils.java, security_ir_artifacts/corpora/xaman-app/runtime/testnet-network-selection-report.json
+- Validation: test -f /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/firebase-disabled-testnet-kit/react-native-navigation-compat/ReactTypefaceUtils.java
+- Acceptance: Record verifier-only compatibility changes and retain their non-equivalence to vendor builds.
+
+## PORTAL-CXTP-124 Analyze release R8 dependencies and native boundary
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the release R8 dependency report and analysis.
+- Priority: P1
+- Track: runtime
+- Depends on: PORTAL-CXTP-119
+- Outputs: security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json, docs/security_verification/xaman_release_r8_dependency_analysis.md
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json
+- Acceptance: Identify retained native dependencies and treat their security behavior as a public-source coverage boundary.
+
+## PORTAL-CXTP-125 Capture Testnet network-selection evidence
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the Testnet network-selection report and capture tooling.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-121
+- Outputs: docs/security_verification/xaman_testnet_network_selection.md, security_ir_artifacts/corpora/xaman-app/runtime/testnet-network-selection-report.json, scripts/ops/security_verification/capture_xaman_testnet_network_selection.py, tests/logic/security_models/crypto_exchange/test_xaman_testnet_network_selection.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_network_selection.py -q
+- Acceptance: Establish categorical `TESTNET`, an allow-listed endpoint decision, and a digest-bound `network_id: 1` observation while rejecting sensitive network inputs.
+
+## PORTAL-CXTP-126 Audit native Firebase packaging boundary
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the native Firebase boundary report and audit test.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-119
+- Outputs: docs/security_verification/xaman_testnet_native_firebase_boundary.md, security_ir_artifacts/corpora/xaman-app/runtime/native-firebase-boundary-report.json, scripts/ops/security_verification/audit_xaman_native_firebase_boundary.py, tests/logic/security_models/crypto_exchange/test_xaman_native_firebase_boundary.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_native_firebase_boundary.py -q
+- Acceptance: Report residual native Firebase/Crashlytics packaging as a hard assurance boundary; JavaScript stubbing alone is never a native-security proof.
+
+## PORTAL-CXTP-127 Stabilize Firebase-stubbed Testnet build tooling
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the runnable build-kit script, documentation, and test.
+- Priority: P1
+- Track: ops
+- Depends on: PORTAL-CXTP-119
+- Outputs: scripts/ops/security_verification/xaman_firebase_disabled_testnet.py, docs/security_verification/xaman_firebase_disabled_testnet.md, tests/logic/security_models/crypto_exchange/test_xaman_firebase_disabled_testnet.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/xaman_firebase_disabled_testnet.py --help
+- Acceptance: Keep verifier build tooling reproducible and clearly limited to the public-source Testnet scope.
+
+## PORTAL-CXTP-128 Ingest redacted Xaman runtime traces
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the runtime trace ingestor, documented assumptions, and tests.
+- Priority: P0
+- Track: model
+- Depends on: PORTAL-CXTP-120, PORTAL-CXTP-122
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/xaman_runtime_trace_ingestor.py, ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/__init__.py, docs/security_verification/xaman_runtime_trace_assumptions.md, tests/logic/security_models/crypto_exchange/test_xaman_runtime_trace_ingestor.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_runtime_trace_ingestor.py -q
+- Acceptance: Reject raw secrets and unrecognized event shapes before conversion into categorical model evidence.
+
+## PORTAL-CXTP-129 Operationalize baseline proof and disproof commands
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains baseline/disproof command wrappers, release-gate documentation, and tests.
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-069, PORTAL-CXTP-070
+- Outputs: scripts/ops/security_verification/run_security_ir_disproof_suite.py, scripts/ops/security_verification/run_security_ir_assurance_baseline.py, docs/security_verification/release_gate_runbook.md, ipfs_datasets_py/logic/security_models/crypto_exchange/README.md, tests/logic/security_models/crypto_exchange/test_disproof_ops_script.py, tests/logic/security_models/crypto_exchange/test_assurance_baseline_ops_script.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_disproof_ops_script.py tests/logic/security_models/crypto_exchange/test_assurance_baseline_ops_script.py -q
+- Acceptance: Make expected negative controls and fail-closed solver evidence reproducible without treating a green harness as a security verdict.
+
+## PORTAL-CXTP-130 Capture redacted Xaman Testnet transaction lifecycle trial
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the transaction-trial script, report, documentation, and test.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-121, PORTAL-CXTP-125, PORTAL-CXTP-126
+- Outputs: scripts/ops/security_verification/capture_xaman_testnet_transaction_trial.py, security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json, docs/security_verification/xaman_testnet_transaction_trial.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_transaction_trial.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_transaction_trial.py -q
+- Acceptance: Preserve redacted lifecycle categories and Testnet binding while rejecting raw transaction and account material.
+
+## PORTAL-CXTP-131 Review frozen Xaman Testnet SecurityModelIR
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the model, claim trace map, assumptions, documentation, and test.
+- Priority: P0
+- Track: model
+- Depends on: PORTAL-CXTP-122, PORTAL-CXTP-128, PORTAL-CXTP-130
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json, security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json, security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json, docs/security_verification/xaman_testnet_model_review.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_model.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_model.py -q
+- Acceptance: Bind every modeled Testnet claim to reviewed inputs and retain unresolved native, backend, XRPL, and runtime assumptions as blocks.
+
+## PORTAL-CXTP-132 Lock Testnet SMT proof worker and CVC5 runner
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the proof-worker lock, CVC5 report, documentation, and test.
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-131
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/proof-worker-lock.json, security_ir_artifacts/corpora/xaman-app/testnet/cvc5-runner-report.json, docs/security_verification/xaman_testnet_smt_worker.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_smt_worker.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_smt_worker.py -q
+- Acceptance: Record reproducible SMT solver paths, versions, model identity, and fail-closed differential baseline inputs.
+
+## PORTAL-CXTP-133 Generate Z3/CVC5 Testnet results and counterexamples
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains differential reports, counterexamples, and result documentation.
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-132
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json, security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/, docs/security_verification/xaman_testnet_smt_results.md
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json
+- Acceptance: Treat disagreement, stale evidence, unsupported claims, and expected negative-control counterexamples as non-secure outcomes.
+
+## PORTAL-CXTP-134 Generate Testnet Apalache concurrency model
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the Testnet TLA artifact, report, documentation, and test.
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-131
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/tla/XamanTestnetPayload.tla, security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json, docs/security_verification/xaman_testnet_apalache.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_apalache.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_apalache.py -q
+- Acceptance: Bound concurrency claims to the reviewed state machine and reject missing solver output or unmodeled state as assurance evidence.
+
+## PORTAL-CXTP-135 Generate Testnet Tamarin/ProVerif protocol model
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the protocol artifact, report, documentation, and test.
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-131
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy, security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json, docs/security_verification/xaman_testnet_protocol_verification.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_protocol.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_protocol.py -q
+- Acceptance: Restrict protocol conclusions to the symbolic model and report replay, secret, authentication, or backend gaps explicitly.
+
+## PORTAL-CXTP-136 Check Lean kernel and decide independent Rocq coverage
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the Lean kernel, report, Rocq coverage decision, and documentation.
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-131
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean, security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json, security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json, docs/security_verification/xaman_testnet_kernel_proofs.md
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json
+- Acceptance: Accept only kernel-checked modeled invariants and preserve independent-kernel requirements as coverage gates.
+
+## PORTAL-CXTP-137 Govern Leanstral-assisted proof suggestions
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the Leanstral lock, candidate audit, and policy document.
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-136
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/leanstral-assistant-lock.json, security_ir_artifacts/corpora/xaman-app/testnet/leanstral-candidate-audit.json, docs/security_verification/xaman_testnet_leanstral_policy.md
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/testnet/leanstral-candidate-audit.json
+- Acceptance: Treat Leanstral output as untrusted suggestions until Lean, Rocq, or another independent checker accepts the resulting artifact.
+
+## PORTAL-CXTP-138 Execute Testnet fuzzing and counterexample retention
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the fuzz report, counterexample directory, documentation, and test.
+- Priority: P0
+- Track: disproof
+- Depends on: PORTAL-CXTP-131
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/, docs/security_verification/xaman_testnet_fuzzing.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_fuzzing.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_fuzzing.py -q
+- Acceptance: Retain seeds, registered mutation domains, and minimized counterexamples while never inferring exhaustive real-wallet coverage from bounded fuzzing.
+
+## PORTAL-CXTP-139 Generate fail-closed Testnet assurance verdict
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the assurance bundle, verdict, and documentation.
+- Priority: P0
+- Track: assurance
+- Depends on: PORTAL-CXTP-132, PORTAL-CXTP-133, PORTAL-CXTP-134, PORTAL-CXTP-135, PORTAL-CXTP-136, PORTAL-CXTP-137, PORTAL-CXTP-138
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/assurance-bundle.json, security_ir_artifacts/corpora/xaman-app/testnet/assurance-verdict.json, docs/security_verification/xaman_xrpl_testnet_assurance_verdict.md
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/testnet/assurance-verdict.json
+- Acceptance: Issue only a scope-bounded result and retain every missing assumption, unmodeled claim, or failed lane as a Testnet assurance block.
+
+## PORTAL-CXTP-140 Reconcile Xaman TLA workflow with executable Apalache evidence
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the reconciled TLA workflow, Apalache lane report, and tests.
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-071, PORTAL-CXTP-134
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_tla_workflow.py, scripts/ops/security_verification/generate_xaman_tla_workflow.py, security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla, security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json, security_ir_artifacts/environment/apalache-solver-lane-report.json, docs/security_verification/xaman_tla_workflow.md, docs/security_verification/apalache_tla_solver_lane.md, tests/logic/security_models/crypto_exchange/test_xaman_tla_workflow.py, tests/logic/security_models/crypto_exchange/test_apalache_solver_lane.py
+- Validation: PATH=/home/barberb/.local/bin:$PATH PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_tla_workflow.py tests/logic/security_models/crypto_exchange/test_apalache_solver_lane.py -q
+- Acceptance: Bind bounded Apalache results to generated source, exact solver evidence, and the stated non-production scope.
+
+## PORTAL-CXTP-141 Pin a Tamarin-supported Maude runtime
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the Tamarin/Maude runtime probe report, documentation, and test.
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-092
+- Outputs: scripts/ops/security_verification/probe_tamarin_runtime.py, security_ir_artifacts/environment/tamarin-runtime-report.json, docs/security_verification/xaman_tamarin_runtime.md, tests/logic/security_models/crypto_exchange/test_tamarin_runtime.py
+- Validation: PATH=/home/barberb/.local/bin:$PATH PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_tamarin_runtime.py -q
+- Acceptance: Pin and verify a Maude release accepted by Tamarin, preserving unsupported protocol models as coverage gaps.
+
+## PORTAL-CXTP-142 Finalize headless ProVerif and Rocq proof toolchain evidence
+
+- Status: completed
+- Completion: manual
+- Completion evidence: Completed supervisor state retains the headless ProVerif/Rocq toolchain probe, documentation, and test.
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-093
+- Outputs: scripts/ops/security_verification/probe_opam_proof_toolchain.py, security_ir_artifacts/environment/opam-proof-toolchain-report.json, docs/security_verification/xaman_opam_proof_toolchain.md, tests/logic/security_models/crypto_exchange/test_opam_proof_toolchain.py
+- Validation: PATH=/home/barberb/.local/bin:$PATH PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_opam_proof_toolchain.py -q
+- Acceptance: Retain a headless ProVerif and Rocq/Coq proof-toolchain record with versions, paths, and fail-closed lane semantics.
+
+## Xaman Public-Source And XRPL Testnet Execution Extension
+
+Target corpus: `XRPL-Labs/Xaman-App` at the manifest-pinned commit. The corpus is
+a React Native mobile XRP Ledger client with a remote sign-request platform
+boundary. The proof target is therefore a public-source/Testnet property under
+declared assumptions, never a blanket claim that Xaman, XRPL, or an exchange is
+secure. Every unsupported source path, unavailable runtime trace, solver
+disagreement, timeout, stale input, or missing reviewer remains `UNKNOWN`,
+`NOT_MODELED`, or `BLOCKED`.
+
+Execution sequence:
+
+1. Reconcile the canonical board with supervisor state before scheduling more work.
+2. Re-freeze source and public build inputs, then map native bridges, payload APIs,
+   deep links, wallet-auth transitions, and XRPL transaction classes to claims.
+3. Extend the SecurityModelIR for reachable `TrustSet`, `OfferCreate`, and
+   `SignerListSet` paths; preserve unsupported semantics as counterexamples or
+   coverage gaps.
+4. Run the same immutable model through Z3/CVC5, Apalache, Tamarin/ProVerif,
+   Lean, and Rocq only where each solver's theory is appropriate. Leanstral may
+   propose artifacts but no generated result is accepted without an independent
+   checker.
+5. Fuzz and mutate the modeled boundary, collect redacted Testnet-only runtime
+   evidence, and make the assurance verdict reject all unmodeled or unreviewed
+   conditions.
+6. Keep vendor-only requirements (released APK provenance, native vault and
+   biometric behavior, backend single-use semantics, and XRPL/RPC trust) blocked
+   until authorized evidence and accountable review exist.
+
+## PORTAL-CXTP-143 Reconcile canonical CXTP taskboard with supervisor state
+
+- Status: completed
+- Completion: manual
+- Priority: P0
+- Track: ops
+- Depends on:
+- Outputs: docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md, security_ir_artifacts/recovery/cxtp-taskboard-state-reconciliation.json, docs/security_verification/cxtp_taskboard_state_reconciliation.md, tests/logic/security_models/crypto_exchange/test_cxtp_taskboard_state_reconciliation.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_cxtp_taskboard_state_reconciliation.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/preflight_crypto_exchange_taskboard.py --out security_ir_artifacts/recovery/taskboard-preflight-report.json
+- Acceptance: Reconstruct durable task records for every supervisor state task absent from the canonical board, preserve completed evidence for PORTAL-CXTP-119 through PORTAL-CXTP-142, make task counts and statuses agree, reject unknown state IDs, and leave at least one valid next task selectable without downgrading any production blocker.
+
+## PORTAL-CXTP-144 Refresh the pinned Xaman public-source and Testnet assessment baseline
+
+- Status: waiting
+- Completion: manual
+- Priority: P0
+- Track: source
+- Depends on: PORTAL-CXTP-143
+- Outputs: security_ir_artifacts/corpora/xaman-app/public-source-refresh.json, security_ir_artifacts/corpora/xaman-app/public-source-assessment.json, docs/security_verification/xaman_public_source_security_verification_plan.md, tests/logic/security_models/crypto_exchange/test_xaman_public_source_refresh.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_public_source_refresh.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/build_xaman_public_source_assessment.py --out security_ir_artifacts/corpora/xaman-app/public-source-assessment.json
+- Acceptance: Revalidate the exact source commit, repository URL, lockfile and public-build digests, responsible-disclosure path, source coverage, known unmodeled domains, and Testnet-only scope; record upstream drift without silently changing the proof corpus.
+
+## PORTAL-CXTP-145 Build a claim-to-source map for wallet, payload, native bridge, and deep-link boundaries
+
+- Status: waiting
+- Completion: manual
+- Priority: P0
+- Track: model
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-144
+- Outputs: security_ir_artifacts/corpora/xaman-app/source-claim-map.json, security_ir_artifacts/corpora/xaman-app/native-boundary-coverage.json, docs/security_verification/xaman_source_claim_coverage.md, tests/logic/security_models/crypto_exchange/test_xaman_source_claim_coverage.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_source_claim_coverage.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/build_xaman_source_claim_coverage.py --out security_ir_artifacts/corpora/xaman-app/source-claim-map.json
+- Acceptance: Bind every modeled wallet-auth, payload review, signing decision, deep-link, QR, network-selection, receipt-consumer, and native-bridge claim to immutable public-source locations; mark vault cryptography, biometrics, native keystore behavior, and backend behavior as `NOT_MODELED` unless source-supported evidence exists.
+
+## PORTAL-CXTP-146 Extend XRPL transaction semantics for reachable public Xaman flows
+
+- Status: waiting
+- Completion: manual
+- Priority: P0
+- Track: model
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-144
+- Outputs: security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json, security_ir_artifacts/corpora/xaman-app/disproof-vectors.json, docs/security_verification/xaman_xrpl_transaction_model.md, tests/logic/security_models/crypto_exchange/test_xaman_xrpl_transaction_coverage.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_xrpl_transaction_coverage.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_xaman_disproof_vectors.py --out security_ir_artifacts/corpora/xaman-app/disproof-vectors.json
+- Acceptance: Model or explicitly reject reachable `TrustSet`, `OfferCreate`, `SignerListSet`, payment, issued-currency, destination-tag, fee, sequence, multisign, memo, network, and canonicalization constraints; unsupported transaction types must yield a recorded coverage gap or counterexample, never a proof.
+
+## PORTAL-CXTP-147 Run a reconciled multi-solver public-source Testnet proof portfolio
+
+- Status: waiting
+- Completion: manual
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-145, PORTAL-CXTP-146
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-manifest.json, security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json, docs/security_verification/xaman_testnet_solver_portfolio.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_solver_portfolio.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_solver_portfolio.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/run_xaman_testnet_solver_portfolio.py --out security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json
+- Acceptance: Record one frozen model CID and evidence digest set per claim, then run Z3/CVC5 differential checks, Apalache state checks, Tamarin/ProVerif protocol checks, Lean/Rocq kernel checks, and fuzz-result consumption only when the claim fits the solver theory; require recorded executable versions, command digests, timeouts, reviewer status, and a fail-closed result for every unavailable or disagreeing lane.
+
+## PORTAL-CXTP-148 Expand adversarial Testnet fuzzing and formal counterexample minimization
+
+- Status: waiting
+- Completion: manual
+- Priority: P0
+- Track: disproof
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-145, PORTAL-CXTP-146
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/fuzz/campaign-manifest.json, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json, docs/security_verification/xaman_testnet_adversarial_fuzzing.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_adversarial_fuzzing.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_adversarial_fuzzing.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/run_xaman_testnet_fuzzing.py --out security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json
+- Acceptance: Exercise bounded input spaces for malformed and replayed payloads, wrong network, account-import attempts, stale or downgraded evidence, auth/review bypass, cancellation/expiry/reconnect races, transaction-type mutations, and solver-result tampering; minimize every discovered counterexample and reject unregistered fuzz domains as unmodeled.
+
+## PORTAL-CXTP-149 Reproduce the public Android Testnet verifier build with a locked environment
+
+- Status: waiting
+- Completion: manual
+- Priority: P1
+- Track: runtime
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-144
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/public-build-reproduction.json, security_ir_artifacts/corpora/xaman-app/testnet/public-build-environment.json, docs/security_verification/xaman_testnet_public_build_reproduction.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_public_build_reproduction.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_public_build_reproduction.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/reproduce_xaman_public_testnet_build.py --out security_ir_artifacts/corpora/xaman-app/testnet/public-build-reproduction.json
+- Acceptance: Record the public-source commit, Android/Gradle/Node/Java/SDK environment, dependency resolution, build outcome, verifier-only patches, APK digest, and every missing credential or service dependency; never classify a public build as equivalent to a vendor release.
+
+## PORTAL-CXTP-150 Capture and validate redacted XRPL Testnet lifecycle evidence
+
+- Status: waiting
+- Completion: manual
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-145, PORTAL-CXTP-147, PORTAL-CXTP-148, PORTAL-CXTP-149
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/runtime-conformance-report.json, security_ir_artifacts/corpora/xaman-app/testnet/runtime-conformance-trace-map.json, docs/security_verification/xaman_testnet_runtime_conformance.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_runtime_conformance.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_runtime_conformance.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/validate_xaman_testnet_runtime_conformance.py --out security_ir_artifacts/corpora/xaman-app/testnet/runtime-conformance-report.json
+- Acceptance: Bind fresh-emulator, Testnet-only network, fresh-account, review, authentication, signing decision, submit attempt/result, cancellation, expiry, replay, reconnect, and network-change categories to the frozen model without retaining seeds, addresses, payloads, transaction blobs, credentials, or raw endpoints; missing paths remain a Testnet assurance block.
+
+## PORTAL-CXTP-151 Issue a bounded Xaman public-source/Testnet assurance verdict
+
+- Status: waiting
+- Completion: manual
+- Priority: P0
+- Track: assurance
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-147, PORTAL-CXTP-148, PORTAL-CXTP-150
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/public-source-testnet-assurance-verdict.json, security_ir_artifacts/corpora/xaman-app/testnet/public-source-testnet-assurance-bundle.json, docs/security_verification/xaman_public_source_testnet_assurance_verdict.md, tests/logic/security_models/crypto_exchange/test_xaman_public_source_testnet_assurance_verdict.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_public_source_testnet_assurance_verdict.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_xaman_public_source_testnet_assurance_verdict.py --out security_ir_artifacts/corpora/xaman-app/testnet/public-source-testnet-assurance-verdict.json
+- Acceptance: Emit only `TESTNET_SCOPE_ASSURED`, `DISPROVED`, `UNKNOWN`, `NOT_MODELED`, or `BLOCKED`; accept `TESTNET_SCOPE_ASSURED` only when every required claim has current reviewed source/runtime evidence and required solver results, and state prominently that it is not a production or vendor-release security decision.
+
+## PORTAL-CXTP-152 Prepare an authorized vendor-evidence intake request for native and backend blockers
+
+- Status: waiting
+- Completion: manual
+- Priority: P1
+- Track: governance
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-145
+- Outputs: docs/security_verification/xaman_vendor_evidence_request.md, security_ir_artifacts/corpora/xaman-app/vendor-evidence-intake-template.json, tests/logic/security_models/crypto_exchange/test_xaman_vendor_evidence_request.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_vendor_evidence_request.py -q
+- Acceptance: Define redacted, authorized requests for release provenance, native vault/biometric policy, backend payload single-use/conflict/expiry semantics, signed-build attestation, test-device trace review, XRPL/RPC trust assumptions, responsible-disclosure routing, accountable owners, expiry, and review criteria; this task must not claim access to or truth of vendor-only evidence.
+
+## PORTAL-CXTP-153 Collect vendor-authorized native, backend, and XRPL trust evidence
+
+- Status: blocked
+- Completion: manual
+- Priority: P0
+- Track: governance
+- Blocked reason: Requires XRPL Labs-authorized release provenance, native vault and biometric documentation, backend payload-service evidence, XRPL/RPC trust assumptions, accountable owners, and responsible-disclosure approval.
+- Depends on: PORTAL-CXTP-152
+- Outputs: security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json, docs/security_verification/xaman_vendor_evidence_review.md
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json; test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json; test -f docs/security_verification/xaman_vendor_evidence_review.md
+- Acceptance: Permit vendor-release assurance work only after authorized, redacted, current, reviewed evidence binds every native, backend, build, and XRPL/RPC assumption to an accountable owner; otherwise preserve the public-source/Testnet non-secure boundary.
