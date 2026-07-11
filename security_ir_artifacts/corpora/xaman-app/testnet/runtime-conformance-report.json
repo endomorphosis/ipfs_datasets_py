@@ -1,0 +1,689 @@
+{
+  "artifact_cid": "bafkreifmr5m3rcyvksrjuxw4h5folgi4o6juzptq4zzthukbpbhej7peoe",
+  "assurance_blocks": [
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+        "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+      ],
+      "category_id": "signing_decision",
+      "claim_ids": [
+        "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+        "xaman-testnet-claim:review-auth-sequence-observed",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "code": "RUNTIME_CATEGORY_SIGNING_DECISION_BOUNDARY",
+      "reason": "Observed categorical runtime evidence remains bounded by a NOT_MODELED cryptographic, backend, or ledger boundary."
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "category_id": "submit_attempt",
+      "claim_ids": [
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "code": "RUNTIME_CATEGORY_SUBMIT_ATTEMPT_BOUNDARY",
+      "reason": "Observed categorical runtime evidence remains bounded by a NOT_MODELED cryptographic, backend, or ledger boundary."
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "category_id": "submit_result",
+      "claim_ids": [
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "code": "RUNTIME_CATEGORY_SUBMIT_RESULT_BOUNDARY",
+      "reason": "Observed categorical runtime evidence remains bounded by a NOT_MODELED cryptographic, backend, or ledger boundary."
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+      ],
+      "category_id": "cancellation",
+      "claim_ids": [
+        "xaman-testnet-claim:cancellation-path-is-not-modeled"
+      ],
+      "code": "RUNTIME_CATEGORY_CANCELLATION_BLOCKED",
+      "reason": "Required Testnet lifecycle path is not evidenced as an observed runtime path."
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "category_id": "expiry",
+      "claim_ids": [
+        "xaman-testnet-claim:expiry-path-is-not-modeled"
+      ],
+      "code": "RUNTIME_CATEGORY_EXPIRY_BLOCKED",
+      "reason": "Required Testnet lifecycle path is not evidenced as an observed runtime path."
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "category_id": "replay",
+      "claim_ids": [
+        "xaman-testnet-claim:replay-controls-are-not-modeled"
+      ],
+      "code": "RUNTIME_CATEGORY_REPLAY_BLOCKED",
+      "reason": "Required Testnet lifecycle path is not evidenced as an observed runtime path."
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:raw-payload-material-excluded",
+      "category": "payload",
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "code": "MODEL_NOT_MODELED_RECORD_ACTIVE",
+      "reason": "Raw payloads, request bodies, and transaction blobs were not recorded."
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded",
+      "category": "signing",
+      "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "code": "MODEL_NOT_MODELED_RECORD_ACTIVE",
+      "reason": "Raw signatures and signed transaction blobs were not retained."
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved",
+      "category": "network",
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "code": "MODEL_NOT_MODELED_RECORD_ACTIVE",
+      "reason": "The Testnet verifier run is not production runtime-equivalence evidence."
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+      "category": "replay",
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "code": "MODEL_NOT_MODELED_RECORD_ACTIVE",
+      "reason": "The reviewed lifecycle event list has no replay or duplicate-submit exercise."
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "category": "cancellation",
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "code": "MODEL_NOT_MODELED_RECORD_ACTIVE",
+      "reason": "Cancellation is present only as a not-exercised reviewed coverage gap."
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "category": "expiry",
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "code": "MODEL_NOT_MODELED_RECORD_ACTIVE",
+      "reason": "Expiry is present only as a not-exercised reviewed coverage gap."
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+      "category": "broadcast",
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "code": "MODEL_NOT_MODELED_RECORD_ACTIVE",
+      "reason": "The report cannot reconstruct transaction blobs and does not prove XRPL broadcast, inclusion, or finality."
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "category": "refusal",
+      "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "code": "MODEL_NOT_MODELED_RECORD_ACTIVE",
+      "reason": "Refusal/decline is present only as a not-exercised reviewed coverage gap."
+    },
+    {
+      "code": "SOLVER_PORTFOLIO_NOT_SECURE",
+      "reason": "Runtime conformance cannot override fail-closed solver portfolio counterevidence.",
+      "source_decision": "BLOCK_TESTNET_ASSURANCE_SOLVER_PORTFOLIO_COUNTEREVIDENCE",
+      "source_status": "non_secure_with_counterevidence"
+    },
+    {
+      "code": "TRANSACTION_TRIAL_HAS_COVERAGE_GAPS",
+      "reason": "The reviewed transaction trial did not exercise every required lifecycle path.",
+      "source_status": "executed_with_coverage_gaps"
+    },
+    {
+      "code": "PUBLIC_BUILD_NOT_VENDOR_RELEASE_EQUIVALENT",
+      "reason": "Public-source Testnet verifier evidence is intentionally not a production/vendor release decision."
+    }
+  ],
+  "corpus": "xaman-app",
+  "dependency_artifacts": [
+    {
+      "artifact_cid": null,
+      "kind": "frozen_model",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+      "present": true,
+      "schema_version": "security-model-ir/xaman/v1",
+      "sha256": "sha256:5525306df1f3264f8b852f962b54eb4b590d6b3cea4ff3e25d328a31d918b718",
+      "task_id": null
+    },
+    {
+      "artifact_cid": "sha256:b286dfd3d62fff34aa33f5f49ddcda332476a025c6dc099d2e792af3fc4d636d",
+      "kind": "source_trace_map",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json",
+      "present": true,
+      "schema_version": "xaman-testnet-claim-trace-map/v1",
+      "sha256": "sha256:fbb5532daac45cf98c798334ab4150244da8f7abda2cdf9f1b5264fa8b3ae2ec",
+      "task_id": "PORTAL-CXTP-131"
+    },
+    {
+      "artifact_cid": "sha256:d69014363ca696757b7673bc8cd22b50a4d5a3628df43500650587d4a6237ee3",
+      "kind": "runtime_report",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-transaction-trial-report.json",
+      "present": true,
+      "schema_version": "xaman-testnet-transaction-lifecycle-trial/v1",
+      "sha256": "sha256:8d3b28c242d36b8f5f6c53bcf975af47dfb6026e2228d83c07cd0226d6b61f36",
+      "task_id": "PORTAL-CXTP-130"
+    },
+    {
+      "artifact_cid": "bafkreiewqlkyt4cplsxvpowswgddfxyf6eaqb44nyoloindbmc2yaydffa",
+      "kind": "build_reproduction",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/public-build-reproduction.json",
+      "present": true,
+      "schema_version": "xaman-testnet-public-build-reproduction/v1",
+      "sha256": "sha256:f44ccc9043ccf37548c00d4376851ece8f64ada4f14d75e7da25581308f9f380",
+      "task_id": "PORTAL-CXTP-149"
+    },
+    {
+      "artifact_cid": "bafkreiggmq4ijj5qwtr5h7ysfuexb6gesy63uuab4qau43n7rsdrhevpny",
+      "kind": "build_environment",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/public-build-environment.json",
+      "present": true,
+      "schema_version": "xaman-testnet-public-build-environment/v1",
+      "sha256": "sha256:aa0421edced3bf8167d29578b97481d94ca218e0d08ade275f1a56529c41f495",
+      "task_id": "PORTAL-CXTP-149"
+    },
+    {
+      "artifact_cid": "bafkreiezuwppychfi3l3urqc7pu4u26dl3vu3nta3kwj2vb7mafrfoxwti",
+      "kind": "solver_portfolio",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json",
+      "present": true,
+      "schema_version": "xaman-testnet-solver-portfolio-report/v1",
+      "sha256": "sha256:59ddf80c2fca35d36b294e73ed4992c916c2841cb13c6f369db9429f3540cac0",
+      "task_id": "PORTAL-CXTP-147"
+    },
+    {
+      "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+      "kind": "fuzz_manifest",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json",
+      "present": true,
+      "schema_version": "xaman-testnet-fuzz-counterexample-manifest/v1",
+      "sha256": "sha256:6bf746cb1ed49b171d8b51cab0588fe072226cdbc7f0b31bc154bf2e1f34378f",
+      "task_id": "PORTAL-CXTP-148"
+    },
+    {
+      "artifact_cid": "bafkreibnxt3rgdnsncyohg6poi5haza52ca2d6shhrn2grcekv2dpl663i",
+      "kind": "runtime_conformance_trace_map",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/runtime-conformance-trace-map.json",
+      "present": true,
+      "schema_version": "xaman-testnet-runtime-conformance-trace-map/v1",
+      "sha256": "sha256:52f124cf189deaedefd30006487443d7b193b85b810b71b2f3d50a11e21d9ba2",
+      "task_id": "PORTAL-CXTP-150"
+    }
+  ],
+  "freshness": {
+    "fresh_account_observed": true,
+    "fresh_emulator_observed": true,
+    "testnet_only_network_observed": true
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model": {
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "claim_count": 12,
+    "model_id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "overall_status": "blocked_testnet_runtime_conformance",
+  "production_release_blocked": true,
+  "redaction_boundary": {
+    "addresses_retained": false,
+    "all_sensitive_material_excluded": true,
+    "allowed_retained_material": [
+      "category identifiers",
+      "categorical outcomes",
+      "review status",
+      "source digests",
+      "redaction digests",
+      "artifact CIDs",
+      "file digests",
+      "endpoint keys and endpoint digests"
+    ],
+    "credentials_retained": false,
+    "endpoint_values_retained": false,
+    "payloads_retained": false,
+    "request_response_bodies_retained": false,
+    "seeds_retained": false,
+    "transaction_material_retained": false
+  },
+  "runtime_categories": [
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+        "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence"
+      ],
+      "assurance_block": false,
+      "category_id": "fresh_emulator",
+      "claim_ids": [
+        "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:account-provenance-is-fresh-testnet-only": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE"
+      },
+      "conformance_status": "observed",
+      "display_name": "fresh-emulator",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.model_scope",
+        "metadata.bound_artifacts.device_trial_report"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": null,
+      "source_action": null,
+      "source_digest": null,
+      "source_kind": "device_profile",
+      "typed_model_fact_id": null
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+        "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved"
+      ],
+      "assurance_block": false,
+      "category_id": "testnet_only_network",
+      "claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:network-binding-is-testnet-only": "MODELED_WITH_TESTNET_SCOPE"
+      },
+      "conformance_status": "observed",
+      "display_name": "Testnet-only network",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.model_scope.network_key",
+        "metadata.typed_model_facts.network-switch"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": null,
+      "source_action": "network_switch",
+      "source_digest": null,
+      "source_kind": "network_binding",
+      "typed_model_fact_id": "xaman-testnet-fact:network-switch"
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "assurance_block": false,
+      "category_id": "fresh_account",
+      "claim_ids": [
+        "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:account-provenance-is-fresh-testnet-only": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE"
+      },
+      "conformance_status": "observed",
+      "display_name": "fresh-account",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.fresh_account_boundary"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": null,
+      "source_action": null,
+      "source_digest": null,
+      "source_kind": "fresh_account_boundary",
+      "typed_model_fact_id": null
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "assurance_block": false,
+      "category_id": "review",
+      "claim_ids": [
+        "xaman-testnet-claim:review-auth-sequence-observed",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:review-auth-sequence-observed": "MODELED_WITH_TESTNET_SCOPE"
+      },
+      "conformance_status": "observed",
+      "display_name": "review",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.typed_model_facts.review"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": "70651242c2e8b8588411fe35a71beb63a10aedcacdf6c972f79d3e0f02b1e610",
+      "source_action": "review",
+      "source_digest": "984e8306a11b4e9fccd1cbc1816bcce6b8d02bb16c396bab6c0a6c5f2d78b8c4",
+      "source_kind": "lifecycle_event",
+      "typed_model_fact_id": "xaman-testnet-fact:review"
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved"
+      ],
+      "assurance_block": false,
+      "category_id": "authentication",
+      "claim_ids": [
+        "xaman-testnet-claim:review-auth-sequence-observed",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:review-auth-sequence-observed": "MODELED_WITH_TESTNET_SCOPE"
+      },
+      "conformance_status": "observed",
+      "display_name": "authentication",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.typed_model_facts.auth-decision"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": "4005b055b666f4f296fdab466d2c71b96be420d1401271b72675b63e2a3e6927",
+      "source_action": "auth_decision",
+      "source_digest": "29c9e094bc0d997e539918cb3c65927a213eb382404a8872cba4d8af85f7cc8e",
+      "source_kind": "lifecycle_event",
+      "typed_model_fact_id": "xaman-testnet-fact:auth-decision"
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+        "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+      ],
+      "assurance_block": true,
+      "category_id": "signing_decision",
+      "claim_ids": [
+        "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+        "xaman-testnet-claim:review-auth-sequence-observed",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:review-auth-sequence-observed": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
+      },
+      "conformance_status": "observed_with_blocking_boundary",
+      "display_name": "signing decision",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.typed_model_facts.signing-decision"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": "480b1622ba935f6b49feab2f92b9caa5a10868c14c8420780896ccb22f1642f5",
+      "source_action": "signing_decision",
+      "source_digest": "f6d5656a0c83728b06fdc96e138b169115a9cc97ed607f970824bb019e340e66",
+      "source_kind": "lifecycle_event",
+      "typed_model_fact_id": "xaman-testnet-fact:signing-decision"
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "assurance_block": true,
+      "category_id": "submit_attempt",
+      "claim_ids": [
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled": "NOT_MODELED",
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
+      },
+      "conformance_status": "observed_with_blocking_boundary",
+      "display_name": "submit attempt",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.typed_model_facts.submit-attempt"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": "223765be8420ebaca78009f4c1ef4aba4749c2db7c53fe67b11840b745bb1368",
+      "source_action": "submit_attempt",
+      "source_digest": "e0f3362055b2e4aa0dceaf1781d45bd3b4af5a8b731bd8c4eddf7879774477c4",
+      "source_kind": "lifecycle_event",
+      "typed_model_fact_id": "xaman-testnet-fact:submit-attempt"
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "assurance_block": true,
+      "category_id": "submit_result",
+      "claim_ids": [
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled": "NOT_MODELED",
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
+      },
+      "conformance_status": "observed_with_blocking_boundary",
+      "display_name": "submit result",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.typed_model_facts.submit-result"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": "4068f7fe654e7901b0a3bb7ad05d960206276d0efcf7cfdfb30755afc02f343b",
+      "source_action": "submit_result",
+      "source_digest": "93ab4d1852d7b8242ae6fc6b30463dc2858c515d71d1a744f5aa58725a1d313f",
+      "source_kind": "lifecycle_event",
+      "typed_model_fact_id": "xaman-testnet-fact:submit-result"
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+      ],
+      "assurance_block": true,
+      "category_id": "cancellation",
+      "claim_ids": [
+        "xaman-testnet-claim:cancellation-path-is-not-modeled"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:cancellation-path-is-not-modeled": "NOT_MODELED"
+      },
+      "conformance_status": "blocked_missing_path",
+      "display_name": "cancellation",
+      "evidence_state": "coverage_gap",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.not_modeled_records.cancellation-path"
+      ],
+      "raw_material_retained": false,
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "redaction_digest": "eb00ed3e1e2b20504a0e9ed7bac7e634d236188371d6633d83249d77ffb64680",
+      "source_action": "cancel",
+      "source_digest": null,
+      "source_kind": "coverage_gap",
+      "typed_model_fact_id": null
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "assurance_block": true,
+      "category_id": "expiry",
+      "claim_ids": [
+        "xaman-testnet-claim:expiry-path-is-not-modeled"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:expiry-path-is-not-modeled": "NOT_MODELED"
+      },
+      "conformance_status": "blocked_missing_path",
+      "display_name": "expiry",
+      "evidence_state": "coverage_gap",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.not_modeled_records.expiry-path"
+      ],
+      "raw_material_retained": false,
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "redaction_digest": "3d4702552580ee2cf5372f4f73df605d74767d51078fd77e119284ee5154c1f1",
+      "source_action": "expiry",
+      "source_digest": null,
+      "source_kind": "coverage_gap",
+      "typed_model_fact_id": null
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "assurance_block": true,
+      "category_id": "replay",
+      "claim_ids": [
+        "xaman-testnet-claim:replay-controls-are-not-modeled"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:replay-controls-are-not-modeled": "NOT_MODELED"
+      },
+      "conformance_status": "blocked_missing_path",
+      "display_name": "replay",
+      "evidence_state": "not_modeled",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.not_modeled_records.replay-duplicate-submit-and-backend-single-use"
+      ],
+      "raw_material_retained": false,
+      "reason_code": "NOT_MODELED",
+      "redaction_digest": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc",
+      "source_action": null,
+      "source_digest": "62d1882c6b456464401d7ee7dbbb30ab936a3f33c23ba01654806583423f59cc",
+      "source_kind": "not_modeled_record",
+      "typed_model_fact_id": "xaman-testnet-not-modeled:replay-duplicate-submit-and-backend-single-use"
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "assurance_block": false,
+      "category_id": "reconnect",
+      "claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:network-binding-is-testnet-only": "MODELED_WITH_TESTNET_SCOPE"
+      },
+      "conformance_status": "observed",
+      "display_name": "reconnect",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.typed_model_facts.reconnect"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": "e4430c84025a6f297c1fdf81c2e35804e52efbd0c12110f0b9ae3193c3868331",
+      "source_action": "reconnect",
+      "source_digest": "7f4d1f75434f3d52f0afef2cd3bc64d998713abc27db055f9a3ef86a2664a086",
+      "source_kind": "lifecycle_event",
+      "typed_model_fact_id": "xaman-testnet-fact:reconnect"
+    },
+    {
+      "assumption_ids": [
+        "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+        "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved"
+      ],
+      "assurance_block": false,
+      "category_id": "network_change",
+      "claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "claim_statuses": {
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved": "MODELED_WITH_TESTNET_SCOPE",
+        "xaman-testnet-claim:network-binding-is-testnet-only": "MODELED_WITH_TESTNET_SCOPE"
+      },
+      "conformance_status": "observed",
+      "display_name": "network-change",
+      "evidence_state": "observed",
+      "model_cid_bound": true,
+      "model_fact_refs": [
+        "metadata.typed_model_facts.network-switch"
+      ],
+      "raw_material_retained": false,
+      "reason_code": null,
+      "redaction_digest": "6e1137d504a93d5f242ca1dae9802aced9c81bb87e7957d16a29d3398d68925a",
+      "source_action": "network_switch",
+      "source_digest": "6c7e93add2a617b4c29678631f1628ba0f0a2445b069a91b26f00215306800eb",
+      "source_kind": "lifecycle_event",
+      "typed_model_fact_id": "xaman-testnet-fact:network-switch"
+    }
+  ],
+  "schema_version": "xaman-testnet-runtime-conformance-report/v1",
+  "scope": {
+    "fresh_account_required": true,
+    "fresh_emulator_required": true,
+    "network": "XRPL Testnet",
+    "network_id": 1,
+    "production_security_result": false,
+    "public_source_only": true,
+    "vendor_release_equivalence_claimed": false
+  },
+  "security_decision": "BLOCK_TESTNET_ASSURANCE_RUNTIME_CONFORMANCE_GAPS",
+  "summary": {
+    "assurance_block_count": 17,
+    "blocked_missing_evidence_count": 0,
+    "blocked_missing_path_count": 3,
+    "observed_category_count": 7,
+    "observed_with_blocking_boundary_count": 3,
+    "required_category_count": 13,
+    "sensitive_material_excluded": true
+  },
+  "task_id": "PORTAL-CXTP-150",
+  "testnet_network_binding": {
+    "endpoint_digest_only": true,
+    "network_id": 1,
+    "network_id_verified": true,
+    "network_key": "TESTNET",
+    "raw_endpoint_retained": false
+  },
+  "verdict_policy": {
+    "blocked_until_missing_paths_are_evidenced": true,
+    "production_or_vendor_release_decision": false,
+    "raw_material_reintroduction_rejected": true,
+    "testnet_scope_assured_allowed": false
+  }
+}
