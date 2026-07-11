@@ -182,7 +182,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-011 Project verified rule gaps into the existing program-synthesis TODO queue
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: synthesis
