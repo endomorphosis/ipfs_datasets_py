@@ -98,7 +98,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-005 Export prioritized autoencoder-to-compiler disagreement packets
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: legal-ir
