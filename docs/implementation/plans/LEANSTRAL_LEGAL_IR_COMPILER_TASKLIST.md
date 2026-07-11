@@ -278,7 +278,7 @@ starting an implementation worker.
 
 ## PORTAL-016 Resolve 1 preflight-conflicting backlogged worktree merges
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: ops
@@ -288,3 +288,14 @@ starting an implementation worker.
 - Outputs: /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery, docs/implementation/plans/LEANSTRAL_LEGAL_IR_COMPILER_TASKLIST.md
 - Validation: test -f /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery/2026-07-11-portal-016-reconciliation-cc6ea8fa964c.md
 - Acceptance: Reconciliation guardrail filed this because 1 branch or worktree cleanup candidates are blocked by preflight_merge_conflict. Use evidence and the machine-readable reconciliation plan in /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery/2026-07-11-portal-016-reconciliation-cc6ea8fa964c.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
+
+## PORTAL-017 Resolve merge retry-budget failure for PORTAL-LIRLS-007
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: ops
+- Depends on: PORTAL-LIRLS-002
+- Outputs: ipfs_datasets_py/logic/modal/leanstral_theorems.py, tests/unit_tests/logic/modal/test_leanstral_theorems.py, /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery
+- Validation: test -f /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery/2026-07-11-portal-017-portal-lirls-007-merge-retry-budget.md
+- Acceptance: Merge retry-budget guardrail filed this from repeated merge failures in PORTAL-LIRLS-007. Use evidence in /home/barberb/.local/state/ipfs_accelerate_py/leanstral-legal-ir-20260711T2244Z/discovery/2026-07-11-portal-017-portal-lirls-007-merge-retry-budget.md to fix the merge blocker, verify the intended implementation changes are committed in their owning repository or submodule, run `ipfs-accelerate-agent-merge-resolver --events-path ... --apply` when the conflict is semantic, then mark this repair task completed so the supervisor can release PORTAL-LIRLS-007 from strategy blocked_tasks.
