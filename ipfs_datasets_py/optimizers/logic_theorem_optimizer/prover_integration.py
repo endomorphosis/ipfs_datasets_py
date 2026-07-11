@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 
 logger = logging.getLogger(__name__)
 
@@ -303,13 +304,12 @@ class ProverIntegrationAdapter:
             # Translate statement to prover format
             formula = self._translate_to_prover_format(statement, prover_name)
             
-            # Verify with prover
-            if hasattr(prover, 'prove'):
-                result = prover.prove(formula, timeout=timeout)
-            elif hasattr(prover, 'verify'):
-                result = prover.verify(formula, timeout=timeout)
-            else:
-                raise AttributeError(f"Prover {prover_name} has no prove/verify method")
+            result = self._call_prover_with_timeout(
+                prover,
+                prover_name=prover_name,
+                formula=formula,
+                timeout=timeout,
+            )
             
             proof_time = time.time() - start_time
             
@@ -348,6 +348,33 @@ class ProverIntegrationAdapter:
                 proof_time=time.time() - start_time,
                 error_message=str(e)
             )
+
+    def _call_prover_with_timeout(
+        self,
+        prover: Any,
+        *,
+        prover_name: str,
+        formula: Any,
+        timeout: float,
+    ) -> Any:
+        """Call one prover with an adapter-enforced wall-clock budget."""
+
+        if hasattr(prover, 'prove'):
+            call = prover.prove
+        elif hasattr(prover, 'verify'):
+            call = prover.verify
+        else:
+            raise AttributeError(f"Prover {prover_name} has no prove/verify method")
+
+        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix=f"prover-{prover_name}")
+        future = executor.submit(call, formula, timeout=timeout)
+        try:
+            return future.result(timeout=max(0.001, float(timeout)))
+        except FutureTimeoutError as exc:
+            future.cancel()
+            raise TimeoutError("Verification timeout") from exc
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
     
     def _is_modal_statement(self, statement: Any) -> bool:
         """Return True when the statement carries deterministic modal IR metadata."""

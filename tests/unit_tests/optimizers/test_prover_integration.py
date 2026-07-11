@@ -4,6 +4,7 @@ Tests for Phase 2 integration with theorem provers.
 """
 
 import pytest
+import time
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     ProverIntegrationAdapter,
     ProverVerificationResult,
@@ -181,6 +182,27 @@ class TestProverIntegrationAdapter:
         assert verification.verified_by == []
         assert verification.prover_results[0].status == ProverStatus.UNAVAILABLE
         assert "no KD/KD45 tableaux adapter" in verification.prover_results[0].error_message
+
+    def test_adapter_enforces_bounded_per_prover_timeout(self):
+        """A hanging prover call should be reported as TIMEOUT by the adapter."""
+
+        class SlowProver:
+            def prove(self, formula, timeout=None):
+                del formula, timeout
+                time.sleep(0.2)
+                return True
+
+        adapter = ProverIntegrationAdapter(use_provers=[], enable_cache=False)
+        adapter.provers["slow"] = SlowProver()
+
+        started = time.time()
+        verification = adapter.verify_statement("P(a)", timeout=0.01)
+
+        assert time.time() - started < 0.15
+        assert verification.overall_valid is False
+        assert verification.prover_results[0].status == ProverStatus.TIMEOUT
+        assert verification.prover_results[0].error_message == "Verification timeout"
+        assert adapter.stats["timeouts"] == 1
 
 
 class TestProverVerificationResult:
