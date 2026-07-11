@@ -1087,6 +1087,14 @@ def _leanstral_prompt(task: LegalIRLeanTask) -> str:
     return json.dumps(payload, ensure_ascii=True, sort_keys=True)
 
 
+def verify_leanstral_audit(*args: Any, **kwargs: Any) -> Any:
+    """Verify a structured Leanstral audit with local deterministic checkers."""
+
+    from .leanstral_verifier import verify_leanstral_audit as _verify
+
+    return _verify(*args, **kwargs)
+
+
 __all__ = [
     "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
     "CompilerChangeSpec",
@@ -1101,4 +1109,5 @@ __all__ = [
     "PythonPatchValidation",
     "validate_leanstral_proposal",
     "validate_python_patch_proposal",
+    "verify_leanstral_audit",
 ]

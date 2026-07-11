@@ -78,6 +78,17 @@ from .leanstral_audit import (
     parse_leanstral_audit_response,
     validate_leanstral_audit_response,
 )
+from .leanstral_verifier import (
+    LEANSTRAL_VERIFIER_SCHEMA_VERSION,
+    LeanstralAuditVerificationResult,
+    LeanstralAuditVerifier,
+    LeanstralCompilerCheck,
+    LeanstralLocalCheck,
+    LeanstralSourceSpanCheck,
+    LeanstralVerificationOutcome,
+    LeanstralVerifierConfig,
+    verify_leanstral_audit,
+)
 from .leanstral_theorems import (
     LEANSTRAL_THEOREM_SCHEMA_VERSION,
     LEGAL_IR_THEOREM_LEAN_KERNEL,
@@ -166,6 +177,7 @@ __all__ = [
     "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
     "LEANSTRAL_CANARY_MANIFEST_VERSION",
     "LEANSTRAL_THEOREM_SCHEMA_VERSION",
+    "LEANSTRAL_VERIFIER_SCHEMA_VERSION",
     "LEGAL_IR_THEOREM_LEAN_KERNEL",
     "LeanstralCanaryManifest",
     "ALLOWED_AUDIT_CLASSIFICATIONS",
@@ -203,6 +215,8 @@ __all__ = [
     "LeanstralAuditResult",
     "LeanstralAuditRunner",
     "LeanstralAuditValidation",
+    "LeanstralAuditVerificationResult",
+    "LeanstralAuditVerifier",
     "NormalizedLegalIRGap",
     "OwnedCompilerSurface",
     "OWNED_COMPILER_SURFACES",
@@ -212,6 +226,11 @@ __all__ = [
     "ProjectionEvidence",
     "PythonPatchProposal",
     "PythonPatchValidation",
+    "LeanstralCompilerCheck",
+    "LeanstralLocalCheck",
+    "LeanstralSourceSpanCheck",
+    "LeanstralVerificationOutcome",
+    "LeanstralVerifierConfig",
     "REQUIRED_LEGAL_IR_GAP_FAMILIES",
     "REQUIRED_LEGAL_LOGIC_FAMILIES",
     "SourceDecodedMetrics",
@@ -257,4 +276,5 @@ __all__ = [
     "validate_leanstral_proposal",
     "validate_leanstral_canary_manifest",
     "validate_python_patch_proposal",
+    "verify_leanstral_audit",
 ]
