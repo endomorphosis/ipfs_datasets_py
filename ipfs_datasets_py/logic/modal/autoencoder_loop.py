@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from collections.abc import Sequence as SequenceABC
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -58,6 +59,43 @@ from .leanstral import (
 LLMGenerateFn = Callable[..., str]
 _PATCH_PREDICATE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,63}$")
 _WORD_RE = re.compile(r"[A-Za-z0-9]+")
+MODAL_INTROSPECTION_MODES = frozenset({"off", "export", "shadow", "seed", "enforce"})
+
+
+@dataclass(frozen=True)
+class ModalIntrospectionSummary:
+    """Rollout-control summary for learned LegalIR introspection."""
+
+    mode: str = "off"
+    alive: bool = True
+    productive: bool = False
+    audits_attempted: int = 0
+    audits_exported: int = 0
+    todos_seeded: int = 0
+    target_scope_matched: bool = True
+    prover_confirmed: bool = True
+    enforce_allowed: bool = True
+    blocked_reasons: Sequence[str] = field(default_factory=tuple)
+    target_scopes: Sequence[str] = field(default_factory=tuple)
+    export_path: str = ""
+    sample_id: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "alive": bool(self.alive),
+            "audits_attempted": int(self.audits_attempted),
+            "audits_exported": int(self.audits_exported),
+            "blocked_reasons": list(self.blocked_reasons),
+            "enforce_allowed": bool(self.enforce_allowed),
+            "export_path": self.export_path,
+            "mode": self.mode,
+            "productive": bool(self.productive),
+            "prover_confirmed": bool(self.prover_confirmed),
+            "sample_id": self.sample_id,
+            "target_scope_matched": bool(self.target_scope_matched),
+            "target_scopes": list(self.target_scopes),
+            "todos_seeded": int(self.todos_seeded),
+        }
 
 
 @dataclass(frozen=True)
@@ -79,6 +117,12 @@ class ModalAutoencoderLoopConfig:
     llm_temperature: float = 0.0
     codex_cache_path: Optional[str] = None
     leanstral_config: LeanstralConfig = field(default_factory=LeanstralConfig)
+    introspection_mode: str = "off"
+    max_audits_per_cycle: int = 0
+    max_todos_per_cycle: int = 0
+    target_scope_filters: Sequence[str] = field(default_factory=tuple)
+    require_prover_confirmation: bool = True
+    introspection_export_path: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -97,6 +141,12 @@ class ModalAutoencoderLoopConfig:
             "llm_temperature": self.llm_temperature,
             "llm_timeout": self.llm_timeout,
             "leanstral_config": self.leanstral_config.to_dict(),
+            "introspection_export_path": self.introspection_export_path,
+            "introspection_mode": _normalise_introspection_mode(self.introspection_mode),
+            "max_audits_per_cycle": max(0, int(self.max_audits_per_cycle or 0)),
+            "max_todos_per_cycle": max(0, int(self.max_todos_per_cycle or 0)),
+            "require_prover_confirmation": bool(self.require_prover_confirmation),
+            "target_scope_filters": list(_normalise_scope_filters(self.target_scope_filters)),
         }
 
 
@@ -142,6 +192,13 @@ class ModalAutoencoderLoopResult:
     llm_patch_validation: Optional["FrameLogicPatchValidation"] = None
     repaired_modal_ir: Optional[ModalIRDocument] = None
     leanstral_shadow: Optional[LeanstralShadowResult] = None
+    introspection: Optional[Dict[str, Any]] = None
+    introspection_summary: ModalIntrospectionSummary = field(
+        default_factory=ModalIntrospectionSummary
+    )
+    cache_counters: Dict[str, int] = field(default_factory=dict)
+    phase_timings: Dict[str, float] = field(default_factory=dict)
+    state_to_compiler_patch_lag: Dict[str, int] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -165,10 +222,17 @@ class ModalAutoencoderLoopResult:
             "leanstral_shadow": self.leanstral_shadow.to_dict()
             if self.leanstral_shadow
             else None,
+            "introspection": self.introspection,
+            "introspection_summary": self.introspection_summary.to_dict(),
+            "cache_counters": dict(sorted(self.cache_counters.items())),
             "metadata": dict(sorted(self.metadata.items())),
+            "phase_timings": dict(sorted(self.phase_timings.items())),
             "prover_signal": self.prover_signal.to_dict() if self.prover_signal else None,
             "sample": self.sample.to_dict(),
             "source_text": self.source_text,
+            "state_to_compiler_patch_lag": dict(
+                sorted(self.state_to_compiler_patch_lag.items())
+            ),
         }
 
 
@@ -211,9 +275,16 @@ class LegalModalAutoencoderLoop:
         section: Optional[str] = None,
         source_embedding: Optional[Sequence[float]] = None,
         allow_llm_repair: Optional[bool] = None,
+        _cycle_budget: Optional[Dict[str, int]] = None,
     ) -> ModalAutoencoderLoopResult:
         """Run one cheap-first legal text -> modal IR -> validation pass."""
 
+        phase_timings: Dict[str, float] = {}
+
+        def mark_timing(name: str, started: float) -> None:
+            phase_timings[name] = round(phase_timings.get(name, 0.0) + time.time() - started, 6)
+
+        started = time.time()
         codec_result = self.codec.encode(
             text,
             document_id=document_id,
@@ -221,16 +292,26 @@ class LegalModalAutoencoderLoop:
             source=source,
             source_embedding=source_embedding,
         )
+        mark_timing("codec", started)
+        started = time.time()
         sample = _sample_from_codec_result(
             codec_result,
             title=title,
             section=section or document_id or codec_result.modal_ir.document_id,
             embedding_vector=source_embedding,
         )
+        mark_timing("sample", started)
+        started = time.time()
         graph_report = self._import_graph(sample.modal_ir)
+        mark_timing("graph_import", started)
+        started = time.time()
         prover_signal = self._evaluate_provers(sample)
+        mark_timing("prover", started)
+        started = time.time()
         available_external_provers = self._external_prover_inventory()
+        mark_timing("external_prover_inventory", started)
         legal_ir_bridge_names = _normalise_bridge_names(self.config.legal_ir_bridge_names)
+        started = time.time()
         decision = self.autoencoder.codex_call_decision(
             sample,
             config=self.config.gate_config,
@@ -238,6 +319,7 @@ class LegalModalAutoencoderLoop:
             prover_signal=prover_signal,
             legal_ir_bridge_names=legal_ir_bridge_names,
         )
+        mark_timing("codex_gate", started)
 
         llm_called = False
         llm_response = ""
@@ -253,6 +335,7 @@ class LegalModalAutoencoderLoop:
         )
 
         if decision.should_call_codex and should_call_llm:
+            started = time.time()
             llm_called = True
             self.cache.record_codex_call(decision)
             llm_response = self._call_llm_repair(codec_result, sample, decision, prover_signal)
@@ -266,11 +349,15 @@ class LegalModalAutoencoderLoop:
                     validation=llm_patch_validation,
                 )
             self.save_cache()
+            mark_timing("llm_repair", started)
         elif not decision.reasons:
+            started = time.time()
             self.cache.record_local_success(decision)
             self.save_cache()
+            mark_timing("cache_save", started)
 
         if self.config.leanstral_config.enabled:
+            started = time.time()
             try:
                 leanstral_shadow = self.leanstral_runner.run(
                     sample,
@@ -281,12 +368,32 @@ class LegalModalAutoencoderLoop:
                 # The Leanstral lane is intentionally shadow-only. A provider
                 # issue must not interrupt deterministic compilation or Codex.
                 leanstral_shadow_error = f"{exc.__class__.__name__}: {exc}"
+            mark_timing("leanstral_shadow", started)
+
+        started = time.time()
+        introspection, introspection_summary = self._run_introspection(
+            sample,
+            prover_signal=prover_signal,
+            cycle_budget=_cycle_budget,
+        )
+        mark_timing("introspection", started)
 
         accepted = _accepted(
             decision,
             graph_report=graph_report,
             prover_signal=prover_signal,
             require_provers=self.config.evaluate_provers,
+        )
+        if introspection_summary.mode == "enforce" and not introspection_summary.enforce_allowed:
+            accepted = False
+        cache_counters = self._cache_counters()
+        state_lag = _state_to_compiler_patch_lag(
+            state_update_count=_state_update_count(self.autoencoder),
+            compiler_patch_count=(
+                llm_patch_validation.accepted_count
+                if llm_patch_validation is not None
+                else 0
+            ),
         )
         return ModalAutoencoderLoopResult(
             source_text=text,
@@ -303,6 +410,11 @@ class LegalModalAutoencoderLoop:
             llm_patch_validation=llm_patch_validation,
             repaired_modal_ir=repaired_modal_ir,
             leanstral_shadow=leanstral_shadow,
+            introspection=introspection,
+            introspection_summary=introspection_summary,
+            cache_counters=cache_counters,
+            phase_timings=phase_timings,
+            state_to_compiler_patch_lag=state_lag,
             metadata={
                 "llm_model": self.config.llm_model if llm_called else "",
                 "llm_provider": self.config.llm_provider if llm_called else "",
@@ -324,6 +436,12 @@ class LegalModalAutoencoderLoop:
         """Run multiple legal text records through one shared gate/cache."""
 
         results = []
+        cycle_budget = {
+            "audits": max(0, int(self.config.max_audits_per_cycle or 0)),
+            "todos": max(0, int(self.config.max_todos_per_cycle or 0)),
+            "used_audits": 0,
+            "used_todos": 0,
+        }
         for index, record in enumerate(records):
             if isinstance(record, str):
                 text = record
@@ -352,6 +470,7 @@ class LegalModalAutoencoderLoop:
                 self.run(
                     text,
                     allow_llm_repair=allow_llm_repair,
+                    _cycle_budget=cycle_budget,
                     **kwargs,
                 )
             )
@@ -439,6 +558,125 @@ class LegalModalAutoencoderLoop:
             timeout=float(self.config.llm_timeout),
         )
 
+    def _run_introspection(
+        self,
+        sample: LegalSample,
+        *,
+        prover_signal: Optional[ProverCompilationSignal],
+        cycle_budget: Optional[Dict[str, int]] = None,
+    ) -> tuple[Optional[Dict[str, Any]], ModalIntrospectionSummary]:
+        mode = _normalise_introspection_mode(self.config.introspection_mode)
+        target_scopes = _normalise_scope_filters(self.config.target_scope_filters)
+        if mode == "off":
+            return None, ModalIntrospectionSummary(mode="off", sample_id=sample.sample_id)
+
+        blocked: list[str] = []
+        scopes = _sample_target_scopes(sample)
+        target_scope_matched = not target_scopes or bool(set(target_scopes) & scopes)
+        if not target_scope_matched:
+            blocked.append("target_scope_filtered")
+
+        prover_confirmed = True
+        if self.config.require_prover_confirmation:
+            prover_confirmed = bool(prover_signal is not None and prover_signal.compiles)
+            if not prover_confirmed:
+                blocked.append("prover_confirmation_required")
+
+        if cycle_budget is None:
+            cycle_budget = {
+                "audits": max(0, int(self.config.max_audits_per_cycle or 0)),
+                "todos": max(0, int(self.config.max_todos_per_cycle or 0)),
+                "used_audits": 0,
+                "used_todos": 0,
+            }
+        audits_allowed = _consume_cycle_budget(cycle_budget, "audits")
+        if not audits_allowed:
+            blocked.append("max_audits_per_cycle_exhausted")
+
+        introspection: Optional[Dict[str, Any]] = None
+        audits_attempted = 0
+        audits_exported = 0
+        todos_seeded = 0
+        export_path = ""
+        if target_scope_matched and prover_confirmed and audits_allowed:
+            audits_attempted = 1
+            introspection = self.autoencoder.introspect_sample(sample).to_dict()
+            if mode in {"export", "shadow", "seed", "enforce"}:
+                export_path = self._export_introspection(sample, introspection)
+                audits_exported = 1 if export_path else 0
+            if mode in {"seed", "enforce"} and _consume_cycle_budget(cycle_budget, "todos"):
+                todos_seeded = 1
+            elif mode in {"seed", "enforce"}:
+                blocked.append("max_todos_per_cycle_exhausted")
+
+        enforce_allowed = True
+        if mode == "enforce":
+            enforce_allowed = bool(
+                introspection is not None
+                and target_scope_matched
+                and prover_confirmed
+                and audits_allowed
+            )
+        productive = bool(audits_attempted or todos_seeded or audits_exported)
+        return introspection, ModalIntrospectionSummary(
+            mode=mode,
+            alive=True,
+            productive=productive,
+            audits_attempted=audits_attempted,
+            audits_exported=audits_exported,
+            todos_seeded=todos_seeded,
+            target_scope_matched=target_scope_matched,
+            prover_confirmed=prover_confirmed,
+            enforce_allowed=enforce_allowed,
+            blocked_reasons=tuple(dict.fromkeys(blocked)),
+            target_scopes=tuple(sorted(scopes)),
+            export_path=export_path,
+            sample_id=sample.sample_id,
+        )
+
+    def _export_introspection(self, sample: LegalSample, introspection: Mapping[str, Any]) -> str:
+        raw_path = str(self.config.introspection_export_path or "").strip()
+        if not raw_path:
+            return ""
+        target = Path(raw_path).expanduser()
+        if target.suffix.lower() != ".json":
+            target = target / f"{sample.sample_id}.introspection.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(
+            json.dumps(
+                {
+                    "introspection": dict(introspection),
+                    "sample_id": sample.sample_id,
+                    "schema_version": "legal-modal-autoencoder-introspection-loop-v1",
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return str(target)
+
+    def _cache_counters(self) -> Dict[str, int]:
+        return {
+            "autoencoder_legal_ir_loss_target_cache_entries": len(
+                getattr(self.autoencoder, "_legal_ir_loss_target_cache", {}) or {}
+            ),
+            "autoencoder_legal_ir_view_target_cache_entries": len(
+                getattr(self.autoencoder, "_legal_ir_view_target_cache", {}) or {}
+            ),
+            "autoencoder_sample_feature_cache_entries": len(
+                getattr(self.autoencoder, "_sample_feature_cache", {}) or {}
+            ),
+            "codex_call_count": int(self.cache.codex_call_count),
+            "codex_feature_signature_hash_count": len(self.cache.codex_feature_signature_hashes),
+            "codex_text_hash_count": len(self.cache.codex_text_hashes),
+            "local_success_feature_signature_hash_count": len(
+                self.cache.local_success_feature_signature_hashes
+            ),
+        }
+
 
 def _sample_from_codec_result(
     codec_result: ModalLogicCodecResult,
@@ -512,6 +750,88 @@ def _normalise_bridge_names(bridge_names: Sequence[str] | str) -> tuple[str, ...
             if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
         )
     )
+
+
+def _normalise_introspection_mode(mode: str) -> str:
+    normalized = str(mode or "off").strip().lower()
+    if normalized in {"0", "false", "no", "none", "disabled"}:
+        return "off"
+    if normalized not in MODAL_INTROSPECTION_MODES:
+        return "off"
+    return normalized
+
+
+def _normalise_scope_filters(scopes: Sequence[str] | str) -> tuple[str, ...]:
+    raw_values: Iterable[str]
+    if isinstance(scopes, str):
+        raw_values = scopes.split(",")
+    else:
+        raw_values = scopes
+    return tuple(
+        dict.fromkeys(
+            str(value).strip()
+            for value in raw_values
+            if str(value).strip()
+            and str(value).strip().lower() not in {"all", "none", "off", "false"}
+        )
+    )
+
+
+def _sample_target_scopes(sample: LegalSample) -> set[str]:
+    scopes = {
+        str(getattr(sample, "source", "") or ""),
+        str(getattr(sample, "title", "") or ""),
+        str(getattr(sample, "section", "") or ""),
+        str(getattr(sample, "selected_frame", "") or ""),
+    }
+    modal_ir = getattr(sample, "modal_ir", None)
+    if modal_ir is not None:
+        scopes.add(str(getattr(modal_ir, "source", "") or ""))
+        for formula in getattr(modal_ir, "formulas", ()) or ():
+            operator = getattr(formula, "operator", None)
+            scopes.add(str(getattr(operator, "family", "") or ""))
+            scopes.add(f"modal.{str(getattr(operator, 'family', '') or '')}")
+    return {scope for scope in scopes if scope}
+
+
+def _consume_cycle_budget(cycle_budget: Optional[Dict[str, int]], key: str) -> bool:
+    if cycle_budget is None:
+        return True
+    limit = max(0, int(cycle_budget.get(key, 0) or 0))
+    if limit <= 0:
+        return False
+    used_key = f"used_{key}"
+    used = max(0, int(cycle_budget.get(used_key, 0) or 0))
+    if used >= limit:
+        return False
+    cycle_budget[used_key] = used + 1
+    return True
+
+
+def _state_update_count(autoencoder: AdaptiveModalAutoencoder) -> int:
+    state = getattr(autoencoder, "state", None)
+    if state is None:
+        return 0
+    telemetry = state.telemetry() if hasattr(state, "telemetry") else {}
+    return max(
+        0,
+        int(telemetry.get("applied_todo_count", 0) or 0)
+        + int(telemetry.get("generalizable_entry_count", 0) or 0),
+    )
+
+
+def _state_to_compiler_patch_lag(
+    *,
+    state_update_count: int,
+    compiler_patch_count: int,
+) -> Dict[str, int]:
+    state_updates = max(0, int(state_update_count or 0))
+    compiler_patches = max(0, int(compiler_patch_count or 0))
+    return {
+        "compiler_patch_count": compiler_patches,
+        "lag": max(0, state_updates - compiler_patches),
+        "state_update_count": state_updates,
+    }
 
 
 def _accepted(
@@ -802,6 +1122,8 @@ __all__ = [
     "FrameLogicPatchValidation",
     "LegalModalAutoencoderLoop",
     "DEFAULT_LEGAL_IR_BRIDGE_NAMES",
+    "MODAL_INTROSPECTION_MODES",
+    "ModalIntrospectionSummary",
     "ModalAutoencoderLoopConfig",
     "ModalAutoencoderLoopResult",
     "validate_frame_logic_patch",

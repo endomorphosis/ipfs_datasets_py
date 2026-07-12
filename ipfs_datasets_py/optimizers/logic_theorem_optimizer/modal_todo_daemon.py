@@ -333,9 +333,11 @@ class ModalOptimizerPolicy:
 class LeanstralTodoProjectionConfig:
     """Bounds for projecting verified Leanstral rule gaps into the TODO queue."""
 
+    max_audits_per_cycle: int = 0
     max_todos_per_cycle: int = 5
     max_todos_per_scope: int = 2
     require_verified_support: bool = True
+    target_scope_filters: Sequence[str] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -2487,11 +2489,23 @@ class ModalTodoSupervisor:
         """Project verified Leanstral rule gaps into the existing Codex TODO queue."""
         cfg = config or LeanstralTodoProjectionConfig()
         self.last_program_synthesis_deduped_count = 0
+        max_audits = max(0, int(cfg.max_audits_per_cycle or 0))
         report_only_audits = _leanstral_report_only_audits(report)
+        if max_audits > 0:
+            report_only_audits = report_only_audits[:max_audits]
         candidates = self.program_synthesis_generator.generate_from_leanstral_rule_gap_report(
             report,
             require_verified_support=bool(cfg.require_verified_support),
         )
+        target_scope_filters = _normalise_projection_scope_filters(
+            cfg.target_scope_filters
+        )
+        if target_scope_filters:
+            candidates = [
+                todo
+                for todo in candidates
+                if _leanstral_projection_todo_matches_scope(todo, target_scope_filters)
+            ]
         selected, budget_skipped_count, scope_counts = _apply_leanstral_projection_budgets(
             candidates,
             max_todos_per_cycle=max(0, int(cfg.max_todos_per_cycle)),
@@ -3846,6 +3860,44 @@ def _apply_leanstral_projection_budgets(
         selected.append(todo)
         scope_counts[scope] = scope_counts.get(scope, 0) + 1
     return selected, skipped, dict(sorted(scope_counts.items()))
+
+
+def _normalise_projection_scope_filters(scopes: Sequence[str] | str) -> tuple[str, ...]:
+    raw_values: Iterable[str]
+    if isinstance(scopes, str):
+        raw_values = scopes.split(",")
+    else:
+        raw_values = scopes
+    return tuple(
+        dict.fromkeys(
+            str(value).strip()
+            for value in raw_values
+            if str(value).strip()
+            and str(value).strip().lower() not in {"all", "none", "off", "false"}
+        )
+    )
+
+
+def _leanstral_projection_todo_matches_scope(
+    todo: ModalTodo,
+    scope_filters: Sequence[str],
+) -> bool:
+    if not scope_filters:
+        return True
+    metadata = dict(getattr(todo, "metadata", {}) or {})
+    evidence = metadata.get("leanstral_evidence")
+    evidence_map = evidence if isinstance(evidence, Mapping) else {}
+    scopes = {
+        str(getattr(todo, "target_component", "") or ""),
+        str(metadata.get("target_component") or ""),
+        str(metadata.get("target_scope") or ""),
+        str(evidence_map.get("target_component") or ""),
+        str(evidence_map.get("proposed_compiler_surface") or ""),
+        _program_todo_scope(todo),
+    }
+    scopes.update(str(path) for path in metadata.get("allowed_paths", []) or [])
+    filters = {str(value).strip() for value in scope_filters if str(value).strip()}
+    return bool(filters & {scope for scope in scopes if scope})
 
 
 def _leanstral_report_only_audits(report: Any) -> List[Dict[str, Any]]:

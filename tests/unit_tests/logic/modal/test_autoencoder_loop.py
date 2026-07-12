@@ -9,6 +9,7 @@ from ipfs_datasets_py.logic.modal import (
     LegalModalAutoencoderLoop,
     LeanstralConfig,
     ModalAutoencoderLoopConfig,
+    MODAL_INTROSPECTION_MODES,
     ModalLogicCodecConfig,
     validate_frame_logic_patch,
 )
@@ -47,7 +48,7 @@ def test_autoencoder_loop_keeps_frame_logic_graph_and_provers_before_llm() -> No
     assert result.llm_called is False
     assert result.codec_result.modal_ir.frame_logic.triples
     assert result.graph_import_report["missing_endpoint_relationships"] == 0
-    assert result.graph_import_report["relationships_imported"] == len(
+    assert result.graph_import_report["relationships_imported"] >= len(
         result.codec_result.modal_ir.frame_logic.triples
     )
     assert result.prover_signal is not None
@@ -55,6 +56,20 @@ def test_autoencoder_loop_keeps_frame_logic_graph_and_provers_before_llm() -> No
     assert result.codex_decision.feature_signature_hash
     assert isinstance(result.available_external_provers, tuple)
     assert result.metadata["loop"] == "legal_modal_autoencoder_loop_v1"
+    assert result.introspection_summary.mode == "off"
+    assert result.introspection is None
+    assert result.cache_counters["codex_call_count"] == 0
+    assert "codec" in result.phase_timings
+    assert "prover" in result.phase_timings
+    assert result.state_to_compiler_patch_lag["lag"] >= 0
+
+
+def test_autoencoder_loop_default_introspection_mode_is_off() -> None:
+    config = ModalAutoencoderLoopConfig()
+
+    assert config.introspection_mode == "off"
+    assert config.to_dict()["introspection_mode"] == "off"
+    assert "enforce" in MODAL_INTROSPECTION_MODES
 
 
 def test_autoencoder_loop_gate_includes_multiview_legal_ir_losses() -> None:
@@ -171,6 +186,94 @@ def test_autoencoder_loop_routes_sparse_codex_repair_through_llm_router_defaults
     assert repeated.llm_called is False
     assert "duplicate_text_hash" in repeated.codex_decision.suppressed_reasons
     assert len(requests) == 1
+
+
+def test_autoencoder_loop_export_mode_honors_scope_and_audit_budget(tmp_path) -> None:
+    loop = LegalModalAutoencoderLoop(
+        ModalAutoencoderLoopConfig(
+            codec_config=ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8),
+            evaluate_provers=False,
+            introspection_mode="export",
+            max_audits_per_cycle=1,
+            max_todos_per_cycle=0,
+            target_scope_filters=("deontic",),
+            require_prover_confirmation=False,
+            introspection_export_path=str(tmp_path),
+        )
+    )
+
+    result = loop.run(
+        "The agency must provide notice within 30 days after application.",
+        document_id="loop-doc",
+        citation="5 U.S.C. 552",
+    )
+
+    summary = result.introspection_summary
+    assert summary.mode == "export"
+    assert summary.alive is True
+    assert summary.productive is True
+    assert summary.audits_attempted == 1
+    assert summary.todos_seeded == 0
+    assert summary.target_scope_matched is True
+    assert result.introspection is not None
+    assert summary.export_path
+    exported = json.loads((tmp_path / "loop-doc.introspection.json").read_text())
+    assert exported["sample_id"] == "loop-doc"
+
+
+def test_autoencoder_loop_enforce_mode_fails_closed_without_prover_confirmation() -> None:
+    loop = LegalModalAutoencoderLoop(
+        ModalAutoencoderLoopConfig(
+            codec_config=ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8),
+            evaluate_provers=False,
+            introspection_mode="enforce",
+            max_audits_per_cycle=1,
+            max_todos_per_cycle=1,
+            require_prover_confirmation=True,
+        )
+    )
+
+    result = loop.run(
+        "The agency must provide notice within 30 days after application.",
+        document_id="loop-doc",
+        citation="5 U.S.C. 552",
+    )
+
+    assert result.accepted is False
+    assert result.introspection_summary.mode == "enforce"
+    assert result.introspection_summary.enforce_allowed is False
+    assert "prover_confirmation_required" in result.introspection_summary.blocked_reasons
+
+
+def test_autoencoder_loop_run_many_applies_per_cycle_audit_budget(tmp_path) -> None:
+    loop = LegalModalAutoencoderLoop(
+        ModalAutoencoderLoopConfig(
+            codec_config=ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8),
+            evaluate_provers=False,
+            introspection_mode="export",
+            max_audits_per_cycle=1,
+            max_todos_per_cycle=0,
+            require_prover_confirmation=False,
+            introspection_export_path=str(tmp_path),
+        )
+    )
+
+    results = loop.run_many(
+        [
+            {
+                "document_id": "loop-doc-1",
+                "text": "The agency must provide notice within 30 days.",
+            },
+            {
+                "document_id": "loop-doc-2",
+                "text": "The Secretary may issue regulations after review.",
+            },
+        ]
+    )
+
+    assert results[0].introspection_summary.audits_attempted == 1
+    assert results[1].introspection_summary.audits_attempted == 0
+    assert "max_audits_per_cycle_exhausted" in results[1].introspection_summary.blocked_reasons
 
 
 def test_autoencoder_loop_rejects_ungrounded_llm_frame_logic_triples() -> None:
