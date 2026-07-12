@@ -3232,15 +3232,27 @@ def _get_claude_py_provider() -> Optional[LLMProvider]:
     return _ClaudePyProvider()
 
 
-def _get_mistral_vibe_provider() -> Optional[LLMProvider]:
+def _get_mistral_vibe_provider(*, auto_install: bool = False) -> Optional[LLMProvider]:
     """Return the Mistral Vibe CLI provider without requiring an SDK dependency."""
 
-    command = os.environ.get(
-        "IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD",
-        "vibe --prompt {prompt} --output text --max-turns 1",
-    )
+    configured_command = os.environ.get("IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD", "").strip()
+    command = configured_command or "vibe --prompt {prompt} --output text --max-turns 1"
     if not _cli_available(command):
-        return None
+        if configured_command or not auto_install:
+            return None
+        try:
+            from ipfs_accelerate_py.utils.mistral_vibe import ensure_mistral_vibe
+
+            install_result = ensure_mistral_vibe(auto_install=True)
+        except Exception as exc:
+            raise LLMRouterError(f"Mistral Vibe auto-install failed: {exc}") from exc
+        if not install_result.available:
+            detail = install_result.reason or "installation did not produce a vibe executable"
+            raise LLMRouterError(f"Mistral Vibe provider unavailable: {detail}")
+        command = (
+            f"{shlex.quote(install_result.executable)} "
+            "--prompt {prompt} --output text --max-turns 1"
+        )
 
     def _mistral_auth_available() -> bool:
         if _coalesce_env("MISTRAL_API_KEY", "IPFS_DATASETS_PY_MISTRAL_API_KEY"):
@@ -3711,7 +3723,7 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
     return _LocalHFProvider()
 
 
-def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
+def _builtin_provider_by_name(name: str, *, auto_install: bool = False) -> Optional[LLMProvider]:
     key = (name or "").strip().lower()
     if not key:
         return None
@@ -3740,7 +3752,7 @@ def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
     if key in {"claude", "claude_py"}:
         return _get_claude_py_provider()
     if key in {"mistral_vibe", "mistral-vibe", "vibe"}:
-        return _get_mistral_vibe_provider()
+        return _get_mistral_vibe_provider(auto_install=auto_install)
     if key in {"hf", "huggingface", "local_hf"}:
         return _get_local_hf_provider(deps=get_default_router_deps())
     return None
@@ -3976,7 +3988,11 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
                 raise LLMRouterError("Copilot Python SDK not installed (optional dependency).")
             return builtin
 
-        builtin = _builtin_provider_by_name(name)
+        builtin = (
+            _get_mistral_vibe_provider(auto_install=True)
+            if name in {"mistral_vibe", "mistral-vibe", "vibe"}
+            else _builtin_provider_by_name(name)
+        )
         if builtin is not None:
             return builtin
         raise ValueError(f"Unknown LLM provider: {preferred_value}")
@@ -4003,7 +4019,11 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
                 raise LLMRouterError("Copilot Python SDK not installed (optional dependency).")
             return builtin
 
-        builtin = _builtin_provider_by_name(forced_name)
+        builtin = (
+            _get_mistral_vibe_provider(auto_install=True)
+            if forced_name in {"mistral_vibe", "mistral-vibe", "vibe"}
+            else _builtin_provider_by_name(forced_name)
+        )
         if builtin is not None:
             return builtin
         raise ValueError(f"Unknown LLM provider: {forced}")

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import subprocess
+import sys
+import types
 
 from ipfs_datasets_py import llm_router
 
@@ -131,6 +133,32 @@ def test_mistral_vibe_provider_passes_model_and_auth_without_prompt_interpolatio
     assert captured["input"] is None
     assert captured["env"]["VIBE_ACTIVE_MODEL"] == "Leanstral"
     assert captured["env"]["MISTRAL_API_KEY"] == "test-key"
+
+
+def test_explicit_mistral_vibe_provider_uses_accelerator_auto_installer(monkeypatch) -> None:
+    install_calls = []
+    fake_module = types.ModuleType("ipfs_accelerate_py.utils.mistral_vibe")
+
+    class Result:
+        available = True
+        executable = "/home/test/.local/bin/vibe"
+        reason = "installed"
+
+    def fake_install(**kwargs):
+        install_calls.append(kwargs)
+        return Result()
+
+    fake_module.ensure_mistral_vibe = fake_install
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", types.ModuleType("ipfs_accelerate_py"))
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.utils", types.ModuleType("ipfs_accelerate_py.utils"))
+    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.utils.mistral_vibe", fake_module)
+    monkeypatch.delenv("IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD", raising=False)
+    monkeypatch.setattr(llm_router, "_cli_available", lambda _command: False)
+
+    provider = llm_router._builtin_provider_by_name("mistral_vibe", auto_install=True)
+
+    assert provider is not None
+    assert install_calls == [{"auto_install": True}]
 
 
 def test_copilot_cli_provider_native_mode_supports_add_dir_and_allow_all_paths(monkeypatch) -> None:
