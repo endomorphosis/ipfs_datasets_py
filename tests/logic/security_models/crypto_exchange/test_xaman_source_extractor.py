@@ -211,6 +211,23 @@ Feature: Authenticate signing
     assert all(gap['review_status'] == 'reviewed_gap' for gap in coverage['coverage_gaps'])
 
 
+def test_xaman_source_extractor_parses_jsonc_comments_without_truncating_urls() -> None:
+    config = XamanSourceExtractor._load_jsonc(
+        '''{
+          "$schema": "https://json.schemastore.org/tsconfig",
+          // Explain why this alias must remain stable.
+          "compilerOptions": {
+            "baseUrl": "src",
+            "paths": { "@services/*": ["./services/*"], },
+          },
+        }''',
+        'tsconfig.json',
+    )
+
+    assert config['$schema'] == 'https://json.schemastore.org/tsconfig'
+    assert config['compilerOptions']['paths']['@services/*'] == ['./services/*']
+
+
 def test_xaman_source_extractor_manifest_only_records_reviewed_gaps(tmp_path: Path) -> None:
     manifest = {
         'schema_version': 'xaman-corpus-source-manifest/v1',

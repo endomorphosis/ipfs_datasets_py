@@ -6,7 +6,7 @@
     "NOT_MODELED",
     "BLOCKED"
   ],
-  "artifact_cid": "bafkreigmlreagdix2glnj3wdmmx7comxec7nlleijrubhan5fwir2qtmku",
+  "artifact_cid": "bafkreighiad6j5m44u7xn2ozdjvxcgxgotpohgjd4cmyv6thothdccccha",
   "blockers": [
     {
       "code": "SOLVER_PORTFOLIO_COUNTEREVIDENCE",
@@ -103,7 +103,7 @@
   ],
   "evidence_artifacts": [
     {
-      "artifact_cid": "sha256:62e3e52fdd3264eb82e9714ff0f4f50c8829882ed415509542ca8426be9cfbd5",
+      "artifact_cid": "sha256:1a35ea305d476712bdf77a1a4b551ed60c975b58faeea9bcc8ee7bc7c9c51bbe",
       "kind": "public_source_assessment",
       "overall_status": "blocked",
       "path": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json",
@@ -112,8 +112,8 @@
       "public_source_result": "blocked_public_source_assessment",
       "schema_version": "xaman-public-source-assessment/v1",
       "security_decision": "BLOCK_PUBLIC_SOURCE_ASSESSMENT_NOT_RELEASE_APPROVAL",
-      "sha256": "sha256:7544c7ff1e68f3e5b664bfdf6b9918aad21404af28703590c6b8a9c7e2b1dbd3",
-      "task_id": "PORTAL-CXTP-119"
+      "sha256": "sha256:407db2c530098def8010a075bea8fa85fe0f03092e8a90ec95931010f4da8796",
+      "task_id": "PORTAL-CXTP-144"
     },
     {
       "artifact_cid": "bafkreiewqlkyt4cplsxvpowswgddfxyf6eaqb44nyoloindbmc2yaydffa",
@@ -136,7 +136,7 @@
       "task_id": "PORTAL-CXTP-149"
     },
     {
-      "artifact_cid": "bafkreiezuwppychfi3l3urqc7pu4u26dl3vu3nta3kwj2vb7mafrfoxwti",
+      "artifact_cid": "bafkreifcb27leoeyrtntja2yf43sj2sdym5ojuhouqa7qrgydsw4aimetm",
       "kind": "testnet_solver_portfolio",
       "overall_status": "non_secure_with_counterevidence",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json",
@@ -144,7 +144,7 @@
       "production_release_blocked": true,
       "schema_version": "xaman-testnet-solver-portfolio-report/v1",
       "security_decision": "BLOCK_TESTNET_ASSURANCE_SOLVER_PORTFOLIO_COUNTEREVIDENCE",
-      "sha256": "sha256:59ddf80c2fca35d36b294e73ed4992c916c2841cb13c6f369db9429f3540cac0",
+      "sha256": "sha256:ed48a0d29fd288aa333cdf6c61ea66b93a24757707acbbc1dcd83cdeaf7c26f5",
       "task_id": "PORTAL-CXTP-147",
       "testnet_assurance_blocked": true
     },
@@ -176,7 +176,7 @@
       "task_id": "PORTAL-CXTP-138"
     },
     {
-      "artifact_cid": "bafkreifmr5m3rcyvksrjuxw4h5folgi4o6juzptq4zzthukbpbhej7peoe",
+      "artifact_cid": "bafkreie5ftk5uvccgwdg76vhoixaji2sb6walzpj7b3xw6xjh23ewcciqe",
       "kind": "runtime_conformance_report",
       "overall_status": "blocked_testnet_runtime_conformance",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/runtime-conformance-report.json",
@@ -184,7 +184,7 @@
       "production_release_blocked": true,
       "schema_version": "xaman-testnet-runtime-conformance-report/v1",
       "security_decision": "BLOCK_TESTNET_ASSURANCE_RUNTIME_CONFORMANCE_GAPS",
-      "sha256": "sha256:ec2455d5cc03517b2b80e1f3644b8dbd261f4341868bf1f735e9022d8dc6c985",
+      "sha256": "sha256:14a298737bd5d72ab765b2fc35c09f2bc9f3e2506033aee18a2bdc0efca33611",
       "task_id": "PORTAL-CXTP-150"
     },
     {

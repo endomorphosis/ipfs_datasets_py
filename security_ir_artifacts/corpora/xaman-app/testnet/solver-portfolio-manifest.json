@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "bafkreidhzfswgtj5igs3dpraq526z7bonrdnv37f6vb7yinrclcp3a6xxe",
+  "artifact_cid": "bafkreidzafqrwu72t4zora5djvjpuwhhxwk73uqjajso3dwlutco4jzbea",
   "claim_evidence": [
     {
       "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
@@ -528,7 +528,7 @@
       "task_id": null
     },
     {
-      "artifact_cid": "sha256:230b50365fb5810c3ceadb96bb96dae191a653f14e188c968c4df0879c093dd9",
+      "artifact_cid": "sha256:9e928c511d683870c8b84c653645e3ef34aea7c3ada501455b1779de0d4beab0",
       "exists": true,
       "kind": "source_claim_map",
       "path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
@@ -544,7 +544,7 @@
       "task_id": "PORTAL-CXTP-146"
     },
     {
-      "artifact_cid": "bafkreiaasfo7mccpw6ezrxcek2dum62jws4p4d46vpgh5zvjopnz5bmt7q",
+      "artifact_cid": "bafkreiazj3uvrsdjptdtrdj5h4erzvrpmn6zljboowzyo2p2oxmgbx2iim",
       "exists": true,
       "kind": "disproof_vectors",
       "model_cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
@@ -924,7 +924,7 @@
       "timeout_seconds": 90
     },
     {
-      "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+      "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
       "available": true,
       "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -998,7 +998,7 @@
     "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
     "public_source_only": true,
     "repository": "XRPL-Labs/Xaman-App",
-    "source_claim_map_artifact_cid": "sha256:230b50365fb5810c3ceadb96bb96dae191a653f14e188c968c4df0879c093dd9",
+    "source_claim_map_artifact_cid": "sha256:9e928c511d683870c8b84c653645e3ef34aea7c3ada501455b1779de0d4beab0",
     "source_claim_map_path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
     "source_manifest_artifact_cid": "bafkreiei6bzr7ziihvbe4ueyfzkxspj7xijuoufqkn5jbqj2i7pzbdlkj4"
   },

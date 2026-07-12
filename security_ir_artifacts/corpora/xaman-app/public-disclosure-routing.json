@@ -1,0 +1,24 @@
+{
+  "authorization_granted": false,
+  "current_public_policy": {
+    "policy_url": "https://github.com/XRPL-Labs/Xaman-Issue-Tracker/blob/master/RESPONSIBLE-DISCLOSURE.md",
+    "reported_contact": "support@xaman.app",
+    "retrieved_at_utc": "2026-07-12T05:40:00Z",
+    "source_type": "public_responsible_disclosure_policy"
+  },
+  "pinned_source_security_txt": {
+    "contact_url": "https://support.xumm.app/hc/en-us/requests/new",
+    "expired_at": "2025-01-26T21:00:00.000Z",
+    "path": "android/app/src/main/assets/security.txt",
+    "status": "historical_route_expired_not_verified_current"
+  },
+  "required_before_sensitive_evidence_exchange": [
+    "verified_reply_from_vendor_security_owner",
+    "vendor_approved_private_evidence_channel",
+    "written_authorization_for_counterexample_detail",
+    "project_security_and_legal_approval"
+  ],
+  "schema_version": "xaman-public-disclosure-routing/v1",
+  "security_decision": "PUBLIC_ROUTE_FOUND_VENDOR_AUTHORIZATION_STILL_REQUIRED",
+  "task_id": "PORTAL-CXTP-155"
+}

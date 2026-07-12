@@ -20,7 +20,7 @@ DEFAULT_OUT = Path('security_ir_artifacts/recovery/taskboard-preflight-report.js
 PRODUCTION_BLOCKER_TASKS = {f'PORTAL-CXTP-{number:03d}' for number in range(77, 85)}
 VALID_STATUSES = {'todo', 'ready', 'waiting', 'blocked', 'completed'}
 TASK_RE = re.compile(r'^## (PORTAL-CXTP-\d{3})\s+(.+?)\s*$', re.MULTILINE)
-FIELD_RE = re.compile(r'^- ([A-Za-z][A-Za-z ]+):\s*(.*?)\s*$', re.MULTILINE)
+FIELD_RE = re.compile(r'^- ([A-Za-z][A-Za-z ]+):[ \t]*(.*?)[ \t]*$', re.MULTILINE)
 
 
 @dataclass(frozen=True)
