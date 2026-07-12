@@ -238,7 +238,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-015 Seed a five-task paired evaluation and publish the production promotion decision
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: evaluation
