@@ -224,7 +224,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-014 Run a no-mutation shadow canary over the highest-impact disagreement clusters
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: evaluation
