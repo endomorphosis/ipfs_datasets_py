@@ -210,7 +210,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-013 Add reversible modes, budgets, lag telemetry, and supervisor health reporting
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: ops
