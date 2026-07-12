@@ -196,7 +196,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-012 Add isolated worktree, mutation, and held-out Pareto validation for projected changes
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: quality
