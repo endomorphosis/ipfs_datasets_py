@@ -1196,7 +1196,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-152 Prepare an authorized vendor-evidence intake request for native and backend blockers
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: governance
