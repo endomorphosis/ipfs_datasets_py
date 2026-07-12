@@ -1,0 +1,68 @@
+{
+  "mutations": [
+    {
+      "citation": "5 U.S.C. 552",
+      "description": "Obligation cue is inverted into a prohibition cue.",
+      "expected_family_change": false,
+      "expected_hash_change": true,
+      "mutation_id": "invert_modality",
+      "mutated_text": "The agency must not provide notice within 30 days after application.",
+      "original_text": "The agency must provide notice within 30 days after application."
+    },
+    {
+      "citation": "5 U.S.C. 552",
+      "description": "The modal cue is removed, which should change the canonical IR surface.",
+      "expected_family_change": true,
+      "expected_hash_change": true,
+      "mutation_id": "remove_modal_cue",
+      "mutated_text": "The agency provides notice within 30 days after application.",
+      "original_text": "The agency must provide notice within 30 days after application."
+    },
+    {
+      "citation": "12 U.S.C. 2605",
+      "description": "Exception scope is removed from a conditional norm.",
+      "expected_family_change": false,
+      "expected_hash_change": true,
+      "mutation_id": "remove_exception",
+      "mutated_text": "The servicer must respond to the borrower within 10 days.",
+      "original_text": "Except as provided in this subsection, the servicer must respond to the borrower within 10 days."
+    },
+    {
+      "citation": "5 U.S.C. 552",
+      "description": "The temporal deadline changes while the deontic cue remains.",
+      "expected_family_change": false,
+      "expected_hash_change": true,
+      "mutation_id": "alter_deadline",
+      "mutated_text": "The agency must provide notice within 60 days after application.",
+      "original_text": "The agency must provide notice within 30 days after application."
+    },
+    {
+      "citation": "42 U.S.C. 1395",
+      "description": "The conditional scope changes from if to notwithstanding.",
+      "expected_family_change": false,
+      "expected_hash_change": true,
+      "mutation_id": "alter_scope",
+      "mutated_text": "Notwithstanding a beneficiary requests review, the Secretary must provide a hearing.",
+      "original_text": "If a beneficiary requests review, the Secretary must provide a hearing."
+    },
+    {
+      "citation": "15 U.S.C. 78u",
+      "description": "Graph endpoint-bearing actor/object text is removed from the modal relation.",
+      "expected_family_change": true,
+      "expected_hash_change": true,
+      "mutation_id": "remove_relation_endpoint",
+      "mutated_text": "Must comply.",
+      "original_text": "The broker must preserve records for the Commission."
+    },
+    {
+      "citation": "5 U.S.C. 706",
+      "description": "A non-registry modal phrase replaces an explicit legal obligation cue.",
+      "expected_family_change": true,
+      "expected_hash_change": true,
+      "mutation_id": "unsupported_modal_system",
+      "mutated_text": "The court hypothetically could review the agency action.",
+      "original_text": "The court must review the agency action."
+    }
+  ],
+  "schema_version": "legal-ir-leanstral-mutations-v1"
+}

@@ -1095,18 +1095,58 @@ def verify_leanstral_audit(*args: Any, **kwargs: Any) -> Any:
     return _verify(*args, **kwargs)
 
 
+def validate_leanstral_projected_change(*args: Any, **kwargs: Any) -> Any:
+    """Validate a projected Leanstral compiler diff in an isolated worktree."""
+
+    from .leanstral_validation import validate_leanstral_projected_change as _validate
+
+    return _validate(*args, **kwargs)
+
+
+def compare_leanstral_holdout_pareto(*args: Any, **kwargs: Any) -> Any:
+    """Compare candidate held-out LegalIR metrics against a frozen baseline."""
+
+    from .leanstral_validation import compare_leanstral_holdout_pareto as _compare
+
+    return _compare(*args, **kwargs)
+
+
+def __getattr__(name: str) -> Any:
+    projected_validation_exports = {
+        "LeanstralMetricComparison",
+        "LeanstralProjectedChangeValidation",
+        "LeanstralProjectedChangeValidator",
+        "LeanstralProjectedValidationConfig",
+        "LeanstralValidationCheck",
+        "LeanstralValidationReason",
+    }
+    if name in projected_validation_exports:
+        from . import leanstral_validation
+
+        return getattr(leanstral_validation, name)
+    raise AttributeError(name)
+
+
 __all__ = [
     "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
     "CompilerChangeSpec",
     "LegalIRLeanTask",
     "LeanstralConfig",
+    "LeanstralMetricComparison",
+    "LeanstralProjectedChangeValidation",
+    "LeanstralProjectedChangeValidator",
+    "LeanstralProjectedValidationConfig",
     "LeanstralProofValidation",
     "LeanstralProposal",
     "LeanstralShadowResult",
     "LeanstralShadowRunner",
+    "LeanstralValidationCheck",
+    "LeanstralValidationReason",
     "ProjectionEvidence",
     "PythonPatchProposal",
     "PythonPatchValidation",
+    "compare_leanstral_holdout_pareto",
+    "validate_leanstral_projected_change",
     "validate_leanstral_proposal",
     "validate_python_patch_proposal",
     "verify_leanstral_audit",
