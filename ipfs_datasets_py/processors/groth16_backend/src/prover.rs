@@ -3,7 +3,8 @@
 
 use crate::{
     circuit::{
-        MVPCircuit, TDFOLv1DerivationCircuitV2, TDFOL_V1_V2_ALPHA, TDFOL_V1_V2_BETA,
+        EventDagCompactionCircuitV3, MVPCircuit, TDFOLv1DerivationCircuitV2,
+        EVENT_DAG_V3_MAX_EVENTS, TDFOL_V1_V2_ALPHA, TDFOL_V1_V2_BETA,
         TDFOL_V1_V2_MAX_AXIOMS, TDFOL_V1_V2_MAX_STEPS,
     },
     ProofOutput, WitnessInput,
@@ -90,6 +91,20 @@ fn field_to_0x32<F: PrimeField + Copy>(x: F) -> String {
 }
 
 fn fr_inputs_from_witness(witness: &WitnessInput) -> anyhow::Result<Vec<Fr>> {
+    if witness.circuit_version == 3 {
+        let root = decode_32byte_hex(
+            "event_dag_merkle_root_hex",
+            witness.event_dag_merkle_root_hex.as_deref().unwrap_or(""),
+        )?;
+        let count = witness.event_count.ok_or_else(|| anyhow::anyhow!("event_count is required for circuit_version=3"))?;
+        if count == 0 || count as usize > EVENT_DAG_V3_MAX_EVENTS {
+            anyhow::bail!("event_count must be in 1..={EVENT_DAG_V3_MAX_EVENTS} for circuit_version=3");
+        }
+        return Ok(vec![
+            Fr::from_be_bytes_mod_order(&root),
+            Fr::from(count as u64),
+        ]);
+    }
     let theorem_hash_bytes = decode_32byte_hex("theorem_hash_hex", &witness.theorem_hash_hex)?;
     let axioms_commitment_bytes =
         decode_32byte_hex("axioms_commitment_hex", &witness.axioms_commitment_hex)?;
@@ -107,12 +122,88 @@ fn fr_inputs_from_witness(witness: &WitnessInput) -> anyhow::Result<Vec<Fr>> {
 }
 
 fn witness_to_public_inputs_wire(witness: &WitnessInput) -> Vec<String> {
+    if witness.circuit_version == 3 {
+        return vec![
+            witness.event_dag_merkle_root_hex.clone().unwrap_or_default(),
+            witness.event_count.unwrap_or_default().to_string(),
+        ];
+    }
     vec![
         witness.theorem_hash_hex.clone(),
         witness.axioms_commitment_hex.clone(),
         witness.circuit_version.to_string(),
         witness.ruleset_id.clone(),
     ]
+}
+
+/// Native Profile F tree construction used by both the prover witness builder
+/// and archive-side verifiers. Leaves are SHA-256(event_digest); parents are
+/// SHA-256(left || right). The fixed four-leaf tree makes circuit shape stable.
+pub fn event_dag_v3_merkle_root(event_digests: &[[u8; 32]]) -> [u8; 32] {
+    let mut layer = event_digests
+        .iter()
+        .map(|digest| {
+            let hashed = Sha256::digest(digest);
+            let mut output = [0u8; 32];
+            output.copy_from_slice(&hashed);
+            output
+        })
+        .collect::<Vec<_>>();
+    while layer.len() > 1 {
+        layer = layer
+            .chunks(2)
+            .map(|pair| {
+                let mut hasher = Sha256::new();
+                hasher.update(pair[0]);
+                hasher.update(pair[1]);
+                let hashed = hasher.finalize();
+                let mut output = [0u8; 32];
+                output.copy_from_slice(&hashed);
+                output
+            })
+            .collect();
+    }
+    layer[0]
+}
+
+fn build_event_dag_v3_circuit(
+    witness: &WitnessInput,
+) -> anyhow::Result<EventDagCompactionCircuitV3<Fr>> {
+    if witness.ruleset_id != "MCP++_EventDAG_Compaction_v1" {
+        anyhow::bail!("circuit_version=3 requires ruleset_id=MCP++_EventDAG_Compaction_v1");
+    }
+    let count = witness.event_count.ok_or_else(|| anyhow::anyhow!("event_count is required for circuit_version=3"))?;
+    if count == 0 || count as usize > EVENT_DAG_V3_MAX_EVENTS {
+        anyhow::bail!("event_count must be in 1..={EVENT_DAG_V3_MAX_EVENTS} for circuit_version=3");
+    }
+    if witness.event_digests_hex.len() != count as usize {
+        anyhow::bail!("event_digests_hex length must equal event_count for circuit_version=3");
+    }
+    let mut digests = witness
+        .event_digests_hex
+        .iter()
+        .enumerate()
+        .map(|(index, digest)| decode_32byte_hex(&format!("event_digests_hex[{index}]"), digest))
+        .collect::<anyhow::Result<Vec<_>>>()?;
+    digests.resize(EVENT_DAG_V3_MAX_EVENTS, [0u8; 32]);
+    let actual_root = event_dag_v3_merkle_root(&digests);
+    let claimed_root = decode_32byte_hex(
+        "event_dag_merkle_root_hex",
+        witness.event_dag_merkle_root_hex.as_deref().unwrap_or(""),
+    )?;
+    if actual_root != claimed_root {
+        anyhow::bail!("event_dag_merkle_root_hex does not match the private event digest witness");
+    }
+    let active = (0..EVENT_DAG_V3_MAX_EVENTS)
+        .map(|index| index < count as usize)
+        .collect::<Vec<_>>();
+    Ok(EventDagCompactionCircuitV3 {
+        event_digests: Some(digests),
+        active: Some(active),
+        merkle_root: Some(claimed_root),
+        event_count: Some(count),
+        _field: std::marker::PhantomData,
+    })
 }
 
 fn proof_to_evm_words(proof: &Proof<Bn254>) -> Vec<String> {
@@ -293,10 +384,10 @@ fn build_tdfol_v1_v2_circuit(
 ///   - `extra.evm_proof`: 8 x 0x32 words
 ///   - `extra.evm_public_inputs`: 4 x 0x32 words
 pub fn generate_proof(witness: &WitnessInput, seed: Option<u64>) -> anyhow::Result<ProofOutput> {
-    if witness.private_axioms.is_empty() {
+    if witness.circuit_version != 3 && witness.private_axioms.is_empty() {
         anyhow::bail!("private_axioms cannot be empty");
     }
-    if witness.theorem.trim().is_empty() {
+    if witness.circuit_version != 3 && witness.theorem.trim().is_empty() {
         anyhow::bail!("theorem cannot be empty");
     }
     if witness.ruleset_id.trim().is_empty() {
@@ -354,6 +445,26 @@ pub fn generate_proof(witness: &WitnessInput, seed: Option<u64>) -> anyhow::Resu
             circuit.clone().generate_constraints(cs.clone())?;
             if !cs.is_satisfied()? {
                 anyhow::bail!("circuit constraints not satisfied");
+            }
+
+            match seed {
+                Some(seed) => {
+                    let mut rng = StdRng::seed_from_u64(seed);
+                    Groth16::<Bn254>::prove(&pk, circuit, &mut rng)?
+                }
+                None => {
+                    let mut rng = OsRng;
+                    Groth16::<Bn254>::prove(&pk, circuit, &mut rng)?
+                }
+            }
+        }
+        3 => {
+            let circuit: EventDagCompactionCircuitV3<Fr> = build_event_dag_v3_circuit(witness)?;
+
+            let cs = ConstraintSystem::<Fr>::new_ref();
+            circuit.clone().generate_constraints(cs.clone())?;
+            if !cs.is_satisfied()? {
+                anyhow::bail!("event DAG circuit constraints not satisfied");
             }
 
             match seed {

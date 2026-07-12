@@ -2584,6 +2584,29 @@ async def mcp_jsonrpc_handler(request: Request):
         elif method == "mcp++/policy/evaluate":
             return {"jsonrpc": "2.0", "id": req_id, "result": {"decision": "allow", "obligations": [], "allowed": True}}
 
+        elif method == "mcp++/dag/zk/status":
+            from .event_dag_zkp import availability
+            return {"jsonrpc": "2.0", "id": req_id, "result": availability()}
+
+        elif method == "mcp++/dag/zk/prove":
+            from .event_dag_zkp import prove_event_dag_compaction
+            event_cids = params.get("event_cids", [])
+            if not isinstance(event_cids, list):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "event_cids must be an array"}}
+            certificate = await anyio.to_thread.run_sync(prove_event_dag_compaction, event_cids)
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"certificate": certificate}}
+
+        elif method == "mcp++/dag/zk/verify":
+            from .event_dag_zkp import verify_event_dag_compaction
+            certificate = params.get("certificate")
+            if not isinstance(certificate, dict):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "certificate must be an object"}}
+            event_cids = params.get("event_cids")
+            if event_cids is not None and not isinstance(event_cids, list):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "event_cids must be an array when supplied"}}
+            result = await anyio.to_thread.run_sync(verify_event_dag_compaction, certificate, event_cids)
+            return {"jsonrpc": "2.0", "id": req_id, "result": result}
+
         elif method == "mcp++/p2p/peers":
             return {"jsonrpc": "2.0", "id": req_id, "result": {"peers": [], "protocol": "/mcp+p2p/1.0.0"}}
 
@@ -2596,6 +2619,38 @@ async def mcp_jsonrpc_handler(request: Request):
     except Exception as e:
         logger.error(f"MCP JSON-RPC error: {e}", exc_info=True)
         return {"jsonrpc": "2.0", "id": body.get("id", 1) if 'body' in dir() else 1, "error": {"code": -32603, "message": str(e)}}
+
+
+@app.get("/mcp/dag/zk/status")
+async def event_dag_zk_status():
+    """Advertise the local verifier-backed Profile F proving capability."""
+    from .event_dag_zkp import availability
+    return availability()
+
+
+@app.post("/mcp/dag/zk/prove")
+async def event_dag_zk_prove(request: Request):
+    """Issue a bounded Profile F Groth16 certificate, or fail closed."""
+    body = await request.json()
+    event_cids = body.get("event_cids", [])
+    if not isinstance(event_cids, list):
+        raise HTTPException(status_code=422, detail="event_cids must be an array")
+    from .event_dag_zkp import prove_event_dag_compaction
+    return {"certificate": await anyio.to_thread.run_sync(prove_event_dag_compaction, event_cids)}
+
+
+@app.post("/mcp/dag/zk/verify")
+async def event_dag_zk_verify(request: Request):
+    """Verify a Profile F certificate and optionally bind it to archived CIDs."""
+    body = await request.json()
+    certificate = body.get("certificate")
+    if not isinstance(certificate, dict):
+        raise HTTPException(status_code=422, detail="certificate must be an object")
+    event_cids = body.get("event_cids")
+    if event_cids is not None and not isinstance(event_cids, list):
+        raise HTTPException(status_code=422, detail="event_cids must be an array when supplied")
+    from .event_dag_zkp import verify_event_dag_compaction
+    return await anyio.to_thread.run_sync(verify_event_dag_compaction, certificate, event_cids)
 
 
 @app.get("/mcp/tools/list")

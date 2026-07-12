@@ -13,6 +13,7 @@ ark-snark = "0.4"
 ark-serialize = { version = "0.4", features = ["derive"] }
 ark-relations = "0.4"
 ark-r1cs-std = "0.4"
+ark-crypto-primitives = { version = "0.4", features = ["crh", "r1cs"] }
 sha2 = "0.10"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

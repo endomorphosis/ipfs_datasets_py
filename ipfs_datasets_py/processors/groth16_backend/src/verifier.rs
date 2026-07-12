@@ -20,15 +20,18 @@ use std::path::PathBuf;
 /// Proof JSON expectations:
 /// - Canonical wire public inputs (backend-agnostic):
 ///   `public_inputs` = [theorem_hash_hex, axioms_commitment_hex, circuit_version_decimal, ruleset_id]
+/// - Profile F circuit v3 instead uses:
+///   `public_inputs` = [event_dag_merkle_root_hex, event_count_decimal]
 /// - EVM-friendly extras (optional but required for real verification):
 ///   `extra.evm_proof` (8 x 0x32 field words)
-///   `extra.evm_public_inputs` (4 x 0x32 field words)
+///   `extra.evm_public_inputs` (4 x 0x32 field words, or 2 for Profile F v3)
 pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
     if proof.schema_version != 1 {
         return Ok(false);
     }
 
-    if proof.public_inputs.len() != 4 {
+    let expected_wire_inputs = if proof.version == 3 { 2 } else { 4 };
+    if proof.public_inputs.len() != expected_wire_inputs {
         return Ok(false);
     }
 
@@ -48,11 +51,11 @@ pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
         Err(_) => return Ok(false),
     };
 
-    // Require internal consistency between explicit version field and public input.
-    if inputs.len() != 4 {
+    let expected_field_inputs = if proof.version == 3 { 2 } else { 4 };
+    if inputs.len() != expected_field_inputs {
         return Ok(false);
     }
-    if inputs[2] != Fr::from(proof.version as u64) {
+    if proof.version != 3 && inputs[2] != Fr::from(proof.version as u64) {
         return Ok(false);
     }
 
@@ -131,6 +134,33 @@ fn parse_public_inputs_fr(inputs: &[String]) -> anyhow::Result<Vec<Fr>> {
 }
 
 fn derive_public_inputs_fr(proof: &ProofOutput) -> anyhow::Result<Vec<Fr>> {
+    if proof.version == 3 {
+        let root = parse_32byte_hex_to_bytes(&proof.public_inputs[0])?;
+        let count: u32 = proof.public_inputs[1].trim().parse()?;
+        if count == 0 || count > 4 {
+            anyhow::bail!("Profile F event_count must be in 1..=4");
+        }
+        let expected = vec![
+            Fr::from_be_bytes_mod_order(&root),
+            Fr::from(count as u64),
+        ];
+        if let Some(v) = proof.extra.get("evm_public_inputs") {
+            let arr = v
+                .as_array()
+                .ok_or_else(|| anyhow::anyhow!("extra.evm_public_inputs must be an array"))?;
+            if arr.len() != expected.len() {
+                anyhow::bail!("Profile F extra.evm_public_inputs must have {} elements", expected.len());
+            }
+            let encoded = arr
+                .iter()
+                .map(|entry| entry.as_str().ok_or_else(|| anyhow::anyhow!("evm_public_inputs entries must be strings")))
+                .collect::<Result<Vec<_>, _>>()?;
+            if parse_public_inputs_fr(&encoded.iter().map(|entry| entry.to_string()).collect::<Vec<_>>())? != expected {
+                anyhow::bail!("Profile F EVM public inputs do not match the canonical wire inputs");
+            }
+        }
+        return Ok(expected);
+    }
     // Preferred: EVM-friendly field encoding explicitly provided.
     if let Some(v) = proof.extra.get("evm_public_inputs") {
         let arr = v
