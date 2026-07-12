@@ -38,6 +38,7 @@ from huggingface_hub import HfFileSystem
 
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
+    MODAL_INTROSPECTION_MODES,
     ModalLogicCodecConfig,
     decoded_modal_phrase_slot_text_map,
     modal_text_token_similarity,
@@ -56,6 +57,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import (
+    build_modal_supervisor_health_report,
+    state_to_compiler_patch_lag,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     ModalOptimizerPolicy,
@@ -112,6 +117,7 @@ DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE = "periodic"
 DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "periodic"
 DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "starved"
 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
+DEFAULT_AUTOENCODER_INTROSPECTION_MODE = "off"
 AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION = "legal-ir-daemon-metrics-v2"
 AUTOENCODER_CANONICAL_WARM_START_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START"
 AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = (
@@ -5639,6 +5645,126 @@ def parse_bool_flag(value: Any) -> bool:
     raise argparse.ArgumentTypeError(f"expected boolean flag, got {value!r}")
 
 
+def autoencoder_introspection_mode(args: argparse.Namespace) -> str:
+    """Return the normalized reversible introspection rollout mode."""
+
+    mode = str(
+        getattr(args, "autoencoder_introspection_mode", DEFAULT_AUTOENCODER_INTROSPECTION_MODE)
+        or DEFAULT_AUTOENCODER_INTROSPECTION_MODE
+    ).strip().lower()
+    if mode in {"0", "false", "no", "none", "disabled"}:
+        return "off"
+    if mode not in MODAL_INTROSPECTION_MODES:
+        return DEFAULT_AUTOENCODER_INTROSPECTION_MODE
+    return mode
+
+
+def autoencoder_target_scope_filters(args: argparse.Namespace) -> List[str]:
+    raw = getattr(args, "autoencoder_target_scope_filters", "")
+    if raw is None:
+        raw = getattr(args, "autoencoder_target_scope_filter", "")
+    if isinstance(raw, str):
+        values: Iterable[str] = raw.split(",")
+    else:
+        values = raw
+    return list(
+        dict.fromkeys(
+            str(value).strip()
+            for value in values
+            if str(value).strip()
+            and str(value).strip().lower() not in {"all", "none", "off", "false"}
+        )
+    )
+
+
+def autoencoder_rollout_control(args: argparse.Namespace) -> Dict[str, Any]:
+    mode = autoencoder_introspection_mode(args)
+    return {
+        "introspection_mode": mode,
+        "max_audits_per_cycle": max(
+            0,
+            int(getattr(args, "autoencoder_max_audits_per_cycle", 0) or 0),
+        ),
+        "max_todos_per_cycle": max(
+            0,
+            int(getattr(args, "autoencoder_max_todos_per_cycle", 0) or 0),
+        ),
+        "require_prover_confirmation": bool(
+            getattr(args, "autoencoder_require_prover_confirmation", True)
+        ),
+        "target_scope_filters": autoencoder_target_scope_filters(args),
+    }
+
+
+def autoencoder_enforce_fail_closed_reason(
+    rollout_control: Mapping[str, Any],
+    *,
+    bridge_evaluate_provers: bool,
+) -> str:
+    if str(rollout_control.get("introspection_mode") or "off") != "enforce":
+        return ""
+    if bool(rollout_control.get("require_prover_confirmation", True)) and not bridge_evaluate_provers:
+        return "enforce_requires_prover_confirmation"
+    if int(rollout_control.get("max_audits_per_cycle", 0) or 0) <= 0:
+        return "enforce_requires_positive_audit_budget"
+    return ""
+
+
+def _sample_matches_target_scope(sample: Any, scope_filters: Sequence[str]) -> bool:
+    filters = {str(value).strip() for value in scope_filters if str(value).strip()}
+    if not filters:
+        return True
+    scopes = {
+        str(getattr(sample, "source", "") or ""),
+        str(getattr(sample, "title", "") or ""),
+        str(getattr(sample, "section", "") or ""),
+        str(getattr(sample, "selected_frame", "") or ""),
+    }
+    modal_ir = getattr(sample, "modal_ir", None)
+    if modal_ir is not None:
+        for formula in getattr(modal_ir, "formulas", ()) or ():
+            operator = getattr(formula, "operator", None)
+            family = str(getattr(operator, "family", "") or "")
+            if family:
+                scopes.add(family)
+                scopes.add(f"modal.{family}")
+    return bool(filters & {scope for scope in scopes if scope})
+
+
+def _budgeted_audit_samples(
+    samples: Sequence[Any],
+    rollout_control: Mapping[str, Any],
+) -> List[Any]:
+    mode = str(rollout_control.get("introspection_mode") or "off")
+    if mode == "off":
+        return list(samples)
+    scope_filters = [
+        str(value)
+        for value in rollout_control.get("target_scope_filters", []) or []
+        if str(value)
+    ]
+    filtered = [
+        sample
+        for sample in samples
+        if _sample_matches_target_scope(sample, scope_filters)
+    ]
+    max_audits = int(rollout_control.get("max_audits_per_cycle", 0) or 0)
+    if max_audits <= 0:
+        return []
+    return filtered[:max_audits]
+
+
+def _effective_todo_budget(default_max_items: int, rollout_control: Mapping[str, Any]) -> int:
+    mode = str(rollout_control.get("introspection_mode") or "off")
+    default_budget = max(0, int(default_max_items or 0))
+    if mode == "off":
+        return default_budget
+    max_todos = max(0, int(rollout_control.get("max_todos_per_cycle", 0) or 0))
+    if max_todos <= 0:
+        return 0
+    return min(default_budget, max_todos) if default_budget > 0 else max_todos
+
+
 def codex_loop_execution_mode(args: argparse.Namespace) -> str:
     if getattr(args, "codex_exec_mode", "packet_only") == "codex_cli":
         return "codex_cli_executor"
@@ -6916,6 +7042,19 @@ def paired_autoencoder_child_health(
         data.get("latest_stop_reason", "") or ""
     )
     health["autoencoder_summary_final"] = bool(data.get("final", False))
+    supervisor_health = (
+        data.get("supervisor_health")
+        if isinstance(data.get("supervisor_health"), Mapping)
+        else build_modal_supervisor_health_report(data).to_dict()
+    )
+    health["autoencoder_supervisor_health"] = dict(supervisor_health)
+    health["autoencoder_alive"] = bool(supervisor_health.get("alive", False))
+    health["autoencoder_productive"] = bool(supervisor_health.get("productive", False))
+    health["state_to_compiler_patch_lag"] = dict(
+        data.get("state_to_compiler_patch_lag")
+        if isinstance(data.get("state_to_compiler_patch_lag"), Mapping)
+        else state_to_compiler_patch_lag(data)
+    )
     summary_age = age_seconds(data.get("updated_at"))
     heartbeat_age = age_seconds(data.get("active_cycle_last_heartbeat_at"))
     health["autoencoder_summary_age_seconds"] = summary_age
@@ -10407,6 +10546,29 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--autoencoder-todo-supervisor-min-open", type=int, default=12)
     parser.add_argument(
+        "--autoencoder-introspection-mode",
+        choices=tuple(sorted(MODAL_INTROSPECTION_MODES)),
+        default=DEFAULT_AUTOENCODER_INTROSPECTION_MODE,
+        help=(
+            "Reversible LegalIR introspection rollout mode. 'off' is inert, "
+            "'export' emits evidence, 'shadow' observes, 'seed' may create "
+            "bounded TODOs, and 'enforce' fails closed when proof/budget gates fail."
+        ),
+    )
+    parser.add_argument("--autoencoder-max-audits-per-cycle", type=int, default=0)
+    parser.add_argument("--autoencoder-max-todos-per-cycle", type=int, default=0)
+    parser.add_argument(
+        "--autoencoder-target-scope-filters",
+        default="",
+        help="Comma-separated target scopes eligible for introspection audits/TODOs.",
+    )
+    parser.add_argument(
+        "--autoencoder-require-prover-confirmation",
+        type=parse_bool_flag,
+        default=True,
+        help="Require theorem-prover confirmation before productive introspection modes.",
+    )
+    parser.add_argument(
         "--bridge-loss-adapters",
         default=DEFAULT_BRIDGE_LOSS_ADAPTERS,
         help=(
@@ -11899,6 +12061,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     bridge_evaluate_provers = bool(
         getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())
     )
+    rollout_control = autoencoder_rollout_control(args)
     bridge_parallel_workers = max(
         1,
         int(getattr(args, "autoencoder_bridge_workers", 1) or 1),
@@ -11921,6 +12084,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_metric_bridge_adapters"] = metric_bridge_adapters
     summary["autoencoder_diagnostic_bridge_adapters"] = diagnostic_bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
+    summary["autoencoder_introspection"] = dict(rollout_control)
+    summary["autoencoder_introspection_mode"] = str(
+        rollout_control["introspection_mode"]
+    )
+    summary["autoencoder_max_audits_per_cycle"] = int(
+        rollout_control["max_audits_per_cycle"]
+    )
+    summary["autoencoder_max_todos_per_cycle"] = int(
+        rollout_control["max_todos_per_cycle"]
+    )
+    summary["autoencoder_target_scope_filters"] = list(
+        rollout_control["target_scope_filters"]
+    )
+    summary["autoencoder_require_prover_confirmation"] = bool(
+        rollout_control["require_prover_confirmation"]
+    )
     summary["autoencoder_bridge_workers"] = bridge_parallel_workers
     summary["legal_ir_bridge_parallelism"] = {
         "bridge_loss_adapters": list(bridge_adapters),
@@ -11937,6 +12116,28 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("best_validation_logic_bridge_acceptance", -1.0)
     summary.setdefault("best_validation_logic_bridge_proof_failure_ratio", 1.0e12)
     summary.setdefault("best_validation_logic_bridge_total_loss", 1.0e12)
+    enforce_block_reason = autoencoder_enforce_fail_closed_reason(
+        rollout_control,
+        bridge_evaluate_provers=bridge_evaluate_provers,
+    )
+    if enforce_block_reason:
+        summary["autoencoder_introspection_enforce_allowed"] = False
+        summary["autoencoder_introspection_enforce_block_reason"] = enforce_block_reason
+        summary["supervisor_health"] = build_modal_supervisor_health_report(
+            summary
+        ).to_dict()
+        save_summary(summary_path, summary, final=True)
+        append_event(
+            log_path,
+            args.run_id,
+            {
+                "event": "autoencoder_introspection_enforce_blocked",
+                "reason": enforce_block_reason,
+            },
+        )
+        return 2
+    summary["autoencoder_introspection_enforce_allowed"] = True
+    summary["autoencoder_introspection_enforce_block_reason"] = ""
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
     state = ModalAutoencoderTrainingState.load_json(state_path)
@@ -12661,6 +12862,24 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if validation_canary_samples
                 else "rotating_holdout"
             )
+            audited_train_samples = _budgeted_audit_samples(
+                train_samples,
+                rollout_control,
+            )
+            effective_max_items = _effective_todo_budget(
+                int(args.max_items),
+                rollout_control,
+            )
+            if (
+                str(rollout_control.get("introspection_mode") or "off") != "off"
+                and effective_max_items <= 0
+            ):
+                audited_train_samples = []
+            summary["active_cycle_introspection"] = {
+                **dict(rollout_control),
+                "eligible_audit_sample_count": len(audited_train_samples),
+                "effective_max_items": effective_max_items,
+            }
             mark_cycle_phase(
                 "before_train_eval",
                 sample_count=len(train_samples),
@@ -12940,14 +13159,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             mark_cycle_phase(
                 "todo_supervisor_optimize",
                 max_inner_iterations=args.max_inner_iterations,
-                max_items=args.max_items,
+                max_items=effective_max_items,
+                audit_sample_count=len(audited_train_samples),
             )
             run = supervisor.optimize(
-                train_samples,
+                audited_train_samples,
                 validation_samples=acceptance_validation_samples,
                 autoencoder=autoencoder,
                 worker_id="random-uscode-daemon-detached",
-                max_items=args.max_items,
+                max_items=effective_max_items,
                 learning_rate=cycle_learning_rate,
                 max_iterations=args.max_inner_iterations,
                 target_cross_entropy_loss=0.001,
@@ -13460,6 +13680,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 metric_bridge_adapters=metric_bridge_adapters,
                 diagnostic_bridge_adapters=diagnostic_bridge_adapters,
             )
+            summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(
+                summary
+            )
+            summary["supervisor_health"] = build_modal_supervisor_health_report(
+                summary
+            ).to_dict()
             summary["validation_mode"] = validation_mode
             program_synthesis_status = update_program_synthesis_summary(
                 summary,
@@ -13745,6 +13971,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary.get("best_validation_learned_ir_view_cosine", -1.0),
                 latest_learned_ir_view_cosine,
             )
+            summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(
+                summary
+            )
+            summary["supervisor_health"] = build_modal_supervisor_health_report(
+                summary
+            ).to_dict()
             append_event(
                 log_path,
                 args.run_id,
@@ -13832,6 +14064,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "event": "cycle",
                     "failed_validation_count": sum(step.failed_validation_count for step in run.steps),
                     "feature_projection_report": feature_projection_report,
+                    "state_to_compiler_patch_lag": summary.get(
+                        "state_to_compiler_patch_lag",
+                        {},
+                    ),
+                    "supervisor_health": summary.get("supervisor_health", {}),
                     "learning_rate_applied": float(cycle_learning_rate),
                     "learning_rate_policy": cycle_lr_policy,
                     "bridge_loss_failure_count": bridge_loss_failures,
@@ -13979,6 +14216,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             supervisor.queue,
             supervisor.policy,
         )
+        summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(summary)
+        summary["supervisor_health"] = build_modal_supervisor_health_report(
+            summary
+        ).to_dict()
         save_summary(summary_path, summary, final=True)
         append_event(log_path, args.run_id, {"event": "run_finished", **summary})
         for signum, handler in previous_signal_handlers.items():
