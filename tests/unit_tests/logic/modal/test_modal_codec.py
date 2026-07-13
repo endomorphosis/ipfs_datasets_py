@@ -46089,6 +46089,68 @@ def test_decompiler_reconstructs_packet_188_frame_semantic_slots() -> None:
     assert "federal payment formula" in income_structural_text
 
 
+def test_decompiler_reconstructs_title_36_observance_organization_semantics() -> None:
+    observances = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Patriotic and National Observances, Ceremonies, and Organizations. "
+            "The corporation may administer national ceremonies and patriotic "
+            "organizations under this chapter."
+        ),
+        predicate="corporation_administer_national_ceremonies_organizations",
+    )
+    sports_body = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "National governing bodies. The United States Olympic and "
+            "Paralympic Committee may certify an amateur sports organization "
+            "as a national governing body."
+        ),
+        predicate="committee_certify_amateur_sports_governing_body",
+    )
+
+    observances_decoded = decode_modal_ir_document(observances)
+    sports_decoded = decode_modal_ir_document(sports_body)
+    observances_slots = decoded_modal_phrase_slot_text_map(observances_decoded)
+    sports_slots = decoded_modal_phrase_slot_text_map(sports_decoded)
+    observances_structural_text = _structural_decoded_text(
+        observances_decoded,
+        modal_ir=observances,
+        selected_frame=None,
+    )
+    sports_structural_text = _structural_decoded_text(
+        sports_decoded,
+        modal_ir=sports_body,
+        selected_frame=None,
+    )
+
+    assert {
+        "patriotic_national_observance_organization",
+        "patriotic_national_observance",
+        "civic_ceremony_organization",
+        "civic_national_organization",
+    }.issubset(set(observances_slots["typed-decompiler-source-semantic-atom"]))
+    assert {
+        "amateur_sports_governing_body",
+        "amateur_sports_organization",
+        "olympic_paralympic_committee",
+    }.issubset(set(sports_slots["typed-decompiler-source-semantic-atom"]))
+    for slot_texts in (observances_slots, sports_slots):
+        assert {"frame->frame", "frame->deontic"}.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+    assert "patriotic national observance organization" in observances_structural_text
+    assert "amateur sports governing body" in sports_structural_text
+    assert "olympic paralympic committee" in sports_structural_text
+
+
 def test_decompiler_reconstructs_packet_4166_modal_ir_semantic_slots() -> None:
     energy_study = _single_formula_document(
         family="deontic",
