@@ -252,7 +252,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-016 Make canary provenance and promotion evidence fail closed
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: quality
 - Depends on: PORTAL-LIRLS-015
