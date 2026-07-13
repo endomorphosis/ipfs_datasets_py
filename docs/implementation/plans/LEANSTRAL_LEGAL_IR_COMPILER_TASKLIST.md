@@ -265,7 +265,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-017 Emit real canonical-state disagreement packets from the production runner
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: legal-ir
 - Depends on: PORTAL-LIRLS-016
