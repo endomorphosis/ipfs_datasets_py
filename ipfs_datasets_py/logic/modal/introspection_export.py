@@ -81,12 +81,16 @@ class IntrospectionPacketExportConfig:
     max_source_span_hashes: int = 16
     max_proof_details: int = 8
     max_synthesis_focus: int = 12
+    max_causal_feature_groups: int = 5
+    max_minimal_pair_probes: int = 5
     config_version: str = INTROSPECTION_EXPORT_CONFIG_VERSION
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "config_version": self.config_version,
+            "max_causal_feature_groups": int(self.max_causal_feature_groups),
             "max_family_gaps": int(self.max_family_gaps),
+            "max_minimal_pair_probes": int(self.max_minimal_pair_probes),
             "max_packet_bytes": int(self.max_packet_bytes),
             "max_proof_details": int(self.max_proof_details),
             "max_ranked_features": int(self.max_ranked_features),
@@ -211,6 +215,12 @@ def export_introspection_packet(
         guidance_map,
         limit=max(0, int(export_config.max_view_items)),
     )
+    causal_feature_attribution = _causal_feature_attribution(
+        introspection_map,
+        guidance_map,
+        max_groups=max(0, int(export_config.max_causal_feature_groups)),
+        max_pair_probes=max(0, int(export_config.max_minimal_pair_probes)),
+    )
     run_context = _run_context(context_map)
 
     packet: Dict[str, Any] = {
@@ -221,11 +231,15 @@ def export_introspection_packet(
                 set(_dense_keys(introspection_map)) | set(_dense_keys(guidance_map))
             ),
         ),
+        "causal_feature_attribution": causal_feature_attribution,
         "compiler_round_trip_gaps": compiler_round_trip_gaps,
         "compiler_decompiler_metrics": compiler_decompiler_metrics,
         "evidence_id": "",
         "evidence_hashes": {
             "canonical_modal_ir_hash": modal_ir_hash,
+            "causal_feature_attribution_hash": _hash_json(
+                causal_feature_attribution
+            ),
             "compiler_guidance_hash": _hash_json(guidance_map),
             "compiler_metrics_hash": _hash_json(compiler_decompiler_metrics),
             "learned_view_gaps_hash": _hash_json(learned_view_gaps),
@@ -423,6 +437,7 @@ def validate_disagreement_packet(
     evidence_hashes = _mapping(payload.get("evidence_hashes"))
     for key in (
         "canonical_modal_ir_hash",
+        "causal_feature_attribution_hash",
         "compiler_guidance_hash",
         "compiler_metrics_hash",
         "learned_view_gaps_hash",
@@ -850,6 +865,121 @@ def _learned_view_gaps(
     }
 
 
+def _causal_feature_attribution(
+    introspection: Mapping[str, Any],
+    guidance: Mapping[str, Any],
+    *,
+    max_groups: int,
+    max_pair_probes: int,
+) -> Dict[str, Any]:
+    source = _mapping(guidance.get("causal_feature_attribution"))
+    ablations = _mapping(source.get("feature_group_ablations")) or _mapping(
+        introspection.get("feature_group_ablations")
+    )
+    pair_probes = _mapping(source.get("legal_minimal_pair_probes")) or _mapping(
+        introspection.get("legal_minimal_pair_probes")
+    )
+    actionability = _mapping(guidance.get("compiler_actionability")) or _mapping(
+        introspection.get("compiler_actionability")
+    )
+    compact_ablations: Dict[str, Any] = {}
+    ablation_rows: List[tuple[float, str, Mapping[str, Any]]] = []
+    for group, item in sorted(ablations.items(), key=lambda pair: str(pair[0])):
+        item_map = _mapping(item)
+        directional = _mapping(item_map.get("directional_effect"))
+        objective_delta = _float_or_zero(directional.get("objective_delta"))
+        ablation_rows.append((abs(objective_delta), str(group), item_map))
+    ablation_rows.sort(key=lambda row: (-row[0], row[1]))
+    for _score, group, item_map in ablation_rows[:max_groups]:
+        compact_ablations[group] = {
+            "directional_effect": {
+                "direction": str(
+                    _mapping(item_map.get("directional_effect")).get("direction")
+                    or ""
+                ),
+                "objective_delta": round(
+                    _float_or_zero(
+                        _mapping(item_map.get("directional_effect")).get(
+                            "objective_delta"
+                        )
+                    ),
+                    12,
+                ),
+                "supports_compiler_action": bool(
+                    _mapping(item_map.get("directional_effect")).get(
+                        "supports_compiler_action",
+                        False,
+                    )
+                ),
+            },
+            "metric_delta": _compact_metric_delta(item_map.get("metric_delta")),
+            "removed_feature_count": int(
+                _float_or_zero(item_map.get("removed_feature_count"))
+            ),
+            "sample_memory_used": bool(item_map.get("sample_memory_used", False)),
+        }
+
+    compact_pairs: Dict[str, Any] = {}
+    for group, item in sorted(pair_probes.items(), key=lambda pair: str(pair[0]))[
+        :max_pair_probes
+    ]:
+        item_map = _mapping(item)
+        compact_pairs[str(group)] = {
+            "ablated_pair_metric_delta": _compact_metric_delta(
+                item_map.get("ablated_pair_metric_delta")
+            ),
+            "pair_metric_delta": _compact_metric_delta(
+                item_map.get("pair_metric_delta")
+            ),
+            "pair_sample_hash": str(item_map.get("pair_sample_hash") or ""),
+            "sample_memory_used": bool(item_map.get("sample_memory_used", False)),
+            "transformation": str(item_map.get("transformation") or ""),
+        }
+    return {
+        "compiler_actionability": {
+            "actionability_requires_cohort": bool(
+                actionability.get("actionability_requires_cohort", False)
+            ),
+            "compiler_actionable_feature_groups": [
+                str(value)
+                for value in actionability.get(
+                    "compiler_actionable_feature_groups",
+                    [],
+                )
+                or []
+            ][:max_groups],
+            "frozen_holdout_sample_count": int(
+                _float_or_zero(actionability.get("frozen_holdout_sample_count"))
+            ),
+            "sample_memory_used": bool(actionability.get("sample_memory_used", False)),
+        },
+        "feature_group_ablations": compact_ablations,
+        "legal_minimal_pair_probes": compact_pairs,
+        "sample_memory_used": False,
+    }
+
+
+def _compact_metric_delta(value: Any) -> Dict[str, float]:
+    metric_delta = _numeric_mapping(value)
+    keys = (
+        "compiler_ir_cross_entropy_excess_loss",
+        "compiler_ir_cross_entropy_loss",
+        "compiler_ir_cosine_similarity",
+        "decompiler_embedding_cosine_loss",
+        "decompiler_token_loss",
+        "formal_validity",
+        "formal_validity_penalty",
+        "learned_view_cross_entropy_excess_loss",
+        "learned_view_cross_entropy_loss",
+        "learned_view_cosine_similarity",
+    )
+    return {
+        key: round(float(metric_delta[key]), 12)
+        for key in keys
+        if key in metric_delta
+    }
+
+
 def _run_context(context: Mapping[str, Any]) -> Dict[str, Any]:
     frozen_canary = _mapping(context.get("frozen_canary"))
     return {
@@ -1049,6 +1179,8 @@ def _cap_packet(
             lambda data: _pop_last(data.get("synthesis_hints")),
             lambda data: _pop_last(data.get("synthesis_focus")),
             lambda data: _pop_mapping_last(_nested_get(data, "compiler_round_trip_gaps", "component_gaps")),
+            lambda data: _pop_mapping_last(_nested_get(data, "causal_feature_attribution", "legal_minimal_pair_probes")),
+            lambda data: _pop_mapping_last(_nested_get(data, "causal_feature_attribution", "feature_group_ablations")),
             lambda data: _pop_mapping_last(_nested_get(data, "sample_hashes", "source_span_hashes")),
             lambda data: _pop_mapping_last(_nested_get(data, "learned_view_gaps", "view_gap_distribution")),
             lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "canonical", "view_distribution")),
@@ -1086,6 +1218,15 @@ def _minimal_packet(packet: Mapping[str, Any]) -> Dict[str, Any]:
             "raw_source_text_included": False,
         },
         "compiler_decompiler_metrics": _mapping(packet.get("compiler_decompiler_metrics")),
+        "causal_feature_attribution": {
+            "compiler_actionability": {
+                "compiler_actionable_feature_groups": [],
+                "sample_memory_used": False,
+            },
+            "feature_group_ablations": {},
+            "legal_minimal_pair_probes": {},
+            "sample_memory_used": False,
+        },
         "compiler_round_trip_gaps": {
             key: value
             for key, value in _mapping(packet.get("compiler_round_trip_gaps")).items()
