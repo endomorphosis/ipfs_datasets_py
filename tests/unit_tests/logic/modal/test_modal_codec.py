@@ -44896,6 +44896,134 @@ def test_decompiler_reconstructs_packet_126_conservation_transfer_slots() -> Non
     assert "national seashore recreation area" in donation_structural_text
 
 
+def test_decompiler_reconstructs_packet_946_designation_guard_and_status_slots() -> None:
+    historic_document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "When title to the Andrew Johnson Homestead shall have been vested "
+            "in the United States, the area shall be designated and set apart "
+            "by proclamation of the President for preservation as a national "
+            "historic site."
+        ),
+        predicate="secretary_designate_historic_site",
+        conditions=["when title has vested"],
+    )
+    guard_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Army National Guard of United States; Air National Guard of "
+            "United States: limitation on relocation of units. A unit of the "
+            "Air National Guard may not be relocated or withdrawn without the "
+            "consent of the governor."
+        ),
+        predicate="air_national_guard_relocation_limit",
+    )
+    fiscal_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Section related to availability of appropriated amounts for "
+            "fiscal year 1993 and was omitted from the Code following "
+            "enactment of Title 51."
+        ),
+        predicate="appropriated_amount_availability",
+    )
+    salvage_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "In the administration of this chapter, the Secretary may enter "
+            "into contracts, obtain the services of experts and consultants, "
+            "and accept funds made available for salvage archeological purposes."
+        ),
+        predicate="secretary_salvage_archeology_administration",
+    )
+
+    historic_decoded = decode_modal_ir_document(historic_document)
+    historic_slots = decoded_modal_phrase_slot_text_map(historic_decoded)
+    historic_structural = _structural_decoded_text(
+        historic_decoded,
+        modal_ir=historic_document,
+        selected_frame=None,
+    )
+    guard_decoded = decode_modal_ir_document(guard_document)
+    guard_slots = decoded_modal_phrase_slot_text_map(guard_decoded)
+    guard_structural = _structural_decoded_text(
+        guard_decoded,
+        modal_ir=guard_document,
+        selected_frame=None,
+    )
+    fiscal_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(fiscal_document)
+    )
+    salvage_decoded = decode_modal_ir_document(salvage_document)
+    salvage_slots = decoded_modal_phrase_slot_text_map(salvage_decoded)
+    salvage_structural = _structural_decoded_text(
+        salvage_decoded,
+        modal_ir=salvage_document,
+        selected_frame=None,
+    )
+
+    assert "national_historic_site_designation" in historic_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "historic_site_preservation_designation" in historic_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "deontic->frame" in historic_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "national historic site designation" in historic_structural
+
+    assert "national_guard_relocation_limit" in guard_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "unit_relocation_withdrawal_restriction" in guard_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "state_governor_consent_requirement" in guard_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->temporal" in guard_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "frame->deontic" in guard_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "national guard relocation limit" in guard_structural
+    assert "state governor consent requirement" in guard_structural
+
+    assert "fiscal_year_appropriation_availability" in fiscal_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "codification_transition" in fiscal_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->temporal" in fiscal_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+
+    assert "salvage_archeology_administration" in salvage_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "expert_consultant_service_authority" in salvage_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "salvage_fund_use_authority" in salvage_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "frame->deontic" in salvage_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "salvage archeology" in salvage_structural
+
+
 def test_decompiler_reconstructs_packet_126_editorial_and_china_oversight_slots() -> None:
     transfer_document = _single_formula_document(
         family="frame",

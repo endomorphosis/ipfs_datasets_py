@@ -395,10 +395,22 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("national seashore recreational areas", "national_seashore_recreation_area"),
     ("national seashore", "national_seashore_recreation_area"),
     ("recreational areas", "recreation_area"),
+    ("national historic site", "national_historic_site_designation"),
+    ("historic site purposes", "national_historic_site_designation"),
+    ("designated and set apart", "historic_site_preservation_designation"),
+    ("set apart by proclamation", "historic_site_preservation_designation"),
+    ("preservation as a national historic site", "historic_site_preservation_designation"),
     ("safe and adequate interstate air transportation", "air_transportation_service_duty"),
     ("safe and adequate air transportation", "air_transportation_service_duty"),
     ("air carrier shall provide", "air_carrier_service_duty"),
     ("interstate air transportation", "interstate_air_transportation"),
+    ("army national guard of the united states", "national_guard_unit_status"),
+    ("air national guard of the united states", "national_guard_unit_status"),
+    ("national guard of the united states", "national_guard_unit_status"),
+    ("limitation on relocation of units", "national_guard_relocation_limit"),
+    ("may not be relocated or withdrawn", "national_guard_relocation_limit"),
+    ("relocated or withdrawn", "unit_relocation_withdrawal_restriction"),
+    ("consent of the governor", "state_governor_consent_requirement"),
     ("performance accountability system", "workforce_performance_accountability"),
     ("state performance reports", "workforce_performance_reporting"),
     ("workforce development", "workforce_development_program"),
@@ -817,6 +829,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("land title", "land_title_authority"),
     ("transferred from the u.s. government publishing office", "editorial_transfer_status"),
     ("transferred from the us government publishing office", "editorial_transfer_status"),
+    ("availability of appropriated amounts", "appropriated_amount_availability"),
+    ("appropriated amounts for fiscal year", "fiscal_year_appropriation_availability"),
+    ("following enactment of title", "codification_transition"),
+    ("salvage archeological purposes", "salvage_archeology_administration"),
+    ("salvage archaeological purposes", "salvage_archeology_administration"),
+    ("make cooperative agreements", "cooperative_agreement_authority"),
+    ("services of experts and consultants", "expert_consultant_service_authority"),
+    ("funds made available for salvage", "salvage_fund_use_authority"),
     ("trade and rule of law", "trade_rule_of_law_compliance"),
     ("rule of law issues", "trade_rule_of_law_compliance"),
     ("united states-china relations", "china_relations_oversight"),
@@ -1175,6 +1195,7 @@ _PROGRAM_RECONSTRUCTION_ATOMS = frozenset(
         "sustainable_chemistry_activity_support",
         "technology_innovation_program",
         "tribal_energy_resource_agreement",
+        "salvage_archeology_administration",
     }
 )
 _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS = frozenset(
@@ -5336,6 +5357,32 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("land_withdrawal_restoration_scope")
     if re.search(
+        r"\b(?:army|air)?\s*national\s+guard\b.{0,100}"
+        r"\b(?:relocat(?:e|ed|ion)|withdraw(?:n|al)?)\b",
+        normalized,
+    ) or re.search(
+        r"\b(?:relocat(?:e|ed|ion)|withdraw(?:n|al)?)\b.{0,100}"
+        r"\b(?:army|air)?\s*national\s+guard\b",
+        normalized,
+    ):
+        add("national_guard_unit_status")
+        add("national_guard_relocation_limit")
+        add("unit_relocation_withdrawal_restriction")
+    if re.search(
+        r"\b(?:relocat(?:e|ed)|withdrawn)\b.{0,100}\bconsent\s+of\s+the\s+governor\b",
+        normalized,
+    ):
+        add("state_governor_consent_requirement")
+    if re.search(
+        r"\bnational\s+historic\s+site\b|"
+        r"\bhistoric\s+site\s+purposes\b|"
+        r"\bdesignated\b.{0,80}\bpreservation\b.{0,80}\bhistoric\s+site\b|"
+        r"\bset\s+apart\b.{0,80}\bpreservation\b",
+        normalized,
+    ):
+        add("national_historic_site_designation")
+        add("historic_site_preservation_designation")
+    if re.search(
         r"\btransfer\b.{0,80}\b(?:housing|lands?|property)\b|"
         r"\b(?:housing|lands?|property)\b.{0,80}\btransfer\b",
         normalized,
@@ -5484,6 +5531,35 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("deadline_report_duty")
+    if re.search(
+        r"\bappropriated\s+amounts?\b.{0,120}\bfiscal\s+year\b|"
+        r"\bfiscal\s+year\b.{0,120}\bappropriated\s+amounts?\b",
+        normalized,
+    ):
+        add("appropriated_amount_availability")
+        add("fiscal_year_appropriation_availability")
+    if re.search(
+        r"\b(?:omitted|reclassified|renumbered|transferred)\b.{0,120}"
+        r"\bfollowing\s+enactment\b",
+        normalized,
+    ):
+        add("codification_transition")
+    if re.search(
+        r"\bsalvage\s+archae?olog(?:ical|y)\b|"
+        r"\b(?:experts?|consultants?)\b.{0,120}\bsalvage\s+archae?olog",
+        normalized,
+    ):
+        add("salvage_archeology_administration")
+    if re.search(
+        r"\b(?:accept|utili[sz]e)\b.{0,120}\bfunds\b.{0,120}\bsalvage\s+archae?olog",
+        normalized,
+    ):
+        add("salvage_fund_use_authority")
+    if re.search(
+        r"\b(?:obtain|services?\s+of)\b.{0,80}\bexperts?\b.{0,40}\bconsultants?\b",
+        normalized,
+    ):
+        add("expert_consultant_service_authority")
     if re.search(
         r"\bterritorial\s+jurisdiction\b.{0,120}\b(?:hydraulic\s+)?mining\b",
         normalized,
@@ -12013,6 +12089,24 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("CEC.native")
         add("modal.frame_logic")
+    if normalized_atom in {
+        "codification_transition",
+        "expert_consultant_service_authority",
+        "fiscal_year_appropriation_availability",
+        "historic_site_preservation_designation",
+        "national_guard_relocation_limit",
+        "national_guard_unit_status",
+        "national_historic_site_designation",
+        "salvage_archeology_administration",
+        "salvage_fund_use_authority",
+        "state_governor_consent_requirement",
+        "unit_relocation_withdrawal_restriction",
+    }:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _RESEARCH_ADMINISTRATION_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -13194,6 +13288,28 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in {
+            "expert_consultant_service_authority",
+            "historic_site_preservation_designation",
+            "national_guard_relocation_limit",
+            "national_guard_unit_status",
+            "national_historic_site_designation",
+            "salvage_archeology_administration",
+            "salvage_fund_use_authority",
+            "state_governor_consent_requirement",
+            "unit_relocation_withdrawal_restriction",
+        }:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in {
+            "codification_transition",
+            "fiscal_year_appropriation_availability",
+            "national_guard_relocation_limit",
+            "unit_relocation_withdrawal_restriction",
+        }:
+            add("temporal")
+            add("frame")
         if normalized_atom in {
             "judicial_review",
             "presidential_action",
@@ -15731,6 +15847,36 @@ def _typed_decompiler_predicate_classes(
         }
     ):
         add("statutory")
+    if normalized_atoms.intersection(
+        {
+            "expert_consultant_service_authority",
+            "historic_site_preservation_designation",
+            "national_historic_site_designation",
+            "salvage_archeology_administration",
+            "salvage_fund_use_authority",
+        }
+    ):
+        add("authorization")
+        add("program")
+        add("statutory")
+    if normalized_atoms.intersection(
+        {
+            "state_governor_consent_requirement",
+            "national_guard_relocation_limit",
+            "unit_relocation_withdrawal_restriction",
+        }
+    ):
+        add("duty")
+        add("remedy")
+        add("statutory")
+    if normalized_atoms.intersection(
+        {
+            "codification_transition",
+            "fiscal_year_appropriation_availability",
+        }
+    ):
+        add("statutory")
+        add("reporting")
     return classes
 
 
