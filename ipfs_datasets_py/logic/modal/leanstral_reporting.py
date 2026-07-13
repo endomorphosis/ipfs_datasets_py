@@ -29,6 +29,21 @@ from .leanstral_verifier import (
 
 
 LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION = "legal-ir-leanstral-rule-gap-report-v1"
+LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION = (
+    "legal-ir-leanstral-patch-feedback-report-v1"
+)
+LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT = "accepted_improvement"
+LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION = "quality_regression"
+LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS = "unsupported_hypothesis"
+LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE = "operational_failure"
+LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE = "stale_evidence"
+LEANSTRAL_PATCH_OUTCOME_STATUSES = {
+    LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT,
+    LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION,
+    LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS,
+    LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE,
+    LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE,
+}
 
 _FREE_FORM_SURFACE_PATTERN = re.compile(
     r"\b(?:architecture|architectural|brainstorm|design doc|epic|platform|"
@@ -304,6 +319,109 @@ class LeanstralRuleGapReportConfig:
     max_conflicts_per_gap: int = 5
 
 
+@dataclass(frozen=True)
+class LeanstralPatchLineage:
+    """State-to-audit-to-TODO-to-patch lineage for one compiler patch result."""
+
+    state_hash: str = ""
+    compiler_commit: str = ""
+    gap_id: str = ""
+    normalized_rule_key: str = ""
+    feature_cluster_id: str = ""
+    target_component: str = ""
+    owned_ast_scope: str = ""
+    todo_id: str = ""
+    todo_status: str = ""
+    todo_action: str = ""
+    audit_request_ids: Sequence[str] = field(default_factory=tuple)
+    audit_response_hashes: Sequence[str] = field(default_factory=tuple)
+    evidence_ids: Sequence[str] = field(default_factory=tuple)
+    proof_ids: Sequence[str] = field(default_factory=tuple)
+    patch_status: str = ""
+    codex_exec_status: str = ""
+    validation_commands: Sequence[str] = field(default_factory=tuple)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "audit_request_ids": list(self.audit_request_ids),
+            "audit_response_hashes": list(self.audit_response_hashes),
+            "codex_exec_status": self.codex_exec_status,
+            "compiler_commit": self.compiler_commit,
+            "evidence_ids": list(self.evidence_ids),
+            "feature_cluster_id": self.feature_cluster_id,
+            "gap_id": self.gap_id,
+            "normalized_rule_key": self.normalized_rule_key,
+            "owned_ast_scope": self.owned_ast_scope,
+            "patch_status": self.patch_status,
+            "proof_ids": list(self.proof_ids),
+            "state_hash": self.state_hash,
+            "target_component": self.target_component,
+            "todo_action": self.todo_action,
+            "todo_id": self.todo_id,
+            "todo_status": self.todo_status,
+            "validation_commands": list(self.validation_commands),
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralPatchOutcomeRecord:
+    """Attribution of one accepted or rejected compiler patch to a feature cluster."""
+
+    outcome_id: str
+    outcome: str
+    feature_cluster_id: str
+    lineage: LeanstralPatchLineage
+    target_metrics: Sequence[str] = field(default_factory=tuple)
+    metric_deltas: Mapping[str, float] = field(default_factory=dict)
+    reasons: Sequence[str] = field(default_factory=tuple)
+    compiler_target: Optional[Dict[str, Any]] = None
+    suppress_cluster: bool = False
+    verified_for_autoencoder: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "compiler_target": _json_ready(self.compiler_target or {}),
+            "feature_cluster_id": self.feature_cluster_id,
+            "lineage": self.lineage.to_dict(),
+            "metric_deltas": {
+                str(key): float(value)
+                for key, value in sorted(self.metric_deltas.items())
+            },
+            "outcome": self.outcome,
+            "outcome_id": self.outcome_id,
+            "reasons": list(self.reasons),
+            "suppress_cluster": bool(self.suppress_cluster),
+            "target_metrics": list(self.target_metrics),
+            "verified_for_autoencoder": bool(self.verified_for_autoencoder),
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralPatchFeedbackReport:
+    """Feedback report consumed by projection and compiler-target evaluation."""
+
+    schema_version: str
+    outcomes: Sequence[LeanstralPatchOutcomeRecord]
+    suppressed_feature_clusters: Sequence[str] = field(default_factory=tuple)
+    compiler_targets_for_autoencoder_evaluation: Sequence[Dict[str, Any]] = field(
+        default_factory=tuple
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        counts: Dict[str, int] = {}
+        for outcome in self.outcomes:
+            counts[outcome.outcome] = counts.get(outcome.outcome, 0) + 1
+        return {
+            "compiler_targets_for_autoencoder_evaluation": _json_ready(
+                list(self.compiler_targets_for_autoencoder_evaluation)
+            ),
+            "outcome_counts": dict(sorted(counts.items())),
+            "outcomes": [outcome.to_dict() for outcome in self.outcomes],
+            "schema_version": self.schema_version,
+            "suppressed_feature_clusters": list(self.suppressed_feature_clusters),
+        }
+
+
 @dataclass
 class _GapAccumulator:
     response: LeanstralAuditResponse
@@ -442,6 +560,424 @@ def leanstral_rule_gap_report_to_json(report: LeanstralRuleGapReport) -> str:
     """Serialize a rule-gap report with stable key ordering."""
 
     return json.dumps(report.to_dict(), ensure_ascii=True, sort_keys=True, indent=2)
+
+
+def build_leanstral_patch_feedback_report(
+    patch_results: Iterable[Any],
+    *,
+    suppression_threshold: int = 2,
+) -> LeanstralPatchFeedbackReport:
+    """Attribute compiler patch outcomes back to Leanstral feature clusters.
+
+    The input may be ``ModalTodo`` objects, TODO dictionaries, or explicit
+    dictionaries with ``todo``/``validation_report`` keys.  Only verified,
+    completed program-synthesis patches become compiler targets for later
+    autoencoder evaluation; unverified Leanstral assertions remain journaled
+    evidence and are never emitted as trainable weight updates.
+    """
+
+    threshold = max(1, int(suppression_threshold))
+    outcomes: List[LeanstralPatchOutcomeRecord] = []
+    disproved_counts: Dict[str, int] = {}
+    for item in patch_results:
+        record = _patch_feedback_record(item)
+        if record is None:
+            continue
+        outcomes.append(record)
+        if record.outcome in {
+            LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION,
+            LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS,
+        }:
+            disproved_counts[record.feature_cluster_id] = (
+                disproved_counts.get(record.feature_cluster_id, 0) + 1
+            )
+
+    suppressed = tuple(
+        sorted(
+            cluster_id
+            for cluster_id, count in disproved_counts.items()
+            if cluster_id and count >= threshold
+        )
+    )
+    compiler_targets = tuple(
+        record.compiler_target
+        for record in outcomes
+        if record.compiler_target
+        and record.outcome == LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT
+    )
+    return LeanstralPatchFeedbackReport(
+        schema_version=LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION,
+        outcomes=tuple(outcomes),
+        suppressed_feature_clusters=suppressed,
+        compiler_targets_for_autoencoder_evaluation=compiler_targets,
+    )
+
+
+def leanstral_patch_feedback_report_to_json(
+    report: LeanstralPatchFeedbackReport,
+) -> str:
+    """Serialize a patch feedback report with stable key ordering."""
+
+    return json.dumps(report.to_dict(), ensure_ascii=True, sort_keys=True, indent=2)
+
+
+def classify_leanstral_patch_outcome(record: Any) -> str:
+    """Return the deterministic feedback classification for one patch record."""
+
+    data, metadata = _patch_feedback_data(record)
+    status = str(data.get("status") or data.get("todo_status") or "").strip()
+    if bool(metadata.get("leanstral_stale_evidence")) or status == "stale":
+        return LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE
+
+    patch_status = str(
+        data.get("patch_status")
+        or metadata.get("completed_patch_status")
+        or metadata.get("failed_validation_patch_status")
+        or metadata.get("last_transient_patch_status")
+        or ""
+    ).strip().lower()
+    exec_status = str(
+        data.get("codex_exec_status")
+        or metadata.get("completed_codex_exec_status")
+        or metadata.get("failed_validation_codex_exec_status")
+        or metadata.get("last_transient_codex_exec_status")
+        or ""
+    ).strip().lower()
+    validation = _patch_feedback_validation_report(data, metadata)
+    validation_status = str(
+        validation.get("main_apply_validation_status")
+        or validation.get("validation_status")
+        or validation.get("status")
+        or ""
+    ).strip().lower()
+    target_status = str(validation.get("target_metric_status") or "").strip().lower()
+    holdout_status = str(
+        validation.get("holdout_target_metric_status") or ""
+    ).strip().lower()
+    regressed = bool(
+        _sequence_values(validation.get("regressed_metrics"))
+        or _sequence_values(validation.get("hard_regressed_metrics"))
+        or _sequence_values(validation.get("target_metric_hard_regressed_metrics"))
+        or target_status == "regressed"
+        or holdout_status == "regressed"
+    )
+    if regressed:
+        return LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION
+
+    if status == "completed":
+        if _leanstral_patch_verified(metadata, validation):
+            return LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT
+        return LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS
+
+    if status == "failed_validation":
+        failure_reason = str(
+            data.get("failure_reason")
+            or metadata.get("failure_reason")
+            or metadata.get("failed_validation_reason")
+            or ""
+        )
+        if "regression" in failure_reason:
+            return LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION
+        if validation_status == "failed" or patch_status in {
+            "created",
+            "applied_to_main",
+            "main_apply_no_merged_delta",
+        }:
+            return LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS
+        return LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE
+
+    if patch_status in {
+        "awaiting_codex_changes",
+        "main_apply_baseline_validation_failed_rolled_back",
+        "main_apply_target_metric_unavailable_rolled_back",
+    } or exec_status in {"failed", "timeout", "transient_failure"}:
+        return LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE
+    return LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS
+
+
+def leanstral_compiler_target_from_patch_record(record: Any) -> Optional[Dict[str, Any]]:
+    """Return a deterministic compiler target only for verified accepted patches."""
+
+    data, metadata = _patch_feedback_data(record)
+    validation = _patch_feedback_validation_report(data, metadata)
+    if classify_leanstral_patch_outcome(record) != LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT:
+        return None
+    if not _leanstral_patch_verified(metadata, validation):
+        return None
+    target_metrics = _dedupe_strings(_sequence_values(metadata.get("target_metrics")))
+    return {
+        "allowed_paths": list(_dedupe_strings(_sequence_values(metadata.get("allowed_paths")))),
+        "audit_request_ids": list(
+            _dedupe_strings(_sequence_values(metadata.get("audit_request_ids")))
+        ),
+        "audit_response_hashes": list(
+            _dedupe_strings(_sequence_values(metadata.get("audit_response_hashes")))
+        ),
+        "evidence_ids": list(_dedupe_strings(_sequence_values(metadata.get("evidence_ids")))),
+        "feature_cluster_id": _feature_cluster_id(data, metadata),
+        "gap_id": str(metadata.get("leanstral_gap_id") or ""),
+        "mutation_cases": list(_dedupe_strings(_sequence_values(metadata.get("mutation_cases")))),
+        "normalized_rule_key": str(metadata.get("normalized_rule_key") or ""),
+        "owned_ast_scope": str(metadata.get("owned_ast_scope") or metadata.get("program_synthesis_scope") or ""),
+        "target_component": str(metadata.get("target_component") or ""),
+        "target_metrics": list(target_metrics),
+        "todo_id": str(data.get("todo_id") or ""),
+        "validation_commands": list(
+            _dedupe_strings(_sequence_values(metadata.get("validation_commands")))
+        ),
+        "validation_gate": _json_ready(metadata.get("validation_gate") or {}),
+        "verified_compiler_rule": True,
+        "write_to_autoencoder_weights": False,
+    }
+
+
+def _patch_feedback_record(item: Any) -> Optional[LeanstralPatchOutcomeRecord]:
+    data, metadata = _patch_feedback_data(item)
+    if not bool(metadata.get("leanstral_projection")) and not metadata.get("leanstral_gap_id"):
+        return None
+    lineage = _patch_feedback_lineage(data, metadata)
+    outcome = classify_leanstral_patch_outcome(item)
+    feature_cluster_id = lineage.feature_cluster_id
+    validation = _patch_feedback_validation_report(data, metadata)
+    reasons = _patch_feedback_reasons(data, metadata, validation, outcome)
+    compiler_target = leanstral_compiler_target_from_patch_record(item)
+    payload = {
+        "feature_cluster_id": feature_cluster_id,
+        "outcome": outcome,
+        "patch_status": lineage.patch_status,
+        "todo_id": lineage.todo_id,
+    }
+    outcome_id = "leanstral-patch-outcome-" + hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return LeanstralPatchOutcomeRecord(
+        outcome_id=outcome_id,
+        outcome=outcome,
+        feature_cluster_id=feature_cluster_id,
+        lineage=lineage,
+        target_metrics=tuple(_dedupe_strings(_sequence_values(metadata.get("target_metrics")))),
+        metric_deltas=_metric_deltas(validation),
+        reasons=tuple(reasons),
+        compiler_target=compiler_target,
+        suppress_cluster=outcome
+        in {
+            LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION,
+            LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS,
+        },
+        verified_for_autoencoder=bool(compiler_target),
+    )
+
+
+def _patch_feedback_data(item: Any) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    if hasattr(item, "to_dict"):
+        data = item.to_dict()
+    elif isinstance(item, Mapping):
+        if "todo" in item and isinstance(item.get("todo"), Mapping):
+            data = dict(item["todo"])
+            data.update(
+                {
+                    key: value
+                    for key, value in item.items()
+                    if key not in {"todo", "metadata"}
+                }
+            )
+        else:
+            data = dict(item)
+    else:
+        data = {
+            "action": getattr(item, "action", ""),
+            "metadata": getattr(item, "metadata", {}),
+            "status": getattr(item, "status", ""),
+            "todo_id": getattr(item, "todo_id", ""),
+        }
+    metadata = dict(data.get("metadata") or {})
+    if isinstance(item, Mapping) and isinstance(item.get("metadata"), Mapping):
+        metadata.update(dict(item.get("metadata") or {}))
+    return data, metadata
+
+
+def _patch_feedback_lineage(
+    data: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+) -> LeanstralPatchLineage:
+    validation = _patch_feedback_validation_report(data, metadata)
+    return LeanstralPatchLineage(
+        state_hash=str(
+            metadata.get("state_hash")
+            or metadata.get("autoencoder_state_hash")
+            or data.get("state_hash")
+            or ""
+        ),
+        compiler_commit=str(
+            metadata.get("compiler_commit")
+            or data.get("compiler_commit")
+            or validation.get("compiler_commit")
+            or ""
+        ),
+        gap_id=str(metadata.get("leanstral_gap_id") or metadata.get("gap_id") or ""),
+        normalized_rule_key=str(metadata.get("normalized_rule_key") or ""),
+        feature_cluster_id=_feature_cluster_id(data, metadata),
+        target_component=str(metadata.get("target_component") or data.get("target_component") or ""),
+        owned_ast_scope=str(
+            metadata.get("owned_ast_scope")
+            or metadata.get("program_synthesis_scope")
+            or ""
+        ),
+        todo_id=str(data.get("todo_id") or ""),
+        todo_status=str(data.get("status") or data.get("todo_status") or ""),
+        todo_action=str(data.get("action") or ""),
+        audit_request_ids=tuple(
+            _dedupe_strings(_sequence_values(metadata.get("audit_request_ids")))
+        ),
+        audit_response_hashes=tuple(
+            _dedupe_strings(_sequence_values(metadata.get("audit_response_hashes")))
+        ),
+        evidence_ids=tuple(_dedupe_strings(_sequence_values(metadata.get("evidence_ids")))),
+        proof_ids=tuple(_dedupe_strings(_sequence_values(metadata.get("proof_ids")))),
+        patch_status=str(
+            data.get("patch_status")
+            or metadata.get("completed_patch_status")
+            or metadata.get("failed_validation_patch_status")
+            or metadata.get("last_transient_patch_status")
+            or ""
+        ),
+        codex_exec_status=str(
+            data.get("codex_exec_status")
+            or metadata.get("completed_codex_exec_status")
+            or metadata.get("failed_validation_codex_exec_status")
+            or metadata.get("last_transient_codex_exec_status")
+            or ""
+        ),
+        validation_commands=tuple(
+            _dedupe_strings(_sequence_values(metadata.get("validation_commands")))
+        ),
+    )
+
+
+def _patch_feedback_validation_report(
+    data: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+) -> Dict[str, Any]:
+    for value in (
+        data.get("validation_report"),
+        metadata.get("completed_validation_report"),
+        metadata.get("failed_validation_report"),
+        metadata.get("last_transient_validation_report"),
+    ):
+        if isinstance(value, Mapping):
+            return dict(value)
+    return {}
+
+
+def _feature_cluster_id(data: Mapping[str, Any], metadata: Mapping[str, Any]) -> str:
+    explicit = str(
+        metadata.get("feature_cluster_id")
+        or metadata.get("semantic_bundle_key")
+        or metadata.get("leanstral_dedup_key")
+        or metadata.get("dedupe_signature")
+        or ""
+    ).strip()
+    if explicit:
+        return explicit
+    payload = {
+        "action": str(data.get("action") or ""),
+        "gap_id": str(metadata.get("leanstral_gap_id") or ""),
+        "normalized_rule_key": str(metadata.get("normalized_rule_key") or ""),
+        "scope": str(metadata.get("program_synthesis_scope") or ""),
+        "target_component": str(metadata.get("target_component") or ""),
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:20]
+    return f"leanstral-feature-cluster:{digest}"
+
+
+def _leanstral_patch_verified(
+    metadata: Mapping[str, Any],
+    validation: Mapping[str, Any],
+) -> bool:
+    if not bool(metadata.get("leanstral_verified")):
+        return False
+    if not _sequence_values(metadata.get("leanstral_local_verifiers")):
+        return False
+    gate = metadata.get("validation_gate")
+    if isinstance(gate, Mapping) and gate.get("accepted") is False:
+        return False
+    target_status = str(validation.get("target_metric_status") or "").strip().lower()
+    holdout_status = str(
+        validation.get("holdout_target_metric_status") or ""
+    ).strip().lower()
+    validation_status = str(
+        validation.get("main_apply_validation_status")
+        or validation.get("validation_status")
+        or validation.get("status")
+        or ""
+    ).strip().lower()
+    if target_status in {"regressed", "failed", "timeout", "unavailable"}:
+        return False
+    if holdout_status in {"regressed", "failed", "timeout", "unavailable"}:
+        return False
+    if validation_status in {"failed", "timeout"}:
+        return False
+    return True
+
+
+def _patch_feedback_reasons(
+    data: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+    validation: Mapping[str, Any],
+    outcome: str,
+) -> Sequence[str]:
+    reasons: List[str] = []
+    for key in (
+        "failure_reason",
+        "failed_validation_reason",
+        "transient_failure_reason",
+        "stale_claim_requeue_reason",
+    ):
+        value = data.get(key) or metadata.get(key)
+        if value:
+            reasons.append(str(value))
+    for key in (
+        "regressed_metrics",
+        "target_metric_hard_regressed_metrics",
+        "holdout_hard_regressed_metrics",
+    ):
+        values = _sequence_values(validation.get(key))
+        if values:
+            reasons.append(f"{key}:{','.join(values)}")
+    if not reasons:
+        reasons.append(outcome)
+    return _dedupe_strings(reasons)
+
+
+def _metric_deltas(validation: Mapping[str, Any]) -> Dict[str, float]:
+    deltas: Dict[str, float] = {}
+    for key in ("metric_deltas", "holdout_metric_deltas"):
+        raw = validation.get(key)
+        if not isinstance(raw, Mapping):
+            continue
+        for metric, value in raw.items():
+            try:
+                deltas[str(metric)] = float(value)
+            except (TypeError, ValueError):
+                continue
+    return dict(sorted(deltas.items()))
+
+
+def _sequence_values(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, Mapping):
+        return [
+            str(key)
+            for key, item in value.items()
+            if item not in (None, "", [], {})
+        ]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [str(item) for item in value if str(item)]
+    text = str(value).strip()
+    return [text] if text else []
 
 
 def _gap_from_accumulator(
@@ -935,8 +1471,18 @@ def _json_ready(value: Any) -> Any:
 
 
 __all__ = [
+    "LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION",
+    "LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT",
+    "LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE",
+    "LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION",
+    "LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE",
+    "LEANSTRAL_PATCH_OUTCOME_STATUSES",
+    "LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS",
     "LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION",
     "OWNED_LEANSTRAL_RULE_GAP_SURFACES",
+    "LeanstralPatchFeedbackReport",
+    "LeanstralPatchLineage",
+    "LeanstralPatchOutcomeRecord",
     "LeanstralOwnedSurface",
     "LeanstralRejectedAudit",
     "LeanstralRuleGap",
@@ -945,5 +1491,9 @@ __all__ = [
     "LeanstralRuleGapReportConfig",
     "aggregate_verified_audits",
     "build_leanstral_rule_gap_report",
+    "build_leanstral_patch_feedback_report",
+    "classify_leanstral_patch_outcome",
+    "leanstral_compiler_target_from_patch_record",
+    "leanstral_patch_feedback_report_to_json",
     "leanstral_rule_gap_report_to_json",
 ]

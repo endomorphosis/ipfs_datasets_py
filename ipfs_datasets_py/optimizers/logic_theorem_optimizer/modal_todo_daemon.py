@@ -20,6 +20,16 @@ from ipfs_datasets_py.logic.modal.synthesis import (
     synthesis_hints_from_autoencoder_introspections,
     synthesis_hints_from_leanstral_rule_gap_report,
 )
+from ipfs_datasets_py.logic.modal.leanstral_reporting import (
+    LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT,
+    LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE,
+    LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION,
+    LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE,
+    LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS,
+    build_leanstral_patch_feedback_report,
+    classify_leanstral_patch_outcome,
+    leanstral_compiler_target_from_patch_record,
+)
 from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_scope_for_component
 
 from .legal_samples import LegalSample
@@ -340,6 +350,7 @@ class LeanstralTodoProjectionConfig:
     max_program_synthesis_queue_pressure: float = 1.0
     max_transient_failure_rate: float = 0.5
     max_transient_failures: int = 24
+    disproven_cluster_suppression_threshold: int = 2
     require_executor_available: bool = True
     require_verified_support: bool = True
     expected_compiler_commit: str = ""
@@ -362,6 +373,8 @@ class LeanstralTodoProjectionResult:
     report_only_audits: List[Dict[str, Any]]
     seed_block_reasons: List[str] = field(default_factory=list)
     executor_health: Dict[str, Any] = field(default_factory=dict)
+    suppressed_feature_clusters: List[str] = field(default_factory=list)
+    compiler_targets_for_autoencoder_evaluation: List[Dict[str, Any]] = field(default_factory=list)
     transient_failure_rate: float = 0.0
     queue_pressure: float = 0.0
     pending_count: int = 0
@@ -387,6 +400,12 @@ class LeanstralTodoProjectionResult:
             "seeded_count": self.seeded_count,
             "seeded_todo_ids": list(self.seeded_todo_ids),
             "stale_count": int(self.stale_count),
+            "suppressed_count": len(self.suppressed_feature_clusters),
+            "suppressed_feature_clusters": list(self.suppressed_feature_clusters),
+            "compiler_targets_for_autoencoder_evaluation": [
+                dict(item)
+                for item in self.compiler_targets_for_autoencoder_evaluation
+            ],
             "executor_health": dict(sorted(self.executor_health.items())),
             "pending_cap": int(self.pending_cap),
             "pending_count": int(self.pending_count),
@@ -1614,6 +1633,14 @@ class ModalProgramSynthesisTodoGenerator:
                 "allowed_paths": _unique_preserve_order(
                     str(path) for path in _as_list(evidence.get("allowed_paths"))
                 ),
+                "audit_request_ids": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("audit_request_ids"))
+                ),
+                "audit_response_hashes": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("audit_response_hashes"))
+                ),
                 "counterexamples": _leanstral_counterexamples(evidence),
                 "dedupe_signature": dedupe_signature,
                 "evidence_ids": _unique_preserve_order(
@@ -2576,6 +2603,18 @@ class ModalTodoSupervisor:
         cfg = config or LeanstralTodoProjectionConfig()
         self.last_program_synthesis_deduped_count = 0
         max_audits = max(0, int(cfg.max_audits_per_cycle or 0))
+        feedback_report = build_leanstral_patch_feedback_report(
+            self.queue.all(),
+            suppression_threshold=max(
+                1,
+                int(cfg.disproven_cluster_suppression_threshold),
+            ),
+        )
+        suppressed_clusters = set(feedback_report.suppressed_feature_clusters)
+        compiler_targets = [
+            dict(target)
+            for target in feedback_report.compiler_targets_for_autoencoder_evaluation
+        ]
         projection_report, report_only_audits, stale_count = (
             _leanstral_projection_report_for_queue(report, config=cfg)
         )
@@ -2597,6 +2636,8 @@ class ModalTodoSupervisor:
                 report_only_audits=report_only_audits,
                 seed_block_reasons=list(gate["seed_block_reasons"]),
                 executor_health=dict(gate["executor_health"]),
+                suppressed_feature_clusters=sorted(suppressed_clusters),
+                compiler_targets_for_autoencoder_evaluation=compiler_targets,
                 transient_failure_rate=float(gate["transient_failure_rate"]),
                 queue_pressure=float(gate["queue_pressure"]),
                 pending_count=int(gate["pending_count"]),
@@ -2615,6 +2656,28 @@ class ModalTodoSupervisor:
                 for todo in candidates
                 if _leanstral_projection_todo_matches_scope(todo, target_scope_filters)
             ]
+        if suppressed_clusters:
+            kept_candidates: List[ModalTodo] = []
+            for todo in candidates:
+                cluster_id = _leanstral_todo_feature_cluster_id(todo)
+                if cluster_id in suppressed_clusters:
+                    report_only_audits.append(
+                        {
+                            "gap_id": str(todo.metadata.get("leanstral_gap_id") or ""),
+                            "normalized_rule_key": str(
+                                todo.metadata.get("normalized_rule_key") or ""
+                            ),
+                            "reasons": ["feature_cluster_repeatedly_disproven"],
+                            "report_only_state": "suppressed_disproven_cluster",
+                            "target_component": str(
+                                todo.metadata.get("target_component") or ""
+                            ),
+                            "feature_cluster_id": cluster_id,
+                        }
+                    )
+                    continue
+                kept_candidates.append(todo)
+            candidates = kept_candidates
         candidates = self._bounded_new_todos(candidates, track_program_deduped=True)
         pre_budget_deduped_count = int(self.last_program_synthesis_deduped_count)
         selected, budget_skipped_count, scope_counts = _apply_leanstral_projection_budgets(
@@ -2642,6 +2705,8 @@ class ModalTodoSupervisor:
             report_only_audits=report_only_audits,
             seed_block_reasons=[],
             executor_health=dict(gate["executor_health"]),
+            suppressed_feature_clusters=sorted(suppressed_clusters),
+            compiler_targets_for_autoencoder_evaluation=compiler_targets,
             transient_failure_rate=float(gate["transient_failure_rate"]),
             queue_pressure=float(gate["queue_pressure"]),
             pending_count=int(gate["pending_count"]),
@@ -3029,9 +3094,10 @@ class ModalTodoSupervisor:
                             patch_status=normalized_patch_status,
                             codex_exec_status=normalized_exec_status,
                         )
-                    failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
-                    )
+                    failed = self.queue.fail_validation(todo_id, reason=reason)
+                    if failed and todo is not None:
+                        _record_leanstral_patch_feedback_evidence(todo)
+                    failed_validation_count += int(failed)
                     continue
                 validation_gate = None
                 if todo is not None:
@@ -3055,9 +3121,10 @@ class ModalTodoSupervisor:
                             patch_status=normalized_patch_status,
                             codex_exec_status=normalized_exec_status,
                         )
-                    failed_validation_count += int(
-                        self.queue.fail_validation(todo_id, reason=reason)
-                    )
+                    failed = self.queue.fail_validation(todo_id, reason=reason)
+                    if failed and todo is not None:
+                        _record_leanstral_patch_feedback_evidence(todo)
+                    failed_validation_count += int(failed)
                     continue
                 if todo is not None:
                     _record_program_synthesis_completion_evidence(
@@ -3066,7 +3133,10 @@ class ModalTodoSupervisor:
                         patch_status=normalized_patch_status,
                         codex_exec_status=normalized_exec_status,
                     )
-                completed_count += int(self.queue.complete(todo_id))
+                completed = self.queue.complete(todo_id)
+                if completed and todo is not None:
+                    _record_leanstral_patch_feedback_evidence(todo)
+                completed_count += int(completed)
             outcome = (
                 "partial"
                 if completed_count and failed_validation_count
@@ -3132,6 +3202,7 @@ class ModalTodoSupervisor:
                     todo.metadata["last_transient_patch_status"] = normalized_patch_status
                     todo.metadata["last_transient_codex_exec_status"] = normalized_exec_status
                     todo.requeue(reason or "transient_apply_failure")
+                    _record_leanstral_patch_feedback_evidence(todo)
                     requeued_count += 1
                     continue
                 if action == "completed":
@@ -3141,7 +3212,10 @@ class ModalTodoSupervisor:
                         patch_status=normalized_patch_status,
                         codex_exec_status=normalized_exec_status,
                     )
-                    completed_count += int(self.queue.complete(todo_id))
+                    completed = self.queue.complete(todo_id)
+                    if completed:
+                        _record_leanstral_patch_feedback_evidence(todo)
+                    completed_count += int(completed)
                     continue
                 if action == "failed_validation":
                     reason = _program_synthesis_failure_reason(
@@ -3155,12 +3229,13 @@ class ModalTodoSupervisor:
                         patch_status=normalized_patch_status,
                         codex_exec_status=normalized_exec_status,
                     )
-                    failed_validation_count += int(
-                        self.queue.fail_validation(
-                            todo_id,
-                            reason=reason,
-                        )
+                    failed = self.queue.fail_validation(
+                        todo_id,
+                        reason=reason,
                     )
+                    if failed:
+                        _record_leanstral_patch_feedback_evidence(todo)
+                    failed_validation_count += int(failed)
             outcome = (
                 "partial"
                 if completed_count and (failed_validation_count or requeued_count)
@@ -5490,6 +5565,8 @@ def _merge_program_todo_evidence(target: ModalTodo, duplicate: ModalTodo) -> Non
         target.metadata["hint_evidence"] = evidence
     for key, limit in (
         ("allowed_paths", 16),
+        ("audit_request_ids", 64),
+        ("audit_response_hashes", 64),
         ("conflicting_evidence_ids", 32),
         ("evidence_ids", 64),
         ("proof_ids", 64),
@@ -5740,6 +5817,8 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
     }
     for key in (
         "allowed_paths",
+        "audit_request_ids",
+        "audit_response_hashes",
         "bridge_failure_name",
         "cosine_loss",
         "cosine_similarity",
@@ -5936,6 +6015,54 @@ def _record_program_synthesis_failure_evidence(
     compact_report = _compact_program_synthesis_validation_report(validation_report)
     if compact_report:
         todo.metadata["failed_validation_report"] = compact_report
+
+
+def _leanstral_todo_feature_cluster_id(todo: ModalTodo) -> str:
+    for key in (
+        "feature_cluster_id",
+        "semantic_bundle_key",
+        "leanstral_dedup_key",
+        "dedupe_signature",
+    ):
+        value = str(todo.metadata.get(key) or "").strip()
+        if value:
+            return value
+    payload = {
+        "action": todo.action,
+        "gap_id": str(todo.metadata.get("leanstral_gap_id") or ""),
+        "normalized_rule_key": str(todo.metadata.get("normalized_rule_key") or ""),
+        "scope": _program_todo_scope(todo),
+        "target_component": _todo_target_component(todo),
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:20]
+    return f"leanstral-feature-cluster:{digest}"
+
+
+def _record_leanstral_patch_feedback_evidence(todo: ModalTodo) -> None:
+    """Attach Leanstral outcome attribution without creating trainable updates."""
+    if not bool(todo.metadata.get("leanstral_projection")):
+        return
+    outcome = classify_leanstral_patch_outcome(todo)
+    cluster_id = _leanstral_todo_feature_cluster_id(todo)
+    todo.metadata["leanstral_patch_outcome"] = outcome
+    todo.metadata["feature_cluster_id"] = cluster_id
+    todo.metadata["leanstral_feedback_recorded_at"] = _utc_now()
+    todo.metadata["leanstral_feedback_never_write_to_autoencoder_weights"] = True
+    compiler_target = leanstral_compiler_target_from_patch_record(todo)
+    if compiler_target is not None:
+        todo.metadata["compiler_target_for_autoencoder_evaluation"] = compiler_target
+        todo.metadata["leanstral_verified_compiler_target"] = True
+    elif outcome in {
+        LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION,
+        LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS,
+    }:
+        todo.metadata["leanstral_disproven_feature_cluster"] = True
+    elif outcome == LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE:
+        todo.metadata["leanstral_operational_failure"] = True
+    elif outcome == LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE:
+        todo.metadata["leanstral_stale_evidence"] = True
 
 
 def _todo_optimizer_role(todo: ModalTodo) -> str:

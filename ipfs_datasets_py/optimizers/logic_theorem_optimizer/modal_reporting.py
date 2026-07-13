@@ -8,6 +8,10 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional
 from .legal_samples import LegalSample
 from .modal_autoencoder import AutoencoderEvaluation
 from .modal_prover_router import ModalProverRouteResult
+from ipfs_datasets_py.logic.modal.leanstral_reporting import (
+    LEANSTRAL_PATCH_OUTCOME_STATUSES,
+    build_leanstral_patch_feedback_report,
+)
 
 
 @dataclass(frozen=True)
@@ -91,6 +95,28 @@ class ModalSupervisorHealthReport:
                 sorted(self.state_to_compiler_patch_lag.items())
             ),
             "transient_failure_rate": float(self.transient_failure_rate),
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralFeedbackSummary:
+    """Compact optimizer report for Leanstral patch outcome feedback."""
+
+    outcome_counts: Dict[str, int]
+    suppressed_feature_clusters: List[str] = field(default_factory=list)
+    compiler_targets_for_autoencoder_evaluation: List[Dict[str, Any]] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        counts = {status: 0 for status in sorted(LEANSTRAL_PATCH_OUTCOME_STATUSES)}
+        counts.update({str(key): int(value) for key, value in self.outcome_counts.items()})
+        return {
+            "compiler_targets_for_autoencoder_evaluation": [
+                dict(target)
+                for target in self.compiler_targets_for_autoencoder_evaluation
+            ],
+            "outcome_counts": dict(sorted(counts.items())),
+            "suppressed_count": len(self.suppressed_feature_clusters),
+            "suppressed_feature_clusters": list(self.suppressed_feature_clusters),
         }
 
 
@@ -198,6 +224,30 @@ def build_modal_supervisor_health_report(
         queue_pressure=queue_pressure,
         seed_block_reasons=seed_block_reasons,
         reasons=reasons,
+    )
+
+
+def build_leanstral_feedback_summary(
+    patch_results: Iterable[Any],
+    *,
+    suppression_threshold: int = 2,
+) -> LeanstralFeedbackSummary:
+    """Summarize Leanstral patch feedback for optimizer dashboards."""
+
+    report = build_leanstral_patch_feedback_report(
+        patch_results,
+        suppression_threshold=suppression_threshold,
+    )
+    counts: Dict[str, int] = {}
+    for outcome in report.outcomes:
+        counts[outcome.outcome] = counts.get(outcome.outcome, 0) + 1
+    return LeanstralFeedbackSummary(
+        outcome_counts=counts,
+        suppressed_feature_clusters=list(report.suppressed_feature_clusters),
+        compiler_targets_for_autoencoder_evaluation=[
+            dict(target)
+            for target in report.compiler_targets_for_autoencoder_evaluation
+        ],
     )
 
 
@@ -380,8 +430,10 @@ def _recursive_status_count(value: Any, status: str) -> int:
 
 
 __all__ = [
+    "LeanstralFeedbackSummary",
     "ModalSupervisorHealthReport",
     "ModalParserReport",
+    "build_leanstral_feedback_summary",
     "build_modal_supervisor_health_report",
     "build_modal_parser_report",
     "state_to_compiler_patch_lag",
