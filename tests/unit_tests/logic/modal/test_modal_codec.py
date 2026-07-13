@@ -46801,6 +46801,90 @@ def test_decompiler_emits_normative_status_narrative_for_packet_000346_slots() -
     assert "knowledge graph legal relations" in structural_text
 
 
+def test_decompiler_reconstructs_packet_000348_fund_and_reclamation_slots() -> None:
+    implementation_fund = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "42 U.S.C. 18121. Implementation funding. There is hereby "
+            "established a Health Insurance Reform Implementation Fund within "
+            "the Department of Health and Human Services to carry out the "
+            "Patient Protection and Affordable Care Act."
+        ),
+        predicate="health_insurance_reform_implementation_fund",
+    )
+    irrigation_project = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "25 U.S.C. 382. Irrigation projects under Reclamation Act. "
+            "The Secretary shall administer irrigation projects under the "
+            "Reclamation Act for allotted lands."
+        ),
+        predicate="secretary_administer_irrigation_projects",
+    )
+    for document in (implementation_fund, irrigation_project):
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": [
+                        "deontic->deontic",
+                        "frame->deontic",
+                        "frame->frame",
+                        "frame->temporal",
+                    ],
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "predicted_family": document.formulas[0].operator.family,
+                "target_family": document.formulas[0].operator.family,
+                "target_view": "deontic.ir",
+                "legal_ir_underrepresented_components": [
+                    "deontic.ir",
+                    "TDFOL.prover",
+                ],
+            }
+        ]
+
+    fund_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(implementation_fund)
+    )
+    irrigation_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(irrigation_project)
+    )
+
+    assert {
+        "department_fund_administration",
+        "fund_establishment_authority",
+        "health_insurance_reform_implementation",
+        "health_insurance_reform_implementation_fund",
+        "implementation_funding",
+        "patient_protection_affordable_care_act",
+        "statutory_implementation_authority",
+    }.issubset(set(fund_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"frame->deontic", "frame->frame", "frame->temporal"}.issubset(
+        set(fund_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
+        set(fund_slots["legal_ir_view_prototype"])
+    )
+
+    assert {
+        "irrigation_project",
+        "reclamation_act_authority",
+        "reclamation_act_irrigation_project",
+    }.issubset(set(irrigation_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"deontic->deontic", "deontic->frame"}.issubset(
+        set(irrigation_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
+        set(irrigation_slots["legal_ir_view_prototype"])
+    )
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

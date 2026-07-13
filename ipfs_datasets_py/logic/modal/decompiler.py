@@ -427,8 +427,18 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("railroad retirement account", "rail_employee_trust_fund"),
     ("withdrawal or after restoration to market", "land_withdrawal_restoration_scope"),
     ("restoration to market", "land_withdrawal_restoration_scope"),
+    (
+        "irrigation projects under reclamation act",
+        "reclamation_act_irrigation_project",
+    ),
+    (
+        "irrigation project under reclamation act",
+        "reclamation_act_irrigation_project",
+    ),
     ("irrigation projects", "irrigation_project"),
     ("irrigation project", "irrigation_project"),
+    ("under reclamation act", "reclamation_act_authority"),
+    ("reclamation act", "reclamation_act_authority"),
     ("irrigation, reclamation, and cultivation", "irrigation_reclamation_cultivation"),
     ("irrigation reclamation and cultivation", "irrigation_reclamation_cultivation"),
     ("reclamation, and cultivation", "irrigation_reclamation_cultivation"),
@@ -994,8 +1004,17 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
         "health insurance reform implementation fund",
         "health_insurance_reform_implementation_fund",
     ),
+    (
+        "health insurance reform implementation",
+        "health_insurance_reform_implementation",
+    ),
     ("implementation funding", "implementation_funding"),
     ("implementation fund", "implementation_fund"),
+    ("implementation fund within the department", "department_fund_administration"),
+    (
+        "established a health insurance reform implementation fund",
+        "fund_establishment_authority",
+    ),
     (
         "patient protection and affordable care act",
         "patient_protection_affordable_care_act",
@@ -1130,7 +1149,11 @@ _PROGRAM_RECONSTRUCTION_ATOMS = frozenset(
         "energy_supply_environmental_coordination",
         "federal_burglary_insurance",
         "higher_education_student_assistance",
+        "health_insurance_reform_implementation",
+        "health_insurance_reform_implementation_fund",
         "indian_energy_resource_development",
+        "implementation_fund",
+        "implementation_funding",
         "insurance_development_program",
         "international_education_program",
         "investment_guarantee_agency",
@@ -1148,6 +1171,7 @@ _PROGRAM_RECONSTRUCTION_ATOMS = frozenset(
         "patriotic_national_observance_organization",
         "program_activity_implementation",
         "public_technology_conference",
+        "statutory_implementation_authority",
         "sustainable_chemistry_activity_support",
         "technology_innovation_program",
         "tribal_energy_resource_agreement",
@@ -4872,6 +4896,29 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("office_establishment")
+    if re.search(
+        r"\b(?:there\s+is\s+hereby\s+)?established\b.{0,120}\bfund\b",
+        normalized,
+    ):
+        add("fund_establishment_authority")
+    if re.search(
+        r"\bfund\b.{0,80}\bwithin\s+the\s+department\b|"
+        r"\bdepartment\b.{0,80}\bfund\b",
+        normalized,
+    ):
+        add("department_fund_administration")
+    if re.search(
+        r"\bcarry\s+out\b.{0,120}\b(?:act|section|program|activities)\b",
+        normalized,
+    ):
+        add("statutory_implementation_authority")
+    if re.search(
+        r"\birrigation\s+projects?\b.{0,80}\breclamation\s+act\b|"
+        r"\breclamation\s+act\b.{0,80}\birrigation\s+projects?\b",
+        normalized,
+    ):
+        add("reclamation_act_irrigation_project")
+        add("reclamation_act_authority")
     if re.search(
         r"\b(?:authorized\s+to\s+)?conclude\b.{0,80}\b(?:officials?|government)\b",
         normalized,
@@ -12028,8 +12075,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "fiscal_year_allotment",
         "forest_resource_reservation",
         "formula_grant",
+        "fund_establishment_authority",
         "fund_transfer_authority",
         "funding_eligibility",
+        "department_fund_administration",
+        "health_insurance_reform_implementation",
         "health_insurance_reform_implementation_fund",
         "implementation_fund",
         "implementation_funding",
@@ -12072,6 +12122,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "interagency_coordination",
         "interinstitutional_discussion",
         "irrigation_project",
+        "reclamation_act_authority",
+        "reclamation_act_irrigation_project",
         "international_agreement_authority",
         "international_boundary_water_commission",
         "international_storage_dam_authorization",
@@ -13281,7 +13333,10 @@ def _typed_decompiler_semantic_atom_target_families(
             "government_publication_purchase_authority",
             "government_property_marking",
             "government_shipment_loss_prevention",
+            "fund_establishment_authority",
             "funding_eligibility",
+            "department_fund_administration",
+            "health_insurance_reform_implementation",
             "health_insurance_reform_implementation_fund",
             "implementation_fund",
             "implementation_funding",
@@ -13333,6 +13388,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "national_seashore_recreation_area",
             "national_forest_resource",
             "national_park_resource",
+            "reclamation_act_authority",
+            "reclamation_act_irrigation_project",
             "office_establishment",
             "office_of_womens_health",
             "absent_uniformed_services_voter",
