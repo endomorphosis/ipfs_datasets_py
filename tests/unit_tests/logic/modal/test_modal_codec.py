@@ -46748,6 +46748,59 @@ def test_decompiler_reconstructs_packet_003768_residual_uscode_surfaces() -> Non
         assert expected_fragment in structural_text
 
 
+def test_decompiler_emits_normative_status_narrative_for_packet_000346_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "2 U.S.C. 65b. Transferred. This section was transferred from "
+            "the U.S. Government Publishing Office subject to this chapter."
+        ),
+        predicate="government_publishing_office_transfer_status",
+        conditions=["subject to this chapter"],
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "bundle": {
+                "action": "refine_semantic_decompiler_reconstruction",
+                "family_pairs": [
+                    "frame->conditional_normative",
+                    "frame->frame",
+                    "frame->deontic",
+                ],
+                "target_component": "modal.ir_decompiler",
+            },
+            "predicted_family": "frame",
+            "target_family": "frame",
+            "target_view": "CEC.native",
+            "legal_ir_underrepresented_components": [
+                "CEC.native",
+                "knowledge_graphs.neo4j_compat",
+            ],
+        }
+    ]
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    narratives = slot_texts["typed_ir_normative_status_narrative"]
+    assert any(
+        "legal status" in value
+        and "legal frame reconstructs conditional obligation" in value
+        and "editorial transfer status" in value
+        and "event calculus native legal events" in value
+        for value in narratives
+    )
+    assert "legal status" in structural_text
+    assert "knowledge graph legal relations" in structural_text
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

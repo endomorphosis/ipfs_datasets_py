@@ -3464,6 +3464,19 @@ def _typed_ir_reconstruction_phrases(
         targets=ordered_targets,
         max_tokens=max_tokens,
     )
+    normative_status_narrative = _typed_ir_normative_status_narrative_text(
+        source_family=family,
+        targets=ordered_targets,
+        force=force,
+        polarity=polarity,
+        roles=roles,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        semantic_atoms=semantic_atoms,
+        status_detail_values=status_detail_values,
+        legal_ir_view_support=legal_ir_view_support,
+        max_tokens=max_tokens,
+    )
     semantic_reconstruction_clause = _typed_ir_semantic_reconstruction_clause_text(
         family=family,
         targets=ordered_targets,
@@ -3493,6 +3506,15 @@ def _typed_ir_reconstruction_phrases(
             DecodedModalPhrase(
                 text=source_semantic_sentence,
                 slot="typed_ir_source_semantic_sentence",
+                spans=spans,
+                provenance_only=provenance_only,
+            )
+        )
+    if normative_status_narrative:
+        phrases.append(
+            DecodedModalPhrase(
+                text=normative_status_narrative,
+                slot="typed_ir_normative_status_narrative",
                 spans=spans,
                 provenance_only=provenance_only,
             )
@@ -4431,6 +4453,109 @@ def _typed_ir_source_semantic_sentence_text(
         add(atom)
 
     return _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+
+
+def _typed_ir_normative_status_narrative_text(
+    *,
+    source_family: str,
+    targets: Sequence[str],
+    force: str,
+    polarity: str,
+    roles: Mapping[str, str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    semantic_atoms: Sequence[str],
+    status_detail_values: Sequence[str],
+    legal_ir_view_support: Sequence[str],
+    max_tokens: int = 56,
+) -> str:
+    """Render high-signal legal status semantics from typed IR slots."""
+    family = _clean_text(source_family).lower()
+    target_set = {
+        _clean_text(target).lower()
+        for target in targets
+        if _clean_text(target).lower()
+    }
+    atom_set = {
+        _clean_text(atom).lower().replace(" ", "_")
+        for atom in semantic_atoms
+        if _clean_text(atom)
+    }
+    has_status_signal = bool(status_detail_values) or bool(
+        atom_set.intersection(
+            {
+                "editorial_reclassification",
+                "editorial_transfer_status",
+                "transferred",
+                "reclassified",
+                "repealed",
+                "omitted",
+                "reserved",
+            }
+        )
+    )
+    has_normative_signal = bool(
+        target_set.intersection({"conditional_normative", "deontic", "frame"})
+        or family in {"conditional_normative", "deontic", "frame"}
+        or condition_values
+        or exception_values
+        or force in {"obligation", "permission", "prohibition"}
+    )
+    if not (has_status_signal or has_normative_signal):
+        return ""
+
+    parts: List[str] = []
+
+    def add(value: str) -> None:
+        cleaned = _humanize_typed_ir_value(value)
+        if cleaned and cleaned not in parts:
+            parts.append(cleaned)
+
+    if has_status_signal:
+        add("legal status")
+    elif "conditional_normative" in target_set:
+        add("conditional legal status")
+    elif "deontic" in target_set:
+        add("deontic legal status")
+    elif "frame" in target_set:
+        add("frame legal status")
+
+    if family:
+        add(_typed_ir_target_family_label(family))
+    for target in targets[:4]:
+        add(_typed_ir_target_family_label(target))
+        bridge_label = _typed_ir_family_pair_bridge_label(family, target)
+        if bridge_label:
+            add(bridge_label)
+
+    if force in {"obligation", "permission", "prohibition"}:
+        add(force)
+    if polarity == "negative_scope":
+        add("negative scope")
+
+    if condition_values or exception_values:
+        add("conditioned scope")
+    for condition in condition_values[:2]:
+        add(condition)
+    for exception in exception_values[:2]:
+        add("except")
+        add(exception)
+
+    for atom in semantic_atoms[:8]:
+        add(atom)
+    for value in status_detail_values[:6]:
+        add(value)
+    for view_support in legal_ir_view_support[:4]:
+        add(view_support)
+    for role in ("subject", "action", "object", "temporal"):
+        value = roles.get(role, "")
+        if value:
+            add(role)
+            add(value)
+
+    if len(parts) <= 1:
+        return ""
+    return _bounded_surface_text(parts, max_tokens=max_tokens)
 
 
 def _typed_ir_semantic_reconstruction_clause_text(
