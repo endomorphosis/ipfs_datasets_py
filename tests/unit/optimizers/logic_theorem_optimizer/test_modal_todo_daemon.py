@@ -682,6 +682,8 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
         "ipfs_datasets_py/logic/modal/decompiler.py"
     ]
     assert decompiler.metadata["evidence_ids"] == ["evidence-gap-decompiler-a"]
+    assert decompiler.metadata["audit_request_ids"] == ["request-gap-decompiler-a"]
+    assert decompiler.metadata["audit_response_hashes"] == ["response-gap-decompiler-a"]
     assert decompiler.metadata["spec_ids"] == [
         "gap-decompiler-a",
         "exception_scope:unless",
@@ -749,6 +751,119 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
     assert active_scope_block.seeded_count == 0
     assert active_scope_block.budget_blocked_count == 1
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 2
+
+
+def test_leanstral_patch_feedback_records_accepted_compiler_target() -> None:
+    report = {
+        "gaps": [
+            _leanstral_gap(
+                "gap-feedback-accepted",
+                component="modal.compiler",
+                action="add_deterministic_parser_rule",
+                priority=0.91,
+                sample_id="sample-feedback",
+                citation="5 U.S.C. 552",
+                rule_key="modal_cue:shall",
+            )
+        ]
+    }
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+    projection = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        report
+    )
+    assert projection.seeded_count == 1
+    [claimed] = supervisor.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+
+    finalized = supervisor.finalize_program_synthesis_batch(
+        [claimed],
+        codex_exec_status="succeeded",
+        patch_status="applied_to_main",
+        validation_report={
+            "main_apply_validation_status": "passed",
+            "metric_deltas": {"modal_ir_formula_recall": 0.05},
+            "status": "passed",
+            "target_metric_status": "improved",
+        },
+    )
+
+    completed = supervisor.queue.get(claimed.todo_id)
+    assert finalized["completed_count"] == 1
+    assert completed is not None
+    assert completed.status == "completed"
+    assert completed.metadata["leanstral_patch_outcome"] == "accepted_improvement"
+    assert completed.metadata["leanstral_feedback_never_write_to_autoencoder_weights"] is True
+    target = completed.metadata["compiler_target_for_autoencoder_evaluation"]
+    assert target["feature_cluster_id"] == completed.metadata["feature_cluster_id"]
+    assert target["verified_compiler_rule"] is True
+    assert target["write_to_autoencoder_weights"] is False
+
+    followup = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        {"gaps": []}
+    )
+
+    assert followup.compiler_targets_for_autoencoder_evaluation == [target]
+
+
+def test_leanstral_projection_suppresses_repeatedly_disproven_clusters() -> None:
+    gap = _leanstral_gap(
+        "gap-disproven",
+        component="modal.compiler",
+        action="add_deterministic_parser_rule",
+        priority=0.91,
+        sample_id="sample-disproven",
+        citation="5 U.S.C. 552",
+        rule_key="modal_cue:shall",
+    )
+    generator = ModalProgramSynthesisTodoGenerator()
+    [template] = generator.generate_from_leanstral_rule_gap_report({"gaps": [gap]})
+    first = ModalTodo.from_dict(template.to_dict())
+    first.todo_id = "disproven-a"
+    first.status = "failed_validation"
+    first.metadata.update(
+        {
+            "failed_validation_patch_status": "applied_to_main",
+            "failed_validation_reason": "target_metric_regression",
+            "failed_validation_report": {
+                "regressed_metrics": ["modal_ir_formula_recall"],
+                "target_metric_status": "regressed",
+            },
+            "leanstral_patch_outcome": "quality_regression",
+        }
+    )
+    second = ModalTodo.from_dict(template.to_dict())
+    second.todo_id = "disproven-b"
+    second.status = "failed_validation"
+    second.metadata.update(
+        {
+            "failed_validation_patch_status": "applied_to_main",
+            "failed_validation_reason": "program_synthesis_validation_rejected",
+            "failed_validation_report": {"main_apply_validation_status": "failed"},
+            "leanstral_patch_outcome": "unsupported_hypothesis",
+        }
+    )
+    queue = ModalTodoQueue([first])
+    queue._todos[second.todo_id] = second
+    supervisor = ModalTodoSupervisor(queue=queue)
+
+    result = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        {"gaps": [gap]},
+        config=LeanstralTodoProjectionConfig(
+            disproven_cluster_suppression_threshold=2,
+            max_todos_per_cycle=4,
+        ),
+    )
+
+    assert result.seeded_count == 0
+    assert result.suppressed_feature_clusters == [
+        template.metadata["semantic_bundle_key"]
+    ]
+    assert result.report_only_audits[-1]["report_only_state"] == (
+        "suppressed_disproven_cluster"
+    )
+    assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 0
 
 
 def test_supervisor_keeps_unverified_leanstral_report_in_report_only_state() -> None:

@@ -6,6 +6,7 @@ import json
 
 from ipfs_datasets_py.logic.modal import (
     LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
+    LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION,
     LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION,
     LeanstralAuditResponse,
     LeanstralAuditValidation,
@@ -13,7 +14,9 @@ from ipfs_datasets_py.logic.modal import (
     LeanstralRuleGapReportConfig,
     LeanstralVerificationOutcome,
     aggregate_verified_audits,
+    build_leanstral_patch_feedback_report,
     leanstral_rule_gap_report_to_json,
+    leanstral_patch_feedback_report_to_json,
     synthesis_hints_from_leanstral_rule_gap_report,
 )
 
@@ -231,3 +234,118 @@ def test_rule_gap_report_projects_to_synthesis_hints_and_json() -> None:
     assert hints[0].target_component == "modal.ir_decompiler"
     assert hints[0].evidence["gap_id"] == report.gaps[0].gap_id
     assert hints[0].evidence["supporting_evidence_count"] == 1
+
+
+def _patch_result(todo_id: str, *, status: str, metadata: dict) -> dict:
+    return {
+        "action": "add_deterministic_parser_rule",
+        "loss_name": "leanstral_verified_rule_gap",
+        "metadata": {
+            "allowed_paths": ["ipfs_datasets_py/logic/modal/compiler.py"],
+            "audit_request_ids": ["leanstral-audit-1"],
+            "audit_response_hashes": ["response-hash-1"],
+            "evidence_ids": ["leanstral-evidence-1"],
+            "leanstral_gap_id": "gap-modal-cue",
+            "leanstral_local_verifiers": ["local-lean"],
+            "leanstral_projection": True,
+            "leanstral_verified": True,
+            "normalized_rule_key": "modal_cue:shall",
+            "owned_ast_scope": "compiler_parser",
+            "program_synthesis_scope": "compiler_parser",
+            "proof_ids": ["PO-1", "modal_operator_preserved"],
+            "semantic_bundle_key": "leanstral-rule-gap:modal-cue-shall",
+            "target_component": "modal.compiler",
+            "target_metrics": ["modal_ir_formula_recall"],
+            "validation_commands": ["python -m pytest -q tests/unit_tests/logic/modal/test_modal_codec.py"],
+            **metadata,
+        },
+        "status": status,
+        "todo_id": todo_id,
+    }
+
+
+def test_patch_feedback_journals_lineage_and_retains_verified_compiler_targets() -> None:
+    result = _patch_result(
+        "todo-accepted",
+        status="completed",
+        metadata={
+            "completed_codex_exec_status": "succeeded",
+            "completed_patch_status": "applied_to_main",
+            "completed_validation_report": {
+                "main_apply_validation_status": "passed",
+                "metric_deltas": {"modal_ir_formula_recall": 0.04},
+                "target_metric_status": "improved",
+            },
+            "validation_gate": {"accepted": True},
+        },
+    )
+
+    report = build_leanstral_patch_feedback_report([result])
+    encoded = leanstral_patch_feedback_report_to_json(report)
+    parsed = json.loads(encoded)
+
+    assert report.schema_version == LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION
+    assert parsed["outcome_counts"]["accepted_improvement"] == 1
+    outcome = report.outcomes[0]
+    assert outcome.lineage.audit_request_ids == ("leanstral-audit-1",)
+    assert outcome.lineage.audit_response_hashes == ("response-hash-1",)
+    assert outcome.lineage.todo_id == "todo-accepted"
+    assert outcome.lineage.patch_status == "applied_to_main"
+    assert outcome.metric_deltas["modal_ir_formula_recall"] == 0.04
+    assert outcome.compiler_target is not None
+    assert outcome.compiler_target["verified_compiler_rule"] is True
+    assert outcome.compiler_target["write_to_autoencoder_weights"] is False
+    assert report.compiler_targets_for_autoencoder_evaluation
+
+
+def test_patch_feedback_classifies_regressions_unsupported_operational_and_stale() -> None:
+    regression = _patch_result(
+        "todo-regression",
+        status="failed_validation",
+        metadata={
+            "failed_validation_patch_status": "applied_to_main",
+            "failed_validation_reason": "target_metric_regression",
+            "failed_validation_report": {
+                "regressed_metrics": ["modal_ir_formula_recall"],
+                "target_metric_status": "regressed",
+            },
+        },
+    )
+    unsupported = _patch_result(
+        "todo-unsupported",
+        status="failed_validation",
+        metadata={
+            "failed_validation_patch_status": "applied_to_main",
+            "failed_validation_reason": "program_synthesis_validation_rejected",
+            "failed_validation_report": {"main_apply_validation_status": "failed"},
+        },
+    )
+    operational = _patch_result(
+        "todo-operational",
+        status="pending",
+        metadata={
+            "last_transient_codex_exec_status": "transient_failure",
+            "last_transient_patch_status": "awaiting_codex_changes",
+        },
+    )
+    stale = _patch_result(
+        "todo-stale",
+        status="stale",
+        metadata={"leanstral_stale_evidence": True},
+    )
+
+    report = build_leanstral_patch_feedback_report(
+        [regression, unsupported, operational, stale],
+        suppression_threshold=2,
+    )
+
+    assert [outcome.outcome for outcome in report.outcomes] == [
+        "quality_regression",
+        "unsupported_hypothesis",
+        "operational_failure",
+        "stale_evidence",
+    ]
+    assert report.suppressed_feature_clusters == (
+        "leanstral-rule-gap:modal-cue-shall",
+    )
+    assert report.compiler_targets_for_autoencoder_evaluation == ()

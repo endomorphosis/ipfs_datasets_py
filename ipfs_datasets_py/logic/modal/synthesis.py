@@ -624,6 +624,12 @@ def synthesis_hints_from_leanstral_rule_gaps(
         evidence_ids = _dedupe_string_values(
             evidence.get("evidence_id") for evidence in support
         )
+        audit_request_ids = _dedupe_string_values(
+            evidence.get("request_id") for evidence in support
+        )
+        audit_response_hashes = _dedupe_string_values(
+            evidence.get("response_hash") for evidence in support
+        )
         supporting_verification_outcomes = _dedupe_string_values(
             evidence.get("verification_outcome") for evidence in support
         )
@@ -648,6 +654,8 @@ def synthesis_hints_from_leanstral_rule_gaps(
         )
         evidence = {
             "allowed_paths": allowed_paths,
+            "audit_request_ids": audit_request_ids,
+            "audit_response_hashes": audit_response_hashes,
             "counterexamples": counterexamples,
             "conflicting_evidence_count": len(conflicts),
             "conflicting_evidence_ids": conflicting_evidence_ids,
