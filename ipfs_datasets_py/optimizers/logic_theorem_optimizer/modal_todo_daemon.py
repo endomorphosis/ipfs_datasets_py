@@ -342,6 +342,9 @@ class LeanstralTodoProjectionConfig:
     max_transient_failures: int = 24
     require_executor_available: bool = True
     require_verified_support: bool = True
+    expected_compiler_commit: str = ""
+    expected_state_hash: str = ""
+    max_report_age_seconds: Optional[float] = None
     target_scope_filters: Sequence[str] = field(default_factory=tuple)
     worker_health: Mapping[str, Any] = field(default_factory=dict)
 
@@ -353,6 +356,7 @@ class LeanstralTodoProjectionResult:
     seeded_todo_ids: List[str]
     deduped_count: int
     budget_skipped_count: int
+    stale_count: int
     report_only_count: int
     scope_counts: Dict[str, int]
     report_only_audits: List[Dict[str, Any]]
@@ -367,8 +371,13 @@ class LeanstralTodoProjectionResult:
     def seeded_count(self) -> int:
         return len(self.seeded_todo_ids)
 
+    @property
+    def budget_blocked_count(self) -> int:
+        return int(self.budget_skipped_count)
+
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "budget_blocked_count": self.budget_blocked_count,
             "budget_skipped_count": int(self.budget_skipped_count),
             "deduped_count": int(self.deduped_count),
             "report_only_audits": [dict(item) for item in self.report_only_audits],
@@ -377,6 +386,7 @@ class LeanstralTodoProjectionResult:
             "seed_block_reasons": list(self.seed_block_reasons),
             "seeded_count": self.seeded_count,
             "seeded_todo_ids": list(self.seeded_todo_ids),
+            "stale_count": int(self.stale_count),
             "executor_health": dict(sorted(self.executor_health.items())),
             "pending_cap": int(self.pending_cap),
             "pending_count": int(self.pending_count),
@@ -1590,6 +1600,11 @@ class ModalProgramSynthesisTodoGenerator:
                 target_component=target_component,
                 program_synthesis_scope=program_synthesis_scope,
             )
+            positive_examples = _leanstral_positive_examples(evidence)
+            negative_examples = _leanstral_negative_examples(evidence)
+            mutation_cases = _unique_preserve_order(
+                str(value) for value in _as_list(evidence.get("mutation_cases"))
+            )
             compact_evidence = _compact_hint_evidence(hint)
             metadata = {
                 **self.policy.metadata_for(
@@ -1608,10 +1623,18 @@ class ModalProgramSynthesisTodoGenerator:
                 "hint_ids": [hint.hint_id],
                 "leanstral_dedup_key": dedupe_signature,
                 "leanstral_gap_id": str(evidence.get("gap_id") or ""),
+                "leanstral_local_verifiers": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("supporting_verified_by"))
+                ),
                 "leanstral_projection": True,
                 "leanstral_report_only": False,
                 "leanstral_verified": bool(evidence.get("leanstral_verified")),
+                "mutation_cases": mutation_cases,
+                "negative_examples": negative_examples,
                 "normalized_rule_key": str(evidence.get("normalized_rule_key") or ""),
+                "owned_ast_scope": program_synthesis_scope,
+                "positive_examples": positive_examples,
                 "program_synthesis_scope": program_synthesis_scope,
                 "proof_ids": _unique_preserve_order(
                     str(value) for value in _as_list(evidence.get("proof_ids"))
@@ -2553,7 +2576,9 @@ class ModalTodoSupervisor:
         cfg = config or LeanstralTodoProjectionConfig()
         self.last_program_synthesis_deduped_count = 0
         max_audits = max(0, int(cfg.max_audits_per_cycle or 0))
-        report_only_audits = _leanstral_report_only_audits(report)
+        projection_report, report_only_audits, stale_count = (
+            _leanstral_projection_report_for_queue(report, config=cfg)
+        )
         if max_audits > 0:
             report_only_audits = report_only_audits[:max_audits]
         gate = _leanstral_projection_seed_gate(
@@ -2566,6 +2591,7 @@ class ModalTodoSupervisor:
                 seeded_todo_ids=[],
                 deduped_count=0,
                 budget_skipped_count=0,
+                stale_count=stale_count,
                 report_only_count=len(report_only_audits),
                 scope_counts={},
                 report_only_audits=report_only_audits,
@@ -2577,7 +2603,7 @@ class ModalTodoSupervisor:
                 pending_cap=int(gate["pending_cap"]),
             )
         candidates = self.program_synthesis_generator.generate_from_leanstral_rule_gap_report(
-            report,
+            projection_report,
             require_verified_support=bool(cfg.require_verified_support),
         )
         target_scope_filters = _normalise_projection_scope_filters(
@@ -2589,14 +2615,19 @@ class ModalTodoSupervisor:
                 for todo in candidates
                 if _leanstral_projection_todo_matches_scope(todo, target_scope_filters)
             ]
+        candidates = self._bounded_new_todos(candidates, track_program_deduped=True)
+        pre_budget_deduped_count = int(self.last_program_synthesis_deduped_count)
         selected, budget_skipped_count, scope_counts = _apply_leanstral_projection_budgets(
             candidates,
             max_todos_per_cycle=max(0, int(cfg.max_todos_per_cycle)),
             max_todos_per_scope=max(0, int(cfg.max_todos_per_scope)),
+            existing_scope_counts=_leanstral_active_projection_scope_counts(
+                self.queue,
+                optimizer_role=self.policy.program_synthesis_role,
+            ),
         )
-        selected = self._bounded_new_todos(selected, track_program_deduped=True)
         added = self.queue.add_many(selected)
-        deduped_count = int(self.last_program_synthesis_deduped_count) + max(
+        deduped_count = pre_budget_deduped_count + max(
             0,
             len(selected) - added,
         )
@@ -2605,6 +2636,7 @@ class ModalTodoSupervisor:
             seeded_todo_ids=[todo.todo_id for todo in selected if self.queue.get(todo.todo_id)],
             deduped_count=deduped_count,
             budget_skipped_count=budget_skipped_count,
+            stale_count=stale_count,
             report_only_count=len(report_only_audits),
             scope_counts=scope_counts,
             report_only_audits=report_only_audits,
@@ -3862,6 +3894,34 @@ def _leanstral_hint_citations(evidence: Mapping[str, Any]) -> List[str]:
     return _unique_preserve_order(citations)[:16]
 
 
+def _leanstral_positive_examples(evidence: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    examples: List[Dict[str, Any]] = []
+    for item in _as_list(evidence.get("supporting_examples")):
+        if isinstance(item, Mapping):
+            examples.append(dict(item))
+    validation_set = evidence.get("validation_set")
+    if isinstance(validation_set, Mapping):
+        for item in _as_list(validation_set.get("regression_examples")):
+            if isinstance(item, Mapping):
+                examples.append({"role": "regression", **dict(item)})
+    return _dedupe_example_mappings(examples, limit=8)
+
+
+def _leanstral_negative_examples(evidence: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    examples: List[Dict[str, Any]] = []
+    for item in _as_list(evidence.get("counterexamples")):
+        if not isinstance(item, Mapping):
+            continue
+        role = str(item.get("role") or item.get("example_role") or "").strip()
+        if role in {"conflicting", "negative", "counterexample"}:
+            examples.append(dict(item))
+    for mutation in _as_list(evidence.get("mutation_cases")):
+        text = str(mutation or "").strip()
+        if text:
+            examples.append({"role": "mutation", "mutation_case": text})
+    return _dedupe_example_mappings(examples, limit=8)
+
+
 def _leanstral_counterexamples(evidence: Mapping[str, Any]) -> List[Dict[str, Any]]:
     examples: List[Dict[str, Any]] = []
     for key in ("counterexamples", "supporting_examples"):
@@ -3882,6 +3942,25 @@ def _leanstral_counterexamples(evidence: Mapping[str, Any]) -> List[Dict[str, An
         seen.add(key)
         deduped.append(example)
         if len(deduped) >= 8:
+            break
+    return deduped
+
+
+def _dedupe_example_mappings(
+    examples: Sequence[Mapping[str, Any]],
+    *,
+    limit: int,
+) -> List[Dict[str, Any]]:
+    deduped: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for example in examples:
+        data = dict(example)
+        key = json.dumps(data, ensure_ascii=True, sort_keys=True, default=str)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(data)
+        if len(deduped) >= limit:
             break
     return deduped
 
@@ -3938,10 +4017,15 @@ def _apply_leanstral_projection_budgets(
     *,
     max_todos_per_cycle: int,
     max_todos_per_scope: int,
+    existing_scope_counts: Optional[Mapping[str, int]] = None,
 ) -> tuple[List[ModalTodo], int, Dict[str, int]]:
     if max_todos_per_cycle < 1 or max_todos_per_scope < 1:
         return [], len(todos), {}
     selected: List[ModalTodo] = []
+    active_scope_counts = {
+        str(scope): max(0, int(count))
+        for scope, count in dict(existing_scope_counts or {}).items()
+    }
     scope_counts: Dict[str, int] = {}
     skipped = 0
     for todo in sorted(todos, key=_todo_priority_key):
@@ -3949,12 +4033,33 @@ def _apply_leanstral_projection_budgets(
             skipped += 1
             continue
         scope = _program_todo_scope(todo)
-        if scope_counts.get(scope, 0) >= max_todos_per_scope:
+        if (
+            active_scope_counts.get(scope, 0) + scope_counts.get(scope, 0)
+            >= max_todos_per_scope
+        ):
             skipped += 1
             continue
         selected.append(todo)
         scope_counts[scope] = scope_counts.get(scope, 0) + 1
     return selected, skipped, dict(sorted(scope_counts.items()))
+
+
+def _leanstral_active_projection_scope_counts(
+    queue: ModalTodoQueue,
+    *,
+    optimizer_role: str,
+) -> Dict[str, int]:
+    counts: Dict[str, int] = {}
+    for todo in queue.all():
+        if _todo_optimizer_role(todo) != optimizer_role:
+            continue
+        if todo.status not in {"pending", "claimed"}:
+            continue
+        if not bool(todo.metadata.get("leanstral_projection")):
+            continue
+        scope = _program_todo_scope(todo)
+        counts[scope] = counts.get(scope, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def _leanstral_projection_seed_gate(
@@ -4109,6 +4214,237 @@ def _leanstral_projection_todo_matches_scope(
     scopes.update(str(path) for path in metadata.get("allowed_paths", []) or [])
     filters = {str(value).strip() for value in scope_filters if str(value).strip()}
     return bool(filters & {scope for scope in scopes if scope})
+
+
+def _leanstral_projection_report_for_queue(
+    report: Any,
+    *,
+    config: LeanstralTodoProjectionConfig,
+) -> tuple[Dict[str, Any], List[Dict[str, Any]], int]:
+    data = report.to_dict() if hasattr(report, "to_dict") else dict(report or {})
+    projection_report = dict(data)
+    accepted_gaps: List[Dict[str, Any]] = []
+    report_only = _leanstral_report_only_audits(data)
+    stale_count = 0
+    for raw_gap in _as_list(data.get("gaps")):
+        gap = raw_gap.to_dict() if hasattr(raw_gap, "to_dict") else raw_gap
+        if not isinstance(gap, Mapping):
+            continue
+        gap_data = dict(gap)
+        stale_reason = _leanstral_gap_stale_reason(
+            gap_data,
+            report=data,
+            config=config,
+        )
+        if stale_reason:
+            stale_count += 1
+            report_only.append(
+                _leanstral_gap_report_only_record(
+                    gap_data,
+                    state="stale",
+                    reasons=(stale_reason,),
+                )
+            )
+            continue
+        block_reasons = _leanstral_gap_projection_block_reasons(
+            gap_data,
+            require_verified_support=bool(config.require_verified_support),
+        )
+        if block_reasons:
+            report_only.append(
+                _leanstral_gap_report_only_record(
+                    gap_data,
+                    state="unverified_or_incomplete_rule_gap",
+                    reasons=block_reasons,
+                )
+            )
+            continue
+        accepted_gaps.append(gap_data)
+    projection_report["gaps"] = accepted_gaps
+    return projection_report, report_only[:128], stale_count
+
+
+def _leanstral_gap_report_only_record(
+    gap: Mapping[str, Any],
+    *,
+    state: str,
+    reasons: Sequence[str],
+) -> Dict[str, Any]:
+    return {
+        "gap_id": str(gap.get("gap_id") or ""),
+        "normalized_rule_key": str(gap.get("normalized_rule_key") or ""),
+        "report_only_state": state,
+        "reasons": _unique_preserve_order(str(reason) for reason in reasons),
+        "target_component": str(gap.get("target_component") or ""),
+    }
+
+
+def _leanstral_gap_projection_block_reasons(
+    gap: Mapping[str, Any],
+    *,
+    require_verified_support: bool,
+) -> List[str]:
+    reasons: List[str] = []
+    target_surface = gap.get("target_surface")
+    if not isinstance(target_surface, Mapping):
+        target_surface = {}
+    validation_set = gap.get("validation_set")
+    if not isinstance(validation_set, Mapping):
+        validation_set = {}
+    supporting = [
+        dict(item)
+        for item in _as_list(gap.get("supporting_evidence"))
+        if isinstance(item, Mapping)
+    ]
+    target_component = str(
+        gap.get("target_component") or target_surface.get("component") or ""
+    ).strip()
+    action = str(gap.get("action") or target_surface.get("action") or "").strip()
+    if str(gap.get("status") or "accepted").strip() not in {"accepted", ""}:
+        reasons.append("gap_status_not_accepted")
+    if not str(gap.get("gap_id") or "").strip():
+        reasons.append("missing_gap_id")
+    if not str(gap.get("normalized_rule_key") or "").strip():
+        reasons.append("missing_normalized_rule_key")
+    if not target_component or not action:
+        reasons.append("missing_owned_surface")
+    if not _string_list(target_surface.get("allowed_paths") or validation_set.get("allowed_paths")):
+        reasons.append("missing_allowed_paths")
+    if not _string_list(
+        target_surface.get("target_metrics")
+        or validation_set.get("held_out_compiler_ir_metrics")
+    ):
+        reasons.append("missing_target_metrics")
+    if not _string_list(
+        target_surface.get("theorem_templates")
+        or validation_set.get("formal_validity_checks")
+    ):
+        reasons.append("missing_theorem_templates")
+    if not _string_list(
+        target_surface.get("mutation_cases") or validation_set.get("mutation_cases")
+    ):
+        reasons.append("missing_mutation_cases")
+    if not str(
+        target_surface.get("target_file_lane")
+        or validation_set.get("target_file_lane")
+        or ""
+    ).strip():
+        reasons.append("missing_owned_ast_scope")
+    proof_obligations = _string_list(validation_set.get("proof_obligation_ids"))
+    if not proof_obligations:
+        proof_obligations = _unique_preserve_order(
+            str(value)
+            for evidence in supporting
+            for value in _as_list(evidence.get("proof_obligation_ids"))
+        )
+    if not proof_obligations:
+        reasons.append("missing_proof_ids")
+    regression_examples = [
+        item
+        for item in _as_list(validation_set.get("regression_examples"))
+        if isinstance(item, Mapping)
+    ]
+    supporting_examples = [
+        example
+        for evidence in supporting
+        for example in _as_list(evidence.get("examples"))
+        if isinstance(example, Mapping)
+    ]
+    if not regression_examples and not supporting_examples:
+        reasons.append("missing_positive_examples")
+    if not supporting:
+        reasons.append("missing_supporting_evidence")
+    for evidence in supporting:
+        if not str(evidence.get("evidence_id") or "").strip():
+            reasons.append("missing_evidence_id")
+        if not str(evidence.get("request_id") or "").strip():
+            reasons.append("missing_audit_request_id")
+        if not str(evidence.get("response_hash") or "").strip():
+            reasons.append("missing_audit_response_hash")
+        if require_verified_support:
+            if str(evidence.get("verification_outcome") or "").strip() != "accepted":
+                reasons.append("support_not_accepted")
+            if not _string_list(evidence.get("verified_by")):
+                reasons.append("missing_local_verifier")
+    return list(dict.fromkeys(reasons))
+
+
+def _leanstral_gap_stale_reason(
+    gap: Mapping[str, Any],
+    *,
+    report: Mapping[str, Any],
+    config: LeanstralTodoProjectionConfig,
+) -> str:
+    if bool(gap.get("stale") or gap.get("is_stale")):
+        return "gap_marked_stale"
+    expected_commit = str(config.expected_compiler_commit or "").strip()
+    if expected_commit:
+        observed_commit = str(
+            gap.get("compiler_commit")
+            or report.get("compiler_commit")
+            or gap.get("compiler_commit_hash")
+            or report.get("compiler_commit_hash")
+            or ""
+        ).strip()
+        if not observed_commit:
+            return "missing_compiler_commit"
+        if observed_commit != expected_commit:
+            return "compiler_commit_mismatch"
+    expected_state_hash = str(config.expected_state_hash or "").strip()
+    if expected_state_hash:
+        observed_state_hash = str(
+            gap.get("state_hash")
+            or report.get("state_hash")
+            or gap.get("autoencoder_state_hash")
+            or report.get("autoencoder_state_hash")
+            or ""
+        ).strip()
+        if not observed_state_hash:
+            return "missing_state_hash"
+        if observed_state_hash != expected_state_hash:
+            return "state_hash_mismatch"
+    max_age = config.max_report_age_seconds
+    if max_age is not None and float(max_age) >= 0.0:
+        timestamp = _leanstral_gap_timestamp(gap, report)
+        if timestamp is None:
+            return "missing_report_timestamp"
+        age = (
+            datetime.now(timezone.utc) - timestamp.astimezone(timezone.utc)
+        ).total_seconds()
+        if age > float(max_age):
+            return "report_age_above_cap"
+    return ""
+
+
+def _leanstral_gap_timestamp(
+    gap: Mapping[str, Any],
+    report: Mapping[str, Any],
+) -> Optional[datetime]:
+    for key in (
+        "verified_at",
+        "generated_at",
+        "created_at",
+        "report_generated_at",
+        "updated_at",
+    ):
+        value = gap.get(key) or report.get(key)
+        if not value:
+            continue
+        try:
+            text = str(value).strip().replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(text)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed
+        except ValueError:
+            continue
+    return None
+
+
+def _string_list(value: Any) -> List[str]:
+    return _unique_preserve_order(
+        str(item).strip() for item in _as_list(value) if str(item).strip()
+    )
 
 
 def _leanstral_report_only_audits(report: Any) -> List[Dict[str, Any]]:

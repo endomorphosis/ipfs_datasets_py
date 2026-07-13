@@ -68,6 +68,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import 
     state_to_compiler_patch_lag,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+    LeanstralTodoProjectionConfig,
     ModalOptimizerPolicy,
     ModalTodo,
     ModalTodoQueue,
@@ -3549,6 +3550,135 @@ def update_program_synthesis_summary(
         summary,
         execution_mode=execution_mode or "queued_for_external_codex_worker",
     )
+
+
+def leanstral_rule_gap_report_path(args: argparse.Namespace, *, root: Path) -> Path:
+    """Return the production rule-gap report path for this daemon run."""
+    explicit = str(getattr(args, "leanstral_rule_gap_report_path", "") or "").strip()
+    if explicit:
+        return Path(explicit).expanduser()
+    return (
+        root
+        / "workspace"
+        / "leanstral-audit-worker"
+        / f"{getattr(args, 'run_id', 'default')}.rule-gaps.json"
+    )
+
+
+def project_verified_leanstral_rule_gaps_into_queue(
+    *,
+    args: argparse.Namespace,
+    queue_path: Path,
+    root: Path,
+    supervisor: ModalTodoSupervisor,
+    worker_health: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Load a verified Leanstral rule-gap report and seed the shared TODO queue."""
+    report_path = leanstral_rule_gap_report_path(args, root=root)
+    result: Dict[str, Any] = {
+        "enabled": bool(getattr(args, "leanstral_rule_gap_projection_enabled", True)),
+        "path": str(report_path),
+        "report_loaded": False,
+        "seeded_count": 0,
+        "deduped_count": 0,
+        "stale_count": 0,
+        "budget_blocked_count": 0,
+        "report_only_count": 0,
+        "seeded_todo_ids": [],
+    }
+    if not result["enabled"]:
+        result["status"] = "disabled"
+        return result
+    if not report_path.is_file():
+        result["status"] = "missing_report"
+        return result
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        result["status"] = "invalid_report"
+        result["error"] = f"{type(exc).__name__}: {str(exc)[:240]}"
+        return result
+    result["report_loaded"] = True
+    config = LeanstralTodoProjectionConfig(
+        max_audits_per_cycle=max(
+            0,
+            int(getattr(args, "autoencoder_max_audits_per_cycle", 0) or 0),
+        ),
+        max_todos_per_cycle=max(
+            0,
+            int(getattr(args, "autoencoder_max_todos_per_cycle", 0) or 0),
+        ),
+        max_todos_per_scope=max(
+            1,
+            int(getattr(args, "leanstral_rule_gap_max_todos_per_scope", 2) or 2),
+        ),
+        max_program_synthesis_pending=max(
+            0,
+            int(getattr(args, "max_program_synthesis_pending", 512) or 512),
+        ),
+        require_verified_support=True,
+        require_executor_available=bool(
+            getattr(args, "leanstral_rule_gap_require_executor_available", True)
+        ),
+        expected_compiler_commit=str(
+            getattr(args, "leanstral_rule_gap_expected_compiler_commit", "")
+            or ""
+        ),
+        expected_state_hash=str(
+            getattr(args, "leanstral_rule_gap_expected_state_hash", "")
+            or ""
+        ),
+        max_report_age_seconds=(
+            float(getattr(args, "leanstral_rule_gap_max_report_age_seconds"))
+            if getattr(args, "leanstral_rule_gap_max_report_age_seconds", None)
+            is not None
+            else None
+        ),
+        target_scope_filters=autoencoder_target_scope_filters(args),
+        worker_health=dict(worker_health or {}),
+    )
+    with queue_file_lock(queue_path):
+        latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+        latest_queue.merge_from(
+            supervisor.queue,
+            preserve_claimed_role=supervisor.policy.program_synthesis_role,
+        )
+        supervisor.queue = latest_queue
+        projection = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+            report,
+            config=config,
+        )
+        supervisor.queue.save_jsonl(queue_path)
+    result.update(projection.to_dict())
+    result["status"] = "projected"
+    result["report_schema_version"] = str(report.get("schema_version") or "")
+    return result
+
+
+def update_leanstral_projection_summary(
+    summary: Dict[str, Any],
+    projection: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Accumulate production Leanstral projection counters in daemon summary."""
+    summary["latest_leanstral_projection"] = dict(projection)
+    for key in (
+        "seeded",
+        "deduped",
+        "stale",
+        "budget_blocked",
+        "report_only",
+    ):
+        latest_key = f"latest_leanstral_projection_{key}_count"
+        source_key = f"{key}_count"
+        summary[latest_key] = int(projection.get(source_key, 0) or 0)
+        total_key = f"leanstral_projection_{key}_total"
+        summary[total_key] = int(summary.get(total_key, 0) or 0) + int(
+            projection.get(source_key, 0) or 0
+        )
+    summary["latest_leanstral_projection_todo_ids"] = list(
+        projection.get("seeded_todo_ids", []) or []
+    )
+    return summary
 
 
 def _sampling_seed_for_args(args: argparse.Namespace) -> tuple[int, str]:
@@ -10802,6 +10932,48 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--autoencoder-max-audits-per-cycle", type=int, default=0)
     parser.add_argument("--autoencoder-max-todos-per-cycle", type=int, default=0)
     parser.add_argument(
+        "--leanstral-rule-gap-projection-enabled",
+        type=parse_bool_flag,
+        default=True,
+        help="Seed Codex TODOs from verified Leanstral rule-gap reports.",
+    )
+    parser.add_argument(
+        "--leanstral-rule-gap-report-path",
+        default="",
+        help=(
+            "Verified Leanstral rule-gap JSON report. Defaults to "
+            "workspace/leanstral-audit-worker/<run-id>.rule-gaps.json."
+        ),
+    )
+    parser.add_argument(
+        "--leanstral-rule-gap-max-todos-per-scope",
+        type=int,
+        default=2,
+        help="Maximum active Leanstral-seeded TODOs per owned compiler/AST scope.",
+    )
+    parser.add_argument(
+        "--leanstral-rule-gap-require-executor-available",
+        type=parse_bool_flag,
+        default=True,
+        help="Block Leanstral TODO seeding when Codex executor health is unavailable.",
+    )
+    parser.add_argument(
+        "--leanstral-rule-gap-expected-compiler-commit",
+        default="",
+        help="Optional compiler commit hash required on the rule-gap report.",
+    )
+    parser.add_argument(
+        "--leanstral-rule-gap-expected-state-hash",
+        default="",
+        help="Optional autoencoder state hash required on the rule-gap report.",
+    )
+    parser.add_argument(
+        "--leanstral-rule-gap-max-report-age-seconds",
+        type=float,
+        default=None,
+        help="Optional freshness cap for verified rule-gap report timestamps.",
+    )
+    parser.add_argument(
         "--autoencoder-target-scope-filters",
         default="",
         help="Comma-separated target scopes eligible for introspection audits/TODOs.",
@@ -13575,6 +13747,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "distillation": [],
                 "guardrail": [],
             }
+            leanstral_projection: Dict[str, Any] = {}
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)
             mark_cycle_phase("queue_merge")
             with queue_file_lock(queue_path):
@@ -13645,6 +13818,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ] = int(guidance_semantic_deduped_count)
                     supervisor.queue.save_jsonl(queue_path)
                     queue = supervisor.queue
+            mark_cycle_phase("leanstral_rule_gap_projection")
+            leanstral_projection = project_verified_leanstral_rule_gaps_into_queue(
+                args=args,
+                queue_path=queue_path,
+                root=root,
+                supervisor=supervisor,
+                worker_health={},
+            )
+            queue = supervisor.queue
             mark_cycle_phase("state_save")
             autoencoder.state.save_json(state_path)
             run.save_json(run_json_path)
@@ -14044,7 +14226,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 value
                 for key, value in guidance_todo_counts.items()
                 if key.endswith("_seeded_count")
-            )
+            ) + int(leanstral_projection.get("seeded_count", 0) or 0)
             preinsert_deduped_count = sum(
                 step.program_synthesis_deduped_count for step in run.steps
             ) + sum(
@@ -14052,14 +14234,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 for key, value in guidance_todo_counts.items()
                 if key.endswith("_deduped_count")
                 and not key.endswith("_semantic_deduped_count")
-            )
+            ) + int(leanstral_projection.get("deduped_count", 0) or 0)
             summary["latest_program_synthesis_seeded_count"] = sum(
                 step.program_synthesis_seeded_count for step in run.steps
             ) + sum(
                 value
                 for key, value in guidance_todo_counts.items()
                 if key.endswith("_seeded_count")
-            )
+            ) + int(leanstral_projection.get("seeded_count", 0) or 0)
             summary["latest_program_synthesis_preinsert_deduped_count"] = int(
                 preinsert_deduped_count
             )
@@ -14123,6 +14305,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["program_synthesis_deduped_total"] = int(
                 summary.get("program_synthesis_preinsert_deduped", 0)
             ) + int(summary.get("program_synthesis_semantic_deduped", 0))
+            update_leanstral_projection_summary(summary, leanstral_projection)
             bridge_loss_failures = sum(step.bridge_loss_failure_count for step in run.steps)
             bridge_loss_samples = sum(step.bridge_loss_sample_count for step in run.steps)
             bridge_loss_signals = sum(step.bridge_loss_signal_count for step in run.steps)
@@ -14377,6 +14560,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ),
                     "compiler_ir_guidance_guardrail_todo_ids": list(
                         guidance_todo_ids["guardrail"]
+                    ),
+                    "leanstral_projection": leanstral_projection,
+                    "leanstral_projection_budget_blocked_count": int(
+                        leanstral_projection.get("budget_blocked_count", 0) or 0
+                    ),
+                    "leanstral_projection_deduped_count": int(
+                        leanstral_projection.get("deduped_count", 0) or 0
+                    ),
+                    "leanstral_projection_report_only_count": int(
+                        leanstral_projection.get("report_only_count", 0) or 0
+                    ),
+                    "leanstral_projection_seeded_count": int(
+                        leanstral_projection.get("seeded_count", 0) or 0
+                    ),
+                    "leanstral_projection_stale_count": int(
+                        leanstral_projection.get("stale_count", 0) or 0
                     ),
                     "compiler_ir_guidance_promotion": guidance_promotion_gate,
                     "compiler_ir_guidance_scope_hints": guidance_scope_hints,

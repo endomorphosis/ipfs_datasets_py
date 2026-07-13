@@ -627,6 +627,11 @@ def synthesis_hints_from_leanstral_rule_gaps(
         supporting_verification_outcomes = _dedupe_string_values(
             evidence.get("verification_outcome") for evidence in support
         )
+        supporting_verified_by = _dedupe_string_values(
+            checker
+            for evidence in support
+            for checker in list(evidence.get("verified_by") or [])
+        )
         conflicting_evidence_ids = _dedupe_string_values(
             evidence.get("evidence_id") for evidence in conflicts
         )
@@ -662,8 +667,14 @@ def synthesis_hints_from_leanstral_rule_gaps(
             "supporting_evidence_count": len(support),
             "supporting_evidence_ids": evidence_ids,
             "supporting_examples": _rule_gap_examples(support),
+            "supporting_verified_by": supporting_verified_by,
             "supporting_verification_outcomes": supporting_verification_outcomes,
             "validation_set": validation_set,
+            "mutation_cases": _dedupe_string_values(
+                surface.get("mutation_cases")
+                or validation_set.get("mutation_cases")
+                or ()
+            ),
             "target_file_lane": surface.get("target_file_lane")
             or validation_set.get("target_file_lane")
             or _target_file_lane(target_component, action),

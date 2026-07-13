@@ -135,6 +135,9 @@ def _leanstral_gap(
             "theorem_templates": ["modal_operator_preserved"]
             if component == "modal.compiler"
             else ["decompiler_round_trip"],
+            "mutation_cases": ["remove_modal_cue"]
+            if component == "modal.compiler"
+            else ["remove_exception", "alter_deadline"],
         },
         "title": f"Verified rule gap {gap_id}",
         "validation_set": {
@@ -145,6 +148,9 @@ def _leanstral_gap(
             "held_out_compiler_ir_metrics": ["modal_ir_formula_recall"]
             if component == "modal.compiler"
             else ["reconstruction_loss"],
+            "mutation_cases": ["remove_modal_cue"]
+            if component == "modal.compiler"
+            else ["remove_exception", "alter_deadline"],
             "proof_obligation_ids": [f"proof-{gap_id}"],
             "regression_examples": [
                 {
@@ -659,6 +665,8 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
 
     assert result.seeded_count == 2
     assert result.budget_skipped_count == 1
+    assert result.budget_blocked_count == 1
+    assert result.stale_count == 0
     assert result.scope_counts == {"compiler_parser": 1, "ir_decompiler": 1}
     assert result.report_only_count == 4
     pending = supervisor.queue.pending(optimizer_role="program_synthesis")
@@ -683,6 +691,14 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
         "proof-gap-decompiler-a",
         "decompiler_round_trip",
     ]
+    assert decompiler.metadata["leanstral_local_verifiers"] == ["local-lean"]
+    assert decompiler.metadata["mutation_cases"] == [
+        "remove_exception",
+        "alter_deadline",
+    ]
+    assert decompiler.metadata["owned_ast_scope"] == "ir_decompiler"
+    assert decompiler.metadata["positive_examples"]
+    assert decompiler.metadata["negative_examples"]
     assert decompiler.metadata["counterexamples"][0]["sample_id"] == "sample-a"
     assert decompiler.metadata["target_metric_goals"][0] == {
         "direction": "decrease",
@@ -707,6 +723,31 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
 
     assert repeated.seeded_count == 0
     assert repeated.deduped_count == 2
+    assert repeated.to_dict()["budget_blocked_count"] == 1
+    assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 2
+
+    active_scope_block = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        {
+            "gaps": [
+                _leanstral_gap(
+                    "gap-decompiler-active-cap",
+                    component="modal.ir_decompiler",
+                    action="refine_typed_ir_or_decompiler_slots",
+                    priority=0.95,
+                    sample_id="sample-active-cap",
+                    citation="5 U.S.C. 706",
+                    rule_key="exception_scope:except",
+                )
+            ]
+        },
+        config=LeanstralTodoProjectionConfig(
+            max_todos_per_cycle=2,
+            max_todos_per_scope=1,
+        ),
+    )
+
+    assert active_scope_block.seeded_count == 0
+    assert active_scope_block.budget_blocked_count == 1
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 2
 
 
@@ -737,16 +778,60 @@ def test_supervisor_keeps_unverified_leanstral_report_in_report_only_state() -> 
     )
 
     assert result.seeded_count == 0
-    assert result.report_only_count == 3
+    assert result.stale_count == 0
+    assert result.report_only_count == 4
     assert result.report_only_audits[0]["report_only_state"] == "unverified_or_rejected"
     assert {
         audit["report_only_state"]
         for audit in result.report_only_audits
     } == {
         "conflicting_or_unverified",
+        "unverified_or_incomplete_rule_gap",
         "unverified_or_rejected",
         "unverified_support",
     }
+    assert supervisor.queue.pending(optimizer_role="program_synthesis") == []
+
+
+def test_supervisor_counts_stale_and_nonlocal_leanstral_gaps_without_seeding() -> None:
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+    stale_gap = _leanstral_gap(
+        "gap-stale",
+        component="modal.compiler",
+        action="add_deterministic_parser_rule",
+        priority=0.9,
+        sample_id="sample-stale",
+        citation="5 U.S.C. 552",
+        rule_key="modal_cue:shall",
+    )
+    stale_gap["compiler_commit"] = "old-commit"
+    nonlocal_gap = _leanstral_gap(
+        "gap-nonlocal",
+        component="modal.ir_decompiler",
+        action="refine_typed_ir_or_decompiler_slots",
+        priority=0.88,
+        sample_id="sample-nonlocal",
+        citation="18 U.S.C. 1001",
+        rule_key="exception_scope:unless",
+    )
+    nonlocal_gap["compiler_commit"] = "current-commit"
+    nonlocal_gap["supporting_evidence"][0]["verified_by"] = []
+
+    result = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        {"gaps": [stale_gap, nonlocal_gap]},
+        config=LeanstralTodoProjectionConfig(
+            expected_compiler_commit="current-commit",
+            max_todos_per_cycle=4,
+        ),
+    )
+
+    assert result.seeded_count == 0
+    assert result.stale_count == 1
+    assert result.report_only_count == 4
+    assert {
+        item["report_only_state"]
+        for item in result.report_only_audits
+    } >= {"stale", "unverified_or_incomplete_rule_gap"}
     assert supervisor.queue.pending(optimizer_role="program_synthesis") == []
 
 
@@ -778,6 +863,7 @@ def test_leanstral_projection_blocks_when_executor_health_is_unavailable() -> No
 
     assert result.seeded_count == 0
     assert result.seed_block_reasons == ["executor_unavailable"]
+    assert result.to_dict()["stale_count"] == 0
     assert result.executor_health["available"] is False
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 0
 
@@ -822,6 +908,7 @@ def test_leanstral_projection_blocks_on_pending_and_transient_caps() -> None:
     )
 
     assert result.seeded_count == 0
+    assert result.stale_count == 0
     assert result.pending_count == 1
     assert result.pending_cap == 1
     assert result.queue_pressure == pytest.approx(1.0)
@@ -832,6 +919,77 @@ def test_leanstral_projection_blocks_on_pending_and_transient_caps() -> None:
         "transient_failure_rate_above_cap",
     ]
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 1
+
+
+def test_runner_projects_verified_leanstral_report_into_existing_queue(
+    tmp_path: Path,
+) -> None:
+    report_path = tmp_path / "leanstral-rule-gaps.json"
+    queue_path = tmp_path / "queue" / "run.jsonl"
+    queue_path.parent.mkdir(parents=True)
+    report = {
+        "schema_version": "legal-ir-leanstral-rule-gap-report-v1",
+        "compiler_commit": "commit-a",
+        "gaps": [
+            _leanstral_gap(
+                "gap-runner",
+                component="modal.compiler",
+                action="add_deterministic_parser_rule",
+                priority=0.93,
+                sample_id="sample-runner",
+                citation="5 U.S.C. 552",
+                rule_key="modal_cue:shall",
+            ),
+            {
+                **_leanstral_gap(
+                    "gap-runner-stale",
+                    component="modal.ir_decompiler",
+                    action="refine_typed_ir_or_decompiler_slots",
+                    priority=0.91,
+                    sample_id="sample-stale",
+                    citation="18 U.S.C. 1001",
+                    rule_key="exception_scope:unless",
+                ),
+                "compiler_commit": "old-commit",
+            },
+        ],
+    }
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+
+    projection = runner.project_verified_leanstral_rule_gaps_into_queue(
+        args=SimpleNamespace(
+            autoencoder_max_audits_per_cycle=0,
+            autoencoder_max_todos_per_cycle=4,
+            autoencoder_target_scope_filters="",
+            leanstral_rule_gap_expected_compiler_commit="commit-a",
+            leanstral_rule_gap_expected_state_hash="",
+            leanstral_rule_gap_max_report_age_seconds=None,
+            leanstral_rule_gap_max_todos_per_scope=2,
+            leanstral_rule_gap_projection_enabled=True,
+            leanstral_rule_gap_report_path=str(report_path),
+            leanstral_rule_gap_require_executor_available=True,
+            max_program_synthesis_pending=8,
+            run_id="runner-projection",
+        ),
+        queue_path=queue_path,
+        root=tmp_path,
+        supervisor=supervisor,
+        worker_health={"codex_executor_available": True},
+    )
+    summary: dict[str, object] = {}
+    runner.update_leanstral_projection_summary(summary, projection)
+
+    queue = ModalTodoQueue.load_jsonl(queue_path)
+    pending = queue.pending(optimizer_role="program_synthesis")
+    assert projection["status"] == "projected"
+    assert projection["seeded_count"] == 1
+    assert projection["stale_count"] == 1
+    assert projection["budget_blocked_count"] == 0
+    assert len(pending) == 1
+    assert pending[0].metadata["leanstral_gap_id"] == "gap-runner"
+    assert summary["latest_leanstral_projection_seeded_count"] == 1
+    assert summary["latest_leanstral_projection_stale_count"] == 1
 
 
 def test_queue_semantic_dedupe_rejects_completed_bundle_duplicates() -> None:
