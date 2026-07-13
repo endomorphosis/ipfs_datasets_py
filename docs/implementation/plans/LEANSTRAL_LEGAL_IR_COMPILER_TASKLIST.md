@@ -317,7 +317,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-021 Seed the existing Codex queue only from verified real rule gaps
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: synthesis
 - Depends on: PORTAL-LIRLS-020, PORTAL-LIRLS-011
