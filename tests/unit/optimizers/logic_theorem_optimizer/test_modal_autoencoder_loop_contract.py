@@ -34,6 +34,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     autoencoder_enforce_fail_closed_reason,
     autoencoder_rollout_control,
     export_canonical_state_disagreement_packets,
+    update_leanstral_projection_summary,
 )
 
 
@@ -232,6 +233,24 @@ def test_modal_supervisor_health_exposes_executor_pressure_and_seed_blocks() -> 
         "executor_unavailable",
         "transient_failure_rate_above_cap",
     ]
+
+    summary: dict[str, object] = {}
+    update_leanstral_projection_summary(
+        summary,
+        {
+            "budget_blocked_count": 2,
+            "deduped_count": 3,
+            "report_only_count": 4,
+            "seeded_count": 1,
+            "stale_count": 5,
+            "seeded_todo_ids": ["program-leanstral-a"],
+        },
+    )
+    assert summary["latest_leanstral_projection_seeded_count"] == 1
+    assert summary["latest_leanstral_projection_deduped_count"] == 3
+    assert summary["latest_leanstral_projection_stale_count"] == 5
+    assert summary["latest_leanstral_projection_budget_blocked_count"] == 2
+    assert summary["latest_leanstral_projection_report_only_count"] == 4
 
 
 def test_production_runner_exports_canonical_disagreement_packets(tmp_path) -> None:
