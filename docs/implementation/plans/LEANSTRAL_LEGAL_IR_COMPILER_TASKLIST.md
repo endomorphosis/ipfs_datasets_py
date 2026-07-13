@@ -278,7 +278,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-018 Add causal and contrastive feature attribution for compiler-actionable gaps
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: autoencoder
 - Depends on: PORTAL-LIRLS-017
