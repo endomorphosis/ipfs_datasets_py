@@ -343,7 +343,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-023 Gate projection on worker health and separate transient failures
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: ops
 - Depends on: PORTAL-LIRLS-017, PORTAL-LIRLS-013
