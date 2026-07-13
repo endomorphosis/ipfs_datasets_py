@@ -304,7 +304,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-020 Connect real audits to deterministic verification and rule-gap reporting
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: proof
 - Depends on: PORTAL-LIRLS-018, PORTAL-LIRLS-019, PORTAL-LIRLS-009, PORTAL-LIRLS-010
