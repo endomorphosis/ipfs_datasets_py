@@ -3782,8 +3782,8 @@ def _typed_ir_semantic_bridge_phrases(
     ]
     if not normalized_targets:
         return []
-    if normalized_family not in {"deontic", "frame"} and not any(
-        target in {"deontic", "frame"} for target in normalized_targets
+    if normalized_family not in {"deontic", "dynamic", "frame"} and not any(
+        target in {"deontic", "dynamic", "frame"} for target in normalized_targets
     ):
         return []
 
@@ -4094,12 +4094,16 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
             "deontic duty reconstructs conditioned legal obligation"
         ),
         "deontic->deontic": "deontic duty preserves legal obligation",
+        "deontic->dynamic": "deontic permission reconstructs dynamic action",
         "deontic->frame": "deontic duty reconstructs legal frame",
         "deontic->temporal": "deontic duty reconstructs temporal deadline",
+        "dynamic->deontic": "dynamic action reconstructs deontic duty",
+        "dynamic->dynamic": "dynamic action preserves transfer event",
         "frame->conditional_normative": (
             "legal frame reconstructs conditional obligation"
         ),
         "frame->deontic": "legal frame reconstructs deontic duty",
+        "frame->dynamic": "legal frame reconstructs dynamic action",
         "frame->epistemic": "legal frame reconstructs knowledge finding",
         "frame->frame": "legal frame preserves ontology frame",
         "frame->temporal": "legal frame reconstructs temporal deadline",
@@ -4181,6 +4185,7 @@ def _typed_ir_target_view_semantic_clause_text(
     if not source or target not in {
         "conditional_normative",
         "deontic",
+        "dynamic",
         "frame",
         "temporal",
     }:
@@ -4253,6 +4258,11 @@ def _typed_ir_target_view_semantic_clause_text(
             add("legal duty")
     elif target == "frame":
         add("legal frame")
+        add(subject)
+    elif target == "dynamic":
+        add("dynamic action")
+        if force == "permission":
+            add("may")
         add(subject)
 
     add(action)
@@ -4402,6 +4412,9 @@ def _typed_ir_semantic_surface_reconstruction_text(
     has_temporal_target = any(
         _clean_text(target).lower() == "temporal" for target in targets
     )
+    has_dynamic_target = any(
+        _clean_text(target).lower() == "dynamic" for target in targets
+    )
     normalized_cues = {
         _clean_text(cue).lower().replace(" ", "_") for cue in cue_values
     }
@@ -4424,6 +4437,8 @@ def _typed_ir_semantic_surface_reconstruction_text(
     add(object_value)
     if not (subject or action or object_value):
         add(predicate_text)
+    if has_dynamic_target:
+        add("dynamic action")
     if has_temporal_target and temporal:
         add("during")
         add(temporal)
@@ -4466,6 +4481,8 @@ def _typed_ir_source_semantic_sentence_text(
         add("legal duty")
     elif "temporal" in target_set:
         add("temporal legal rule")
+    elif "dynamic" in target_set:
+        add("dynamic legal action")
     elif "frame" in target_set:
         add("legal frame")
 
@@ -4626,8 +4643,9 @@ def _typed_ir_semantic_reconstruction_clause_text(
     ]
     if not normalized_family or not target_values:
         return ""
-    if normalized_family not in {"deontic", "frame"} and not any(
-        target in {"conditional_normative", "deontic", "frame", "temporal"}
+    if normalized_family not in {"deontic", "dynamic", "frame"} and not any(
+        target
+        in {"conditional_normative", "deontic", "dynamic", "frame", "temporal"}
         for target in target_values
     ):
         return ""
@@ -4735,6 +4753,8 @@ def _typed_ir_target_family_label(target: str) -> str:
         return "knowledge determination finding"
     if normalized == "doxastic":
         return "belief intent knowledge state"
+    if normalized == "dynamic":
+        return "dynamic action transfer change"
     if normalized == "temporal":
         return "temporal deadline period"
     if normalized == "frame":
@@ -4762,10 +4782,11 @@ def _typed_ir_reconstruction_target_order(target: str) -> Tuple[int, str]:
         "conditional_normative": 0,
         "epistemic": 1,
         "deontic": 2,
-        "temporal": 3,
-        "frame": 4,
-        "doxastic": 5,
-        "alethic": 6,
+        "dynamic": 3,
+        "temporal": 4,
+        "frame": 5,
+        "doxastic": 6,
+        "alethic": 7,
     }
     return priority.get(normalized, 20), normalized
 

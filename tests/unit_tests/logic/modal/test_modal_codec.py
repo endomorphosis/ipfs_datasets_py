@@ -46197,6 +46197,11 @@ def test_decompiler_reconstructs_packet_280_authority_and_program_slots() -> Non
     transfer_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(transfer)
     )
+    transfer_structural_text = _structural_decoded_text(
+        decode_modal_ir_document(transfer),
+        modal_ir=transfer,
+        selected_frame=None,
+    )
     developing_slots = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(developing_institutions)
     )
@@ -46227,6 +46232,8 @@ def test_decompiler_reconstructs_packet_280_authority_and_program_slots() -> Non
         "force-polarity-family-pair:permission:positive_scope:deontic->dynamic"
         in transfer_slots["decompiler-plan"]
     )
+    assert "dynamic action transfer change" in transfer_structural_text
+    assert "deontic permission reconstructs dynamic action" in transfer_structural_text
     assert "TDFOL.prover" in transfer_slots["legal_ir_view_prototype"]
 
     assert {
