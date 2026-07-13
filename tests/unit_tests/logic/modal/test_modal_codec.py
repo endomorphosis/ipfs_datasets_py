@@ -45523,6 +45523,96 @@ def test_decompiler_reconstructs_packet_336_housing_and_authorization_slots() ->
     assert "supplemental authorization policy" in supplemental_structural_text
 
 
+def test_decompiler_reconstructs_packet_344_uscode_surface_profiles() -> None:
+    naval_facility = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Expansion of facilities at Carderock, Maryland. The Secretary of "
+            "the Navy is authorized, in implementation of the unitary plan, to "
+            "expand the naval facilities at the David W. Taylor Model Basin, "
+            "Carderock, Maryland, by the construction of buildings and "
+            "installation of equipment."
+        ),
+        predicate="secretary_navy_facility_expansion",
+    )
+    vessel_penalty = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Penalties. If a vessel to which this chapter applies is operated "
+            "in violation of this chapter or a regulation prescribed under this "
+            "chapter, the owner, charterer, managing operator, agent, master, "
+            "and individual in charge are each liable for a civil penalty."
+        ),
+        predicate="vessel_chapter_violation_penalty",
+        conditions=["if a vessel to which this chapter applies"],
+    )
+    higher_education = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Higher Education Resources and Student Assistance. Minority "
+            "Science and Engineering Improvement. Developing institutions may "
+            "cooperate with the Secretary under this part."
+        ),
+        predicate="minority_science_developing_institution_program",
+    )
+
+    naval_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(naval_facility)
+    )
+    penalty_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(vessel_penalty)
+    )
+    education_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(higher_education)
+    )
+
+    assert "naval_facility_expansion" in naval_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "uscode_naval_facility_expansion_surface" in naval_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert "uscode_catalog_record:frame->deontic" in naval_slots[
+        "typed-decompiler-target-reconstruction-surface-profile"
+    ]
+    assert "naval_facility_expansion:frame->temporal" in naval_slots[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+
+    assert "civil_penalty_liability" in penalty_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "statutory_violation_condition" in penalty_slots[
+        "typed-decompiler-source-semantic-atom"
+    ]
+    assert "uscode_vessel_violation_penalty_surface" in penalty_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert "frame->conditional_normative" in penalty_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in penalty_slots["legal_ir_view_prototype"]
+
+    assert {
+        "developing_institution_program",
+        "higher_education_student_assistance",
+        "science_engineering_education_program",
+    }.issubset(set(education_slots["typed-decompiler-source-semantic-atom"]))
+    assert "uscode_higher_education_program_surface" in education_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert "frame->deontic" in education_slots[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "CEC.native" in education_slots["legal_ir_view_prototype"]
+
+
 def test_decompiler_reconstructs_packet_338_semantic_residual_slots() -> None:
     definition = _single_formula_document(
         family="frame",

@@ -14902,6 +14902,29 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_severability_surface")
     if re.search(r"\b(?:management\s+and\s+disposition\s+of\s+vessels|disposition\s+of\s+vessels\s+and\s+other\s+property|arising\s+out\s+of\s+fishery\s+loans?)\b", lowered):
         add("uscode_property_disposition_surface")
+    if re.search(
+        r"\b(?:penalt(?:y|ies)|civil\s+penalt(?:y|ies)|liable)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:vessels?|operated\s+in\s+violation|regulation\s+prescribed|"
+        r"violation\s+of\s+this\s+chapter)\b",
+        lowered,
+    ):
+        add("uscode_vessel_violation_penalty_surface")
+    if re.search(
+        r"\b(?:expand(?:ed|s|ing)?|expansion)\b.{0,100}"
+        r"\b(?:naval\s+facilit(?:y|ies)|model\s+basin|carderock)\b|"
+        r"\b(?:naval\s+facilit(?:y|ies)|model\s+basin|carderock)\b.{0,100}"
+        r"\b(?:expand(?:ed|s|ing)?|expansion|construction|installation)\b",
+        lowered,
+    ):
+        add("uscode_naval_facility_expansion_surface")
+    if re.search(
+        r"\b(?:higher\s+education\s+resources|student\s+assistance|"
+        r"developing\s+institutions?|minority\s+science\s+and\s+engineering)\b",
+        lowered,
+    ):
+        add("uscode_higher_education_program_surface")
     if re.search(r"\b(?:amendments?|struck\s+out|inserted|substituted|redesignated|reclassified)\b", lowered):
         add("uscode_amendment_operation_surface")
     if re.search(r"\b(?:receiving\s+loan\s+from\s+court\s+officer|court\s+officer|receiver|receivership)\b", lowered):
