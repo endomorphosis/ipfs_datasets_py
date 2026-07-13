@@ -6,6 +6,7 @@ import json
 import importlib.util
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 _SCRIPT_PATH = (
     Path(__file__).resolve().parents[4]
@@ -51,6 +52,8 @@ def test_seed_canary_dry_run_selects_at_most_five_verified_tasks_without_mutatio
     assert "no_verifier_evidence" in result.promotion_blockers
     assert "no_seeded_tasks" in result.promotion_blockers
     assert "no_observed_paired_metrics" in result.promotion_blockers
+    assert "actual_isolated_implementations_missing" in result.promotion_blockers
+    assert "no_accepted_compiler_decompiler_patch" in result.promotion_blockers
     assert result.evidence_provenance_summary["synthetic_fixture_record_count"] > 0
     assert result.paired_metrics_provenance_summary["observed_improvement_task_count"] == 0
     assert result.paired_metrics_provenance_summary["synthetic_projection_task_count"] == 5
@@ -72,15 +75,17 @@ def test_seed_canary_report_contains_promotion_and_rollback_sections(tmp_path) -
         "## Paired Evaluation Metrics",
         "## Evidence Provenance",
         "## Paired Metrics Provenance",
+        "## Isolated Implementation Evidence",
         "## Hard Guardrails",
+        "## Rollout Decision Gates",
         "## Throughput Decision",
         "## Task-To-Accepted-Patch Rate",
         "## Cycle Time",
-        "## State-To-Patch Lag",
+        "## State-To-Accepted-Patch Lag",
         "## Rollback Commands",
     ):
         assert section in report
-    assert '"schema_version": "legal-ir-leanstral-seed-canary-v1"' in report
+    assert '"schema_version": "legal-ir-leanstral-real-seed-canary-v2"' in report
     assert "non-production dry run" in report
 
 
@@ -220,3 +225,138 @@ def test_seed_canary_result_is_json_ready() -> None:
     assert decoded["verified_task_count"] == 4
     assert decoded["aggregate_comparisons"]["compiler_ir_cross_entropy"]["regressed"] is False
     assert decoded["paired_metrics_provenance_summary"]["synthetic_metrics_reported_as_observed"] is False
+
+
+def test_real_seed_canary_allows_rollout_with_observed_isolated_patch_evidence(tmp_path) -> None:
+    record = {
+        "evidence_id": "real-evidence-001",
+        "leanstral_metrics": {
+            "compiler_ir_cross_entropy": 0.30,
+            "compiler_ir_cosine": 0.94,
+            "learned_ir_view_cross_entropy": 0.28,
+            "learned_ir_view_cosine": 0.93,
+            "theorem_validity": 1.0,
+            "proof_validity": 1.0,
+            "graph_validity": 1.0,
+            "provenance_validity": 1.0,
+            "anti_copy_penalty": 0.005,
+            "mutation_validity": 1.0,
+            "validation_rejection_rate": 0.03,
+            "task_to_accepted_patch_rate": 0.75,
+            "cycle_time_seconds": 1200.0,
+            "state_to_accepted_patch_lag": 1.5,
+            "autoencoder_cycle_overhead": 0.04,
+            "transient_execution_failure_rate": 0.02,
+        },
+        "control_metrics": {
+            "compiler_ir_cross_entropy": 0.32,
+            "compiler_ir_cosine": 0.93,
+            "learned_ir_view_cross_entropy": 0.29,
+            "learned_ir_view_cosine": 0.92,
+            "theorem_validity": 1.0,
+            "proof_validity": 1.0,
+            "graph_validity": 1.0,
+            "provenance_validity": 1.0,
+            "anti_copy_penalty": 0.006,
+            "mutation_validity": 1.0,
+            "validation_rejection_rate": 0.04,
+            "task_to_accepted_patch_rate": 0.50,
+            "cycle_time_seconds": 1500.0,
+            "state_to_accepted_patch_lag": 2.4,
+            "autoencoder_cycle_overhead": 0.0,
+            "transient_execution_failure_rate": 0.0,
+        },
+        "isolated_implementations": {
+            "leanstral": {
+                "actual_isolated_implementation": True,
+                "locally_verified": True,
+                "outcome": "accepted_improvement",
+                "accepted_patch": True,
+                "compiler_or_decompiler_patch": True,
+                "target_component": "modal.ir_decompiler",
+                "validation_worktree": "/tmp/leanstral-worktree",
+                "validation_commands": ["pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q"],
+                "autoencoder_cycle_overhead": 0.04,
+                "transient_execution_failure_rate": 0.02,
+                "state_to_accepted_patch_lag": 1.5,
+            },
+            "control": {
+                "actual_isolated_implementation": True,
+                "locally_verified": True,
+                "outcome": "unsupported_hypothesis",
+                "accepted_patch": False,
+                "target_component": "modal.ir_decompiler",
+                "validation_worktree": "/tmp/control-worktree",
+                "validation_commands": ["pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q"],
+                "autoencoder_cycle_overhead": 0.0,
+                "transient_execution_failure_rate": 0.0,
+                "state_to_accepted_patch_lag": 2.4,
+            },
+        },
+    }
+    audit = SimpleNamespace(
+        audit_verified=True,
+        cluster_id="real-cluster-001",
+        compiler_surface="modal.ir_decompiler",
+        evidence_provenance={
+            "dominant_kind": "cached_real_packet",
+            "packet_kind_counts": {"cached_real_packet": 1},
+            "production_eligible": True,
+            "provider_or_verified_cache": True,
+            "real_record_count": 1,
+            "synthetic_fixture_record_count": 0,
+        },
+        guardrails={
+            "anti_copy": {"passed": True},
+            "cluster_evidence_ids": ["real-evidence-001"],
+            "provenance": {"passed": True},
+            "schema": {"passed": True},
+            "verifier": {"passed": True},
+        },
+        projected_todo=SimpleNamespace(
+            action="repair_ir_decompiler",
+            allowed_paths=("ipfs_datasets_py/logic/modal/",),
+            dedup_key="real-seed-task",
+            mutation_cases=("ir_decompiler_regression",),
+            specificity_score=1.0,
+            target_component="modal.ir_decompiler",
+            target_metrics=("compiler_ir_cross_entropy",),
+            theorem_templates=("decompiler_round_trip",),
+            validation_commands=("pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q",),
+        ),
+        rank_score=0.9,
+        heldout_impact=0.8,
+        recurrence=3,
+        semantic_family="decompiler",
+        semantic_signature="real signature",
+    )
+    shadow = SimpleNamespace(
+        audit_validity={"valid": 1, "verified": 1, "invalid": 0},
+        audits=(audit,),
+        cache_summary={"cache_hits": 1, "cache_misses": 0, "llm_calls": 0, "requests": 1},
+        evidence_provenance_summary={"real_record_count": 1},
+        promotion_allowed=True,
+        promotion_blockers=(),
+        selected_cluster_count=1,
+    )
+
+    result = run_seed_canary(
+        [record],
+        config=SeedCanaryConfig(
+            dry_run=False,
+            max_todos=5,
+            todo_queue_path=str(tmp_path / "todos.jsonl"),
+            require_verified_audit_for_promotion=True,
+        ),
+        shadow_result=shadow,
+    )
+
+    assert result.promotion_allowed is True
+    assert result.promotion_blockers == ()
+    assert result.seeded_task_count == 1
+    assert result.accepted_compiler_decompiler_patch_count == 1
+    assert result.rollout_decision_summary["task_to_accepted_patch_rate_requirement_met"] is True
+    assert result.rollout_decision_summary["state_to_accepted_patch_lag_requirement_met"] is True
+    assert result.rollout_decision_summary["autoencoder_cycle_overhead_requirement_met"] is True
+    assert result.rollout_decision_summary["transient_execution_failure_requirement_met"] is True
+    assert (tmp_path / "todos.jsonl").read_text(encoding="utf-8").count("\n") == 1

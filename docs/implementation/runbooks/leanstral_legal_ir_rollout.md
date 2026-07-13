@@ -10,7 +10,8 @@ anti-copy gates remain authoritative.
 - `off`: no Leanstral introspection, audit, TODO seeding, or enforcement.
 - `export`: write introspection evidence only.
 - `shadow`: audit evidence without seeding TODOs or mutating source.
-- `seed`: append at most five verified Leanstral TODOs for paired evaluation.
+- `seed`: append at most five verified real Leanstral TODOs for paired
+  isolated implementation evaluation.
 - `enforce`: fail closed when required Leanstral/introspection evidence is absent.
 
 Default to `off`.  Use `enforce` only after the seed canary report permits
@@ -27,18 +28,20 @@ PYTHONPATH=. python scripts/ops/legal_ir/run_leanstral_shadow_canary.py --dry-ru
 Run the seed canary without mutation:
 
 ```bash
-PYTHONPATH=. python scripts/ops/legal_ir/run_leanstral_seed_canary.py --dry-run --max-todos 5
+PYTHONPATH=. python scripts/ops/legal_ir/run_leanstral_seed_canary.py --dry-run --max-todos 5 \
+  --report-path docs/implementation/reports/leanstral_real_seed_canary.md
 ```
 
 The seed report is written to
-`docs/implementation/reports/leanstral_seed_canary.md`.
+`docs/implementation/reports/leanstral_real_seed_canary.md`.
 
 ## Seed Evaluation
 
 The seed canary must select no more than five tasks.  Each selected task must
 have provenance evidence, anti-copy evidence, schema-valid packets, focused
 allowed paths, theorem templates, mutation cases, validation commands, and a
-matched non-Leanstral control task.
+matched non-Leanstral control task.  Production promotion evidence must include
+actual isolated implementation outcomes for both the Leanstral and control arm.
 
 The paired evaluation compares:
 
@@ -49,17 +52,30 @@ The paired evaluation compares:
 - validation rejection rate
 - task-to-accepted-patch rate
 - cycle time
-- state-to-patch lag
+- state-to-accepted-patch lag
+- accepted compiler/decompiler patch count
+- autoencoder cycle overhead
+- transient execution failure rate
 
 ## Promotion Rule
 
 Permit broader rollout only when all of these are true:
 
 - The canary is not a dry run.
-- At most five verified tasks were seeded.
+- At most five locally verified real tasks were seeded.
+- Every selected task has actual isolated Leanstral and control implementation
+  evidence.
+- At least one Leanstral compiler/decompiler patch was accepted.
+- Task-to-accepted-patch rate improves by at least 20 percent against the
+  matched control.
+- State-to-accepted-patch lag is at least 25 percent lower than the matched
+  control.
+- Compiler IR CE/cosine and learned LegalIR-view CE/cosine do not regress on
+  frozen holdouts.
+- Theorem, graph, provenance, anti-copy, and mutation guardrails do not regress.
+- Autoencoder cycle overhead is below 10 percent.
+- Transient execution failure rate is below 5 percent.
 - No hard guardrail regressed against the matched control.
-- Compiler development throughput materially improved by the configured
-  threshold.
 - Every selected task has verified local evidence and, for production
   promotion, verified Leanstral audit evidence.
 
@@ -76,7 +92,7 @@ PYTHONPATH=. python scripts/ops/legal_ir/run_leanstral_seed_canary.py \
   --input workspace/leanstral-shadow/disagreement_packets.jsonl \
   --cache-dir workspace/leanstral-audit-cache \
   --todo-queue-path workspace/leanstral-seed-canary/todos.jsonl \
-  --report-path docs/implementation/reports/leanstral_seed_canary.md \
+  --report-path docs/implementation/reports/leanstral_real_seed_canary.md \
   --require-promotion
 ```
 
@@ -89,7 +105,8 @@ any unconsumed seed queue entries:
 export LEANSTRAL_LEGAL_IR_MODE=off
 pkill -f 'run_leanstral_seed_canary.py' || true
 rm -f workspace/leanstral-seed-canary/todos.jsonl
-PYTHONPATH=. python scripts/ops/legal_ir/run_leanstral_seed_canary.py --dry-run --max-todos 5
+PYTHONPATH=. python scripts/ops/legal_ir/run_leanstral_seed_canary.py --dry-run --max-todos 5 \
+  --report-path docs/implementation/reports/leanstral_real_seed_canary.md
 ```
 
 If the autoencoder daemon is running, restart it with introspection disabled:
@@ -101,4 +118,6 @@ scripts/ops/logic/restart_autoencoder_codex_daemon.sh
 
 Rollback is mandatory when compiler IR CE/cosine, learned IR-view metrics,
 proof or graph validity, anti-copy penalty, validation rejection rate,
-task-to-accepted-patch rate, cycle time, or state-to-patch lag regresses.
+task-to-accepted-patch rate, cycle time, state-to-accepted-patch lag,
+autoencoder cycle overhead, transient execution failure rate, provenance, or
+mutation guardrails regress.
