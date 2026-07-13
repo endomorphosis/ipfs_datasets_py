@@ -373,6 +373,52 @@ def test_verifier_reports_timed_out_without_accepting_llm_assertion(tmp_path) ->
     assert result.local_checks[0].route_available is True
 
 
+def test_verifier_parallel_slices_reuse_successful_proofs_after_restart(tmp_path) -> None:
+    sample = _sample()
+    request = _request(sample)
+    response = _response(request)
+    counter_path = tmp_path / "lean-runs.txt"
+    lean = _lean_script(
+        tmp_path,
+        "#!/bin/sh\n"
+        'if [ "$1" = "--version" ]; then echo "Lean fake-v1"; exit 0; fi\n'
+        f'printf x >> "{counter_path}"\n'
+        "exit 0\n",
+    )
+    config = LeanstralVerifierConfig(
+        lean_executable=lean,
+        lean_parallel_workers=2,
+        lean_proof_cache_path=str(tmp_path / "proof-cache.json"),
+        lean_slice_size=1,
+        run_lean=True,
+        run_modal_bridge=False,
+    )
+
+    cold = verify_leanstral_audit(
+        request,
+        response,
+        examples=[sample],
+        config=config,
+    )
+    warm = verify_leanstral_audit(
+        request,
+        response,
+        examples=[sample],
+        config=config,
+    )
+
+    assert cold.accepted is True
+    assert warm.accepted is True
+    cold_lean = cold.local_checks[-1]
+    warm_lean = warm.local_checks[-1]
+    assert cold_lean.details["slice_count"] == 2
+    assert cold_lean.details["parallel_workers"] == 2
+    assert cold_lean.details["cache_miss_count"] == 2
+    assert warm_lean.details["cache_hit_count"] == 2
+    assert warm_lean.details["cache_miss_count"] == 0
+    assert counter_path.read_text(encoding="utf-8") == "xx"
+
+
 def test_verifier_requires_referenced_examples_even_for_well_formed_audit() -> None:
     sample = _sample()
     request = _request(sample)

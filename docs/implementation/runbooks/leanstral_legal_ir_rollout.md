@@ -25,6 +25,16 @@ Run the shadow canary first:
 PYTHONPATH=. python scripts/ops/legal_ir/run_leanstral_shadow_canary.py --dry-run --max-clusters 50
 ```
 
+Real Lean checks default to full formula coverage, two-formula registry slices,
+an adaptive worker count capped at eight, and a persistent local proof cache at
+`workspace/leanstral-audit-worker/lean-proof-cache.json`. Cache entries bind the
+canonical full and sliced IR hashes, theorem-generator source hash, and Lean
+toolchain identity. Only successful Lean checks are reusable.
+
+To restore the previous bounded proof behavior during rollback or diagnosis,
+pass `--lean-max-formulas 2 --lean-slice-size 0 --lean-parallel-workers 1` and
+use a separate `--lean-proof-cache-path`.
+
 Run the seed canary without mutation:
 
 ```bash

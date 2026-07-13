@@ -9,15 +9,19 @@ bridge/prover routes.  A model assertion is never treated as proof.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import shutil
 import subprocess
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field, replace
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+
+from ipfs_datasets_py.logic.common import ProofCache
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     LegalSample,
@@ -48,6 +52,7 @@ from .kg_bridge import modal_ir_to_neo4j_graph_data
 
 
 LEANSTRAL_VERIFIER_SCHEMA_VERSION = "legal-ir-leanstral-verifier-v1"
+LEANSTRAL_LEAN_CACHE_SCHEMA_VERSION = "legal-ir-lean-registry-cache-v1"
 
 
 class LeanstralVerificationOutcome(str, Enum):
@@ -68,6 +73,11 @@ class LeanstralVerifierConfig:
     canonical_recompile_backend: str = "codec"
     lean_executable: Optional[str] = None
     lean_max_formulas: int = 0
+    lean_parallel_workers: int = 1
+    lean_proof_cache_max_entries: int = 4096
+    lean_proof_cache_path: Optional[str] = None
+    lean_proof_cache_ttl_seconds: int = 2_592_000
+    lean_slice_size: int = 0
     lean_timeout_seconds: float = 5.0
     prover_timeout_seconds: float = 5.0
     use_provers: Sequence[str] = field(default_factory=tuple)
@@ -149,6 +159,49 @@ class LeanstralLocalCheck:
         }
 
 
+def _file_sha256(path: Path) -> str:
+    """Hash a local verifier dependency without trusting its path alone."""
+
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError:
+        return "unavailable"
+    return digest.hexdigest()
+
+
+def _callable_source_hash(value: Any) -> str:
+    """Hash the source module that defines a verifier-owned callable."""
+
+    source_path = inspect.getsourcefile(value)
+    if source_path:
+        return _file_sha256(Path(source_path))
+    return hashlib.sha256(repr(value).encode("utf-8")).hexdigest()
+
+
+def _local_check_from_mapping(value: Mapping[str, Any]) -> LeanstralLocalCheck:
+    """Rehydrate a JSON-safe local check from the persistent proof cache."""
+
+    status_value = value.get("status", LeanstralVerificationOutcome.UNSUPPORTED.value)
+    if isinstance(status_value, LeanstralVerificationOutcome):
+        status = status_value
+    else:
+        status = LeanstralVerificationOutcome(str(status_value))
+    details = value.get("details")
+    return LeanstralLocalCheck(
+        checker_name=str(value.get("checker_name") or "lean"),
+        status=status,
+        route_available=bool(value.get("route_available")),
+        theorem_valid=bool(value.get("theorem_valid")),
+        timeout_seconds=float(value.get("timeout_seconds") or 0.0),
+        elapsed_seconds=float(value.get("elapsed_seconds") or 0.0),
+        details=dict(details) if isinstance(details, Mapping) else {},
+        error_message=str(value.get("error_message") or ""),
+    )
+
+
 @dataclass(frozen=True)
 class LeanstralAuditVerificationResult:
     """Full verifier report for a Leanstral audit response."""
@@ -194,6 +247,20 @@ class LeanstralAuditVerifier:
         self.codec = DeterministicModalLogicCodec(self.config.codec_config)
         self.prover_adapter = prover_adapter
         self._lean_check_cache: Dict[str, LeanstralLocalCheck] = {}
+        self._lean_toolchain_identities: Dict[str, Dict[str, str]] = {}
+        self._lean_theorem_generator_hash = _callable_source_hash(
+            generate_legal_semantics_theorem_registry
+        )
+        self._lean_proof_cache = (
+            ProofCache(
+                maxsize=max(1, int(self.config.lean_proof_cache_max_entries or 1)),
+                ttl=max(1, int(self.config.lean_proof_cache_ttl_seconds or 1)),
+                enable_persistence=True,
+                persistence_path=self.config.lean_proof_cache_path,
+            )
+            if self.config.lean_proof_cache_path
+            else None
+        )
         self._recompiled_sample_cache: Dict[str, LegalSample] = {}
 
     def verify(
@@ -578,24 +645,72 @@ class LeanstralAuditVerifier:
 
     def _check_lean_registry(self, sample: LegalSample) -> LeanstralLocalCheck:
         executable = self.config.lean_executable or shutil.which("lean") or ""
+        toolchain = self._lean_toolchain_identity(executable)
         cache_key = hashlib.sha256(
             (
-                f"{sample.modal_ir.canonical_hash()}\0{executable}\0"
-                f"{self.config.lean_timeout_seconds}\0{self.config.lean_max_formulas}"
+                f"{sample.modal_ir.canonical_hash()}\0{toolchain['identity_hash']}\0"
+                f"{self._lean_theorem_generator_hash}\0{self.config.lean_timeout_seconds}\0"
+                f"{self.config.lean_max_formulas}\0{self.config.lean_slice_size}"
             ).encode("utf-8")
         ).hexdigest()
         cached = self._lean_check_cache.get(cache_key)
         if cached is not None:
-            return cached
-        result = self._run_lean_registry_check(sample, executable=executable)
+            details = dict(cached.details)
+            details.update(
+                {
+                    "cache_hit_count": int(details.get("slice_count") or 1),
+                    "cache_miss_count": 0,
+                    "process_cache_hit": True,
+                }
+            )
+            return replace(cached, elapsed_seconds=0.0, details=details)
+        result = self._run_lean_registry_check(
+            sample,
+            executable=executable,
+            toolchain=toolchain,
+        )
         self._lean_check_cache[cache_key] = result
         return result
+
+    def _lean_toolchain_identity(self, executable: str) -> Dict[str, str]:
+        cached = self._lean_toolchain_identities.get(executable)
+        if cached is not None:
+            return cached
+        resolved = str(Path(executable).resolve()) if executable else ""
+        executable_hash = _file_sha256(Path(resolved)) if resolved else ""
+        version = ""
+        if executable:
+            try:
+                process = subprocess.run(
+                    [executable, "--version"],
+                    capture_output=True,
+                    check=False,
+                    text=True,
+                    timeout=min(
+                        2.0,
+                        max(0.1, float(self.config.lean_timeout_seconds)),
+                    ),
+                )
+                version = ((process.stdout or "") + (process.stderr or "")).strip()
+            except (OSError, subprocess.TimeoutExpired):
+                version = "unavailable"
+        payload = {
+            "executable_hash": executable_hash,
+            "executable_path": resolved,
+            "version": version,
+        }
+        payload["identity_hash"] = hashlib.sha256(
+            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        self._lean_toolchain_identities[executable] = payload
+        return payload
 
     def _run_lean_registry_check(
         self,
         sample: LegalSample,
         *,
         executable: str,
+        toolchain: Mapping[str, str],
     ) -> LeanstralLocalCheck:
         start = time.time()
         timeout = max(0.001, float(self.config.lean_timeout_seconds))
@@ -611,16 +726,162 @@ class LeanstralAuditVerifier:
             )
         full_formula_count = len(sample.modal_ir.formulas)
         max_formulas = max(0, int(self.config.lean_max_formulas or 0))
-        theorem_sample = sample
+        selected_formulas = sorted(
+            sample.modal_ir.formulas,
+            key=lambda formula: formula.formula_id,
+        )
         if max_formulas and full_formula_count > max_formulas:
-            selected_formulas = sorted(
-                sample.modal_ir.formulas,
-                key=lambda formula: formula.formula_id,
-            )[:max_formulas]
-            theorem_sample = replace(
-                sample,
-                modal_ir=replace(sample.modal_ir, formulas=list(selected_formulas)),
+            selected_formulas = selected_formulas[:max_formulas]
+        slice_size = max(0, int(self.config.lean_slice_size or 0))
+        if not slice_size:
+            slice_size = max(1, len(selected_formulas))
+        formula_slices = [
+            selected_formulas[index : index + slice_size]
+            for index in range(0, len(selected_formulas), slice_size)
+        ] or [[]]
+        workers = min(
+            len(formula_slices),
+            max(1, int(self.config.lean_parallel_workers or 1)),
+        )
+        results: Dict[int, LeanstralLocalCheck] = {}
+        if workers == 1:
+            for index, formulas in enumerate(formula_slices):
+                results[index] = self._run_lean_registry_slice(
+                    sample,
+                    formulas=formulas,
+                    executable=executable,
+                    toolchain=toolchain,
+                    timeout=timeout,
+                )
+        else:
+            with ThreadPoolExecutor(
+                max_workers=workers,
+                thread_name_prefix="lean-registry",
+            ) as executor:
+                futures = {
+                    executor.submit(
+                        self._run_lean_registry_slice,
+                        sample,
+                        formulas=formulas,
+                        executable=executable,
+                        toolchain=toolchain,
+                        timeout=timeout,
+                    ): index
+                    for index, formulas in enumerate(formula_slices)
+                }
+                for future in as_completed(futures):
+                    results[futures[future]] = future.result()
+        ordered_results = [results[index] for index in range(len(formula_slices))]
+        statuses = {result.status for result in ordered_results}
+        if LeanstralVerificationOutcome.REJECTED in statuses:
+            status = LeanstralVerificationOutcome.REJECTED
+        elif LeanstralVerificationOutcome.TIMED_OUT in statuses:
+            status = LeanstralVerificationOutcome.TIMED_OUT
+        elif LeanstralVerificationOutcome.UNSUPPORTED in statuses:
+            status = LeanstralVerificationOutcome.UNSUPPORTED
+        else:
+            status = LeanstralVerificationOutcome.ACCEPTED
+        error_messages = tuple(
+            dict.fromkeys(
+                result.error_message
+                for result in ordered_results
+                if result.error_message
             )
+        )
+        return LeanstralLocalCheck(
+            checker_name="lean",
+            status=status,
+            route_available=all(result.route_available for result in ordered_results),
+            theorem_valid=all(result.theorem_valid for result in ordered_results),
+            timeout_seconds=timeout,
+            elapsed_seconds=time.time() - start,
+            details={
+                "cache_hit_count": sum(
+                    1 for result in ordered_results if result.details.get("proof_cache_hit")
+                ),
+                "cache_miss_count": sum(
+                    1 for result in ordered_results if not result.details.get("proof_cache_hit")
+                ),
+                "full_formula_count": full_formula_count,
+                "lean_toolchain_hash": toolchain.get("identity_hash", ""),
+                "parallel_workers": workers,
+                "process_cache_hit": False,
+                "selected_formula_count": len(selected_formulas),
+                "slice_count": len(formula_slices),
+                "slice_size": slice_size,
+                "slices": [result.to_dict() for result in ordered_results],
+                "theorem_generator_hash": self._lean_theorem_generator_hash,
+                "theorem_count": sum(
+                    int(result.details.get("theorem_count") or 0)
+                    for result in ordered_results
+                ),
+                "verified_formula_count": sum(
+                    int(result.details.get("verified_formula_count") or 0)
+                    for result in ordered_results
+                    if result.status == LeanstralVerificationOutcome.ACCEPTED
+                ),
+            },
+            error_message=error_messages[0] if error_messages else "",
+        )
+
+    def _run_lean_registry_slice(
+        self,
+        sample: LegalSample,
+        *,
+        formulas: Sequence[Any],
+        executable: str,
+        toolchain: Mapping[str, str],
+        timeout: float,
+    ) -> LeanstralLocalCheck:
+        start = time.time()
+        theorem_sample = replace(
+            sample,
+            modal_ir=replace(sample.modal_ir, formulas=list(formulas)),
+        )
+        slice_hash = theorem_sample.modal_ir.canonical_hash()
+        cache_key_payload = {
+            "cache_schema": LEANSTRAL_LEAN_CACHE_SCHEMA_VERSION,
+            "formula_ids": [formula.formula_id for formula in formulas],
+            "full_modal_ir_hash": sample.modal_ir.canonical_hash(),
+            "slice_modal_ir_hash": slice_hash,
+            "theorem_generator_hash": self._lean_theorem_generator_hash,
+            "toolchain_hash": toolchain.get("identity_hash", ""),
+        }
+        cache_key = json.dumps(
+            cache_key_payload,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        if self._lean_proof_cache is not None:
+            cached = self._lean_proof_cache.get(
+                cache_key,
+                prover_name="leanstral_lean_registry",
+            )
+            if (
+                isinstance(cached, Mapping)
+                and cached.get("theorem_valid") is True
+                and cached.get("status") == LeanstralVerificationOutcome.ACCEPTED.value
+            ):
+                try:
+                    check = _local_check_from_mapping(cached)
+                except (TypeError, ValueError):
+                    check = None
+                if check is None:
+                    cached = None
+                else:
+                    details = dict(check.details)
+                    details.update(
+                        {
+                            "cached_proof_elapsed_seconds": check.elapsed_seconds,
+                            "proof_cache_hit": True,
+                        }
+                    )
+                    return replace(
+                        check,
+                        elapsed_seconds=time.time() - start,
+                        details=details,
+                    )
         registry = generate_legal_semantics_theorem_registry(theorem_sample)
         proofs = {theorem.theorem_id: "by decide" for theorem in registry.theorems}
         try:
@@ -658,7 +919,7 @@ class LeanstralAuditVerifier:
             )
         output = ((process.stdout or "") + (process.stderr or "")).strip()
         accepted = process.returncode == 0 and "sorry" not in output.lower()
-        return LeanstralLocalCheck(
+        result = LeanstralLocalCheck(
             checker_name="lean",
             status=LeanstralVerificationOutcome.ACCEPTED
             if accepted
@@ -669,13 +930,21 @@ class LeanstralAuditVerifier:
             elapsed_seconds=time.time() - start,
             details={
                 "lean_output": output,
-                "full_formula_count": full_formula_count,
-                "verified_formula_count": len(theorem_sample.modal_ir.formulas),
+                "formula_ids": [formula.formula_id for formula in formulas],
+                "proof_cache_hit": False,
                 "registry_hash": registry.registry_hash,
                 "theorem_count": registry.theorem_count,
+                "verified_formula_count": len(formulas),
             },
             error_message="" if accepted else "lean_rejected_theorem_registry",
         )
+        if accepted and self._lean_proof_cache is not None:
+            self._lean_proof_cache.set(
+                cache_key,
+                result.to_dict(),
+                prover_name="leanstral_lean_registry",
+            )
+        return result
 
     def _check_modal_bridge(self, sample: LegalSample) -> Sequence[LeanstralLocalCheck]:
         adapter = self.prover_adapter

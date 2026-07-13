@@ -15,6 +15,7 @@ import asyncio
 import hashlib
 import json
 import math
+import os
 import time
 from collections import Counter
 from dataclasses import asdict, dataclass, field
@@ -59,8 +60,12 @@ SHADOW_CANARY_SCHEMA_VERSION = "legal-ir-leanstral-shadow-canary-v1"
 REAL_SHADOW_CANARY_SCHEMA_VERSION = "legal-ir-leanstral-real-shadow-canary-v1"
 DEFAULT_REPORT_PATH = Path("docs/implementation/reports/leanstral_real_shadow_canary.md")
 LEGACY_REPORT_PATH = Path("docs/implementation/reports/leanstral_shadow_canary.md")
+DEFAULT_LEAN_PROOF_CACHE_PATH = Path(
+    "workspace/leanstral-audit-worker/lean-proof-cache.json"
+)
 MAX_CANARY_CLUSTERS = 50
 MIN_REAL_CANARY_PACKETS = 25
+DEFAULT_LEAN_PARALLEL_WORKERS = min(8, max(1, (os.cpu_count() or 1) // 2))
 GUARDRAIL_CODES = (
     "provenance",
     "anti_copy",
@@ -266,7 +271,12 @@ class RealShadowCanaryConfig:
     run_syntax_check: bool = True
     run_graph_check: bool = True
     run_provenance_check: bool = True
-    lean_max_formulas: int = 2
+    lean_max_formulas: int = 0
+    lean_parallel_workers: int = DEFAULT_LEAN_PARALLEL_WORKERS
+    lean_proof_cache_max_entries: int = 4096
+    lean_proof_cache_path: str = str(DEFAULT_LEAN_PROOF_CACHE_PATH)
+    lean_proof_cache_ttl_seconds: int = 2_592_000
+    lean_slice_size: int = 2
     lean_timeout_seconds: float = 10.0
 
     def bounded_min_real_packets(self) -> int:
@@ -301,6 +311,17 @@ class RealShadowCanaryConfig:
             allow_partial_source_span_evidence=True,
             canonical_recompile_backend="packet_canonical",
             lean_max_formulas=max(0, int(self.lean_max_formulas or 0)),
+            lean_parallel_workers=max(1, int(self.lean_parallel_workers or 1)),
+            lean_proof_cache_max_entries=max(
+                1, int(self.lean_proof_cache_max_entries or 1)
+            ),
+            lean_proof_cache_path=(
+                self.lean_proof_cache_path if self.run_lean else None
+            ),
+            lean_proof_cache_ttl_seconds=max(
+                1, int(self.lean_proof_cache_ttl_seconds or 1)
+            ),
+            lean_slice_size=max(0, int(self.lean_slice_size or 0)),
             lean_timeout_seconds=max(0.001, float(self.lean_timeout_seconds or 0.0)),
             run_graph_check=self.run_graph_check,
             run_lean=self.run_lean,
@@ -334,6 +355,11 @@ class RealShadowAudit:
     local_verifier_accepted: bool
     local_verifier_reasons: Sequence[str]
     local_check_count: int
+    lean_cache_hit_count: int = 0
+    lean_cache_miss_count: int = 0
+    lean_parallel_workers: int = 0
+    lean_slice_count: int = 0
+    lean_verified_formula_count: int = 0
     state_to_verified_audit_lag_seconds: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -350,6 +376,11 @@ class RealShadowAudit:
             "local_verifier_accepted": self.local_verifier_accepted,
             "local_verifier_outcome": self.local_verifier_outcome,
             "local_verifier_reasons": list(self.local_verifier_reasons),
+            "lean_cache_hit_count": int(self.lean_cache_hit_count),
+            "lean_cache_miss_count": int(self.lean_cache_miss_count),
+            "lean_parallel_workers": int(self.lean_parallel_workers),
+            "lean_slice_count": int(self.lean_slice_count),
+            "lean_verified_formula_count": int(self.lean_verified_formula_count),
             "request_id": self.request_id,
             "response_hash": self.response_hash,
             "semantic_family": self.semantic_family,
@@ -876,6 +907,14 @@ def render_real_markdown_report(result: RealShadowCanaryResult) -> str:
                 f"- Local verifier: `{audit.local_verifier_outcome}`; accepted: `{str(audit.local_verifier_accepted).lower()}`; checks: {audit.local_check_count}",
             ]
         )
+        if audit.lean_slice_count:
+            lines.append(
+                "- Lean slices: "
+                f"{audit.lean_slice_count}; proof-cache hits/misses: "
+                f"{audit.lean_cache_hit_count}/{audit.lean_cache_miss_count}; "
+                f"workers: {audit.lean_parallel_workers}; "
+                f"verified formulas: {audit.lean_verified_formula_count}"
+            )
         if audit.state_to_verified_audit_lag_seconds is not None:
             lines.append(
                 f"- State-to-verified-audit lag seconds: {audit.state_to_verified_audit_lag_seconds:.6f}"
@@ -1634,6 +1673,11 @@ def _verify_real_shadow_audits(
         )
         verifier_outcome = str(_get_attr_or_key(verification, "outcome", "not-run") or "not-run")
         local_checks = _get_attr_or_key(verification, "local_checks", ()) or ()
+        lean_details: Mapping[str, Any] = {}
+        for local_check in local_checks:
+            if str(_get_attr_or_key(local_check, "checker_name", "")) == "lean":
+                lean_details = _mapping(_get_attr_or_key(local_check, "details", {}))
+                break
         item_records = [
             records_by_evidence_id[evidence_id]
             for evidence_id in item.evidence_ids
@@ -1675,6 +1719,21 @@ def _verify_real_shadow_audits(
                     for reason in (_get_attr_or_key(verification, "reasons", ()) or ())
                 ),
                 local_check_count=len(local_checks),
+                lean_cache_hit_count=int(
+                    _finite_float(lean_details.get("cache_hit_count"), 0.0)
+                ),
+                lean_cache_miss_count=int(
+                    _finite_float(lean_details.get("cache_miss_count"), 0.0)
+                ),
+                lean_parallel_workers=int(
+                    _finite_float(lean_details.get("parallel_workers"), 0.0)
+                ),
+                lean_slice_count=int(
+                    _finite_float(lean_details.get("slice_count"), 0.0)
+                ),
+                lean_verified_formula_count=int(
+                    _finite_float(lean_details.get("verified_formula_count"), 0.0)
+                ),
                 state_to_verified_audit_lag_seconds=lag,
             )
         )
@@ -1927,6 +1986,15 @@ def _real_verifier_summary(audits: Sequence[RealShadowAudit]) -> Dict[str, Any]:
     return {
         "accepted": sum(1 for audit in audits if audit.local_verifier_accepted),
         "local_check_count": sum(audit.local_check_count for audit in audits),
+        "lean_cache_hit_count": sum(audit.lean_cache_hit_count for audit in audits),
+        "lean_cache_miss_count": sum(audit.lean_cache_miss_count for audit in audits),
+        "lean_max_parallel_workers": max(
+            (audit.lean_parallel_workers for audit in audits), default=0
+        ),
+        "lean_slice_count": sum(audit.lean_slice_count for audit in audits),
+        "lean_verified_formula_count": sum(
+            audit.lean_verified_formula_count for audit in audits
+        ),
         "outcomes": dict(sorted(outcomes.items())),
         "reasons": dict(sorted(reasons.items())),
         "rejected_or_unsupported": sum(
@@ -2292,7 +2360,19 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--skip-graph-check", action="store_true")
     parser.add_argument("--skip-provenance-check", action="store_true")
     parser.add_argument("--run-lean", action="store_true")
-    parser.add_argument("--lean-max-formulas", type=int, default=2)
+    parser.add_argument("--lean-max-formulas", type=int, default=0)
+    parser.add_argument(
+        "--lean-parallel-workers",
+        type=int,
+        default=DEFAULT_LEAN_PARALLEL_WORKERS,
+    )
+    parser.add_argument("--lean-proof-cache-max-entries", type=int, default=4096)
+    parser.add_argument(
+        "--lean-proof-cache-path",
+        default=str(DEFAULT_LEAN_PROOF_CACHE_PATH),
+    )
+    parser.add_argument("--lean-proof-cache-ttl-seconds", type=int, default=2_592_000)
+    parser.add_argument("--lean-slice-size", type=int, default=2)
     parser.add_argument("--lean-timeout-seconds", type=float, default=10.0)
     parser.add_argument("--run-modal-bridge", action="store_true")
     parser.add_argument(
@@ -2362,6 +2442,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         max_retries=args.max_retries,
         min_real_packets=args.min_real_packets,
         lean_max_formulas=args.lean_max_formulas,
+        lean_parallel_workers=args.lean_parallel_workers,
+        lean_proof_cache_max_entries=args.lean_proof_cache_max_entries,
+        lean_proof_cache_path=args.lean_proof_cache_path,
+        lean_proof_cache_ttl_seconds=args.lean_proof_cache_ttl_seconds,
+        lean_slice_size=args.lean_slice_size,
         lean_timeout_seconds=args.lean_timeout_seconds,
         model=args.model,
         provider=args.provider,
