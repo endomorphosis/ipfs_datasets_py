@@ -291,7 +291,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-019 Add a bounded asynchronous Leanstral audit worker
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: ops
 - Depends on: PORTAL-LIRLS-017, PORTAL-LIRLS-008
