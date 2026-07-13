@@ -1092,8 +1092,9 @@ def test_modal_registry_packet_000180_exposes_signal_free_ambiguity_pairs() -> N
 
 def test_modal_registry_packet_000297_exposes_deontic_frame_ambiguity_policy() -> None:
     expected_pairs = (
-        ("deontic", "deontic"),
+        ("deontic", "conditional_normative"),
         ("deontic", "frame"),
+        ("frame", "conditional_normative"),
         ("frame", "deontic"),
     )
 
@@ -2033,10 +2034,30 @@ def test_modal_compiler_surfaces_packet_000297_adaptive_ambiguities() -> None:
         )
     )
     scenarios = (
-        ("us-code-34-10512-f1eb1d96fb4b565b", "frame", "deontic", -0.01020671373),
-        ("us-code-7-2322-8a47b18df0989404", "deontic", "deontic", 0.014337962825),
-        ("us-code-25-233-da029ae8d3664392", "deontic", "frame", -0.706950482391),
-        ("us-code-16-477-1e795a196584fe10", "frame", "deontic", -0.796888002027),
+        (
+            "us-code-10-2263-571407a5044f94b2",
+            "deontic",
+            "frame",
+            -0.32941965664,
+        ),
+        (
+            "us-code-33-3803-ac8f8e7ef6c14117",
+            "deontic",
+            "conditional_normative",
+            -0.291527539167,
+        ),
+        (
+            "us-code-38-1731-7736f9e2e50472ec",
+            "frame",
+            "deontic",
+            -0.074189302181,
+        ),
+        (
+            "us-code-2-5541-462165e82b6b68ce",
+            "frame",
+            "conditional_normative",
+            -0.235295473994,
+        ),
     )
 
     for index, (sample_id, predicted_family, target_family, family_margin) in enumerate(
