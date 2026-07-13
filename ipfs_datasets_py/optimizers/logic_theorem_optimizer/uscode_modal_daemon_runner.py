@@ -3765,6 +3765,9 @@ def paired_program_synthesis_health(
     queue_exists = queue_path.exists()
     queue = ModalTodoQueue.load_jsonl(queue_path) if queue_exists else ModalTodoQueue()
     status = queue.role_status_counts().get("program_synthesis", {})
+    transient_counts = queue.transient_failure_counts(
+        optimizer_role="program_synthesis"
+    )
     failed_reason_counts: Counter[str] = Counter()
     failed_kind_counts: Counter[str] = Counter()
     failed_test_counts: Counter[str] = Counter()
@@ -3789,6 +3792,7 @@ def paired_program_synthesis_health(
     waiting = 0
     active = 0
     claimed_total = 0
+    transient_requeue_total = 0
     execution_count = 0
     idle_stale = 0
     stale_claimed_worker_ids: List[str] = []
@@ -3804,7 +3808,9 @@ def paired_program_synthesis_health(
             continue
         summary_count += 1
         claimed_total += int(payload.get("codex_claimed_total", 0) or 0)
-        execution_count += int(payload.get("codex_execution_count", 0) or 0)
+        child_execution_count = int(payload.get("codex_execution_count", 0) or 0)
+        execution_count += child_execution_count
+        transient_requeue_total += int(payload.get("codex_transient_requeue_count", 0) or 0)
         worker_id = str(payload.get("worker_id") or payload.get("codex_scope") or path.stem)
         heartbeat_age = 0.0
         if payload.get("heartbeat_at"):
@@ -3827,8 +3833,20 @@ def paired_program_synthesis_health(
     claimed = int(status.get("claimed", 0) or 0)
     failed_validation = int(status.get("failed_validation", 0) or 0)
     superseded = int(status.get("superseded", 0) or 0)
+    transient_attempt_count = max(
+        int(transient_counts.get("transient_attempt_count", 0)),
+        int(transient_requeue_total),
+    )
+    transient_todo_count = int(transient_counts.get("transient_todo_count", 0))
+    transient_failure_rate = (
+        float(transient_attempt_count) / float(execution_count)
+        if execution_count > 0
+        else queue.transient_failure_rate(optimizer_role="program_synthesis")
+    )
     starved = pending == 0 and claimed == 0 and waiting > 0
     drained = pending == 0 and claimed == 0 and failed_validation == 0
+    executor_available = summary_count > 0 and len(stale_claimed_worker_ids) < summary_count
+    executor_throttled = bool(transient_failure_rate >= 0.5 and transient_attempt_count > 0)
     return {
         "codex_claimed_total": claimed_total,
         "codex_execution_count": execution_count,
@@ -3839,6 +3857,10 @@ def paired_program_synthesis_health(
         "codex_worker_stale_count": len(stale_claimed_worker_ids),
         "codex_workers_active_packet_count": active,
         "codex_workers_waiting_for_todos_count": waiting,
+        "codex_executor_available": executor_available,
+        "codex_executor_throttled": executor_throttled,
+        "codex_transient_requeue_count": transient_attempt_count,
+        "codex_transient_failure_rate": round(transient_failure_rate, 6),
         "program_synthesis_claimed": claimed,
         "program_synthesis_claimed_by_worker": dict(claimed_by_worker),
         "program_synthesis_completed": int(status.get("completed", 0) or 0),
@@ -3848,10 +3870,23 @@ def paired_program_synthesis_health(
         "program_synthesis_failed_validation_test_counts": dict(failed_test_counts),
         "program_synthesis_pending": pending,
         "program_synthesis_superseded": superseded,
+        "program_synthesis_transient_failure_count": transient_todo_count,
+        "program_synthesis_transient_failure_attempts": transient_attempt_count,
+        "program_synthesis_transient_failure_rate": round(transient_failure_rate, 6),
         "queue_exists": queue_exists,
         "stale_claimed_codex_worker_ids": stale_claimed_worker_ids,
         "stale_idle_codex_worker_ids": stale_idle_worker_ids,
     }
+
+
+def _program_synthesis_queue_pressure(
+    health: Mapping[str, Any],
+    *,
+    pending_cap: int,
+) -> float:
+    cap = max(0, int(pending_cap or 0))
+    pending = int(health.get("program_synthesis_pending", 0) or 0)
+    return (float(pending) / float(cap)) if cap > 0 else 0.0
 
 
 def _paired_failed_validation_rescue_should_seed(
@@ -11986,6 +12021,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "run_id": args.run_id,
         "started_at": utc_now(),
     }
+    paired_queue_path = root / "workspace" / "todo-queues" / f"{paired['queue_run_id']}.jsonl"
     save_summary(summary_path, summary)
 
     stop_requested = False
@@ -12105,6 +12141,22 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                         for run_id, exit_code in codex_exit_codes.items()
                     },
                 }
+                program_health = paired_program_synthesis_health(
+                    queue_path=paired_queue_path,
+                    codex_summary_paths=[
+                        log_dir / f"{child['run_id']}.summary"
+                        for child in codex_child_summaries
+                    ],
+                    codex_worker_stale_seconds=float(
+                        getattr(args, "codex_worker_stale_seconds", 300.0)
+                    ),
+                )
+                summary["program_synthesis_health"] = program_health
+                summary["program_synthesis_executor_health"] = program_health
+                summary["program_synthesis_queue_pressure"] = _program_synthesis_queue_pressure(
+                    program_health,
+                    pending_cap=int(getattr(args, "max_program_synthesis_pending", 512) or 512),
+                )
                 save_summary(summary_path, summary)
 
                 if auto_exit_code is not None and all(
@@ -12164,6 +12216,22 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 for run_id, exit_code in codex_exit_codes.items()
             },
         }
+        program_health = paired_program_synthesis_health(
+            queue_path=paired_queue_path,
+            codex_summary_paths=[
+                log_dir / f"{child['run_id']}.summary"
+                for child in codex_child_summaries
+            ],
+            codex_worker_stale_seconds=float(
+                getattr(args, "codex_worker_stale_seconds", 300.0)
+            ),
+        )
+        summary["program_synthesis_health"] = program_health
+        summary["program_synthesis_executor_health"] = program_health
+        summary["program_synthesis_queue_pressure"] = _program_synthesis_queue_pressure(
+            program_health,
+            pending_cap=int(getattr(args, "max_program_synthesis_pending", 512) or 512),
+        )
         summary["finished_at"] = utc_now()
         autoencoder_child_health = paired_autoencoder_child_health(
             log_dir / f"{paired['autoencoder_run_id']}.summary"
@@ -13948,6 +14016,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 supervisor.queue,
                 supervisor.policy,
             )
+            summary["program_synthesis_transient_failure"] = (
+                supervisor.queue.transient_failure_counts(
+                    optimizer_role=supervisor.policy.program_synthesis_role
+                )
+            )
+            summary["program_synthesis_transient_failure_rate"] = (
+                supervisor.queue.transient_failure_rate(
+                    optimizer_role=supervisor.policy.program_synthesis_role
+                )
+            )
+            summary["program_synthesis_queue_pressure"] = (
+                _program_synthesis_queue_pressure(
+                    program_synthesis_status,
+                    pending_cap=int(supervisor.policy.max_program_synthesis_pending),
+                )
+            )
             summary["program_synthesis_metric_feedback"] = (
                 _program_synthesis_metric_feedback_report(
                     supervisor.queue,
@@ -14473,6 +14557,20 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             supervisor.queue,
             supervisor.policy,
         )
+        summary["program_synthesis_transient_failure"] = (
+            supervisor.queue.transient_failure_counts(
+                optimizer_role=supervisor.policy.program_synthesis_role
+            )
+        )
+        summary["program_synthesis_transient_failure_rate"] = (
+            supervisor.queue.transient_failure_rate(
+                optimizer_role=supervisor.policy.program_synthesis_role
+            )
+        )
+        summary["program_synthesis_queue_pressure"] = _program_synthesis_queue_pressure(
+            summary,
+            pending_cap=int(supervisor.policy.max_program_synthesis_pending),
+        )
         summary["state_to_compiler_patch_lag"] = state_to_compiler_patch_lag(summary)
         summary["supervisor_health"] = build_modal_supervisor_health_report(
             summary
@@ -14717,6 +14815,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         )
 
             summary["cycles"] = cycle
+            summary["heartbeat_at"] = utc_now()
             summary["codex_claimed_total"] = int(
                 summary.get("codex_claimed_total", 0)
             ) + len(claimed)
@@ -14742,6 +14841,13 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 ) + int(
                     dict(packet.get("transient_requeue", {})).get("requeued_count", 0)
                 )
+            summary["codex_transient_failure_rate"] = (
+                round(
+                    float(summary.get("codex_transient_requeue_count", 0) or 0)
+                    / float(max(1, int(summary.get("codex_execution_count", 0) or 0))),
+                    6,
+                )
+            )
             main_apply_status = str(packet.get("main_apply_status", "")).strip().lower()
             if main_apply_status == "applied":
                 summary["codex_main_apply_count"] = int(
@@ -14778,6 +14884,14 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             summary["elapsed_seconds"] = round(time.time() - started_at, 3)
             summary["latest_queue_counts"] = queue.status_counts()
             summary["latest_role_queue_counts"] = queue.role_status_counts()
+            summary["program_synthesis_transient_failure"] = queue.transient_failure_counts(
+                optimizer_role=policy.program_synthesis_role
+            )
+            summary["program_synthesis_transient_failure_rate"] = (
+                queue.transient_failure_rate(
+                    optimizer_role=policy.program_synthesis_role
+                )
+            )
             if vector_claim_report:
                 summary["latest_codex_vector_claim_report"] = dict(vector_claim_report)
             summary["latest_stop_reason"] = (
@@ -14833,6 +14947,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             summary["latest_stop_reason"] = f"signal_{stop_signal}"
             summary["stopped_by_signal"] = stop_signal
         summary["elapsed_seconds"] = round(time.time() - started_at, 3)
+        summary["heartbeat_at"] = utc_now()
         with queue_file_lock(queue_path):
             queue = ModalTodoQueue.load_jsonl(queue_path)
             update_program_synthesis_summary(
@@ -14843,6 +14958,14 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             )
             summary["latest_queue_counts"] = queue.status_counts()
             summary["latest_role_queue_counts"] = queue.role_status_counts()
+            summary["program_synthesis_transient_failure"] = queue.transient_failure_counts(
+                optimizer_role=policy.program_synthesis_role
+            )
+            summary["program_synthesis_transient_failure_rate"] = (
+                queue.transient_failure_rate(
+                    optimizer_role=policy.program_synthesis_role
+                )
+            )
         summary["finished_at"] = utc_now()
         save_summary(summary_path, summary, final=True)
         append_event(log_path, args.run_id, {"event": "run_finished", **summary})

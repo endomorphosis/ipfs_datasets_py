@@ -750,6 +750,90 @@ def test_supervisor_keeps_unverified_leanstral_report_in_report_only_state() -> 
     assert supervisor.queue.pending(optimizer_role="program_synthesis") == []
 
 
+def test_leanstral_projection_blocks_when_executor_health_is_unavailable() -> None:
+    report = {
+        "gaps": [
+            _leanstral_gap(
+                "gap-health",
+                component="modal.compiler",
+                action="add_deterministic_parser_rule",
+                priority=0.91,
+                sample_id="sample-health",
+                citation="5 U.S.C. 552",
+                rule_key="modal_cue:shall",
+            )
+        ]
+    }
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+
+    result = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        report,
+        config=LeanstralTodoProjectionConfig(
+            worker_health={
+                "codex_executor_available": False,
+                "codex_worker_summary_count": 0,
+            },
+        ),
+    )
+
+    assert result.seeded_count == 0
+    assert result.seed_block_reasons == ["executor_unavailable"]
+    assert result.executor_health["available"] is False
+    assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 0
+
+
+def test_leanstral_projection_blocks_on_pending_and_transient_caps() -> None:
+    existing = ModalTodo(
+        todo_id="program-transient",
+        action="add_deterministic_parser_rule",
+        objective="repair parser",
+        sample_ids=["sample-a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="leanstral_verified_rule_gap",
+        loss_value=1.0,
+        priority=5.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "transient_failure_count": 3,
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([existing]))
+    report = {
+        "gaps": [
+            _leanstral_gap(
+                "gap-pending-cap",
+                component="modal.compiler",
+                action="add_deterministic_parser_rule",
+                priority=0.91,
+                sample_id="sample-b",
+                citation="18 U.S.C. 1001",
+                rule_key="modal_cue:shall_not",
+            )
+        ]
+    }
+
+    result = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        report,
+        config=LeanstralTodoProjectionConfig(
+            max_program_synthesis_pending=1,
+            max_transient_failures=2,
+            max_transient_failure_rate=0.25,
+        ),
+    )
+
+    assert result.seeded_count == 0
+    assert result.pending_count == 1
+    assert result.pending_cap == 1
+    assert result.queue_pressure == pytest.approx(1.0)
+    assert result.transient_failure_rate == pytest.approx(1.0)
+    assert result.seed_block_reasons == [
+        "pending_cap_reached",
+        "transient_failure_count_above_cap",
+        "transient_failure_rate_above_cap",
+    ]
+    assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 1
+
+
 def test_queue_semantic_dedupe_rejects_completed_bundle_duplicates() -> None:
     metadata = {
         "optimizer_role": "program_synthesis",
@@ -3421,7 +3505,10 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert failed["updated"] is True
     assert failed["completed_count"] == 0
     assert failed["failed_validation_count"] == 0
+    assert failed["quality_failure_count"] == 0
     assert failed["requeued_count"] == 1
+    assert failed["operational_requeue_count"] == 1
+    assert failed["transient_failure_count"] == 1
     assert failed["reason"] == "awaiting_codex_changes"
     failed_todo = supervisor_fail.queue.get(claimed_fail[0].todo_id)
     assert failed_todo.status == "pending"
@@ -5729,6 +5816,53 @@ def test_paired_program_synthesis_health_detects_stale_claimed_codex_worker(
     assert health["codex_worker_stale_count"] == 1
     assert health["codex_idle_worker_stale_count"] == 0
     assert health["stale_claimed_codex_worker_ids"] == ["codex-bridge-01"]
+    assert health["codex_executor_available"] is False
+
+
+def test_paired_program_synthesis_health_reports_transient_rate(tmp_path: Path) -> None:
+    transient = ModalTodo(
+        todo_id="pending-transient",
+        action="repair_multiview_legal_ir_loss",
+        objective="pending bridge repair",
+        sample_ids=["sample-a"],
+        citations=[],
+        loss_name="legal_ir_multiview_total_loss",
+        loss_value=1.0,
+        priority=3.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "bridge",
+            "transient_failure_count": 2,
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([transient]).save_jsonl(queue_path)
+    child_summary = tmp_path / "codex-bridge-01.summary"
+    child_summary.write_text(
+        json.dumps(
+            {
+                "codex_claimed_total": 2,
+                "codex_execution_count": 4,
+                "codex_scope": "bridge",
+                "codex_transient_requeue_count": 2,
+                "heartbeat_at": datetime.now().astimezone().isoformat(),
+                "latest_stop_reason": "waiting_for_program_synthesis_todos",
+                "worker_id": "codex-bridge-01",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    health = runner.paired_program_synthesis_health(
+        queue_path=queue_path,
+        codex_summary_paths=[child_summary],
+        codex_worker_stale_seconds=60.0,
+    )
+
+    assert health["program_synthesis_failed_validation"] == 0
+    assert health["program_synthesis_transient_failure_attempts"] == 2
+    assert health["codex_transient_failure_rate"] == pytest.approx(0.5)
+    assert health["codex_executor_throttled"] is True
 
 
 def test_codex_main_apply_backpressure_blocks_new_claims_when_lane_is_full() -> None:

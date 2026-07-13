@@ -202,6 +202,38 @@ def test_modal_supervisor_health_distinguishes_alive_from_productive_loop() -> N
     )["lag"] == 2
 
 
+def test_modal_supervisor_health_exposes_executor_pressure_and_seed_blocks() -> None:
+    health = build_modal_supervisor_health_report(
+        {
+            "cycles": 3,
+            "latest_queue_counts": {"pending": 8, "claimed": 2},
+            "latest_leanstral_projection": {
+                "executor_health": {
+                    "available": False,
+                    "throttled": True,
+                    "transient_failure_count": 4,
+                },
+                "queue_pressure": 0.8,
+                "seed_block_reasons": [
+                    "executor_unavailable",
+                    "transient_failure_rate_above_cap",
+                ],
+                "transient_failure_rate": 0.4,
+            },
+            "program_synthesis_pending_cap": 10,
+        }
+    ).to_dict()
+
+    assert health["executor_health"]["available"] is False
+    assert health["executor_health"]["throttled"] is True
+    assert health["queue_pressure"] == 0.8
+    assert health["transient_failure_rate"] == 0.4
+    assert health["seed_block_reasons"] == [
+        "executor_unavailable",
+        "transient_failure_rate_above_cap",
+    ]
+
+
 def test_production_runner_exports_canonical_disagreement_packets(tmp_path) -> None:
     sample = build_us_code_sample(
         title="5",
