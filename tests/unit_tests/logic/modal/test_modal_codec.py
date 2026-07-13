@@ -41879,6 +41879,47 @@ def test_decompiler_emits_semantic_source_slots_for_consultation_frame_span() ->
     ]
 
 
+def test_decompiler_reconstructs_multilateral_investment_guarantee_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Multilateral Investment Guarantee Agency. The Secretary may "
+            "participate in the multilateral investment guarantee program "
+            "and provide advice and assistance under this subchapter."
+        ),
+        predicate="multilateral_investment_guarantee_agency",
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert {
+        "development_advice_assistance",
+        "investment_guarantee_authority",
+        "multilateral_investment_guarantee",
+        "multilateral_investment_guarantee_agency",
+    }.issubset(set(slot_texts["typed-decompiler-source-semantic-atom"]))
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+    }.issubset(set(slot_texts["typed-decompiler-target-reconstruction-pair"]))
+    assert "multilateral_investment_guarantee:frame->deontic" in slot_texts[
+        "typed-decompiler-target-semantic-family-pair"
+    ]
+    assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(slot_texts["legal_ir_view_prototype"])
+    )
+    assert "multilateral investment guarantee" in structural_text
+
+
 def test_decompiler_binds_packet_000208_family_pairs_to_legal_ir_views() -> None:
     deontic_document = _single_formula_document(
         family="deontic",
