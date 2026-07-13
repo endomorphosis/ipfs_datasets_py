@@ -109,7 +109,28 @@ def test_decoder_slot_grounding_audit_from_ir_preserves_cross_reference_blocker(
     audit = build_decoder_slot_grounding_audit_record_from_ir(norm)
 
     assert audit["source_id"] == element["source_id"]
-    assert audit["required_slots"] == ["actor", "action"]
+    assert audit["required_slots"] == [
+        "actor",
+        "modality",
+        "action",
+        "exceptions",
+        "cross_references",
+    ]
     assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
     assert element["llm_repair"]["required"] is True
+
+
+def test_decoder_slot_grounding_audit_from_ir_uses_family_specific_definition_slots():
+    element = extract_normative_elements(
+        'In this section, the term "covered mail" means nonpostage mail from outside sources.'
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    audit = build_decoder_slot_grounding_audit_record_from_ir(norm)
+
+    assert norm.norm_type == "definition"
+    assert audit["required_slots"] == ["actor"]
+    assert audit["grounded_slots"] == ["actor"]
+    assert audit["slot_grounding_complete"] is True
+    assert audit["requires_validation"] is False

@@ -19,7 +19,11 @@ from .formula_builder import (
     build_deontic_formula_record_from_ir,
     build_deontic_formula_records_from_irs,
 )
-from .ir import LegalNormIR, legal_norm_ir_slot_provenance
+from .ir import (
+    LegalNormIR,
+    legal_norm_ir_phase8_required_slots,
+    legal_norm_ir_slot_provenance,
+)
 from .prover_syntax import validate_ir_with_provers
 
 
@@ -2218,25 +2222,32 @@ def build_decoder_slot_grounding_audit_record(
 
 def build_decoder_slot_grounding_audit_record_from_ir(
     norm: LegalNormIR,
-    required_slots: Sequence[str] = ("actor", "action"),
+    required_slots: Sequence[str] | None = None,
 ) -> Dict[str, Any]:
     """Build a decoder slot-grounding audit row from typed legal IR."""
 
+    resolved_required_slots = (
+        tuple(required_slots)
+        if required_slots is not None
+        else tuple(legal_norm_ir_phase8_required_slots(norm))
+    )
     return build_decoder_slot_grounding_audit_record(
         build_decoder_record_from_ir(norm),
-        required_slots,
+        resolved_required_slots,
     )
 
 
 def build_decoder_slot_grounding_audit_records_from_irs(
     norms: Iterable[LegalNormIR],
-    required_slots: Sequence[str] = ("actor", "action"),
+    required_slots: Sequence[str] | None = None,
 ) -> List[Dict[str, Any]]:
     """Build ordered decoder slot-grounding audit rows for typed legal IR.
 
     Phase 8 reconstruction reports need batch-level diagnostics, not just
     per-row audit records. This helper keeps the audit source-grounded by
-    deriving each row from the existing deterministic decoder record path.
+    deriving each row from the existing deterministic decoder record path. When
+    callers do not provide an override, each row uses the same family-aware
+    LegalNormIR slot requirements as the bridge quality gate.
     """
 
     return [

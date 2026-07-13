@@ -89,7 +89,13 @@ def test_decoder_slot_grounding_audit_records_from_irs_preserve_source_grounding
         element["source_id"] for element in elements
     ]
     assert all(record["reconstruction_id"].startswith("reconstruction:") for record in records)
-    assert all(record["required_slots"] == ["actor", "action"] for record in records)
+    assert records[0]["required_slots"] == [
+        "actor",
+        "modality",
+        "action",
+        "temporal_constraints",
+    ]
+    assert records[1]["required_slots"] == ["actor", "modality", "action"]
     assert all(record["slot_grounding_complete"] is True for record in records)
     assert all(record["requires_validation"] is False for record in records)
     assert summary["record_count"] == 2
