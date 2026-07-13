@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import errno
 import json
 import threading
 import time
@@ -143,6 +144,33 @@ def test_worker_loads_jsonl_clusters_and_deduplicates_required_axes(tmp_path) ->
     assert item.request.response_schema_hash
 
 
+def test_worker_bounds_model_evidence_and_preserves_full_hash_manifest(tmp_path) -> None:
+    packets = [_packet(index) for index in range(1, 13)]
+    items, stale = build_leanstral_audit_work_items(
+        packets,
+        config=LeanstralAuditWorkerConfig(
+            cache_dir=str(tmp_path / "cache"),
+            max_evidence_packets_per_item=2,
+        ),
+    )
+
+    assert stale == []
+    truncated = [
+        item
+        for item in items
+        if item.request.evidence.get("evidence_packet_count", 0) > 2
+    ]
+    assert truncated
+    for item in truncated:
+        evidence = item.request.evidence
+        assert len(evidence["evidence_packets"]) == 2
+        assert evidence["evidence_packet_selection"] == "ranked_prefix_with_full_hash_manifest"
+        assert len(evidence["source_record_hashes"]) == evidence["evidence_packet_count"]
+        assert len(evidence["omitted_evidence_packet_hashes"]) == (
+            evidence["evidence_packet_count"] - 2
+        )
+
+
 def test_worker_runs_bounded_async_audits_and_reuses_checkpoint_and_cache(tmp_path) -> None:
     active = 0
     max_active = 0
@@ -221,6 +249,25 @@ def test_worker_retries_timeouts_and_reports_labs_unavailable(tmp_path) -> None:
     unavailable = asyncio.run(unavailable_worker.run_records([_packet(2)], source_digest="unavailable"))
     assert unavailable.unavailable_count == 1
     assert unavailable.results[0].reasons == ("leanstral_labs_model_unavailable",)
+
+    def oversized_generate(prompt: str, **kwargs: object) -> str:
+        raise OSError(errno.E2BIG, "Argument list too long")
+
+    oversized_worker = LeanstralAuditWorker(
+        LeanstralAuditWorkerConfig(
+            cache_dir=str(tmp_path / "oversized-cache"),
+            max_retries=0,
+            request_timeout_seconds=2.0,
+        ),
+        llm_generate=oversized_generate,
+    )
+    oversized = asyncio.run(
+        oversized_worker.run_records([_packet(3)], source_digest="oversized")
+    )
+    assert oversized.failed_count == 1
+    assert oversized.results[0].reasons == (
+        "provider_error:OSError:argument_list_too_long",
+    )
 
 
 def test_worker_rejects_stale_state_and_non_leanstral_model(tmp_path) -> None:

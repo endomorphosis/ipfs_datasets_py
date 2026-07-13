@@ -43,6 +43,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--retry-backoff-seconds", type=float, default=0.25)
     parser.add_argument("--expected-state-hash", default="")
     parser.add_argument("--max-records", type=int, default=0)
+    parser.add_argument("--max-work-items", type=int, default=0)
+    parser.add_argument("--max-evidence-packets-per-item", type=int, default=6)
     parser.add_argument("--provider", default="mistral_vibe")
     parser.add_argument("--model", default="Leanstral")
     parser.add_argument("--vibe-agent", default="lean")
@@ -96,6 +98,8 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
         checkpoint_path=args.checkpoint_path,
         expected_state_hash=args.expected_state_hash,
         max_records=args.max_records,
+        max_work_items=args.max_work_items,
+        max_evidence_packets_per_item=args.max_evidence_packets_per_item,
         provider_enabled=not args.cache_only,
         provider=args.provider,
         model=args.model,

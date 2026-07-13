@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import asyncio
+import errno
 import json
 import math
 import os
@@ -137,6 +138,7 @@ class LeanstralAuditWorkerConfig:
     expected_state_hash: str = ""
     max_records: int = 0
     max_work_items: int = 0
+    max_evidence_packets_per_item: int = 6
     provider_enabled: bool = True
     provider: str = "mistral_vibe"
     model: str = "Leanstral"
@@ -152,6 +154,9 @@ class LeanstralAuditWorkerConfig:
 
     def bounded_max_work_items(self) -> int:
         return max(0, int(self.max_work_items or 0))
+
+    def bounded_max_evidence_packets_per_item(self) -> int:
+        return max(1, int(self.max_evidence_packets_per_item or 1))
 
     def timeout(self) -> float:
         value = float(self.request_timeout_seconds or 0.0)
@@ -1017,7 +1022,7 @@ class LeanstralAuditWorker:
                         llm_called=True,
                         elapsed=time.monotonic() - started,
                     )
-                last_reasons = (f"provider_error:{exc.__class__.__name__}",)
+                last_reasons = (_provider_error_reason(exc),)
             else:
                 status = (
                     "cache_hit"
@@ -1440,14 +1445,25 @@ def _build_worker_audit_request(
             "semantic_signature": str(getattr(cluster, "semantic_signature", "")),
         }
     )
+    source_record_hashes = [canonical_sha256(record) for record in records]
+    packet_limit = config.bounded_max_evidence_packets_per_item()
+    selected_records = list(records[:packet_limit])
     evidence = {
         "cluster": cluster.to_dict(include_gaps=True),
         "compiler_commit": _records_compiler_commit(records),
-        "evidence_packets": [_compact_worker_packet(record) for record in records],
+        "evidence_packets": [_compact_worker_packet(record) for record in selected_records],
         "semantic_signature": str(getattr(cluster, "semantic_signature", "")),
-        "source_record_hashes": [canonical_sha256(record) for record in records],
+        "source_record_hashes": source_record_hashes,
         "state_hashes": sorted({value for record in records for value in _record_state_hashes(record)}),
     }
+    if len(selected_records) < len(records):
+        evidence.update(
+            {
+                "evidence_packet_count": len(records),
+                "evidence_packet_selection": "ranked_prefix_with_full_hash_manifest",
+                "omitted_evidence_packet_hashes": source_record_hashes[len(selected_records) :],
+            }
+        )
     prompt = {
         "template": config.prompt_template,
         "instructions": [
@@ -1641,6 +1657,17 @@ def _provider_unavailable_reason(exc: Exception) -> str:
     ):
         return "leanstral_labs_model_unavailable"
     return ""
+
+
+def _provider_error_reason(exc: Exception) -> str:
+    if isinstance(exc, OSError):
+        if exc.errno == errno.E2BIG:
+            return "provider_error:OSError:argument_list_too_long"
+        if exc.errno == errno.ENOMEM:
+            return "provider_error:OSError:out_of_memory"
+        if exc.errno == errno.EAGAIN:
+            return "provider_error:OSError:resource_temporarily_unavailable"
+    return f"provider_error:{exc.__class__.__name__}"
 
 
 def _is_leanstral_model_identity(model: Mapping[str, Any]) -> bool:
