@@ -356,7 +356,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-024 Run a real no-mutation canonical-state shadow canary
 
-- Status: pending
+- Status: completed
 - Priority: P1
 - Track: evaluation
 - Depends on: PORTAL-LIRLS-020, PORTAL-LIRLS-023
