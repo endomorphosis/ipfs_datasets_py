@@ -5,13 +5,14 @@ from __future__ import annotations
 import hashlib
 import json
 import stat
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
     LeanstralAuditRequest,
     LeanstralAuditResponse,
+    LeanstralLocalCheck,
     LeanstralVerificationOutcome,
     LeanstralVerifierConfig,
     ModalLogicCodecConfig,
@@ -25,6 +26,12 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration impo
     ProverStatus,
     ProverVerificationResult,
 )
+
+
+@dataclass(frozen=True)
+class _NestedProverDetail:
+    accepted: bool
+    labels: tuple[str, ...]
 
 
 class _FakeProverAdapter:
@@ -54,6 +61,30 @@ class _FakeProverAdapter:
             agreement_rate=1.0 if self.is_valid else 0.0,
             verified_by=["fake"] if self.is_valid else [],
         )
+
+
+def test_local_check_serializes_dataclass_prover_details() -> None:
+    check = LeanstralLocalCheck(
+        checker_name="tableaux",
+        status=LeanstralVerificationOutcome.ACCEPTED,
+        route_available=True,
+        theorem_valid=True,
+        timeout_seconds=1.0,
+        elapsed_seconds=0.1,
+        details={
+            "outcome": LeanstralVerificationOutcome.ACCEPTED,
+            "result": _NestedProverDetail(True, ("modal", "valid")),
+        },
+    )
+
+    payload = check.to_dict()
+
+    assert payload["details"]["outcome"] == "accepted"
+    assert payload["details"]["result"] == {
+        "accepted": True,
+        "labels": ["modal", "valid"],
+    }
+    json.dumps(payload)
 
 
 def _sample():

@@ -16,7 +16,7 @@ import subprocess
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import asdict, dataclass, field, replace
+from dataclasses import asdict, dataclass, field, is_dataclass, replace
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
@@ -149,7 +149,7 @@ class LeanstralLocalCheck:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "checker_name": self.checker_name,
-            "details": dict(self.details),
+            "details": _json_ready(self.details),
             "elapsed_seconds": self.elapsed_seconds,
             "error_message": self.error_message,
             "route_available": self.route_available,
@@ -157,6 +157,30 @@ class LeanstralLocalCheck:
             "theorem_valid": self.theorem_valid,
             "timeout_seconds": self.timeout_seconds,
         }
+
+
+def _json_ready(value: Any) -> Any:
+    """Convert verifier and prover detail objects to deterministic JSON data."""
+
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, Enum):
+        return _json_ready(value.value)
+    if is_dataclass(value) and not isinstance(value, type):
+        return _json_ready(asdict(value))
+    if isinstance(value, Mapping):
+        return {
+            str(key): _json_ready(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(value, (list, tuple)):
+        return [_json_ready(item) for item in value]
+    if isinstance(value, (set, frozenset)):
+        return [_json_ready(item) for item in sorted(value, key=str)]
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        return _json_ready(to_dict())
+    return str(value)
 
 
 def _file_sha256(path: Path) -> str:
