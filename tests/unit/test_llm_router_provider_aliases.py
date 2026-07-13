@@ -100,7 +100,7 @@ def test_run_cli_command_preserves_prompt_with_quotes_in_template(monkeypatch) -
     assert captured["cmd"][-1] == 'He said "notice denied" and then filed a grievance.'
 
 
-def test_mistral_vibe_provider_passes_model_and_auth_without_prompt_interpolation(monkeypatch) -> None:
+def test_mistral_vibe_provider_uses_stdin_and_lets_lean_agent_select_model(monkeypatch) -> None:
     captured = {}
 
     def fake_run(cmd, **kwargs):
@@ -111,10 +111,9 @@ def test_mistral_vibe_provider_passes_model_and_auth_without_prompt_interpolatio
 
     monkeypatch.setattr(llm_router, "_cli_available", lambda command: True)
     monkeypatch.setattr(llm_router.subprocess, "run", fake_run)
-    monkeypatch.setenv(
-        "IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD",
-        "vibe --prompt {prompt} --output text --max-turns 1",
-    )
+    monkeypatch.delenv("IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL", raising=False)
+    monkeypatch.delenv("VIBE_ACTIVE_MODEL", raising=False)
 
     provider = llm_router._get_mistral_vibe_provider()
 
@@ -128,10 +127,10 @@ def test_mistral_vibe_provider_passes_model_and_auth_without_prompt_interpolatio
 
     assert result == "proved"
     assert captured["cmd"][0] == "vibe"
-    assert captured["cmd"][2] == 'Prove "notice".'
+    assert captured["cmd"][1:3] == ["--prompt", "--output"]
     assert captured["cmd"][-2:] == ["--agent", "lean"]
-    assert captured["input"] is None
-    assert captured["env"]["VIBE_ACTIVE_MODEL"] == "Leanstral"
+    assert captured["input"] == 'Prove "notice".'
+    assert "VIBE_ACTIVE_MODEL" not in captured["env"]
     assert captured["env"]["MISTRAL_API_KEY"] == "test-key"
 
 

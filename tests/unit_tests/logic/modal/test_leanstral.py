@@ -70,7 +70,7 @@ def test_shadow_runner_validates_a_fixed_lean_goal_and_persists_artifact(tmp_pat
                 "task_id": task["task_id"],
                 "target_modal_ir_hash": task["modal_ir_hash"],
                 "compiler_change_spec_id": change_spec["spec_id"],
-                "proof": "by unfold wellFormed modalityMatches sourceProvenancePresent; decide",
+                "proof": "by simp [wellFormed, modalityMatches, sourceProvenancePresent, String.length]",
                 "deterministic_rule_hints": [
                     {
                         "action": "add_or_refine_spacy_rule",

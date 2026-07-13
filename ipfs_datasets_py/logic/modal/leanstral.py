@@ -12,7 +12,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import subprocess
 import tempfile
 from dataclasses import asdict, dataclass, field
@@ -26,6 +25,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     AdaptiveModalAutoencoder,
     ProverCompilationSignal,
 )
+from .lean_runtime import resolve_lean_executable
 from .leanstral_theorems import (
     LEGAL_IR_THEOREM_LEAN_KERNEL,
     LeanstralTheoremRegistry,
@@ -716,7 +716,7 @@ def validate_leanstral_proposal(
             reasons=tuple(reasons),
             proof_sha256=proof_sha256,
         )
-    executable = lean_executable or shutil.which("lean")
+    executable = resolve_lean_executable(lean_executable)
     if not executable:
         return LeanstralProofValidation(
             accepted=False,
@@ -1067,6 +1067,7 @@ def _leanstral_prompt(task: LegalIRLeanTask) -> str:
         "instructions": [
             "Return strict JSON only.",
             "Return a Lean proof body beginning with by for the fixed theorem.",
+            "For concrete String.length goals, prefer simp with String.length over decide, which can elaborate very slowly.",
             "Optional theorem_proofs may map verifier theorem IDs to Lean proof bodies only.",
             "Do not return theorem statements, Lean source files, imports, namespaces, or theorem declarations.",
             "Do not change the theorem, introduce axioms, imports, sorry, admit, or executable tactics.",

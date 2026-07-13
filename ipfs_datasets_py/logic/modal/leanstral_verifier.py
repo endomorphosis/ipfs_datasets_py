@@ -11,7 +11,6 @@ from __future__ import annotations
 import hashlib
 import inspect
 import json
-import shutil
 import subprocess
 import tempfile
 import time
@@ -48,6 +47,7 @@ from .leanstral_audit import (
     validate_leanstral_audit_response,
 )
 from .leanstral_theorems import generate_legal_semantics_theorem_registry
+from .lean_runtime import resolve_lean_executable
 from .kg_bridge import modal_ir_to_neo4j_graph_data
 
 
@@ -668,7 +668,7 @@ class LeanstralAuditVerifier:
         )
 
     def _check_lean_registry(self, sample: LegalSample) -> LeanstralLocalCheck:
-        executable = self.config.lean_executable or shutil.which("lean") or ""
+        executable = resolve_lean_executable(self.config.lean_executable)
         toolchain = self._lean_toolchain_identity(executable)
         cache_key = hashlib.sha256(
             (
