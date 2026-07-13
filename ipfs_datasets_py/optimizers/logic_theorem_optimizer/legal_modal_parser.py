@@ -551,6 +551,12 @@ _USCODE_RESIDUAL_HEADER_SCOPE_PHRASES = (
     "united states code",
     "www.gpo.gov",
 )
+_USCODE_SOURCE_PATH_HEADER_RE = re.compile(
+    r"^\s*(?:(?:title|subtitle|chapter|subchapter|part)\s+"
+    r"[0-9A-Za-zIVXLCDM.\-]+(?:\b|\s+-)"
+    r"(?:\s+[A-Z][A-Z0-9'&,.\-]+)*)+\.?\s*$",
+    re.IGNORECASE,
+)
 _USCODE_SECTION_CATCHLINE_STOP_RE = re.compile(
     r"\s+(?=(?:From\s+the\s+U\.?\s*S\.?\s+Government\s+Publishing\s+Office|"
     r"§+\s*\d|"
@@ -1834,7 +1840,10 @@ class LegalModalParser:
             coverage_segment = (
                 None
                 if self._preserve_full_residual_segment(segment)
-                else self._residual_paragraph_heading_prefix_segment(segment)
+                else (
+                    self._uscode_source_path_header_prefix_segment(segment)
+                    or self._residual_paragraph_heading_prefix_segment(segment)
+                )
             ) or segment
             formulas.append(
                 self._residual_span_coverage_formula(
@@ -2096,6 +2105,8 @@ class LegalModalParser:
         if self._has_blocking_residual_modal_cues(normalized):
             return False
         if self._is_uscode_header_residual_candidate(normalized, tokens):
+            return True
+        if self._is_uscode_source_path_header_residual_candidate(normalized, tokens):
             return True
         if self._is_uscode_statutory_fragment_residual_candidate(normalized, tokens):
             return True
@@ -2515,6 +2526,40 @@ class LegalModalParser:
             role="heading",
         )
 
+    def _uscode_source_path_header_prefix_segment(
+        self,
+        segment: LegalSegment,
+    ) -> Optional[LegalSegment]:
+        match = re.match(
+            r"^\s*(?P<prefix>(?:(?:title|subtitle|chapter|subchapter|part)\s+"
+            r"[0-9A-Za-zIVXLCDM.\-]+(?:\s+-)?"
+            r"(?:\s+[A-Z][A-Z0-9'&,.\-]+)*?)\.)"
+            r"(?=\s+(?:sec(?:tion)?s?\.?|§|from\s+the\s+u\.?\s*s\.?\s+"
+            r"government\s+publishing\s+office)\b)",
+            segment.text,
+            re.IGNORECASE,
+        )
+        if match is None:
+            return None
+        prefix_text = match.group("prefix").strip()
+        if not prefix_text:
+            return None
+        if self._has_blocking_residual_modal_cues(prefix_text):
+            return None
+        tokens = _TOKEN_RE.findall(prefix_text.lower())
+        if not self._is_uscode_source_path_header_residual_candidate(
+            prefix_text,
+            tokens,
+        ):
+            return None
+        prefix_start = segment.start_char + segment.text.index(prefix_text)
+        return LegalSegment(
+            text=prefix_text,
+            start_char=prefix_start,
+            end_char=prefix_start + len(prefix_text),
+            role="heading",
+        )
+
     def _coalesce_short_residual_segments(
         self,
         segments: Sequence[LegalSegment],
@@ -2602,6 +2647,28 @@ class LegalModalParser:
         ):
             return True
         return "u.s.c." in lowered or "united states code" in lowered
+
+    def _is_uscode_source_path_header_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover compact U.S.C. hierarchy prefixes split from section headings."""
+        token_count = len(tokens)
+        if (
+            token_count < 2
+            or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS
+        ):
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+            or _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered)
+        ):
+            return False
+        return bool(_USCODE_SOURCE_PATH_HEADER_RE.search(normalized_segment_text))
 
     def _is_uscode_statutory_fragment_residual_candidate(
         self,

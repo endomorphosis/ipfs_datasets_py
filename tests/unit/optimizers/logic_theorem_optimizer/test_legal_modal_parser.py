@@ -624,6 +624,33 @@ def test_parser_covers_untyped_uscode_section_markers_between_catchlines() -> No
     assert " §2263." in marker_spans
 
 
+def test_parser_covers_split_uscode_source_path_header_spans() -> None:
+    parser = LegalModalParser()
+    text = (
+        "33 U.S.C. 3803: CHAPTER 51 - CLEAN HULLS. "
+        "Sec. 3803 - Administration and enforcement From the U.S. "
+        "Government Publishing Office, www.gpo.gov §3803. The Secretary "
+        "shall administer the Convention."
+    )
+
+    document = parser.parse(
+        text,
+        document_id="us-code-33-3803-source-path-header",
+        source="us_code",
+        citation="33 U.S.C. 3803",
+    )
+
+    residual_spans = {
+        document.normalized_text[
+            formula.provenance.start_char : formula.provenance.end_char
+        ].strip()
+        for formula in document.formulas
+        if formula.operator.family == "frame"
+        and formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+    assert "CHAPTER 51 - CLEAN HULLS." in residual_spans
+
+
 def test_parser_preserves_uscode_definition_residual_tail() -> None:
     parser = LegalModalParser()
     text = (
