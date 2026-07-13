@@ -4182,6 +4182,19 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         codex_scope="frame_logic",
         codex_sandbox="workspace-write",
         codex_timeout_seconds=30.0,
+        codex_main_apply_lock_timeout_seconds=1200.0,
+        autoencoder_introspection_mode="seed",
+        autoencoder_max_audits_per_cycle=5,
+        autoencoder_max_todos_per_cycle=4,
+        leanstral_rule_gap_projection_enabled=True,
+        leanstral_rule_gap_report_path="/tmp/leanstral-rule-gaps.json",
+        leanstral_rule_gap_max_todos_per_scope=2,
+        leanstral_rule_gap_require_executor_available=True,
+        leanstral_rule_gap_expected_compiler_commit="compiler-sha",
+        leanstral_rule_gap_expected_state_hash="state-sha",
+        leanstral_rule_gap_max_report_age_seconds=900.0,
+        autoencoder_target_scope_filters="compiler_parser,ir_decompiler",
+        autoencoder_require_prover_confirmation=True,
         warm_start_run_id=["warm-a", "warm-b"],
         warm_start_state=["/tmp/warm-state.json"],
     )
@@ -4329,6 +4342,19 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "--autoencoder-todo-supervisor-min-open"
     )
     assert paired["autoencoder_command"][todo_supervisor_min_open_index + 1] == "12"
+    autoencoder_command = paired["autoencoder_command"]
+    assert autoencoder_command[autoencoder_command.index("--autoencoder-introspection-mode") + 1] == "seed"
+    assert autoencoder_command[autoencoder_command.index("--autoencoder-max-audits-per-cycle") + 1] == "5"
+    assert autoencoder_command[autoencoder_command.index("--autoencoder-max-todos-per-cycle") + 1] == "4"
+    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-report-path") + 1] == "/tmp/leanstral-rule-gaps.json"
+    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-max-todos-per-scope") + 1] == "2"
+    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-expected-compiler-commit") + 1] == "compiler-sha"
+    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-expected-state-hash") + 1] == "state-sha"
+    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-max-report-age-seconds") + 1] == "900.0"
+    assert autoencoder_command[autoencoder_command.index("--autoencoder-target-scope-filters") + 1] == "compiler_parser,ir_decompiler"
+    assert autoencoder_command[autoencoder_command.index("--autoencoder-require-prover-confirmation") + 1] == "true"
+    codex_command = paired["codex_command"]
+    assert codex_command[codex_command.index("--codex-main-apply-lock-timeout-seconds") + 1] == "1200.0"
     assert "--autoencoder-max-cosine-regression" not in paired["autoencoder_command"]
     assert "--learning-rate-floor-ratio" in paired["autoencoder_command"]
     assert "--learning-rate-cap-ratio" in paired["autoencoder_command"]

@@ -6779,6 +6779,8 @@ def _build_codex_child_command(
         str(getattr(args, "codex_merge_repair_mode", "apply_3way")),
         "--codex-merge-repair-attempts",
         str(getattr(args, "codex_merge_repair_attempts", 1)),
+        "--codex-main-apply-lock-timeout-seconds",
+        str(getattr(args, "codex_main_apply_lock_timeout_seconds", 300.0)),
         "--codex-main-apply-max-inflight-packets",
         str(getattr(args, "codex_main_apply_max_inflight_packets", 1)),
     ]
@@ -7088,6 +7090,36 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_todo_supervisor_mode", DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE)),
         "--autoencoder-todo-supervisor-min-open",
         str(getattr(args, "autoencoder_todo_supervisor_min_open", 12)),
+        "--autoencoder-introspection-mode",
+        str(
+            getattr(
+                args,
+                "autoencoder_introspection_mode",
+                DEFAULT_AUTOENCODER_INTROSPECTION_MODE,
+            )
+        ),
+        "--autoencoder-max-audits-per-cycle",
+        str(getattr(args, "autoencoder_max_audits_per_cycle", 0)),
+        "--autoencoder-max-todos-per-cycle",
+        str(getattr(args, "autoencoder_max_todos_per_cycle", 0)),
+        "--leanstral-rule-gap-projection-enabled",
+        str(getattr(args, "leanstral_rule_gap_projection_enabled", True)).lower(),
+        "--leanstral-rule-gap-report-path",
+        str(getattr(args, "leanstral_rule_gap_report_path", "")),
+        "--leanstral-rule-gap-max-todos-per-scope",
+        str(getattr(args, "leanstral_rule_gap_max_todos_per_scope", 2)),
+        "--leanstral-rule-gap-require-executor-available",
+        str(
+            getattr(args, "leanstral_rule_gap_require_executor_available", True)
+        ).lower(),
+        "--leanstral-rule-gap-expected-compiler-commit",
+        str(getattr(args, "leanstral_rule_gap_expected_compiler_commit", "")),
+        "--leanstral-rule-gap-expected-state-hash",
+        str(getattr(args, "leanstral_rule_gap_expected_state_hash", "")),
+        "--autoencoder-target-scope-filters",
+        str(getattr(args, "autoencoder_target_scope_filters", "")),
+        "--autoencoder-require-prover-confirmation",
+        str(getattr(args, "autoencoder_require_prover_confirmation", True)).lower(),
         "--learning-rate-floor-ratio",
         str(getattr(args, "learning_rate_floor_ratio", 0.25)),
         "--learning-rate-cap-ratio",
@@ -7107,6 +7139,18 @@ def build_paired_daemon_commands(
             )
         ),
     ]
+    leanstral_max_report_age_seconds = getattr(
+        args,
+        "leanstral_rule_gap_max_report_age_seconds",
+        None,
+    )
+    if leanstral_max_report_age_seconds is not None:
+        autoencoder_command.extend(
+            [
+                "--leanstral-rule-gap-max-report-age-seconds",
+                str(leanstral_max_report_age_seconds),
+            ]
+        )
     canonical_warm_start_state = getattr(args, "canonical_warm_start_state", None)
     if canonical_warm_start_state:
         autoencoder_command.extend(
