@@ -330,7 +330,7 @@ queue. Wave 5 is a bounded, reversible rollout.
 
 ## PORTAL-LIRLS-022 Attribute accepted and rejected compiler patches back to feature clusters
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: feedback
 - Depends on: PORTAL-LIRLS-021, PORTAL-LIRLS-012
