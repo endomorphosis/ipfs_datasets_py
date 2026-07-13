@@ -336,8 +336,14 @@ class LeanstralTodoProjectionConfig:
     max_audits_per_cycle: int = 0
     max_todos_per_cycle: int = 5
     max_todos_per_scope: int = 2
+    max_program_synthesis_pending: Optional[int] = None
+    max_program_synthesis_queue_pressure: float = 1.0
+    max_transient_failure_rate: float = 0.5
+    max_transient_failures: int = 24
+    require_executor_available: bool = True
     require_verified_support: bool = True
     target_scope_filters: Sequence[str] = field(default_factory=tuple)
+    worker_health: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -350,6 +356,12 @@ class LeanstralTodoProjectionResult:
     report_only_count: int
     scope_counts: Dict[str, int]
     report_only_audits: List[Dict[str, Any]]
+    seed_block_reasons: List[str] = field(default_factory=list)
+    executor_health: Dict[str, Any] = field(default_factory=dict)
+    transient_failure_rate: float = 0.0
+    queue_pressure: float = 0.0
+    pending_count: int = 0
+    pending_cap: int = 0
 
     @property
     def seeded_count(self) -> int:
@@ -362,8 +374,14 @@ class LeanstralTodoProjectionResult:
             "report_only_audits": [dict(item) for item in self.report_only_audits],
             "report_only_count": int(self.report_only_count),
             "scope_counts": dict(sorted(self.scope_counts.items())),
+            "seed_block_reasons": list(self.seed_block_reasons),
             "seeded_count": self.seeded_count,
             "seeded_todo_ids": list(self.seeded_todo_ids),
+            "executor_health": dict(sorted(self.executor_health.items())),
+            "pending_cap": int(self.pending_cap),
+            "pending_count": int(self.pending_count),
+            "queue_pressure": float(self.queue_pressure),
+            "transient_failure_rate": float(self.transient_failure_rate),
         }
 
 
@@ -766,6 +784,13 @@ def _safe_float(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _safe_int(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
 
 
 @dataclass
@@ -1909,6 +1934,44 @@ class ModalTodoQueue:
             for role, role_counts in sorted(counts.items())
         }
 
+    def transient_failure_counts(
+        self,
+        *,
+        optimizer_role: Optional[str] = None,
+    ) -> Dict[str, int]:
+        """Return transient retry counters without treating them as validation failures."""
+        todo_count = 0
+        transient_todo_count = 0
+        transient_attempt_count = 0
+        pending_transient_todo_count = 0
+        for todo in self._todos.values():
+            if optimizer_role is not None and _todo_optimizer_role(todo) != optimizer_role:
+                continue
+            todo_count += 1
+            attempts = _safe_int(todo.metadata.get("transient_failure_count"))
+            if attempts <= 0:
+                continue
+            transient_todo_count += 1
+            transient_attempt_count += attempts
+            if todo.status == "pending":
+                pending_transient_todo_count += 1
+        return {
+            "pending_transient_todo_count": pending_transient_todo_count,
+            "todo_count": todo_count,
+            "transient_attempt_count": transient_attempt_count,
+            "transient_todo_count": transient_todo_count,
+        }
+
+    def transient_failure_rate(
+        self,
+        *,
+        optimizer_role: Optional[str] = None,
+    ) -> float:
+        """Return the share of queued TODOs that are pending after transient failures."""
+        counts = self.transient_failure_counts(optimizer_role=optimizer_role)
+        denominator = max(1, int(counts.get("todo_count", 0)))
+        return float(counts.get("transient_todo_count", 0)) / float(denominator)
+
     def claim_batch(
         self,
         *,
@@ -2493,6 +2556,26 @@ class ModalTodoSupervisor:
         report_only_audits = _leanstral_report_only_audits(report)
         if max_audits > 0:
             report_only_audits = report_only_audits[:max_audits]
+        gate = _leanstral_projection_seed_gate(
+            self.queue,
+            policy=self.policy,
+            config=cfg,
+        )
+        if gate["blocked"]:
+            return LeanstralTodoProjectionResult(
+                seeded_todo_ids=[],
+                deduped_count=0,
+                budget_skipped_count=0,
+                report_only_count=len(report_only_audits),
+                scope_counts={},
+                report_only_audits=report_only_audits,
+                seed_block_reasons=list(gate["seed_block_reasons"]),
+                executor_health=dict(gate["executor_health"]),
+                transient_failure_rate=float(gate["transient_failure_rate"]),
+                queue_pressure=float(gate["queue_pressure"]),
+                pending_count=int(gate["pending_count"]),
+                pending_cap=int(gate["pending_cap"]),
+            )
         candidates = self.program_synthesis_generator.generate_from_leanstral_rule_gap_report(
             report,
             require_verified_support=bool(cfg.require_verified_support),
@@ -2525,6 +2608,12 @@ class ModalTodoSupervisor:
             report_only_count=len(report_only_audits),
             scope_counts=scope_counts,
             report_only_audits=report_only_audits,
+            seed_block_reasons=[],
+            executor_health=dict(gate["executor_health"]),
+            transient_failure_rate=float(gate["transient_failure_rate"]),
+            queue_pressure=float(gate["queue_pressure"]),
+            pending_count=int(gate["pending_count"]),
+            pending_cap=int(gate["pending_cap"]),
         )
 
     def seed_failed_validation_rescue_todos(
@@ -2849,8 +2938,11 @@ class ModalTodoSupervisor:
             return {
                 "completed_count": 0,
                 "failed_validation_count": 0,
+                "operational_requeue_count": 0,
                 "outcome": "no_program_synthesis_todos",
+                "quality_failure_count": 0,
                 "reason": None,
+                "transient_failure_count": 0,
                 "updated": False,
             }
 
@@ -3052,9 +3144,12 @@ class ModalTodoSupervisor:
         return {
             "completed_count": completed_count,
             "failed_validation_count": failed_validation_count,
+            "operational_requeue_count": requeued_count,
             "outcome": outcome,
+            "quality_failure_count": failed_validation_count,
             "reason": reason,
             "requeued_count": requeued_count,
+            "transient_failure_count": requeued_count,
             "updated": bool(completed_count or failed_validation_count or requeued_count),
         }
 
@@ -3860,6 +3955,122 @@ def _apply_leanstral_projection_budgets(
         selected.append(todo)
         scope_counts[scope] = scope_counts.get(scope, 0) + 1
     return selected, skipped, dict(sorted(scope_counts.items()))
+
+
+def _leanstral_projection_seed_gate(
+    queue: ModalTodoQueue,
+    *,
+    policy: ModalOptimizerPolicy,
+    config: LeanstralTodoProjectionConfig,
+) -> Dict[str, Any]:
+    """Return whether new Leanstral projection TODOs may be seeded now."""
+
+    worker_health = dict(config.worker_health or {})
+    pending_cap = (
+        int(config.max_program_synthesis_pending)
+        if config.max_program_synthesis_pending is not None
+        else int(policy.max_program_synthesis_pending)
+    )
+    pending_cap = max(0, pending_cap)
+    pending_count = queue.pending_count(optimizer_role=policy.program_synthesis_role)
+    claimed_count = queue.claimed_count(optimizer_role=policy.program_synthesis_role)
+    queue_pressure = (
+        float(pending_count) / float(pending_cap)
+        if pending_cap > 0
+        else (1.0 if pending_count > 0 else 0.0)
+    )
+    transient_counts = queue.transient_failure_counts(
+        optimizer_role=policy.program_synthesis_role
+    )
+    queue_transient_rate = queue.transient_failure_rate(
+        optimizer_role=policy.program_synthesis_role
+    )
+    health_transient_rate = _safe_float(
+        worker_health.get("codex_transient_failure_rate")
+        if "codex_transient_failure_rate" in worker_health
+        else worker_health.get("transient_failure_rate")
+    )
+    transient_rate = max(queue_transient_rate, health_transient_rate)
+    transient_count = max(
+        int(transient_counts.get("transient_attempt_count", 0)),
+        _safe_int(worker_health.get("codex_transient_requeue_count")),
+        _safe_int(worker_health.get("transient_failure_count")),
+    )
+    reasons: List[str] = []
+
+    if config.require_executor_available and worker_health:
+        available = _leanstral_executor_available(worker_health)
+        if not available:
+            reasons.append("executor_unavailable")
+    if _leanstral_executor_throttled(worker_health):
+        reasons.append("executor_throttled")
+    if pending_cap <= 0:
+        reasons.append("pending_cap_zero")
+    elif pending_count >= pending_cap:
+        reasons.append("pending_cap_reached")
+    elif queue_pressure > float(config.max_program_synthesis_queue_pressure):
+        reasons.append("queue_pressure_above_cap")
+    if transient_count > int(config.max_transient_failures):
+        reasons.append("transient_failure_count_above_cap")
+    if transient_rate > float(config.max_transient_failure_rate):
+        reasons.append("transient_failure_rate_above_cap")
+
+    executor_health = {
+        "available": _leanstral_executor_available(worker_health)
+        if worker_health
+        else True,
+        "claimed_count": claimed_count,
+        "pending_count": pending_count,
+        "queue_pressure": round(queue_pressure, 6),
+        "throttled": _leanstral_executor_throttled(worker_health),
+        "transient_failure_count": transient_count,
+        "transient_failure_rate": round(transient_rate, 6),
+    }
+    for key in (
+        "codex_queue_starved",
+        "codex_worker_summary_count",
+        "codex_workers_active_packet_count",
+        "codex_workers_waiting_for_todos_count",
+        "codex_worker_stale_count",
+        "codex_idle_worker_stale_count",
+        "executor_seed_block_reason",
+    ):
+        if key in worker_health:
+            executor_health[key] = worker_health[key]
+    return {
+        "blocked": bool(reasons),
+        "executor_health": executor_health,
+        "pending_cap": pending_cap,
+        "pending_count": pending_count,
+        "queue_pressure": queue_pressure,
+        "seed_block_reasons": _unique_preserve_order(reasons),
+        "transient_failure_count": transient_count,
+        "transient_failure_rate": transient_rate,
+    }
+
+
+def _leanstral_executor_available(worker_health: Mapping[str, Any]) -> bool:
+    if "executor_available" in worker_health:
+        return bool(worker_health.get("executor_available"))
+    if "codex_executor_available" in worker_health:
+        return bool(worker_health.get("codex_executor_available"))
+    if "worker_available" in worker_health:
+        return bool(worker_health.get("worker_available"))
+    if "codex_worker_summary_count" in worker_health:
+        return _safe_int(worker_health.get("codex_worker_summary_count")) > 0
+    return True
+
+
+def _leanstral_executor_throttled(worker_health: Mapping[str, Any]) -> bool:
+    for key in (
+        "executor_throttled",
+        "codex_executor_throttled",
+        "worker_throttled",
+        "codex_throttled",
+    ):
+        if key in worker_health and bool(worker_health.get(key)):
+            return True
+    return False
 
 
 def _normalise_projection_scope_filters(scopes: Sequence[str] | str) -> tuple[str, ...]:

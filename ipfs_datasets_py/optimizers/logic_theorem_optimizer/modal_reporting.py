@@ -66,6 +66,10 @@ class ModalSupervisorHealthReport:
     cache_counters: Dict[str, int] = field(default_factory=dict)
     state_to_compiler_patch_lag: Dict[str, int] = field(default_factory=dict)
     queue_counts: Dict[str, int] = field(default_factory=dict)
+    executor_health: Dict[str, Any] = field(default_factory=dict)
+    transient_failure_rate: float = 0.0
+    queue_pressure: float = 0.0
+    seed_block_reasons: List[str] = field(default_factory=list)
     reasons: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -79,10 +83,14 @@ class ModalSupervisorHealthReport:
             "latest_phase_timings": dict(sorted(self.latest_phase_timings.items())),
             "productive": bool(self.productive),
             "queue_counts": dict(sorted(self.queue_counts.items())),
+            "executor_health": dict(sorted(self.executor_health.items())),
+            "queue_pressure": float(self.queue_pressure),
             "reasons": list(self.reasons),
+            "seed_block_reasons": list(self.seed_block_reasons),
             "state_to_compiler_patch_lag": dict(
                 sorted(self.state_to_compiler_patch_lag.items())
             ),
+            "transient_failure_rate": float(self.transient_failure_rate),
         }
 
 
@@ -144,6 +152,10 @@ def build_modal_supervisor_health_report(
     queue_counts = _int_mapping(data.get("latest_queue_counts") or {})
     cache_counters = _cache_counters_from_summary(data)
     lag = state_to_compiler_patch_lag(data)
+    executor_health = _executor_health_from_summary(data)
+    queue_pressure = _queue_pressure_from_summary(data, queue_counts=queue_counts)
+    transient_failure_rate = _transient_failure_rate_from_summary(data, executor_health)
+    seed_block_reasons = _seed_block_reasons_from_summary(data)
     reasons: List[str] = []
 
     alive = bool(cycles > 0 or phase or data.get("active_cycle_last_heartbeat_at"))
@@ -181,6 +193,10 @@ def build_modal_supervisor_health_report(
         cache_counters=cache_counters,
         state_to_compiler_patch_lag=lag,
         queue_counts=queue_counts,
+        executor_health=executor_health,
+        transient_failure_rate=transient_failure_rate,
+        queue_pressure=queue_pressure,
+        seed_block_reasons=seed_block_reasons,
         reasons=reasons,
     )
 
@@ -235,6 +251,94 @@ def _cache_counters_from_summary(summary: Mapping[str, Any]) -> Dict[str, int]:
             compiler.get("persistent_sample_cache_misses")
         ),
     }
+
+
+def _executor_health_from_summary(summary: Mapping[str, Any]) -> Dict[str, Any]:
+    for key in (
+        "program_synthesis_executor_health",
+        "latest_program_synthesis_health",
+        "program_synthesis_health",
+    ):
+        value = summary.get(key)
+        if isinstance(value, Mapping):
+            return dict(value)
+    projection = _mapping(summary.get("latest_leanstral_projection"))
+    health = projection.get("executor_health")
+    if isinstance(health, Mapping):
+        return dict(health)
+    return {}
+
+
+def _queue_pressure_from_summary(
+    summary: Mapping[str, Any],
+    *,
+    queue_counts: Mapping[str, int],
+) -> float:
+    for key in ("program_synthesis_queue_pressure", "queue_pressure"):
+        if key in summary:
+            return _safe_float(summary.get(key))
+    projection = _mapping(summary.get("latest_leanstral_projection"))
+    if "queue_pressure" in projection:
+        return _safe_float(projection.get("queue_pressure"))
+    pending = _safe_int(summary.get("program_synthesis_pending"))
+    if pending <= 0:
+        pending = _safe_int(queue_counts.get("pending"))
+    cap = _safe_int(
+        summary.get("program_synthesis_pending_cap")
+        or summary.get("max_program_synthesis_pending")
+    )
+    return (float(pending) / float(cap)) if cap > 0 else 0.0
+
+
+def _transient_failure_rate_from_summary(
+    summary: Mapping[str, Any],
+    executor_health: Mapping[str, Any],
+) -> float:
+    for key in ("program_synthesis_transient_failure_rate", "transient_failure_rate"):
+        if key in summary:
+            return _safe_float(summary.get(key))
+    if "transient_failure_rate" in executor_health:
+        return _safe_float(executor_health.get("transient_failure_rate"))
+    projection = _mapping(summary.get("latest_leanstral_projection"))
+    if "transient_failure_rate" in projection:
+        return _safe_float(projection.get("transient_failure_rate"))
+    transient = _safe_int(
+        summary.get("codex_transient_requeue_count")
+        or summary.get("program_synthesis_transient_requeue_count")
+    )
+    executions = _safe_int(
+        summary.get("codex_execution_count")
+        or summary.get("program_synthesis_execution_count")
+    )
+    return (float(transient) / float(executions)) if executions > 0 else 0.0
+
+
+def _seed_block_reasons_from_summary(summary: Mapping[str, Any]) -> List[str]:
+    values: List[Any] = []
+    for key in (
+        "program_synthesis_seed_block_reasons",
+        "leanstral_seed_block_reasons",
+    ):
+        raw = summary.get(key)
+        if isinstance(raw, list):
+            values.extend(raw)
+        elif raw:
+            values.append(raw)
+    projection = _mapping(summary.get("latest_leanstral_projection"))
+    raw_projection_reasons = projection.get("seed_block_reasons")
+    if isinstance(raw_projection_reasons, list):
+        values.extend(raw_projection_reasons)
+    elif raw_projection_reasons:
+        values.append(raw_projection_reasons)
+    seen = set()
+    reasons: List[str] = []
+    for value in values:
+        reason = str(value).strip()
+        if not reason or reason in seen:
+            continue
+        seen.add(reason)
+        reasons.append(reason)
+    return reasons
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
