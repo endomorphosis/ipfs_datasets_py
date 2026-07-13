@@ -626,6 +626,60 @@ def test_modal_frame_logic_bridge_promotes_semantic_bundle_key_flogic_guidance()
     assert "frame_ontology_terms" in frame_metadata
 
 
+def test_modal_frame_logic_bridge_exposes_view_quality_ontology_audit_terms() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    packet_features = [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:CEC.native",
+        "legal-ir-view:knowledge_graphs.neo4j_compat",
+        "quality:bias",
+        "quality:symbolic:has-formula",
+        "legal-ir-view:TDFOL.prover",
+    ]
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        (
+            "The Secretary shall administer and enforce this section and may "
+            "issue regulations after notice."
+        ),
+        document_id="bridge-layer-view-quality-ontology-audit",
+        citation="Bridge Layer View Quality Ontology Audit",
+        compiler_guidance={
+            "action": "audit_frame_logic_terms",
+            "family_features": packet_features,
+            "frame_features": packet_features,
+            "program_synthesis_scope": "frame_logic",
+            "target_component": "modal.frame_logic",
+            "top_family_features": packet_features,
+        },
+        evaluate_provers=False,
+    )
+
+    frame_metadata = report.ir_document.views["frame_logic"].metadata
+
+    assert "frame_ontology_terms_from_feature_keys" in frame_metadata
+    assert "frame_ontology_contextualized_terms" in frame_metadata
+    for term in [
+        "bias",
+        "cec_native",
+        "deontic_ir",
+        "knowledge_graphs_neo4j_compat",
+        "symbolic_has_formula",
+        "tdfol_prover",
+    ]:
+        assert term in frame_metadata["frame_ontology_terms"]
+    for term in [
+        "legal_ir_view_cec_native",
+        "legal_ir_view_deontic_ir",
+        "legal_ir_view_knowledge_graphs_neo4j_compat",
+        "legal_ir_view_tdfol_prover",
+        "quality_bias",
+        "quality_symbolic_has_formula",
+    ]:
+        assert term in frame_metadata["frame_ontology_contextualized_terms"]
+
+
 def test_modal_frame_logic_bridge_promotes_sample_only_flogic_guidance() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

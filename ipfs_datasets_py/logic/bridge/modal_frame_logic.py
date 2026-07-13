@@ -173,6 +173,9 @@ class ModalFrameLogicBridgeAdapter:
         graph_data = codec_result.neo4j_graph_data
         graph_payload = graph_data.to_dict() if hasattr(graph_data, "to_dict") else {}
         frame_audit_metadata = _frame_ontology_audit_metadata(modal_ir)
+        flogic_result_metadata = _frame_ontology_audit_metadata(
+            getattr(getattr(codec_result, "flogic_result", None), "metadata", {}) or {}
+        )
         modal_payload = modal_ir.to_dict()
         modal_metadata = dict(modal_payload.get("metadata") or {})
         triples = tuple(
@@ -209,6 +212,7 @@ class ModalFrameLogicBridgeAdapter:
                     "selected_frame": modal_ir.frame_logic.selected_frame or "",
                     "triple_count": len(triples),
                     **_frame_ontology_audit_metadata(modal_ir.metadata),
+                    **flogic_result_metadata,
                 },
             ),
             "neo4j_graph_data": LogicIRView(
@@ -354,11 +358,26 @@ def _frame_ontology_audit_metadata(subject: Any) -> dict[str, Any]:
         return {}
     allowed = {
         "frame_ontology_audit_projected",
+        "frame_ontology_contextualized_term_count",
+        "frame_ontology_contextualized_terms",
         "frame_ontology_high_signal_term_audit_count",
         "frame_ontology_high_signal_term_audit_terms",
+        "frame_ontology_high_signal_term_count",
+        "frame_ontology_high_signal_terms",
+        "frame_ontology_high_signal_terms_from_contextualized",
+        "frame_ontology_high_signal_terms_from_contextualized_count",
+        "frame_ontology_high_signal_terms_from_feature_keys",
+        "frame_ontology_high_signal_terms_from_feature_keys_count",
+        "frame_ontology_high_signal_terms_from_triples",
+        "frame_ontology_high_signal_terms_from_triples_count",
         "frame_ontology_term_audit_count",
         "frame_ontology_term_audit_terms",
+        "frame_ontology_term_count",
         "frame_ontology_terms",
+        "frame_ontology_terms_from_feature_keys",
+        "frame_ontology_terms_from_feature_keys_count",
+        "frame_ontology_terms_from_triples",
+        "frame_ontology_terms_from_triples_count",
     }
     return {
         str(key): value
