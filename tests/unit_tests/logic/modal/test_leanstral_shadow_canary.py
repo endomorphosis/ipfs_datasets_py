@@ -7,16 +7,13 @@ import importlib.util
 import hashlib
 import sys
 import time
-from dataclasses import replace
 from pathlib import Path
 
 from ipfs_datasets_py.logic.modal import (
-    DeterministicModalLogicCodec,
     LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
     LeanstralAuditCache,
     LeanstralAuditResponse,
     LeanstralAuditValidation,
-    ModalLogicCodecConfig,
     build_leanstral_audit_work_items,
     validate_leanstral_audit_response,
 )
@@ -39,6 +36,7 @@ _SPEC.loader.exec_module(_canary)
 ShadowCanaryConfig = _canary.ShadowCanaryConfig
 RealShadowCanaryConfig = _canary.RealShadowCanaryConfig
 _build_audit_request = _canary._build_audit_request
+_verifier_reference_from_row = _canary._verifier_reference_from_row
 build_dry_run_fixture_records = _canary.build_dry_run_fixture_records
 render_markdown_report = _canary.render_markdown_report
 run_real_shadow_canary = _canary.run_real_shadow_canary
@@ -151,23 +149,7 @@ def _real_packets(count: int = 25, **kwargs):
 
 
 def _verifier_example(text: str = "The agency must provide notice within 30 days after application.") -> dict:
-    base = build_us_code_sample(title="5", section="552", text=text)
-    encoded = DeterministicModalLogicCodec(
-        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
-    ).encode(
-        text,
-        document_id=base.sample_id,
-        citation=base.citation,
-        source=base.source,
-        source_embedding=base.embedding_vector,
-    )
-    sample = replace(
-        base,
-        modal_ir=encoded.modal_ir,
-        frame_candidates=encoded.frame_candidates,
-        selected_frame=encoded.selected_frame,
-        losses=encoded.losses,
-    )
+    sample = build_us_code_sample(title="5", section="552", text=text)
     return {
         "citation": sample.citation,
         "example_id": sample.sample_id,
@@ -186,6 +168,39 @@ def _verifier_example(text: str = "The agency must provide notice within 30 days
         "source_text": sample.text,
         "title": sample.title,
     }
+
+
+def test_verifier_reference_from_row_requires_matching_source_hashes() -> None:
+    text = "The agency must provide notice within 30 days after application."
+    base = build_us_code_sample(title="5", section="552", text=text)
+    packet = {
+        "sample_hashes": {
+            "modal_ir_hash": base.modal_ir.canonical_hash(),
+            "normalized_text_hash": hashlib.sha256(
+                base.normalized_text.encode("utf-8")
+            ).hexdigest(),
+            "sample_id": base.sample_id,
+            "source_span_hashes": {},
+            "source_text_hash": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        }
+    }
+    row = {
+        "title_number": "5",
+        "section_number": "552",
+        "text": text,
+        "normalized_citation": "5 U.S.C. 552",
+    }
+
+    reference, failures = _verifier_reference_from_row(packet, row)
+    assert failures == ()
+    assert reference is not None
+    assert reference["example_id"] == base.sample_id
+    assert reference["source_text"] == text
+
+    packet["sample_hashes"]["source_text_hash"] = "0" * 64
+    reference, failures = _verifier_reference_from_row(packet, row)
+    assert reference is None
+    assert failures == (f"source_text_hash_mismatch:{base.sample_id}",)
 
 
 def _seed_verified_real_cache(records, cache_dir: Path, config: RealShadowCanaryConfig):
@@ -366,7 +381,10 @@ def test_real_shadow_canary_consumes_25_canonical_packets_with_verified_cache(tm
 
     result = run_real_shadow_canary(records, config=config)
 
-    assert result.status == "passed"
+    assert result.status == "passed", (
+        result.blocked_reasons,
+        result.verifier_outcomes,
+    )
     assert result.valid_real_packet_count == 25
     assert result.invalid_packet_count == 0
     assert result.canonical_state["state_hash"] == "state-real"
@@ -382,6 +400,25 @@ def test_real_shadow_canary_consumes_25_canonical_packets_with_verified_cache(tm
     assert result.no_mutation["source_mutation_count"] == 0
     assert result.synthetic_promotion_evidence_generated is False
     assert result.promotion_allowed is False
+
+
+def test_real_shadow_canary_limits_audits_without_reducing_packet_validation(tmp_path) -> None:
+    records = _real_packets(25)
+
+    result = run_real_shadow_canary(
+        records,
+        config=RealShadowCanaryConfig(
+            cache_dir=str(tmp_path / "cache"),
+            max_clusters=1,
+            min_real_packets=25,
+            provider_enabled=False,
+        ),
+    )
+
+    assert result.valid_real_packet_count == 25
+    assert result.worker_summary["work_item_count"] == 1
+    assert result.cache_summary["requests"] == 1
+    assert len(result.audits) == 1
 
 
 def test_real_shadow_canary_blocks_when_leanstral_labs_unavailable(tmp_path) -> None:

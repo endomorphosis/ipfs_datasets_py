@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import math
 import time
@@ -33,6 +34,7 @@ from ipfs_datasets_py.logic.modal import (
     LeanstralAuditRequest,
     LeanstralAuditResult,
     LeanstralAuditRunner,
+    LeanstralAuditVerifier,
     LeanstralAuditValidation,
     LeanstralAuditWorker,
     LeanstralAuditWorkerConfig,
@@ -46,6 +48,11 @@ from ipfs_datasets_py.logic.modal import (
     verify_leanstral_audit,
 )
 from ipfs_datasets_py.logic.modal.leanstral_audit import canonical_sha256
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
+    HF_USCODE_DATASET_ID,
+    USCODE_LAWS_PARQUET,
+    USCodeParquetRecord,
+)
 
 
 SHADOW_CANARY_SCHEMA_VERSION = "legal-ir-leanstral-shadow-canary-v1"
@@ -235,6 +242,7 @@ class RealShadowCanaryConfig:
 
     min_real_packets: int = MIN_REAL_CANARY_PACKETS
     max_records: int = 0
+    max_clusters: int = MAX_CANARY_CLUSTERS
     provider_enabled: bool = False
     cache_dir: str = ""
     checkpoint_path: str = ""
@@ -250,14 +258,22 @@ class RealShadowCanaryConfig:
     vibe_agent: str = "lean"
     require_leanstral_model: bool = True
     require_local_verifier: bool = True
+    resolve_verifier_examples: bool = False
+    verifier_dataset_repo_id: str = HF_USCODE_DATASET_ID
+    verifier_laws_path: str = USCODE_LAWS_PARQUET
     run_lean: bool = False
     run_modal_bridge: bool = False
     run_syntax_check: bool = True
     run_graph_check: bool = True
     run_provenance_check: bool = True
+    lean_max_formulas: int = 2
+    lean_timeout_seconds: float = 10.0
 
     def bounded_min_real_packets(self) -> int:
         return max(1, int(self.min_real_packets or 1))
+
+    def bounded_max_clusters(self) -> int:
+        return max(1, min(MAX_CANARY_CLUSTERS, int(self.max_clusters or 1)))
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -269,6 +285,7 @@ class RealShadowCanaryConfig:
             expected_state_hash=self.expected_state_hash,
             max_concurrency=self.max_concurrency,
             max_records=self.max_records,
+            max_work_items=self.bounded_max_clusters(),
             max_retries=self.max_retries,
             model=self.model,
             provider=self.provider,
@@ -281,6 +298,10 @@ class RealShadowCanaryConfig:
 
     def verifier_config(self) -> LeanstralVerifierConfig:
         return LeanstralVerifierConfig(
+            allow_partial_source_span_evidence=True,
+            canonical_recompile_backend="packet_canonical",
+            lean_max_formulas=max(0, int(self.lean_max_formulas or 0)),
+            lean_timeout_seconds=max(0.001, float(self.lean_timeout_seconds or 0.0)),
             run_graph_check=self.run_graph_check,
             run_lean=self.run_lean,
             run_modal_bridge=self.run_modal_bridge,
@@ -492,6 +513,7 @@ def run_real_shadow_canary(
     config: Optional[RealShadowCanaryConfig] = None,
     worker: Optional[LeanstralAuditWorker] = None,
     llm_generate: Optional[Any] = None,
+    verifier_examples_by_sample_id: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> RealShadowCanaryResult:
     """Run the real no-mutation canary over canonical-state packets.
 
@@ -564,12 +586,46 @@ def run_real_shadow_canary(
         result.work_key: result
         for result in (tuple(worker_summary.results) if worker_summary is not None else ())
     }
+    verifier_example_resolution: Dict[str, Any] = {
+        "enabled": bool(cfg.resolve_verifier_examples),
+        "failure_count": 0,
+        "failures": [],
+        "requested_sample_count": 0,
+        "resolved_sample_count": 0,
+        "source": "disabled",
+    }
+    resolved_verifier_examples: Mapping[str, Mapping[str, Any]] = (
+        verifier_examples_by_sample_id or {}
+    )
+    if verifier_examples_by_sample_id is not None:
+        verifier_example_resolution.update(
+            {
+                "enabled": True,
+                "requested_sample_count": len(verifier_examples_by_sample_id),
+                "resolved_sample_count": len(verifier_examples_by_sample_id),
+                "source": "provided",
+            }
+        )
+    elif cfg.resolve_verifier_examples and valid_records:
+        try:
+            resolved_verifier_examples, verifier_example_resolution = (
+                _load_hf_verifier_examples(valid_records, config=cfg)
+            )
+        except Exception as exc:  # pragma: no cover - external I/O fail-closed path
+            verifier_example_resolution.update(
+                {
+                    "failure_count": 1,
+                    "failures": [f"{exc.__class__.__name__}: {str(exc)[:240]}"],
+                    "source": "huggingface_error",
+                }
+            )
     real_audits = _verify_real_shadow_audits(
         items,
         results_by_key=work_results_by_key,
         records=valid_records,
         worker=canary_worker,
         config=cfg,
+        verifier_examples_by_sample_id=resolved_verifier_examples,
     )
     if worker_summary is not None and worker_summary.unavailable_count:
         blocked_reasons.append("leanstral_labs_access_unavailable")
@@ -581,6 +637,8 @@ def run_real_shadow_canary(
         blocked_reasons.append("no_provider_or_verified_cache_evidence")
     if not any(audit.local_verifier_accepted for audit in real_audits):
         blocked_reasons.append("no_local_verifier_acceptance")
+        if cfg.resolve_verifier_examples and not resolved_verifier_examples:
+            blocked_reasons.append("verifier_example_resolution_failed")
     if not any(audit.audit_valid and audit.audit_verified for audit in real_audits):
         blocked_reasons.append("no_verified_audit_responses")
     if invalid_records:
@@ -604,6 +662,9 @@ def run_real_shadow_canary(
         worker_payload["stale_state_rejections"] = [
             _json_ready(item) for item in stale_rejections
         ]
+    worker_payload["verifier_example_resolution"] = _json_ready(
+        verifier_example_resolution
+    )
     blocked = sorted(set(blocked_reasons))
     return RealShadowCanaryResult(
         schema_version=REAL_SHADOW_CANARY_SCHEMA_VERSION,
@@ -1523,6 +1584,7 @@ def _verify_real_shadow_audits(
     records: Sequence[Mapping[str, Any]],
     worker: LeanstralAuditWorker,
     config: RealShadowCanaryConfig,
+    verifier_examples_by_sample_id: Mapping[str, Mapping[str, Any]],
 ) -> List[RealShadowAudit]:
     records_by_evidence_id = {
         str(record.get("evidence_id") or ""): record
@@ -1531,16 +1593,27 @@ def _verify_real_shadow_audits(
     }
     audits: List[RealShadowAudit] = []
     verification_time = time.time()
+    local_verifier = LeanstralAuditVerifier(config.verifier_config())
     for item in items:
         result = results_by_key.get(item.work_key)
         entry = worker.runner.cache.get_entry(item.request)
         verification = None
         if entry is not None and config.require_local_verifier:
             try:
-                verification = verify_leanstral_audit(
+                referenced_evidence_ids = _response_evidence_ids(entry.response)
+                item_examples = [
+                    verifier_examples_by_sample_id[sample_id]
+                    for sample_id in _item_sample_ids(
+                        item,
+                        records_by_evidence_id,
+                        evidence_ids=referenced_evidence_ids or item.evidence_ids,
+                    )
+                    if sample_id in verifier_examples_by_sample_id
+                ]
+                verification = local_verifier.verify(
                     item.request,
                     entry.response,
-                    config=config.verifier_config(),
+                    examples=item_examples,
                 )
             except Exception as exc:  # pragma: no cover - defensive fail-closed path
                 verification = {
@@ -1606,6 +1679,161 @@ def _verify_real_shadow_audits(
             )
         )
     return audits
+
+
+def _item_sample_ids(
+    item: LeanstralAuditWorkItem,
+    records_by_evidence_id: Mapping[str, Mapping[str, Any]],
+    *,
+    evidence_ids: Sequence[str],
+) -> Sequence[str]:
+    return tuple(
+        dict.fromkeys(
+            str(_mapping(records_by_evidence_id[evidence_id].get("sample_hashes")).get("sample_id") or "")
+            for evidence_id in evidence_ids
+            if evidence_id in records_by_evidence_id
+            and str(
+                _mapping(records_by_evidence_id[evidence_id].get("sample_hashes")).get("sample_id")
+                or ""
+            )
+        )
+    )
+
+
+def _response_evidence_ids(response: Any) -> Sequence[str]:
+    for payload in (
+        getattr(response, "counterexample", None),
+        getattr(response, "witness", None),
+    ):
+        if isinstance(payload, Mapping) and str(payload.get("evidence_id") or ""):
+            return (str(payload["evidence_id"]),)
+    return ()
+
+
+def _load_hf_verifier_examples(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: RealShadowCanaryConfig,
+) -> tuple[Dict[str, Dict[str, Any]], Dict[str, Any]]:
+    """Resolve hash-checked verifier examples without exposing text to Leanstral."""
+
+    import pyarrow.parquet as pq
+    from huggingface_hub import HfFileSystem
+
+    targets: Dict[int, List[Mapping[str, Any]]] = {}
+    failures: List[str] = []
+    requested_sample_ids: set[str] = set()
+    for record in records:
+        sample_id = str(_mapping(record.get("sample_hashes")).get("sample_id") or "")
+        raw_index = _mapping(_mapping(record.get("run_context")).get("frozen_canary")).get(
+            "index"
+        )
+        if not sample_id or raw_index is None:
+            failures.append(f"missing_frozen_reference:{sample_id or 'unknown'}")
+            continue
+        try:
+            row_index = int(raw_index)
+        except (TypeError, ValueError):
+            failures.append(f"invalid_frozen_index:{sample_id}")
+            continue
+        requested_sample_ids.add(sample_id)
+        targets.setdefault(row_index, []).append(record)
+
+    examples: Dict[str, Dict[str, Any]] = {}
+    hf_path = f"datasets/{config.verifier_dataset_repo_id}/{config.verifier_laws_path}"
+    columns = (
+        "ipfs_cid",
+        "title_number",
+        "title_name",
+        "section_number",
+        "law_name",
+        "source_url",
+        "text",
+        "citation_text",
+        "normalized_citation",
+    )
+    remaining_indices = set(targets)
+    with HfFileSystem().open(hf_path, "rb") as laws_file:
+        parquet_file = pq.ParquetFile(laws_file)
+        row_group_start = 0
+        for row_group in range(parquet_file.num_row_groups):
+            row_count = parquet_file.metadata.row_group(row_group).num_rows
+            selected = sorted(
+                index
+                for index in remaining_indices
+                if row_group_start <= index < row_group_start + row_count
+            )
+            if selected:
+                table = parquet_file.read_row_group(row_group, columns=list(columns))
+                for row_index in selected:
+                    row = table.slice(row_index - row_group_start, 1).to_pylist()[0]
+                    packets_by_sample_id = {
+                        str(_mapping(packet.get("sample_hashes")).get("sample_id") or ""): packet
+                        for packet in targets[row_index]
+                    }
+                    for packet in packets_by_sample_id.values():
+                        reference, reference_failures = _verifier_reference_from_row(
+                            packet,
+                            row,
+                        )
+                        if reference is not None:
+                            examples[str(reference["example_id"])] = reference
+                        failures.extend(reference_failures)
+                    remaining_indices.discard(row_index)
+            row_group_start += row_count
+            if not remaining_indices:
+                break
+    failures.extend(f"frozen_index_not_found:{index}" for index in sorted(remaining_indices))
+    return examples, {
+        "enabled": True,
+        "failure_count": len(failures),
+        "failures": failures[:32],
+        "requested_sample_count": len(requested_sample_ids),
+        "resolved_sample_count": len(examples),
+        "source": hf_path,
+    }
+
+
+def _verifier_reference_from_row(
+    packet: Mapping[str, Any],
+    row: Mapping[str, Any],
+) -> tuple[Optional[Dict[str, Any]], Sequence[str]]:
+    sample_hashes = _mapping(packet.get("sample_hashes"))
+    expected_sample_id = str(sample_hashes.get("sample_id") or "")
+    record = USCodeParquetRecord.from_row(row)
+    normalized_text = " ".join(record.text.split())
+    digest = hashlib.sha256(
+        f"{record.title_number}:{record.section_number}:{normalized_text}".encode("utf-8")
+    ).hexdigest()[:16]
+    resolved_sample_id = (
+        f"us-code-{record.title_number}-{record.section_number}-{digest}"
+    )
+    failures: List[str] = []
+    if resolved_sample_id != expected_sample_id:
+        failures.append(f"sample_id_mismatch:{expected_sample_id}")
+    if hashlib.sha256(record.text.encode("utf-8")).hexdigest() != str(
+        sample_hashes.get("source_text_hash") or ""
+    ):
+        failures.append(f"source_text_hash_mismatch:{expected_sample_id}")
+    if hashlib.sha256(normalized_text.encode("utf-8")).hexdigest() != str(
+        sample_hashes.get("normalized_text_hash") or ""
+    ):
+        failures.append(f"normalized_text_hash_mismatch:{expected_sample_id}")
+    if failures:
+        return None, tuple(failures)
+    return (
+        {
+            "citation": record.citation,
+            "example_id": resolved_sample_id,
+            "expected_modal_ir_hash": str(sample_hashes.get("modal_ir_hash") or ""),
+            "section": record.section_number,
+            "source_span_hashes": dict(_mapping(sample_hashes.get("source_span_hashes"))),
+            "source_span_hash_format": "introspection_packet_v1",
+            "source_text": record.text,
+            "title": record.title_number,
+        },
+        (),
+    )
 
 
 def _packet_validity_summary(
@@ -2064,7 +2292,16 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--skip-graph-check", action="store_true")
     parser.add_argument("--skip-provenance-check", action="store_true")
     parser.add_argument("--run-lean", action="store_true")
+    parser.add_argument("--lean-max-formulas", type=int, default=2)
+    parser.add_argument("--lean-timeout-seconds", type=float, default=10.0)
     parser.add_argument("--run-modal-bridge", action="store_true")
+    parser.add_argument(
+        "--resolve-verifier-examples",
+        action="store_true",
+        help="Resolve frozen canary source rows from Hugging Face for local verification only.",
+    )
+    parser.add_argument("--verifier-dataset-repo-id", default=HF_USCODE_DATASET_ID)
+    parser.add_argument("--verifier-laws-path", default=USCODE_LAWS_PARQUET)
     parser.add_argument("--require-promotion", action="store_true", help="Exit non-zero when promotion is blocked")
     return parser.parse_args(argv)
 
@@ -2120,9 +2357,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         expected_compiler_commit=args.expected_compiler_commit,
         expected_state_hash=args.expected_state_hash,
         max_concurrency=args.max_concurrency,
+        max_clusters=args.max_clusters,
         max_records=args.max_records,
         max_retries=args.max_retries,
         min_real_packets=args.min_real_packets,
+        lean_max_formulas=args.lean_max_formulas,
+        lean_timeout_seconds=args.lean_timeout_seconds,
         model=args.model,
         provider=args.provider,
         provider_enabled=bool(args.run_provider and not args.dry_run),
@@ -2133,7 +2373,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         run_modal_bridge=bool(args.run_modal_bridge),
         run_provenance_check=not args.skip_provenance_check,
         run_syntax_check=not args.skip_syntax_check,
+        resolve_verifier_examples=bool(args.resolve_verifier_examples),
         timeout_seconds=args.timeout_seconds,
+        verifier_dataset_repo_id=args.verifier_dataset_repo_id,
+        verifier_laws_path=args.verifier_laws_path,
         vibe_agent=args.vibe_agent,
     )
     result = run_real_shadow_canary(records, config=config)

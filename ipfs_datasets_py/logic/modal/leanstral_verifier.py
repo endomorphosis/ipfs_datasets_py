@@ -9,6 +9,7 @@ bridge/prover routes.  A model assertion is never treated as proof.
 from __future__ import annotations
 
 import hashlib
+import json
 import shutil
 import subprocess
 import tempfile
@@ -21,7 +22,6 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     LegalSample,
     build_us_code_sample,
-    stable_mock_embedding,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
     LogicalStatement,
@@ -64,7 +64,10 @@ class LeanstralVerifierConfig:
     """Bounded local-check configuration."""
 
     codec_config: ModalLogicCodecConfig = field(default_factory=ModalLogicCodecConfig)
+    allow_partial_source_span_evidence: bool = False
+    canonical_recompile_backend: str = "codec"
     lean_executable: Optional[str] = None
+    lean_max_formulas: int = 0
     lean_timeout_seconds: float = 5.0
     prover_timeout_seconds: float = 5.0
     use_provers: Sequence[str] = field(default_factory=tuple)
@@ -190,6 +193,8 @@ class LeanstralAuditVerifier:
         self.config = config or LeanstralVerifierConfig()
         self.codec = DeterministicModalLogicCodec(self.config.codec_config)
         self.prover_adapter = prover_adapter
+        self._lean_check_cache: Dict[str, LeanstralLocalCheck] = {}
+        self._recompiled_sample_cache: Dict[str, LegalSample] = {}
 
     def verify(
         self,
@@ -314,6 +319,7 @@ class LeanstralAuditVerifier:
         example_id = reference["example_id"] or f"example-{index + 1}"
         expected_hash = reference["expected_modal_ir_hash"]
         expected_spans = dict(reference["source_span_hashes"])
+        source_span_hash_format = str(reference["source_span_hash_format"] or "raw_span_v1")
         if not expected_hash and single_example:
             expected_hash = str(request.evidence.get("modal_ir_hash", "")).strip()
         if not expected_spans and single_example:
@@ -347,35 +353,9 @@ class LeanstralAuditVerifier:
                 text=text,
                 citation=str(reference["citation"] or f"0 U.S.C. {example_id}"),
             )
-            encoded = self.codec.encode(
-                text,
-                document_id=base.sample_id,
-                citation=base.citation,
-                source=base.source,
-                source_embedding=stable_mock_embedding(base.normalized_text),
-            )
-            sample = replace(
-                base,
-                modal_ir=encoded.modal_ir,
-                frame_candidates=encoded.frame_candidates,
-                selected_frame=encoded.selected_frame,
-                losses=encoded.losses,
-            )
+            sample = self._recompile_sample(base)
         else:
-            encoded = self.codec.encode(
-                sample.text,
-                document_id=sample.sample_id,
-                citation=sample.citation,
-                source=sample.source,
-                source_embedding=sample.embedding_vector,
-            )
-            sample = replace(
-                sample,
-                modal_ir=encoded.modal_ir,
-                frame_candidates=encoded.frame_candidates,
-                selected_frame=encoded.selected_frame,
-                losses=encoded.losses,
-            )
+            sample = self._recompile_sample(sample)
 
         actual_hash = sample.modal_ir.canonical_hash()
         compiler_reasons: List[str] = []
@@ -388,8 +368,13 @@ class LeanstralAuditVerifier:
             sample,
             example_id=example_id,
             expected_spans=expected_spans,
+            hash_format=source_span_hash_format,
         )
-        if not expected_spans:
+        if (
+            not expected_spans
+            and sample.modal_ir.formulas
+            and not self.config.allow_partial_source_span_evidence
+        ):
             compiler_reasons.append("missing_expected_source_span_hashes")
 
         return {
@@ -404,6 +389,43 @@ class LeanstralAuditVerifier:
             "span_checks": span_checks,
             "sample": sample,
         }
+
+    def _recompile_sample(self, sample: LegalSample) -> LegalSample:
+        backend = str(self.config.canonical_recompile_backend or "codec").strip().lower()
+        cache_key = hashlib.sha256(
+            f"{backend}\0{sample.sample_id}\0{sample.citation}\0{sample.text}".encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        cached = self._recompiled_sample_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        if backend in {"legal", "legal_modal_parser", "packet_canonical"}:
+            recompiled = build_us_code_sample(
+                title=sample.title,
+                section=sample.section,
+                text=sample.text,
+                citation=sample.citation,
+                embedding_model=sample.embedding_model,
+                embedding_vector=sample.embedding_vector,
+            )
+        else:
+            encoded = self.codec.encode(
+                sample.text,
+                document_id=sample.sample_id,
+                citation=sample.citation,
+                source=sample.source,
+                source_embedding=sample.embedding_vector,
+            )
+            recompiled = replace(
+                sample,
+                modal_ir=encoded.modal_ir,
+                frame_candidates=encoded.frame_candidates,
+                selected_frame=encoded.selected_frame,
+                losses=encoded.losses,
+            )
+        self._recompiled_sample_cache[cache_key] = recompiled
+        return recompiled
 
     def _check_modal_ir_syntax(self, sample: LegalSample) -> LeanstralLocalCheck:
         started = time.time()
@@ -537,7 +559,11 @@ class LeanstralAuditVerifier:
             ].strip()
             if not span:
                 reasons.append("empty_formula_source_span")
-            if span_checks and formula.formula_id not in checks_by_formula:
+            if (
+                span_checks
+                and formula.formula_id not in checks_by_formula
+                and not self.config.allow_partial_source_span_evidence
+            ):
                 reasons.append("missing_formula_source_span_check")
         return _cheap_check(
             "provenance",
@@ -551,8 +577,27 @@ class LeanstralAuditVerifier:
         )
 
     def _check_lean_registry(self, sample: LegalSample) -> LeanstralLocalCheck:
+        executable = self.config.lean_executable or shutil.which("lean") or ""
+        cache_key = hashlib.sha256(
+            (
+                f"{sample.modal_ir.canonical_hash()}\0{executable}\0"
+                f"{self.config.lean_timeout_seconds}\0{self.config.lean_max_formulas}"
+            ).encode("utf-8")
+        ).hexdigest()
+        cached = self._lean_check_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        result = self._run_lean_registry_check(sample, executable=executable)
+        self._lean_check_cache[cache_key] = result
+        return result
+
+    def _run_lean_registry_check(
+        self,
+        sample: LegalSample,
+        *,
+        executable: str,
+    ) -> LeanstralLocalCheck:
         start = time.time()
-        executable = self.config.lean_executable or shutil.which("lean")
         timeout = max(0.001, float(self.config.lean_timeout_seconds))
         if not executable:
             return LeanstralLocalCheck(
@@ -564,7 +609,19 @@ class LeanstralAuditVerifier:
                 elapsed_seconds=time.time() - start,
                 error_message="lean_executable_unavailable",
             )
-        registry = generate_legal_semantics_theorem_registry(sample)
+        full_formula_count = len(sample.modal_ir.formulas)
+        max_formulas = max(0, int(self.config.lean_max_formulas or 0))
+        theorem_sample = sample
+        if max_formulas and full_formula_count > max_formulas:
+            selected_formulas = sorted(
+                sample.modal_ir.formulas,
+                key=lambda formula: formula.formula_id,
+            )[:max_formulas]
+            theorem_sample = replace(
+                sample,
+                modal_ir=replace(sample.modal_ir, formulas=list(selected_formulas)),
+            )
+        registry = generate_legal_semantics_theorem_registry(theorem_sample)
         proofs = {theorem.theorem_id: "by decide" for theorem in registry.theorems}
         try:
             with tempfile.TemporaryDirectory(prefix="legal-ir-audit-lean-") as directory:
@@ -612,6 +669,8 @@ class LeanstralAuditVerifier:
             elapsed_seconds=time.time() - start,
             details={
                 "lean_output": output,
+                "full_formula_count": full_formula_count,
+                "verified_formula_count": len(theorem_sample.modal_ir.formulas),
                 "registry_hash": registry.registry_hash,
                 "theorem_count": registry.theorem_count,
             },
@@ -704,6 +763,7 @@ def _normalize_reference_example(
             "sample": example,
             "section": example.section,
             "source_span_hashes": _source_span_hashes_for_sample(example),
+            "source_span_hash_format": "raw_span_v1",
             "text": example.text,
             "title": example.title,
         }
@@ -730,6 +790,9 @@ def _normalize_reference_example(
         }
         if isinstance(expected_spans, Mapping)
         else {},
+        "source_span_hash_format": str(
+            example.get("source_span_hash_format", "raw_span_v1")
+        ),
         "text": str(
             example.get(
                 "source_text",
@@ -767,6 +830,7 @@ def _check_source_spans(
     *,
     example_id: str,
     expected_spans: Mapping[str, str],
+    hash_format: str = "raw_span_v1",
 ) -> Sequence[LeanstralSourceSpanCheck]:
     if not expected_spans:
         return ()
@@ -788,11 +852,14 @@ def _check_source_spans(
                 )
             )
             continue
-        actual = _source_span_hash(
-            sample,
-            formula.provenance.start_char,
-            formula.provenance.end_char,
-        )
+        if str(hash_format).strip().lower() == "introspection_packet_v1":
+            actual = _source_span_attestation_hash(sample, formula)
+        else:
+            actual = _source_span_hash(
+                sample,
+                formula.provenance.start_char,
+                formula.provenance.end_char,
+            )
         accepted = str(expected_hash) == actual
         checks.append(
             LeanstralSourceSpanCheck(
@@ -814,6 +881,25 @@ def _source_span_hash(sample: LegalSample, start_char: int, end_char: int) -> st
     end = max(start, int(end_char))
     span = sample.normalized_text[start:end].strip() or sample.text[start:end].strip()
     return hashlib.sha256(span.encode("utf-8")).hexdigest()
+
+
+def _source_span_attestation_hash(sample: LegalSample, formula: Any) -> str:
+    start = int(formula.provenance.start_char)
+    end = int(formula.provenance.end_char)
+    span_text_hash = hashlib.sha256(sample.text[start:end].encode("utf-8")).hexdigest()
+    payload = {
+        "end_char": end,
+        "formula_id": formula.formula_id,
+        "span_text_hash": span_text_hash,
+        "start_char": start,
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _logical_statement_for_formula(formula: Any) -> LogicalStatement:

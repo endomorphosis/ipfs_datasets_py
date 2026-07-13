@@ -51,6 +51,21 @@ LEANSTRAL_AUDIT_RESPONSE_SCHEMA: Dict[str, Any] = {
         "proof_obligation_ids",
         "abstention_reason",
     ),
+    "field_constraints": {
+        "abstention_reason": (
+            "Use null or an empty string unless classification is abstain; "
+            "abstain requires a non-empty reason."
+        ),
+        "counterexample_or_witness": (
+            "Every non-abstain response requires at least one non-null, "
+            "evidence-grounded counterexample or witness."
+        ),
+        "proof_obligation_ids": "Use only IDs present in the request.",
+        "proposed_compiler_surface": (
+            "Every non-abstain response requires at least one non-empty object."
+        ),
+        "request_id": "Copy request.request_id exactly.",
+    },
 }
 
 LEANSTRAL_AUDIT_REQUEST_SCHEMA_HASH = ""
@@ -121,6 +136,7 @@ class LeanstralAuditWorkerConfig:
     checkpoint_path: Optional[str] = None
     expected_state_hash: str = ""
     max_records: int = 0
+    max_work_items: int = 0
     provider_enabled: bool = True
     provider: str = "mistral_vibe"
     model: str = "Leanstral"
@@ -133,6 +149,9 @@ class LeanstralAuditWorkerConfig:
 
     def bounded_retries(self) -> int:
         return max(0, int(self.max_retries or 0))
+
+    def bounded_max_work_items(self) -> int:
+        return max(0, int(self.max_work_items or 0))
 
     def timeout(self) -> float:
         value = float(self.request_timeout_seconds or 0.0)
@@ -252,18 +271,48 @@ class LeanstralAuditRequest:
         return canonical_sha256(self.to_dict())
 
     def to_prompt_payload(self) -> Dict[str, Any]:
+        cluster = _json_ready_mapping(self.evidence.get("cluster"))
+        semantic_family = str(cluster.get("semantic_family") or "legal_ir").strip()
+        compiler_surface = str(cluster.get("compiler_surface") or "legal_ir.compiler").strip()
         return {
             "allowed_classifications": sorted(ALLOWED_AUDIT_CLASSIFICATIONS),
             "instructions": [
                 "Return strict JSON only.",
                 "Classify the legal-IR semantic audit using one allowed classification.",
-                "For non-abstention findings, include a counterexample or witness.",
-                "For issue findings, identify the missing semantic rule and compiler surface.",
+                "Copy request.request_id exactly into response.request_id.",
+                "For every non-abstain response, include a non-null counterexample or witness grounded in request evidence.",
+                "For every non-abstain response, include at least one non-empty proposed_compiler_surface object.",
+                "For issue findings, identify a non-empty missing_semantic_rule.",
                 "Use only proof_obligation_ids from the request.",
-                "Set abstention_reason when and only when classification is abstain.",
+                "For non-abstain responses, set abstention_reason to JSON null or an empty string, never the text 'None'.",
+                "For abstain responses, set a non-empty abstention_reason and leave issue evidence fields empty.",
             ],
             "request": self.to_dict(),
             "response_schema": LEANSTRAL_AUDIT_RESPONSE_SCHEMA,
+            "response_template": {
+                "abstention_reason": None,
+                "affected_ir_families": [semantic_family],
+                "classification": "missing_semantic_rule",
+                "confidence": 0.0,
+                "counterexample": {
+                    "evidence_id": "copy a relevant request evidence_id",
+                    "observed": "describe the observed compiler behavior",
+                    "expected": "describe the expected legal semantics",
+                },
+                "missing_semantic_rule": {
+                    "description": "describe the missing deterministic semantic rule"
+                },
+                "proof_obligation_ids": list(self.proof_obligation_ids[:1]),
+                "proposed_compiler_surface": [
+                    {
+                        "component": compiler_surface,
+                        "operation": "describe the deterministic compiler or decompiler change",
+                    }
+                ],
+                "request_id": self.request_id,
+                "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
+                "witness": None,
+            },
         }
 
     def to_dict(self) -> Dict[str, Any]:
@@ -331,7 +380,7 @@ class LeanstralAuditResponse:
             proposed_compiler_surface=surfaces,
             confidence=confidence_float,
             proof_obligation_ids=obligations,
-            abstention_reason=str(data.get("abstention_reason", "")).strip(),
+            abstention_reason=_normalize_optional_text(data.get("abstention_reason")),
             rationale=str(data.get("rationale", "")).strip(),
             request_cache_key=str(data.get("request_cache_key", "")).strip(),
         )
@@ -1173,17 +1222,18 @@ def build_leanstral_audit_work_items(
                 cluster=cluster.to_dict(include_gaps=True),
             ),
         )
-    return (
-        sorted(
-            items_by_key.values(),
-            key=lambda item: (
-                item.compiler_commit,
-                item.semantic_signature,
-                item.work_key,
-            ),
+    items = sorted(
+        items_by_key.values(),
+        key=lambda item: (
+            item.compiler_commit,
+            item.semantic_signature,
+            item.work_key,
         ),
-        stale_rejections,
     )
+    max_work_items = cfg.bounded_max_work_items()
+    if max_work_items:
+        items = items[:max_work_items]
+    return items, stale_rejections
 
 
 def load_leanstral_audit_checkpoint(
@@ -1404,6 +1454,9 @@ def _build_worker_audit_request(
             "Audit this LegalIR disagreement cluster asynchronously.",
             "Return only the structured Leanstral audit response JSON.",
             "Bind findings to evidence hashes, compiler commit, semantic signature, theorem obligations, and schema hashes.",
+            "Echo request_id and proof obligation IDs exactly; do not invent identifiers.",
+            "Use the cluster compiler_surface in a non-empty proposed_compiler_surface object for every non-abstain response.",
+            "Set abstention_reason to JSON null for non-abstain responses.",
             "Do not use or describe a fallback model as Leanstral.",
         ],
     }
@@ -1633,6 +1686,15 @@ def _normalize_hash(name: str, value: str) -> str:
 
 def _normalize_token(value: Any) -> str:
     return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _normalize_optional_text(value: Any) -> str:
+    if value is None:
+        return ""
+    normalized = str(value).strip()
+    if normalized.lower() in {"none", "null", "n/a", "not applicable", "not_applicable"}:
+        return ""
+    return normalized
 
 
 def _string_tuple(value: Any) -> Sequence[str]:

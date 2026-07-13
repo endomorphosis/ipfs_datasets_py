@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import stat
 from dataclasses import replace
@@ -165,6 +166,135 @@ def test_verifier_accepts_only_after_deterministic_checks_and_local_checker(tmp_
     ]
     assert result.local_checks[3].checker_name == "lean"
     assert set(result.verified_by) == {"lean", "fake"}
+
+
+def test_verifier_recompiles_packet_canonical_legal_parser_ir() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days after application.",
+    )
+    request = _request(sample)
+    response = _response(request)
+
+    result = verify_leanstral_audit(
+        request,
+        response,
+        examples=[sample],
+        config=LeanstralVerifierConfig(
+            canonical_recompile_backend="packet_canonical",
+            run_lean=False,
+            run_modal_bridge=False,
+        ),
+    )
+
+    assert result.outcome == LeanstralVerificationOutcome.ACCEPTED
+    assert result.compiler_checks[0].actual_modal_ir_hash == sample.modal_ir.canonical_hash()
+    assert all(check.accepted for check in result.source_span_checks)
+
+
+def test_verifier_reproduces_introspection_packet_span_attestations() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days after application.",
+    )
+    request = _request(sample)
+    response = _response(request)
+    expected_spans = {}
+    for formula in sample.modal_ir.formulas:
+        start = formula.provenance.start_char
+        end = formula.provenance.end_char
+        span_text_hash = hashlib.sha256(
+            sample.text[start:end].encode("utf-8")
+        ).hexdigest()
+        payload = {
+            "end_char": end,
+            "formula_id": formula.formula_id,
+            "span_text_hash": span_text_hash,
+            "start_char": start,
+        }
+        expected_spans[formula.formula_id] = hashlib.sha256(
+            json.dumps(
+                payload,
+                ensure_ascii=True,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+
+    result = verify_leanstral_audit(
+        request,
+        response,
+        examples=[
+            {
+                "citation": sample.citation,
+                "example_id": sample.sample_id,
+                "expected_modal_ir_hash": sample.modal_ir.canonical_hash(),
+                "section": sample.section,
+                "source_span_hash_format": "introspection_packet_v1",
+                "source_span_hashes": expected_spans,
+                "source_text": sample.text,
+                "title": sample.title,
+            }
+        ],
+        config=LeanstralVerifierConfig(
+            canonical_recompile_backend="packet_canonical",
+            run_lean=False,
+            run_modal_bridge=False,
+        ),
+    )
+
+    assert result.outcome == LeanstralVerificationOutcome.ACCEPTED
+    assert all(check.accepted for check in result.source_span_checks)
+
+
+def test_verifier_allows_explicitly_capped_packet_span_evidence() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days after application.",
+    )
+    request = LeanstralAuditRequest.build(
+        evidence={
+            "evidence_id": "projection-capped",
+            "modal_ir_hash": sample.modal_ir.canonical_hash(),
+        },
+        prompt={"template": "audit"},
+        model={
+            "provider": "mistral_vibe",
+            "model": "Leanstral",
+            "vibe_agent": "lean",
+        },
+        theorem_registry={"registry_id": "legal-ir-theorems-v1"},
+        proof_obligation_ids=("PO-modal-001",),
+    )
+    response = _response(request)
+    result = verify_leanstral_audit(
+        request,
+        response,
+        examples=[
+            {
+                "citation": sample.citation,
+                "example_id": sample.sample_id,
+                "expected_modal_ir_hash": sample.modal_ir.canonical_hash(),
+                "section": sample.section,
+                "source_span_hash_format": "introspection_packet_v1",
+                "source_span_hashes": {},
+                "source_text": sample.text,
+                "title": sample.title,
+            }
+        ],
+        config=LeanstralVerifierConfig(
+            allow_partial_source_span_evidence=True,
+            canonical_recompile_backend="packet_canonical",
+            run_lean=False,
+            run_modal_bridge=False,
+        ),
+    )
+
+    assert result.outcome == LeanstralVerificationOutcome.ACCEPTED
+    assert result.source_span_checks == ()
 
 
 def test_verifier_rejects_canonical_hash_or_source_span_mismatch() -> None:

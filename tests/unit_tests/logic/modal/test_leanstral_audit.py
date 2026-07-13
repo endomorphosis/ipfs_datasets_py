@@ -123,6 +123,22 @@ def test_audit_response_validation_requires_machine_readable_evidence() -> None:
     assert "missing_counterexample_or_witness" in rejected.reasons
 
 
+def test_prompt_contract_uses_exact_ids_and_normalizes_null_abstention() -> None:
+    request = _request()
+    payload = request.to_prompt_payload()
+    template = payload["response_template"]
+
+    assert template["request_id"] == request.request_id
+    assert template["proof_obligation_ids"] == [request.proof_obligation_ids[0]]
+    assert template["abstention_reason"] is None
+
+    response = _response(request, abstention_reason="None")
+    validation = validate_leanstral_audit_response(request, response)
+
+    assert response.abstention_reason == ""
+    assert validation.accepted is True
+
+
 def test_abstention_requires_reason_and_malformed_json_is_not_a_response() -> None:
     request = _request()
     malformed = parse_leanstral_audit_response("not json")

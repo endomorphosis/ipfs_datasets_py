@@ -126,6 +126,7 @@ workspace/logs/
 workspace/test-reports/
 workspace/test-logs/
 workspace/autoencoder-weight-review/
+workspace/leanstral-audit-worker/
 workspace/codex-work/
 workspace/todo-queues/
 workspace/todo-queues/legal-ir-hparam8h-20260530T230404Z-*

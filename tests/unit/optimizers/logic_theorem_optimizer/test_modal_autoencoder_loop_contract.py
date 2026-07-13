@@ -253,7 +253,10 @@ def test_modal_supervisor_health_exposes_executor_pressure_and_seed_blocks() -> 
     assert summary["latest_leanstral_projection_report_only_count"] == 4
 
 
-def test_production_runner_exports_canonical_disagreement_packets(tmp_path) -> None:
+def test_production_runner_exports_canonical_disagreement_packets(
+    tmp_path,
+    monkeypatch,
+) -> None:
     sample = build_us_code_sample(
         title="5",
         section="552",
@@ -300,6 +303,21 @@ def test_production_runner_exports_canonical_disagreement_packets(tmp_path) -> N
         ],
     }
 
+    calls = {"guidance": 0, "introspection": 0}
+    original_guidance = autoencoder.compiler_guidance_for_sample
+    original_introspection = autoencoder.introspect_sample
+
+    def counting_guidance(*args, **kwargs):
+        calls["guidance"] += 1
+        return original_guidance(*args, **kwargs)
+
+    def counting_introspection(*args, **kwargs):
+        calls["introspection"] += 1
+        return original_introspection(*args, **kwargs)
+
+    monkeypatch.setattr(autoencoder, "compiler_guidance_for_sample", counting_guidance)
+    monkeypatch.setattr(autoencoder, "introspect_sample", counting_introspection)
+
     summary_path = tmp_path / "run.summary"
     report = export_canonical_state_disagreement_packets(
         autoencoder=autoencoder,
@@ -319,7 +337,12 @@ def test_production_runner_exports_canonical_disagreement_packets(tmp_path) -> N
 
     assert report["enabled"] is True
     assert report["packet_count"] == 2
+    assert report["shared_sample_analysis_count"] == 1
+    assert report["shared_sample_analysis_cache_hit_count"] == 1
     assert report["schema_failure_count"] == 0
+    # Guidance performs one internal introspection. Both calls are shared by
+    # the guided and unguided export roles instead of being repeated per role.
+    assert calls == {"guidance": 1, "introspection": 2}
     assert report["paths"] == [str(tmp_path / "run.canonical-disagreements.jsonl")]
     lines = (tmp_path / "run.canonical-disagreements.jsonl").read_text(
         encoding="utf-8"

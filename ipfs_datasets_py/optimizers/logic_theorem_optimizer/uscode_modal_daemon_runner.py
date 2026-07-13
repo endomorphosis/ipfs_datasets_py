@@ -1368,26 +1368,39 @@ def export_canonical_state_disagreement_packets(
     )
     packets = []
     export_failures: List[Dict[str, Any]] = []
+    sample_analysis_cache: Dict[int, tuple[Any, Any, Any]] = {}
+    sample_analysis_cache_hits = 0
     for evaluation_role, compiler_block in by_role:
         metric_records = _sample_metric_records_by_sample_id(compiler_block)
         for sample_position, sample in enumerate(samples):
             sample_id = str(getattr(sample, "sample_id", "") or "")
             try:
-                introspection = autoencoder.introspect_sample(
-                    sample,
-                    use_sample_memory=False,
-                    top_k=top_k,
-                )
-                guidance = autoencoder.compiler_guidance_for_sample(
-                    sample,
-                    use_sample_memory=False,
-                    top_k=top_k,
-                )
-                prover_signal = (
-                    evaluate_modal_prover_compilation(sample)
-                    if evaluate_provers
-                    else None
-                )
+                if sample_position in sample_analysis_cache:
+                    introspection, guidance, prover_signal = sample_analysis_cache[
+                        sample_position
+                    ]
+                    sample_analysis_cache_hits += 1
+                else:
+                    introspection = autoencoder.introspect_sample(
+                        sample,
+                        use_sample_memory=False,
+                        top_k=top_k,
+                    )
+                    guidance = autoencoder.compiler_guidance_for_sample(
+                        sample,
+                        use_sample_memory=False,
+                        top_k=top_k,
+                    )
+                    prover_signal = (
+                        evaluate_modal_prover_compilation(sample)
+                        if evaluate_provers
+                        else None
+                    )
+                    sample_analysis_cache[sample_position] = (
+                        introspection,
+                        guidance,
+                        prover_signal,
+                    )
                 compiler_metrics = metric_records.get(sample_id) or {}
                 packet = export_introspection_packet(
                     sample,
@@ -1445,6 +1458,8 @@ def export_canonical_state_disagreement_packets(
         "export_mode": str(export_mode or ""),
         "paths": [str(path)] if append_report.get("packet_count", 0) else [],
         "requested_packet_count": len(packets),
+        "shared_sample_analysis_count": len(sample_analysis_cache),
+        "shared_sample_analysis_cache_hit_count": sample_analysis_cache_hits,
         "state_hash": state_hash,
     }
 
@@ -14648,7 +14663,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             save_summary(summary_path, summary)
 
-            if cycle % args.test_every_cycles == 0:
+            if _should_run_cycle_tests(cycle, args.test_every_cycles):
                 test_result = run_tests(root, report_dir, cycle)
                 summary["test_failures"] = int(summary.get("test_failures", 0)) + int(test_result["exit_code"] != 0)
                 append_event(log_path, args.run_id, test_result)
