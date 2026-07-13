@@ -13069,6 +13069,7 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "may prescribe",
                     "may provide",
                     "may take",
+                    "may utilize",
                     "may use",
                     "may make and file",
                     "may inspect",
@@ -13098,6 +13099,8 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "shall not be construed to restrict",
                     "shall not be construed to circumvent",
                     "may not be closed",
+                    "may not be relocated",
+                    "may not be relocated or withdrawn",
                     "must not",
                     "no member",
                     "no person",
@@ -14187,6 +14190,13 @@ COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_001174_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+)
+
 COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
     *COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS,
@@ -14205,6 +14215,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     *COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000370_FAMILY_PAIRS,
     *COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
+    *COMPILER_REFINED_PACKET_001174_FAMILY_PAIRS,
 )
 
 COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
@@ -14236,6 +14247,7 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000370_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001174_FAMILY_PAIRS,
         )
     )
 )
@@ -14269,6 +14281,7 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000370_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001174_FAMILY_PAIRS,
         )
     )
 )
@@ -14302,6 +14315,7 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000370_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001174_FAMILY_PAIRS,
         )
     )
 )
@@ -14335,6 +14349,7 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000370_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001174_FAMILY_PAIRS,
         )
     )
 )
