@@ -38,9 +38,13 @@ from huggingface_hub import HfFileSystem
 
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
+    IntrospectionPacketExportConfig,
     MODAL_INTROSPECTION_MODES,
     ModalLogicCodecConfig,
+    append_disagreement_packets_jsonl,
     decoded_modal_phrase_slot_text_map,
+    export_introspection_packet,
+    introspection_export_mode_enabled,
     modal_text_token_similarity,
 )
 from ipfs_datasets_py.logic.modal.codec import stable_mock_embedding
@@ -57,6 +61,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
+    evaluate_modal_prover_compilation,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import (
     build_modal_supervisor_health_report,
@@ -1237,6 +1242,210 @@ def autoencoder_state_telemetry(
         sidecar.update({"error": str(exc), "status": "failed"})
     telemetry["low_rank_sidecar"] = sidecar
     return telemetry
+
+
+def autoencoder_canonical_state_hash(state: ModalAutoencoderTrainingState) -> str:
+    """Return the canonical hash exported in disagreement packets."""
+
+    return hashlib.sha256(state.to_json().encode("utf-8")).hexdigest()
+
+
+def _compiler_commit(root: Path) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+    commit = (result.stdout or "").strip()
+    return commit if result.returncode == 0 and commit else "unknown"
+
+
+def introspection_disagreement_export_path(summary_path: Path) -> Path:
+    return summary_path.with_name(
+        f"{summary_path.stem}.canonical-disagreements.jsonl"
+    )
+
+
+def _sample_metric_records_by_sample_id(block: Mapping[str, Any]) -> Dict[str, Mapping[str, Any]]:
+    records = block.get("sample_metric_records")
+    if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
+        return {}
+    indexed: Dict[str, Mapping[str, Any]] = {}
+    for record in records:
+        if not isinstance(record, Mapping):
+            continue
+        for key in ("sample_id", "metric_sample_id"):
+            sample_id = str(record.get(key) or "")
+            if sample_id and sample_id not in indexed:
+                indexed[sample_id] = record
+    return indexed
+
+
+def _canary_set_hash(
+    *,
+    validation_mode: str,
+    validation_indices: Sequence[int],
+    validation_samples: Sequence[Any],
+) -> str:
+    payload = {
+        "sample_ids": [
+            str(getattr(sample, "sample_id", "") or "")
+            for sample in validation_samples
+        ],
+        "validation_indices": [int(index) for index in validation_indices],
+        "validation_mode": str(validation_mode or ""),
+    }
+    return hashlib.sha256(_stable_metric_json(payload).encode("utf-8")).hexdigest()
+
+
+def _frozen_canary_identity(
+    sample: Any,
+    *,
+    index: Optional[int],
+    validation_mode: str,
+    canary_set_hash: str,
+) -> Dict[str, Any]:
+    is_canary = str(validation_mode or "") == "fixed_canary"
+    return {
+        "canary_set_hash": canary_set_hash if is_canary else "",
+        "enabled": is_canary,
+        "index": int(index) if index is not None and is_canary else None,
+        "sample_id": str(getattr(sample, "sample_id", "") or "") if is_canary else "",
+    }
+
+
+def export_canonical_state_disagreement_packets(
+    *,
+    autoencoder: AdaptiveModalAutoencoder,
+    compiler_ir_validation: Mapping[str, Any],
+    compiler_ir_guided_validation: Mapping[str, Any],
+    cycle: int,
+    export_mode: str,
+    root: Path,
+    run_id: str,
+    samples: Sequence[Any],
+    state: ModalAutoencoderTrainingState,
+    summary_path: Path,
+    validation_indices: Sequence[int],
+    validation_mode: str,
+    evaluate_provers: bool = False,
+    top_k: int = 16,
+) -> Dict[str, Any]:
+    """Export real canonical autoencoder/compiler disagreements for one cycle."""
+
+    if not introspection_export_mode_enabled(export_mode):
+        path = introspection_disagreement_export_path(summary_path)
+        return {
+            "enabled": False,
+            "elapsed_seconds": 0.0,
+            "export_mode": str(export_mode or "off"),
+            "packet_count": 0,
+            "path": str(path),
+            "paths": [],
+            "schema_failure_count": 0,
+            "schema_failures": [],
+        }
+    started_at = time.time()
+    path = introspection_disagreement_export_path(summary_path)
+    state_hash = autoencoder_canonical_state_hash(state)
+    commit = _compiler_commit(root)
+    canary_hash = _canary_set_hash(
+        validation_mode=validation_mode,
+        validation_indices=validation_indices,
+        validation_samples=samples,
+    )
+    sample_indices = list(validation_indices)
+    by_role = (
+        ("unguided", compiler_ir_validation),
+        ("guided", compiler_ir_guided_validation),
+    )
+    packets = []
+    export_failures: List[Dict[str, Any]] = []
+    for evaluation_role, compiler_block in by_role:
+        metric_records = _sample_metric_records_by_sample_id(compiler_block)
+        for sample_position, sample in enumerate(samples):
+            sample_id = str(getattr(sample, "sample_id", "") or "")
+            try:
+                introspection = autoencoder.introspect_sample(
+                    sample,
+                    use_sample_memory=False,
+                    top_k=top_k,
+                )
+                guidance = autoencoder.compiler_guidance_for_sample(
+                    sample,
+                    use_sample_memory=False,
+                    top_k=top_k,
+                )
+                prover_signal = (
+                    evaluate_modal_prover_compilation(sample)
+                    if evaluate_provers
+                    else None
+                )
+                compiler_metrics = metric_records.get(sample_id) or {}
+                packet = export_introspection_packet(
+                    sample,
+                    introspection,
+                    compiler_guidance=guidance,
+                    compiler_metrics=compiler_metrics,
+                    config=IntrospectionPacketExportConfig(),
+                    export_context={
+                        "aggregate_compiler_metrics": dict(compiler_block),
+                        "compiler_commit": commit,
+                        "cycle": int(cycle),
+                        "evaluation_role": evaluation_role,
+                        "export_mode": str(export_mode or ""),
+                        "frozen_canary": _frozen_canary_identity(
+                            sample,
+                            index=(
+                                sample_indices[sample_position]
+                                if sample_position < len(sample_indices)
+                                else None
+                            ),
+                            validation_mode=validation_mode,
+                            canary_set_hash=canary_hash,
+                        ),
+                        "run_id": run_id,
+                        "sample_role": (
+                            "frozen_canary"
+                            if validation_mode == "fixed_canary"
+                            else "validation_holdout"
+                        ),
+                        "state_hash": state_hash,
+                    },
+                    prover_signal=prover_signal,
+                    state_version=MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                    extra_versions={
+                        "daemon_metric_schema_version": AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+                    },
+                )
+                packets.append(packet)
+            except Exception as exc:
+                export_failures.append(
+                    {
+                        "evaluation_role": evaluation_role,
+                        "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+                        "sample_id": sample_id,
+                    }
+                )
+    append_report = append_disagreement_packets_jsonl(path, packets)
+    elapsed = round(time.time() - started_at, 6)
+    return {
+        **append_report,
+        "enabled": True,
+        "elapsed_seconds": elapsed,
+        "export_failure_count": len(export_failures),
+        "export_failures": export_failures[:16],
+        "export_mode": str(export_mode or ""),
+        "paths": [str(path)] if append_report.get("packet_count", 0) else [],
+        "requested_packet_count": len(packets),
+        "state_hash": state_hash,
+    }
 
 
 def autoencoder_low_rank_load_report(
@@ -13247,6 +13456,25 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary_path,
                 guidance_distillation,
             )
+            mark_cycle_phase(
+                "introspection_disagreement_export",
+                sample_count=len(acceptance_validation_samples),
+            )
+            introspection_export = export_canonical_state_disagreement_packets(
+                autoencoder=autoencoder,
+                compiler_ir_validation=compiler_ir_validation,
+                compiler_ir_guided_validation=compiler_ir_guided_validation,
+                cycle=cycle,
+                export_mode=str(rollout_control.get("introspection_mode") or "off"),
+                root=root,
+                run_id=args.run_id,
+                samples=acceptance_validation_samples,
+                state=autoencoder.state,
+                summary_path=summary_path,
+                validation_indices=acceptance_validation_indices,
+                validation_mode=validation_mode,
+                evaluate_provers=bridge_evaluate_provers,
+            )
             guidance_todo_candidates_by_kind = {
                 "activation": compiler_guidance_activation_todos(
                     guidance_distillation,
@@ -13645,6 +13873,34 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if guidance_distillation_path is not None
                 else ""
             )
+            summary["latest_introspection_disagreement_export"] = (
+                introspection_export
+            )
+            summary["introspection_disagreement_export_packet_count"] = int(
+                summary.get("introspection_disagreement_export_packet_count", 0)
+            ) + int(introspection_export.get("packet_count", 0) or 0)
+            summary["introspection_disagreement_export_schema_failure_count"] = int(
+                summary.get(
+                    "introspection_disagreement_export_schema_failure_count",
+                    0,
+                )
+            ) + int(introspection_export.get("schema_failure_count", 0) or 0)
+            summary["introspection_disagreement_export_failure_count"] = int(
+                summary.get("introspection_disagreement_export_failure_count", 0)
+            ) + int(introspection_export.get("export_failure_count", 0) or 0)
+            export_paths = [
+                str(path)
+                for path in summary.get(
+                    "introspection_disagreement_export_paths",
+                    [],
+                )
+                or []
+                if str(path)
+            ]
+            for export_path in introspection_export.get("paths", []) or []:
+                if str(export_path) and str(export_path) not in export_paths:
+                    export_paths.append(str(export_path))
+            summary["introspection_disagreement_export_paths"] = export_paths
             summary["latest_compiler_ir_guidance_ce_delta"] = (
                 latest_compiler_ir_guidance_ce_delta
             )
@@ -14019,6 +14275,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         latest_compiler_ir_guidance_cosine_delta
                     ),
                     "compiler_ir_guidance_distillation": guidance_distillation,
+                    "introspection_disagreement_export": introspection_export,
                     "compiler_ir_guidance_distillation_deduped_count": int(
                         guidance_todo_counts["distillation_deduped_count"]
                     ),

@@ -11,7 +11,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import time
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
@@ -43,6 +45,28 @@ _DENSE_FIELD_ALLOWED_KEYS = frozenset(
         "dense_weight_tables_included",
         "stripped_dense_input_key_hashes",
     }
+)
+_ACTIVE_EXPORT_MODES = frozenset({"export", "shadow", "seed", "enforce"})
+_COMPACT_COMPILER_METRIC_KEYS = (
+    "compiler_guidance_applied",
+    "compiler_ir_metric_timeout_fallback",
+    "cross_entropy_excess_loss",
+    "cross_entropy_loss",
+    "cosine_similarity",
+    "metric_sample_id",
+    "metric_text_length",
+    "metric_text_policy",
+    "metric_text_truncated",
+    "reconstruction_loss",
+    "sample_timeout_seconds",
+    "source_copy_loss",
+    "source_copy_reward_hack_penalty",
+    "source_decompiled_text_embedding_cosine_loss",
+    "source_decompiled_text_embedding_cosine_similarity",
+    "source_decompiled_text_token_loss",
+    "source_decompiled_text_token_similarity",
+    "structural_text_reconstruction_loss",
+    "text_reconstruction_loss",
 )
 
 
@@ -101,6 +125,8 @@ def export_introspection_packet(
     state_version: str = MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     config: Optional[IntrospectionPacketExportConfig] = None,
     extra_versions: Optional[Mapping[str, Any]] = None,
+    export_context: Optional[Mapping[str, Any]] = None,
+    compiler_metrics: Optional[Mapping[str, Any]] = None,
 ) -> LegalIRDisagreementPacket:
     """Export one deterministic autoencoder-to-compiler disagreement packet.
 
@@ -114,6 +140,8 @@ def export_introspection_packet(
     sample_map = _object_to_mapping(sample)
     introspection_map = _object_to_mapping(introspection)
     guidance_map = dict(compiler_guidance or {})
+    context_map = dict(export_context or {})
+    compiler_metric_map = _mapping(compiler_metrics)
     canonical_ir_obj = canonical_legal_ir if canonical_legal_ir is not None else _get(sample, "modal_ir")
     canonical_ir = _object_to_mapping(canonical_ir_obj) or _mapping(sample_map.get("modal_ir"))
     sample_id = _sample_id(sample, sample_map, introspection_map, canonical_ir)
@@ -174,6 +202,16 @@ def export_introspection_packet(
         introspection_map,
         limit=max(0, int(export_config.max_view_items)),
     )
+    compiler_decompiler_metrics = _compact_compiler_decompiler_metrics(
+        compiler_metric_map,
+        aggregate_fallback=context_map.get("aggregate_compiler_metrics"),
+    )
+    learned_view_gaps = _learned_view_gaps(
+        introspection_map,
+        guidance_map,
+        limit=max(0, int(export_config.max_view_items)),
+    )
+    run_context = _run_context(context_map)
 
     packet: Dict[str, Any] = {
         "anti_copy_evidence": _anti_copy_evidence(
@@ -184,7 +222,17 @@ def export_introspection_packet(
             ),
         ),
         "compiler_round_trip_gaps": compiler_round_trip_gaps,
+        "compiler_decompiler_metrics": compiler_decompiler_metrics,
         "evidence_id": "",
+        "evidence_hashes": {
+            "canonical_modal_ir_hash": modal_ir_hash,
+            "compiler_guidance_hash": _hash_json(guidance_map),
+            "compiler_metrics_hash": _hash_json(compiler_decompiler_metrics),
+            "learned_view_gaps_hash": _hash_json(learned_view_gaps),
+            "proof_route_hash": _hash_json(proof_status),
+            "source_span_hashes_hash": _hash_json(source_span_hashes),
+            "state_hash": str(context_map.get("state_hash") or ""),
+        },
         "legal_ir_views": {
             "canonical": {
                 "document_id": str(canonical_ir.get("document_id") or sample_id),
@@ -214,6 +262,7 @@ def export_introspection_packet(
                 ),
             },
         },
+        "learned_view_gaps": learned_view_gaps,
         "per_family_gaps": per_family_gaps,
         "priority_score": _priority_score(
             introspection_map,
@@ -238,6 +287,7 @@ def export_introspection_packet(
             "source_span_hashes": source_span_hashes,
             "source_text_hash": source_text_hash,
         },
+        "run_context": run_context,
         "schema_version": INTROSPECTION_EXPORT_SCHEMA_VERSION,
         "synthesis_focus": synthesis_focus,
         "synthesis_hints": [
@@ -335,6 +385,98 @@ def packet_to_json(packet: LegalIRDisagreementPacket | Mapping[str, Any]) -> str
     if isinstance(packet, LegalIRDisagreementPacket):
         return packet.to_json()
     return _stable_json(dict(packet))
+
+
+def introspection_export_mode_enabled(mode: str) -> bool:
+    """Return whether a daemon rollout mode should emit JSONL packets."""
+
+    return str(mode or "").strip().lower() in _ACTIVE_EXPORT_MODES
+
+
+def validate_disagreement_packet(
+    packet: LegalIRDisagreementPacket | Mapping[str, Any],
+) -> List[str]:
+    """Return fail-closed schema errors for a compact disagreement packet."""
+
+    payload = packet.to_dict() if isinstance(packet, LegalIRDisagreementPacket) else dict(packet)
+    failures: List[str] = []
+    if payload.get("schema_version") != INTROSPECTION_EXPORT_SCHEMA_VERSION:
+        failures.append("unexpected_schema_version")
+    for key in (
+        "compiler_decompiler_metrics",
+        "evidence_hashes",
+        "evidence_id",
+        "legal_ir_views",
+        "learned_view_gaps",
+        "proof_route_status",
+        "run_context",
+        "sample_hashes",
+    ):
+        if key not in payload:
+            failures.append(f"missing_{key}")
+    context = _mapping(payload.get("run_context"))
+    for key in ("compiler_commit", "cycle", "evaluation_role", "sample_role", "state_hash"):
+        if context.get(key) in (None, ""):
+            failures.append(f"missing_run_context_{key}")
+    if "frozen_canary" not in context:
+        failures.append("missing_run_context_frozen_canary")
+    evidence_hashes = _mapping(payload.get("evidence_hashes"))
+    for key in (
+        "canonical_modal_ir_hash",
+        "compiler_guidance_hash",
+        "compiler_metrics_hash",
+        "learned_view_gaps_hash",
+        "proof_route_hash",
+        "source_span_hashes_hash",
+        "state_hash",
+    ):
+        if not str(evidence_hashes.get(key) or ""):
+            failures.append(f"missing_evidence_hash_{key}")
+    if _contains_dense_key(payload):
+        failures.append("dense_state_or_vector_field_present")
+    encoded = packet_to_json(payload)
+    if any(token in encoded for token in _DENSE_FIELD_TOKENS):
+        failures.append("dense_field_token_present")
+    return list(dict.fromkeys(failures))
+
+
+def append_disagreement_packets_jsonl(
+    path: str | Path,
+    packets: Iterable[LegalIRDisagreementPacket | Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Append validated packets to compact JSONL and return export telemetry."""
+
+    started_at = time.time()
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    packet_count = 0
+    schema_failures: List[Dict[str, Any]] = []
+    bytes_written = 0
+    with destination.open("a", encoding="utf-8") as handle:
+        for packet in packets:
+            payload = packet.to_dict() if isinstance(packet, LegalIRDisagreementPacket) else dict(packet)
+            failures = validate_disagreement_packet(payload)
+            if failures:
+                schema_failures.append(
+                    {
+                        "evidence_id": str(payload.get("evidence_id") or ""),
+                        "failures": failures,
+                        "sample_id": str(_mapping(payload.get("sample_hashes")).get("sample_id") or ""),
+                    }
+                )
+                continue
+            line = packet_to_json(payload)
+            handle.write(line + "\n")
+            packet_count += 1
+            bytes_written += len(line.encode("utf-8")) + 1
+    return {
+        "bytes_written": bytes_written,
+        "elapsed_seconds": round(time.time() - started_at, 6),
+        "packet_count": packet_count,
+        "path": str(destination),
+        "schema_failure_count": len(schema_failures),
+        "schema_failures": schema_failures[:16],
+    }
 
 
 def _object_to_mapping(value: Any) -> Dict[str, Any]:
@@ -623,6 +765,114 @@ def _compiler_round_trip_gaps(
     }
 
 
+def _compact_compiler_decompiler_metrics(
+    metrics: Mapping[str, Any],
+    *,
+    aggregate_fallback: Any = None,
+) -> Dict[str, Any]:
+    source = _mapping(metrics)
+    if not source:
+        source = _mapping(aggregate_fallback)
+    if "metrics" in source and isinstance(source.get("metrics"), Mapping):
+        source = {**source, **_mapping(source.get("metrics"))}
+    compact: Dict[str, Any] = {}
+    for key in _COMPACT_COMPILER_METRIC_KEYS:
+        if key not in source:
+            continue
+        value = source.get(key)
+        if isinstance(value, bool):
+            compact[key] = value
+        elif isinstance(value, int):
+            compact[key] = value
+        elif isinstance(value, float):
+            compact[key] = round(_float_or_zero(value), 12)
+        elif value is not None and str(value):
+            compact[key] = str(value)
+    if "sample_id" in source:
+        compact["sample_id"] = str(source.get("sample_id") or "")
+    return compact
+
+
+def _learned_view_gaps(
+    introspection: Mapping[str, Any],
+    guidance: Mapping[str, Any],
+    *,
+    limit: int,
+) -> Dict[str, Any]:
+    target = _numeric_mapping(
+        introspection.get("legal_ir_view_distribution")
+        or guidance.get("legal_ir_target_view_distribution")
+        or guidance.get("legal_ir_view_distribution")
+    )
+    predicted = _numeric_mapping(
+        introspection.get("legal_ir_predicted_view_distribution")
+        or guidance.get("legal_ir_predicted_view_distribution")
+    )
+    explicit_gaps = _numeric_mapping(guidance.get("legal_ir_view_gap_distribution"))
+    gaps: Dict[str, float] = {}
+    for key in sorted(set(target) | set(predicted) | set(explicit_gaps)):
+        if key in explicit_gaps:
+            value = explicit_gaps[key]
+        else:
+            value = float(target.get(key, 0.0)) - float(predicted.get(key, 0.0))
+        if abs(value) > _EPSILON:
+            gaps[key] = value
+    return {
+        "cross_entropy_excess_loss": round(
+            _float_or_zero(
+                introspection.get("legal_ir_view_cross_entropy_excess_loss")
+                or _mapping(guidance.get("legal_ir_view_metrics")).get(
+                    "cross_entropy_excess_loss"
+                )
+            ),
+            12,
+        ),
+        "cross_entropy_loss": round(
+            _float_or_zero(
+                introspection.get("legal_ir_view_cross_entropy_loss")
+                or _mapping(guidance.get("legal_ir_view_metrics")).get(
+                    "cross_entropy_loss"
+                )
+            ),
+            12,
+        ),
+        "overrepresented_components": [
+            str(value)
+            for value in introspection.get("legal_ir_overrepresented_components", []) or []
+            if str(value)
+        ][:limit],
+        "underrepresented_components": [
+            str(value)
+            for value in introspection.get("legal_ir_underrepresented_components", []) or []
+            if str(value)
+        ][:limit],
+        "view_gap_distribution": _top_numeric_mapping(gaps, limit=limit, signed=True),
+    }
+
+
+def _run_context(context: Mapping[str, Any]) -> Dict[str, Any]:
+    frozen_canary = _mapping(context.get("frozen_canary"))
+    return {
+        "compiler_commit": str(context.get("compiler_commit") or ""),
+        "cycle": int(_float_or_zero(context.get("cycle"))),
+        "evaluation_role": str(context.get("evaluation_role") or ""),
+        "export_mode": str(context.get("export_mode") or ""),
+        "frozen_canary": {
+            "canary_set_hash": str(frozen_canary.get("canary_set_hash") or ""),
+            "enabled": bool(frozen_canary.get("enabled", False)),
+            "index": (
+                int(_float_or_zero(frozen_canary.get("index")))
+                if frozen_canary.get("index") is not None
+                else None
+            ),
+            "sample_id": str(frozen_canary.get("sample_id") or ""),
+        },
+        "run_id": str(context.get("run_id") or ""),
+        "sample_role": str(context.get("sample_role") or ""),
+        "state_hash": str(context.get("state_hash") or ""),
+    }
+
+
 def _proof_route_status(prover_signal: Any, *, limit: int) -> Dict[str, Any]:
     signal = _object_to_mapping(prover_signal)
     if not signal:
@@ -754,7 +1004,11 @@ def _priority_score(
             (_float_or_zero(value) for value in _mapping(compiler_round_trip_gaps.get("component_gaps")).values()),
             default=0.0,
         ),
-        _float_or_zero(proof_status.get("failure_ratio")),
+        (
+            _float_or_zero(proof_status.get("failure_ratio"))
+            if int(_float_or_zero(proof_status.get("attempted_count"))) > 0
+            else 0.0
+        ),
         max(0.0, -_float_or_zero(introspection.get("family_margin"))),
         family_gap,
     ]
@@ -792,17 +1046,18 @@ def _cap_packet(
         capped,
         max_bytes,
         [
-            lambda data: _pop_last(_nested_get(data, "proof_route_status", "details")),
             lambda data: _pop_last(data.get("synthesis_hints")),
             lambda data: _pop_last(data.get("synthesis_focus")),
             lambda data: _pop_mapping_last(_nested_get(data, "compiler_round_trip_gaps", "component_gaps")),
             lambda data: _pop_mapping_last(_nested_get(data, "sample_hashes", "source_span_hashes")),
+            lambda data: _pop_mapping_last(_nested_get(data, "learned_view_gaps", "view_gap_distribution")),
             lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "canonical", "view_distribution")),
             lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "predicted", "view_distribution")),
             lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "canonical", "family_distribution")),
             lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "predicted", "family_distribution")),
             lambda data: _pop_last(data.get("per_family_gaps")),
             lambda data: _pop_last(data.get("ranked_feature_contributions")),
+            lambda data: _pop_last(_nested_get(data, "proof_route_status", "details")),
         ],
     )
     if _json_size(capped) > max_bytes:
@@ -822,43 +1077,73 @@ def _minimal_packet(packet: Mapping[str, Any]) -> Dict[str, Any]:
     legal_views = _mapping(packet.get("legal_ir_views"))
     canonical = _mapping(legal_views.get("canonical"))
     predicted = _mapping(legal_views.get("predicted"))
+    anti_copy = _mapping(packet.get("anti_copy_evidence"))
+    proof_status = _mapping(packet.get("proof_route_status"))
     return {
-        "anti_copy_evidence": _mapping(packet.get("anti_copy_evidence")),
+        "anti_copy_evidence": {
+            "dense_weight_tables_included": False,
+            "exact_source_spans_included": False,
+            "raw_source_text_included": False,
+        },
+        "compiler_decompiler_metrics": _mapping(packet.get("compiler_decompiler_metrics")),
         "compiler_round_trip_gaps": {
             key: value
             for key, value in _mapping(packet.get("compiler_round_trip_gaps")).items()
-            if key != "component_gaps"
+            if key
+            in {
+                "cosine_loss",
+                "embedding_cosine_gap",
+                "source_decompiled_text_embedding_cosine_loss",
+                "source_decompiled_text_token_loss",
+            }
         },
         "evidence_id": str(packet.get("evidence_id") or ""),
+        "evidence_hashes": _mapping(packet.get("evidence_hashes")),
         "legal_ir_views": {
             "canonical": {
                 "modal_ir_hash": canonical.get("modal_ir_hash", ""),
-                "view_distribution_hash": _hash_json(canonical.get("view_distribution", {})),
             },
             "predicted": {
                 "predicted_family": predicted.get("predicted_family", ""),
                 "target_family": predicted.get("target_family", ""),
-                "view_distribution_hash": _hash_json(predicted.get("view_distribution", {})),
             },
         },
-        "per_family_gaps": list(packet.get("per_family_gaps", []) or [])[:2],
+        "learned_view_gaps": {
+            key: value
+            for key, value in _mapping(packet.get("learned_view_gaps")).items()
+            if key in {"cross_entropy_excess_loss", "cross_entropy_loss"}
+        },
+        "per_family_gaps": [],
         "priority_score": packet.get("priority_score", 0.0),
         "proof_route_status": {
             key: value
-            for key, value in _mapping(packet.get("proof_route_status")).items()
-            if key != "details"
+            for key, value in proof_status.items()
+            if key
+            in {
+                "attempted_count",
+                "compiles",
+                "failure_ratio",
+                "route_status",
+                "valid_count",
+                "verified_by",
+            }
         },
         "ranked_feature_contributions": [],
         "sample_hashes": {
             "modal_ir_hash": sample_hashes.get("modal_ir_hash", ""),
             "sample_hash": sample_hashes.get("sample_hash", ""),
             "sample_id": sample_hashes.get("sample_id", ""),
-            "source_text_hash": sample_hashes.get("source_text_hash", ""),
         },
+        "run_context": _mapping(packet.get("run_context")),
         "schema_version": packet.get("schema_version", INTROSPECTION_EXPORT_SCHEMA_VERSION),
         "synthesis_focus": [],
         "synthesis_hints": [],
-        "versions": _mapping(packet.get("versions")),
+        "truncation": _mapping(packet.get("truncation")),
+        "versions": {
+            key: value
+            for key, value in _mapping(packet.get("versions")).items()
+            if key in {"export_schema_version", "state_version"}
+        },
     }
 
 
@@ -987,6 +1272,18 @@ def _dense_keys(value: Any, *, prefix: str = "") -> List[str]:
     return keys
 
 
+def _contains_dense_key(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if _is_dense_key(str(key)) or _is_dense_sequence(item):
+                return True
+            if _contains_dense_key(item):
+                return True
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return any(_contains_dense_key(item) for item in value)
+    return False
+
+
 def _numeric_mapping(value: Any) -> Dict[str, float]:
     if not isinstance(value, Mapping):
         return {}
@@ -1070,8 +1367,11 @@ __all__ = [
     "INTROSPECTION_EXPORT_SCHEMA_VERSION",
     "IntrospectionPacketExportConfig",
     "LegalIRDisagreementPacket",
+    "append_disagreement_packets_jsonl",
     "export_autoencoder_disagreement_packet",
     "export_introspection_packet",
     "export_prioritized_disagreement_packets",
+    "introspection_export_mode_enabled",
     "packet_to_json",
+    "validate_disagreement_packet",
 ]

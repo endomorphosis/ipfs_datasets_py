@@ -3,9 +3,11 @@ import json
 from ipfs_datasets_py.logic.modal import (
     INTROSPECTION_EXPORT_SCHEMA_VERSION,
     IntrospectionPacketExportConfig,
+    append_disagreement_packets_jsonl,
     export_introspection_packet,
     export_prioritized_disagreement_packets,
     packet_to_json,
+    validate_disagreement_packet,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     build_us_code_sample,
@@ -231,3 +233,67 @@ def test_export_prioritized_disagreement_packets_orders_by_priority():
     assert len(packets) == 2
     assert packets[0].payload["priority_score"] >= packets[1].payload["priority_score"]
     assert packets[0].payload["compiler_round_trip_gaps"]["embedding_cosine_gap"] == 0.67
+
+
+def test_export_packet_accepts_production_context_and_appends_jsonl(tmp_path):
+    sample = _sample()
+    introspection = _introspection(sample.sample_id)
+    packet = export_introspection_packet(
+        sample,
+        introspection,
+        compiler_guidance={
+            "legal_ir_view_gap_distribution": {"deontic.ir": 0.4},
+            "ranked_guidance_features": [
+                {"feature": "compiler-contract:notice", "score": 0.7}
+            ],
+        },
+        compiler_metrics={
+            "compiler_guidance_applied": True,
+            "metrics": {
+                "cross_entropy_loss": 0.32,
+                "cosine_similarity": 0.81,
+                "source_decompiled_text_embedding_cosine_loss": 0.19,
+                "source_decompiled_text_token_loss": 0.27,
+            },
+            "metric_sample_id": sample.sample_id,
+            "sample_id": sample.sample_id,
+        },
+        export_context={
+            "compiler_commit": "abc123",
+            "cycle": 7,
+            "evaluation_role": "guided",
+            "export_mode": "shadow",
+            "frozen_canary": {
+                "canary_set_hash": "canary-hash",
+                "enabled": True,
+                "index": 42,
+                "sample_id": sample.sample_id,
+            },
+            "run_id": "run-1",
+            "sample_role": "frozen_canary",
+            "state_hash": "state-hash",
+        },
+        config=IntrospectionPacketExportConfig(max_packet_bytes=9000),
+    )
+
+    payload = packet.to_dict()
+    assert validate_disagreement_packet(packet) == []
+    assert payload["run_context"]["compiler_commit"] == "abc123"
+    assert payload["run_context"]["cycle"] == 7
+    assert payload["run_context"]["sample_role"] == "frozen_canary"
+    assert payload["run_context"]["frozen_canary"]["index"] == 42
+    assert payload["evidence_hashes"]["state_hash"] == "state-hash"
+    assert payload["compiler_decompiler_metrics"]["cross_entropy_loss"] == 0.32
+    assert payload["learned_view_gaps"]["view_gap_distribution"]["deontic.ir"] == 0.4
+
+    export_path = tmp_path / "packets.jsonl"
+    report = append_disagreement_packets_jsonl(export_path, [packet])
+    assert report["packet_count"] == 1
+    assert report["schema_failure_count"] == 0
+    lines = export_path.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+    decoded = json.loads(lines[0])
+    assert decoded["evidence_id"] == payload["evidence_id"]
+    encoded = lines[0]
+    assert "decoded_embedding" not in encoded
+    assert "feature_embedding_weights" not in encoded

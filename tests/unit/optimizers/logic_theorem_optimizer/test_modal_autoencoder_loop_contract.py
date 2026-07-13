@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from types import SimpleNamespace
 
@@ -32,6 +33,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
     autoencoder_enforce_fail_closed_reason,
     autoencoder_rollout_control,
+    export_canonical_state_disagreement_packets,
 )
 
 
@@ -198,3 +200,92 @@ def test_modal_supervisor_health_distinguishes_alive_from_productive_loop() -> N
         state_update_count=3,
         compiler_patch_count=1,
     )["lag"] == 2
+
+
+def test_production_runner_exports_canonical_disagreement_packets(tmp_path) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide notice before denying a request.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    autoencoder.evaluate([sample], use_sample_memory=False)
+    compiler_metrics = {
+        "autoencoder_guidance_enabled": False,
+        "cross_entropy_loss": 0.42,
+        "cosine_similarity": 0.76,
+        "evaluated_count": 1,
+        "sample_count": 1,
+        "sample_metric_records": [
+            {
+                "compiler_guidance_applied": False,
+                "metric_sample_id": sample.sample_id,
+                "metrics": {
+                    "cross_entropy_loss": 0.42,
+                    "cosine_similarity": 0.76,
+                    "source_decompiled_text_embedding_cosine_loss": 0.24,
+                    "source_decompiled_text_token_loss": 0.31,
+                },
+                "sample_id": sample.sample_id,
+            }
+        ],
+    }
+    guided_metrics = {
+        **compiler_metrics,
+        "autoencoder_guidance_enabled": True,
+        "autoencoder_guidance_applied_count": 1,
+        "sample_metric_records": [
+            {
+                "compiler_guidance_applied": True,
+                "metric_sample_id": sample.sample_id,
+                "metrics": {
+                    "cross_entropy_loss": 0.37,
+                    "cosine_similarity": 0.8,
+                    "source_decompiled_text_embedding_cosine_loss": 0.2,
+                    "source_decompiled_text_token_loss": 0.29,
+                },
+                "sample_id": sample.sample_id,
+            }
+        ],
+    }
+
+    summary_path = tmp_path / "run.summary"
+    report = export_canonical_state_disagreement_packets(
+        autoencoder=autoencoder,
+        compiler_ir_validation=compiler_metrics,
+        compiler_ir_guided_validation=guided_metrics,
+        cycle=3,
+        export_mode="export",
+        root=tmp_path,
+        run_id="contract-run",
+        samples=[sample],
+        state=autoencoder.state,
+        summary_path=summary_path,
+        validation_indices=[17],
+        validation_mode="fixed_canary",
+        evaluate_provers=False,
+    )
+
+    assert report["enabled"] is True
+    assert report["packet_count"] == 2
+    assert report["schema_failure_count"] == 0
+    assert report["paths"] == [str(tmp_path / "run.canonical-disagreements.jsonl")]
+    lines = (tmp_path / "run.canonical-disagreements.jsonl").read_text(
+        encoding="utf-8"
+    ).splitlines()
+    assert len(lines) == 2
+    packets = [json.loads(line) for line in lines]
+    assert {packet["run_context"]["evaluation_role"] for packet in packets} == {
+        "guided",
+        "unguided",
+    }
+    for packet in packets:
+        assert packet["run_context"]["cycle"] == 3
+        assert packet["run_context"]["sample_role"] == "frozen_canary"
+        assert packet["run_context"]["frozen_canary"]["index"] == 17
+        assert packet["evidence_hashes"]["state_hash"] == report["state_hash"]
+        assert packet["compiler_decompiler_metrics"]["cross_entropy_loss"] > 0.0
+        assert packet["proof_route_status"]["route_status"] == "not_evaluated"
+        encoded = json.dumps(packet, sort_keys=True)
+        assert "decoded_embedding" not in encoded
+        assert "feature_embedding_weights" not in encoded
