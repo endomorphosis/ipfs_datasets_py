@@ -60,6 +60,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     ModalLogicFamily,
     compiler_refined_modal_family_cue_margin_buffer,
@@ -342,6 +343,73 @@ def test_packet_000279_registry_refines_modal_family_cue_policy() -> None:
             )
             >= margin_floors[(predicted_family, target_family)]
         )
+
+
+def test_packet_000373_registry_refines_modal_family_cue_policy() -> None:
+    expected_pairs = {
+        ("conditional_normative", "conditional_normative"),
+        ("deontic", "conditional_normative"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "epistemic"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS) == expected_pairs
+    margin_floors = {
+        ("conditional_normative", "conditional_normative"): 0.075,
+        ("deontic", "conditional_normative"): 0.45,
+        ("frame", "conditional_normative"): 0.84,
+        ("frame", "deontic"): 0.68,
+        ("frame", "epistemic"): 0.34,
+    }
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= margin_floors[(predicted_family, target_family)]
+        )
+
+    encoding = SpaCyLegalEncoder().encode(
+        (
+            "The Secretary may, whenever the Secretary shall deem it necessary, "
+            "cause townsites to be surveyed."
+        ),
+        document_id="packet-000373-townsites-epistemic-cue",
+    )
+    assert any(
+        cue.family == "epistemic"
+        and cue.cue.lower() == "shall deem it necessary"
+        for cue in encoding.cues
+    )
 
 
 def test_packet_006902_registry_exposes_modal_ambiguity_policy() -> None:
