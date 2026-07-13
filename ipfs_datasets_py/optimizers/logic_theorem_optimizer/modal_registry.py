@@ -368,11 +368,11 @@ COMPILER_REFINED_PACKET_002542_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
 COMPILER_AMBIGUITY_PACKET_001314_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
-        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DYNAMIC.value,
     ),
     (
+        ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.FRAME.value,
-        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
 )
 

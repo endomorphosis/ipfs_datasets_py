@@ -98,6 +98,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001309_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001310_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001314_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001068_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001392_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001692_FAMILY_PAIRS,
@@ -228,6 +229,164 @@ def test_modal_registry_packet_000202_refines_modal_family_cue_pairs() -> None:
             target_family,
             0.2,
         )
+
+
+def test_modal_registry_packet_001314_refines_deontic_dynamic_frame_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "dynamic"),
+        ("deontic", "frame"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_001314_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        _assert_refined_margin_buffer_at_least(
+            predicted_family,
+            target_family,
+            0.2,
+        )
+
+
+def test_modal_compiler_packet_001314_emits_deontic_outvoted_family_pairs() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="packet-001314-deontic-transfer-frame",
+        text=(
+            "An amount available under this chapter may be transferred to "
+            "another appropriation account. Developing institutions may "
+            "cooperate with the Secretary under this part."
+        ),
+        normalized_text=(
+            "An amount available under this chapter may be transferred to "
+            "another appropriation account. Developing institutions may "
+            "cooperate with the Secretary under this part."
+        ),
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="deontic",
+                system="KD",
+                symbol="P",
+                label="permission",
+                cue="may",
+                start_char=39,
+                end_char=42,
+                token_indices=[],
+            ),
+            SpaCyModalCueFeature(
+                family="dynamic",
+                system="PDL",
+                symbol="[a]",
+                label="after_action",
+                cue="transferred",
+                start_char=46,
+                end_char=57,
+                token_indices=[],
+            ),
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="ontology_frame",
+                cue="Developing institutions",
+                start_char=95,
+                end_char=118,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id=encoding.document_id,
+        source="legal_text",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-001314-deontic",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(
+                    name="transfer_and_developing_institution_authority",
+                    arguments=[],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id=encoding.document_id,
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                ),
+            )
+        ],
+    )
+    ranking = [
+        {"family": "deontic", "count": 2, "share": 0.5},
+        {"family": "frame", "count": 1, "share": 0.205211396269},
+        {"family": "dynamic", "count": 1, "share": 0.027461749327},
+    ]
+
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=ranking,
+        family_shares={
+            "deontic": 0.5,
+            "frame": 0.205211396269,
+            "dynamic": 0.027461749327,
+        },
+        predicted_family_source="adaptive_logits",
+    )
+    explicit = {
+        ambiguity.ambiguity_type: ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
+    }
+
+    for target_family in ("dynamic", "frame"):
+        ambiguity = explicit[
+            f"adaptive_deontic_{target_family}_outvoted_margin_low"
+        ]
+        assert ambiguity.severity == "requires_rule"
+        assert ambiguity.candidate_ids == ["deontic", target_family]
+        assert ambiguity.metadata["adaptive_policy_pair"] == (
+            f"deontic->{target_family}"
+        )
+        assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
 
 
 def test_modal_registry_packet_007052_refines_weak_modal_family_cues() -> None:
