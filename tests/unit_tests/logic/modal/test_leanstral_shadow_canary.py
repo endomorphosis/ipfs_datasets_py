@@ -39,6 +39,20 @@ def _records(count: int = 6):
     return build_dry_run_fixture_records(count=count)
 
 
+def _real_records(count: int = 6):
+    records = json.loads(json.dumps(build_dry_run_fixture_records(count=count)))
+    for index, record in enumerate(records, start=1):
+        sample_id = f"real-canary-sample-{index:03d}"
+        record["evidence_id"] = f"real-canary-evidence-{index:03d}"
+        record.pop("evidence_provenance", None)
+        record["sample_hashes"]["sample_id"] = sample_id
+        record["versions"] = {
+            "export_schema_version": "legal-ir-introspection-packet-v1",
+            "state_version": "canonical-state-v1",
+        }
+    return records
+
+
 def test_shadow_canary_dry_run_audits_top_clusters_without_mutation() -> None:
     result = run_shadow_canary(
         _records(8),
@@ -56,6 +70,10 @@ def test_shadow_canary_dry_run_audits_top_clusters_without_mutation() -> None:
     assert result.audits[0].rank_score >= result.audits[-1].rank_score
     assert result.projected_todo_specificity["mean"] > 0.0
     assert result.estimated_compiler_impact["top_promotion_value"] > 0.0
+    assert result.evidence_provenance_summary["real_record_count"] == 0
+    assert result.evidence_provenance_summary["synthetic_fixture_record_count"] > 0
+    assert "no_real_evidence_records" in result.promotion_blockers
+    assert "no_provider_or_verified_cache_evidence" in result.promotion_blockers
 
 
 def test_shadow_canary_report_contains_required_acceptance_sections(tmp_path) -> None:
@@ -70,6 +88,7 @@ def test_shadow_canary_report_contains_required_acceptance_sections(tmp_path) ->
     assert path.read_text(encoding="utf-8") == report
     for section in (
         "## Cache Use",
+        "## Evidence Provenance",
         "## Audit Validity",
         "## Theorem Outcomes",
         "## Disagreement Categories",
@@ -102,7 +121,7 @@ def test_shadow_canary_guardrails_fail_promotion_on_missing_provenance_and_anti_
 
 
 def test_shadow_canary_uses_verified_cache_without_provider_call(tmp_path) -> None:
-    records = _records(2)
+    records = _real_records(2)
     analysis = analyze_introspection_disagreements(
         records,
         config=IntrospectionAnalysisConfig(max_gaps_per_cluster=50),
@@ -153,6 +172,10 @@ def test_shadow_canary_uses_verified_cache_without_provider_call(tmp_path) -> No
     assert result.cache_summary["llm_calls"] == 0
     assert result.audit_validity["verified"] == 1
     assert result.audits[0].audit_verified is True
+    assert result.audits[0].evidence_provenance["dominant_kind"] == "cached_real_packet"
+    assert result.evidence_provenance_summary["cached_real_packet_count"] > 0
+    assert result.evidence_provenance_summary["provider_or_verified_cache_audit_count"] == 1
+    assert result.evidence_provenance_summary["real_record_count"] > 0
 
 
 def test_shadow_canary_result_is_json_ready() -> None:
@@ -166,3 +189,4 @@ def test_shadow_canary_result_is_json_ready() -> None:
 
     assert decoded["selected_cluster_count"] == 4
     assert decoded["cache_summary"]["requests"] == 4
+    assert decoded["evidence_provenance_summary"]["synthetic_fixture_record_count"] > 0

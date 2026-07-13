@@ -2,13 +2,15 @@
 
 - Schema: `legal-ir-leanstral-seed-canary-v1`
 - Mode: `dry-run`
+- Production evidence: `non-production dry run`
 - Selected tasks: 5 of 5 source records
 - Verified tasks: 5
 - Seeded tasks: 0
-- Runtime seconds: 0.002458
+- Runtime seconds: 0.002654
 - Production promotion allowed: `false`
-- Throughput materially improved: `true` (0.235573)
-- Promotion blockers: `dry_run_no_production_promotion`
+- Observed throughput materially improved: `false` (0.000000)
+- Synthetic/projected throughput improvement: `0.235573`
+- Promotion blockers: `compiler_development_throughput_not_materially_improved`, `dry_run_no_production_promotion`, `no_observed_paired_metrics`, `no_provider_or_verified_cache_evidence`, `no_real_evidence_records`, `no_seeded_tasks`, `no_verifier_evidence`
 
 ## Seeded Task Limit
 - Maximum TODOs permitted: `5`
@@ -31,6 +33,21 @@
 | `cycle_time_seconds` | 1872.914512 | 2450.000000 | 0.235545 | `false` |
 | `state_to_patch_lag` | 3.210755 | 4.200000 | 0.235535 | `false` |
 
+## Evidence Provenance
+- `packet_kind_counts`: {"synthetic_fixture": 5}
+- `production_eligible_task_count`: 0
+- `provider_or_verified_cache_task_count`: 0
+- `real_record_count`: 0
+- `seeded_production_eligible_task_count`: 0
+- `synthetic_fixture_record_count`: 5
+- `verifier_passed_task_count`: 0
+
+## Paired Metrics Provenance
+- `metric_kind_counts`: {"synthetic_projection": 5}
+- `observed_improvement_task_count`: 0
+- `synthetic_metrics_reported_as_observed`: false
+- `synthetic_projection_task_count`: 5
+
 ## Hard Guardrails
 - `anti_copy_passed`: 5
 - `hard_guardrail_regressions`: []
@@ -43,8 +60,9 @@
 
 ## Throughput Decision
 - `material_threshold`: 0.15
-- `observed_improvement`: 0.2355728933564926
-- `throughput_materially_improved`: true
+- `observed_improvement`: 0.0
+- `synthetic_projected_improvement`: 0.2355728933564926
+- `throughput_materially_improved`: false
 
 ## Task-To-Accepted-Patch Rate
 - Leanstral `0.673448` vs control `0.545020`; relative improvement `0.235639`; regressed `false`
@@ -70,6 +88,7 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
 - Surface: `external_provers.router`
 - Family: `prover`
 - Verified: `true`; seeded: `false`; audit verified: `false`
+- Evidence provenance: `synthetic_fixture`; metrics: `synthetic_projection`
 - Leanstral TODO: `leanstral-seed-pair-9e47340ff93b8f45-leanstral`
 - Control TODO: `leanstral-seed-pair-9e47340ff93b8f45-control`
 - Regressions: `none`
@@ -79,6 +98,7 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
 - Surface: `deontic.ir`
 - Family: `deontic`
 - Verified: `true`; seeded: `false`; audit verified: `false`
+- Evidence provenance: `synthetic_fixture`; metrics: `synthetic_projection`
 - Leanstral TODO: `leanstral-seed-pair-e74688676372d1d0-leanstral`
 - Control TODO: `leanstral-seed-pair-e74688676372d1d0-control`
 - Regressions: `none`
@@ -88,6 +108,7 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
 - Surface: `external_provers.router`
 - Family: `prover`
 - Verified: `true`; seeded: `false`; audit verified: `false`
+- Evidence provenance: `synthetic_fixture`; metrics: `synthetic_projection`
 - Leanstral TODO: `leanstral-seed-pair-8bd004894ab7a5a2-leanstral`
 - Control TODO: `leanstral-seed-pair-8bd004894ab7a5a2-control`
 - Regressions: `none`
@@ -97,6 +118,7 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
 - Surface: `external_provers.router`
 - Family: `prover`
 - Verified: `true`; seeded: `false`; audit verified: `false`
+- Evidence provenance: `synthetic_fixture`; metrics: `synthetic_projection`
 - Leanstral TODO: `leanstral-seed-pair-991ddf8239c28590-leanstral`
 - Control TODO: `leanstral-seed-pair-991ddf8239c28590-control`
 - Regressions: `none`
@@ -106,6 +128,7 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
 - Surface: `deontic.ir`
 - Family: `deontic`
 - Verified: `true`; seeded: `false`; audit verified: `false`
+- Evidence provenance: `synthetic_fixture`; metrics: `synthetic_projection`
 - Leanstral TODO: `leanstral-seed-pair-471beefda5021a84-leanstral`
 - Control TODO: `leanstral-seed-pair-471beefda5021a84-control`
 - Regressions: `none`
@@ -243,17 +266,45 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
   },
   "dry_run_no_mutation": {
     "dry_run": true,
+    "dry_run_non_production": true,
     "max_todos": 5,
     "queue_append_count": 0,
     "source_mutation_count": 0,
+    "synthetic_metrics_are_projection_only": true,
     "verified_candidates": 5
   },
+  "evidence_provenance_summary": {
+    "packet_kind_counts": {
+      "synthetic_fixture": 5
+    },
+    "production_eligible_task_count": 0,
+    "provider_or_verified_cache_task_count": 0,
+    "real_record_count": 0,
+    "seeded_production_eligible_task_count": 0,
+    "synthetic_fixture_record_count": 5,
+    "verifier_passed_task_count": 0
+  },
   "hard_guardrail_regressions": [],
+  "paired_metrics_provenance_summary": {
+    "metric_kind_counts": {
+      "synthetic_projection": 5
+    },
+    "observed_improvement_task_count": 0,
+    "synthetic_metrics_reported_as_observed": false,
+    "synthetic_projection_task_count": 5
+  },
+  "projected_throughput_improvement": 0.235573,
   "promotion_allowed": false,
   "promotion_blockers": [
-    "dry_run_no_production_promotion"
+    "compiler_development_throughput_not_materially_improved",
+    "dry_run_no_production_promotion",
+    "no_observed_paired_metrics",
+    "no_provider_or_verified_cache_evidence",
+    "no_real_evidence_records",
+    "no_seeded_tasks",
+    "no_verifier_evidence"
   ],
-  "runtime_seconds": 0.002458,
+  "runtime_seconds": 0.002654,
   "schema_version": "legal-ir-leanstral-seed-canary-v1",
   "seeded_task_count": 0,
   "selected_task_count": 5,
@@ -269,9 +320,26 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
       "llm_calls": 0,
       "requests": 5
     },
+    "evidence_provenance_summary": {
+      "cached_real_packet_count": 0,
+      "dry_run_reports_are_non_production": true,
+      "live_canonical_state_packet_count": 0,
+      "packet_kind_counts": {
+        "synthetic_fixture": 5
+      },
+      "production_eligible_audit_count": 0,
+      "provider_or_verified_cache_audit_count": 0,
+      "real_record_count": 0,
+      "synthetic_fixture_record_count": 5,
+      "unknown_record_count": 0,
+      "verifier_passed_audit_count": 0
+    },
     "promotion_allowed": false,
     "promotion_blockers": [
       "dry_run_no_promotion",
+      "no_provider_or_verified_cache_evidence",
+      "no_real_evidence_records",
+      "no_verifier_evidence",
       "verifier_guardrail_not_satisfied"
     ],
     "selected_cluster_count": 5
@@ -464,6 +532,22 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         "dry-run-evidence-004",
         "dry-run-evidence-005"
       ],
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 1
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 1,
+        "synthetic_fixture_record_count": 1,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
+      },
       "guardrails": {
         "anti_copy": {
           "max_observed_source_span_copy_ratio": 0.0,
@@ -551,6 +635,13 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         ]
       },
       "pair_id": "leanstral-seed-pair-9e47340ff93b8f45",
+      "paired_metrics_provenance": {
+        "kind": "synthetic_projection",
+        "metric_record_count": 5,
+        "observed_improvement_eligible": false,
+        "production_evidence_eligible": false,
+        "synthetic_projection": true
+      },
       "rank": 1,
       "sample_ids": [
         "dry-run-sample-001",
@@ -753,6 +844,22 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         "dry-run-evidence-004",
         "dry-run-evidence-005"
       ],
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 1
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 1,
+        "synthetic_fixture_record_count": 1,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
+      },
       "guardrails": {
         "anti_copy": {
           "max_observed_source_span_copy_ratio": 0.0,
@@ -842,6 +949,13 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         ]
       },
       "pair_id": "leanstral-seed-pair-e74688676372d1d0",
+      "paired_metrics_provenance": {
+        "kind": "synthetic_projection",
+        "metric_record_count": 5,
+        "observed_improvement_eligible": false,
+        "production_evidence_eligible": false,
+        "synthetic_projection": true
+      },
       "rank": 2,
       "sample_ids": [
         "dry-run-sample-001",
@@ -1042,6 +1156,22 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         "dry-run-evidence-004",
         "dry-run-evidence-005"
       ],
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 1
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 1,
+        "synthetic_fixture_record_count": 1,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
+      },
       "guardrails": {
         "anti_copy": {
           "max_observed_source_span_copy_ratio": 0.0,
@@ -1129,6 +1259,13 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         ]
       },
       "pair_id": "leanstral-seed-pair-8bd004894ab7a5a2",
+      "paired_metrics_provenance": {
+        "kind": "synthetic_projection",
+        "metric_record_count": 5,
+        "observed_improvement_eligible": false,
+        "production_evidence_eligible": false,
+        "synthetic_projection": true
+      },
       "rank": 3,
       "sample_ids": [
         "dry-run-sample-001",
@@ -1329,6 +1466,22 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         "dry-run-evidence-004",
         "dry-run-evidence-005"
       ],
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 1
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 1,
+        "synthetic_fixture_record_count": 1,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
+      },
       "guardrails": {
         "anti_copy": {
           "max_observed_source_span_copy_ratio": 0.0,
@@ -1416,6 +1569,13 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         ]
       },
       "pair_id": "leanstral-seed-pair-991ddf8239c28590",
+      "paired_metrics_provenance": {
+        "kind": "synthetic_projection",
+        "metric_record_count": 5,
+        "observed_improvement_eligible": false,
+        "production_evidence_eligible": false,
+        "synthetic_projection": true
+      },
       "rank": 4,
       "sample_ids": [
         "dry-run-sample-001",
@@ -1618,6 +1778,22 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         "dry-run-evidence-004",
         "dry-run-evidence-005"
       ],
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 1
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 1,
+        "synthetic_fixture_record_count": 1,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
+      },
       "guardrails": {
         "anti_copy": {
           "max_observed_source_span_copy_ratio": 0.0,
@@ -1707,6 +1883,13 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
         ]
       },
       "pair_id": "leanstral-seed-pair-471beefda5021a84",
+      "paired_metrics_provenance": {
+        "kind": "synthetic_projection",
+        "metric_record_count": 5,
+        "observed_improvement_eligible": false,
+        "production_evidence_eligible": false,
+        "synthetic_projection": true
+      },
       "rank": 5,
       "sample_ids": [
         "dry-run-sample-001",
@@ -1722,8 +1905,8 @@ rm -f workspace/leanstral-seed-canary/todos.jsonl
       "verified": true
     }
   ],
-  "throughput_improvement": 0.235573,
-  "throughput_materially_improved": true,
+  "throughput_improvement": 0.0,
+  "throughput_materially_improved": false,
   "todo_queue_path": "workspace/leanstral-seed-canary/todos.jsonl",
   "verified_task_count": 5
 }

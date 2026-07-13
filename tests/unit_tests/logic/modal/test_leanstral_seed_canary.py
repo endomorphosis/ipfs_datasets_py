@@ -43,7 +43,17 @@ def test_seed_canary_dry_run_selects_at_most_five_verified_tasks_without_mutatio
     assert result.dry_run_no_mutation["source_mutation_count"] == 0
     assert result.promotion_allowed is False
     assert "dry_run_no_production_promotion" in result.promotion_blockers
-    assert result.throughput_materially_improved is True
+    assert result.throughput_materially_improved is False
+    assert result.throughput_improvement == 0.0
+    assert result.projected_throughput_improvement > 0.0
+    assert "no_real_evidence_records" in result.promotion_blockers
+    assert "no_provider_or_verified_cache_evidence" in result.promotion_blockers
+    assert "no_verifier_evidence" in result.promotion_blockers
+    assert "no_seeded_tasks" in result.promotion_blockers
+    assert "no_observed_paired_metrics" in result.promotion_blockers
+    assert result.evidence_provenance_summary["synthetic_fixture_record_count"] > 0
+    assert result.paired_metrics_provenance_summary["observed_improvement_task_count"] == 0
+    assert result.paired_metrics_provenance_summary["synthetic_projection_task_count"] == 5
     assert not result.hard_guardrail_regressions
 
 
@@ -60,6 +70,8 @@ def test_seed_canary_report_contains_promotion_and_rollback_sections(tmp_path) -
     for section in (
         "## Seeded Task Limit",
         "## Paired Evaluation Metrics",
+        "## Evidence Provenance",
+        "## Paired Metrics Provenance",
         "## Hard Guardrails",
         "## Throughput Decision",
         "## Task-To-Accepted-Patch Rate",
@@ -69,6 +81,7 @@ def test_seed_canary_report_contains_promotion_and_rollback_sections(tmp_path) -
     ):
         assert section in report
     assert '"schema_version": "legal-ir-leanstral-seed-canary-v1"' in report
+    assert "non-production dry run" in report
 
 
 def test_seed_canary_blocks_promotion_when_hard_guardrail_regresses() -> None:
@@ -155,6 +168,7 @@ def test_seed_canary_requires_material_throughput_improvement() -> None:
     assert not result.hard_guardrail_regressions
     assert result.throughput_materially_improved is False
     assert "compiler_development_throughput_not_materially_improved" in result.promotion_blockers
+    assert result.paired_metrics_provenance_summary["observed_improvement_task_count"] == 0
 
 
 def test_metric_comparison_uses_directional_guardrails() -> None:
@@ -205,3 +219,4 @@ def test_seed_canary_result_is_json_ready() -> None:
     assert decoded["selected_task_count"] == 4
     assert decoded["verified_task_count"] == 4
     assert decoded["aggregate_comparisons"]["compiler_ir_cross_entropy"]["regressed"] is False
+    assert decoded["paired_metrics_provenance_summary"]["synthetic_metrics_reported_as_observed"] is False
