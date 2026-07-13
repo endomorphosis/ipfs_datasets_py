@@ -65,10 +65,6 @@ Additional optional providers (opt-in by selecting provider):
 - `claude_code`: Claude Code CLI command
     - `IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD` (supports `{prompt}` placeholder)
 - `claude_py`: Python wrapper in `ipfs_datasets_py.utils.claude_cli.ClaudeCLI`
-- `mistral_vibe`: Mistral Vibe CLI (`vibe`), including Leanstral's Lean agent
-    - `IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD` (supports `{prompt}` and `{model}` placeholders)
-    - `IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL` (optional default model)
-    - `MISTRAL_API_KEY` or `IPFS_DATASETS_PY_MISTRAL_API_KEY` for auth
 """
 
 from __future__ import annotations
@@ -1798,10 +1794,6 @@ def _clean_gemini_output(text: str) -> str:
     return _clean_codex_output(text)
 
 
-def _clean_mistral_vibe_output(text: str) -> str:
-    return _clean_codex_output(text)
-
-
 def _trace_sidecar_path(primary_path: str, suffix: str) -> str:
     text = str(primary_path or "").strip()
     if not text:
@@ -1910,7 +1902,6 @@ def _run_cli_command(
     timeout_seconds: float = 120.0,
     template_vars: Optional[Dict[str, str]] = None,
     label: Optional[str] = None,
-    extra_env: Optional[Dict[str, str]] = None,
 ) -> str:
     if not command:
         raise RuntimeError("CLI command not configured")
@@ -1932,11 +1923,6 @@ def _run_cli_command(
         input_text = prompt
 
     try:
-        env = os.environ.copy()
-        if extra_env:
-            for key, value in extra_env.items():
-                if key and value is not None and str(value).strip():
-                    env[str(key)] = str(value)
         proc = subprocess.run(
             cmd,
             input=input_text,
@@ -1944,7 +1930,7 @@ def _run_cli_command(
             capture_output=True,
             check=False,
             timeout=timeout_seconds,
-            env=env,
+            env=os.environ.copy(),
         )
     except FileNotFoundError as exc:
         name = (label or "CLI").strip() or "CLI"
@@ -3232,73 +3218,6 @@ def _get_claude_py_provider() -> Optional[LLMProvider]:
     return _ClaudePyProvider()
 
 
-def _get_mistral_vibe_provider() -> Optional[LLMProvider]:
-    """Return the Mistral Vibe CLI provider without requiring an SDK dependency."""
-
-    command = os.environ.get(
-        "IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD",
-        "vibe --prompt {prompt} --output text --max-turns 1",
-    )
-    if not _cli_available(command):
-        return None
-
-    def _mistral_auth_available() -> bool:
-        if _coalesce_env("MISTRAL_API_KEY", "IPFS_DATASETS_PY_MISTRAL_API_KEY"):
-            return True
-        env_file = os.path.join(os.path.expanduser("~"), ".vibe", ".env")
-        try:
-            if not os.path.exists(env_file):
-                return False
-            with open(env_file, "r", encoding="utf-8", errors="replace") as handle:
-                return "MISTRAL_API_KEY=" in handle.read()
-        except OSError:
-            return False
-
-    class _MistralVibeProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
-            model = (
-                model_name
-                or os.environ.get("IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL", "")
-            ).strip()
-            timeout = float(kwargs.get("timeout", 240))
-            agent = str(kwargs.pop("mistral_vibe_agent", "") or "").strip()
-            if agent and not re.fullmatch(r"[A-Za-z0-9_-]+", agent):
-                raise ValueError("mistral_vibe_agent must contain only letters, digits, underscores, or hyphens")
-            command_for_call = command
-            if agent and "{agent}" not in command_for_call:
-                command_for_call = f"{command_for_call} --agent {{agent}}"
-            per_call_key = kwargs.pop("mistral_api_key", None)
-            mistral_api_key = (
-                str(per_call_key).strip()
-                if per_call_key is not None and str(per_call_key).strip()
-                else _coalesce_env("IPFS_DATASETS_PY_MISTRAL_API_KEY", "MISTRAL_API_KEY")
-            )
-            try:
-                raw = _run_cli_command(
-                    command_for_call,
-                    prompt,
-                    timeout_seconds=timeout,
-                    template_vars={"agent": agent, "model": model},
-                    label="Mistral Vibe CLI",
-                    extra_env={
-                        **({"MISTRAL_API_KEY": mistral_api_key} if mistral_api_key else {}),
-                        **({"VIBE_ACTIVE_MODEL": model} if model else {}),
-                    }
-                    or None,
-                )
-            except LLMRouterError as exc:
-                if not mistral_api_key and not _mistral_auth_available():
-                    raise LLMRouterError(
-                        "Mistral Vibe call failed and no local auth markers were found. "
-                        "Set MISTRAL_API_KEY (or IPFS_DATASETS_PY_MISTRAL_API_KEY) "
-                        "or run 'vibe --setup'."
-                    ) from exc
-                raise
-            return _clean_mistral_vibe_output(raw)
-
-    return _MistralVibeProvider()
-
-
 def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
     enable_value = os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE")
     if enable_value is not None and enable_value.strip() and not _truthy(enable_value):
@@ -3568,10 +3487,6 @@ def _provider_cache_key() -> tuple:
         os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "").strip(),
         os.getenv("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "").strip(),
         os.getenv("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "").strip(),
-        os.getenv("IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD", "").strip(),
-        os.getenv("IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL", "").strip(),
-        os.getenv("IPFS_DATASETS_PY_MISTRAL_API_KEY", "").strip(),
-        os.getenv("MISTRAL_API_KEY", "").strip(),
     )
 
 
@@ -3739,8 +3654,6 @@ def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
         return _get_claude_code_provider()
     if key in {"claude", "claude_py"}:
         return _get_claude_py_provider()
-    if key in {"mistral_vibe", "mistral-vibe", "vibe"}:
-        return _get_mistral_vibe_provider()
     if key in {"hf", "huggingface", "local_hf"}:
         return _get_local_hf_provider(deps=get_default_router_deps())
     return None

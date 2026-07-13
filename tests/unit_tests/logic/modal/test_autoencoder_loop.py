@@ -7,7 +7,6 @@ import json
 from ipfs_datasets_py.logic.modal import (
     DEFAULT_LEGAL_IR_BRIDGE_NAMES,
     LegalModalAutoencoderLoop,
-    LeanstralConfig,
     ModalAutoencoderLoopConfig,
     ModalLogicCodecConfig,
     validate_frame_logic_patch,
@@ -362,45 +361,3 @@ def test_autoencoder_loop_run_many_reuses_gate_cache_for_duplicate_records() -> 
     assert "duplicate_text_hash" in results[1].codex_decision.suppressed_reasons
     assert loop.cache.codex_call_count == 1
     assert len(requests) == 1
-
-
-def test_autoencoder_loop_runs_leanstral_as_a_non_mutating_shadow_lane(tmp_path) -> None:
-    requests: list[dict[str, object]] = []
-
-    def fake_leanstral(prompt: str, **kwargs) -> str:
-        requests.append({"prompt": prompt, **kwargs})
-        task = json.loads(prompt)["task"]
-        return json.dumps(
-            {
-                "schema_version": "legal-ir-leanstral-proposal-v1",
-                "task_id": task["task_id"],
-                "target_modal_ir_hash": task["modal_ir_hash"],
-                "compiler_change_spec_id": task["compiler_change_spec"]["spec_id"],
-                "proof": "by unfold wellFormed modalityMatches sourceProvenancePresent; decide",
-            }
-        )
-
-    loop = LegalModalAutoencoderLoop(
-        ModalAutoencoderLoopConfig(
-            codec_config=ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8),
-            evaluate_provers=False,
-            leanstral_config=LeanstralConfig(
-                enabled=True,
-                artifact_dir=str(tmp_path),
-            ),
-        ),
-        leanstral_generate=fake_leanstral,
-    )
-
-    result = loop.run(
-        "The agency must provide notice within 30 days after application.",
-        document_id="loop-doc",
-        citation="5 U.S.C. 552",
-    )
-
-    assert result.leanstral_shadow is not None
-    assert result.leanstral_shadow.validation.accepted is True
-    assert result.leanstral_shadow.artifact_path is not None
-    assert result.repaired_modal_ir is None
-    assert result.metadata["leanstral_shadow_error"] == ""
-    assert requests[0]["provider"] == "mistral_vibe"

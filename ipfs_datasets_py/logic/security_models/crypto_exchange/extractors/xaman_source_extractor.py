@@ -563,9 +563,52 @@ class XamanSourceExtractor:
         return deduped
 
     @staticmethod
-    def _load_jsonc(source: str, path: str) -> dict[str, Any]:
-        stripped = _JSON_BLOCK_COMMENT_RE.sub('', source)
-        stripped = _JSON_LINE_COMMENT_RE.sub(r'\1', stripped)
+    def _strip_jsonc_comments(source: str) -> str:
+        """Remove JSONC comments without treating URL-like string content as a comment."""
+
+        result: list[str] = []
+        index = 0
+        quote = ''
+        escaped = False
+        length = len(source)
+        while index < length:
+            character = source[index]
+            if quote:
+                result.append(character)
+                if escaped:
+                    escaped = False
+                elif character == '\\':
+                    escaped = True
+                elif character == quote:
+                    quote = ''
+                index += 1
+                continue
+            if character in {'"', "'"}:
+                quote = character
+                result.append(character)
+                index += 1
+                continue
+            if source.startswith('//', index):
+                newline = source.find('\n', index)
+                if newline == -1:
+                    break
+                result.append('\n')
+                index = newline + 1
+                continue
+            if source.startswith('/*', index):
+                closing = source.find('*/', index + 2)
+                if closing == -1:
+                    raise ValueError('unterminated JSONC block comment')
+                result.extend('\n' for character in source[index:closing + 2] if character == '\n')
+                index = closing + 2
+                continue
+            result.append(character)
+            index += 1
+        return ''.join(result)
+
+    @classmethod
+    def _load_jsonc(cls, source: str, path: str) -> dict[str, Any]:
+        stripped = cls._strip_jsonc_comments(source)
         stripped = _JSON_TRAILING_COMMA_RE.sub(r'\1', stripped)
         try:
             loaded = json.loads(stripped)

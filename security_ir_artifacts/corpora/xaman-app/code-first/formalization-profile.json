@@ -1,0 +1,137 @@
+{
+  "analysis_mode": "public_source_code_first",
+  "assumption_ledger": [
+    {
+      "classification": "NOT_MODELED",
+      "domain": "native",
+      "evidence_rule": "Must not be represented as vendor evidence or a proved fact.",
+      "id": "native-custody-and-bridge",
+      "owner": "Xaman native implementation",
+      "promotion_blocking": true,
+      "scope": "keystore, biometric, secure-enclave, vault cryptography, and native bridge semantics"
+    },
+    {
+      "classification": "ASSUMPTION",
+      "domain": "backend",
+      "evidence_rule": "Treat as adversarial or nondeterministic; never vendor evidence.",
+      "id": "remote-payload-services",
+      "owner": "Xaman backend operator",
+      "promotion_blocking": true,
+      "scope": "payload authorization, atomic single-use, availability, and server-side validation"
+    },
+    {
+      "classification": "NOT_MODELED",
+      "domain": "deployment",
+      "evidence_rule": "Public source identity is not proof of deployed equivalence.",
+      "id": "public-source-release-equivalence",
+      "owner": "release and distribution operator",
+      "promotion_blocking": true,
+      "scope": "equivalence of the pinned public commit to deployed or store binaries and configuration"
+    },
+    {
+      "classification": "ASSUMPTION",
+      "domain": "ledger",
+      "evidence_rule": "Model as an external trust boundary, not a proved product fact.",
+      "id": "xrpl-consensus-and-rpc",
+      "owner": "XRPL validators and RPC providers",
+      "promotion_blocking": true,
+      "scope": "consensus, finality, ordering, RPC correctness, and network availability"
+    }
+  ],
+  "claim_taxonomy": {
+    "categories": [
+      "authentication",
+      "backend_trust",
+      "custody",
+      "network_binding",
+      "payload_integrity",
+      "proof_consumer_policy",
+      "replay_prevention",
+      "runtime_equivalence",
+      "transaction_semantics"
+    ],
+    "formal_result_vocabulary": [
+      "PROVED_UNDER_ASSUMPTIONS",
+      "DISPROVED",
+      "UNKNOWN",
+      "NOT_MODELED",
+      "BLOCKED"
+    ],
+    "observed_source_claim_statuses": [
+      "NOT_PROVED_BLOCKING",
+      "PARTIAL_CLIENT_CONTROL_BACKEND_BLOCKING",
+      "POLICY_DEFINED_NOT_YET_KERNEL_PROVED",
+      "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "SUPPORTED_FOR_PAYMENT_WITH_ASSUMPTIONS"
+    ],
+    "vendor_evidence_is_available": false
+  },
+  "hydrated_coverage": {
+    "content_unavailable_files": 0,
+    "manifest_files": 3444,
+    "parse_error_files": 0,
+    "parsed_coverage_percent": 90.44,
+    "parsed_files": 643,
+    "reviewed_gap_count": 68,
+    "security_relevant_files": 711,
+    "unsupported_files": 68
+  },
+  "inputs": {
+    "claim_catalog": {
+      "artifact_cid": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+      "schema_version": "xaman-security-claims/v1",
+      "sha256": "sha256:648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7"
+    },
+    "hydrated_coverage": {
+      "artifact_cid": "sha256:30d8eaa5c67c6b49ef4be902c46bd5ac0813daf9aad87a75cafdb7f69714ef37",
+      "path": "security_ir_artifacts/corpora/xaman-app/source-coverage-hydrated.json",
+      "schema_version": "xaman-source-coverage/v1",
+      "sha256": "sha256:654956dfd2b35cecf5b85612bdec1b75d1c1e1bbaf70196d26d39efad975a260"
+    },
+    "solver_environment": {
+      "artifact_cid": "sha256:69c7ca855cf057da873312dab0ec44dc8541b81b8cbb6faf03c1f3fc3ff9a8ad",
+      "path": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
+      "schema_version": "xaman-environment-probe/v1",
+      "sha256": "sha256:a675a87bb94b279afc7d18a5d68e96c3865b77d5fb2f3c60e5eb02f0fc457dff"
+    },
+    "source_claim_map": {
+      "artifact_cid": "sha256:9e928c511d683870c8b84c653645e3ef34aea7c3ada501455b1779de0d4beab0",
+      "path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
+      "schema_version": "xaman-source-claim-map/v1",
+      "sha256": "sha256:f21fdb9b79f49c68dd69bc099f37234edc659f25325a052174cc314c673babc2"
+    },
+    "source_manifest": {
+      "artifact_cid": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+      "schema_version": "xaman-corpus-source-manifest/v1",
+      "sha256": "sha256:a269b91c526132771a8c931dfe94ef57a78c0cf2f0acf4c9a439437ce8795ec3"
+    },
+    "transaction_coverage": {
+      "artifact_cid": "sha256:3afcf320e04094a6b39cca1952c9c8a68351cc0c4b1f5ed26880a017d0914beb",
+      "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json",
+      "schema_version": "xaman-xrpl-transaction-coverage/v1",
+      "sha256": "sha256:96b658b3e2780ae9eeee4956694102b36f53fd93fbd04c15a4ca5c900d5689f7"
+    }
+  },
+  "profile_digest": "sha256:defbd282297c90e89bfab1f5c5da3ccf87817b71046c9c8378bb98cdda5fd6e7",
+  "promotion_policy": {
+    "assumptions_may_be_promoted_to_evidence": false,
+    "not_modeled_may_be_promoted_to_proved": false,
+    "production_release_claims_allowed": false,
+    "proof_requires_digest_bound_inputs_and_named_assumptions": true
+  },
+  "schema_version": "xaman-code-first-formalization-profile/v1",
+  "solver_environment": {
+    "input": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
+    "live_vendor_or_ledger_access_required": false,
+    "local_only": true,
+    "overall_status": "ready"
+  },
+  "source": {
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "public_source_only": true,
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App"
+  },
+  "task_id": "PORTAL-CXTP-156"
+}

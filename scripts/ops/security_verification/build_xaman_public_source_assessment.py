@@ -19,6 +19,7 @@ from typing import Any, Iterable, Mapping
 ROOT_DIR = Path(__file__).resolve().parents[3]
 CORPUS_DIR = Path('security_ir_artifacts/corpora/xaman-app')
 DEFAULT_OUT = CORPUS_DIR / 'public-source-assessment.json'
+PUBLIC_SOURCE_REFRESH_PATH = CORPUS_DIR / 'public-source-refresh.json'
 
 SOURCE_MANIFEST_PATH = CORPUS_DIR / 'source-manifest.json'
 SOURCE_COVERAGE_PATH = CORPUS_DIR / 'source-coverage.json'
@@ -69,6 +70,38 @@ def _canonical_sha256(payload: Mapping[str, Any]) -> str:
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+
+
+def build_public_source_refresh(repo_root: Path) -> dict[str, Any]:
+    """Validate and return the frozen public-source refresh evidence package.
+
+    The package intentionally retains a fixed, reviewed snapshot of upstream
+    state rather than silently repinning the proof corpus during an assessment
+    run.  Validate its content address and the immutable source/coverage
+    anchors before allowing the assessment to consume it.
+    """
+
+    refresh = _load_json(repo_root, PUBLIC_SOURCE_REFRESH_PATH)
+    artifact_cid = str(refresh.pop('artifact_cid', ''))
+    expected_cid = _canonical_sha256(refresh)
+    refresh['artifact_cid'] = artifact_cid
+    if artifact_cid != expected_cid:
+        raise ValueError('public-source refresh artifact CID does not match its payload')
+
+    manifest = _load_json(repo_root, SOURCE_MANIFEST_PATH)
+    coverage = _load_json(repo_root, SOURCE_COVERAGE_PATH)
+    source_pin = refresh.get('source_pin') or {}
+    source = manifest.get('source') or {}
+    if source_pin.get('repo_url') != source.get('repo_url'):
+        raise ValueError('public-source refresh repository does not match the frozen manifest')
+    if source_pin.get('commit_sha') != source.get('commit_sha'):
+        raise ValueError('public-source refresh commit does not match the frozen manifest')
+    if (
+        (refresh.get('source_coverage') or {}).get('aggregate_sha256')
+        != (coverage.get('source') or {}).get('aggregate_sha256')
+    ):
+        raise ValueError('public-source refresh coverage digest does not match the frozen coverage')
+    return refresh
 
 
 def _artifact_ref(
@@ -350,6 +383,7 @@ def _vendor_only_evidence(
 def build_assessment(repo_root: Path) -> dict[str, Any]:
     manifest = _load_json(repo_root, SOURCE_MANIFEST_PATH)
     coverage = _load_json(repo_root, SOURCE_COVERAGE_PATH)
+    refresh = build_public_source_refresh(repo_root)
     claims = _load_json(repo_root, SECURITY_CLAIMS_PATH)
     counterexamples = _load_json(repo_root, COUNTEREXAMPLE_REPORT_PATH)
     smt = _load_json(repo_root, SMT_DIFFERENTIAL_PATH)
@@ -418,7 +452,7 @@ def build_assessment(repo_root: Path) -> dict[str, Any]:
 
     payload: dict[str, Any] = {
         'schema_version': 'xaman-public-source-assessment/v1',
-        'task_id': 'PORTAL-CXTP-119',
+        'task_id': 'PORTAL-CXTP-144',
         'corpus': 'xaman-app',
         'generated_at_utc': GENERATED_AT_UTC,
         'source': {
@@ -430,6 +464,20 @@ def build_assessment(repo_root: Path) -> dict[str, Any]:
             'coverage_path': str(SOURCE_COVERAGE_PATH),
             'coverage_aggregate_sha256': coverage.get('source', {}).get('aggregate_sha256'),
             'public_source_only': True,
+            'refresh_path': str(PUBLIC_SOURCE_REFRESH_PATH),
+            'upstream_drift_detected': bool((refresh.get('upstream_drift') or {}).get('drift_detected')),
+            'proof_corpus_changed_by_refresh': bool(
+                (refresh.get('source_pin') or {}).get('proof_corpus_changed_by_refresh')
+            ),
+        },
+        'refresh_baseline': {
+            'upstream_drift': refresh.get('upstream_drift', {}),
+            'public_build_digest_count': int(
+                (refresh.get('acceptance_summary') or {}).get('public_build_digest_count', 0)
+            ),
+            'known_unmodeled_domain_count': int(
+                (refresh.get('acceptance_summary') or {}).get('known_unmodeled_domain_count', 0)
+            ),
         },
         'assessment_boundary': {
             'scope': 'public_source_security_assessment',

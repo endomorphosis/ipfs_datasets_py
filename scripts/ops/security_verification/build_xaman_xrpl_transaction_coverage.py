@@ -16,6 +16,7 @@ FACTS_PATH = CORPUS_DIR / 'xrpl-transaction-facts.json'
 CLAIMS_PATH = CORPUS_DIR / 'security-claims.json'
 DISPROOF_VECTORS_PATH = CORPUS_DIR / 'disproof-vectors.json'
 OUTPUT_PATH = CORPUS_DIR / 'xrpl-transaction-coverage.json'
+DOC_PATH = Path('docs/security_verification/xaman_xrpl_transaction_model.md')
 
 SCHEMA_VERSION = 'xaman-xrpl-transaction-coverage/v1'
 TASK_ID = 'PORTAL-CXTP-146'
@@ -550,6 +551,75 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8')
 
 
+def _write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding='utf-8')
+
+
+def _bind_disproof_vectors(repo_root: Path, coverage: Mapping[str, Any]) -> None:
+    vectors = _load_json(repo_root, DISPROOF_VECTORS_PATH)
+    coverage_ref = {
+        'path': str(OUTPUT_PATH),
+        'artifact_cid': coverage['artifact_cid'],
+        'transaction_classes': ['TrustSet', 'OfferCreate', 'SignerListSet'],
+    }
+    vectors['xrpl_transaction_coverage'] = dict(coverage_ref)
+    for vector in vectors.get('vectors', []):
+        if vector.get('id') != 'xaman-disproof:unsupported-xrpl-semantics':
+            continue
+        evidence = list(vector.get('evidence', []))
+        if str(OUTPUT_PATH) not in evidence:
+            evidence.append(str(OUTPUT_PATH))
+        vector['evidence'] = evidence
+        vector['xrpl_transaction_coverage'] = dict(coverage_ref)
+    _write_json(repo_root / DISPROOF_VECTORS_PATH, vectors)
+
+
+def _render_document(coverage: Mapping[str, Any]) -> str:
+    constraint_rows = '\n'.join(
+        f"- `{row['constraint']}`: `{row['status']}` - {row['summary']}"
+        for row in coverage['constraint_coverage']
+    )
+    return f"""# Xaman XRPL Transaction Model
+
+Tasks: `PORTAL-CXTP-066`, `PORTAL-CXTP-146`
+
+This model records reviewed XRPL transaction semantics from the pinned Xaman
+React Native source corpus. The facts artifact is
+`security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json`; the
+coverage artifact is `{OUTPUT_PATH}`.
+
+## Proof Boundary
+
+The coverage decision is `RECORD_GAP_OR_COUNTEREXAMPLE_NEVER_PROOF`: each
+reachable public flow is source-modeled, explicitly rejected, or retained as a
+blocking coverage gap. This is not a proof of XRPL consensus, node honesty,
+runtime freshness, native vault signing, deployed-binary equivalence, or
+production release safety.
+
+## Constraint Coverage
+
+{constraint_rows}
+
+## Validation
+
+```bash
+PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest \\
+  tests/logic/security_models/crypto_exchange/test_xaman_xrpl_transaction_coverage.py -q
+PYTHONPATH=. /home/barberb/miniforge3/bin/python \\
+  scripts/ops/security_verification/build_xaman_xrpl_transaction_coverage.py
+```
+"""
+
+
+def generate(repo_root: Path, out_path: Path) -> dict[str, Any]:
+    payload = build_xrpl_transaction_coverage(repo_root)
+    _write_json(out_path, payload)
+    _bind_disproof_vectors(repo_root, payload)
+    _write_text(repo_root / DOC_PATH, _render_document(payload))
+    return payload
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo-root', default=str(ROOT_DIR))
@@ -557,11 +627,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
-    payload = build_xrpl_transaction_coverage(repo_root)
     out_path = Path(args.out)
     if not out_path.is_absolute():
         out_path = repo_root / out_path
-    _write_json(out_path, payload)
+    payload = generate(repo_root, out_path)
     print(
         f'Wrote {out_path.relative_to(repo_root)} '
         f'({payload["summary"]["required_constraint_count"]} constraints, '

@@ -484,7 +484,6 @@ class ProverCompilationSignal:
     unavailable_count: int = 0
     error_count: int = 0
     failed_count: int = 0
-    proved_count: int = 0
     verified_by: List[str] = field(default_factory=list)
     details: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -501,11 +500,6 @@ class ProverCompilationSignal:
         failures = self.unavailable_count + self.error_count + self.failed_count
         return min(1.0, failures / self.attempted_count)
 
-    @property
-    def proofs_valid(self) -> bool:
-        """Return True only when every compiled formula is actually proved."""
-        return self.compiles and self.proved_count == self.attempted_count
-
     def to_dict(self) -> Dict[str, Any]:
         return {
             "attempted_count": self.attempted_count,
@@ -514,8 +508,6 @@ class ProverCompilationSignal:
             "error_count": self.error_count,
             "failed_count": self.failed_count,
             "failure_ratio": self.failure_ratio,
-            "proofs_valid": self.proofs_valid,
-            "proved_count": self.proved_count,
             "unavailable_count": self.unavailable_count,
             "valid_count": self.valid_count,
             "verified_by": list(self.verified_by),
@@ -24178,7 +24170,6 @@ def evaluate_modal_prover_compilation(
     unavailable_count = 0
     error_count = 0
     failed_count = 0
-    proved_count = 0
     verified_by: List[str] = []
     details: List[Dict[str, Any]] = []
 
@@ -24201,15 +24192,8 @@ def evaluate_modal_prover_compilation(
             for prover_result in result.prover_results
         ]
         verified_by.extend(str(name) for name in result.verified_by)
-        compiled = any(
-            str(getattr(prover_result, "details", {}).get("modal_route_status", ""))
-            == "available"
-            for prover_result in result.prover_results
-        )
-        if compiled:
+        if result.overall_valid:
             valid_count += 1
-            if result.overall_valid:
-                proved_count += 1
         elif "unavailable" in statuses:
             unavailable_count += 1
         elif "error" in statuses or "timeout" in statuses:
@@ -24220,7 +24204,6 @@ def evaluate_modal_prover_compilation(
             {
                 "formula": statement.formula,
                 "formula_id": formula.formula_id,
-                "compiled": compiled,
                 "overall_valid": bool(result.overall_valid),
                 "statuses": statuses,
                 "verified_by": list(result.verified_by),
@@ -24233,7 +24216,6 @@ def evaluate_modal_prover_compilation(
         unavailable_count=unavailable_count,
         error_count=error_count,
         failed_count=failed_count,
-        proved_count=proved_count,
         verified_by=sorted(set(verified_by)),
         details=details,
     )

@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "sha256:62e3e52fdd3264eb82e9714ff0f4f50c8829882ed415509542ca8426be9cfbd5",
+  "artifact_cid": "sha256:1a35ea305d476712bdf77a1a4b551ed60c975b58faeea9bcc8ee7bc7c9c51bbe",
   "assessment_boundary": {
     "may_be_used_for_production_release_approval": false,
     "not_a_production_release_approval": true,
@@ -538,12 +538,12 @@
     },
     {
       "kind": "tla_apalache",
-      "overall_status": "blocked_optional_lane",
+      "overall_status": "checked_bounded_model_only",
       "path": "security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json",
       "schema_version": "xaman-tla-apalache-report/v1",
-      "security_decision": "BLOCK_TLA_APALACHE_MISSING_SOLVER",
-      "sha256": "sha256:792bb1deda05857e0cbaae04bb77cd914a111569b6c7df8c8ec46530f5e15977",
-      "task_id": "PORTAL-CXTP-071"
+      "security_decision": "ACCEPT_BOUNDED_MODEL_EVIDENCE_ONLY",
+      "sha256": "sha256:568f770d54eedf390042f9f9a851d5abcd194ed6a80576364befaba7ea280696",
+      "task_id": "PORTAL-CXTP-140"
     },
     {
       "kind": "protocol_projection",
@@ -583,6 +583,29 @@
     }
   ],
   "public_source_result": "blocked_public_source_assessment",
+  "refresh_baseline": {
+    "known_unmodeled_domain_count": 17,
+    "public_build_digest_count": 12,
+    "upstream_drift": {
+      "action": "record_no_drift_and_keep_existing_proof_corpus",
+      "checked_at_utc": "2026-07-11T00:00:00Z",
+      "default_branch": "master",
+      "drift_detected": false,
+      "head_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+      "head_matches_pin": true,
+      "head_ref": "HEAD",
+      "latest_version_tag": {
+        "commit_sha": "bfb4207b0cca173efe7c8fee6425ca7f6634b4d8",
+        "name": "v3.3.0",
+        "selection_rule": "highest semver tag observed in git ls-remote output"
+      },
+      "main_ref_present": false,
+      "master_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+      "master_matches_pin": true,
+      "method": "git ls-remote https://github.com/XRPL-Labs/Xaman-App HEAD refs/heads/master refs/heads/main refs/tags/*",
+      "pinned_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+    }
+  },
   "release_decision": "not_a_release_decision_public_source_only",
   "schema_version": "xaman-public-source-assessment/v1",
   "security_decision": "BLOCK_PUBLIC_SOURCE_ASSESSMENT_NOT_RELEASE_APPROVAL",
@@ -607,13 +630,10 @@
         "xaman-claim:network-binding-prevents-wrong-network-signing"
       ],
       "lane": "tla_apalache",
-      "missing": [
-        "apalache-mc",
-        "apalache"
-      ],
-      "overall_status": "blocked_optional_lane",
+      "missing": [],
+      "overall_status": "checked_bounded_model_only",
       "public_source_result": "solver_lane_missing",
-      "security_decision": "BLOCK_TLA_APALACHE_MISSING_SOLVER"
+      "security_decision": "ACCEPT_BOUNDED_MODEL_EVIDENCE_ONLY"
     },
     {
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json",
@@ -654,9 +674,12 @@
     "coverage_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
     "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
     "manifest_schema_version": "xaman-corpus-source-manifest/v1",
+    "proof_corpus_changed_by_refresh": false,
     "public_source_only": true,
+    "refresh_path": "security_ir_artifacts/corpora/xaman-app/public-source-refresh.json",
     "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
-    "requested_ref": "942f43876265a7af44f233288ad2b1d00841d5fa"
+    "requested_ref": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "upstream_drift_detected": false
   },
   "source_supported_facts": [
     {
@@ -2781,7 +2804,7 @@
     "unmodeled_component_count": 17,
     "vendor_only_evidence_count": 28
   },
-  "task_id": "PORTAL-CXTP-119",
+  "task_id": "PORTAL-CXTP-144",
   "unmodeled_components": [
     {
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
