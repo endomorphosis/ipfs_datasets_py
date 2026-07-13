@@ -8,13 +8,15 @@ evidence, prompt, model, theorem registry, schemas, and local verifier result.
 from __future__ import annotations
 
 import hashlib
+import asyncio
 import json
 import math
 import os
+import time
 import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
 
 LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION = "legal-ir-leanstral-audit-request-v1"
@@ -80,6 +82,10 @@ ISSUE_AUDIT_CLASSIFICATIONS = frozenset(
 LLMGenerateFn = Callable[..., str]
 
 
+LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION = "legal-ir-leanstral-audit-worker-v1"
+LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION = "legal-ir-leanstral-audit-checkpoint-v1"
+
+
 @dataclass(frozen=True)
 class LeanstralAuditConfig:
     """Configuration for the structured Leanstral audit lane."""
@@ -98,6 +104,60 @@ class LeanstralAuditConfig:
             "provider": self.provider,
             "vibe_agent": self.vibe_agent,
         }
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class LeanstralAuditWorkerConfig:
+    """Bounded asynchronous worker controls for immutable disagreement streams."""
+
+    max_concurrency: int = 2
+    max_retries: int = 2
+    request_timeout_seconds: float = 300.0
+    retry_backoff_seconds: float = 0.25
+    cache_dir: Optional[str] = None
+    checkpoint_path: Optional[str] = None
+    expected_state_hash: str = ""
+    max_records: int = 0
+    provider_enabled: bool = True
+    provider: str = "mistral_vibe"
+    model: str = "Leanstral"
+    vibe_agent: str = "lean"
+    prompt_template: str = "leanstral-async-disagreement-audit-v1"
+    require_leanstral_model: bool = True
+
+    def bounded_concurrency(self) -> int:
+        return max(1, int(self.max_concurrency or 1))
+
+    def bounded_retries(self) -> int:
+        return max(0, int(self.max_retries or 0))
+
+    def timeout(self) -> float:
+        value = float(self.request_timeout_seconds or 0.0)
+        return value if math.isfinite(value) and value > 0.0 else 300.0
+
+    def backoff(self) -> float:
+        value = float(self.retry_backoff_seconds or 0.0)
+        return max(0.0, value if math.isfinite(value) else 0.0)
+
+    def model_identity(self) -> Dict[str, Any]:
+        return {
+            "model": self.model,
+            "provider": self.provider,
+            "vibe_agent": self.vibe_agent,
+        }
+
+    def runner_config(self) -> LeanstralAuditConfig:
+        return LeanstralAuditConfig(
+            enabled=bool(self.provider_enabled),
+            provider=self.provider,
+            model=self.model,
+            vibe_agent=self.vibe_agent,
+            timeout_seconds=self.timeout(),
+            cache_dir=self.cache_dir,
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -407,6 +467,170 @@ class LeanstralAuditResult:
         }
 
 
+@dataclass(frozen=True)
+class LeanstralAuditWorkItem:
+    """One deduplicated asynchronous audit job."""
+
+    work_key: str
+    request: LeanstralAuditRequest
+    evidence_ids: Sequence[str]
+    compiler_commit: str
+    semantic_signature: str
+    state_hashes: Sequence[str]
+    source_record_hashes: Sequence[str]
+    cluster: Mapping[str, Any] = field(default_factory=dict)
+    schema_version: str = LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "cluster": _json_ready_mapping(self.cluster),
+            "compiler_commit": self.compiler_commit,
+            "evidence_ids": list(self.evidence_ids),
+            "request": self.request.to_dict(),
+            "schema_version": self.schema_version,
+            "semantic_signature": self.semantic_signature,
+            "source_record_hashes": list(self.source_record_hashes),
+            "state_hashes": list(self.state_hashes),
+            "work_key": self.work_key,
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralAuditWorkResult:
+    """Final status for one asynchronous worker item."""
+
+    work_key: str
+    status: str
+    request_id: str = ""
+    cache_key: str = ""
+    cache_hit: bool = False
+    llm_called: bool = False
+    attempts: int = 0
+    reasons: Sequence[str] = field(default_factory=tuple)
+    response_hash: str = ""
+    validation: Optional[LeanstralAuditValidation] = None
+    elapsed_seconds: float = 0.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "attempts": int(self.attempts),
+            "cache_hit": bool(self.cache_hit),
+            "cache_key": self.cache_key,
+            "elapsed_seconds": round(float(self.elapsed_seconds), 6),
+            "llm_called": bool(self.llm_called),
+            "reasons": list(self.reasons),
+            "request_id": self.request_id,
+            "response_hash": self.response_hash,
+            "status": self.status,
+            "validation": self.validation.to_dict() if self.validation else None,
+            "work_key": self.work_key,
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralAuditCheckpoint:
+    """Atomic worker checkpoint containing completed content-addressed work keys."""
+
+    completed_work_keys: Sequence[str]
+    source_digest: str
+    results: Mapping[str, Any]
+    schema_version: str = LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION
+    updated_at: float = field(default_factory=time.time)
+
+    @classmethod
+    def empty(cls, *, source_digest: str = "") -> "LeanstralAuditCheckpoint":
+        return cls(completed_work_keys=(), source_digest=source_digest, results={})
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "LeanstralAuditCheckpoint":
+        if data.get("schema_version") != LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION:
+            raise ValueError("unsupported Leanstral audit checkpoint schema")
+        completed = _string_tuple(data.get("completed_work_keys"))
+        results = data.get("results")
+        if not isinstance(results, Mapping):
+            results = {}
+        return cls(
+            completed_work_keys=completed,
+            source_digest=str(data.get("source_digest") or ""),
+            results=dict(results),
+            updated_at=float(data.get("updated_at") or 0.0),
+        )
+
+    def with_result(
+        self,
+        result: LeanstralAuditWorkResult,
+        *,
+        source_digest: Optional[str] = None,
+    ) -> "LeanstralAuditCheckpoint":
+        completed = set(self.completed_work_keys)
+        if result.status in {"accepted", "cache_hit", "rejected", "provider_disabled", "model_rejected"}:
+            completed.add(result.work_key)
+        next_results = dict(self.results)
+        next_results[result.work_key] = result.to_dict()
+        return LeanstralAuditCheckpoint(
+            completed_work_keys=tuple(sorted(completed)),
+            source_digest=self.source_digest if source_digest is None else source_digest,
+            results=next_results,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "completed_work_keys": list(self.completed_work_keys),
+            "results": _json_ready(self.results),
+            "schema_version": self.schema_version,
+            "source_digest": self.source_digest,
+            "updated_at": round(float(self.updated_at), 6),
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralAuditWorkerSummary:
+    """Machine-readable worker run summary."""
+
+    schema_version: str
+    source_record_count: int
+    valid_record_count: int
+    invalid_record_count: int
+    work_item_count: int
+    completed_count: int
+    cache_hit_count: int
+    llm_call_count: int
+    rejected_count: int
+    failed_count: int
+    skipped_checkpoint_count: int
+    checkpoint_path: str
+    source_digest: str
+    results: Sequence[LeanstralAuditWorkResult]
+    schema_failures: Sequence[Mapping[str, Any]] = field(default_factory=tuple)
+    stale_state_rejections: Sequence[Mapping[str, Any]] = field(default_factory=tuple)
+    unavailable_count: int = 0
+    runtime_seconds: float = 0.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "cache_hit_count": int(self.cache_hit_count),
+            "checkpoint_path": self.checkpoint_path,
+            "completed_count": int(self.completed_count),
+            "failed_count": int(self.failed_count),
+            "invalid_record_count": int(self.invalid_record_count),
+            "llm_call_count": int(self.llm_call_count),
+            "rejected_count": int(self.rejected_count),
+            "results": [result.to_dict() for result in self.results],
+            "runtime_seconds": round(float(self.runtime_seconds), 6),
+            "schema_failures": [_json_ready_mapping(item) for item in self.schema_failures],
+            "schema_version": self.schema_version,
+            "skipped_checkpoint_count": int(self.skipped_checkpoint_count),
+            "source_digest": self.source_digest,
+            "source_record_count": int(self.source_record_count),
+            "stale_state_rejections": [
+                _json_ready_mapping(item) for item in self.stale_state_rejections
+            ],
+            "unavailable_count": int(self.unavailable_count),
+            "valid_record_count": int(self.valid_record_count),
+            "work_item_count": int(self.work_item_count),
+        }
+
+
 class LeanstralAuditCache:
     """Content-addressed cache for verified audit responses."""
 
@@ -585,6 +809,429 @@ class LeanstralAuditRunner:
         )
 
 
+class LeanstralAuditWorker:
+    """Consume disagreement packets without blocking the autoencoder loop."""
+
+    def __init__(
+        self,
+        config: Optional[LeanstralAuditWorkerConfig] = None,
+        *,
+        audit_runner: Optional[LeanstralAuditRunner] = None,
+        llm_generate: Optional[LLMGenerateFn] = None,
+    ) -> None:
+        self.config = config or LeanstralAuditWorkerConfig()
+        self.runner = audit_runner or LeanstralAuditRunner(
+            self.config.runner_config(),
+            llm_generate=llm_generate,
+        )
+
+    async def run_paths(self, paths: Sequence[str | Path]) -> LeanstralAuditWorkerSummary:
+        records, schema_failures, source_digest = load_leanstral_audit_disagreements(
+            paths,
+            max_records=self.config.max_records,
+        )
+        return await self.run_records(
+            records,
+            schema_failures=schema_failures,
+            source_digest=source_digest,
+        )
+
+    async def run_records(
+        self,
+        records: Sequence[Mapping[str, Any]],
+        *,
+        schema_failures: Sequence[Mapping[str, Any]] = (),
+        source_digest: str = "",
+    ) -> LeanstralAuditWorkerSummary:
+        started = time.monotonic()
+        checkpoint, checkpoint_source_mismatch = load_leanstral_audit_checkpoint(
+            self.config.checkpoint_path,
+            source_digest=source_digest,
+        )
+        items, stale_rejections = build_leanstral_audit_work_items(
+            records,
+            config=self.config,
+        )
+        completed_keys = set(checkpoint.completed_work_keys)
+        if checkpoint_source_mismatch:
+            completed_keys = set()
+            stale_rejections = tuple(stale_rejections) + (
+                {
+                    "reason": "checkpoint_source_digest_mismatch",
+                    "checkpoint_source_digest": checkpoint.source_digest,
+                    "current_source_digest": source_digest,
+                },
+            )
+        pending = [item for item in items if item.work_key not in completed_keys]
+        skipped = len(items) - len(pending)
+        semaphore = asyncio.Semaphore(self.config.bounded_concurrency())
+        checkpoint_state = checkpoint
+        checkpoint_lock = asyncio.Lock()
+        results: List[LeanstralAuditWorkResult] = []
+
+        async def run_one(item: LeanstralAuditWorkItem) -> LeanstralAuditWorkResult:
+            async with semaphore:
+                result = await self._run_item(item)
+                async with checkpoint_lock:
+                    nonlocal checkpoint_state
+                    checkpoint_state = checkpoint_state.with_result(
+                        result,
+                        source_digest=source_digest,
+                    )
+                    write_leanstral_audit_checkpoint(
+                        self.config.checkpoint_path,
+                        checkpoint_state,
+                    )
+                return result
+
+        if pending:
+            results = list(await asyncio.gather(*(run_one(item) for item in pending)))
+        skipped_results = [
+            _result_from_checkpoint(item.work_key, checkpoint.results.get(item.work_key))
+            for item in items
+            if item.work_key in completed_keys
+        ]
+        all_results = skipped_results + results
+        runtime = time.monotonic() - started
+        return LeanstralAuditWorkerSummary(
+            schema_version=LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION,
+            source_record_count=len(records) + len(schema_failures),
+            valid_record_count=len(records),
+            invalid_record_count=len(schema_failures),
+            work_item_count=len(items),
+            completed_count=sum(1 for result in all_results if result.status in {"accepted", "cache_hit"}),
+            cache_hit_count=sum(1 for result in results if result.cache_hit),
+            llm_call_count=sum(1 for result in results if result.llm_called),
+            rejected_count=sum(1 for result in all_results if result.status in {"rejected", "provider_disabled", "model_rejected"}),
+            failed_count=sum(1 for result in all_results if result.status in {"failed", "timeout"}),
+            skipped_checkpoint_count=skipped,
+            checkpoint_path=str(self.config.checkpoint_path or ""),
+            source_digest=source_digest,
+            results=tuple(all_results),
+            schema_failures=tuple(schema_failures),
+            stale_state_rejections=tuple(stale_rejections),
+            unavailable_count=sum(1 for result in all_results if result.status == "unavailable"),
+            runtime_seconds=runtime,
+        )
+
+    async def _run_item(self, item: LeanstralAuditWorkItem) -> LeanstralAuditWorkResult:
+        started = time.monotonic()
+        if self.config.require_leanstral_model and not _is_leanstral_model_identity(item.request.model):
+            return _work_result(
+                item,
+                status="model_rejected",
+                attempts=0,
+                reasons=("non_leanstral_model_identity",),
+                elapsed=time.monotonic() - started,
+            )
+        cached = self.runner.cache.get_accepted_entry(item.request)
+        if cached is not None:
+            return _work_result(
+                item,
+                status="cache_hit",
+                attempts=0,
+                reasons=(),
+                cache_hit=True,
+                llm_called=False,
+                response_hash=cached.response_hash,
+                validation=validate_leanstral_audit_response(item.request, cached.response),
+                elapsed=time.monotonic() - started,
+            )
+        if not self.config.provider_enabled:
+            return _work_result(
+                item,
+                status="provider_disabled",
+                attempts=0,
+                reasons=("provider_disabled_cache_miss",),
+                elapsed=time.monotonic() - started,
+            )
+
+        attempts = 0
+        last_reasons: tuple[str, ...] = ()
+        for attempt in range(self.config.bounded_retries() + 1):
+            attempts = attempt + 1
+            try:
+                audit_result = await asyncio.wait_for(
+                    asyncio.to_thread(self._run_sync_item, item),
+                    timeout=self.config.timeout(),
+                )
+            except asyncio.TimeoutError:
+                last_reasons = ("leanstral_audit_timeout",)
+            except Exception as exc:  # provider failures must fail closed
+                unavailable_reason = _provider_unavailable_reason(exc)
+                if unavailable_reason:
+                    return _work_result(
+                        item,
+                        status="unavailable",
+                        attempts=attempts,
+                        reasons=(unavailable_reason,),
+                        llm_called=True,
+                        elapsed=time.monotonic() - started,
+                    )
+                last_reasons = (f"provider_error:{exc.__class__.__name__}",)
+            else:
+                status = (
+                    "cache_hit"
+                    if audit_result.cache_hit
+                    else "accepted"
+                    if audit_result.validation.accepted and audit_result.validation.verified
+                    else "rejected"
+                )
+                return _work_result(
+                    item,
+                    status=status,
+                    attempts=attempts,
+                    reasons=audit_result.validation.reasons,
+                    cache_hit=audit_result.cache_hit,
+                    llm_called=audit_result.llm_called,
+                    response_hash=audit_result.validation.response_hash,
+                    validation=audit_result.validation,
+                    elapsed=time.monotonic() - started,
+                )
+            if attempt < self.config.bounded_retries() and self.config.backoff() > 0.0:
+                await asyncio.sleep(self.config.backoff() * (2**attempt))
+        return _work_result(
+            item,
+            status="timeout" if "leanstral_audit_timeout" in last_reasons else "failed",
+            attempts=attempts,
+            reasons=last_reasons,
+            llm_called=True,
+            elapsed=time.monotonic() - started,
+        )
+
+    def _run_sync_item(self, item: LeanstralAuditWorkItem) -> LeanstralAuditResult:
+        return self.runner.run(
+            evidence=item.request.evidence,
+            prompt=item.request.prompt,
+            theorem_registry_hash=item.request.theorem_registry_hash,
+            proof_obligation_ids=item.request.proof_obligation_ids,
+        )
+
+
+def load_leanstral_audit_disagreements(
+    paths: Sequence[str | Path],
+    *,
+    max_records: int = 0,
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]], str]:
+    """Load immutable disagreement JSON/JSONL inputs and return valid records."""
+
+    records: List[Dict[str, Any]] = []
+    failures: List[Dict[str, Any]] = []
+    source_fingerprints: List[Dict[str, Any]] = []
+    for raw_path in paths:
+        path = Path(raw_path).expanduser()
+        if not path.exists():
+            raise FileNotFoundError(str(path))
+        files = (
+            sorted(path.rglob("*.json")) + sorted(path.rglob("*.jsonl"))
+            if path.is_dir()
+            else [path]
+        )
+        for file_path in files:
+            file_hash = _file_sha256(file_path)
+            stat = file_path.stat()
+            source_fingerprints.append(
+                {
+                    "path": str(file_path),
+                    "sha256": file_hash,
+                    "size": int(stat.st_size),
+                }
+            )
+            for line_number, record in _records_from_json_file(file_path):
+                if max_records and len(records) >= max_records:
+                    break
+                if not isinstance(record, Mapping):
+                    failures.append(
+                        {
+                            "failures": ("non_mapping_record",),
+                            "line": line_number,
+                            "path": str(file_path),
+                        }
+                    )
+                    continue
+                root = _root_record(record)
+                try:
+                    from .introspection_export import validate_disagreement_packet
+
+                    packet_failures = validate_disagreement_packet(root)
+                except Exception as exc:  # pragma: no cover - defensive schema path
+                    packet_failures = (f"schema_validator_error:{exc.__class__.__name__}",)
+                if packet_failures:
+                    failures.append(
+                        {
+                            "evidence_id": str(root.get("evidence_id") or ""),
+                            "failures": tuple(packet_failures),
+                            "line": line_number,
+                            "path": str(file_path),
+                        }
+                    )
+                    continue
+                records.append(dict(root))
+            if max_records and len(records) >= max_records:
+                break
+    source_digest = canonical_sha256(
+        {
+            "files": source_fingerprints,
+            "record_count": len(records),
+            "schema_failure_count": len(failures),
+        }
+    )
+    return records, failures, source_digest
+
+
+def build_leanstral_audit_work_items(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: Optional[LeanstralAuditWorkerConfig] = None,
+) -> tuple[List[LeanstralAuditWorkItem], List[Dict[str, Any]]]:
+    """Cluster and deduplicate records into content-addressed audit work."""
+
+    cfg = config or LeanstralAuditWorkerConfig()
+    if not records:
+        return [], []
+    from .introspection_analysis import (
+        IntrospectionAnalysisConfig,
+        IntrospectionAnalysisSchemaError,
+        analyze_introspection_disagreements,
+    )
+
+    stale_rejections: List[Dict[str, Any]] = []
+    filtered_records: List[Dict[str, Any]] = []
+    expected_state_hash = str(cfg.expected_state_hash or "").strip()
+    for record in records:
+        state_hashes = _record_state_hashes(record)
+        if expected_state_hash and expected_state_hash not in state_hashes:
+            stale_rejections.append(
+                {
+                    "evidence_id": str(record.get("evidence_id") or ""),
+                    "reason": "stale_state_hash",
+                    "state_hashes": tuple(state_hashes),
+                    "expected_state_hash": expected_state_hash,
+                }
+            )
+            continue
+        filtered_records.append(dict(record))
+    if not filtered_records:
+        return [], stale_rejections
+    try:
+        analysis = analyze_introspection_disagreements(
+            filtered_records,
+            config=IntrospectionAnalysisConfig(max_gaps_per_cluster=50),
+        )
+    except IntrospectionAnalysisSchemaError as exc:
+        return [], stale_rejections + [
+            {
+                "reason": "analysis_schema_error",
+                "message": str(exc),
+            }
+        ]
+    record_index: Dict[str, Dict[str, Any]] = {
+        str(record.get("evidence_id") or ""): dict(record)
+        for record in filtered_records
+        if str(record.get("evidence_id") or "")
+    }
+    items_by_key: Dict[str, LeanstralAuditWorkItem] = {}
+    for cluster in analysis.clusters:
+        cluster_records = [
+            record_index[evidence_id]
+            for evidence_id in cluster.evidence_ids
+            if evidence_id in record_index
+        ]
+        if not cluster_records:
+            continue
+        request = _build_worker_audit_request(
+            cluster,
+            cluster_records,
+            config=cfg,
+        )
+        compiler_commit = _records_compiler_commit(cluster_records)
+        semantic_signature = str(cluster.semantic_signature)
+        state_hashes = tuple(sorted({value for record in cluster_records for value in _record_state_hashes(record)}))
+        source_record_hashes = tuple(canonical_sha256(record) for record in cluster_records)
+        work_key = canonical_sha256(
+            {
+                "compiler_commit": compiler_commit,
+                "evidence_hash": request.evidence_hash,
+                "model_hash": request.model_hash,
+                "prompt_hash": request.prompt_hash,
+                "request_schema_hash": request.request_schema_hash,
+                "response_schema_hash": request.response_schema_hash,
+                "semantic_signature": semantic_signature,
+                "theorem_registry_hash": request.theorem_registry_hash,
+            }
+        )
+        items_by_key.setdefault(
+            work_key,
+            LeanstralAuditWorkItem(
+                work_key=work_key,
+                request=request,
+                evidence_ids=tuple(cluster.evidence_ids),
+                compiler_commit=compiler_commit,
+                semantic_signature=semantic_signature,
+                state_hashes=state_hashes,
+                source_record_hashes=source_record_hashes,
+                cluster=cluster.to_dict(include_gaps=True),
+            ),
+        )
+    return (
+        sorted(
+            items_by_key.values(),
+            key=lambda item: (
+                item.compiler_commit,
+                item.semantic_signature,
+                item.work_key,
+            ),
+        ),
+        stale_rejections,
+    )
+
+
+def load_leanstral_audit_checkpoint(
+    path: Optional[str | Path],
+    *,
+    source_digest: str = "",
+) -> tuple[LeanstralAuditCheckpoint, bool]:
+    """Load a worker checkpoint and report whether it belongs to stale inputs."""
+
+    if not path:
+        return LeanstralAuditCheckpoint.empty(source_digest=source_digest), False
+    checkpoint_path = Path(path).expanduser()
+    if not checkpoint_path.is_file():
+        return LeanstralAuditCheckpoint.empty(source_digest=source_digest), False
+    try:
+        payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        checkpoint = LeanstralAuditCheckpoint.from_mapping(payload)
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return LeanstralAuditCheckpoint.empty(source_digest=source_digest), True
+    mismatch = bool(checkpoint.source_digest and source_digest and checkpoint.source_digest != source_digest)
+    return checkpoint, mismatch
+
+
+def write_leanstral_audit_checkpoint(
+    path: Optional[str | Path],
+    checkpoint: LeanstralAuditCheckpoint,
+) -> Optional[Path]:
+    """Atomically write the worker checkpoint."""
+
+    if not path:
+        return None
+    checkpoint_path = Path(path).expanduser()
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        dir=checkpoint_path.parent,
+        prefix=f".{checkpoint_path.name}.",
+        suffix=".tmp",
+        delete=False,
+    ) as handle:
+        json.dump(checkpoint.to_dict(), handle, ensure_ascii=True, indent=2, sort_keys=True)
+        handle.write("\n")
+        temporary_path = Path(handle.name)
+    os.replace(temporary_path, checkpoint_path)
+    return checkpoint_path
+
+
 def build_leanstral_audit_cache_key(
     *,
     evidence_hash: str,
@@ -727,6 +1374,226 @@ def _cache_validation_is_verified(validation: Mapping[str, Any], cache_key: str)
     )
 
 
+def _build_worker_audit_request(
+    cluster: Any,
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: LeanstralAuditWorkerConfig,
+) -> LeanstralAuditRequest:
+    proof_obligations = _worker_proof_obligation_ids(cluster)
+    theorem_registry_hash = canonical_sha256(
+        {
+            "compiler_commit": _records_compiler_commit(records),
+            "proof_obligation_ids": proof_obligations,
+            "schema_version": "leanstral-async-audit-theorem-registry-v1",
+            "semantic_family": str(getattr(cluster, "semantic_family", "")),
+            "semantic_signature": str(getattr(cluster, "semantic_signature", "")),
+        }
+    )
+    evidence = {
+        "cluster": cluster.to_dict(include_gaps=True),
+        "compiler_commit": _records_compiler_commit(records),
+        "evidence_packets": [_compact_worker_packet(record) for record in records],
+        "semantic_signature": str(getattr(cluster, "semantic_signature", "")),
+        "source_record_hashes": [canonical_sha256(record) for record in records],
+        "state_hashes": sorted({value for record in records for value in _record_state_hashes(record)}),
+    }
+    prompt = {
+        "template": config.prompt_template,
+        "instructions": [
+            "Audit this LegalIR disagreement cluster asynchronously.",
+            "Return only the structured Leanstral audit response JSON.",
+            "Bind findings to evidence hashes, compiler commit, semantic signature, theorem obligations, and schema hashes.",
+            "Do not use or describe a fallback model as Leanstral.",
+        ],
+    }
+    return LeanstralAuditRequest.build(
+        evidence=evidence,
+        prompt=prompt,
+        model=config.model_identity(),
+        theorem_registry_hash=theorem_registry_hash,
+        proof_obligation_ids=proof_obligations,
+    )
+
+
+def _compact_worker_packet(record: Mapping[str, Any]) -> Dict[str, Any]:
+    root = _root_record(record)
+    return {
+        "anti_copy_evidence": _json_ready_mapping(root.get("anti_copy_evidence") or root.get("anti_copy")),
+        "compiler_decompiler_metrics": _json_ready_mapping(root.get("compiler_decompiler_metrics")),
+        "evidence_hashes": _json_ready_mapping(root.get("evidence_hashes")),
+        "evidence_id": str(root.get("evidence_id") or ""),
+        "legal_ir_views": _json_ready_mapping(root.get("legal_ir_views")),
+        "learned_view_gaps": _json_ready_mapping(root.get("learned_view_gaps")),
+        "proof_route_status": _json_ready_mapping(root.get("proof_route_status")),
+        "run_context": _json_ready_mapping(root.get("run_context")),
+        "sample_hashes": _json_ready_mapping(root.get("sample_hashes")),
+        "schema_version": str(root.get("schema_version") or ""),
+        "versions": _json_ready_mapping(root.get("versions")),
+    }
+
+
+def _worker_proof_obligation_ids(cluster: Any) -> tuple[str, ...]:
+    material = canonical_sha256(
+        {
+            "compiler_surface": str(getattr(cluster, "compiler_surface", "")),
+            "semantic_signature": str(getattr(cluster, "semantic_signature", "")),
+        }
+    )[:12]
+    family = _normalize_token(getattr(cluster, "semantic_family", "legal_ir")).replace("_", "-")
+    return (f"PO-async-{family}-{material}",)
+
+
+def _records_compiler_commit(records: Sequence[Mapping[str, Any]]) -> str:
+    commits = sorted(
+        {
+            str(_json_ready_mapping(record.get("run_context")).get("compiler_commit") or "").strip()
+            for record in records
+            if str(_json_ready_mapping(record.get("run_context")).get("compiler_commit") or "").strip()
+        }
+    )
+    return ",".join(commits) if commits else "unknown"
+
+
+def _record_state_hashes(record: Mapping[str, Any]) -> tuple[str, ...]:
+    root = _root_record(record)
+    context = _json_ready_mapping(root.get("run_context"))
+    evidence_hashes = _json_ready_mapping(root.get("evidence_hashes"))
+    values = [
+        str(context.get("state_hash") or "").strip(),
+        str(evidence_hashes.get("state_hash") or "").strip(),
+    ]
+    return tuple(sorted({value for value in values if value}))
+
+
+def _root_record(record: Mapping[str, Any]) -> Dict[str, Any]:
+    payload = record.get("payload")
+    return dict(payload) if isinstance(payload, Mapping) else dict(record)
+
+
+def _records_from_json_file(path: Path) -> Iterable[tuple[int, Any]]:
+    text = path.read_text(encoding="utf-8")
+    if path.suffix.lower() == ".jsonl":
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            if not line.strip():
+                continue
+            try:
+                yield line_number, json.loads(line)
+            except json.JSONDecodeError:
+                yield line_number, {"_invalid_json": True}
+        return
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        yield 1, {"_invalid_json": True}
+        return
+    if isinstance(data, list):
+        for index, item in enumerate(data, start=1):
+            yield index, item
+        return
+    if isinstance(data, Mapping):
+        for key in ("packets", "records", "disagreements", "items"):
+            value = data.get(key)
+            if isinstance(value, list):
+                for index, item in enumerate(value, start=1):
+                    yield index, item
+                return
+        yield 1, data
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _work_result(
+    item: LeanstralAuditWorkItem,
+    *,
+    status: str,
+    attempts: int,
+    reasons: Sequence[str],
+    cache_hit: bool = False,
+    llm_called: bool = False,
+    response_hash: str = "",
+    validation: Optional[LeanstralAuditValidation] = None,
+    elapsed: float = 0.0,
+) -> LeanstralAuditWorkResult:
+    return LeanstralAuditWorkResult(
+        work_key=item.work_key,
+        status=status,
+        request_id=item.request.request_id,
+        cache_key=item.request.cache_key,
+        cache_hit=cache_hit,
+        llm_called=llm_called,
+        attempts=attempts,
+        reasons=tuple(reasons),
+        response_hash=response_hash,
+        validation=validation,
+        elapsed_seconds=elapsed,
+    )
+
+
+def _result_from_checkpoint(work_key: str, data: Any) -> LeanstralAuditWorkResult:
+    if not isinstance(data, Mapping):
+        return LeanstralAuditWorkResult(
+            work_key=work_key,
+            status="checkpoint_skipped",
+        )
+    validation_data = data.get("validation")
+    validation = None
+    if isinstance(validation_data, Mapping):
+        validation = LeanstralAuditValidation(
+            accepted=bool(validation_data.get("accepted")),
+            verified=bool(validation_data.get("verified")),
+            reasons=_string_tuple(validation_data.get("reasons")),
+            response_hash=str(validation_data.get("response_hash") or ""),
+            cache_key=str(validation_data.get("cache_key") or ""),
+            verified_by=_string_tuple(validation_data.get("verified_by")),
+        )
+    return LeanstralAuditWorkResult(
+        work_key=work_key,
+        status=str(data.get("status") or "checkpoint_skipped"),
+        request_id=str(data.get("request_id") or ""),
+        cache_key=str(data.get("cache_key") or ""),
+        cache_hit=bool(data.get("cache_hit")),
+        llm_called=bool(data.get("llm_called")),
+        attempts=int(data.get("attempts") or 0),
+        reasons=_string_tuple(data.get("reasons")),
+        response_hash=str(data.get("response_hash") or ""),
+        validation=validation,
+        elapsed_seconds=float(data.get("elapsed_seconds") or 0.0),
+    )
+
+
+def _provider_unavailable_reason(exc: Exception) -> str:
+    text = f"{exc.__class__.__name__}: {exc}".lower()
+    if any(
+        token in text
+        for token in (
+            "leanstral",
+            "labs",
+            "lab model",
+            "permission",
+            "unauthorized",
+            "forbidden",
+            "not available",
+            "unavailable",
+            "access",
+            "404",
+            "403",
+        )
+    ):
+        return "leanstral_labs_model_unavailable"
+    return ""
+
+
+def _is_leanstral_model_identity(model: Mapping[str, Any]) -> bool:
+    return str(model.get("model") or "").strip().lower() == "leanstral"
+
+
 def _json_ready_mapping(value: Any) -> Dict[str, Any]:
     if not isinstance(value, Mapping):
         return {}
@@ -817,17 +1684,29 @@ __all__ = [
     "LEANSTRAL_AUDIT_RESPONSE_SCHEMA",
     "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_HASH",
     "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION",
+    "LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION",
+    "LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION",
     "LeanstralAuditCache",
     "LeanstralAuditCacheEntry",
     "LeanstralAuditConfig",
+    "LeanstralAuditCheckpoint",
     "LeanstralAuditRequest",
     "LeanstralAuditResponse",
     "LeanstralAuditResult",
     "LeanstralAuditRunner",
     "LeanstralAuditValidation",
+    "LeanstralAuditWorker",
+    "LeanstralAuditWorkerConfig",
+    "LeanstralAuditWorkerSummary",
+    "LeanstralAuditWorkItem",
+    "LeanstralAuditWorkResult",
     "build_leanstral_audit_cache_key",
+    "build_leanstral_audit_work_items",
     "cache_entry_is_current",
     "canonical_sha256",
+    "load_leanstral_audit_checkpoint",
+    "load_leanstral_audit_disagreements",
     "parse_leanstral_audit_response",
     "validate_leanstral_audit_response",
+    "write_leanstral_audit_checkpoint",
 ]
