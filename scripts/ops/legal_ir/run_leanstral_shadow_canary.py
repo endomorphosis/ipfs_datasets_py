@@ -11,13 +11,15 @@ never applies source patches.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import math
 import time
 from collections import Counter
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from ipfs_datasets_py.logic.modal import (
     INTROSPECTION_ANALYSIS_SCHEMA_VERSION,
@@ -32,17 +34,26 @@ from ipfs_datasets_py.logic.modal import (
     LeanstralAuditResult,
     LeanstralAuditRunner,
     LeanstralAuditValidation,
+    LeanstralAuditWorker,
+    LeanstralAuditWorkerConfig,
+    LeanstralAuditWorkItem,
+    LeanstralAuditWorkResult,
     LeanstralVerifierConfig,
     LegalIRGapCluster,
     analyze_introspection_disagreements,
+    build_leanstral_audit_work_items,
+    validate_disagreement_packet,
     verify_leanstral_audit,
 )
 from ipfs_datasets_py.logic.modal.leanstral_audit import canonical_sha256
 
 
 SHADOW_CANARY_SCHEMA_VERSION = "legal-ir-leanstral-shadow-canary-v1"
-DEFAULT_REPORT_PATH = Path("docs/implementation/reports/leanstral_shadow_canary.md")
+REAL_SHADOW_CANARY_SCHEMA_VERSION = "legal-ir-leanstral-real-shadow-canary-v1"
+DEFAULT_REPORT_PATH = Path("docs/implementation/reports/leanstral_real_shadow_canary.md")
+LEGACY_REPORT_PATH = Path("docs/implementation/reports/leanstral_shadow_canary.md")
 MAX_CANARY_CLUSTERS = 50
+MIN_REAL_CANARY_PACKETS = 25
 GUARDRAIL_CODES = (
     "provenance",
     "anti_copy",
@@ -218,6 +229,178 @@ class ShadowCanaryResult:
         }
 
 
+@dataclass(frozen=True)
+class RealShadowCanaryConfig:
+    """Runtime controls for the real canonical-state shadow canary."""
+
+    min_real_packets: int = MIN_REAL_CANARY_PACKETS
+    max_records: int = 0
+    provider_enabled: bool = False
+    cache_dir: str = ""
+    checkpoint_path: str = ""
+    report_path: str = str(DEFAULT_REPORT_PATH)
+    expected_state_hash: str = ""
+    expected_compiler_commit: str = ""
+    max_concurrency: int = 2
+    max_retries: int = 0
+    timeout_seconds: float = 300.0
+    retry_backoff_seconds: float = 0.25
+    provider: str = "mistral_vibe"
+    model: str = "Leanstral"
+    vibe_agent: str = "lean"
+    require_leanstral_model: bool = True
+    require_local_verifier: bool = True
+    run_lean: bool = False
+    run_modal_bridge: bool = False
+    run_syntax_check: bool = True
+    run_graph_check: bool = True
+    run_provenance_check: bool = True
+
+    def bounded_min_real_packets(self) -> int:
+        return max(1, int(self.min_real_packets or 1))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def worker_config(self) -> LeanstralAuditWorkerConfig:
+        return LeanstralAuditWorkerConfig(
+            cache_dir=self.cache_dir or None,
+            checkpoint_path=self.checkpoint_path or None,
+            expected_state_hash=self.expected_state_hash,
+            max_concurrency=self.max_concurrency,
+            max_records=self.max_records,
+            max_retries=self.max_retries,
+            model=self.model,
+            provider=self.provider,
+            provider_enabled=self.provider_enabled,
+            request_timeout_seconds=self.timeout_seconds,
+            require_leanstral_model=self.require_leanstral_model,
+            retry_backoff_seconds=self.retry_backoff_seconds,
+            vibe_agent=self.vibe_agent,
+        )
+
+    def verifier_config(self) -> LeanstralVerifierConfig:
+        return LeanstralVerifierConfig(
+            run_graph_check=self.run_graph_check,
+            run_lean=self.run_lean,
+            run_modal_bridge=self.run_modal_bridge,
+            run_provenance_check=self.run_provenance_check,
+            run_syntax_check=self.run_syntax_check,
+        )
+
+
+@dataclass(frozen=True)
+class RealShadowAudit:
+    """Audit, cache, and local-verifier evidence for one real work item."""
+
+    work_key: str
+    request_id: str
+    cache_key: str
+    status: str
+    compiler_commit: str
+    state_hashes: Sequence[str]
+    semantic_family: str
+    compiler_surface: str
+    semantic_signature: str
+    evidence_ids: Sequence[str]
+    source_record_hashes: Sequence[str]
+    cache_hit: bool
+    llm_called: bool
+    audit_valid: bool
+    audit_verified: bool
+    response_hash: str
+    local_verifier_outcome: str
+    local_verifier_accepted: bool
+    local_verifier_reasons: Sequence[str]
+    local_check_count: int
+    state_to_verified_audit_lag_seconds: Optional[float] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "audit_valid": self.audit_valid,
+            "audit_verified": self.audit_verified,
+            "cache_hit": self.cache_hit,
+            "cache_key": self.cache_key,
+            "compiler_commit": self.compiler_commit,
+            "compiler_surface": self.compiler_surface,
+            "evidence_ids": list(self.evidence_ids),
+            "llm_called": self.llm_called,
+            "local_check_count": int(self.local_check_count),
+            "local_verifier_accepted": self.local_verifier_accepted,
+            "local_verifier_outcome": self.local_verifier_outcome,
+            "local_verifier_reasons": list(self.local_verifier_reasons),
+            "request_id": self.request_id,
+            "response_hash": self.response_hash,
+            "semantic_family": self.semantic_family,
+            "semantic_signature": self.semantic_signature,
+            "source_record_hashes": list(self.source_record_hashes),
+            "state_hashes": list(self.state_hashes),
+            "state_to_verified_audit_lag_seconds": (
+                round(float(self.state_to_verified_audit_lag_seconds), 6)
+                if self.state_to_verified_audit_lag_seconds is not None
+                else None
+            ),
+            "status": self.status,
+            "work_key": self.work_key,
+        }
+
+
+@dataclass(frozen=True)
+class RealShadowCanaryResult:
+    """Fail-closed real shadow canary report."""
+
+    schema_version: str
+    config: RealShadowCanaryConfig
+    status: str
+    blocked_reasons: Sequence[str]
+    source_record_count: int
+    valid_real_packet_count: int
+    invalid_packet_count: int
+    packet_validity: Mapping[str, Any]
+    canonical_state: Mapping[str, Any]
+    coverage: Mapping[str, Any]
+    cache_summary: Mapping[str, int]
+    audit_validity: Mapping[str, int]
+    verifier_outcomes: Mapping[str, Any]
+    state_to_verified_audit_lag_seconds: Mapping[str, Any]
+    runtime_seconds: float
+    audits: Sequence[RealShadowAudit]
+    worker_summary: Mapping[str, Any]
+    no_mutation: Mapping[str, Any]
+    source_digest: str = ""
+    promotion_allowed: bool = False
+    synthetic_promotion_evidence_generated: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "audit_validity": dict(sorted(self.audit_validity.items())),
+            "audits": [audit.to_dict() for audit in self.audits],
+            "blocked_reasons": list(self.blocked_reasons),
+            "cache_summary": dict(sorted(self.cache_summary.items())),
+            "canonical_state": _json_ready(self.canonical_state),
+            "config": self.config.to_dict(),
+            "coverage": _json_ready(self.coverage),
+            "invalid_packet_count": int(self.invalid_packet_count),
+            "no_mutation": _json_ready(self.no_mutation),
+            "packet_validity": _json_ready(self.packet_validity),
+            "promotion_allowed": self.promotion_allowed,
+            "runtime_seconds": round(float(self.runtime_seconds), 6),
+            "schema_version": self.schema_version,
+            "source_digest": self.source_digest,
+            "source_record_count": int(self.source_record_count),
+            "state_to_verified_audit_lag_seconds": _json_ready(
+                self.state_to_verified_audit_lag_seconds
+            ),
+            "status": self.status,
+            "synthetic_promotion_evidence_generated": (
+                self.synthetic_promotion_evidence_generated
+            ),
+            "valid_real_packet_count": int(self.valid_real_packet_count),
+            "verifier_outcomes": _json_ready(self.verifier_outcomes),
+            "worker_summary": _json_ready(self.worker_summary),
+        }
+
+
 def run_shadow_canary(
     records: Sequence[Mapping[str, Any]],
     *,
@@ -303,7 +486,173 @@ def run_shadow_canary(
     )
 
 
-def write_markdown_report(result: ShadowCanaryResult, path: str | Path) -> Path:
+def run_real_shadow_canary(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: Optional[RealShadowCanaryConfig] = None,
+    worker: Optional[LeanstralAuditWorker] = None,
+    llm_generate: Optional[Any] = None,
+) -> RealShadowCanaryResult:
+    """Run the real no-mutation canary over canonical-state packets.
+
+    This path accepts only production-shaped disagreement packets.  Synthetic
+    dry-run fixtures are invalid input here and cannot contribute to promotion
+    evidence.
+    """
+
+    started = time.monotonic()
+    cfg = config or RealShadowCanaryConfig()
+    source_records = [dict(_mapping(record.get("payload")) or record) for record in records]
+    if cfg.max_records:
+        source_records = source_records[: max(0, int(cfg.max_records))]
+
+    valid_records, invalid_records = _validate_real_packets(source_records, config=cfg)
+    source_digest = canonical_sha256(
+        {
+            "records": [canonical_sha256(record) for record in valid_records],
+            "source_record_count": len(source_records),
+            "valid_real_packet_count": len(valid_records),
+        }
+    )
+    canonical_state = _canonical_state_summary(valid_records, config=cfg)
+    blocked_reasons: List[str] = []
+    if not source_records:
+        blocked_reasons.append("no_canonical_packet_input")
+    if len(valid_records) < cfg.bounded_min_real_packets():
+        blocked_reasons.append("insufficient_real_canonical_packets")
+    if canonical_state["state_hash_count"] != 1:
+        blocked_reasons.append("canonical_state_not_unique")
+    if canonical_state["compiler_commit_count"] != 1:
+        blocked_reasons.append("compiler_commit_not_unique")
+    if canonical_state.get("expected_state_hash_mismatch"):
+        blocked_reasons.append("expected_state_hash_mismatch")
+    if canonical_state.get("expected_compiler_commit_mismatch"):
+        blocked_reasons.append("expected_compiler_commit_mismatch")
+
+    worker_config = cfg.worker_config()
+    canary_worker = worker or LeanstralAuditWorker(
+        worker_config,
+        llm_generate=llm_generate,
+    )
+    worker_summary = None
+    items: List[LeanstralAuditWorkItem] = []
+    stale_rejections: Sequence[Mapping[str, Any]] = ()
+    if valid_records and not any(
+        reason
+        in {
+            "canonical_state_not_unique",
+            "compiler_commit_not_unique",
+            "expected_state_hash_mismatch",
+            "expected_compiler_commit_mismatch",
+        }
+        for reason in blocked_reasons
+    ):
+        worker_summary = asyncio.run(
+            canary_worker.run_records(valid_records, source_digest=source_digest)
+        )
+        items, stale_rejections = build_leanstral_audit_work_items(
+            valid_records,
+            config=worker_config,
+        )
+    else:
+        items, stale_rejections = build_leanstral_audit_work_items(
+            valid_records,
+            config=worker_config,
+        )
+
+    work_results_by_key = {
+        result.work_key: result
+        for result in (tuple(worker_summary.results) if worker_summary is not None else ())
+    }
+    real_audits = _verify_real_shadow_audits(
+        items,
+        results_by_key=work_results_by_key,
+        records=valid_records,
+        worker=canary_worker,
+        config=cfg,
+    )
+    if worker_summary is not None and worker_summary.unavailable_count:
+        blocked_reasons.append("leanstral_labs_access_unavailable")
+    if stale_rejections:
+        blocked_reasons.append("stale_state_rejections")
+    if worker_summary is not None and worker_summary.work_item_count == 0:
+        blocked_reasons.append("no_audit_work_items")
+    if not any(audit.cache_hit or audit.llm_called for audit in real_audits):
+        blocked_reasons.append("no_provider_or_verified_cache_evidence")
+    if not any(audit.local_verifier_accepted for audit in real_audits):
+        blocked_reasons.append("no_local_verifier_acceptance")
+    if not any(audit.audit_valid and audit.audit_verified for audit in real_audits):
+        blocked_reasons.append("no_verified_audit_responses")
+    if invalid_records:
+        blocked_reasons.append("invalid_packets_present")
+
+    runtime = time.monotonic() - started
+    worker_payload = (
+        worker_summary.to_dict()
+        if worker_summary is not None
+        else {
+            "completed_count": 0,
+            "failed_count": 0,
+            "llm_call_count": 0,
+            "results": [],
+            "skipped": True,
+            "unavailable_count": 0,
+            "work_item_count": len(items),
+        }
+    )
+    if stale_rejections:
+        worker_payload["stale_state_rejections"] = [
+            _json_ready(item) for item in stale_rejections
+        ]
+    blocked = sorted(set(blocked_reasons))
+    return RealShadowCanaryResult(
+        schema_version=REAL_SHADOW_CANARY_SCHEMA_VERSION,
+        config=cfg,
+        status="blocked" if blocked else "passed",
+        blocked_reasons=tuple(blocked),
+        source_record_count=len(source_records),
+        valid_real_packet_count=len(valid_records),
+        invalid_packet_count=len(invalid_records),
+        packet_validity=_packet_validity_summary(
+            valid_records,
+            invalid_records,
+            min_packets=cfg.bounded_min_real_packets(),
+        ),
+        canonical_state=canonical_state,
+        coverage=_real_coverage_summary(valid_records, items),
+        cache_summary=_real_cache_summary(real_audits, worker_payload),
+        audit_validity=_real_audit_validity_summary(real_audits),
+        verifier_outcomes=_real_verifier_summary(real_audits),
+        state_to_verified_audit_lag_seconds=_lag_summary(
+            [
+                audit.state_to_verified_audit_lag_seconds
+                for audit in real_audits
+                if audit.local_verifier_accepted
+            ]
+        ),
+        runtime_seconds=runtime,
+        audits=tuple(real_audits),
+        worker_summary=worker_payload,
+        no_mutation={
+            "mode": "real_shadow",
+            "report_only": True,
+            "queue_seeded_count": 0,
+            "source_mutation_count": 0,
+            "source_mutation_detected": False,
+            "todo_queue_seeded": False,
+            "provider_cache_writes_allowed": bool(cfg.provider_enabled),
+            "promotion_evidence_generated": not bool(blocked),
+        },
+        source_digest=source_digest,
+        promotion_allowed=False,
+        synthetic_promotion_evidence_generated=False,
+    )
+
+
+def write_markdown_report(
+    result: ShadowCanaryResult | RealShadowCanaryResult,
+    path: str | Path,
+) -> Path:
     """Write a human-readable canary report."""
 
     target = Path(path)
@@ -312,9 +661,11 @@ def write_markdown_report(result: ShadowCanaryResult, path: str | Path) -> Path:
     return target
 
 
-def render_markdown_report(result: ShadowCanaryResult) -> str:
+def render_markdown_report(result: ShadowCanaryResult | RealShadowCanaryResult) -> str:
     """Render a compact Markdown report with the required acceptance sections."""
 
+    if isinstance(result, RealShadowCanaryResult):
+        return render_real_markdown_report(result)
     payload = result.to_dict()
     lines = [
         "# Leanstral Shadow Canary",
@@ -379,6 +730,100 @@ def render_markdown_report(result: ShadowCanaryResult) -> str:
                 f"- Projected TODO: `{audit.projected_todo.action}` on `{audit.projected_todo.target_component}`; specificity {audit.projected_todo.specificity_score:.3f}",
             ]
         )
+    lines.extend(
+        [
+            "",
+            "## Machine Readable Summary",
+            "",
+            "```json",
+            json.dumps(payload, ensure_ascii=True, indent=2, sort_keys=True),
+            "```",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def render_real_markdown_report(result: RealShadowCanaryResult) -> str:
+    """Render the real canonical-state shadow canary report."""
+
+    payload = result.to_dict()
+    lines = [
+        "# Leanstral Real Shadow Canary",
+        "",
+        f"- Schema: `{result.schema_version}`",
+        "- Mode: `real-shadow`",
+        f"- Status: `{result.status}`",
+        f"- Source records: {result.source_record_count}",
+        f"- Valid real packets: {result.valid_real_packet_count}",
+        f"- Invalid packets: {result.invalid_packet_count}",
+        f"- Runtime seconds: {result.runtime_seconds:.6f}",
+        f"- Promotion allowed: `{str(result.promotion_allowed).lower()}`",
+        f"- Synthetic promotion evidence generated: `{str(result.synthetic_promotion_evidence_generated).lower()}`",
+    ]
+    if result.blocked_reasons:
+        lines.append(
+            "- Blocked reasons: "
+            + ", ".join(f"`{reason}`" for reason in result.blocked_reasons)
+        )
+    lines.extend(
+        [
+            "",
+            "## Real Packet Validity",
+            _markdown_kv(result.packet_validity),
+            "",
+            "## Canonical State And Compiler Commit",
+            _markdown_kv(result.canonical_state),
+            "",
+            "## Family And Surface Coverage",
+            _markdown_kv(result.coverage),
+            "",
+            "## Cache Behavior",
+            _markdown_kv(result.cache_summary),
+            "",
+            "## Audit Validity",
+            _markdown_kv(result.audit_validity),
+            "",
+            "## Verifier Outcomes",
+            _markdown_kv(result.verifier_outcomes),
+            "",
+            "## State-To-Verified-Audit Lag",
+            _markdown_kv(result.state_to_verified_audit_lag_seconds),
+            "",
+            "## No-Mutation Contract",
+            _markdown_kv(result.no_mutation),
+            "",
+            "## Audit Work Items",
+        ]
+    )
+    if not result.audits:
+        lines.append("")
+        lines.append("No audit work items produced verified promotion evidence.")
+    for index, audit in enumerate(result.audits, start=1):
+        lines.extend(
+            [
+                "",
+                f"### {index}. `{audit.work_key[:16]}`",
+                f"- Status: `{audit.status}`",
+                f"- Request: `{audit.request_id}`",
+                f"- Surface: `{audit.compiler_surface}`",
+                f"- Family: `{audit.semantic_family}`",
+                f"- State hashes: {', '.join(f'`{value}`' for value in audit.state_hashes) or '`none`'}",
+                f"- Compiler commit: `{audit.compiler_commit}`",
+                f"- Cache hit: `{str(audit.cache_hit).lower()}`; LLM called: `{str(audit.llm_called).lower()}`",
+                f"- Audit valid: `{str(audit.audit_valid).lower()}`; verified: `{str(audit.audit_verified).lower()}`",
+                f"- Local verifier: `{audit.local_verifier_outcome}`; accepted: `{str(audit.local_verifier_accepted).lower()}`; checks: {audit.local_check_count}",
+            ]
+        )
+        if audit.state_to_verified_audit_lag_seconds is not None:
+            lines.append(
+                f"- State-to-verified-audit lag seconds: {audit.state_to_verified_audit_lag_seconds:.6f}"
+            )
+        if audit.local_verifier_reasons:
+            lines.append(
+                "- Verifier reasons: "
+                + ", ".join(f"`{reason}`" for reason in audit.local_verifier_reasons)
+            )
     lines.extend(
         [
             "",
@@ -984,6 +1429,364 @@ def _specificity_summary(audits: Sequence[ShadowClusterAudit]) -> Dict[str, floa
     }
 
 
+def _validate_real_packets(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: RealShadowCanaryConfig,
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    valid: List[Dict[str, Any]] = []
+    invalid: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, record in enumerate(records):
+        root = dict(_mapping(record.get("payload")) or record)
+        failures = list(validate_disagreement_packet(root))
+        evidence_id = str(root.get("evidence_id") or "")
+        if not evidence_id:
+            failures.append("missing_evidence_id")
+        elif evidence_id in seen:
+            failures.append("duplicate_evidence_id")
+        seen.add(evidence_id)
+        if _record_is_synthetic_fixture(root):
+            failures.append("synthetic_fixture_not_allowed")
+        context = _mapping(root.get("run_context"))
+        evidence_hashes = _mapping(root.get("evidence_hashes"))
+        state_hash = str(context.get("state_hash") or "")
+        if state_hash and str(evidence_hashes.get("state_hash") or "") != state_hash:
+            failures.append("state_hash_evidence_mismatch")
+        if config.expected_state_hash and state_hash != config.expected_state_hash:
+            failures.append("expected_state_hash_mismatch")
+        commit = str(context.get("compiler_commit") or "")
+        if config.expected_compiler_commit and commit != config.expected_compiler_commit:
+            failures.append("expected_compiler_commit_mismatch")
+        if failures:
+            invalid.append(
+                {
+                    "evidence_id": evidence_id,
+                    "failures": tuple(sorted(set(failures))),
+                    "index": index,
+                }
+            )
+        else:
+            valid.append(root)
+    return valid, invalid
+
+
+def _canonical_state_summary(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: RealShadowCanaryConfig,
+) -> Dict[str, Any]:
+    state_hashes = sorted(
+        {
+            str(_mapping(record.get("run_context")).get("state_hash") or "")
+            for record in records
+            if str(_mapping(record.get("run_context")).get("state_hash") or "")
+        }
+    )
+    compiler_commits = sorted(
+        {
+            str(_mapping(record.get("run_context")).get("compiler_commit") or "")
+            for record in records
+            if str(_mapping(record.get("run_context")).get("compiler_commit") or "")
+        }
+    )
+    cycles = [
+        int(_finite_float(_mapping(record.get("run_context")).get("cycle"), 0.0))
+        for record in records
+    ]
+    return {
+        "compiler_commit": compiler_commits[0] if len(compiler_commits) == 1 else "",
+        "compiler_commit_count": len(compiler_commits),
+        "compiler_commits": compiler_commits,
+        "cycle_max": max(cycles) if cycles else None,
+        "cycle_min": min(cycles) if cycles else None,
+        "expected_compiler_commit": config.expected_compiler_commit,
+        "expected_compiler_commit_mismatch": bool(
+            config.expected_compiler_commit
+            and compiler_commits != [config.expected_compiler_commit]
+        ),
+        "expected_state_hash": config.expected_state_hash,
+        "expected_state_hash_mismatch": bool(
+            config.expected_state_hash and state_hashes != [config.expected_state_hash]
+        ),
+        "packet_count": len(records),
+        "state_hash": state_hashes[0] if len(state_hashes) == 1 else "",
+        "state_hash_count": len(state_hashes),
+        "state_hashes": state_hashes,
+    }
+
+
+def _verify_real_shadow_audits(
+    items: Sequence[LeanstralAuditWorkItem],
+    *,
+    results_by_key: Mapping[str, LeanstralAuditWorkResult],
+    records: Sequence[Mapping[str, Any]],
+    worker: LeanstralAuditWorker,
+    config: RealShadowCanaryConfig,
+) -> List[RealShadowAudit]:
+    records_by_evidence_id = {
+        str(record.get("evidence_id") or ""): record
+        for record in records
+        if str(record.get("evidence_id") or "")
+    }
+    audits: List[RealShadowAudit] = []
+    verification_time = time.time()
+    for item in items:
+        result = results_by_key.get(item.work_key)
+        entry = worker.runner.cache.get_entry(item.request)
+        verification = None
+        if entry is not None and config.require_local_verifier:
+            try:
+                verification = verify_leanstral_audit(
+                    item.request,
+                    entry.response,
+                    config=config.verifier_config(),
+                )
+            except Exception as exc:  # pragma: no cover - defensive fail-closed path
+                verification = {
+                    "accepted": False,
+                    "outcome": "rejected",
+                    "reasons": (f"verifier_error:{exc.__class__.__name__}",),
+                    "local_checks": (),
+                }
+        validation = entry.validation if entry is not None else {}
+        result_validation = result.validation if result is not None else None
+        audit_valid = bool(
+            validation.get("accepted")
+            or (result_validation is not None and result_validation.accepted)
+        )
+        audit_verified = bool(
+            validation.get("verified")
+            or (result_validation is not None and result_validation.verified)
+        )
+        verifier_outcome = str(_get_attr_or_key(verification, "outcome", "not-run") or "not-run")
+        local_checks = _get_attr_or_key(verification, "local_checks", ()) or ()
+        item_records = [
+            records_by_evidence_id[evidence_id]
+            for evidence_id in item.evidence_ids
+            if evidence_id in records_by_evidence_id
+        ]
+        lag = _item_state_to_verified_lag(
+            item_records,
+            verification_time=verification_time,
+            verified=bool(_get_attr_or_key(verification, "accepted", False)),
+        )
+        cluster = _mapping(item.cluster)
+        audits.append(
+            RealShadowAudit(
+                work_key=item.work_key,
+                request_id=item.request.request_id,
+                cache_key=item.request.cache_key,
+                status=result.status if result is not None else "not-run",
+                compiler_commit=item.compiler_commit,
+                state_hashes=tuple(item.state_hashes),
+                semantic_family=str(cluster.get("semantic_family") or ""),
+                compiler_surface=str(cluster.get("compiler_surface") or ""),
+                semantic_signature=item.semantic_signature,
+                evidence_ids=tuple(item.evidence_ids),
+                source_record_hashes=tuple(item.source_record_hashes),
+                cache_hit=bool(result.cache_hit if result is not None else entry is not None),
+                llm_called=bool(result.llm_called if result is not None else False),
+                audit_valid=audit_valid,
+                audit_verified=audit_verified,
+                response_hash=str(
+                    validation.get("response_hash")
+                    or (result.response_hash if result is not None else "")
+                ),
+                local_verifier_outcome=verifier_outcome,
+                local_verifier_accepted=bool(
+                    _get_attr_or_key(verification, "accepted", False)
+                ),
+                local_verifier_reasons=tuple(
+                    str(reason)
+                    for reason in (_get_attr_or_key(verification, "reasons", ()) or ())
+                ),
+                local_check_count=len(local_checks),
+                state_to_verified_audit_lag_seconds=lag,
+            )
+        )
+    return audits
+
+
+def _packet_validity_summary(
+    valid_records: Sequence[Mapping[str, Any]],
+    invalid_records: Sequence[Mapping[str, Any]],
+    *,
+    min_packets: int,
+) -> Dict[str, Any]:
+    failure_counts: Counter[str] = Counter()
+    for record in invalid_records:
+        for failure in record.get("failures", ()) or ():
+            failure_counts[str(failure)] += 1
+    return {
+        "invalid_packet_count": len(invalid_records),
+        "invalid_reasons": dict(sorted(failure_counts.items())),
+        "meets_minimum_real_packet_count": len(valid_records) >= min_packets,
+        "min_required_real_packets": int(min_packets),
+        "valid_real_packet_count": len(valid_records),
+    }
+
+
+def _real_coverage_summary(
+    records: Sequence[Mapping[str, Any]],
+    items: Sequence[LeanstralAuditWorkItem],
+) -> Dict[str, Any]:
+    family_counts: Counter[str] = Counter()
+    surface_counts: Counter[str] = Counter()
+    sample_roles: Counter[str] = Counter()
+    evaluation_roles: Counter[str] = Counter()
+    for record in records:
+        canonical = _mapping(_mapping(record.get("legal_ir_views")).get("canonical"))
+        for family, value in _mapping(canonical.get("family_distribution")).items():
+            if _finite_float(value, 0.0) > 0.0:
+                family_counts[str(family)] += 1
+        for component in _mapping(record.get("legal_ir_component_gaps")).keys():
+            surface = ".".join(str(component).split(".")[:2]) or str(component)
+            surface_counts[surface] += 1
+        context = _mapping(record.get("run_context"))
+        sample_roles[str(context.get("sample_role") or "unknown")] += 1
+        evaluation_roles[str(context.get("evaluation_role") or "unknown")] += 1
+    item_families: Counter[str] = Counter()
+    item_surfaces: Counter[str] = Counter()
+    for item in items:
+        cluster = _mapping(item.cluster)
+        item_families[str(cluster.get("semantic_family") or "unknown")] += 1
+        item_surfaces[str(cluster.get("compiler_surface") or "unknown")] += 1
+    return {
+        "audit_item_count": len(items),
+        "audit_item_family_counts": dict(sorted(item_families.items())),
+        "audit_item_surface_counts": dict(sorted(item_surfaces.items())),
+        "evaluation_role_counts": dict(sorted(evaluation_roles.items())),
+        "family_counts": dict(sorted(family_counts.items())),
+        "family_count": len(family_counts),
+        "sample_role_counts": dict(sorted(sample_roles.items())),
+        "surface_count": len(surface_counts),
+        "surface_counts": dict(sorted(surface_counts.items())),
+    }
+
+
+def _real_cache_summary(
+    audits: Sequence[RealShadowAudit],
+    worker_summary: Mapping[str, Any],
+) -> Dict[str, int]:
+    return {
+        "cache_hits": sum(1 for audit in audits if audit.cache_hit),
+        "cache_misses": max(0, len(audits) - sum(1 for audit in audits if audit.cache_hit)),
+        "checkpoint_skips": int(_finite_float(worker_summary.get("skipped_checkpoint_count"), 0.0)),
+        "llm_calls": sum(1 for audit in audits if audit.llm_called),
+        "provider_disabled_or_missed": sum(
+            1 for audit in audits if audit.status == "provider_disabled"
+        ),
+        "requests": len(audits),
+        "unavailable": int(_finite_float(worker_summary.get("unavailable_count"), 0.0)),
+    }
+
+
+def _real_audit_validity_summary(audits: Sequence[RealShadowAudit]) -> Dict[str, int]:
+    return {
+        "invalid": sum(1 for audit in audits if not audit.audit_valid),
+        "valid": sum(1 for audit in audits if audit.audit_valid),
+        "verified": sum(1 for audit in audits if audit.audit_verified),
+    }
+
+
+def _real_verifier_summary(audits: Sequence[RealShadowAudit]) -> Dict[str, Any]:
+    outcomes = Counter(audit.local_verifier_outcome for audit in audits)
+    reasons: Counter[str] = Counter()
+    for audit in audits:
+        for reason in audit.local_verifier_reasons:
+            reasons[str(reason)] += 1
+    return {
+        "accepted": sum(1 for audit in audits if audit.local_verifier_accepted),
+        "local_check_count": sum(audit.local_check_count for audit in audits),
+        "outcomes": dict(sorted(outcomes.items())),
+        "reasons": dict(sorted(reasons.items())),
+        "rejected_or_unsupported": sum(
+            1 for audit in audits if not audit.local_verifier_accepted
+        ),
+    }
+
+
+def _item_state_to_verified_lag(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    verification_time: float,
+    verified: bool,
+) -> Optional[float]:
+    if not verified:
+        return None
+    timestamps = [
+        timestamp
+        for timestamp in (_packet_state_timestamp(record) for record in records)
+        if timestamp is not None
+    ]
+    if not timestamps:
+        return None
+    return max(0.0, float(verification_time) - max(timestamps))
+
+
+def _packet_state_timestamp(record: Mapping[str, Any]) -> Optional[float]:
+    root = _mapping(record.get("payload")) or dict(record)
+    context = _mapping(root.get("run_context"))
+    for key in (
+        "state_exported_at",
+        "exported_at",
+        "created_at",
+        "timestamp",
+        "state_timestamp",
+    ):
+        parsed = _parse_timestamp(context.get(key))
+        if parsed is not None:
+            return parsed
+        parsed = _parse_timestamp(root.get(key))
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _parse_timestamp(value: Any) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        number = float(value)
+        return number if math.isfinite(number) and number > 0.0 else None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        number = float(text)
+    except ValueError:
+        normalized = text[:-1] + "+00:00" if text.endswith("Z") else text
+        try:
+            parsed = datetime.fromisoformat(normalized)
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.timestamp()
+    return number if math.isfinite(number) and number > 0.0 else None
+
+
+def _lag_summary(values: Sequence[Optional[float]]) -> Dict[str, Any]:
+    observed = [float(value) for value in values if value is not None]
+    missing = len(values) - len(observed)
+    if not observed:
+        return {
+            "count": 0,
+            "max": None,
+            "mean": None,
+            "min": None,
+            "missing_count": missing,
+        }
+    return {
+        "count": len(observed),
+        "max": max(observed),
+        "mean": sum(observed) / len(observed),
+        "min": min(observed),
+        "missing_count": missing,
+    }
+
+
 def _packet_index(records: Sequence[Mapping[str, Any]]) -> Dict[str, Mapping[str, Any]]:
     index: Dict[str, Mapping[str, Any]] = {}
     for record in records:
@@ -1236,45 +2039,122 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", action="append", default=[], help="JSON/JSONL packet file or directory")
     parser.add_argument("--max-clusters", type=int, default=MAX_CANARY_CLUSTERS)
+    parser.add_argument("--max-records", type=int, default=0)
+    parser.add_argument("--min-real-packets", type=int, default=MIN_REAL_CANARY_PACKETS)
     parser.add_argument("--cache-dir", default="", help="Leanstral audit cache directory")
-    parser.add_argument("--report-path", default=str(DEFAULT_REPORT_PATH))
+    parser.add_argument("--checkpoint-path", default="", help="Optional Leanstral worker checkpoint path")
+    parser.add_argument("--report-path", default="")
     parser.add_argument("--dry-run", action="store_true", help="Do not call Leanstral; use cache-only shadow audit")
     parser.add_argument("--run-provider", action="store_true", help="Call Leanstral for cache misses")
+    parser.add_argument("--provider", default="mistral_vibe")
+    parser.add_argument("--model", default="Leanstral")
+    parser.add_argument("--vibe-agent", default="lean")
+    parser.add_argument("--expected-state-hash", default="")
+    parser.add_argument("--expected-compiler-commit", default="")
+    parser.add_argument("--max-concurrency", type=int, default=2)
+    parser.add_argument("--max-retries", type=int, default=0)
+    parser.add_argument("--timeout-seconds", type=float, default=300.0)
+    parser.add_argument("--retry-backoff-seconds", type=float, default=0.25)
+    parser.add_argument(
+        "--legacy-cluster-canary",
+        action="store_true",
+        help="Run the legacy synthetic/disagreement-cluster report instead of the real canary.",
+    )
+    parser.add_argument("--skip-syntax-check", action="store_true")
+    parser.add_argument("--skip-graph-check", action="store_true")
+    parser.add_argument("--skip-provenance-check", action="store_true")
+    parser.add_argument("--run-lean", action="store_true")
+    parser.add_argument("--run-modal-bridge", action="store_true")
     parser.add_argument("--require-promotion", action="store_true", help="Exit non-zero when promotion is blocked")
     return parser.parse_args(argv)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
-    dry_run = True if args.dry_run or not args.run_provider else False
-    records = load_disagreement_records(args.input) if args.input else []
-    if not records and dry_run:
-        records = build_dry_run_fixture_records(
-            count=max(1, min(args.max_clusters, MAX_CANARY_CLUSTERS))
+    legacy_mode = bool(args.legacy_cluster_canary or (not args.input and not args.run_provider))
+    if legacy_mode:
+        report_path_arg = args.report_path or str(LEGACY_REPORT_PATH)
+        dry_run = True if args.dry_run or not args.run_provider else False
+        records = load_disagreement_records(args.input) if args.input else []
+        if not records and dry_run:
+            records = build_dry_run_fixture_records(
+                count=max(1, min(args.max_clusters, MAX_CANARY_CLUSTERS))
+            )
+        config = ShadowCanaryConfig(
+            max_clusters=args.max_clusters,
+            dry_run=dry_run,
+            cache_dir=args.cache_dir,
+            report_path=report_path_arg,
+            provider=args.provider,
+            model=args.model,
+            vibe_agent=args.vibe_agent,
+            timeout_seconds=args.timeout_seconds,
         )
-    config = ShadowCanaryConfig(
-        max_clusters=args.max_clusters,
-        dry_run=dry_run,
+        result = run_shadow_canary(records, config=config)
+        report_path = write_markdown_report(result, report_path_arg)
+        print(
+            json.dumps(
+                {
+                    "cache_summary": result.cache_summary,
+                    "promotion_allowed": result.promotion_allowed,
+                    "promotion_blockers": result.promotion_blockers,
+                    "report_path": str(report_path),
+                    "runtime_seconds": round(result.runtime_seconds, 6),
+                    "selected_cluster_count": result.selected_cluster_count,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+            )
+        )
+        if args.require_promotion and not result.promotion_allowed:
+            return 2
+        return 0
+
+    records = load_disagreement_records(args.input) if args.input else []
+    if not records:
+        raise SystemExit("--input is required for the real shadow canary")
+    report_path_arg = args.report_path or str(DEFAULT_REPORT_PATH)
+    config = RealShadowCanaryConfig(
         cache_dir=args.cache_dir,
-        report_path=args.report_path,
+        checkpoint_path=args.checkpoint_path,
+        expected_compiler_commit=args.expected_compiler_commit,
+        expected_state_hash=args.expected_state_hash,
+        max_concurrency=args.max_concurrency,
+        max_records=args.max_records,
+        max_retries=args.max_retries,
+        min_real_packets=args.min_real_packets,
+        model=args.model,
+        provider=args.provider,
+        provider_enabled=bool(args.run_provider and not args.dry_run),
+        report_path=report_path_arg,
+        retry_backoff_seconds=args.retry_backoff_seconds,
+        run_graph_check=not args.skip_graph_check,
+        run_lean=bool(args.run_lean),
+        run_modal_bridge=bool(args.run_modal_bridge),
+        run_provenance_check=not args.skip_provenance_check,
+        run_syntax_check=not args.skip_syntax_check,
+        timeout_seconds=args.timeout_seconds,
+        vibe_agent=args.vibe_agent,
     )
-    result = run_shadow_canary(records, config=config)
-    report_path = write_markdown_report(result, args.report_path)
+    result = run_real_shadow_canary(records, config=config)
+    report_path = write_markdown_report(result, report_path_arg)
     print(
         json.dumps(
             {
+                "audit_validity": result.audit_validity,
+                "blocked_reasons": result.blocked_reasons,
                 "cache_summary": result.cache_summary,
-                "promotion_allowed": result.promotion_allowed,
-                "promotion_blockers": result.promotion_blockers,
+                "canonical_state": result.canonical_state,
                 "report_path": str(report_path),
                 "runtime_seconds": round(result.runtime_seconds, 6),
-                "selected_cluster_count": result.selected_cluster_count,
+                "status": result.status,
+                "valid_real_packet_count": result.valid_real_packet_count,
             },
             ensure_ascii=True,
             sort_keys=True,
         )
     )
-    if args.require_promotion and not result.promotion_allowed:
+    if args.require_promotion and result.status != "passed":
         return 2
     return 0
 
