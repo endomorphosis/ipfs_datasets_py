@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ipfs_datasets_py.logic.modal import (
+    LeanstralAuditVerifier,
     LeanstralAuditWorker,
     LeanstralAuditWorkerConfig,
     LeanstralVerifierConfig,
@@ -19,7 +20,6 @@ from ipfs_datasets_py.logic.modal import (
     build_leanstral_audit_work_items,
     leanstral_rule_gap_report_to_json,
     load_leanstral_audit_disagreements,
-    verify_leanstral_audit,
 )
 
 
@@ -78,6 +78,17 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument("--lean-executable", default="")
+    parser.add_argument(
+        "--canonical-recompile-backend",
+        default="packet_canonical",
+        choices=("packet_canonical", "legal_modal_parser", "codec"),
+        help="Compiler lane used to reproduce the canonical IR recorded in evidence.",
+    )
+    parser.add_argument(
+        "--require-complete-source-span-evidence",
+        action="store_true",
+        help="Reject packets whose intentionally capped span attestations omit formulas.",
+    )
     parser.add_argument("--lean-timeout-seconds", type=float, default=5.0)
     parser.add_argument("--prover-timeout-seconds", type=float, default=5.0)
     parser.add_argument(
@@ -125,6 +136,10 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
             worker_config=config,
             reference_examples=reference_examples,
             verifier_config=LeanstralVerifierConfig(
+                allow_partial_source_span_evidence=(
+                    not args.require_complete_source_span_evidence
+                ),
+                canonical_recompile_backend=args.canonical_recompile_backend,
                 lean_executable=args.lean_executable or None,
                 lean_timeout_seconds=args.lean_timeout_seconds,
                 prover_timeout_seconds=args.prover_timeout_seconds,
@@ -169,6 +184,7 @@ def verify_worker_audit_outputs(
         max_records=worker_config.max_records,
     )
     items, _ = build_leanstral_audit_work_items(records, config=worker_config)
+    verifier = LeanstralAuditVerifier(verifier_config)
     verification_records: List[Dict[str, Any]] = []
     report_inputs: List[Mapping[str, Any]] = []
     for item in items:
@@ -176,7 +192,7 @@ def verify_worker_audit_outputs(
         if entry is None:
             continue
         response = entry.response
-        verification = verify_leanstral_audit(
+        verification = verifier.verify(
             item.request,
             response,
             examples=_reference_examples_for_item(
@@ -184,7 +200,6 @@ def verify_worker_audit_outputs(
                 response=response,
                 reference_examples=reference_examples or {},
             ),
-            config=verifier_config,
         )
         record = {
             "request": item.request.to_dict(),
