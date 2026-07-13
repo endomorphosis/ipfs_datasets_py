@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import errno
+import hashlib
 import json
 import threading
 import time
@@ -26,7 +27,10 @@ from ipfs_datasets_py.logic.modal.leanstral_audit import canonical_sha256
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     build_us_code_sample,
 )
-from scripts.ops.legal_ir.run_leanstral_audit_worker import verify_worker_audit_outputs
+from scripts.ops.legal_ir.run_leanstral_audit_worker import (
+    load_reference_examples,
+    verify_worker_audit_outputs,
+)
 
 
 def _packet(index: int, *, state_hash: str = "state-a", component: str = "deontic") -> dict:
@@ -361,6 +365,100 @@ def test_worker_verifies_cached_real_audits_into_rule_gap_report(tmp_path) -> No
     assert report.gaps[0].supporting_evidence[0].examples[0]["example_role"] == "counterexample"
 
 
+def test_worker_verifier_resolves_hash_only_audit_from_trusted_examples(tmp_path) -> None:
+    sample = _modal_sample()
+    packet = _packet(7)
+    modal_hash = sample.modal_ir.canonical_hash()
+    source_span_hashes = _introspection_source_span_hashes(sample)
+    packet["evidence_hashes"]["canonical_modal_ir_hash"] = modal_hash
+    packet["legal_ir_views"]["canonical"]["modal_ir_hash"] = modal_hash
+    packet["sample_hashes"].update(
+        {
+            "modal_ir_hash": modal_hash,
+            "sample_id": sample.sample_id,
+            "source_span_hashes": source_span_hashes,
+        }
+    )
+    path = tmp_path / "packets.jsonl"
+    path.write_text(json.dumps(packet) + "\n", encoding="utf-8")
+    reference_path = tmp_path / "daemon-state.json"
+    reference_path.write_text(
+        json.dumps(
+            {
+                "validation_metric_sample_payloads": [
+                    {
+                        "citation": sample.citation,
+                        "sample_id": sample.sample_id,
+                        "section": sample.section,
+                        "text": sample.text,
+                        "title": sample.title,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    records, failures, _ = load_leanstral_audit_disagreements([path])
+    assert failures == []
+    config = LeanstralAuditWorkerConfig(
+        cache_dir=str(tmp_path / "cache"),
+        provider_enabled=False,
+    )
+    worker = LeanstralAuditWorker(config)
+    item = build_leanstral_audit_work_items(records, config=config)[0][0]
+    response = LeanstralAuditResponse.from_mapping(
+        {
+            "abstention_reason": "",
+            "affected_ir_families": ["deontic"],
+            "classification": "missing_semantic_rule",
+            "confidence": 0.82,
+            "counterexample": {
+                "evidence_id": packet["evidence_id"],
+                "expected": "preserved obligation scope",
+                "observed": "lost obligation scope",
+            },
+            "missing_semantic_rule": {"rule_id": "obligation_notice_scope"},
+            "proof_obligation_ids": [item.request.proof_obligation_ids[0]],
+            "proposed_compiler_surface": [{"component": "deontic.ir"}],
+            "request_cache_key": item.request.cache_key,
+            "request_id": item.request.request_id,
+            "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
+            "witness": None,
+        }
+    )
+    worker.runner.cache.put(
+        item.request,
+        response,
+        LeanstralAuditValidation(
+            accepted=True,
+            verified=True,
+            cache_key=item.request.cache_key,
+            response_hash=response.content_hash,
+            verified_by=("test",),
+        ),
+    )
+
+    verification_records, report = verify_worker_audit_outputs(
+        [path],
+        worker=worker,
+        worker_config=config,
+        reference_examples=load_reference_examples([reference_path]),
+        verifier_config=LeanstralVerifierConfig(
+            run_lean=False,
+            run_modal_bridge=False,
+        ),
+    )
+
+    assert verification_records[0]["verification"]["outcome"] == "accepted"
+    assert verification_records[0]["verification"]["compiler_checks"][0][
+        "example_id"
+    ] == sample.sample_id
+    assert report.gaps[0].status == "accepted"
+    assert report.gaps[0].supporting_evidence[0].examples[0]["evidence_id"] == packet[
+        "evidence_id"
+    ]
+
+
 def _modal_sample():
     text = "The agency must provide notice within 30 days after application."
     base = build_us_code_sample(title="5", section="552", text=text)
@@ -387,6 +485,23 @@ def _source_span_hashes(sample) -> dict:
         formula.formula_id: _span_hash(sample, formula)
         for formula in sample.modal_ir.formulas
     }
+
+
+def _introspection_source_span_hashes(sample) -> dict:
+    hashes = {}
+    for formula in sample.modal_ir.formulas:
+        start = formula.provenance.start_char
+        end = formula.provenance.end_char
+        span_text_hash = hashlib.sha256(sample.text[start:end].encode("utf-8")).hexdigest()
+        hashes[formula.formula_id] = canonical_sha256(
+            {
+                "end_char": end,
+                "formula_id": formula.formula_id,
+                "span_text_hash": span_text_hash,
+                "start_char": start,
+            }
+        )
+    return hashes
 
 
 def _span_hash(sample, formula) -> str:

@@ -68,6 +68,15 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         default="",
         help="Write the deterministic verified Leanstral rule-gap report as JSON.",
     )
+    parser.add_argument(
+        "--reference-example-path",
+        action="append",
+        default=[],
+        help=(
+            "JSON/JSONL source containing trusted sample_id/text holdout payloads; "
+            "repeatable and used only by the local verifier."
+        ),
+    )
     parser.add_argument("--lean-executable", default="")
     parser.add_argument("--lean-timeout-seconds", type=float, default=5.0)
     parser.add_argument("--prover-timeout-seconds", type=float, default=5.0)
@@ -109,10 +118,12 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
     worker = LeanstralAuditWorker(config)
     summary = await worker.run_paths(args.input)
     if args.verification_output or args.rule_gap_report_output:
+        reference_examples = load_reference_examples(args.reference_example_path)
         verification_records, report = verify_worker_audit_outputs(
             args.input,
             worker=worker,
             worker_config=config,
+            reference_examples=reference_examples,
             verifier_config=LeanstralVerifierConfig(
                 lean_executable=args.lean_executable or None,
                 lean_timeout_seconds=args.lean_timeout_seconds,
@@ -148,6 +159,7 @@ def verify_worker_audit_outputs(
     *,
     worker: LeanstralAuditWorker,
     worker_config: LeanstralAuditWorkerConfig,
+    reference_examples: Optional[Mapping[str, Mapping[str, Any]]] = None,
     verifier_config: Optional[LeanstralVerifierConfig] = None,
 ) -> Tuple[List[Dict[str, Any]], Any]:
     """Verify cached real audit responses and build a deterministic gap report."""
@@ -167,6 +179,11 @@ def verify_worker_audit_outputs(
         verification = verify_leanstral_audit(
             item.request,
             response,
+            examples=_reference_examples_for_item(
+                item,
+                response=response,
+                reference_examples=reference_examples or {},
+            ),
             config=verifier_config,
         )
         record = {
@@ -185,6 +202,100 @@ def verify_worker_audit_outputs(
         )
     report = aggregate_verified_audits(report_inputs)
     return verification_records, report
+
+
+def load_reference_examples(
+    paths: Sequence[str | Path],
+) -> Dict[str, Dict[str, Any]]:
+    """Index trusted holdout payloads without copying them into model evidence."""
+
+    examples: Dict[str, Dict[str, Any]] = {}
+    for raw_path in paths:
+        path = Path(raw_path).expanduser()
+        if not path.exists():
+            raise FileNotFoundError(str(path))
+        files = (
+            sorted(path.rglob("*.json")) + sorted(path.rglob("*.jsonl"))
+            if path.is_dir()
+            else [path]
+        )
+        for file_path in files:
+            for value in _reference_json_values(file_path):
+                for candidate in _iter_reference_example_mappings(value):
+                    sample_id = str(candidate.get("sample_id") or "").strip()
+                    examples.setdefault(sample_id, dict(candidate))
+    return examples
+
+
+def _reference_examples_for_item(
+    item: Any,
+    *,
+    response: Any,
+    reference_examples: Mapping[str, Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    referenced_evidence_ids = {
+        str(payload.get("evidence_id") or "").strip()
+        for payload in (response.counterexample, response.witness)
+        if isinstance(payload, Mapping) and str(payload.get("evidence_id") or "").strip()
+    }
+    packets = [
+        packet
+        for packet in item.request.evidence.get("evidence_packets", [])
+        if isinstance(packet, Mapping)
+    ]
+    if referenced_evidence_ids:
+        referenced_packets = [
+            packet
+            for packet in packets
+            if str(packet.get("evidence_id") or "").strip() in referenced_evidence_ids
+        ]
+        if referenced_packets:
+            packets = referenced_packets
+
+    examples: List[Dict[str, Any]] = []
+    seen_sample_ids: set[str] = set()
+    for packet in packets:
+        sample_hashes = packet.get("sample_hashes")
+        if not isinstance(sample_hashes, Mapping):
+            continue
+        sample_id = str(sample_hashes.get("sample_id") or "").strip()
+        reference = reference_examples.get(sample_id)
+        if not sample_id or sample_id in seen_sample_ids or not isinstance(reference, Mapping):
+            continue
+        example = dict(reference)
+        example["example_id"] = sample_id
+        example["sample_id"] = sample_id
+        expected_hash = str(sample_hashes.get("modal_ir_hash") or "").strip()
+        if expected_hash:
+            example["expected_modal_ir_hash"] = expected_hash
+        source_span_hashes = sample_hashes.get("source_span_hashes")
+        if isinstance(source_span_hashes, Mapping) and source_span_hashes:
+            example["source_span_hashes"] = dict(source_span_hashes)
+            example["source_span_hash_format"] = "introspection_packet_v1"
+        examples.append(example)
+        seen_sample_ids.add(sample_id)
+    return examples
+
+
+def _reference_json_values(path: Path) -> Sequence[Any]:
+    text = path.read_text(encoding="utf-8")
+    if path.suffix.lower() == ".jsonl":
+        return [json.loads(line) for line in text.splitlines() if line.strip()]
+    return [json.loads(text)]
+
+
+def _iter_reference_example_mappings(value: Any):
+    if isinstance(value, Mapping):
+        sample_id = str(value.get("sample_id") or "").strip()
+        text = value.get("source_text", value.get("text"))
+        if sample_id and isinstance(text, str) and text.strip():
+            yield value
+        for child in value.values():
+            if isinstance(child, (Mapping, list, tuple)):
+                yield from _iter_reference_example_mappings(child)
+    elif isinstance(value, (list, tuple)):
+        for child in value:
+            yield from _iter_reference_example_mappings(child)
 
 
 def _write_jsonl_atomic(path: Path, records: Sequence[Mapping[str, Any]]) -> None:
