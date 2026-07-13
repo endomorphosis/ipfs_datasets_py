@@ -6,16 +6,26 @@ import asyncio
 import json
 import threading
 import time
+from dataclasses import replace
 
 from ipfs_datasets_py.logic.modal import (
+    DeterministicModalLogicCodec,
     LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
     LeanstralAuditRequest,
+    LeanstralAuditResponse,
+    LeanstralAuditValidation,
     LeanstralAuditWorker,
     LeanstralAuditWorkerConfig,
+    LeanstralVerifierConfig,
+    ModalLogicCodecConfig,
     build_leanstral_audit_work_items,
     load_leanstral_audit_disagreements,
 )
 from ipfs_datasets_py.logic.modal.leanstral_audit import canonical_sha256
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
+    build_us_code_sample,
+)
+from scripts.ops.legal_ir.run_leanstral_audit_worker import verify_worker_audit_outputs
 
 
 def _packet(index: int, *, state_hash: str = "state-a", component: str = "deontic") -> dict:
@@ -236,3 +246,106 @@ def test_worker_rejects_stale_state_and_non_leanstral_model(tmp_path) -> None:
     assert generic.rejected_count == 1
     assert generic.results[0].status == "model_rejected"
     assert generic.results[0].llm_called is False
+
+
+def test_worker_verifies_cached_real_audits_into_rule_gap_report(tmp_path) -> None:
+    path = tmp_path / "packets.jsonl"
+    path.write_text(json.dumps(_packet(1)) + "\n", encoding="utf-8")
+    records, failures, _ = load_leanstral_audit_disagreements([path])
+    assert failures == []
+
+    config = LeanstralAuditWorkerConfig(
+        cache_dir=str(tmp_path / "cache"),
+        provider_enabled=False,
+    )
+    worker = LeanstralAuditWorker(config)
+    items, stale = build_leanstral_audit_work_items(records, config=config)
+    assert stale == []
+    item = items[0]
+    sample = _modal_sample()
+    response = LeanstralAuditResponse.from_mapping(
+        {
+            "abstention_reason": "",
+            "affected_ir_families": ["deontic"],
+            "classification": "missing_semantic_rule",
+            "confidence": 0.82,
+            "counterexample": {
+                "example_id": sample.sample_id,
+                "expected_modal_ir_hash": sample.modal_ir.canonical_hash(),
+                "source_span_hashes": _source_span_hashes(sample),
+                "source_text": sample.text,
+                "title": sample.title,
+                "section": sample.section,
+                "citation": sample.citation,
+            },
+            "missing_semantic_rule": {"rule_id": "obligation_notice_scope"},
+            "proof_obligation_ids": [item.request.proof_obligation_ids[0]],
+            "proposed_compiler_surface": [{"component": "deontic.ir"}],
+            "request_cache_key": item.request.cache_key,
+            "request_id": item.request.request_id,
+            "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
+            "witness": None,
+        }
+    )
+    worker.runner.cache.put(
+        item.request,
+        response,
+        LeanstralAuditValidation(
+            accepted=True,
+            verified=True,
+            cache_key=item.request.cache_key,
+            response_hash=response.content_hash,
+            verified_by=("test",),
+        ),
+    )
+
+    verification_records, report = verify_worker_audit_outputs(
+        [path],
+        worker=worker,
+        worker_config=config,
+        verifier_config=LeanstralVerifierConfig(
+            run_lean=False,
+            run_modal_bridge=False,
+        ),
+    )
+
+    assert verification_records[0]["verification"]["outcome"] == "accepted"
+    assert report.gaps[0].status == "accepted"
+    assert report.gaps[0].supporting_evidence[0].examples[0]["example_role"] == "counterexample"
+
+
+def _modal_sample():
+    text = "The agency must provide notice within 30 days after application."
+    base = build_us_code_sample(title="5", section="552", text=text)
+    result = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    ).encode(
+        text,
+        document_id=base.sample_id,
+        citation=base.citation,
+        source=base.source,
+        source_embedding=base.embedding_vector,
+    )
+    return replace(
+        base,
+        modal_ir=result.modal_ir,
+        frame_candidates=result.frame_candidates,
+        selected_frame=result.selected_frame,
+        losses=result.losses,
+    )
+
+
+def _source_span_hashes(sample) -> dict:
+    return {
+        formula.formula_id: _span_hash(sample, formula)
+        for formula in sample.modal_ir.formulas
+    }
+
+
+def _span_hash(sample, formula) -> str:
+    import hashlib
+
+    span = sample.normalized_text[
+        formula.provenance.start_char : formula.provenance.end_char
+    ].strip()
+    return hashlib.sha256(span.encode("utf-8")).hexdigest()

@@ -32,7 +32,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration impo
     ProverStatus,
 )
 
-from .codec import DeterministicModalLogicCodec, ModalLogicCodecConfig
+from .codec import (
+    DeterministicModalLogicCodec,
+    ModalLogicCodecConfig,
+    modal_ir_to_flogic_triples,
+)
 from .leanstral_audit import (
     LeanstralAuditRequest,
     LeanstralAuditResponse,
@@ -40,6 +44,7 @@ from .leanstral_audit import (
     validate_leanstral_audit_response,
 )
 from .leanstral_theorems import generate_legal_semantics_theorem_registry
+from .kg_bridge import modal_ir_to_neo4j_graph_data
 
 
 LEANSTRAL_VERIFIER_SCHEMA_VERSION = "legal-ir-leanstral-verifier-v1"
@@ -65,6 +70,9 @@ class LeanstralVerifierConfig:
     use_provers: Sequence[str] = field(default_factory=tuple)
     run_lean: bool = True
     run_modal_bridge: bool = True
+    run_syntax_check: bool = True
+    run_graph_check: bool = True
+    run_provenance_check: bool = True
 
     def to_dict(self) -> Dict[str, Any]:
         payload = asdict(self)
@@ -254,6 +262,29 @@ class LeanstralAuditVerifier:
 
         local_checks: List[LeanstralLocalCheck] = []
         for sample in compiled_samples:
+            if self.config.run_syntax_check:
+                local_checks.append(self._check_modal_ir_syntax(sample))
+            if self.config.run_graph_check:
+                local_checks.append(self._check_modal_ir_graph(sample))
+            if self.config.run_provenance_check:
+                local_checks.append(
+                    self._check_modal_ir_provenance(sample, span_checks)
+                )
+
+        cheap_outcome, cheap_reasons = _outcome_from_local_checks(local_checks)
+        if cheap_outcome == LeanstralVerificationOutcome.REJECTED:
+            return self._result(
+                LeanstralVerificationOutcome.REJECTED,
+                cheap_reasons,
+                audit_validation,
+                compiler_checks=compiler_checks,
+                source_span_checks=span_checks,
+                local_checks=local_checks,
+                response=response,
+                request_id=request.request_id,
+            )
+
+        for sample in compiled_samples:
             if self.config.run_lean:
                 local_checks.append(self._check_lean_registry(sample))
             if self.config.run_modal_bridge:
@@ -374,6 +405,151 @@ class LeanstralAuditVerifier:
             "sample": sample,
         }
 
+    def _check_modal_ir_syntax(self, sample: LegalSample) -> LeanstralLocalCheck:
+        started = time.time()
+        reasons: List[str] = []
+        modal_ir = sample.modal_ir
+        if not str(modal_ir.document_id).strip():
+            reasons.append("missing_modal_ir_document_id")
+        if modal_ir.normalized_text != sample.normalized_text:
+            reasons.append("modal_ir_normalized_text_mismatch")
+        if not modal_ir.formulas:
+            reasons.append("missing_modal_ir_formulas")
+        formula_ids: set[str] = set()
+        for formula in modal_ir.formulas:
+            formula_id = str(getattr(formula, "formula_id", "") or "").strip()
+            if not formula_id:
+                reasons.append("missing_formula_id")
+            elif formula_id in formula_ids:
+                reasons.append("duplicate_formula_id")
+            formula_ids.add(formula_id)
+            operator = getattr(formula, "operator", None)
+            predicate = getattr(formula, "predicate", None)
+            if not str(getattr(operator, "family", "") or "").strip():
+                reasons.append("missing_operator_family")
+            if not str(getattr(operator, "system", "") or "").strip():
+                reasons.append("missing_operator_system")
+            if not str(getattr(operator, "symbol", "") or "").strip():
+                reasons.append("missing_operator_symbol")
+            if not str(getattr(predicate, "name", "") or "").strip():
+                reasons.append("missing_predicate_name")
+            provenance = getattr(formula, "provenance", None)
+            start = int(getattr(provenance, "start_char", -1))
+            end = int(getattr(provenance, "end_char", -1))
+            if start < 0 or end <= start or end > len(sample.normalized_text):
+                reasons.append("invalid_formula_source_span")
+        return _cheap_check(
+            "syntax",
+            started,
+            reasons,
+            {
+                "document_id": modal_ir.document_id,
+                "formula_count": len(modal_ir.formulas),
+            },
+        )
+
+    def _check_modal_ir_graph(self, sample: LegalSample) -> LeanstralLocalCheck:
+        started = time.time()
+        reasons: List[str] = []
+        details: Dict[str, Any] = {"document_id": sample.modal_ir.document_id}
+        try:
+            triples = modal_ir_to_flogic_triples(
+                sample.modal_ir,
+                selected_frame=sample.selected_frame,
+            )
+            graph = modal_ir_to_neo4j_graph_data(
+                sample.modal_ir,
+                selected_frame=sample.selected_frame,
+                triples=triples,
+            )
+        except Exception as exc:  # deterministic projection failures reject the audit
+            return _cheap_check(
+                "graph",
+                started,
+                (f"graph_projection_error:{exc.__class__.__name__}",),
+                details,
+            )
+
+        node_ids = {str(getattr(node, "id", "") or "") for node in graph.nodes}
+        for triple in triples:
+            if not str(triple.get("subject", "")).strip():
+                reasons.append("empty_flogic_subject")
+            if not str(triple.get("predicate", "")).strip():
+                reasons.append("empty_flogic_predicate")
+            if not str(triple.get("object", "")).strip():
+                reasons.append("empty_flogic_object")
+        if not triples:
+            reasons.append("missing_flogic_triples")
+        if not graph.nodes:
+            reasons.append("missing_graph_nodes")
+        if sample.modal_ir.formulas and not graph.relationships:
+            reasons.append("missing_graph_relationships")
+        for relationship in graph.relationships:
+            start_id = str(
+                getattr(
+                    relationship,
+                    "start_node_id",
+                    getattr(relationship, "source", ""),
+                )
+                or ""
+            )
+            end_id = str(
+                getattr(
+                    relationship,
+                    "end_node_id",
+                    getattr(relationship, "target", ""),
+                )
+                or ""
+            )
+            if start_id and start_id not in node_ids:
+                reasons.append("dangling_graph_relationship_start")
+            if end_id and end_id not in node_ids:
+                reasons.append("dangling_graph_relationship_end")
+        details.update(
+            {
+                "graph_id": getattr(graph, "id", ""),
+                "node_count": len(graph.nodes),
+                "relationship_count": len(graph.relationships),
+                "triple_count": len(triples),
+            }
+        )
+        return _cheap_check("graph", started, reasons, details)
+
+    def _check_modal_ir_provenance(
+        self,
+        sample: LegalSample,
+        span_checks: Sequence[LeanstralSourceSpanCheck],
+    ) -> LeanstralLocalCheck:
+        started = time.time()
+        reasons: List[str] = []
+        checks_by_formula = {
+            check.formula_id: check
+            for check in span_checks
+        }
+        for formula in sample.modal_ir.formulas:
+            provenance = formula.provenance
+            if provenance.source_id != sample.sample_id:
+                reasons.append("formula_source_id_mismatch")
+            if provenance.citation and provenance.citation != sample.citation:
+                reasons.append("formula_citation_mismatch")
+            span = sample.normalized_text[
+                max(0, int(provenance.start_char)) : max(0, int(provenance.end_char))
+            ].strip()
+            if not span:
+                reasons.append("empty_formula_source_span")
+            if span_checks and formula.formula_id not in checks_by_formula:
+                reasons.append("missing_formula_source_span_check")
+        return _cheap_check(
+            "provenance",
+            started,
+            reasons,
+            {
+                "document_id": sample.modal_ir.document_id,
+                "formula_count": len(sample.modal_ir.formulas),
+                "source_span_check_count": len(checks_by_formula),
+            },
+        )
+
     def _check_lean_registry(self, sample: LegalSample) -> LeanstralLocalCheck:
         start = time.time()
         executable = self.config.lean_executable or shutil.which("lean")
@@ -484,6 +660,7 @@ class LeanstralAuditVerifier:
             check.checker_name
             for check in local_checks
             if check.status == LeanstralVerificationOutcome.ACCEPTED
+            and not _is_cheap_check(check)
         ]
         return LeanstralAuditVerificationResult(
             schema_version=LEANSTRAL_VERIFIER_SCHEMA_VERSION,
@@ -704,6 +881,30 @@ def _local_checks_from_prover_result(
     return tuple(checks)
 
 
+def _cheap_check(
+    name: str,
+    started: float,
+    reasons: Sequence[str],
+    details: Optional[Mapping[str, Any]] = None,
+) -> LeanstralLocalCheck:
+    unique_reasons = tuple(
+        dict.fromkeys(str(reason) for reason in reasons if str(reason).strip())
+    )
+    accepted = not unique_reasons
+    return LeanstralLocalCheck(
+        checker_name=name,
+        status=LeanstralVerificationOutcome.ACCEPTED
+        if accepted
+        else LeanstralVerificationOutcome.REJECTED,
+        route_available=True,
+        theorem_valid=accepted,
+        timeout_seconds=0.0,
+        elapsed_seconds=time.time() - started,
+        details={"check_phase": "cheap", **dict(details or {})},
+        error_message=";".join(unique_reasons),
+    )
+
+
 def _outcome_from_prover_status(
     status: ProverStatus,
     is_valid: bool,
@@ -760,17 +961,30 @@ def _outcome_from_local_checks(
                 )
             ),
         )
-    if any(check.status == LeanstralVerificationOutcome.ACCEPTED for check in checks):
+    proof_checks = [check for check in checks if not _is_cheap_check(check)]
+    acceptance_checks = proof_checks or list(checks)
+    if any(
+        check.status == LeanstralVerificationOutcome.ACCEPTED
+        for check in acceptance_checks
+    ):
         return LeanstralVerificationOutcome.ACCEPTED, ()
     return (
         LeanstralVerificationOutcome.UNSUPPORTED,
         tuple(
             dict.fromkeys(
                 check.error_message or f"{check.checker_name}_unsupported"
-                for check in checks
+                for check in acceptance_checks
             )
         ),
     )
+
+
+def _is_cheap_check(check: LeanstralLocalCheck) -> bool:
+    return check.details.get("check_phase") == "cheap" or check.checker_name in {
+        "graph",
+        "provenance",
+        "syntax",
+    }
 
 
 __all__ = [

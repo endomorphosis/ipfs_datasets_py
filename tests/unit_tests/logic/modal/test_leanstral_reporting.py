@@ -104,6 +104,7 @@ def test_report_collapses_duplicate_audits_and_preserves_examples() -> None:
     assert len(report.gaps) == 1
     gap = report.gaps[0]
     assert gap.normalized_rule_key == "deontic_exception_scope"
+    assert gap.status == "accepted"
     assert gap.target_component == "modal.ir_decompiler"
     assert gap.action == "refine_semantic_decompiler_reconstruction"
     assert len(gap.supporting_evidence) == 2
@@ -158,7 +159,31 @@ def test_report_rejects_free_form_architecture_tasks() -> None:
 
     assert report.gaps == ()
     assert len(report.rejected_audits) == 1
+    assert report.rejected_audits[0].status == "rejected"
+    assert report.rejected_audits[0].verification_outcome == "accepted"
     assert "free_form_architecture_task" in report.rejected_audits[0].reasons
+
+
+def test_report_emits_only_deterministic_record_statuses() -> None:
+    response = _response()
+    allowed = {"accepted", "rejected", "unsupported", "timed-out"}
+
+    report = aggregate_verified_audits(
+        [
+            (
+                response,
+                _verification(
+                    response,
+                    outcome=LeanstralVerificationOutcome.TIMED_OUT,
+                    reasons=("lean_timeout",),
+                ),
+            )
+        ]
+    )
+
+    assert report.gaps == ()
+    assert report.rejected_audits[0].status == "timed-out"
+    assert report.rejected_audits[0].status in allowed
 
 
 def test_report_maps_each_gap_to_one_owned_surface_and_bounds_outputs() -> None:
