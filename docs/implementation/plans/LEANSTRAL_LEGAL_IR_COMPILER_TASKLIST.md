@@ -250,6 +250,150 @@ queue. Wave 5 is a bounded, reversible rollout.
 - Merge key: legal-ir-leanstral-seed-canary
 - Acceptance: Seed at most five verified tasks and compare them with a matched non-Leanstral control using compiler IR CE/cosine, learned IR-view metrics, proof and graph validity, anti-copy penalty, validation rejection rate, task-to-accepted-patch rate, cycle time, and state-to-patch lag; document rollback commands and permit broader rollout only when no hard guardrail regresses and compiler development throughput materially improves.
 
+## PORTAL-LIRLS-016 Make canary provenance and promotion evidence fail closed
+
+- Status: pending
+- Priority: P0
+- Track: quality
+- Depends on: PORTAL-LIRLS-015
+- Outputs: scripts/ops/legal_ir/run_leanstral_shadow_canary.py, scripts/ops/legal_ir/run_leanstral_seed_canary.py, docs/implementation/reports/leanstral_shadow_canary.md, docs/implementation/reports/leanstral_seed_canary.md, tests/unit_tests/logic/modal/test_leanstral_shadow_canary.py, tests/unit_tests/logic/modal/test_leanstral_seed_canary.py
+- Validation: PYTHONPATH=. python -m pytest tests/unit_tests/logic/modal/test_leanstral_shadow_canary.py tests/unit_tests/logic/modal/test_leanstral_seed_canary.py -q
+- Bundle: legal-ir/leanstral-production-evidence
+- Goal id: LIR-LEANSTRAL-PRODUCTION
+- Merge key: legal-ir-leanstral-canary-provenance
+- Acceptance: Add explicit evidence provenance fields that distinguish synthetic fixtures, cached real packets, and live canonical-state packets; never report synthetic paired metrics as observed improvement; require nonzero real record, provider-or-verified-cache, verifier, and seeded-task counts before production promotion can pass; preserve dry-run utility while making every dry-run report unambiguously non-production.
+
+## PORTAL-LIRLS-017 Emit real canonical-state disagreement packets from the production runner
+
+- Status: pending
+- Priority: P0
+- Track: legal-ir
+- Depends on: PORTAL-LIRLS-016
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, ipfs_datasets_py/logic/modal/introspection_export.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_loop_contract.py, tests/unit_tests/logic/modal/test_introspection_export.py
+- Validation: PYTHONPATH=. python -m pytest tests/unit_tests/logic/modal/test_introspection_export.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_loop_contract.py -q
+- Bundle: legal-ir/leanstral-production-evidence
+- Goal id: LIR-LEANSTRAL-PRODUCTION
+- Merge key: legal-ir-leanstral-production-export
+- Acceptance: In `export|shadow|seed|enforce` modes, export compact append-only JSONL disagreement packets from the real canonical autoencoder after unguided and guided compiler evaluation; include state hash, compiler commit, cycle, sample role, frozen-canary identity, evidence hashes, actual compiler/decompiler metrics, learned-view gaps, and proof-route status; never serialize dense state tables; expose packet counts, paths, schema failures, and export timing in the live summary.
+
+## PORTAL-LIRLS-018 Add causal and contrastive feature attribution for compiler-actionable gaps
+
+- Status: pending
+- Priority: P0
+- Track: autoencoder
+- Depends on: PORTAL-LIRLS-017
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, ipfs_datasets_py/logic/modal/introspection_export.py, tests/unit_tests/optimizers/test_modal_autoencoder.py, tests/unit_tests/logic/modal/test_introspection_export.py
+- Validation: PYTHONPATH=. python -m pytest tests/unit_tests/optimizers/test_modal_autoencoder.py tests/unit_tests/logic/modal/test_introspection_export.py -q
+- Bundle: legal-ir/leanstral-causal-attribution
+- Goal id: LIR-LEANSTRAL-CAUSAL
+- Merge key: legal-ir-leanstral-causal-attribution
+- Acceptance: Supplement magnitude-ranked weights with bounded feature-group ablations and legal minimal-pair probes; report the change in compiler IR CE/cosine, learned-view CE/cosine, decompiler losses, and formal validity when compiler-contract, decompiler-template, cycle-consistency, semantic-slot, or logic-view features are removed; classify a feature as compiler-actionable only when its directional effect recurs across samples and survives a frozen holdout; keep sample memory disabled.
+
+## PORTAL-LIRLS-019 Add a bounded asynchronous Leanstral audit worker
+
+- Status: pending
+- Priority: P0
+- Track: ops
+- Depends on: PORTAL-LIRLS-017, PORTAL-LIRLS-008
+- Outputs: ipfs_datasets_py/logic/modal/leanstral_audit.py, scripts/ops/legal_ir/run_leanstral_audit_worker.py, tests/unit_tests/logic/modal/test_leanstral_audit.py, tests/unit_tests/logic/modal/test_leanstral_audit_worker.py
+- Validation: PYTHONPATH=.:../ipfs_accelerate_py python -m pytest tests/unit_tests/logic/modal/test_leanstral_audit.py tests/unit_tests/logic/modal/test_leanstral_audit_worker.py -q
+- Bundle: legal-ir/leanstral-runtime
+- Goal id: LIR-LEANSTRAL-RUNTIME
+- Merge key: legal-ir-leanstral-async-worker
+- Acceptance: Consume immutable disagreement JSONL asynchronously so provider and prover latency never blocks the autoencoder cycle; cluster and deduplicate by evidence, compiler commit, semantic signature, model, prompt, theorem registry, and schema hashes; enforce bounded concurrency, retries, timeouts, content-addressed cache validation, stale-state rejection, atomic checkpoints, and clear handling of unavailable Labs-model access without substituting a generic model as Leanstral.
+
+## PORTAL-LIRLS-020 Connect real audits to deterministic verification and rule-gap reporting
+
+- Status: pending
+- Priority: P0
+- Track: proof
+- Depends on: PORTAL-LIRLS-018, PORTAL-LIRLS-019, PORTAL-LIRLS-009, PORTAL-LIRLS-010
+- Outputs: ipfs_datasets_py/logic/modal/leanstral_verifier.py, ipfs_datasets_py/logic/modal/leanstral_reporting.py, scripts/ops/legal_ir/run_leanstral_audit_worker.py, tests/unit_tests/logic/modal/test_leanstral_verifier.py, tests/unit_tests/logic/modal/test_leanstral_reporting.py, tests/unit_tests/logic/modal/test_leanstral_audit_worker.py
+- Validation: PYTHONPATH=. python -m pytest tests/unit_tests/logic/modal/test_leanstral_verifier.py tests/unit_tests/logic/modal/test_leanstral_reporting.py tests/unit_tests/logic/modal/test_leanstral_audit_worker.py -q
+- Bundle: legal-ir/leanstral-runtime
+- Goal id: LIR-LEANSTRAL-RUNTIME
+- Merge key: legal-ir-leanstral-real-verification
+- Acceptance: For each real structured audit, recompile referenced examples, verify canonical and source-span hashes, run cheap syntax/graph/provenance checks before bounded Lean and prover checks, retain supporting and conflicting counterexamples, distinguish route unavailability from theorem failure, and emit only deterministic accepted, rejected, unsupported, or timed-out rule-gap records.
+
+## PORTAL-LIRLS-021 Seed the existing Codex queue only from verified real rule gaps
+
+- Status: pending
+- Priority: P0
+- Track: synthesis
+- Depends on: PORTAL-LIRLS-020, PORTAL-LIRLS-011
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_loop_contract.py
+- Validation: PYTHONPATH=. python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_loop_contract.py -q
+- Bundle: legal-ir/leanstral-projection
+- Goal id: LIR-LEANSTRAL-PROJECTION-V2
+- Merge key: legal-ir-leanstral-real-queue-handoff
+- Acceptance: Invoke the existing Leanstral rule-gap projector from the production runner; seed only real, non-stale, locally verified evidence; include exact evidence/spec/proof IDs, positive and negative examples, allowed paths, one owned AST/compiler scope, target metrics, mutation cases, and frozen validation commands; cap active work to two TODOs per scope and report seeded, deduped, stale, budget-blocked, and report-only counts.
+
+## PORTAL-LIRLS-022 Attribute accepted and rejected compiler patches back to feature clusters
+
+- Status: pending
+- Priority: P0
+- Track: feedback
+- Depends on: PORTAL-LIRLS-021, PORTAL-LIRLS-012
+- Outputs: ipfs_datasets_py/logic/modal/leanstral_reporting.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_reporting.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py, tests/unit_tests/logic/modal/test_leanstral_reporting.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py
+- Validation: PYTHONPATH=. python -m pytest tests/unit_tests/logic/modal/test_leanstral_reporting.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py -q
+- Bundle: legal-ir/leanstral-feedback
+- Goal id: LIR-LEANSTRAL-FEEDBACK
+- Merge key: legal-ir-leanstral-outcome-feedback
+- Acceptance: Journal the full state-to-audit-to-TODO-to-patch lineage and classify each result as accepted improvement, quality regression, unsupported hypothesis, operational failure, or stale evidence; suppress repeatedly disproven clusters, retain successful deterministic rules as compiler targets for subsequent autoencoder evaluation, and never write an unverified Leanstral assertion directly into autoencoder weights.
+
+## PORTAL-LIRLS-023 Gate projection on worker health and separate transient failures
+
+- Status: pending
+- Priority: P0
+- Track: ops
+- Depends on: PORTAL-LIRLS-017, PORTAL-LIRLS-013
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_todo_daemon.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_reporting.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_loop_contract.py
+- Validation: PYTHONPATH=. python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_loop_contract.py -q
+- Bundle: legal-ir/leanstral-operations
+- Goal id: LIR-LEANSTRAL-OPS
+- Merge key: legal-ir-leanstral-worker-health
+- Acceptance: Do not seed additional Leanstral TODOs while implementation workers are unavailable, throttled, or above configurable transient-failure and pending caps; retry operational failures without counting them as semantic rejection; preserve quality failures for rescue analysis; expose executor health, transient rate, queue pressure, and seed-block reasons in summaries.
+
+## PORTAL-LIRLS-024 Run a real no-mutation canonical-state shadow canary
+
+- Status: pending
+- Priority: P1
+- Track: evaluation
+- Depends on: PORTAL-LIRLS-020, PORTAL-LIRLS-023
+- Outputs: scripts/ops/legal_ir/run_leanstral_shadow_canary.py, docs/implementation/reports/leanstral_real_shadow_canary.md, tests/unit_tests/logic/modal/test_leanstral_shadow_canary.py
+- Validation: PYTHONPATH=.:../ipfs_accelerate_py python -m pytest tests/unit_tests/logic/modal/test_leanstral_shadow_canary.py -q
+- Bundle: legal-ir/leanstral-real-evaluation
+- Goal id: LIR-LEANSTRAL-EVALUATION
+- Merge key: legal-ir-leanstral-real-shadow
+- Acceptance: Consume at least 25 real packets from a canonical state and compiler commit, make provider calls or use hash-matching verified cache entries, run local verification, seed no TODOs, mutate no source, and report real packet validity, audit validity, verifier outcomes, family/surface coverage, cache behavior, runtime, and state-to-verified-audit lag; if Leanstral Labs access is unavailable, record an explicit blocked result and do not generate synthetic promotion evidence.
+
+## PORTAL-LIRLS-025 Run a real five-task paired seed and publish the rollout decision
+
+- Status: pending
+- Priority: P1
+- Track: evaluation
+- Depends on: PORTAL-LIRLS-021, PORTAL-LIRLS-022, PORTAL-LIRLS-024
+- Outputs: scripts/ops/legal_ir/run_leanstral_seed_canary.py, docs/implementation/reports/leanstral_real_seed_canary.md, docs/implementation/runbooks/leanstral_legal_ir_rollout.md, tests/unit_tests/logic/modal/test_leanstral_seed_canary.py
+- Validation: PYTHONPATH=.:../ipfs_accelerate_py python -m pytest tests/unit_tests/logic/modal/test_leanstral_seed_canary.py -q
+- Bundle: legal-ir/leanstral-real-evaluation
+- Goal id: LIR-LEANSTRAL-EVALUATION
+- Merge key: legal-ir-leanstral-real-seed
+- Acceptance: Seed at most five locally verified real tasks and compare them with matched controls through actual isolated implementations; require at least one accepted compiler/decompiler patch, at least 20 percent relative improvement in task-to-accepted-patch rate, at least 25 percent lower state-to-accepted-patch lag, non-regressing compiler IR CE/cosine and learned-view metrics on frozen holdouts, no theorem/graph/provenance/anti-copy/mutation regression, less than 10 percent autoencoder cycle overhead, and less than 5 percent transient execution failure before permitting a longer rollout.
+
+## PORTAL-LIRLS-999 End of Leanstral implementation tasks
+
+- Status: completed
+- Completion: manual
+- Priority: P3
+- Track: ops
+- Depends on:
+- Outputs: docs/implementation/plans/LEANSTRAL_LEGAL_IR_COMPILER_TASKLIST.md
+- Validation: true
+- Bundle: legal-ir/leanstral-boundary
+- Goal id: LIR-LEANSTRAL-BOUNDARY
+- Merge key: legal-ir-leanstral-boundary
+- Acceptance: Keep this completed parser boundary after all actionable `PORTAL-LIRLS-*` tasks so unrelated generated repair-task metadata below cannot be interpreted as part of the final actionable task.
+
 ## Completion Criteria
 
 This program is complete only when the shadow and seed canaries demonstrate
