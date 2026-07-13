@@ -25,7 +25,7 @@ from typing import (
     Sequence,
 )
 
-from .legal_samples import LegalSample, stable_mock_embedding
+from .legal_samples import LegalSample, build_us_code_sample, stable_mock_embedding
 from .modal_registry import ModalLogicFamily
 
 _LEGAL_IR_TARGET_CACHE_MAX = 2048
@@ -192,6 +192,13 @@ _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS: Mapping[str, tuple[str, ...]] = {
 }
 
 _AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT = 1.6
+COMPILER_ACTIONABLE_FEATURE_GROUPS: tuple[str, ...] = (
+    "compiler-contract",
+    "decompiler-template",
+    "cycle-consistency",
+    "semantic-slot",
+    "logic-view",
+)
 
 
 def cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
@@ -421,15 +428,25 @@ class AutoencoderIntrospection:
     legal_ir_overrepresented_components: List[str] = field(default_factory=list)
     legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
     legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
+    feature_group_ablations: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    legal_minimal_pair_probes: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    compiler_actionability: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "base_decoded_embedding": list(self.base_decoded_embedding),
+            "compiler_actionability": _json_round_floats(self.compiler_actionability),
             "cosine_loss": self.cosine_loss,
             "cosine_similarity": self.cosine_similarity,
             "decoded_embedding": list(self.decoded_embedding),
             "family_margin": self.family_margin,
+            "feature_group_ablations": _json_round_floats(
+                self.feature_group_ablations
+            ),
             "feature_count": self.feature_count,
+            "legal_minimal_pair_probes": _json_round_floats(
+                self.legal_minimal_pair_probes
+            ),
             "legal_ir_predicted_view_distribution": dict(
                 sorted(self.legal_ir_predicted_view_distribution.items())
             ),
@@ -3430,6 +3447,10 @@ class AdaptiveModalAutoencoder:
         pipeline_stage_focus = _pipeline_stage_focus_from_diagnostics(
             pipeline_stage_diagnostics
         )
+        causal_attribution = self.causal_feature_attribution_for_sample(
+            sample,
+            top_k=max(top_k, 0),
+        )
         return AutoencoderIntrospection(
             sample_id=sample.sample_id,
             target_family=target_family,
@@ -3488,6 +3509,21 @@ class AdaptiveModalAutoencoder:
                 key: round(float(value), 12)
                 for key, value in sorted(legal_ir_predicted_view_distribution.items())
             },
+            feature_group_ablations={
+                key: dict(value)
+                for key, value in sorted(
+                    causal_attribution.get("feature_group_ablations", {}).items()
+                )
+            },
+            legal_minimal_pair_probes={
+                key: dict(value)
+                for key, value in sorted(
+                    causal_attribution.get("legal_minimal_pair_probes", {}).items()
+                )
+            },
+            compiler_actionability=dict(
+                causal_attribution.get("compiler_actionability", {})
+            ),
             synthesis_focus=self._synthesis_focus_for(
                 sample,
                 target_family=target_family,
@@ -3566,6 +3602,10 @@ class AdaptiveModalAutoencoder:
             "compiler_contract": self._compiler_contract_feature_keys_for(sample),
             "decompiler_surface_template": self._decompiler_surface_template_feature_keys_for(sample),
             "cycle_consistency": self._cycle_consistency_feature_keys_for(sample),
+            "semantic_slot": [
+                f"semantic-slot:{slot.removeprefix('slot:')}"
+                for slot in self._semantic_slot_distribution_for(sample).keys()
+            ],
             "logic_view_contract": self._logic_view_contract_feature_keys_for(sample),
         }
         ranked_features = self._rank_guidance_features(
@@ -3587,6 +3627,23 @@ class AdaptiveModalAutoencoder:
                     ).items()
                 )
             },
+            "causal_feature_attribution": {
+                "feature_group_ablations": _json_round_floats(
+                    introspection.feature_group_ablations
+                ),
+                "legal_minimal_pair_probes": _json_round_floats(
+                    introspection.legal_minimal_pair_probes
+                ),
+            },
+            "compiler_actionability": _json_round_floats(
+                introspection.compiler_actionability
+            ),
+            "compiler_actionable_feature_groups": list(
+                introspection.compiler_actionability.get(
+                    "compiler_actionable_feature_groups",
+                    [],
+                )
+            ),
             "feature_groups": {
                 name: list(features[:limit] if limit else features)
                 for name, features in sorted(feature_groups.items())
@@ -3631,6 +3688,410 @@ class AdaptiveModalAutoencoder:
                 for contribution in introspection.top_family_contributions
             ],
         }
+
+    def causal_feature_attribution_for_sample(
+        self,
+        sample: LegalSample,
+        *,
+        top_k: int = 16,
+    ) -> Dict[str, Any]:
+        """Return bounded causal/contrastive attribution for one sample.
+
+        The calculation intentionally evaluates reusable feature heads only:
+        sample-specific decoded embeddings and family logits are stripped from
+        the cloned state before every ablation.
+        """
+
+        limit = max(0, int(top_k))
+        baseline = self._compiler_gap_metrics_for_sample(sample)
+        ablations: Dict[str, Dict[str, Any]] = {}
+        for group in COMPILER_ACTIONABLE_FEATURE_GROUPS:
+            ablated = self._clone_for_feature_group_ablation(sample, group)
+            ablated_metrics = ablated._compiler_gap_metrics_for_sample(sample)
+            delta = _metric_delta(ablated_metrics, baseline)
+            ablations[group] = {
+                "ablated_metrics": ablated_metrics,
+                "directional_effect": _directional_effect_from_delta(delta),
+                "metric_delta": delta,
+                "removed_feature_count": self._feature_group_removed_count(
+                    sample,
+                    group,
+                ),
+                "sample_memory_used": False,
+            }
+
+        pair_probes = self._legal_minimal_pair_probes_for_sample(
+            sample,
+            baseline_metrics=baseline,
+            top_k=limit,
+        )
+        return {
+            "baseline_metrics": baseline,
+            "compiler_actionability": {
+                "actionability_requires_cohort": True,
+                "compiler_actionable_feature_groups": [],
+                "evaluated_group_count": len(COMPILER_ACTIONABLE_FEATURE_GROUPS),
+                "frozen_holdout_sample_count": 0,
+                "sample_memory_used": False,
+            },
+            "feature_group_ablations": ablations,
+            "legal_minimal_pair_probes": pair_probes,
+            "sample_id": sample.sample_id,
+            "sample_memory_used": False,
+        }
+
+    def causal_feature_attribution(
+        self,
+        samples: Iterable[LegalSample],
+        *,
+        frozen_holdout_samples: Iterable[LegalSample] = (),
+        legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
+        min_recurrence: float = 0.60,
+        min_effect: float = 1.0e-9,
+        max_samples: int = 32,
+        max_holdout_samples: int = 16,
+        top_k: int = 16,
+    ) -> Dict[str, Any]:
+        """Classify compiler-actionable feature groups across samples.
+
+        A group is actionable only when removing it repeatedly worsens the
+        compiler-facing objective on the sampled cohort and the same direction
+        survives the frozen holdout.  The method never enables sample memory.
+        """
+
+        sample_list = list(samples)[: max(0, int(max_samples))]
+        holdout_list = list(frozen_holdout_samples)[: max(0, int(max_holdout_samples))]
+        if legal_ir_targets is not None and (sample_list or holdout_list):
+            self.evaluate(
+                [*sample_list, *holdout_list],
+                legal_ir_targets=legal_ir_targets,
+                use_sample_memory=False,
+            )
+        sample_reports = [
+            self.causal_feature_attribution_for_sample(sample, top_k=top_k)
+            for sample in sample_list
+        ]
+        holdout_reports = [
+            self.causal_feature_attribution_for_sample(sample, top_k=top_k)
+            for sample in holdout_list
+        ]
+        group_summaries: Dict[str, Dict[str, Any]] = {}
+        actionable_groups: List[str] = []
+        for group in COMPILER_ACTIONABLE_FEATURE_GROUPS:
+            sample_effects = [
+                _float_or_zero(
+                    report["feature_group_ablations"][group]["directional_effect"][
+                        "objective_delta"
+                    ]
+                )
+                for report in sample_reports
+            ]
+            holdout_effects = [
+                _float_or_zero(
+                    report["feature_group_ablations"][group]["directional_effect"][
+                        "objective_delta"
+                    ]
+                )
+                for report in holdout_reports
+            ]
+            recurring_count = sum(value > min_effect for value in sample_effects)
+            recurrence_ratio = (
+                recurring_count / len(sample_effects)
+                if sample_effects
+                else 0.0
+            )
+            holdout_survived = bool(holdout_effects) and all(
+                value > min_effect for value in holdout_effects
+            )
+            actionable = (
+                bool(sample_effects)
+                and recurrence_ratio >= max(0.0, min(1.0, float(min_recurrence)))
+                and holdout_survived
+            )
+            if actionable:
+                actionable_groups.append(group)
+            group_summaries[group] = {
+                "actionable": actionable,
+                "frozen_holdout_mean_objective_delta": round(
+                    _mean(holdout_effects),
+                    12,
+                ),
+                "frozen_holdout_positive_count": sum(
+                    value > min_effect for value in holdout_effects
+                ),
+                "frozen_holdout_sample_count": len(holdout_effects),
+                "mean_objective_delta": round(_mean(sample_effects), 12),
+                "recurrence_ratio": round(recurrence_ratio, 12),
+                "recurring_positive_count": recurring_count,
+                "sample_count": len(sample_effects),
+            }
+        return {
+            "compiler_actionable_feature_groups": actionable_groups,
+            "feature_group_actionability": group_summaries,
+            "frozen_holdout_sample_count": len(holdout_list),
+            "sample_count": len(sample_list),
+            "sample_memory_used": False,
+            "sample_reports": sample_reports,
+        }
+
+    def _compiler_gap_metrics_for_sample(self, sample: LegalSample) -> Dict[str, float]:
+        family_distribution = self._family_distribution(
+            sample,
+            use_sample_memory=False,
+        )
+        target_family_distribution = _observed_family_distribution(sample)
+        decoded = self._decoded_for(sample, use_sample_memory=False)
+        legal_ir_target_distribution = self._legal_ir_view_target_distribution_for_sample(
+            sample,
+        )
+        legal_ir_predicted_distribution: Dict[str, float] = {}
+        if legal_ir_target_distribution:
+            legal_ir_predicted_distribution = self._legal_ir_view_distribution(
+                sample,
+                legal_ir_target_distribution,
+                use_sample_memory=False,
+            )
+        legal_ir_losses = self._compiler_quality_loss_targets_for_sample(sample)
+        decompiler_losses = _source_decompiled_text_losses_from_targets(legal_ir_losses)
+        return {
+            "compiler_ir_cross_entropy_excess_loss": round(
+                cross_entropy_excess_distribution_loss(
+                    family_distribution,
+                    target_family_distribution,
+                ),
+                12,
+            ),
+            "compiler_ir_cross_entropy_loss": round(
+                cross_entropy_distribution_loss(
+                    family_distribution,
+                    target_family_distribution,
+                ),
+                12,
+            ),
+            "compiler_ir_cosine_similarity": round(
+                _distribution_cosine_similarity(
+                    family_distribution,
+                    target_family_distribution,
+                ),
+                12,
+            ),
+            "decompiler_embedding_cosine_loss": round(
+                decompiler_losses["source_decompiled_text_embedding_cosine_loss"],
+                12,
+            ),
+            "decompiler_token_loss": round(
+                decompiler_losses["source_decompiled_text_token_loss"],
+                12,
+            ),
+            "embedding_cosine_similarity": round(
+                cosine_similarity(sample.embedding_vector, decoded),
+                12,
+            ),
+            "formal_validity": round(
+                max(0.0, 1.0 - symbolic_validity_penalty(sample)),
+                12,
+            ),
+            "formal_validity_penalty": round(symbolic_validity_penalty(sample), 12),
+            "learned_view_cross_entropy_excess_loss": round(
+                cross_entropy_excess_distribution_loss(
+                    legal_ir_predicted_distribution,
+                    legal_ir_target_distribution,
+                )
+                if legal_ir_target_distribution
+                else 0.0,
+                12,
+            ),
+            "learned_view_cross_entropy_loss": round(
+                cross_entropy_distribution_loss(
+                    legal_ir_predicted_distribution,
+                    legal_ir_target_distribution,
+                )
+                if legal_ir_target_distribution
+                else 0.0,
+                12,
+            ),
+            "learned_view_cosine_similarity": round(
+                _distribution_cosine_similarity(
+                    legal_ir_predicted_distribution,
+                    legal_ir_target_distribution,
+                )
+                if legal_ir_target_distribution
+                else 0.0,
+                12,
+            ),
+            "reconstruction_loss": round(
+                mse_loss(sample.embedding_vector, decoded),
+                12,
+            ),
+        }
+
+    def _clone_for_feature_group_ablation(
+        self,
+        sample: LegalSample,
+        group: str,
+    ) -> "AdaptiveModalAutoencoder":
+        clone = object.__new__(self.__class__)
+        clone.__dict__ = dict(self.__dict__)
+        clone.state = self.state.generalizable_copy()
+        clone._sample_feature_cache = {}
+        clone._legal_ir_loss_target_cache = {
+            key: dict(value)
+            for key, value in self._legal_ir_loss_target_cache.items()
+        }
+        clone._legal_ir_view_target_cache = {
+            key: dict(value)
+            for key, value in self._legal_ir_view_target_cache.items()
+        }
+        clone._legal_ir_view_family_candidates_cache = (
+            self._legal_ir_view_family_candidates_cache
+        )
+        clone._ablate_feature_group_state(sample, group)
+        return clone
+
+    def _ablate_feature_group_state(self, sample: LegalSample, group: str) -> None:
+        prefixes = _feature_group_prefixes(group)
+        feature_keys = set(self._feature_group_keys_for(sample, group))
+        for mapping in (
+            self.state.feature_embedding_weights,
+            self.state.feature_family_logits,
+            self.state.feature_legal_ir_view_logits,
+        ):
+            _remove_group_keys(mapping, prefixes=prefixes, keys=feature_keys)
+        if group == "compiler-contract":
+            self.state.compiler_quality_embedding_weights.clear()
+            self.state.compiler_quality_family_logits.clear()
+        elif group == "decompiler-template":
+            self.state.decompiler_plan_embedding_weights.clear()
+            self.state.decompiler_plan_family_logits.clear()
+            self.state.decompiler_plan_legal_ir_view_logits.clear()
+        elif group == "cycle-consistency":
+            self.state.round_trip_signal_embedding_weights.clear()
+            self.state.round_trip_signal_family_logits.clear()
+            self.state.round_trip_signal_legal_ir_view_logits.clear()
+        elif group == "semantic-slot":
+            self.state.semantic_slot_embedding_weights.clear()
+            self.state.semantic_slot_family_logits.clear()
+            self.state.semantic_slot_legal_ir_view_embedding_weights.clear()
+            self.state.semantic_slot_legal_ir_view_family_logits.clear()
+            self.state.semantic_slot_legal_ir_view_logits.clear()
+            self.state.family_semantic_slot_embedding_weights.clear()
+            self.state.family_semantic_slot_legal_ir_view_embedding_weights.clear()
+            self.state.family_semantic_slot_legal_ir_view_logits.clear()
+            self.state.predicate_argument_embedding_weights.clear()
+            self.state.predicate_argument_family_logits.clear()
+            self.state.predicate_argument_legal_ir_view_logits.clear()
+        elif group == "logic-view":
+            self.state.logic_signature_embedding_weights.clear()
+            self.state.logic_signature_family_logits.clear()
+            self.state.logic_signature_legal_ir_view_logits.clear()
+            self.state.legal_ir_view_logits.clear()
+            self.state.legal_ir_view_embedding_weights.clear()
+            self.state.legal_ir_view_family_logits.clear()
+            self.state.family_legal_ir_view_embedding_weights.clear()
+
+    def _feature_group_keys_for(self, sample: LegalSample, group: str) -> List[str]:
+        if group == "compiler-contract":
+            return self._compiler_contract_feature_keys_for(sample)
+        if group == "decompiler-template":
+            return self._decompiler_surface_template_feature_keys_for(sample)
+        if group == "cycle-consistency":
+            return self._cycle_consistency_feature_keys_for(sample)
+        if group == "semantic-slot":
+            return _unique_preserve_order(
+                [*self._semantic_slot_distribution_for(sample).keys()]
+                + [
+                    f"semantic-slot:{slot.removeprefix('slot:')}"
+                    for slot in self._semantic_slot_distribution_for(sample).keys()
+                ]
+            )
+        if group == "logic-view":
+            return _unique_preserve_order(
+                self._logic_view_contract_feature_keys_for(sample)
+                + self._legal_ir_view_core_feature_keys_for(sample)
+            )
+        return []
+
+    def _feature_group_removed_count(self, sample: LegalSample, group: str) -> int:
+        keys = set(self._feature_group_keys_for(sample, group))
+        prefixes = _feature_group_prefixes(group)
+        count = 0
+        for mapping in (
+            self.state.feature_embedding_weights,
+            self.state.feature_family_logits,
+            self.state.feature_legal_ir_view_logits,
+        ):
+            count += sum(
+                1
+                for key in mapping
+                if key in keys or any(str(key).startswith(prefix) for prefix in prefixes)
+            )
+        if group == "compiler-contract":
+            count += len(self.state.compiler_quality_embedding_weights)
+            count += len(self.state.compiler_quality_family_logits)
+        elif group == "decompiler-template":
+            count += len(self.state.decompiler_plan_embedding_weights)
+            count += len(self.state.decompiler_plan_family_logits)
+            count += len(self.state.decompiler_plan_legal_ir_view_logits)
+        elif group == "cycle-consistency":
+            count += len(self.state.round_trip_signal_embedding_weights)
+            count += len(self.state.round_trip_signal_family_logits)
+            count += len(self.state.round_trip_signal_legal_ir_view_logits)
+        elif group == "semantic-slot":
+            count += len(self.state.semantic_slot_embedding_weights)
+            count += len(self.state.semantic_slot_family_logits)
+            count += len(self.state.semantic_slot_legal_ir_view_logits)
+            count += len(self.state.predicate_argument_embedding_weights)
+        elif group == "logic-view":
+            count += len(self.state.logic_signature_embedding_weights)
+            count += len(self.state.logic_signature_family_logits)
+            count += len(self.state.logic_signature_legal_ir_view_logits)
+            count += len(self.state.legal_ir_view_logits)
+            count += len(self.state.legal_ir_view_embedding_weights)
+            count += len(self.state.legal_ir_view_family_logits)
+        return count
+
+    def _legal_minimal_pair_probes_for_sample(
+        self,
+        sample: LegalSample,
+        *,
+        baseline_metrics: Mapping[str, float],
+        top_k: int,
+    ) -> Dict[str, Dict[str, Any]]:
+        probes: Dict[str, Dict[str, Any]] = {}
+        for group in COMPILER_ACTIONABLE_FEATURE_GROUPS:
+            pair_text, transformation = _minimal_pair_text_for_group(
+                sample.text or sample.normalized_text,
+                group,
+            )
+            if pair_text == (sample.text or sample.normalized_text):
+                continue
+            pair_sample = build_us_code_sample(
+                title=sample.title,
+                section=sample.section,
+                citation=sample.citation,
+                text=pair_text,
+                embedding_model=sample.embedding_model,
+                embedding_vector=stable_mock_embedding(
+                    pair_text,
+                    dimensions=len(sample.embedding_vector),
+                ),
+            )
+            pair_metrics = self._compiler_gap_metrics_for_sample(pair_sample)
+            ablated_pair = self._clone_for_feature_group_ablation(pair_sample, group)
+            ablated_pair_metrics = ablated_pair._compiler_gap_metrics_for_sample(
+                pair_sample
+            )
+            probes[group] = {
+                "ablated_pair_metric_delta": _metric_delta(
+                    ablated_pair_metrics,
+                    pair_metrics,
+                ),
+                "pair_metric_delta": _metric_delta(pair_metrics, baseline_metrics),
+                "pair_sample_hash": _hash_text(pair_sample.sample_id),
+                "sample_memory_used": False,
+                "transformation": transformation,
+            }
+        return dict(list(sorted(probes.items()))[: max(0, int(top_k))])
 
     def _rank_guidance_features(
         self,
@@ -25521,6 +25982,143 @@ def _max_abs_mapping(values: Mapping[str, float]) -> float:
     return max(abs(float(value)) for value in values.values())
 
 
+def _distribution_cosine_similarity(
+    left: Mapping[str, float],
+    right: Mapping[str, float],
+) -> float:
+    names = sorted(set(map(str, left.keys())) | set(map(str, right.keys())))
+    if not names:
+        return 0.0
+    left_vector = [_float_or_zero(left.get(name, 0.0)) for name in names]
+    right_vector = [_float_or_zero(right.get(name, 0.0)) for name in names]
+    return cosine_similarity(left_vector, right_vector)
+
+
+def _metric_delta(
+    changed: Mapping[str, float],
+    baseline: Mapping[str, float],
+) -> Dict[str, float]:
+    return {
+        key: round(
+            _float_or_zero(changed.get(key, 0.0))
+            - _float_or_zero(baseline.get(key, 0.0)),
+            12,
+        )
+        for key in sorted(set(changed) | set(baseline))
+    }
+
+
+def _directional_effect_from_delta(delta: Mapping[str, float]) -> Dict[str, Any]:
+    objective_delta = (
+        _float_or_zero(delta.get("compiler_ir_cross_entropy_excess_loss"))
+        - _float_or_zero(delta.get("compiler_ir_cosine_similarity"))
+        + _float_or_zero(delta.get("learned_view_cross_entropy_excess_loss"))
+        - _float_or_zero(delta.get("learned_view_cosine_similarity"))
+        + _float_or_zero(delta.get("decompiler_embedding_cosine_loss"))
+        + _float_or_zero(delta.get("decompiler_token_loss"))
+        + _float_or_zero(delta.get("formal_validity_penalty"))
+    )
+    return {
+        "direction": "worsens_when_removed"
+        if objective_delta > 0.0
+        else "improves_or_neutral_when_removed",
+        "objective_delta": round(objective_delta, 12),
+        "supports_compiler_action": objective_delta > 0.0,
+    }
+
+
+def _feature_group_prefixes(group: str) -> tuple[str, ...]:
+    if group == "compiler-contract":
+        return ("compiler-contract:", "legal-ir:compiler-contract:", "quality:")
+    if group == "decompiler-template":
+        return ("decompiler-surface:", "decompiler-plan:", "legal-ir:decompiler-surface:")
+    if group == "cycle-consistency":
+        return ("cycle-consistency:", "round-trip:", "legal-ir:cycle-consistency:")
+    if group == "semantic-slot":
+        return (
+            "semantic-slot:",
+            "slot:",
+            "legal-ir:semantic-slot:",
+            "predicate-argument:",
+        )
+    if group == "logic-view":
+        return ("logic-view-contract:", "legal-ir:", "legal-ir-view:", "signature:")
+    return ()
+
+
+def _remove_group_keys(
+    mapping: MutableMapping[str, Any],
+    *,
+    prefixes: Sequence[str],
+    keys: set[str],
+) -> None:
+    for key in list(mapping.keys()):
+        key_text = str(key)
+        if key_text in keys or any(key_text.startswith(prefix) for prefix in prefixes):
+            mapping.pop(key, None)
+
+
+def _minimal_pair_text_for_group(text: str, group: str) -> tuple[str, str]:
+    source = str(text or "").strip()
+    if not source:
+        return source, "empty-text"
+    replacements: Mapping[str, Sequence[tuple[str, str]]] = {
+        "compiler-contract": (
+            (r"\bshall not\b", "may"),
+            (r"\bshall\b", "may"),
+            (r"\bmust\b", "may"),
+            (r"\bmay\b", "shall"),
+        ),
+        "decompiler-template": (
+            (r"\bnotice\b", "written notice"),
+            (r"\blicense\b", "authorization instrument"),
+            (r"\brecords?\b", "official record"),
+        ),
+        "cycle-consistency": (
+            (r"\bbefore\b", "after"),
+            (r"\bafter\b", "before"),
+            (r"\bwithin\b", "not later than"),
+        ),
+        "semantic-slot": (
+            (r"\bagency\b", "Secretary"),
+            (r"\bapplicant\b", "recipient"),
+            (r"\bperson\b", "officer"),
+        ),
+        "logic-view": (
+            (r"\bexcept as provided\b", "subject to"),
+            (r"\bif\b", "unless"),
+            (r"\bsubject to\b", "notwithstanding"),
+        ),
+    }
+    for pattern, replacement in replacements.get(group, ()):
+        changed = re.sub(pattern, replacement, source, count=1, flags=re.IGNORECASE)
+        if changed != source:
+            return changed, f"replace:{pattern}->{replacement}"
+    suffixes = {
+        "compiler-contract": " The agency may grant an exception.",
+        "decompiler-template": " The decision must be stated in writing.",
+        "cycle-consistency": " The action occurs before final notice.",
+        "semantic-slot": " The Secretary records the applicant role.",
+        "logic-view": " If the condition applies, the rule is subject to this section.",
+    }
+    return source + suffixes.get(group, ""), "append:legal-contrastive-cue"
+
+
+def _json_round_floats(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _json_round_floats(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(value, list):
+        return [_json_round_floats(item) for item in value]
+    if isinstance(value, tuple):
+        return [_json_round_floats(item) for item in value]
+    if isinstance(value, float):
+        return round(value, 12) if math.isfinite(value) else 0.0
+    return value
+
+
 def frame_ranking_loss(sample: LegalSample) -> float:
     """Return zero when the selected frame is ranked first, otherwise rank penalty."""
     if not sample.frame_candidates or sample.selected_frame is None:
@@ -25549,6 +26147,7 @@ __all__ = [
     "CodexCallCache",
     "CodexCallDecision",
     "CodexCallGateConfig",
+    "COMPILER_ACTIONABLE_FEATURE_GROUPS",
     "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
     "MODAL_AUTOENCODER_LOW_RANK_BASIS",
     "MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK",

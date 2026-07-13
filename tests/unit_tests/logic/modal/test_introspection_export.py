@@ -297,3 +297,84 @@ def test_export_packet_accepts_production_context_and_appends_jsonl(tmp_path):
     encoded = lines[0]
     assert "decoded_embedding" not in encoded
     assert "feature_embedding_weights" not in encoded
+
+
+def test_export_packet_includes_compact_causal_feature_attribution():
+    sample = _sample()
+    introspection = _introspection(sample.sample_id)
+    introspection["feature_group_ablations"] = {
+        "compiler-contract": {
+            "ablated_metrics": {
+                "compiler_ir_cross_entropy_loss": 0.8,
+                "compiler_ir_cosine_similarity": 0.4,
+            },
+            "directional_effect": {
+                "direction": "worsens_when_removed",
+                "objective_delta": 0.31,
+                "supports_compiler_action": True,
+            },
+            "metric_delta": {
+                "compiler_ir_cross_entropy_excess_loss": 0.31,
+                "compiler_ir_cross_entropy_loss": 0.31,
+                "compiler_ir_cosine_similarity": -0.2,
+                "decompiler_embedding_cosine_loss": 0.0,
+                "decompiler_token_loss": 0.0,
+                "formal_validity": 0.0,
+                "learned_view_cross_entropy_loss": 0.12,
+                "learned_view_cosine_similarity": -0.05,
+            },
+            "removed_feature_count": 3,
+            "sample_memory_used": False,
+        }
+    }
+    introspection["legal_minimal_pair_probes"] = {
+        "compiler-contract": {
+            "ablated_pair_metric_delta": {
+                "compiler_ir_cross_entropy_loss": 0.2,
+            },
+            "pair_metric_delta": {
+                "compiler_ir_cross_entropy_loss": 0.1,
+            },
+            "pair_sample_hash": "pair-hash",
+            "sample_memory_used": False,
+            "transformation": "replace:shall->may",
+        }
+    }
+    introspection["compiler_actionability"] = {
+        "actionability_requires_cohort": True,
+        "compiler_actionable_feature_groups": ["compiler-contract"],
+        "frozen_holdout_sample_count": 1,
+        "sample_memory_used": False,
+    }
+
+    packet = export_introspection_packet(
+        sample,
+        introspection,
+        export_context={
+            "compiler_commit": "abc123",
+            "cycle": 7,
+            "evaluation_role": "guided",
+            "frozen_canary": {"enabled": True, "sample_id": sample.sample_id},
+            "sample_role": "frozen_canary",
+            "state_hash": "state-hash",
+        },
+        config=IntrospectionPacketExportConfig(max_packet_bytes=9000),
+    )
+
+    payload = packet.to_dict()
+    attribution = payload["causal_feature_attribution"]
+    assert validate_disagreement_packet(packet) == []
+    assert payload["evidence_hashes"]["causal_feature_attribution_hash"]
+    assert attribution["sample_memory_used"] is False
+    assert attribution["feature_group_ablations"]["compiler-contract"][
+        "removed_feature_count"
+    ] == 3
+    assert attribution["feature_group_ablations"]["compiler-contract"][
+        "metric_delta"
+    ]["compiler_ir_cross_entropy_loss"] == 0.31
+    assert attribution["legal_minimal_pair_probes"]["compiler-contract"][
+        "pair_sample_hash"
+    ] == "pair-hash"
+    encoded = packet_to_json(packet)
+    assert "ablated_metrics" not in encoded
+    assert "decoded_embedding" not in encoded
