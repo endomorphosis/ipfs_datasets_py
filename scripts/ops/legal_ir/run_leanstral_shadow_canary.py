@@ -49,6 +49,12 @@ GUARDRAIL_CODES = (
     "schema",
     "verifier",
 )
+SYNTHETIC_FIXTURE_PACKET = "synthetic_fixture"
+CACHED_REAL_PACKET = "cached_real_packet"
+LIVE_CANONICAL_STATE_PACKET = "live_canonical_state_packet"
+REAL_PACKET_WITHOUT_PROMOTION_EVIDENCE = "real_packet_without_provider_or_verified_cache"
+UNKNOWN_PACKET_PROVENANCE = "unknown_packet_provenance"
+PRODUCTION_PACKET_KINDS = frozenset({CACHED_REAL_PACKET, LIVE_CANONICAL_STATE_PACKET})
 
 
 @dataclass(frozen=True)
@@ -127,6 +133,7 @@ class ShadowClusterAudit:
     projected_todo: ProjectedTodoSpecificity
     estimated_compiler_impact: Mapping[str, float]
     guardrails: Mapping[str, Any]
+    evidence_provenance: Mapping[str, Any]
     request_id: str = ""
     response_hash: str = ""
 
@@ -144,6 +151,7 @@ class ShadowClusterAudit:
                 key: round(float(value), 6)
                 for key, value in sorted(self.estimated_compiler_impact.items())
             },
+            "evidence_provenance": _json_ready(self.evidence_provenance),
             "formal_severity": round(float(self.formal_severity), 6),
             "guardrails": _json_ready(self.guardrails),
             "heldout_impact": round(float(self.heldout_impact), 6),
@@ -172,6 +180,7 @@ class ShadowCanaryResult:
     promotion_allowed: bool
     promotion_blockers: Sequence[str]
     cache_summary: Mapping[str, int]
+    evidence_provenance_summary: Mapping[str, Any]
     audit_validity: Mapping[str, int]
     theorem_outcomes: Mapping[str, int]
     disagreement_categories: Mapping[str, int]
@@ -193,6 +202,7 @@ class ShadowCanaryResult:
                 key: round(float(value), 6)
                 for key, value in sorted(self.estimated_compiler_impact.items())
             },
+            "evidence_provenance_summary": _json_ready(self.evidence_provenance_summary),
             "no_mutation": _json_ready(self.no_mutation),
             "projected_todo_specificity": {
                 key: round(float(value), 6)
@@ -272,6 +282,7 @@ def run_shadow_canary(
         promotion_allowed=promotion_allowed,
         promotion_blockers=tuple(blockers),
         cache_summary=_cache_summary(audits),
+        evidence_provenance_summary=_evidence_provenance_summary(audits),
         audit_validity=_audit_validity_summary(audits),
         theorem_outcomes=_theorem_summary(audits),
         disagreement_categories=dict(Counter(cat for audit in audits for cat in audit.disagreement_categories)),
@@ -285,6 +296,8 @@ def run_shadow_canary(
             "todo_queue_seeded": False,
             "mode": "shadow",
             "report_only": True,
+            "dry_run_non_production": bool(cfg.dry_run),
+            "production_promotion_eligible": False,
         },
         analysis_error=analysis_error,
     )
@@ -308,6 +321,7 @@ def render_markdown_report(result: ShadowCanaryResult) -> str:
         "",
         f"- Schema: `{result.schema_version}`",
         f"- Mode: `{'dry-run' if result.config.dry_run else 'shadow'}`",
+        f"- Production evidence: `{'non-production dry run' if result.config.dry_run else 'shadow evidence only'}`",
         f"- Selected clusters: {result.selected_cluster_count} of {result.source_record_count} source records",
         f"- Runtime seconds: {result.runtime_seconds:.6f}",
         f"- Promotion allowed: `{str(result.promotion_allowed).lower()}`",
@@ -321,6 +335,9 @@ def render_markdown_report(result: ShadowCanaryResult) -> str:
             "",
             "## Cache Use",
             _markdown_kv(result.cache_summary),
+            "",
+            "## Evidence Provenance",
+            _markdown_kv(result.evidence_provenance_summary),
             "",
             "## Audit Validity",
             _markdown_kv(result.audit_validity),
@@ -357,6 +374,7 @@ def render_markdown_report(result: ShadowCanaryResult) -> str:
                 f"- Score: {audit.rank_score:.6f}; recurrence: {audit.recurrence}; held-out impact: {audit.heldout_impact:.6f}",
                 f"- Cache hit: `{str(audit.cache_hit).lower()}`; LLM called: `{str(audit.llm_called).lower()}`",
                 f"- Audit valid: `{str(audit.audit_valid).lower()}`; verified: `{str(audit.audit_verified).lower()}`",
+                f"- Evidence provenance: `{audit.evidence_provenance.get('dominant_kind', UNKNOWN_PACKET_PROVENANCE)}`; production eligible: `{str(bool(audit.evidence_provenance.get('production_eligible', False))).lower()}`",
                 f"- Guardrails: `{_guardrail_status(audit.guardrails)}`",
                 f"- Projected TODO: `{audit.projected_todo.action}` on `{audit.projected_todo.target_component}`; specificity {audit.projected_todo.specificity_score:.3f}",
             ]
@@ -417,6 +435,13 @@ def build_dry_run_fixture_records(count: int = 8) -> List[Dict[str, Any]]:
                     "stripped_dense_input_key_hashes": [],
                 },
                 "evidence_id": evidence_id,
+                "evidence_provenance": {
+                    "kind": SYNTHETIC_FIXTURE_PACKET,
+                    "metric_observation_kind": "synthetic_projection",
+                    "production_eligible": False,
+                    "generated_by": "run_leanstral_shadow_canary.build_dry_run_fixture_records",
+                    "dry_run_fixture": True,
+                },
                 "heldout_impact_by_surface": {surface: impact},
                 "legal_ir_component_gaps": {f"{surface}.{component}": 0.35 + index * 0.01},
                 "legal_ir_views": {
@@ -451,6 +476,7 @@ def build_dry_run_fixture_records(count: int = 8) -> List[Dict[str, Any]]:
                 "versions": {
                     "canary_manifest_version": "dry-run-fixture-v1",
                     "export_schema_version": "legal-ir-introspection-packet-v1",
+                    "evidence_provenance_kind": SYNTHETIC_FIXTURE_PACKET,
                 },
             }
         )
@@ -541,6 +567,7 @@ def _audit_cluster(
         verification=verification,
         config=config,
     )
+    evidence_provenance = _audit_evidence_provenance(records, audit_result=audit_result)
     theorem_outcomes = _cluster_theorem_outcomes(cluster, records, verification=verification)
     projected = _project_todo_specificity(cluster)
     return ShadowClusterAudit(
@@ -564,6 +591,7 @@ def _audit_cluster(
         projected_todo=projected,
         estimated_compiler_impact=_estimated_cluster_impact(cluster),
         guardrails=guardrails,
+        evidence_provenance=evidence_provenance,
         request_id=audit_result.request.request_id,
         response_hash=audit_result.validation.response_hash,
     )
@@ -578,6 +606,7 @@ def _build_audit_request(
     evidence = {
         "cluster": cluster.to_dict(include_gaps=True),
         "evidence_packets": [_compact_packet(record) for record in records],
+        "evidence_provenance": _records_evidence_provenance(records),
         "guardrail_requirements": list(GUARDRAIL_CODES),
         "no_mutation_contract": {
             "queue_seeded": False,
@@ -831,6 +860,13 @@ def _promotion_decision(
         blockers.append("no_clusters_selected")
     if dry_run:
         blockers.append("dry_run_no_promotion")
+    provenance = _evidence_provenance_summary(audits)
+    if int(provenance.get("real_record_count", 0)) <= 0:
+        blockers.append("no_real_evidence_records")
+    if int(provenance.get("provider_or_verified_cache_audit_count", 0)) <= 0:
+        blockers.append("no_provider_or_verified_cache_evidence")
+    if int(provenance.get("verifier_passed_audit_count", 0)) <= 0:
+        blockers.append("no_verifier_evidence")
     for audit in audits:
         for code in GUARDRAIL_CODES:
             guardrail = _mapping(audit.guardrails.get(code))
@@ -877,6 +913,46 @@ def _cache_summary(audits: Sequence[ShadowClusterAudit]) -> Dict[str, int]:
         "cache_misses": sum(1 for audit in audits if not audit.cache_hit),
         "llm_calls": sum(1 for audit in audits if audit.llm_called),
         "requests": len(audits),
+    }
+
+
+def _evidence_provenance_summary(audits: Sequence[ShadowClusterAudit]) -> Dict[str, Any]:
+    kind_counts: Counter[str] = Counter()
+    real_record_count = 0
+    synthetic_record_count = 0
+    cached_real_count = 0
+    live_canonical_count = 0
+    unknown_count = 0
+    provider_or_verified_cache_count = 0
+    verifier_passed_count = 0
+    production_eligible_count = 0
+    for audit in audits:
+        provenance = _mapping(audit.evidence_provenance)
+        for kind, count in _mapping(provenance.get("packet_kind_counts")).items():
+            kind_counts[str(kind)] += int(_finite_float(count, 0.0))
+        real_record_count += int(_finite_float(provenance.get("real_record_count"), 0.0))
+        synthetic_record_count += int(_finite_float(provenance.get("synthetic_fixture_record_count"), 0.0))
+        cached_real_count += int(_finite_float(provenance.get("cached_real_packet_count"), 0.0))
+        live_canonical_count += int(_finite_float(provenance.get("live_canonical_state_packet_count"), 0.0))
+        unknown_count += int(_finite_float(provenance.get("unknown_record_count"), 0.0))
+        if bool(provenance.get("provider_or_verified_cache", False)):
+            provider_or_verified_cache_count += 1
+        verifier = _mapping(audit.guardrails.get("verifier"))
+        if bool(verifier.get("passed", False)):
+            verifier_passed_count += 1
+        if bool(provenance.get("production_eligible", False)):
+            production_eligible_count += 1
+    return {
+        "cached_real_packet_count": cached_real_count,
+        "dry_run_reports_are_non_production": True,
+        "live_canonical_state_packet_count": live_canonical_count,
+        "packet_kind_counts": dict(sorted(kind_counts.items())),
+        "production_eligible_audit_count": production_eligible_count,
+        "provider_or_verified_cache_audit_count": provider_or_verified_cache_count,
+        "real_record_count": real_record_count,
+        "synthetic_fixture_record_count": synthetic_record_count,
+        "unknown_record_count": unknown_count,
+        "verifier_passed_audit_count": verifier_passed_count,
     }
 
 
@@ -942,11 +1018,139 @@ def _compact_packet(record: Mapping[str, Any]) -> Dict[str, Any]:
     return {
         "anti_copy_evidence": _mapping(root.get("anti_copy_evidence") or root.get("anti_copy")),
         "evidence_id": str(root.get("evidence_id") or ""),
+        "evidence_provenance": _record_declared_provenance(root),
         "legal_ir_views": _mapping(root.get("legal_ir_views")),
         "sample_hashes": _mapping(root.get("sample_hashes")),
         "schema_version": str(root.get("schema_version") or ""),
         "versions": _mapping(root.get("versions")),
     }
+
+
+def _audit_evidence_provenance(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    audit_result: LeanstralAuditResult,
+) -> Dict[str, Any]:
+    packet_kinds = [
+        _record_provenance_kind(
+            record,
+            cache_hit=bool(audit_result.cache_hit),
+            llm_called=bool(audit_result.llm_called),
+        )
+        for record in records
+    ]
+    counts = Counter(packet_kinds)
+    real_count = sum(count for kind, count in counts.items() if kind != SYNTHETIC_FIXTURE_PACKET)
+    provider_or_verified_cache = bool(
+        audit_result.llm_called
+        or (
+            audit_result.cache_hit
+            and audit_result.validation.accepted
+            and audit_result.validation.verified
+        )
+    )
+    dominant_kind = packet_kinds[0] if packet_kinds else UNKNOWN_PACKET_PROVENANCE
+    if packet_kinds:
+        dominant_kind = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+    return {
+        "cached_real_packet_count": counts.get(CACHED_REAL_PACKET, 0),
+        "dominant_kind": dominant_kind,
+        "live_canonical_state_packet_count": counts.get(LIVE_CANONICAL_STATE_PACKET, 0),
+        "packet_kind_counts": dict(sorted(counts.items())),
+        "production_eligible": bool(
+            real_count > 0
+            and provider_or_verified_cache
+            and all(kind in PRODUCTION_PACKET_KINDS for kind in packet_kinds)
+        ),
+        "provider_or_verified_cache": provider_or_verified_cache,
+        "real_record_count": real_count,
+        "record_count": len(records),
+        "synthetic_fixture_record_count": counts.get(SYNTHETIC_FIXTURE_PACKET, 0),
+        "unknown_record_count": counts.get(UNKNOWN_PACKET_PROVENANCE, 0)
+        + counts.get(REAL_PACKET_WITHOUT_PROMOTION_EVIDENCE, 0),
+        "verified_cache_used": bool(
+            audit_result.cache_hit
+            and audit_result.validation.accepted
+            and audit_result.validation.verified
+        ),
+        "live_provider_used": bool(audit_result.llm_called),
+    }
+
+
+def _records_evidence_provenance(records: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
+    counts = Counter(_record_provenance_kind(record) for record in records)
+    return {
+        "packet_kind_counts": dict(sorted(counts.items())),
+        "record_count": len(records),
+        "synthetic_fixture_record_count": counts.get(SYNTHETIC_FIXTURE_PACKET, 0),
+    }
+
+
+def _record_provenance_kind(
+    record: Mapping[str, Any],
+    *,
+    cache_hit: bool = False,
+    llm_called: bool = False,
+) -> str:
+    root = _mapping(record.get("payload")) or dict(record)
+    declared = str(_record_declared_provenance(root).get("kind") or "").strip()
+    if declared:
+        if declared == SYNTHETIC_FIXTURE_PACKET:
+            return SYNTHETIC_FIXTURE_PACKET
+        if declared in PRODUCTION_PACKET_KINDS:
+            return declared
+    if _record_is_synthetic_fixture(root):
+        return SYNTHETIC_FIXTURE_PACKET
+    if llm_called:
+        return LIVE_CANONICAL_STATE_PACKET
+    if cache_hit:
+        return CACHED_REAL_PACKET
+    if _record_has_live_canonical_state(root):
+        return LIVE_CANONICAL_STATE_PACKET
+    if _record_has_canonical_hash_evidence(root):
+        return REAL_PACKET_WITHOUT_PROMOTION_EVIDENCE
+    return UNKNOWN_PACKET_PROVENANCE
+
+
+def _record_declared_provenance(record: Mapping[str, Any]) -> Dict[str, Any]:
+    provenance = _mapping(record.get("evidence_provenance") or record.get("packet_provenance"))
+    if provenance:
+        return provenance
+    versions = _mapping(record.get("versions"))
+    kind = str(versions.get("evidence_provenance_kind") or "").strip()
+    return {"kind": kind} if kind else {}
+
+
+def _record_is_synthetic_fixture(record: Mapping[str, Any]) -> bool:
+    provenance = _record_declared_provenance(record)
+    if str(provenance.get("kind") or "") == SYNTHETIC_FIXTURE_PACKET:
+        return True
+    versions = _mapping(record.get("versions"))
+    evidence_id = str(record.get("evidence_id") or "")
+    hashes = _mapping(record.get("sample_hashes"))
+    sample_id = str(hashes.get("sample_id") or record.get("sample_id") or "")
+    return (
+        str(versions.get("canary_manifest_version") or "") == "dry-run-fixture-v1"
+        or evidence_id.startswith("dry-run-")
+        or sample_id.startswith("dry-run-")
+    )
+
+
+def _record_has_live_canonical_state(record: Mapping[str, Any]) -> bool:
+    versions = _mapping(record.get("versions"))
+    return bool(
+        str(versions.get("state_version") or "").strip()
+        and _record_has_canonical_hash_evidence(record)
+    )
+
+
+def _record_has_canonical_hash_evidence(record: Mapping[str, Any]) -> bool:
+    hashes = _mapping(record.get("sample_hashes"))
+    views = _mapping(record.get("legal_ir_views"))
+    canonical = _mapping(views.get("canonical"))
+    span_hashes = _mapping(hashes.get("source_span_hashes") or record.get("source_span_hashes"))
+    modal_hash = str(hashes.get("modal_ir_hash") or canonical.get("modal_ir_hash") or "")
+    return bool(str(record.get("evidence_id") or "").strip() and modal_hash and span_hashes)
 
 
 def _proof_obligation_ids(cluster: LegalIRGapCluster) -> tuple[str, ...]:

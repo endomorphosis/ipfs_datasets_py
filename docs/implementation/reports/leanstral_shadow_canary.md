@@ -2,16 +2,29 @@
 
 - Schema: `legal-ir-leanstral-shadow-canary-v1`
 - Mode: `dry-run`
+- Production evidence: `non-production dry run`
 - Selected clusters: 17 of 50 source records
-- Runtime seconds: 0.013056
+- Runtime seconds: 0.014198
 - Promotion allowed: `false`
-- Promotion blockers: `dry_run_no_promotion`, `verifier_guardrail_not_satisfied`
+- Promotion blockers: `dry_run_no_promotion`, `no_provider_or_verified_cache_evidence`, `no_real_evidence_records`, `no_verifier_evidence`, `verifier_guardrail_not_satisfied`
 
 ## Cache Use
 - `cache_hits`: 0
 - `cache_misses`: 17
 - `llm_calls`: 0
 - `requests`: 17
+
+## Evidence Provenance
+- `cached_real_packet_count`: 0
+- `dry_run_reports_are_non_production`: true
+- `live_canonical_state_packet_count`: 0
+- `packet_kind_counts`: {"synthetic_fixture": 107}
+- `production_eligible_audit_count`: 0
+- `provider_or_verified_cache_audit_count`: 0
+- `real_record_count`: 0
+- `synthetic_fixture_record_count`: 107
+- `unknown_record_count`: 0
+- `verifier_passed_audit_count`: 0
 
 ## Audit Validity
 - `invalid`: 17
@@ -72,7 +85,9 @@
 - `total_projected_impact`: 11.910674605682383
 
 ## No-Mutation Contract
+- `dry_run_non_production`: true
 - `mode`: "shadow"
+- `production_promotion_eligible`: false
 - `queue_seeded_count`: 0
 - `report_only`: true
 - `source_mutation_count`: 0
@@ -88,6 +103,7 @@
 - Score: 0.909571; recurrence: 7; held-out impact: 0.875000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `repair_multiview_legal_ir_prover_gate` on `external_provers.router`; specificity 1.000
 
@@ -98,6 +114,7 @@
 - Score: 0.906186; recurrence: 7; held-out impact: 0.920000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `repair_deontic_bridge_quality_gate` on `deontic.ir`; specificity 1.000
 
@@ -108,6 +125,7 @@
 - Score: 0.897571; recurrence: 7; held-out impact: 0.875000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `repair_multiview_legal_ir_prover_gate` on `external_provers.router`; specificity 1.000
 
@@ -118,6 +136,7 @@
 - Score: 0.887071; recurrence: 7; held-out impact: 0.875000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `repair_multiview_legal_ir_prover_gate` on `external_provers.router`; specificity 1.000
 
@@ -128,6 +147,7 @@
 - Score: 0.879786; recurrence: 7; held-out impact: 0.920000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `repair_deontic_bridge_quality_gate` on `deontic.ir`; specificity 1.000
 
@@ -138,6 +158,7 @@
 - Score: 0.835090; recurrence: 6; held-out impact: 0.830000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `repair_multiview_legal_ir_graph_projection` on `knowledge_graphs.neo4j_compat`; specificity 1.000
 
@@ -148,6 +169,7 @@
 - Score: 0.817857; recurrence: 6; held-out impact: 0.785000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `refine_semantic_decompiler_reconstruction` on `modal.ir_decompiler`; specificity 1.000
 
@@ -158,6 +180,7 @@
 - Score: 0.800624; recurrence: 6; held-out impact: 0.740000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `review_temporal_legal_ir_gap` on `modal.temporal`; specificity 1.000
 
@@ -168,6 +191,7 @@
 - Score: 0.783390; recurrence: 6; held-out impact: 0.695000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `review_provenance_legal_ir_gap` on `modal.source_provenance`; specificity 1.000
 
@@ -178,6 +202,7 @@
 - Score: 0.766157; recurrence: 6; held-out impact: 0.650000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `repair_flogic_ontology_constraints` on `modal.frame_logic`; specificity 1.000
 
@@ -188,6 +213,7 @@
 - Score: 0.756690; recurrence: 6; held-out impact: 0.695000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `review_provenance_legal_ir_gap` on `modal.source_provenance`; specificity 1.000
 
@@ -198,6 +224,7 @@
 - Score: 0.756224; recurrence: 6; held-out impact: 0.740000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `review_temporal_legal_ir_gap` on `modal.temporal`; specificity 1.000
 
@@ -208,6 +235,7 @@
 - Score: 0.748924; recurrence: 6; held-out impact: 0.605000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `review_event_calculus_legal_ir_gap` on `event_calculus.core`; specificity 1.000
 
@@ -218,6 +246,7 @@
 - Score: 0.748557; recurrence: 6; held-out impact: 0.785000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `refine_semantic_decompiler_reconstruction` on `modal.ir_decompiler`; specificity 1.000
 
@@ -228,6 +257,7 @@
 - Score: 0.713957; recurrence: 6; held-out impact: 0.650000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `repair_flogic_ontology_constraints` on `modal.frame_logic`; specificity 1.000
 
@@ -238,6 +268,7 @@
 - Score: 0.707224; recurrence: 6; held-out impact: 0.605000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `review_event_calculus_legal_ir_gap` on `event_calculus.core`; specificity 1.000
 
@@ -248,6 +279,7 @@
 - Score: 0.467290; recurrence: 6; held-out impact: 0.000000
 - Cache hit: `false`; LLM called: `false`
 - Audit valid: `false`; verified: `false`
+- Evidence provenance: `synthetic_fixture`; production eligible: `false`
 - Guardrails: `failed:verifier`
 - Projected TODO: `refine_semantic_decompiler_reconstruction` on `modal.ir_decompiler`; specificity 1.000
 
@@ -283,6 +315,22 @@
         "promotion_value": 0.817875,
         "rank_score": 0.909571,
         "recurrence_norm": 0.528874
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 7
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 7,
+        "synthetic_fixture_record_count": 7,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 1.0,
       "guardrails": {
@@ -339,7 +387,7 @@
       "rank": 1,
       "rank_score": 0.909571,
       "recurrence": 7,
-      "request_id": "leanstral-audit-13ceeb6f34699cc9",
+      "request_id": "leanstral-audit-d679149d078d7b14",
       "response_hash": "",
       "semantic_family": "prover",
       "semantic_signature": "prover:formal_prover_gap:prover->temporal:route_failure_ratio",
@@ -373,6 +421,22 @@
         "promotion_value": 0.83694,
         "rank_score": 0.906186,
         "recurrence_norm": 0.528874
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 7
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 7,
+        "synthetic_fixture_record_count": 7,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.95,
       "guardrails": {
@@ -431,7 +495,7 @@
       "rank": 2,
       "rank_score": 0.906186,
       "recurrence": 7,
-      "request_id": "leanstral-audit-500be289957cd333",
+      "request_id": "leanstral-audit-41052c65a19307be",
       "response_hash": "",
       "semantic_family": "deontic",
       "semantic_signature": "deontic:compiler_component_gap:deontic->temporal:obligation_scope",
@@ -465,6 +529,22 @@
         "promotion_value": 0.813675,
         "rank_score": 0.897571,
         "recurrence_norm": 0.528874
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 7
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 7,
+        "synthetic_fixture_record_count": 7,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 1.0,
       "guardrails": {
@@ -521,7 +601,7 @@
       "rank": 3,
       "rank_score": 0.897571,
       "recurrence": 7,
-      "request_id": "leanstral-audit-91de8fe44eac467b",
+      "request_id": "leanstral-audit-02d81cd395d4b6e5",
       "response_hash": "",
       "semantic_family": "prover",
       "semantic_signature": "prover:compiler_component_gap:prover->temporal:failure_ratio",
@@ -555,6 +635,22 @@
         "promotion_value": 0.81,
         "rank_score": 0.887071,
         "recurrence_norm": 0.528874
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 7
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 7,
+        "synthetic_fixture_record_count": 7,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 1.0,
       "guardrails": {
@@ -611,7 +707,7 @@
       "rank": 4,
       "rank_score": 0.887071,
       "recurrence": 7,
-      "request_id": "leanstral-audit-ed77b5cc6b4b64fc",
+      "request_id": "leanstral-audit-8bc9a948dcf5d1f9",
       "response_hash": "",
       "semantic_family": "prover",
       "semantic_signature": "prover:synthesis_focus_gap:prover->temporal:failure_ratio",
@@ -645,6 +741,22 @@
         "promotion_value": 0.8277,
         "rank_score": 0.879786,
         "recurrence_norm": 0.528874
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 7
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 7,
+        "synthetic_fixture_record_count": 7,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.86,
       "guardrails": {
@@ -703,7 +815,7 @@
       "rank": 5,
       "rank_score": 0.879786,
       "recurrence": 7,
-      "request_id": "leanstral-audit-41b990bbf8fac9c3",
+      "request_id": "leanstral-audit-774cec4bf2c49720",
       "response_hash": "",
       "semantic_family": "deontic",
       "semantic_signature": "deontic:synthesis_focus_gap:deontic->temporal:obligation_scope",
@@ -737,6 +849,22 @@
         "promotion_value": 0.764764,
         "rank_score": 0.83509,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.95,
       "guardrails": {
@@ -792,7 +920,7 @@
       "rank": 6,
       "rank_score": 0.83509,
       "recurrence": 6,
-      "request_id": "leanstral-audit-eaf6119a8d5abbe7",
+      "request_id": "leanstral-audit-119984953578a7d7",
       "response_hash": "",
       "semantic_family": "knowledge_graph",
       "semantic_signature": "knowledge_graph:compiler_component_gap:knowledge_graph->temporal:edge_role",
@@ -826,6 +954,22 @@
         "promotion_value": 0.738483,
         "rank_score": 0.817857,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.95,
       "guardrails": {
@@ -886,7 +1030,7 @@
       "rank": 7,
       "rank_score": 0.817857,
       "recurrence": 6,
-      "request_id": "leanstral-audit-82d0c132a9445c32",
+      "request_id": "leanstral-audit-995ee1a793172365",
       "response_hash": "",
       "semantic_family": "decompiler",
       "semantic_signature": "decompiler:compiler_component_gap:decompiler->temporal:exception_reconstruction",
@@ -920,6 +1064,22 @@
         "promotion_value": 0.712201,
         "rank_score": 0.800624,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.95,
       "guardrails": {
@@ -976,7 +1136,7 @@
       "rank": 8,
       "rank_score": 0.800624,
       "recurrence": 6,
-      "request_id": "leanstral-audit-1751f26a79d5243e",
+      "request_id": "leanstral-audit-cbc8617258b2c91f",
       "response_hash": "",
       "semantic_family": "temporal",
       "semantic_signature": "temporal:compiler_component_gap:temporal->deontic:deadline_order",
@@ -1010,6 +1170,22 @@
         "promotion_value": 0.685919,
         "rank_score": 0.78339,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.95,
       "guardrails": {
@@ -1065,7 +1241,7 @@
       "rank": 9,
       "rank_score": 0.78339,
       "recurrence": 6,
-      "request_id": "leanstral-audit-e761d59b49688b1a",
+      "request_id": "leanstral-audit-160d79a07e72a1c0",
       "response_hash": "",
       "semantic_family": "provenance",
       "semantic_signature": "provenance:compiler_component_gap:provenance->temporal:span_hash",
@@ -1099,6 +1275,22 @@
         "promotion_value": 0.659638,
         "rank_score": 0.766157,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.95,
       "guardrails": {
@@ -1156,7 +1348,7 @@
       "rank": 10,
       "rank_score": 0.766157,
       "recurrence": 6,
-      "request_id": "leanstral-audit-ed7cb28f5ca09f6c",
+      "request_id": "leanstral-audit-48587f26a4b0c7e1",
       "response_hash": "",
       "semantic_family": "frame_logic",
       "semantic_signature": "frame_logic:compiler_component_gap:frame_logic->temporal:slot_alignment",
@@ -1190,6 +1382,22 @@
         "promotion_value": 0.676574,
         "rank_score": 0.75669,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.86,
       "guardrails": {
@@ -1245,7 +1453,7 @@
       "rank": 11,
       "rank_score": 0.75669,
       "recurrence": 6,
-      "request_id": "leanstral-audit-8259aca973e70314",
+      "request_id": "leanstral-audit-029a499de6dc3e33",
       "response_hash": "",
       "semantic_family": "provenance",
       "semantic_signature": "provenance:synthesis_focus_gap:provenance->temporal:span_hash",
@@ -1279,6 +1487,22 @@
         "promotion_value": 0.696661,
         "rank_score": 0.756224,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.76,
       "guardrails": {
@@ -1335,7 +1559,7 @@
       "rank": 12,
       "rank_score": 0.756224,
       "recurrence": 6,
-      "request_id": "leanstral-audit-1d359b9c617c1f1d",
+      "request_id": "leanstral-audit-25d94145f1228132",
       "response_hash": "",
       "semantic_family": "temporal",
       "semantic_signature": "temporal:synthesis_focus_gap:temporal->deontic:deadline_order",
@@ -1369,6 +1593,22 @@
         "promotion_value": 0.633356,
         "rank_score": 0.748924,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.95,
       "guardrails": {
@@ -1425,7 +1665,7 @@
       "rank": 13,
       "rank_score": 0.748924,
       "recurrence": 6,
-      "request_id": "leanstral-audit-1bc54cf5c741b718",
+      "request_id": "leanstral-audit-2b4ff0a83b85d34f",
       "response_hash": "",
       "semantic_family": "event_calculus",
       "semantic_signature": "event_calculus:compiler_component_gap:event_calculus->temporal:fluent_interval",
@@ -1459,6 +1699,22 @@
         "promotion_value": 0.714228,
         "rank_score": 0.748557,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.62,
       "guardrails": {
@@ -1519,7 +1775,7 @@
       "rank": 14,
       "rank_score": 0.748557,
       "recurrence": 6,
-      "request_id": "leanstral-audit-2ddf72992436057e",
+      "request_id": "leanstral-audit-08120a47ff8e6cdb",
       "response_hash": "",
       "semantic_family": "decompiler",
       "semantic_signature": "decompiler:synthesis_focus_gap:decompiler->temporal:exception_reconstruction",
@@ -1553,6 +1809,22 @@
         "promotion_value": 0.641368,
         "rank_score": 0.713957,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.72,
       "guardrails": {
@@ -1610,7 +1882,7 @@
       "rank": 15,
       "rank_score": 0.713957,
       "recurrence": 6,
-      "request_id": "leanstral-audit-2b782aafda5f3951",
+      "request_id": "leanstral-audit-3a4055113fcefc6a",
       "response_hash": "",
       "semantic_family": "frame_logic",
       "semantic_signature": "frame_logic:synthesis_focus_gap:frame_logic->temporal:slot_alignment",
@@ -1644,6 +1916,22 @@
         "promotion_value": 0.618761,
         "rank_score": 0.707224,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.78,
       "guardrails": {
@@ -1700,7 +1988,7 @@
       "rank": 16,
       "rank_score": 0.707224,
       "recurrence": 6,
-      "request_id": "leanstral-audit-481d2d510df7df03",
+      "request_id": "leanstral-audit-afe141b64e029fa9",
       "response_hash": "",
       "semantic_family": "event_calculus",
       "semantic_signature": "event_calculus:synthesis_focus_gap:event_calculus->temporal:fluent_interval",
@@ -1734,6 +2022,22 @@
         "promotion_value": 0.262534,
         "rank_score": 0.46729,
         "recurrence_norm": 0.494913
+      },
+      "evidence_provenance": {
+        "cached_real_packet_count": 0,
+        "dominant_kind": "synthetic_fixture",
+        "live_canonical_state_packet_count": 0,
+        "live_provider_used": false,
+        "packet_kind_counts": {
+          "synthetic_fixture": 6
+        },
+        "production_eligible": false,
+        "provider_or_verified_cache": false,
+        "real_record_count": 0,
+        "record_count": 6,
+        "synthetic_fixture_record_count": 6,
+        "unknown_record_count": 0,
+        "verified_cache_used": false
       },
       "formal_severity": 0.62,
       "guardrails": {
@@ -1794,7 +2098,7 @@
       "rank": 17,
       "rank_score": 0.46729,
       "recurrence": 6,
-      "request_id": "leanstral-audit-00d9c8eeca7b5522",
+      "request_id": "leanstral-audit-5fc0d5f49cdd5abc",
       "response_hash": "",
       "semantic_family": "decompiler",
       "semantic_signature": "decompiler:synthesis_focus_gap:knowledge_graph->temporal:edge_role",
@@ -1868,8 +2172,24 @@
     "top_promotion_value": 0.83694,
     "total_projected_impact": 11.910675
   },
+  "evidence_provenance_summary": {
+    "cached_real_packet_count": 0,
+    "dry_run_reports_are_non_production": true,
+    "live_canonical_state_packet_count": 0,
+    "packet_kind_counts": {
+      "synthetic_fixture": 107
+    },
+    "production_eligible_audit_count": 0,
+    "provider_or_verified_cache_audit_count": 0,
+    "real_record_count": 0,
+    "synthetic_fixture_record_count": 107,
+    "unknown_record_count": 0,
+    "verifier_passed_audit_count": 0
+  },
   "no_mutation": {
+    "dry_run_non_production": true,
     "mode": "shadow",
+    "production_promotion_eligible": false,
     "queue_seeded_count": 0,
     "report_only": true,
     "source_mutation_count": 0,
@@ -1884,9 +2204,12 @@
   "promotion_allowed": false,
   "promotion_blockers": [
     "dry_run_no_promotion",
+    "no_provider_or_verified_cache_evidence",
+    "no_real_evidence_records",
+    "no_verifier_evidence",
     "verifier_guardrail_not_satisfied"
   ],
-  "runtime_seconds": 0.013056,
+  "runtime_seconds": 0.014198,
   "schema_version": "legal-ir-leanstral-shadow-canary-v1",
   "selected_cluster_count": 17,
   "source_record_count": 50,

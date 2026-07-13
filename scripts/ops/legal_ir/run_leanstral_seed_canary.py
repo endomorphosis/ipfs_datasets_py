@@ -274,6 +274,8 @@ class SeededPairedTask:
     dry_run: bool
     audit_verified: bool
     guardrails: Mapping[str, Any]
+    evidence_provenance: Mapping[str, Any]
+    paired_metrics_provenance: Mapping[str, Any]
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -285,10 +287,12 @@ class SeededPairedTask:
             "control_task": _json_ready(self.control_task),
             "dry_run": self.dry_run,
             "evidence_ids": list(self.evidence_ids),
+            "evidence_provenance": _json_ready(self.evidence_provenance),
             "guardrails": _json_ready(self.guardrails),
             "leanstral_metrics": self.leanstral_metrics.to_dict(),
             "leanstral_task": _json_ready(self.leanstral_task),
             "pair_id": self.pair_id,
+            "paired_metrics_provenance": _json_ready(self.paired_metrics_provenance),
             "rank": self.rank,
             "sample_ids": list(self.sample_ids),
             "seeded": self.seeded,
@@ -314,11 +318,14 @@ class SeedCanaryResult:
     hard_guardrail_regressions: Sequence[str]
     throughput_materially_improved: bool
     throughput_improvement: float
+    projected_throughput_improvement: float
     promotion_allowed: bool
     promotion_blockers: Sequence[str]
     todo_queue_path: str
     runtime_seconds: float
     dry_run_no_mutation: Mapping[str, Any]
+    evidence_provenance_summary: Mapping[str, Any]
+    paired_metrics_provenance_summary: Mapping[str, Any]
     shadow_summary: Mapping[str, Any]
 
     def to_dict(self) -> Dict[str, Any]:
@@ -329,9 +336,14 @@ class SeedCanaryResult:
             },
             "config": self.config.to_dict(),
             "dry_run_no_mutation": _json_ready(self.dry_run_no_mutation),
+            "evidence_provenance_summary": _json_ready(self.evidence_provenance_summary),
             "hard_guardrail_regressions": list(self.hard_guardrail_regressions),
+            "paired_metrics_provenance_summary": _json_ready(self.paired_metrics_provenance_summary),
             "promotion_allowed": self.promotion_allowed,
             "promotion_blockers": list(self.promotion_blockers),
+            "projected_throughput_improvement": _stable_float(
+                self.projected_throughput_improvement
+            ),
             "runtime_seconds": _stable_float(self.runtime_seconds),
             "schema_version": self.schema_version,
             "seeded_task_count": self.seeded_task_count,
@@ -414,10 +426,19 @@ def run_seed_canary(
     regressions = tuple(
         metric for metric, comparison in aggregate.items() if comparison.regressed
     )
-    throughput_improvement = _throughput_improvement(aggregate)
+    projected_throughput_improvement = _throughput_improvement(aggregate)
+    observed_tasks = [
+        task for task in tasks if _paired_metrics_observed_improvement_eligible(task)
+    ]
+    observed_aggregate = _aggregate_comparisons(observed_tasks)
+    throughput_improvement = (
+        _throughput_improvement(observed_aggregate) if observed_tasks else 0.0
+    )
     throughput_materially_improved = (
         throughput_improvement >= float(cfg.material_throughput_improvement)
     )
+    evidence_provenance_summary = _evidence_provenance_summary(tasks)
+    paired_metrics_provenance_summary = _paired_metrics_provenance_summary(tasks)
     promotion_allowed, blockers = _promotion_decision(
         cfg,
         tasks=tasks,
@@ -425,6 +446,9 @@ def run_seed_canary(
         regressions=regressions,
         throughput_materially_improved=throughput_materially_improved,
         selected_count=len(tasks),
+        seeded_count=seeded_count if not cfg.dry_run else 0,
+        evidence_provenance_summary=evidence_provenance_summary,
+        paired_metrics_provenance_summary=paired_metrics_provenance_summary,
     )
     runtime = time.monotonic() - started
     return SeedCanaryResult(
@@ -439,6 +463,7 @@ def run_seed_canary(
         hard_guardrail_regressions=regressions,
         throughput_materially_improved=throughput_materially_improved,
         throughput_improvement=throughput_improvement,
+        projected_throughput_improvement=projected_throughput_improvement,
         promotion_allowed=promotion_allowed,
         promotion_blockers=tuple(blockers),
         todo_queue_path=str(cfg.todo_queue_path),
@@ -449,10 +474,15 @@ def run_seed_canary(
             "source_mutation_count": 0,
             "max_todos": max_todos,
             "verified_candidates": sum(1 for task in tasks if task.verified),
+            "dry_run_non_production": bool(cfg.dry_run),
+            "synthetic_metrics_are_projection_only": True,
         },
+        evidence_provenance_summary=evidence_provenance_summary,
+        paired_metrics_provenance_summary=paired_metrics_provenance_summary,
         shadow_summary={
             "audit_validity": dict(shadow.audit_validity),
             "cache_summary": dict(shadow.cache_summary),
+            "evidence_provenance_summary": dict(shadow.evidence_provenance_summary),
             "promotion_allowed": shadow.promotion_allowed,
             "promotion_blockers": list(shadow.promotion_blockers),
             "selected_cluster_count": shadow.selected_cluster_count,
@@ -478,12 +508,14 @@ def render_markdown_report(result: SeedCanaryResult) -> str:
         "",
         f"- Schema: `{result.schema_version}`",
         f"- Mode: `{'dry-run' if result.config.dry_run else 'seed'}`",
+        f"- Production evidence: `{'non-production dry run' if result.config.dry_run else 'seed promotion evidence'}`",
         f"- Selected tasks: {result.selected_task_count} of {result.source_record_count} source records",
         f"- Verified tasks: {result.verified_task_count}",
         f"- Seeded tasks: {result.seeded_task_count}",
         f"- Runtime seconds: {result.runtime_seconds:.6f}",
         f"- Production promotion allowed: `{str(result.promotion_allowed).lower()}`",
-        f"- Throughput materially improved: `{str(result.throughput_materially_improved).lower()}` ({result.throughput_improvement:.6f})",
+        f"- Observed throughput materially improved: `{str(result.throughput_materially_improved).lower()}` ({result.throughput_improvement:.6f})",
+        f"- Synthetic/projected throughput improvement: `{result.projected_throughput_improvement:.6f}`",
     ]
     if result.promotion_blockers:
         lines.append(
@@ -502,6 +534,12 @@ def render_markdown_report(result: SeedCanaryResult) -> str:
             "## Paired Evaluation Metrics",
             _markdown_comparisons(result.aggregate_comparisons),
             "",
+            "## Evidence Provenance",
+            _markdown_kv(result.evidence_provenance_summary),
+            "",
+            "## Paired Metrics Provenance",
+            _markdown_kv(result.paired_metrics_provenance_summary),
+            "",
             "## Hard Guardrails",
             _markdown_guardrails(result),
             "",
@@ -510,6 +548,7 @@ def render_markdown_report(result: SeedCanaryResult) -> str:
                 {
                     "material_threshold": result.config.material_throughput_improvement,
                     "observed_improvement": result.throughput_improvement,
+                    "synthetic_projected_improvement": result.projected_throughput_improvement,
                     "throughput_materially_improved": result.throughput_materially_improved,
                 }
             ),
@@ -546,6 +585,7 @@ def render_markdown_report(result: SeedCanaryResult) -> str:
                 f"- Surface: `{task.compiler_surface}`",
                 f"- Family: `{task.semantic_family}`",
                 f"- Verified: `{str(task.verified).lower()}`; seeded: `{str(task.seeded).lower()}`; audit verified: `{str(task.audit_verified).lower()}`",
+                f"- Evidence provenance: `{task.evidence_provenance.get('dominant_kind', 'unknown_packet_provenance')}`; metrics: `{task.paired_metrics_provenance.get('kind', 'unknown_metrics')}`",
                 f"- Leanstral TODO: `{task.leanstral_task.get('todo_id', '')}`",
                 f"- Control TODO: `{task.control_task.get('todo_id', '')}`",
                 f"- Regressions: `{', '.join(_task_regressions(task)) or 'none'}`",
@@ -581,10 +621,17 @@ def _paired_task_from_shadow_audit(
     )
     evidence_ids = record_evidence_ids or tuple(_extract_evidence_ids_from_audit(audit))
     sample_ids = tuple(_extract_sample_ids_from_audit(audit, records))
-    leanstral_metrics, control_metrics = _paired_metrics(
+    leanstral_metrics, control_metrics, metrics_generated = _paired_metrics(
         audit,
         records=records,
         rank=rank,
+    )
+    evidence_provenance = _mapping(getattr(audit, "evidence_provenance", {}))
+    metrics_provenance = _paired_metrics_provenance(
+        records,
+        evidence_provenance=evidence_provenance,
+        generated=metrics_generated,
+        dry_run=config.dry_run,
     )
     comparisons = tuple(compare_metrics(leanstral_metrics, control_metrics).values())
     pair_id = "leanstral-seed-pair-" + canonical_sha256(
@@ -637,6 +684,8 @@ def _paired_task_from_shadow_audit(
         dry_run=config.dry_run,
         audit_verified=bool(audit.audit_verified),
         guardrails=audit.guardrails,
+        evidence_provenance=evidence_provenance,
+        paired_metrics_provenance=metrics_provenance,
     )
 
 
@@ -684,11 +733,11 @@ def _paired_metrics(
     *,
     records: Sequence[Mapping[str, Any]],
     rank: int,
-) -> tuple[PairedEvaluationMetrics, PairedEvaluationMetrics]:
+) -> tuple[PairedEvaluationMetrics, PairedEvaluationMetrics, bool]:
     explicit_lean = _first_metrics(records, "leanstral")
     explicit_control = _first_metrics(records, "control")
     if explicit_lean is not None and explicit_control is not None:
-        return explicit_lean, explicit_control
+        return explicit_lean, explicit_control, False
 
     rank_score = max(0.0, min(1.0, float(audit.rank_score)))
     impact = max(0.0, min(1.0, float(audit.heldout_impact)))
@@ -727,7 +776,43 @@ def _paired_metrics(
         cycle_time_seconds=control_cycle,
         state_to_patch_lag=control_lag,
     )
-    return lean, control
+    return lean, control, True
+
+
+def _paired_metrics_provenance(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    evidence_provenance: Mapping[str, Any],
+    generated: bool,
+    dry_run: bool,
+) -> Dict[str, Any]:
+    real_records = int(_finite_float(evidence_provenance.get("real_record_count"), 0.0))
+    production_evidence = bool(evidence_provenance.get("production_eligible", False))
+    synthetic_records = int(
+        _finite_float(evidence_provenance.get("synthetic_fixture_record_count"), 0.0)
+    )
+    if generated:
+        kind = "synthetic_projection"
+        observed_eligible = False
+    elif synthetic_records > 0 or real_records == 0:
+        kind = "synthetic_fixture_paired_metrics"
+        observed_eligible = False
+    elif dry_run:
+        kind = "dry_run_cached_pair_metrics"
+        observed_eligible = False
+    elif production_evidence and real_records > 0:
+        kind = "observed_real_paired_metrics"
+        observed_eligible = True
+    else:
+        kind = "real_metrics_without_provider_or_verified_cache"
+        observed_eligible = False
+    return {
+        "kind": kind,
+        "metric_record_count": len(records),
+        "observed_improvement_eligible": observed_eligible,
+        "production_evidence_eligible": bool(production_evidence),
+        "synthetic_projection": bool(generated or synthetic_records > 0),
+    }
 
 
 def _first_metrics(
@@ -873,6 +958,9 @@ def _promotion_decision(
     regressions: Sequence[str],
     throughput_materially_improved: bool,
     selected_count: int,
+    seeded_count: int,
+    evidence_provenance_summary: Mapping[str, Any],
+    paired_metrics_provenance_summary: Mapping[str, Any],
 ) -> tuple[bool, List[str]]:
     blockers: List[str] = []
     if selected_count == 0:
@@ -881,6 +969,16 @@ def _promotion_decision(
         blockers.append("seed_task_limit_exceeded")
     if config.dry_run:
         blockers.append("dry_run_no_production_promotion")
+    if seeded_count <= 0:
+        blockers.append("no_seeded_tasks")
+    if int(_finite_float(evidence_provenance_summary.get("real_record_count"), 0.0)) <= 0:
+        blockers.append("no_real_evidence_records")
+    if int(_finite_float(evidence_provenance_summary.get("provider_or_verified_cache_task_count"), 0.0)) <= 0:
+        blockers.append("no_provider_or_verified_cache_evidence")
+    if int(_finite_float(evidence_provenance_summary.get("verifier_passed_task_count"), 0.0)) <= 0:
+        blockers.append("no_verifier_evidence")
+    if int(_finite_float(paired_metrics_provenance_summary.get("observed_improvement_task_count"), 0.0)) <= 0:
+        blockers.append("no_observed_paired_metrics")
     if regressions:
         blockers.extend(f"{metric}_regressed" for metric in regressions)
     if any(not task.verified for task in tasks):
@@ -898,6 +996,69 @@ def _promotion_decision(
     if missing:
         blockers.append("paired_metric_coverage_incomplete")
     return not blockers, sorted(set(blockers))
+
+
+def _evidence_provenance_summary(tasks: Sequence[SeededPairedTask]) -> Dict[str, Any]:
+    kind_counts: Counter[str] = Counter()
+    real_record_count = 0
+    synthetic_record_count = 0
+    provider_or_verified_cache_count = 0
+    verifier_passed_count = 0
+    production_eligible_count = 0
+    seeded_production_eligible_count = 0
+    for task in tasks:
+        provenance = _mapping(task.evidence_provenance)
+        for kind, count in _mapping(provenance.get("packet_kind_counts")).items():
+            kind_counts[str(kind)] += int(_finite_float(count, 0.0))
+        real_record_count += int(_finite_float(provenance.get("real_record_count"), 0.0))
+        synthetic_record_count += int(_finite_float(provenance.get("synthetic_fixture_record_count"), 0.0))
+        if bool(provenance.get("provider_or_verified_cache", False)):
+            provider_or_verified_cache_count += 1
+        verifier = _mapping(task.guardrails.get("verifier"))
+        if bool(verifier.get("passed", False)):
+            verifier_passed_count += 1
+        if bool(provenance.get("production_eligible", False)):
+            production_eligible_count += 1
+            if task.seeded:
+                seeded_production_eligible_count += 1
+    return {
+        "packet_kind_counts": dict(sorted(kind_counts.items())),
+        "production_eligible_task_count": production_eligible_count,
+        "provider_or_verified_cache_task_count": provider_or_verified_cache_count,
+        "real_record_count": real_record_count,
+        "seeded_production_eligible_task_count": seeded_production_eligible_count,
+        "synthetic_fixture_record_count": synthetic_record_count,
+        "verifier_passed_task_count": verifier_passed_count,
+    }
+
+
+def _paired_metrics_provenance_summary(tasks: Sequence[SeededPairedTask]) -> Dict[str, Any]:
+    counts = Counter(
+        str(_mapping(task.paired_metrics_provenance).get("kind") or "unknown_metrics")
+        for task in tasks
+    )
+    observed_count = sum(
+        1
+        for task in tasks
+        if _paired_metrics_observed_improvement_eligible(task)
+    )
+    synthetic_projection_count = sum(
+        1
+        for task in tasks
+        if bool(_mapping(task.paired_metrics_provenance).get("synthetic_projection", False))
+    )
+    return {
+        "metric_kind_counts": dict(sorted(counts.items())),
+        "observed_improvement_task_count": observed_count,
+        "synthetic_projection_task_count": synthetic_projection_count,
+        "synthetic_metrics_reported_as_observed": False,
+    }
+
+
+def _paired_metrics_observed_improvement_eligible(task: SeededPairedTask) -> bool:
+    return bool(
+        _mapping(task.paired_metrics_provenance).get("observed_improvement_eligible", False)
+    )
 
 
 def _append_todo_queue(payloads: Sequence[Mapping[str, Any]], path: str | Path) -> int:
