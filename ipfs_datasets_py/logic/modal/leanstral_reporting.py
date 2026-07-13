@@ -202,6 +202,7 @@ class LeanstralRuleGap:
     """One deduplicated, evidence-backed compiler rule gap."""
 
     gap_id: str
+    status: str
     title: str
     normalized_rule_key: str
     missing_semantic_rule: Dict[str, Any]
@@ -231,6 +232,7 @@ class LeanstralRuleGap:
             "missing_semantic_rule": dict(self.missing_semantic_rule),
             "normalized_rule_key": self.normalized_rule_key,
             "priority": self.priority,
+            "status": self.status,
             "supporting_evidence": [
                 evidence.to_dict() for evidence in self.supporting_evidence
             ],
@@ -247,6 +249,7 @@ class LeanstralRejectedAudit:
 
     audit_id: str
     reasons: Sequence[str]
+    status: str = "rejected"
     request_id: str = ""
     response_hash: str = ""
     verification_outcome: str = ""
@@ -261,6 +264,7 @@ class LeanstralRejectedAudit:
             "reasons": list(self.reasons),
             "request_id": self.request_id,
             "response_hash": self.response_hash,
+            "status": self.status,
             "verification_outcome": self.verification_outcome,
         }
 
@@ -350,6 +354,7 @@ def aggregate_verified_audits(
     rejected: List[LeanstralRejectedAudit] = []
     accumulators: Dict[str, _GapAccumulator] = {}
     pending_conflicts: Dict[str, List[LeanstralRuleGapEvidence]] = {}
+    pending_orphan_rejections: Dict[str, List[LeanstralRejectedAudit]] = {}
 
     for item in audits:
         source_count += 1
@@ -398,6 +403,7 @@ def aggregate_verified_audits(
             for conflict in pending_conflicts.pop(signature, []):
                 if len(accumulator.conflicting) < max_conflicts:
                     accumulator.conflicting.append(conflict)
+            pending_orphan_rejections.pop(signature, None)
             continue
 
         conflict_count += 1
@@ -407,9 +413,19 @@ def aggregate_verified_audits(
                 accumulator.conflicting.append(evidence)
         else:
             pending_conflicts.setdefault(signature, []).append(evidence)
+            pending_orphan_rejections.setdefault(signature, []).append(
+                _rejected_audit(
+                    record,
+                    tuple(_verification_reasons(verification))
+                    or ("no_verified_supporting_audit",),
+                )
+            )
 
     gaps = [_gap_from_accumulator(acc, max_examples=max_examples) for acc in accumulators.values()]
     gaps = sorted(gaps, key=lambda gap: (-gap.priority, gap.gap_id))[:max_gaps]
+    for orphan_group in pending_orphan_rejections.values():
+        rejected.extend(orphan_group)
+    rejected = sorted(rejected, key=lambda audit: audit.audit_id)
     return LeanstralRuleGapReport(
         schema_version=LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION,
         gaps=tuple(gaps),
@@ -459,6 +475,7 @@ def _gap_from_accumulator(
     ).hexdigest()[:16]
     return LeanstralRuleGap(
         gap_id=gap_id,
+        status=LeanstralVerificationOutcome.ACCEPTED.value,
         title=_gap_title(response, accumulator.surface),
         normalized_rule_key=accumulator.rule_key,
         missing_semantic_rule=dict(response.missing_semantic_rule),
@@ -673,7 +690,7 @@ def _verification_accepted(value: Any) -> bool:
     if isinstance(value, LeanstralAuditVerificationResult):
         return bool(value.accepted)
     if isinstance(value, Mapping):
-        return bool(value.get("accepted", False)) or str(value.get("outcome", "")) == "accepted"
+        return bool(value.get("accepted", False)) or _verification_outcome(value) == "accepted"
     return bool(getattr(value, "accepted", False)) or _verification_outcome(value) == "accepted"
 
 
@@ -681,7 +698,29 @@ def _verification_outcome(value: Any) -> str:
     outcome = value.get("outcome", "") if isinstance(value, Mapping) else getattr(value, "outcome", "")
     if isinstance(outcome, LeanstralVerificationOutcome):
         return outcome.value
-    return str(outcome or "").strip()
+    return _normalize_record_status(outcome)
+
+
+def _rejected_record_status(record: _AuditRecord) -> str:
+    outcome = _verification_outcome(record.verification)
+    if outcome in {
+        LeanstralVerificationOutcome.UNSUPPORTED.value,
+        LeanstralVerificationOutcome.TIMED_OUT.value,
+    }:
+        return outcome
+    return LeanstralVerificationOutcome.REJECTED.value
+
+
+def _normalize_record_status(value: Any) -> str:
+    status = str(value or "").strip().lower().replace("_", "-")
+    allowed = {item.value for item in LeanstralVerificationOutcome}
+    if status in allowed:
+        return status
+    if status in {"timeout", "timedout"}:
+        return LeanstralVerificationOutcome.TIMED_OUT.value
+    if not status:
+        return ""
+    return LeanstralVerificationOutcome.REJECTED.value
 
 
 def _verification_reasons(value: Any) -> Sequence[str]:
@@ -775,6 +814,7 @@ def _rejected_audit(
     return LeanstralRejectedAudit(
         audit_id=audit_id,
         reasons=tuple(dict.fromkeys(str(reason) for reason in reasons if reason)),
+        status=_rejected_record_status(record),
         request_id=_record_request_id(record),
         response_hash=_record_response_hash(record),
         verification_outcome=_verification_outcome(record.verification),

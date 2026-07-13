@@ -158,6 +158,12 @@ def test_verifier_accepts_only_after_deterministic_checks_and_local_checker(tmp_
     assert result.audit_validation.verified is True
     assert result.compiler_checks[0].accepted is True
     assert all(check.accepted for check in result.source_span_checks)
+    assert [check.checker_name for check in result.local_checks[:3]] == [
+        "syntax",
+        "graph",
+        "provenance",
+    ]
+    assert result.local_checks[3].checker_name == "lean"
     assert set(result.verified_by) == {"lean", "fake"}
 
 
