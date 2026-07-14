@@ -2664,24 +2664,12 @@ COMPILER_AMBIGUITY_PACKET_000964_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
 
 COMPILER_AMBIGUITY_PACKET_000148_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
-        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
-        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.DEONTIC.value,
-    ),
-    (
-        ModalLogicFamily.FRAME.value,
-        ModalLogicFamily.DOXASTIC.value,
-    ),
-    (
-        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-        ModalLogicFamily.DEONTIC.value,
-    ),
-    (
-        ModalLogicFamily.DEONTIC.value,
-        ModalLogicFamily.DYNAMIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -14510,6 +14498,18 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
             (ModalLogicFamily.FRAME.value, ModalLogicFamily.FRAME.value), 0.0
         ),
         0.18,
+    ),
+    (ModalLogicFamily.TEMPORAL.value, ModalLogicFamily.DEONTIC.value): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (ModalLogicFamily.TEMPORAL.value, ModalLogicFamily.DEONTIC.value), 0.0
+        ),
+        0.24,
+    ),
+    (ModalLogicFamily.TEMPORAL.value, ModalLogicFamily.FRAME.value): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (ModalLogicFamily.TEMPORAL.value, ModalLogicFamily.FRAME.value), 0.0
+        ),
+        0.58,
     ),
 }
 
