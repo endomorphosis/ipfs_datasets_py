@@ -1722,9 +1722,16 @@ def _compiler_guidance_row_supports_cec_materialization(
         return True
     if any(metric.startswith("cec_dcec_") for metric in _guidance_metric_names(row)):
         return True
-    if _boolish(row.get("spacy_parser_missing_formula")) is False and (
-        row.get("spacy_modal_formula_count") is not None
-    ):
+    diagnostics = _mapping(row.get("pipeline_stage_diagnostics"))
+    spacy_missing_formula = row.get(
+        "spacy_parser_missing_formula",
+        diagnostics.get("spacy_parser_missing_formula"),
+    )
+    spacy_formula_count = row.get(
+        "spacy_modal_formula_count",
+        diagnostics.get("spacy_modal_formula_count"),
+    )
+    if _boolish(spacy_missing_formula) is False and spacy_formula_count is not None:
         return True
     return False
 
@@ -3024,6 +3031,11 @@ def _cec_guidance_record_targets_cec(row: Mapping[str, Any]) -> bool:
             and _cec_guidance_token_targets_cec(str(gap_key).split(":", 1)[0])
         ):
             return True
+    for gap_key, gap_value in _cec_guidance_component_gap_items(row):
+        if not _cec_guidance_token_targets_cec(str(gap_key).split(":", 1)[0]):
+            continue
+        if _coerce_guidance_gap_value(gap_value) > 0.0:
+            return True
     return False
 
 
@@ -3083,11 +3095,46 @@ def _cec_guidance_gap_items(row: Mapping[str, Any]) -> list[tuple[str, Any]]:
     return items
 
 
+def _cec_guidance_component_gap_items(row: Mapping[str, Any]) -> list[tuple[str, Any]]:
+    items: list[tuple[str, Any]] = []
+    for key in (
+        "legal_ir_component_gaps",
+        "compiler_guidance_legal_ir_component_gaps",
+    ):
+        value = row.get(key)
+        if isinstance(value, Mapping):
+            items.extend(
+                (str(gap_key), gap_value)
+                for gap_key, gap_value in value.items()
+            )
+    attribution = row.get("compiler_guidance_attribution")
+    if isinstance(attribution, Mapping):
+        value = attribution.get("legal_ir_component_gaps")
+        if isinstance(value, Mapping):
+            items.extend(
+                (str(gap_key), gap_value)
+                for gap_key, gap_value in value.items()
+            )
+    return items
+
+
 def _cec_guidance_gap_quality_gate_passes(value: Any) -> bool:
     if not isinstance(value, Mapping):
         return True
     gate = str(value.get("quality_gate") or "").strip().lower()
     return gate in {"", "pass", "passed", "ok", "true", "1"}
+
+
+def _coerce_guidance_gap_value(value: Any) -> float:
+    if isinstance(value, Mapping):
+        for key in ("gap", "value", "score", "delta"):
+            if key in value:
+                return _coerce_guidance_gap_value(value.get(key))
+        return 0.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def _sequence_values(value: Any) -> list[Any]:

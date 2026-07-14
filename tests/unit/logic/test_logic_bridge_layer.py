@@ -7443,6 +7443,63 @@ def test_cec_dcec_bridge_activates_from_target_metric_evidence() -> None:
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_activates_from_component_gap_diagnostics() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _PlainNormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "cec-component-gap-guided",
+                    "actor": "Director",
+                    "action": "make awards",
+                    "modality": "obligated",
+                    "support_text": "The Director shall make awards.",
+                }
+            ]
+        }
+
+    class _PlainNormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _PlainNormResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_PlainNormConverter())
+    report = adapter.evaluate(
+        "2 U.S.C. 5541: The Director shall make awards.",
+        document_id="cec-component-gap-guided",
+        citation="2 U.S.C. 5541",
+        compiler_guidance={
+            "evidence": [
+                {
+                    "legal_ir_component_gaps": {
+                        "CEC.native": 0.14339914067,
+                        "TDFOL.prover": -0.051386632748,
+                    },
+                    "pipeline_stage_diagnostics": {
+                        "spacy_modal_formula_count": 27,
+                        "spacy_parser_missing_formula": False,
+                    },
+                }
+            ],
+            "source": "compiler_guidance_distillation_v1",
+        },
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_routes"] == ["repair_cec_dcec_bridge"]
+    assert report.metadata["compiler_guidance_target_component"] == "CEC.native"
+    assert event_record["event_formula_source"] == (
+        "compiler_guidance.evidence.materialized_event_formula"
+    )
+    assert event_record["event_formula_syntax_valid"] is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_falls_back_from_slot_incomplete_guided_event_formula() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
