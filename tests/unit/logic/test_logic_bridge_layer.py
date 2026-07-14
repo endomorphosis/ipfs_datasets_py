@@ -12734,6 +12734,28 @@ def test_zkp_attestation_bridge_promotes_passing_autoencoder_evidence() -> None:
     assert report.proof_gate.compiles is True
 
 
+def test_zkp_guidance_evidence_route_infers_zkp_circuit_defaults() -> None:
+    from ipfs_datasets_py.logic.zkp import compiler_guidance_contract_from_metadata
+
+    contract = compiler_guidance_contract_from_metadata(
+        {
+            "compiler_guidance_evidence": [
+                {
+                    "action": "repair_zkp_attestation_bridge",
+                    "quality_gate": "pass",
+                    "role": "program_synthesis",
+                    "source": "compiler_guidance_distillation_v1",
+                    "support": 1,
+                }
+            ]
+        }
+    )
+
+    assert contract["route"] == "repair_zkp_attestation_bridge"
+    assert contract["program_synthesis_scope"] == "zkp"
+    assert contract["target_component"] == "zkp.circuits"
+
+
 def test_form_certificate_serializes_distinct_zkp_public_inputs() -> None:
     from ipfs_datasets_py.logic.zkp import ZKPProver
     from ipfs_datasets_py.logic.zkp.form_circuit import FormCompletionCertificate

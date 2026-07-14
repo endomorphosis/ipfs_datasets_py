@@ -338,9 +338,9 @@ def _contract_from_guidance_evidence_row(value: Any) -> Dict[str, Any]:
 
     if route_matches and not selected.get("route"):
         selected.setdefault("route", "repair_zkp_attestation_bridge")
-    if target_matches and not selected.get("target_component"):
+    if (route_matches or target_matches) and not selected.get("target_component"):
         selected.setdefault("target_component", "zkp.circuits")
-    if not selected.get("program_synthesis_scope") and target_matches:
+    if not selected.get("program_synthesis_scope") and (route_matches or target_matches):
         selected.setdefault("program_synthesis_scope", "zkp")
     if not selected.get("source") and (
         route_matches or "compiler_guidance_distillation_v1" in _guidance_text_tokens(row)
