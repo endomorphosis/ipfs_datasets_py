@@ -4452,6 +4452,115 @@ def test_deontic_bridge_synthesizes_rows_from_passed_guidance_ir() -> None:
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_preserves_full_guidance_ir_reconstruction_slots() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = (
+        "The Secretary shall provide notice to applicants within 30 days "
+        "if an application is incomplete under section 3803."
+    )
+    source_id = "us-code-33-3803-ac8f8e7ef6c14117"
+
+    class _FakeResult:
+        success = True
+        metadata = {}
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        source_text,
+        document_id=source_id,
+        citation="33 U.S.C. 3803",
+        compiler_guidance={
+            "compiler_guidance_route": "repair_deontic_bridge_quality_gate",
+            "compiler_guidance_quality_gate": "pass",
+            "target_component": "deontic.ir",
+            "metric_sample_payloads": [
+                {
+                    "sample_id": source_id,
+                    "target_view": "deontic.ir",
+                    "quality_gate": "pass",
+                    "legal_norm_ir": {
+                        "source_id": source_id,
+                        "canonical_citation": "33 U.S.C. 3803",
+                        "actor": "Secretary",
+                        "modality": "O",
+                        "norm_type": "obligation",
+                        "action": "provide notice",
+                        "recipient": "applicants",
+                        "conditions": [
+                            {
+                                "type": "condition",
+                                "value": "an application is incomplete",
+                                "span": [69, 97],
+                            }
+                        ],
+                        "temporal_constraints": [
+                            {
+                                "type": "deadline",
+                                "value": "within 30 days",
+                                "span": [49, 63],
+                            }
+                        ],
+                        "cross_references": [
+                            {
+                                "type": "section_reference",
+                                "value": "section 3803",
+                                "span": [104, 116],
+                            }
+                        ],
+                        "source_text": source_text,
+                        "support_text": source_text,
+                        "support_span": [0, len(source_text)],
+                        "field_spans": {
+                            "subject": [4, 13],
+                            "modality": [14, 19],
+                            "action": [20, 34],
+                            "recipient": [38, 48],
+                            "conditions": [69, 97],
+                            "temporal_constraints": [49, 63],
+                            "cross_references": [104, 116],
+                        },
+                        "export_readiness": {"blockers": []},
+                    },
+                }
+            ],
+        },
+    )
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
+        "records"
+    ][0]
+    slot_loss = report.ir_document.views["deontic_reconstruction_slot_loss"].payload[
+        "summary"
+    ]
+    phase8_record = report.ir_document.views["deontic_phase8_quality"].payload[
+        "records"
+    ][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert norm["recipient"] == "applicants"
+    assert norm["conditions"][0]["value"] == "an application is incomplete"
+    assert norm["temporal_constraints"][0]["value"] == "within 30 days"
+    assert norm["cross_references"][0]["value"] == "section 3803"
+    decoded_slots = {
+        phrase["slot"] for phrase in decoder_record["phrase_provenance"]
+    }
+    assert "conditions" in decoded_slots
+    assert "temporal_constraints" in decoded_slots
+    assert "cross_references" in decoded_slots
+    assert decoder_record["requires_validation"] is False
+    assert slot_loss["slot_reconstruction_complete"] is True
+    assert phase8_record["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_recovers_purpose_slots_from_nested_legal_frame() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 

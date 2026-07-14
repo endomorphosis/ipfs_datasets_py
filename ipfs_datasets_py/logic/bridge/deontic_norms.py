@@ -635,6 +635,7 @@ def _apply_deontic_compiler_guidance_to_rows(
                     enriched,
                     bridge_guidance,
                 )
+                legal_frame = dict(enriched.get("legal_frame") or legal_frame)
                 for key, value in bridge_guidance.items():
                     if _value_is_present(value):
                         legal_frame.setdefault(key, value)
@@ -924,6 +925,7 @@ def _parser_row_from_deontic_guidance_ir(
         "promotable_to_theorem": True,
         "export_readiness": _deontic_guidance_export_readiness(evidence),
     }
+    row = _fill_parser_row_from_legal_norm_row(row, promoted_ir)
     legal_frame = {
         key: _copy_slot_value(value)
         for key, value in evidence.items()
@@ -1201,6 +1203,47 @@ def _deontic_guidance_ir_slots_from_candidate(
         if _value_is_present(value):
             slots[key] = _copy_slot_value(value)
 
+    for key in (
+        "parent_source_id",
+        "enumeration_label",
+        "enumeration_index",
+        "is_enumerated_child",
+        "actor_type",
+        "mental_state",
+        "action_verb",
+        "action_object",
+        "recipient",
+        "action_recipient",
+        "beneficiary",
+        "conditions",
+        "condition_details",
+        "exceptions",
+        "exception_details",
+        "overrides",
+        "override_clause_details",
+        "temporal_constraints",
+        "temporal_constraint_details",
+        "cross_references",
+        "cross_reference_details",
+        "resolved_cross_references",
+        "defined_terms",
+        "defined_term_refs",
+        "penalty",
+        "procedure",
+        "ontology_terms",
+        "kg_relationship_hints",
+        "legal_frame",
+        "section_context",
+        "definition_scope",
+        "quality",
+        "export_readiness",
+        "prover_syntax_records",
+        "local_prover_syntax_records",
+    ):
+        value = candidate.get(key)
+        if _value_is_present(value):
+            slots[key] = _copy_slot_value(value)
+
     return slots
 
 
@@ -1225,7 +1268,9 @@ def _fill_deontic_row_from_compiler_guidance_ir(
     if not isinstance(promoted_ir, Mapping):
         return
 
+    row.update(_fill_parser_row_from_legal_norm_row(row, promoted_ir))
     _fill_scalar_alias_from_norm(row, promoted_ir, "subject", "actor", as_list=True)
+    _fill_scalar_alias_from_norm(row, promoted_ir, "actor", "actor")
     _fill_scalar_alias_from_norm(row, promoted_ir, "actor", "subject")
     _fill_scalar_alias_from_norm(row, promoted_ir, "action", "action", as_list=True)
     _fill_scalar_alias_from_norm(row, promoted_ir, "deontic_operator", "modality")
