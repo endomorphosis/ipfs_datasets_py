@@ -64,6 +64,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003763_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     ModalLogicFamily,
     compiler_refined_modal_family_cue_margin_buffer,
@@ -100,6 +101,26 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
 )
 
 pytest.importorskip("spacy")
+
+
+def test_packet_003763_registry_exposes_compiler_ambiguity_policy() -> None:
+    expected_pairs = {
+        ("deontic", "deontic"),
+        ("frame", "temporal"),
+        ("temporal", "deontic"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_003763_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_003763_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
 
 
 def test_packet_002837_registry_refines_modal_family_cue_policy() -> None:
