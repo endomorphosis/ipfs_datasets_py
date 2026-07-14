@@ -13789,6 +13789,68 @@ def test_bridge_contract_guidance_uses_packet_gap_maps_as_projection_evidence() 
     assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
 
 
+def test_bridge_contract_balances_modal_family_mismatch_underrepresented_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "action": "repair_multiview_legal_ir_loss",
+            "evidence": {
+                "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                "legal_ir_component_gaps": {
+                    "CEC.native": 0.146060771162,
+                    "TDFOL.prover": -0.050532245545,
+                    "deontic.ir": -0.033527570368,
+                    "external_provers.router": -0.030509697504,
+                    "knowledge_graphs.neo4j_compat": 0.022748513608,
+                    "modal.frame_logic": 0.060069414698,
+                    "zkp.circuits": -0.010706210045,
+                },
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "modal.frame_logic",
+                    "knowledge_graphs.neo4j_compat",
+                ],
+                "pipeline_stage_diagnostics": {
+                    "legal_ir_component_gap_max": 0.146060771162,
+                    "legal_ir_view_cross_entropy_loss": 2.136386122468,
+                    "modal_family_cue_mismatch": True,
+                    "modal_family_target_probability_gap": 0.222956791924,
+                },
+                "pipeline_stage_focus": [
+                    "modal_family_registry",
+                    "legal_ir_multiview",
+                ],
+                "predicted_view": "CEC.native",
+                "primary_pipeline_stage": "modal_family_registry",
+                "source": "compiler_guidance_distillation_v1",
+                "target_file_lane": "bridge",
+                "target_view": "CEC.native",
+            },
+            "program_synthesis_scope": "bridge",
+            "source": "compiler_guidance_distillation_v1",
+            "target_component": "bridge.contracts",
+        }
+    )
+
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert set(target_distribution) == {
+        "CEC.native",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
+    }
+    assert target_distribution["CEC.native"] < 0.55
+    assert target_distribution["modal.frame_logic"] >= 0.23
+    assert target_distribution["knowledge_graphs.neo4j_compat"] >= 0.22
+    assert metadata["compiler_guidance_component_gaps"]["CEC.native"] > 0.0
+    assert abs(sum(target_distribution.values()) - 1.0) < 1e-9
+
+
 def test_multiview_training_target_distribution_preserves_zkp_tail_lane() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import MultiViewLegalIRReport
     from ipfs_datasets_py.logic.bridge.types import LegalIRDocument, LogicIRView

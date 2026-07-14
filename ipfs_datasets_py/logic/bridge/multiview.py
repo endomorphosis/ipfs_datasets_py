@@ -1313,8 +1313,17 @@ def _compiler_guidance_bridge_contract_metadata(
             "legal_ir_underrepresented_components",
             "underrepresented_components",
         ):
+            underrepresented_values = _guidance_sequence(mapping.get(key))
+            underrepresented_score = 1.0
+            if (
+                len(underrepresented_values) >= 2
+                and _guidance_modal_family_cue_mismatch(mapping)
+            ):
+                underrepresented_score = 1.6
             for value in _guidance_sequence(mapping.get(key)):
-                add_lane(value)
+                add_lane(value, underrepresented_score)
+            if underrepresented_values and _guidance_modal_family_cue_mismatch(mapping):
+                _add_modal_family_mismatch_stage_lanes(mapping, add_lane=add_lane)
         for key in (
             "legal_ir_target_view_distribution",
             "compiler_guidance_legal_ir_view_gap_distribution",
@@ -1649,6 +1658,40 @@ def _guidance_quality_gate_passes(value: Any) -> bool:
         "true",
         "1",
     }
+
+
+def _guidance_modal_family_cue_mismatch(mapping: Mapping[str, Any]) -> bool:
+    """Return whether guidance reports a modal-family/view cue mismatch."""
+
+    if bool(mapping.get("modal_family_cue_mismatch")):
+        return True
+    diagnostics = mapping.get("pipeline_stage_diagnostics")
+    return isinstance(diagnostics, Mapping) and bool(
+        diagnostics.get("modal_family_cue_mismatch")
+    )
+
+
+def _add_modal_family_mismatch_stage_lanes(
+    mapping: Mapping[str, Any],
+    *,
+    add_lane: Any,
+) -> None:
+    """Project modal-family mismatch diagnostics into bridge contract lanes."""
+
+    stages = {
+        str(stage or "").strip().lower()
+        for key in (
+            "pipeline_stage_focus",
+            "primary_pipeline_stage",
+        )
+        for stage in _guidance_sequence(mapping.get(key))
+        if str(stage or "").strip()
+    }
+    if "modal_family_registry" in stages:
+        add_lane("modal.frame_logic", 0.50)
+    if "legal_ir_multiview" in stages:
+        add_lane("knowledge_graphs.neo4j_compat", 0.35)
+        add_lane("CEC.native", 0.15)
 
 
 def _guidance_sequence(value: Any) -> tuple[Any, ...]:
