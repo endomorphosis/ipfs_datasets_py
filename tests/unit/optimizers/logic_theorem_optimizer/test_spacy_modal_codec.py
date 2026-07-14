@@ -64,6 +64,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_003976_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003763_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     ModalLogicFamily,
@@ -12307,6 +12308,46 @@ def test_packet_003559_frame_policy_exposes_explicit_adaptive_ambiguity() -> Non
             and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
             for ambiguity in ambiguities
         )
+
+
+def test_packet_003976_registry_refines_weak_frame_family_cues() -> None:
+    expected_pairs = (
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    )
+
+    assert COMPILER_REFINED_PACKET_003976_FAMILY_PAIRS == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    assert compiler_refined_modal_family_cue_margin_buffer("frame", "deontic") >= 0.94
+    assert compiler_refined_modal_family_cue_margin_buffer("frame", "temporal") >= 0.76
 
 
 def test_packet_003166_compiler_policy_exposes_explicit_adaptive_ambiguity() -> None:
