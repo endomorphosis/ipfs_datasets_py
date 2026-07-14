@@ -59,6 +59,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_002837_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000368_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003002_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_003436_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000279_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
@@ -411,6 +412,54 @@ def test_packet_000373_registry_refines_modal_family_cue_policy() -> None:
         and cue.cue.lower() == "shall deem it necessary"
         for cue in encoding.cues
     )
+
+
+def test_packet_003436_registry_refines_deontic_family_cue_policy() -> None:
+    expected_pairs = {
+        ("conditional_normative", "deontic"),
+        ("frame", "deontic"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_003436_FAMILY_PAIRS) == expected_pairs
+    margin_floors = {
+        ("conditional_normative", "deontic"): 0.16,
+        ("frame", "deontic"): 0.89,
+    }
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_003436_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(
+                predicted_family,
+                target_family,
+            )
+            >= margin_floors[(predicted_family, target_family)]
+        )
 
 
 def test_packet_006902_registry_exposes_modal_ambiguity_policy() -> None:
