@@ -19496,6 +19496,28 @@ def test_modal_codec_supports_autoencoder_feature_codec_protocol() -> None:
     assert "slot:citation_section:552" in feature_keys
 
 
+def test_modal_codec_autoencoder_features_do_not_run_full_codec(monkeypatch) -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+
+    def fail_full_encode(*args, **kwargs):
+        raise AssertionError("autoencoder feature extraction ran the full codec")
+
+    monkeypatch.setattr(codec, "encode", fail_full_encode)
+
+    feature_keys = codec.feature_keys_for_sample(sample, max_features=64)
+
+    assert feature_keys
+    assert "frame:administrative_notice_hearing" in feature_keys
+    assert any(feature.startswith("flogic:modal_family:") for feature in feature_keys)
+
+
 def test_modal_codec_emits_frame_ontology_term_triples() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
@@ -41839,6 +41861,44 @@ def test_decompiler_emits_cue_derived_source_force_slots_for_frame_shall() -> No
     assert (
         "deontic||slot:typed-decompiler-source-predicate-force-pair:"
         f"{force_value}||deontic.ir"
+    ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+
+
+def test_decompiler_uses_semantic_predicate_head_for_air_carrier_force_slots() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Except as provided in this chapter, an air carrier shall provide "
+            "safe and adequate interstate air transportation."
+        ),
+        predicate="pub_safe_transportation",
+        conditions=["Except as provided in this chapter"],
+    )
+    document.formulas[0].exceptions.append("Except as provided in this chapter")
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    semantic_force_value = (
+        "frame:air_transportation_service_duty|"
+        "typed-decompiler-force-polarity:obligation:mandatory"
+    )
+    assert "air_transportation_service_duty" in slot_texts[
+        "typed-decompiler-semantic-predicate-head"
+    ]
+    assert semantic_force_value in slot_texts[
+        "typed-decompiler-source-predicate-force-pair"
+    ]
+    assert (
+        f"{semantic_force_value}|typed-decompiler-family-pair:frame->deontic"
+        in slot_texts["typed-decompiler-source-predicate-force-family-pair"]
+    )
+    assert (
+        "deontic||slot:typed-decompiler-source-predicate-force-pair:"
+        f"{semantic_force_value}||deontic.ir"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
 
 

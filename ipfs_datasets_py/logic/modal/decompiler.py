@@ -1415,6 +1415,7 @@ _LOW_INFORMATION_PREDICATE_HEAD_TOKENS = frozenset(
         "note",
         "notes",
         "one",
+        "pub",
         "report",
         "section",
         "sec",
@@ -10653,6 +10654,10 @@ def _typed_decompiler_target_reconstruction_slots(
             )
         )
         if semantic_predicate_key and semantic_predicate_key != predicate_key:
+            semantic_source_force_value = (
+                f"{source_family}:{semantic_predicate_key}|"
+                f"typed-decompiler-force-polarity:{force}:{polarity}"
+            )
             slots.extend(
                 (
                     (
@@ -10664,12 +10669,12 @@ def _typed_decompiler_target_reconstruction_slots(
                         f"{source_family}:{semantic_predicate_key}->{target}",
                     ),
                     (
+                        "typed-decompiler-source-predicate-force-pair",
+                        semantic_source_force_value,
+                    ),
+                    (
                         "typed-decompiler-source-predicate-force-family-pair",
-                        (
-                            f"{source_family}:{semantic_predicate_key}|"
-                            f"typed-decompiler-force-polarity:{force}:{polarity}|"
-                            f"typed-decompiler-family-pair:{pair}"
-                        ),
+                        f"{semantic_source_force_value}|typed-decompiler-family-pair:{pair}",
                     ),
                     (
                         "family_semantic_slot_legal_ir_view_prototype",
@@ -10678,6 +10683,15 @@ def _typed_decompiler_target_reconstruction_slots(
                             f"{semantic_predicate_key}||CEC.native"
                         ),
                     ),
+                )
+            )
+            slots.extend(
+                _typed_decompiler_source_predicate_force_view_slots(
+                    source_family=source_family,
+                    target_family=target,
+                    source_force_value=semantic_source_force_value,
+                    force=force,
+                    polarity=polarity,
                 )
             )
         slots.extend(
@@ -11624,6 +11638,16 @@ def _typed_decompiler_source_reconstruction_slots(
             f"{topology}:{source_family}:{source_symbol or 'none'}",
         ),
     ]
+    if raw_predicate_head and raw_predicate_head != predicate_head:
+        slots.append(
+            (
+                "typed-decompiler-source-predicate-force-pair",
+                (
+                    f"{source_family}:{raw_predicate_head}|"
+                    f"typed-decompiler-force-polarity:{force}:{polarity}"
+                ),
+            )
+        )
     source_predicate = _source_predicate_family_pair_value(
         family=source_family,
         predicate_text=predicate_text,
@@ -11662,6 +11686,24 @@ def _typed_decompiler_source_reconstruction_slots(
                     ),
                 )
             )
+            raw_source_force_value = ""
+            if raw_predicate_head and raw_predicate_head != predicate_head:
+                raw_source_force_value = (
+                    f"{source_family}:{raw_predicate_head}|"
+                    f"typed-decompiler-force-polarity:{cue_force}:{cue_polarity}"
+                )
+                slots.extend(
+                    (
+                        (
+                            "typed-decompiler-source-predicate-force-pair",
+                            raw_source_force_value,
+                        ),
+                        (
+                            "typed-decompiler-source-predicate-force-cue",
+                            f"{cue}:{raw_source_force_value}",
+                        ),
+                    )
+                )
             for target in targets or [source_family]:
                 pair = f"{source_family}->{target}"
                 slots.extend(
@@ -11679,6 +11721,25 @@ def _typed_decompiler_source_reconstruction_slots(
                         ),
                     )
                 )
+                if raw_source_force_value:
+                    slots.extend(
+                        (
+                            (
+                                "typed-decompiler-source-predicate-force-family-pair",
+                                (
+                                    f"{raw_source_force_value}|"
+                                    f"typed-decompiler-family-pair:{pair}"
+                                ),
+                            ),
+                            (
+                                "family_semantic_slot_prototype",
+                                (
+                                    f"{target}||slot:typed-decompiler-source-predicate-force-pair:"
+                                    f"{raw_source_force_value}"
+                                ),
+                            ),
+                        )
+                    )
                 for view in _typed_decompiler_family_pair_legal_ir_views(
                     source_family,
                     target,
@@ -11692,6 +11753,16 @@ def _typed_decompiler_source_reconstruction_slots(
                             ),
                         )
                     )
+                    if raw_source_force_value:
+                        slots.append(
+                            (
+                                "family_semantic_slot_legal_ir_view_prototype",
+                                (
+                                    f"{target}||slot:typed-decompiler-source-predicate-force-pair:"
+                                    f"{raw_source_force_value}||{view}"
+                                ),
+                            )
+                        )
                 slots.extend(
                     _typed_decompiler_source_predicate_force_view_slots(
                         source_family=source_family,
@@ -11701,6 +11772,16 @@ def _typed_decompiler_source_reconstruction_slots(
                         polarity=cue_polarity,
                     )
                 )
+                if raw_source_force_value:
+                    slots.extend(
+                        _typed_decompiler_source_predicate_force_view_slots(
+                            source_family=source_family,
+                            target_family=target,
+                            source_force_value=raw_source_force_value,
+                            force=cue_force,
+                            polarity=cue_polarity,
+                        )
+                    )
     if exception_values or any(cue.startswith("except") for cue in condition_cues):
         slots.extend(
             (
