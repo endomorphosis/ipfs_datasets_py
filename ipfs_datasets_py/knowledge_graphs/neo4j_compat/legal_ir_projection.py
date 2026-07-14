@@ -400,10 +400,15 @@ def _source_id_from_text_components(text: str) -> List[Tuple[str, str]]:
     if not citation_match:
         citation_match = _USCODE_TITLE_RE.search(normalized)
     section_match = _SECTION_MARKER_RE.search(normalized)
-    if not citation_match or not section_match:
+    if not citation_match:
         return []
     title = citation_match.group("title")
-    section = _lead_section(_normalize_section(section_match.group("section")))
+    raw_section = (
+        section_match.group("section")
+        if section_match
+        else citation_match.groupdict().get("section", "")
+    )
+    section = _lead_section(_normalize_section(raw_section))
     if not title or not section:
         return []
     source_id = f"us-code-{title}-{section}"
@@ -426,9 +431,16 @@ def _citation_from_text_components(text: str) -> List[Tuple[str, str]]:
 def _section_text_components(text: str) -> List[Tuple[str, str]]:
     normalized = _normalize_dashes(text)
     section_match = _SECTION_MARKER_RE.search(normalized)
+    citation_match = None
     if not section_match:
+        citation_match = _USCODE_CITATION_RE.search(normalized)
+    if not section_match and not citation_match:
         return []
-    raw_section = section_match.group("section")
+    raw_section = (
+        section_match.group("section")
+        if section_match
+        else citation_match.group("section")
+    )
     section = _normalize_section(raw_section)
     components: List[Tuple[str, str]] = [
         ("section_marker", raw_section),

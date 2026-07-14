@@ -1552,6 +1552,73 @@ def test_neo4j_compat_augments_packet_samples_past_modal_triple_cutoff() -> None
         assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_compat_uses_leading_usc_citation_as_section_marker() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-38-1731-truncated-header",
+                "predicate": "source_text",
+                "object": (
+                    "38 U.S.C. 1731: U.S.C. Title 38 - VETERANS' BENEFITS "
+                    "38 U.S.C. United States Code, 2024 Edition Title 38 - "
+                    "VETERANS' BENEFITS PART II - GENERAL BENEFITS CHAPTER "
+                    "17 - HOSPITAL, NURSING HOME, DOMICILIARY, AND MEDICAL "
+                    "CARE SUBCHAPTER IV - HOSPITAL CARE AND..."
+                ),
+            },
+            {
+                "subject": "us-code-10-2263-truncated-header",
+                "predicate": "source_text",
+                "object": (
+                    "10 U.S.C. 2263: U.S.C. Title 10 - ARMED FORCES "
+                    "10 U.S.C. United States Code, 2024 Edition Title 10 - "
+                    "ARMED FORCES Subtitle A - General Military Law PART IV "
+                    "- SERVICE, SUPPLY, AND PROPERTY CHAPTER 134 - "
+                    "MISCELLANEOUS ADMINISTRATIVE PROVISIONS SUBCHAPTER..."
+                ),
+            },
+        ],
+        graph_id="packet-leading-citation-section-marker-projection",
+    )
+
+    graph_triples = {
+        (
+            relationship.properties["flogic_subject"],
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+
+    assert (
+        "us-code-38-1731-truncated-header",
+        "source_id_citation_canonical",
+        "38 U.S.C. 1731",
+    ) in graph_triples
+    assert (
+        "us-code-38-1731-truncated-header",
+        "section_marker_normalized",
+        "1731",
+    ) in graph_triples
+    assert (
+        "us-code-10-2263-truncated-header",
+        "source_id_citation_canonical",
+        "10 U.S.C. 2263",
+    ) in graph_triples
+    assert (
+        "us-code-10-2263-truncated-header",
+        "section_marker_normalized",
+        "2263",
+    ) in graph_triples
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata[
+        "frame_logic_projection_legal_view_coverage_complete"
+    ] is True
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_neo4j_compat_trims_truncated_gpo_tail_from_packet_catchline() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 
