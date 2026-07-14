@@ -115,6 +115,8 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
     "exception_",
     "fallback_rule_",
     "fallback_surface_text_",
+    "legal_ir_view",
+    "learned_legal_ir_",
     "modal_family_count",
     "predicate_argument_",
     "procedural_keyword_",

@@ -331,8 +331,11 @@ class FLogicSemanticOptimizer:
 
         document_selected_frames: Dict[str, str] = {}
         document_selected_terms: Dict[str, set[str]] = {}
+        modal_frame_logic_view_subjects: set[str] = set()
         violations: List[OntologyViolation] = []
         for subj, facts in sorted(triples_by_subject.items()):
+            if _facts_reference_modal_frame_logic_view(facts):
+                modal_frame_logic_view_subjects.add(subj)
             selected_frames = [
                 obj for pred, obj in facts if pred == "selected_ontology_frame"
             ]
@@ -389,6 +392,17 @@ class FLogicSemanticOptimizer:
                 )
 
         if not document_selected_frames:
+            for subj in sorted(modal_frame_logic_view_subjects):
+                violations.append(
+                    OntologyViolation(
+                        frame_id=subj,
+                        constraint="modal_frame_logic_view_has_selected_frame",
+                        details=(
+                            "Subject references modal.frame_logic LegalIR view "
+                            "without any selected_ontology_frame grounding"
+                        ),
+                    )
+                )
             return violations
 
         selected_frame_values = set(document_selected_frames.values())
@@ -450,6 +464,36 @@ class FLogicSemanticOptimizer:
 # ---------------------------------------------------------------------------
 # Utility
 # ---------------------------------------------------------------------------
+
+
+def _facts_reference_modal_frame_logic_view(
+    facts: Sequence[tuple[str, str]],
+) -> bool:
+    """Return whether facts declare modal.frame_logic as a LegalIR view."""
+    for pred, obj in facts:
+        normalized_predicate = str(pred or "").strip().lower().replace("-", "_")
+        if "legal_ir" not in normalized_predicate:
+            continue
+        normalized_object = _normalized_legal_ir_view_value(obj)
+        if normalized_object == "modal.frame_logic":
+            return True
+    return False
+
+
+def _normalized_legal_ir_view_value(value: Any) -> str:
+    """Canonicalize learned/prototype LegalIR view values for constraints."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if ":" in text:
+        text = text.split(":", 1)[0].strip()
+    normalized = text.lower().replace("-", "_")
+    aliases = {
+        "modal_frame_logic": "modal.frame_logic",
+        "modal.frame.logic": "modal.frame_logic",
+        "modal.frame_logic": "modal.frame_logic",
+    }
+    return aliases.get(normalized, normalized)
 
 
 def _selected_frame_constraint_violations(

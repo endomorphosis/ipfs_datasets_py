@@ -226,6 +226,70 @@ def test_frame_ontology_constraints_reject_ungrounded_interpreted_frame_term() -
     assert "interpreted_frame_terms_selected" in constraints
 
 
+def test_frame_ontology_constraints_reject_ungrounded_modal_frame_logic_view() -> None:
+    result = _consistent_optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[
+            {
+                "subject": "doc",
+                "predicate": "learned_legal_ir_target_view",
+                "object": "modal.frame_logic",
+            },
+            {
+                "subject": "doc",
+                "predicate": "learned_legal_ir_view_gap",
+                "object": "modal.frame_logic:0.058785",
+            },
+        ],
+    )
+
+    constraints = {violation.constraint for violation in result.violations}
+    assert result.ontology_consistent is False
+    assert "modal_frame_logic_view_has_selected_frame" in constraints
+
+
+def test_frame_ontology_terms_include_packet_modal_frame_logic_view_features() -> None:
+    result = _optimizer().evaluate(
+        source_text="s",
+        decoded_text="d",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[
+            {
+                "subject": "doc",
+                "predicate": "legal_ir_view_prototype",
+                "object": "modal.frame_logic",
+            },
+        ],
+        frame_feature_keys=[
+            {
+                "hint_id": "modal-synthesis-9853f956128e55e3",
+                "frame_features": [
+                    "legal-ir-view:deontic.ir",
+                    "quality:bias",
+                    "quality:symbolic:has-formula",
+                    "legal-ir-view:modal.frame_logic",
+                    "legal-ir-view:modal.autoencoder",
+                    "quality:frame:rank-top",
+                    "legal-ir-view:TDFOL.prover",
+                ],
+            }
+        ],
+    )
+
+    metadata = result.metadata
+    assert "legal-ir-view:modal.frame_logic" in metadata["frame_audit_feature_keys"]
+    assert "quality:frame:rank-top" in metadata["frame_audit_feature_keys"]
+    assert "modal_frame_logic" in metadata["frame_ontology_terms"]
+    assert "quality_frame_rank_top" in metadata["frame_ontology_terms"]
+    assert "legal_ir_view_modal_frame_logic" in metadata[
+        "frame_ontology_contextualized_terms"
+    ]
+
+
 def test_frame_ontology_terms_include_contextualized_suffix_count_features() -> None:
     result = _optimizer().evaluate(
         source_text="s",

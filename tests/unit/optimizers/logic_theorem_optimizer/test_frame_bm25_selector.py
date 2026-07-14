@@ -279,6 +279,33 @@ def test_frame_ontology_terms_from_triples_support_contextual_flogic_predicates(
     ]
 
 
+def test_frame_ontology_terms_from_triples_include_legal_ir_view_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "legal_ir_view_prototype",
+                "object": "modal.frame_logic",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "learned_legal_ir_target_view",
+                "object": "TDFOL.prover",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "learned_legal_ir_view_gap",
+                "object": "modal.frame_logic:0.058785",
+            },
+        ]
+    )
+
+    assert terms == [
+        "modal_frame_logic",
+        "tdfol_prover",
+    ]
+
+
 def test_frame_ontology_terms_from_triples_preserve_modal_cue_stopwords_for_audits() -> None:
     terms = frame_ontology_terms_from_triples(
         [
