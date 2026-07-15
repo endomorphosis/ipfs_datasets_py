@@ -146,6 +146,10 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
     if recipient and not _text_already_contains(action_phrase, recipient):
         phrases.append(_fixed_phrase("to", "recipient_connector"))
         phrases.append(_phrase(recipient, "recipient", norm))
+    elif recipient:
+        phrases.append(
+            _provenance_phrase(recipient, "recipient", _slot_spans(norm, "recipient"))
+        )
 
     rendered_conditions = 0
     for condition in norm.conditions:

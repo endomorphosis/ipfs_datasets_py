@@ -4621,6 +4621,42 @@ def test_deontic_bridge_preserves_full_guidance_ir_reconstruction_slots() -> Non
     assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
 
 
+def test_deontic_bridge_recovers_passive_benefit_recipient_slot() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = (
+        "43 U.S.C. 433a.: §433a. Preference of needy families It is declared "
+        "to be the policy of the Congress that, in the opening to entry of "
+        "newly irrigated public lands, preference shall be given to families "
+        "who have no other means of earning a livelihood, or"
+    )
+
+    report = DeonticNormsBridgeAdapter(
+        converter_kwargs={
+            "enable_monitoring": False,
+            "use_cache": False,
+            "use_ml": False,
+        }
+    ).evaluate(source_text, document_id="us-code-43-433a-passive-benefit")
+
+    norm = report.ir_document.views["deontic_ir"].payload["norms"][0]
+    decoder_record = report.ir_document.views["deontic_decoder_reconstructions"].payload[
+        "records"
+    ][0]
+    recipient_phrase = next(
+        phrase
+        for phrase in decoder_record["phrase_provenance"]
+        if phrase["slot"] == "recipient"
+    )
+
+    assert norm["recipient"] == "families who have no other means of earning a livelihood"
+    assert norm["field_spans"]["action_recipient"]
+    assert recipient_phrase["spans"]
+    assert decoder_record["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert report.round_trip.extra_losses["deontic_quality_requires_validation_loss"] == 0.0
+
+
 def test_deontic_bridge_recovers_purpose_slots_from_nested_legal_frame() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 

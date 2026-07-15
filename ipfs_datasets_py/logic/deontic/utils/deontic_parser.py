@@ -382,6 +382,11 @@ _TRAILING_NOISE_RE = re.compile(
     re.IGNORECASE,
 )
 _PASSIVE_BY_RE = re.compile(r"^be\s+([A-Za-z][A-Za-z0-9'’\-]*)\s+by\s+(.+)$", re.IGNORECASE)
+_PASSIVE_BENEFIT_RECIPIENT_RE = re.compile(
+    r"^be\s+(?:given|granted|provided|awarded|allocated|distributed|paid|issued|made)\s+"
+    r"(?:to|for)\s+(.+?)(?=(?:\s+(?:if|when|where|provided\s+that|unless|except|within|before|after)\b)|[.;:]|$)",
+    re.IGNORECASE,
+)
 _PAST_PARTICIPLE_BASE = {
     "adopted": "adopt",
     "awarded": "award",
@@ -4013,6 +4018,12 @@ def classify_legal_entity(text: str) -> str:
 
 def extract_action_recipient(action: str) -> str:
     """Extract a likely beneficiary/recipient from an action phrase."""
+    passive_match = _PASSIVE_BENEFIT_RECIPIENT_RE.search(str(action or "").strip())
+    if passive_match:
+        recipient = _clean_passive_benefit_recipient(passive_match.group(1))
+        if recipient:
+            return recipient
+
     match = _RECIPIENT_RE.search(str(action or "").strip())
     if not match:
         return ""
@@ -4029,6 +4040,14 @@ def extract_action_recipient(action: str) -> str:
     }:
         return ""
     return recipient
+
+
+def _clean_passive_benefit_recipient(value: str) -> str:
+    """Return the beneficiary of passive grant phrases without trailing joins."""
+
+    recipient = _clean_phrase(value)
+    recipient = re.sub(r"\s*,?\s+(?:and|or)\s*$", "", recipient, flags=re.IGNORECASE)
+    return recipient.strip(" ,.;:")
 
 
 def extract_definition_body(sentence: str) -> str:
