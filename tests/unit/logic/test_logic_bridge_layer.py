@@ -1425,6 +1425,107 @@ def test_neo4j_compat_augments_sparse_legal_sample_text_projection() -> None:
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_neo4j_compat_projects_packet_88_editorial_status_evidence() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    repealed_evidence = {
+        "bridge_failure_name": "legal_ir_multiview_graph_failure_penalty",
+        "legal_ir_component_gaps": {
+            "CEC.native": 0.257435545701,
+            "knowledge_graphs.neo4j_compat": 0.138955578643,
+            "TDFOL.prover": 0.044809911188,
+        },
+        "legal_ir_underrepresented_components": [
+            "CEC.native",
+            "knowledge_graphs.neo4j_compat",
+            "TDFOL.prover",
+        ],
+        "pipeline_stage_focus": ["modal_family_registry", "legal_ir_multiview"],
+        "predicted_view": "knowledge_graphs.neo4j_compat",
+        "target_file_lane": "knowledge_graph",
+        "target_view": "knowledge_graphs.neo4j_compat",
+    }
+    transferred_evidence = {
+        **repealed_evidence,
+        "legal_ir_component_gaps": {
+            "CEC.native": 0.272958880295,
+            "knowledge_graphs.neo4j_compat": 0.126249490058,
+            "deontic.ir": 0.021999324993,
+        },
+        "legal_ir_underrepresented_components": [
+            "CEC.native",
+            "knowledge_graphs.neo4j_compat",
+            "deontic.ir",
+        ],
+    }
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-42-6244.-3e0d2b124eabe490",
+                "predicate": "sample_id",
+                "object": "us-code-42-6244.-3e0d2b124eabe490",
+            },
+            {
+                "subject": "us-code-42-6244.-3e0d2b124eabe490",
+                "predicate": "source_text",
+                "object": (
+                    "42 U.S.C. 6244.: §6244. Repealed. Pub. L. 106-469, "
+                    "title I, §103(16), Nov. 9, 2000, 114 Stat. 2032"
+                ),
+            },
+            {
+                "subject": "us-code-42-6244.-3e0d2b124eabe490",
+                "predicate": "evidence",
+                "object": json.dumps(repealed_evidence, sort_keys=True),
+            },
+            {
+                "subject": "us-code-42-2751.-d7af5ae7f6f1c93a",
+                "predicate": "sample_id",
+                "object": "us-code-42-2751.-d7af5ae7f6f1c93a",
+            },
+            {
+                "subject": "us-code-42-2751.-d7af5ae7f6f1c93a",
+                "predicate": "source_text",
+                "object": (
+                    "42 U.S.C. 2751.: §2751. Transferred Editorial Notes "
+                    "Codification Section 2751, originally enacted as section "
+                    "121 of Pub. L. 88-452, was renumbered section 441 of "
+                    "Pub. L. 89-329 and transferred to section 1087-51 of "
+                    "Title 20, Education."
+                ),
+            },
+            {
+                "subject": "us-code-42-2751.-d7af5ae7f6f1c93a",
+                "predicate": "evidence",
+                "object": json.dumps(transferred_evidence, sort_keys=True),
+            },
+        ],
+        graph_id="packet-88-editorial-status-projection",
+    )
+
+    triples = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+    }
+    view_distribution = graph_data.metadata["frame_logic_projection_view_distribution"]
+
+    assert ("status_keyword", "repealed") in triples
+    assert ("status_public_law_number", "106-469") in triples
+    assert ("status_keyword", "transferred") in triples
+    assert ("status_transfer_destination_citation", "20 U.S.C. 1087-51") in triples
+    assert ("learned_legal_ir_target_view", "knowledge_graphs.neo4j_compat") in triples
+    assert view_distribution["editorial_status"] >= 4
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata[
+        "frame_logic_projection_legal_view_coverage_complete"
+    ] is True
+    assert graph_data.metadata["legal_ir_multiview_graph_failure_penalty"] == 0.0
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_neo4j_compat_augments_packet_sample_text_section_markers() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 

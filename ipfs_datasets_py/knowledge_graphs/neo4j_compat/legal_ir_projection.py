@@ -196,6 +196,16 @@ _EDITORIAL_NOTES_START_RE = re.compile(
     r"\b(?:Editorial Notes?|Statutory Notes?|Historical and Revision Notes?)\b",
     re.IGNORECASE,
 )
+_TRANSFER_DESTINATION_RE = re.compile(
+    r"\btransferred\s+to\s+section\s+"
+    r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)"
+    r"\s+of\s+Title\s+(?P<title>\d+[A-Za-z]*)\b",
+    re.IGNORECASE,
+)
+_PUBLIC_LAW_RE = re.compile(
+    r"\bPub\.\s*L\.\s*(?P<number>\d+\s*[-\u2010-\u2014]\s*\d+)\b",
+    re.IGNORECASE,
+)
 _CATCHLINE_BODY_START_RE = re.compile(
     r"\s+(?:A|An|Each|For|In|It|No|Nothing|Not|The|There|This|Whoever|"
     r"Pub\. L\.)\b.*$"
@@ -566,7 +576,38 @@ def _editorial_status_components(text: str) -> List[Tuple[str, str]]:
     for keyword in _editorial_reference_status_keywords(normalized, primary_keywords):
         components.append(("editorial_reference_status_keyword", keyword))
         components.append((f"editorial_reference_status_keyword_{keyword}", "true"))
+    components.extend(_transfer_destination_components(normalized))
+    components.extend(_public_law_status_components(normalized))
     return components
+
+
+def _transfer_destination_components(text: str) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    for match in _TRANSFER_DESTINATION_RE.finditer(text):
+        title = match.group("title")
+        section = _normalize_section(match.group("section"))
+        citation = _canonical_usc_citation(title, section)
+        components.extend(
+            [
+                ("status_transfer_destination_title", title),
+                ("status_transfer_destination_section", section),
+                ("status_transfer_destination_citation", citation),
+                ("status_transfer_destination_title_section_key", f"{title}:{section}"),
+            ]
+        )
+    return _clean_components(components[:12])
+
+
+def _public_law_status_components(text: str) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    for index, match in enumerate(_PUBLIC_LAW_RE.finditer(text), start=1):
+        number = _normalize_dashes(match.group("number"))
+        number = re.sub(r"\s*-\s*", "-", number).strip()
+        if not number:
+            continue
+        components.append(("status_public_law_number", number))
+        components.append((f"status_public_law_{index}_number", number))
+    return _clean_components(components[:12])
 
 
 def _primary_editorial_status_keywords(text: str) -> List[str]:

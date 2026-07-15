@@ -136,6 +136,9 @@ _EDITORIAL_STATUS_PREDICATES = {
     "status_keyword",
 }
 _EDITORIAL_STATUS_PREDICATE_PREFIXES = (
+    "editorial_reference_status_",
+    "status_public_law_",
+    "status_transfer_",
     "status_keyword_",
 )
 _EDITORIAL_STATUS_TOKENS = (
