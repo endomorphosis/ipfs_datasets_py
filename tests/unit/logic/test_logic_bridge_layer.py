@@ -14404,6 +14404,55 @@ def test_multiview_training_target_compacts_short_official_usc_section() -> None
     assert abs(sum(compacted.values()) - 1.0) < 1e-9
 
 
+def test_multiview_training_target_retains_frame_lane_for_membership_governance() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compact_official_usc_contract_distribution,
+    )
+
+    distribution = {
+        "CEC.native": 0.17,
+        "TDFOL.prover": 0.19,
+        "deontic.ir": 0.28,
+        "external_provers.router": 0.10,
+        "knowledge_graphs.neo4j_compat": 0.14,
+        "modal.frame_logic": 0.09,
+        "zkp.circuits": 0.03,
+    }
+    text = (
+        "U.S.C. Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, "
+        "CEREMONIES, AND ORGANIZATIONS 36 U.S.C. United States Code, "
+        "2024 Edition Subtitle II - Patriotic and National Organizations "
+        "Part B - Organizations CHAPTER 1509 - NATIONAL COUNCIL ON "
+        "RADIATION PROTECTION AND MEASUREMENTS Sec. 150903 - Membership "
+        "From the U.S. Government Publishing Office, www.gpo.gov "
+        "§150903. Membership (a) Eligibility. Except as provided in this "
+        "chapter, eligibility for membership in the corporation and the "
+        "rights and privileges of members are as provided in the bylaws. "
+        "(b) Voting. Each member, except an honorary or associate member, "
+        "has one vote on each matter submitted to a vote at a meeting of "
+        "the members. Pub. L. 105-225, Aug. 12, 1998, 112 Stat. 1395. "
+        "Historical and Revision Notes Revised Section Source U.S. Code "
+        "Source Statutes at Large 150903 36:4506."
+    )
+
+    compacted = _compact_official_usc_contract_distribution(
+        distribution,
+        text=text,
+    )
+
+    assert set(compacted) == {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
+    }
+    assert compacted["modal.frame_logic"] >= 0.08
+    assert compacted["CEC.native"] > compacted["TDFOL.prover"]
+    assert compacted["knowledge_graphs.neo4j_compat"] > compacted["TDFOL.prover"]
+    assert abs(sum(compacted.values()) - 1.0) < 1e-9
+
+
 def test_multiview_training_target_projects_packet_official_usc_contract_patterns() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _compact_official_usc_contract_distribution,

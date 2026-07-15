@@ -681,6 +681,16 @@ _BRIDGE_CONTRACT_FEDERAL_CHARTER_GOVERNANCE_RE = re.compile(
     r"principal\s+office|perpetual\s+succession)\b",
     flags=re.IGNORECASE,
 )
+_BRIDGE_CONTRACT_MEMBERSHIP_GOVERNANCE_RE = re.compile(
+    r"\b(?:membership|members?|eligibility|voting|vote|rights?\s+and\s+"
+    r"privileges?|honorary|associate)\b.{0,260}\b(?:corporation|bylaws?|"
+    r"meeting\s+of\s+the\s+members?|submitted\s+to\s+a\s+vote)\b"
+    r"|\b(?:corporation|bylaws?|meeting\s+of\s+the\s+members?|submitted\s+"
+    r"to\s+a\s+vote)\b.{0,260}\b(?:membership|members?|eligibility|voting|"
+    r"vote|rights?\s+and\s+privileges?|honorary|associate)\b",
+    flags=re.IGNORECASE,
+)
+_BRIDGE_CONTRACT_ORGANIZATIONAL_FRAME_AUXILIARY_FLOOR = 0.08
 
 
 @dataclass(frozen=True)
@@ -4011,8 +4021,13 @@ def _compact_official_usc_contract_distribution(
         lane: value / total
         for lane, value in sorted(primary.items())
     }
-    return _project_official_usc_primary_contract_distribution(
+    projected = _project_official_usc_primary_contract_distribution(
         compacted,
+        text=normalized_text,
+    )
+    return _retain_official_usc_auxiliary_contract_lanes(
+        projected,
+        original_distribution=lanes,
         text=normalized_text,
     )
 
@@ -4262,6 +4277,9 @@ def _project_official_usc_primary_contract_distribution(
     has_federal_charter_governance = bool(
         _BRIDGE_CONTRACT_FEDERAL_CHARTER_GOVERNANCE_RE.search(normalized_text)
     )
+    has_membership_governance = bool(
+        _BRIDGE_CONTRACT_MEMBERSHIP_GOVERNANCE_RE.search(normalized_text)
+    )
     status_operation_cue_count = _cue_count(
         _BRIDGE_CONTRACT_STATUS_OPERATION_CUE_RE,
         normalized_text,
@@ -4438,7 +4456,7 @@ def _project_official_usc_primary_contract_distribution(
             ("TDFOL.prover", 0.14),
         )
         strength = 0.44
-    elif has_federal_charter_governance:
+    elif has_federal_charter_governance or has_membership_governance:
         target_mix = (
             ("CEC.native", 0.34),
             ("knowledge_graphs.neo4j_compat", 0.30),
@@ -4706,6 +4724,69 @@ def _project_official_usc_primary_contract_distribution(
         target_mix,
         strength=strength,
     )
+
+
+def _retain_official_usc_auxiliary_contract_lanes(
+    distribution: Mapping[str, float],
+    *,
+    original_distribution: Mapping[str, float],
+    text: str,
+) -> Dict[str, float]:
+    """Preserve frame supervision for organizational U.S.C. governance sections."""
+
+    adjusted = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if not adjusted:
+        return adjusted
+
+    original = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(original_distribution or {}).items()
+        if float(value) > 0.0
+    }
+    frame_lane = "modal.frame_logic"
+    if original.get(frame_lane, 0.0) <= 0.0:
+        return adjusted
+
+    normalized_text = " ".join(str(text or "").split()).lower()
+    has_organizational_frame = bool(
+        _BRIDGE_CONTRACT_MEMBERSHIP_GOVERNANCE_RE.search(normalized_text)
+    )
+    if not has_organizational_frame:
+        return adjusted
+
+    frame_floor = min(
+        _BRIDGE_CONTRACT_ORGANIZATIONAL_FRAME_AUXILIARY_FLOOR,
+        original[frame_lane],
+    )
+    if adjusted.get(frame_lane, 0.0) >= frame_floor:
+        return adjusted
+
+    deficit = frame_floor - adjusted.get(frame_lane, 0.0)
+    donor_priority = (
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+        "CEC.native",
+    )
+    for donor in donor_priority:
+        donor_value = adjusted.get(donor, 0.0)
+        if donor_value <= 0.0 or deficit <= 0.0:
+            continue
+        shift = min(deficit, max(0.0, donor_value - 0.04))
+        if shift <= 0.0:
+            continue
+        adjusted[donor] = donor_value - shift
+        adjusted[frame_lane] = adjusted.get(frame_lane, 0.0) + shift
+        deficit -= shift
+
+    total = sum(adjusted.values())
+    if total <= 0.0:
+        return adjusted
+    return {lane: value / total for lane, value in adjusted.items()}
 
 
 def _metadata_signal_values(metadata: Mapping[str, Any]) -> list[float]:
