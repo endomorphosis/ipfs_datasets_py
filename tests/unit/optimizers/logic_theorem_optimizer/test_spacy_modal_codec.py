@@ -10323,6 +10323,35 @@ def test_spacy_compiler_adds_administrative_proceeding_record_residual_span_cove
     )
 
 
+def test_spacy_compiler_adds_public_review_recommendation_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    text = (
+        "Sec. 433a - Recommendations and reports. "
+        "Environmental impact recommendations and reports for public review."
+    )
+    encoding = encoder.encode(
+        text,
+        document_id="us-code-43-433a-public-review-residual",
+        citation="43 U.S.C. 433a.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+
+    assert (
+        "Environmental impact recommendations and reports for public review."
+        in residual_text_spans
+    )
+
+
 def test_spacy_compiler_adds_administrative_approval_residual_span_coverage_for_packet_005219_shape() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

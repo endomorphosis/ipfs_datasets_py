@@ -238,6 +238,10 @@ _USCODE_ADMINISTRATIVE_PROCEDURE_RESIDUAL_MAX_TOKENS = 96
 _USCODE_ADMINISTRATIVE_PROCEDURE_PHRASE_RE = re.compile(
     r"\b(?:administrative\s+(?:notice|review|hearing|procedure|procedures)|"
     r"administrative\s+(?:proceeding|proceedings|record|records)|"
+    r"(?:administrative|public)\s+(?:recommendation|recommendations|"
+    r"report|reports|statement|statements)|"
+    r"(?:recommendation|recommendations|report|reports|statement|statements)\s+"
+    r"(?:for|on|after)\s+(?:administrative|public)\s+(?:review|comment|hearing)|"
     r"notice\s+and\s+hearing|notice\s+of\s+(?:hearing|proceeding|proceedings)|"
     r"opportunity\s+for\s+hearing|public\s+hearing|"
     r"hearing\s+(?:procedure|procedures|requirements|record|records)|"
@@ -274,10 +278,16 @@ _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS = frozenset(
         "proceedings",
         "procedure",
         "procedures",
+        "recommendation",
+        "recommendations",
         "record",
         "records",
+        "report",
+        "reports",
         "requirements",
         "review",
+        "statement",
+        "statements",
         "testimony",
     }
 )
