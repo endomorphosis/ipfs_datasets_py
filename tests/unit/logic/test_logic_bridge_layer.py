@@ -8523,6 +8523,35 @@ def test_cec_dcec_bridge_extracts_bare_usc_shall_clause_without_converter() -> N
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_extracts_passive_preference_clause_without_converter() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("passive preference clause should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "43 U.S.C. 433a. Preference shall be given to families who have "
+            "no other means of earning a livelihood."
+        ),
+        document_id="cec-bridge-passive-preference-clause",
+        citation="43 U.S.C. 433a",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    formula_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "selection_official"
+    assert event_record["event"].startswith("give_preference_to_families")
+    assert formula_record["proof_input"].startswith("O(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_extracts_mandatory_application_without_heading_duplication() -> None:
     from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
 

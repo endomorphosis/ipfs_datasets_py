@@ -3599,6 +3599,25 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "support_text": corporation_records_match.group(0)[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
+    passive_preference_match = re.search(
+        r"\bpreference\s+shall\s+be\s+given\s+to\s+"
+        r"(?P<beneficiary>[^.;]{1,260})",
+        operative_text.lower(),
+    )
+    if passive_preference_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        beneficiary = _clean_operational_slot(
+            passive_preference_match.group("beneficiary")
+        )
+        return {
+            "actor": "selection official",
+            "action": _clean_operational_slot(f"give preference to {beneficiary}"),
+            "modality": "obligated",
+            "norm_type": "obligated",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": passive_preference_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     patterns = (
         (
             "obligated",
@@ -4076,6 +4095,7 @@ def _strip_uscode_catchline_and_subsection_heading(text: str) -> str:
         "Any",
         "No",
         "Nothing",
+        "Preference",
     )
     starter_pattern = "|".join(re.escape(starter) for starter in starters)
     subsection_dash_match = re.match(
