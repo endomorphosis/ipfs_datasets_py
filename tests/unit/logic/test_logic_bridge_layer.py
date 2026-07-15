@@ -910,6 +910,66 @@ def test_modal_frame_logic_bridge_audits_packet_frame_feature_evidence() -> None
     assert "legal_ir_multiview" in high_signal_terms
 
 
+def test_modal_frame_logic_bridge_audits_nested_legal_ir_gap_evidence() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("modal_frame_logic")
+    report = adapter.evaluate(
+        (
+            "43 U.S.C. 433a. Preference shall be given to families who have "
+            "no other means of earning a livelihood."
+        ),
+        document_id="bridge-layer-nested-gap-evidence",
+        citation="43 U.S.C. 433a",
+        compiler_guidance={
+            "bundle": {
+                "action": "repair_flogic_ontology_constraints",
+                "target_component": "modal.frame_logic",
+            },
+            "evidence": {
+                "legal_ir_component_gaps": {
+                    "CEC.native": 0.098704790379,
+                    "TDFOL.prover": -0.01788238027,
+                    "deontic.ir": 0.064682778724,
+                    "modal.autoencoder": -0.103051172281,
+                    "modal.frame_logic": 0.058237228729,
+                },
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "deontic.ir",
+                    "modal.frame_logic",
+                ],
+                "pipeline_stage_focus": [
+                    "modal_family_registry",
+                    "legal_ir_multiview",
+                ],
+                "predicted_view": "modal.frame_logic",
+                "target_view": "modal.frame_logic",
+            },
+        },
+        evaluate_provers=False,
+    )
+
+    modal_metadata = report.ir_document.views["modal_ir"].payload["modal_ir"][
+        "metadata"
+    ]
+    frame_triples = report.ir_document.views["frame_logic"].payload["triples"]
+    selected_terms = {
+        triple["object"]
+        for triple in frame_triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert report.round_trip.to_dict()["ontology_violation_count"] == 0.0
+    assert "modal_frame_logic" in selected_terms
+    assert "deontic_ir" in selected_terms
+    assert "cec_native" in selected_terms
+    assert "modal_autoencoder" not in selected_terms
+    assert "legal_ir_view_modal_frame_logic" in modal_metadata[
+        "frame_ontology_term_audit_terms"
+    ]
+
+
 def test_modal_frame_logic_bridge_promotes_graph_projection_guidance_to_neo4j_view() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

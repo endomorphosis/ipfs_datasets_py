@@ -2088,6 +2088,7 @@ def _compiler_guidance_frame_audit_features(
             add_feature_values(mapping.get(key))
         for key in _COMPILER_GUIDANCE_FRAME_AUDIT_STAGE_KEYS:
             add_stage_values(mapping.get(key))
+        candidates.extend(_compiler_guidance_legal_ir_view_features(mapping))
 
     collect(compiler_guidance)
     raw_evidence = compiler_guidance.get("evidence")
@@ -2105,6 +2106,40 @@ def _compiler_guidance_frame_audit_features(
 
     return frame_ontology_feature_keys(
         _unique_preserve_order(candidates),
+        max_keys=_COMPILER_GUIDANCE_MAX_FEATURES,
+    )
+
+
+def _compiler_guidance_legal_ir_view_features(
+    mapping: Mapping[str, Any],
+) -> List[str]:
+    """Promote compact LegalIR view evidence into frame audit feature keys."""
+    if not isinstance(mapping, Mapping):
+        return []
+
+    values: List[Any] = [
+        mapping.get("legal_ir_underrepresented_components"),
+        mapping.get("underrepresented_components"),
+        mapping.get("predicted_view"),
+        mapping.get("target_view"),
+        mapping.get("target_component"),
+        mapping.get("target_file_lane"),
+    ]
+    for gap_key in (
+        "legal_ir_component_gaps",
+        "legal_ir_view_gaps",
+        "compiler_guidance_legal_ir_view_gaps",
+    ):
+        raw_gaps = mapping.get(gap_key)
+        if not isinstance(raw_gaps, Mapping):
+            continue
+        values.extend(
+            f"legal-ir-view:{component}"
+            for component, raw_gap in sorted(raw_gaps.items())
+            if _safe_float(raw_gap) > 0.0
+        )
+    return frame_ontology_feature_keys_from_values(
+        values,
         max_keys=_COMPILER_GUIDANCE_MAX_FEATURES,
     )
 
@@ -3239,14 +3274,36 @@ class DeterministicModalLogicCodec:
         max_features: Optional[int] = None,
     ) -> List[str]:
         """Return generalizable modal, frame, and F-logic features for SGD."""
-        codec_result = self.encode(
-            sample.text,
-            document_id=sample.sample_id,
-            citation=sample.citation,
-            source=sample.source,
-            source_embedding=sample.embedding_vector,
-        )
         limit = max(0, int(max_features or 0))
+        if limit <= 0:
+            # Preserve the unbounded public API's full codec semantics,
+            # including caller-supplied frame selectors and optimized graphs.
+            codec_result = self.encode(
+                sample.text,
+                document_id=sample.sample_id,
+                citation=sample.citation,
+                source=sample.source,
+                source_embedding=sample.embedding_vector,
+            )
+            encoding = codec_result.encoding
+            modal_ir = codec_result.modal_ir
+            decoded_modal_text = codec_result.decoded_modal_text
+            selected_frame = codec_result.selected_frame
+            frame_candidates = codec_result.frame_candidates
+            kg_triples = codec_result.kg_triples
+        else:
+            # Bounded SGD feature extraction reuses the sample's canonical IR;
+            # the full codec would also optimize graphs, decompile text, and
+            # calculate losses only to obtain a small feature vocabulary.
+            encoding = self.encode_sample(sample)
+            modal_ir = sample.modal_ir
+            decoded_modal_text = None
+            selected_frame = sample.selected_frame
+            frame_candidates = sample.frame_candidates
+            kg_triples = modal_ir_to_flogic_triples(
+                modal_ir,
+                selected_frame=selected_frame,
+            )
         features: List[str] = []
         seen: set[str] = set()
 
@@ -3271,18 +3328,63 @@ class DeterministicModalLogicCodec:
         frame_term_budget = None
         triple_budget = None
         if limit > 0:
-            decoder_budget = max(32, limit // 2)
-            slot_budget = max(16, limit // 4)
-            frame_term_budget = max(24, limit // 4)
-            triple_budget = max(16, limit // 4)
+            # Leave room for every semantic family instead of allowing token
+            # features to consume the entire bounded result before frame and
+            # F-logic evidence is considered.
+            payload_budget = max(4, limit - 8)
+            decoder_budget = max(1, int(payload_budget * 0.35))
+            slot_budget = max(1, int(payload_budget * 0.20))
+            frame_term_budget = max(1, int(payload_budget * 0.20))
+            triple_budget = max(
+                1,
+                payload_budget
+                - decoder_budget
+                - slot_budget
+                - frame_term_budget,
+            )
 
-        add_many(self.decoder._feature_stream(codec_result.encoding), budget=decoder_budget)
-        add_many(_slot_features(codec_result.decoded_modal_text), budget=slot_budget)
-        if codec_result.selected_frame:
-            add(f"frame:{codec_result.selected_frame}")
-            for family in _selected_frame_modal_families(codec_result.modal_ir):
+        add_many(self.decoder._feature_stream(encoding), budget=decoder_budget)
+        if decoded_modal_text is not None:
+            slot_features = _slot_features(decoded_modal_text)
+        else:
+            slot_features = [
+                f"slot:modal_family:{formula.operator.family}"
+                for formula in modal_ir.formulas
+            ]
+            slot_features.extend(
+                f"slot:modal_operator:{formula.operator.symbol}"
+                for formula in modal_ir.formulas
+            )
+            if sample.title:
+                slot_features.append(f"slot:citation_title:{sample.title}")
+            if sample.section:
+                slot_features.append(f"slot:citation_section:{sample.section}")
+        add_many(slot_features, budget=slot_budget)
+        if selected_frame:
+            add(f"frame:{selected_frame}")
+            selected_frame_families = _selected_frame_modal_families(modal_ir)
+            if not selected_frame_families:
+                selected_frame_families = sorted(
+                    {str(formula.operator.family) for formula in modal_ir.formulas}
+                )
+            for family in selected_frame_families:
                 add(f"family:selected_frame:{family}")
-        frame_terms = _frame_ontology_terms_by_frame(codec_result.modal_ir)
+        frame_terms = _frame_ontology_terms_by_frame(modal_ir)
+        frame_lookup = {frame.frame_id: frame for frame in self.frame_selector.frames}
+        for candidate in frame_candidates:
+            frame_id = str(candidate.get("frame_id") or "")
+            frame = frame_lookup.get(frame_id)
+            if frame is None:
+                continue
+            frame_terms[frame_id] = _unique_preserve_order(
+                [
+                    *frame_terms.get(frame_id, ()),
+                    *frame_ontology_terms(
+                        frame,
+                        matched_terms=candidate.get("matched_terms") or (),
+                    ),
+                ]
+            )
         frame_term_count = 0
         for frame_id in sorted(frame_terms):
             terms = frame_terms[frame_id]
@@ -3291,16 +3393,38 @@ class DeterministicModalLogicCodec:
                     break
                 if add(f"frame-term:{term}"):
                     frame_term_count += 1
-                if frame_id == codec_result.selected_frame:
+                if frame_id == selected_frame:
                     add(f"selected-frame-term:{term}")
             if frame_term_budget is not None and frame_term_count >= frame_term_budget:
                 break
-        for candidate in codec_result.frame_candidates:
+        for candidate in frame_candidates:
             frame_id = candidate.get("frame_id")
             if frame_id:
                 add(f"frame-candidate:{frame_id}")
         triple_count = 0
-        for triple in codec_result.kg_triples:
+        triple_priority_prefixes = (
+            "modal_family",
+            "modal_operator",
+            "modal_system",
+            "condition",
+            "exception",
+            "predicate_role",
+            "selected_ontology",
+        )
+
+        def triple_priority(triple: Mapping[str, Any]) -> tuple[int, str, str]:
+            predicate = str(triple.get("predicate", ""))
+            priority = next(
+                (
+                    index
+                    for index, prefix in enumerate(triple_priority_prefixes)
+                    if predicate.startswith(prefix)
+                ),
+                len(triple_priority_prefixes),
+            )
+            return priority, predicate, str(triple.get("object", ""))
+
+        for triple in sorted(kg_triples, key=triple_priority):
             if triple_budget is not None and triple_count >= triple_budget:
                 break
             predicate = triple.get("predicate", "")
