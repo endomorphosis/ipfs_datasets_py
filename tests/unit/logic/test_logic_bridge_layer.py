@@ -13409,6 +13409,32 @@ def test_zkp_guidance_ref_normalizes_json_encoded_packet_bundle() -> None:
     )
 
 
+def test_zkp_guidance_ref_normalizes_semantic_bundle_key_packet() -> None:
+    from ipfs_datasets_py.logic.zkp import (
+        compiler_guidance_contract_from_metadata,
+        compiler_guidance_ref_from_metadata,
+    )
+
+    packet = {
+        "program_synthesis_scope": "zkp",
+        "route": "repair_zkp_attestation_bridge",
+        "source": "compiler_guidance_distillation_v1",
+        "target_component": "zkp.circuits",
+    }
+    bundled = {
+        "semantic_bundle_key": json.dumps(packet, sort_keys=True),
+        "source": "compiler_guidance_distillation_v1",
+    }
+    explicit = {"compiler_guidance_contract": packet}
+
+    assert compiler_guidance_contract_from_metadata(bundled) == (
+        compiler_guidance_contract_from_metadata(explicit)
+    )
+    assert compiler_guidance_ref_from_metadata(bundled) == (
+        compiler_guidance_ref_from_metadata(explicit)
+    )
+
+
 def test_zkp_guidance_contract_promotes_route_before_attribution_container() -> None:
     from ipfs_datasets_py.logic.zkp import compiler_guidance_contract_from_metadata
 
