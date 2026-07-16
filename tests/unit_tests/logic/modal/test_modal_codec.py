@@ -121,6 +121,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003171_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003229_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003901_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003360_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005348_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003762_FAMILY_PAIRS,
@@ -230,6 +231,46 @@ def test_modal_registry_packet_000202_refines_modal_family_cue_pairs() -> None:
             target_family,
             0.2,
         )
+
+
+def test_modal_registry_packet_003901_exposes_frame_policy_ambiguity_pairs() -> None:
+    expected_pairs = {
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_003901_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    _assert_refined_margin_buffer_at_least("frame", "deontic", 0.74)
+    _assert_refined_margin_buffer_at_least("frame", "temporal", 0.74)
 
 
 def test_modal_registry_packet_001314_refines_deontic_dynamic_frame_pairs() -> None:
@@ -40337,6 +40378,39 @@ def test_decompiler_binds_frame_conditional_deontic_cues_to_deontic_view() -> No
         "frame:administrator|typed-decompiler-force-polarity:"
         "obligation:negative_scope||deontic.ir"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+
+
+def test_decompiler_preserves_conditional_normative_family_reconstruction() -> None:
+    document = _single_formula_document(
+        family="conditional_normative",
+        symbol="O|",
+        label="conditional obligation",
+        text=(
+            "Subject to subsection (b), the Secretary shall make grants to "
+            "eligible institutions."
+        ),
+        predicate="secretary_grant_award",
+        conditions=["subject to subsection (b)"],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    reconstruction_pairs = slot_texts["typed-decompiler-target-reconstruction-pair"]
+    assert reconstruction_pairs[0] == (
+        "conditional_normative->conditional_normative"
+    )
+    assert "conditional_normative" in slot_texts[
+        "typed-decompiler-target-reconstruction-family"
+    ]
+    assert "conditional obligation source reconstruction" in slot_texts[
+        "typed_ir_family_pair_reconstruction_support"
+    ]
+    assert any(
+        text.startswith("conditional obligation")
+        for text in slot_texts["typed_ir_semantic_reconstruction_clause"]
+    )
 
 
 def test_decompiler_binds_packet_000328_family_pairs_to_typed_role_values() -> None:

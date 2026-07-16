@@ -1985,7 +1985,7 @@ _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
 }
 _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
     "alethic": ("conditional_normative", "deontic", "temporal"),
-    "conditional_normative": ("deontic",),
+    "conditional_normative": ("conditional_normative", "deontic"),
     "deontic": ("conditional_normative", "deontic", "frame", "temporal"),
     "doxastic": ("conditional_normative", "deontic"),
     "frame": (
@@ -16356,10 +16356,11 @@ def _typed_decompiler_bridge_target_families(
         if normalized_target and normalized_target not in targets:
             targets.append(normalized_target)
 
-    if family in {"conditional_normative", "deontic"}:
-        add("deontic")
     if family == "conditional_normative":
         add("conditional_normative")
+        add("deontic")
+    elif family == "deontic":
+        add("deontic")
     temporal_cues = _temporal_transition_context_cues_from_text(text)
     if "temporal" in roles or temporal_cues:
         add("temporal")
