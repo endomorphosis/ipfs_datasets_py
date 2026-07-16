@@ -3467,6 +3467,55 @@ def test_modal_decompiler_packet_005035_promotes_typed_self_pair_semantics() -> 
     assert "not later than 180 days after enactment" in decoded.text
 
 
+def test_modal_decompiler_preserves_operator_temporal_self_target_without_surface_cue() -> None:
+    source = "The Secretary submits a report to Congress."
+    document = ModalIRDocument(
+        document_id="packet-000596-temporal-operator-self-target",
+        source="us_code",
+        normalized_text=source,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000596-temporal",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="secretary_submits_report",
+                    arguments=[
+                        "actor:secretary",
+                        "action:submit",
+                        "object:report",
+                    ],
+                    role="temporal",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000596-temporal-operator-self-target",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="22 U.S.C. 6831",
+                ),
+                metadata={"cue": "eventually"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "temporal->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "temporal->temporal:subject+action+object+temporal" in slot_texts[
+        "typed-decompiler-family-pair-role-topology"
+    ]
+    assert "temporal->temporal:temporal:temporal_operator_scope" in slot_texts[
+        "typed-decompiler-family-pair-role-value"
+    ]
+
+
 def test_flogic_graph_projection_metadata_tracks_frame_logic_alignment() -> None:
     graph_data = flogic_triples_to_graph_data(
         [

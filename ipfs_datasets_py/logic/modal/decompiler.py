@@ -3420,6 +3420,8 @@ def _typed_ir_reconstruction_phrases(
     )
     for role, value in _semantic_role_values_from_arguments(argument_values).items():
         roles.setdefault(role, value)
+    if family == "temporal" and "temporal" not in roles:
+        roles["temporal"] = "temporal_operator_scope"
     semantic_atoms = _legal_semantic_atoms_from_text(
         " ".join(
             value
@@ -3478,6 +3480,8 @@ def _typed_ir_reconstruction_phrases(
     ):
         if guided_target not in targets:
             targets.append(guided_target)
+    if family == "temporal" and "temporal" not in targets:
+        targets.append("temporal")
     if (condition_values or exception_values) and "conditional_normative" not in targets:
         targets.append("conditional_normative")
     if family == "frame" and semantic_atoms:
@@ -10890,6 +10894,8 @@ def _typed_decompiler_target_reconstruction_slots(
     temporal_cues = _temporal_transition_context_cues_from_text(reconstruction_text)
     if temporal_cues:
         roles["temporal"] = "+".join(temporal_cues)
+    elif source_family == "temporal":
+        roles.setdefault("temporal", "temporal_operator_scope")
     semantic_atoms = _legal_semantic_atoms_from_text(reconstruction_text)
     status_detail_slots = _typed_decompiler_status_detail_slots(reconstruction_text)
     targets = _typed_decompiler_bridge_target_families(
@@ -10921,7 +10927,8 @@ def _typed_decompiler_target_reconstruction_slots(
     )
     has_conditioned_scope = bool(condition_values or exception_values or condition_cues)
     has_temporal_scope = bool(
-        temporal_cues
+        source_family == "temporal"
+        or temporal_cues
         or any(_temporal_clause_prefix_relation(cue) for cue in condition_cues)
     )
     if has_conditioned_scope and "conditional_normative" not in targets:
@@ -16949,6 +16956,8 @@ def _typed_decompiler_bridge_target_families(
         add("deontic")
     elif family == "deontic":
         add("deontic")
+    elif family == "temporal":
+        add("temporal")
     temporal_cues = _temporal_transition_context_cues_from_text(text)
     if "temporal" in roles or temporal_cues:
         add("temporal")
