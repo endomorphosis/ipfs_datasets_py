@@ -3693,6 +3693,9 @@ def _typed_ir_reconstruction_phrases(
     ):
         if semantic_target not in targets:
             targets.append(semantic_target)
+    for directional_target in _typed_decompiler_directional_target_families(family):
+        if directional_target not in targets:
+            targets.append(directional_target)
 
     legal_ir_view_support = _typed_ir_legal_view_support_values(document)
     support_values: List[str] = []
@@ -4121,9 +4124,14 @@ def _typed_ir_scope_frame_texts(
     )
     has_temporal_scope = any(scope["temporal_relation"] for scope in condition_scopes)
     has_condition_scope = bool(condition_scopes or exception_scopes)
+    has_frame_self_scope = (
+        source == "frame"
+        and "frame" in normalized_targets
+        and bool(roles or semantic_atoms)
+    )
     if not has_condition_scope and not any(
         target in {"conditional_normative", "temporal"} for target in normalized_targets
-    ):
+    ) and not has_frame_self_scope:
         return []
 
     subject = _humanize_typed_ir_value(roles.get("subject", ""))

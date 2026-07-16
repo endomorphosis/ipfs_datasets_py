@@ -42981,6 +42981,49 @@ def test_decompiler_emits_heading_typed_ir_reconstruction_for_frame_residuals() 
     assert "federal needs" in structural_text
 
 
+def test_decompiler_reconstructs_unconditioned_frame_self_scope_from_semantic_atoms() -> None:
+    text = (
+        "36 U.S.C. 20208. National governing body. The corporation is the "
+        "national governing body for the amateur sport and may coordinate "
+        "national championships."
+    )
+    formula = ModalIRFormula(
+        formula_id="us-code-36-20208-frame-self-scope:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame_bm25",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="national_governing_body"),
+        provenance=ModalIRProvenance(
+            source_id="us-code-36-20208-frame-self-scope",
+            start_char=0,
+            end_char=len(text),
+            citation="36 U.S.C. 20208",
+        ),
+        metadata={"cue": "__uscode_residual_span_fallback__"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-36-20208-frame-self-scope",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "frame->frame" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert any(
+        "legal frame source reconstruction scope" in value
+        and "national governing body" in value
+        and "amateur sports" in value
+        for value in slot_texts["typed_ir_scope_frame_reconstruction"]
+    )
+
+
 def test_decompiler_emits_packet_000169_semantic_reconstruction_clause() -> None:
     document = _single_formula_document(
         family="frame",
