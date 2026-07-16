@@ -41564,6 +41564,82 @@ def test_decompiler_emits_direct_frame_target_reconstruction_view_anchors() -> N
     )
 
 
+def test_decompiler_uses_rule_gap_target_family_from_autoencoder_prose() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "10 U.S.C. 8729. Capability finding. The Secretary determines "
+            "whether the reserve component can perform the required mission."
+        ),
+        predicate="reserve_component_capability_finding",
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "predicted_family": "frame",
+            "target_family": "temporal",
+            "missing_semantic_rule": {
+                "description": (
+                    "Missing deterministic rule for decompiler family "
+                    "classification when alethic->frame family probability gap "
+                    "exceeds threshold. The decompiler must deterministically "
+                    "assign the target family (alethic) when the predicted "
+                    "family is frame."
+                )
+            },
+        }
+    ]
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "alethic" in slot_texts["autoencoder_modal_target_family_guidance"]
+    assert "frame->alethic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "alethic" in slot_texts["typed-decompiler-target-reconstruction-family"]
+
+
+def test_decompiler_uses_family_distribution_target_probability_gap() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "10 U.S.C. 8729. Knowledge finding. The Secretary determines "
+            "whether the person is eligible under this chapter."
+        ),
+        predicate="eligibility_knowledge_finding",
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "predicted_family": "frame",
+            "family_distribution": {
+                "epistemic": {
+                    "predicted_probability": 0.000590528976,
+                    "target_probability": 0.95,
+                },
+                "frame": {
+                    "predicted_probability": 0.000590528976,
+                    "target_probability": 0.0,
+                },
+            },
+        }
+    ]
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "epistemic" in slot_texts["autoencoder_modal_target_family_guidance"]
+    assert "frame->epistemic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "epistemic" in slot_texts["typed-decompiler-target-reconstruction-family"]
+
+
 def test_decompiler_reconstructs_housing_investment_authority_from_frame_slots() -> None:
     document = _single_formula_document(
         family="frame",

@@ -1984,7 +1984,7 @@ _CROSS_FAMILY_BRIDGE_FAMILY_PRIORITY: Mapping[str, int] = {
     "dynamic": 6,
 }
 _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = {
-    "alethic": ("conditional_normative", "deontic", "temporal"),
+    "alethic": ("conditional_normative", "deontic", "frame", "temporal"),
     "conditional_normative": ("conditional_normative", "deontic"),
     "deontic": ("conditional_normative", "deontic", "frame", "temporal"),
     "doxastic": ("conditional_normative", "deontic"),
@@ -6588,6 +6588,8 @@ def _autoencoder_modal_family_guidance_slots(
             slots.append(("autoencoder_family_legal_ir_view_pair", pair))
     for pair in _autoencoder_family_pair_guidance_values(document):
         slots.append(("autoencoder_modal_family_guided_pair", pair))
+    for family in _autoencoder_target_family_guidance_values(document):
+        slots.append(("autoencoder_modal_target_family_guidance", family))
     return _unique_slot_values(slots)
 
 
@@ -6699,14 +6701,116 @@ def _autoencoder_target_family_guidance_values(
 ) -> List[str]:
     """Return explicit target-family hints for typed IR reconstruction."""
     targets: List[str] = []
+
+    def add_target(value: Any) -> None:
+        family = _slot_safe_family_key(
+            _clean_text(str(value or "")).lower()
+        )
+        if family and family not in targets:
+            targets.append(family)
+
     for entry in _autoencoder_guidance_entries(document):
         for field in ("target_family", "selected_family"):
-            family = _slot_safe_family_key(
-                _clean_text(str(entry.get(field) or "")).lower()
-            )
-            if family and family not in targets:
-                targets.append(family)
+            add_target(entry.get(field))
+        for family in _autoencoder_target_family_distribution_values(entry):
+            add_target(family)
+        for family in _autoencoder_rule_gap_target_family_values(entry):
+            add_target(family)
     return targets
+
+
+def _autoencoder_target_family_distribution_values(
+    entry: Mapping[str, Any],
+) -> List[str]:
+    """Return target families underrepresented in an introspection distribution."""
+    families: List[str] = []
+    distributions: List[Mapping[str, Any]] = []
+
+    def add_distribution(value: Any) -> None:
+        if isinstance(value, Mapping):
+            distributions.append(value)
+
+    add_distribution(entry.get("family_distribution"))
+    for key in ("counterexample", "counterexamples", "evidence", "evidences"):
+        for nested in _mapping_sequence(entry.get(key)):
+            add_distribution(nested.get("family_distribution"))
+
+    for distribution in distributions:
+        ranked: List[Tuple[float, str]] = []
+        for family, raw_stats in distribution.items():
+            if not isinstance(raw_stats, Mapping):
+                continue
+            normalized_family = _slot_safe_family_key(_clean_text(str(family)).lower())
+            if not normalized_family:
+                continue
+            try:
+                target_probability = float(raw_stats.get("target_probability", 0.0))
+                predicted_probability = float(
+                    raw_stats.get("predicted_probability", 0.0)
+                )
+            except (TypeError, ValueError):
+                continue
+            gap = target_probability - predicted_probability
+            if target_probability >= 0.001 and gap > 0.0:
+                ranked.append((gap, normalized_family))
+        for _gap, family in sorted(ranked, reverse=True):
+            if family not in families:
+                families.append(family)
+    return families
+
+
+def _autoencoder_rule_gap_target_family_values(
+    entry: Mapping[str, Any],
+) -> List[str]:
+    """Extract deterministic target families from accepted rule-gap prose."""
+    families: List[str] = []
+
+    def add(value: Any) -> None:
+        family = _slot_safe_family_key(_clean_text(str(value or "")).lower())
+        if family and family not in families:
+            families.append(family)
+
+    text_parts: List[str] = []
+
+    def collect_text(value: Any) -> None:
+        if isinstance(value, str):
+            cleaned = _clean_text(value)
+            if cleaned:
+                text_parts.append(cleaned)
+        elif isinstance(value, Mapping):
+            for key in (
+                "missing_semantic_rule",
+                "description",
+                "expected",
+                "observed",
+                "objective",
+                "normalized_rule_key",
+            ):
+                collect_text(value.get(key))
+
+    for key in (
+        "missing_semantic_rule",
+        "description",
+        "expected",
+        "objective",
+        "normalized_rule_key",
+    ):
+        collect_text(entry.get(key))
+    for key in ("counterexample", "counterexamples", "evidence", "evidences"):
+        for nested in _mapping_sequence(entry.get(key)):
+            collect_text(nested)
+
+    joined = " ".join(text_parts).replace("\\u2192", "->").replace("→", "->")
+    lowered = joined.lower()
+    for pattern in (
+        r"target\s+family\s*\(\s*([a-z_]+)\s*\)",
+        r"expected\s+([a-z_]+)\s+family\b",
+        r"canonical\s+ir\s+specifies\s+['\"]?([a-z_]+)['\"]?\s+semantics",
+        r"target\s+probability\s+(?:is\s+)?[0-9.]+\s+for\s+([a-z_]+)\b",
+    ):
+        for match in re.finditer(pattern, lowered):
+            add(match.group(1))
+    return families
 
 
 def _modal_family_guidance_features(entry: Mapping[str, Any]) -> List[str]:
