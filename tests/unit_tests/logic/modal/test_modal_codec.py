@@ -49056,6 +49056,142 @@ def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> N
     ]
 
 
+def test_decompiler_reconstructs_packet_000600_uscode_residual_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "43 U.S.C. 1313. Exceptions from operation of section "
+                    "1311 of this title. There is excepted from the operation "
+                    "of section 1311 of this title all tracts or parcels of "
+                    "land together with all accretions thereto, resources "
+                    "therein, or improvements thereon."
+                ),
+                predicate="submerged_lands_exception_parcels",
+            ),
+            {
+                "statutory_operation_exception",
+                "land_parcel_exception",
+                "land_accretion_resource",
+                "land_improvement_exception",
+            },
+            {"frame->deontic", "frame->frame"},
+            "uscode_land_operation_exception_surface",
+        ),
+        (
+            _single_formula_document(
+                family="doxastic",
+                symbol="B",
+                label="believes",
+                text=(
+                    "1 U.S.C. 212. Additional distribution. The Public "
+                    "Printer shall distribute additional copies of supplements "
+                    "to the Code of Laws of the United States and District of "
+                    "Columbia Code."
+                ),
+                predicate="additional_distribution_code_supplements",
+            ),
+            {
+                "additional_distribution",
+                "code_supplement_distribution",
+                "united_states_code_supplement",
+                "district_columbia_code_supplement",
+            },
+            {"doxastic->deontic", "doxastic->epistemic"},
+            "uscode_code_supplement_distribution_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "49 U.S.C. 11702. Enforcement by the Board. The Board "
+                    "may bring a civil action to enjoin a rail carrier from "
+                    "violating sections 10901 through 10906 of this title, or "
+                    "a regulation prescribed or order or certificate issued "
+                    "under any of those sections."
+                ),
+                predicate="board_enforcement_civil_action",
+            ),
+            {
+                "board_enforcement_authority",
+                "board_civil_action_authority",
+                "rail_carrier_injunction",
+                "rail_carrier_violation_enforcement",
+                "transportation_order_certificate_enforcement",
+            },
+            {"frame->deontic", "frame->epistemic"},
+            "uscode_board_enforcement_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "33 U.S.C. 1384. State water pollution control revolving "
+                    "funds. Each State shall establish a water pollution "
+                    "control revolving fund to provide assistance for "
+                    "construction of treatment works and implementation of "
+                    "management programs."
+                ),
+                predicate="state_water_pollution_revolving_fund",
+            ),
+            {
+                "state_water_pollution_revolving_fund",
+                "water_pollution_control_revolving_fund",
+                "treatment_works_construction_assistance",
+                "water_quality_management_program",
+            },
+            {"deontic->deontic", "deontic->temporal"},
+            "uscode_water_pollution_revolving_fund_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "34 U.S.C. 10405. Juvenile justice and delinquency "
+                    "prevention. The Administrator shall make grants to "
+                    "improve juvenile justice systems and delinquency "
+                    "prevention programs."
+                ),
+                predicate="juvenile_justice_grant_program",
+            ),
+            {
+                "juvenile_justice_program",
+                "juvenile_delinquency_prevention",
+                "juvenile_justice_system_improvement",
+            },
+            {"frame->deontic", "frame->temporal"},
+            "uscode_juvenile_justice_program_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        slot_texts = decoded_modal_phrase_slot_text_map(
+            decode_modal_ir_document(document)
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

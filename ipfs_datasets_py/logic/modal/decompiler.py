@@ -135,6 +135,32 @@ _USCODE_EDITORIAL_NOTE_LABELS: tuple[str, ...] = (
     "Amendments",
     "Statutory Notes and Related Subsidiaries",
 )
+_PACKET_000600_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "additional_distribution",
+        "board_civil_action_authority",
+        "board_enforcement_authority",
+        "code_supplement_distribution",
+        "district_columbia_code_supplement",
+        "juvenile_delinquency_prevention",
+        "juvenile_justice_program",
+        "juvenile_justice_system_improvement",
+        "justice_system_improvement",
+        "land_accretion_resource",
+        "land_improvement_exception",
+        "land_parcel_exception",
+        "rail_carrier_injunction",
+        "rail_carrier_violation_enforcement",
+        "state_water_pollution_revolving_fund",
+        "statutory_operation_exception",
+        "transportation_order_certificate_enforcement",
+        "treatment_works_construction_assistance",
+        "united_states_code_supplement",
+        "water_pollution_control_program",
+        "water_pollution_control_revolving_fund",
+        "water_quality_management_program",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -249,6 +275,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("public documents printed after expiration of terms", "post_term_public_document_allotment"),
     ("allotments of public documents", "public_document_allotment"),
     ("congressional allotment of public documents", "public_document_allotment"),
+    ("additional distribution", "additional_distribution"),
+    ("additional copies of supplements", "code_supplement_distribution"),
+    (
+        "supplements to the code of laws of the united states",
+        "code_supplement_distribution",
+    ),
+    ("code of laws of the united states", "united_states_code_supplement"),
+    ("district of columbia code", "district_columbia_code_supplement"),
     ("free use of government publications", "government_publication_depository_access"),
     ("depository libraries", "government_publication_depository_access"),
     ("distribution of precedents", "congressional_precedents_distribution"),
@@ -444,6 +478,14 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("safe and adequate air transportation", "air_transportation_service_duty"),
     ("air carrier shall provide", "air_carrier_service_duty"),
     ("interstate air transportation", "interstate_air_transportation"),
+    ("enforcement by the board", "board_enforcement_authority"),
+    ("board may bring a civil action", "board_civil_action_authority"),
+    ("enjoin a rail carrier", "rail_carrier_injunction"),
+    ("rail carrier from violating", "rail_carrier_violation_enforcement"),
+    (
+        "regulation prescribed or order or certificate issued",
+        "transportation_order_certificate_enforcement",
+    ),
     ("army national guard of the united states", "national_guard_unit_status"),
     ("air national guard of the united states", "national_guard_unit_status"),
     ("national guard of the united states", "national_guard_unit_status"),
@@ -643,6 +685,17 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("research program and plan", "research_program_plan"),
     ("formula grants to states", "state_formula_grant"),
     ("formula grants", "formula_grant"),
+    (
+        "state water pollution control revolving funds",
+        "state_water_pollution_revolving_fund",
+    ),
+    (
+        "water pollution control revolving fund",
+        "water_pollution_control_revolving_fund",
+    ),
+    ("construction of treatment works", "treatment_works_construction_assistance"),
+    ("implementation of management programs", "water_quality_management_program"),
+    ("water pollution prevention and control", "water_pollution_control_program"),
     (
         "grants to states for reduction of excess hospital capacity",
         "excess_hospital_capacity_reduction",
@@ -888,6 +941,13 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("title to the lands", "land_title_authority"),
     ("title to the land", "land_title_authority"),
     ("land title", "land_title_authority"),
+    ("exceptions from operation", "statutory_operation_exception"),
+    ("excepted from the operation", "statutory_operation_exception"),
+    ("tracts or parcels of land", "land_parcel_exception"),
+    ("parcels of land", "land_parcel_exception"),
+    ("accretions thereto", "land_accretion_resource"),
+    ("resources therein", "land_accretion_resource"),
+    ("improvements thereon", "land_improvement_exception"),
     ("transferred from the u.s. government publishing office", "editorial_transfer_status"),
     ("transferred from the us government publishing office", "editorial_transfer_status"),
     ("availability of appropriated amounts", "appropriated_amount_availability"),
@@ -1069,6 +1129,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("new federal building", "federal_building_compliance"),
     ("adopt procedures necessary to assure", "procedure_adoption_duty"),
     ("adopt procedures", "procedure_adoption_duty"),
+    ("juvenile justice", "juvenile_justice_program"),
+    ("delinquency prevention", "juvenile_delinquency_prevention"),
+    ("juvenile justice systems", "juvenile_justice_system_improvement"),
+    ("justice system improvement", "justice_system_improvement"),
     ("renewable energy projects", "renewable_energy_project"),
     ("renewable energy project", "renewable_energy_project"),
     ("tax and rate treatment", "renewable_energy_tax_rate_treatment"),
@@ -12657,6 +12721,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000600_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -13925,6 +13995,35 @@ def _typed_decompiler_semantic_atom_target_families(
             add("deontic")
             add("conditional_normative")
             add("epistemic")
+        if normalized_atom in _PACKET_000600_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in {
+            "additional_distribution",
+            "board_civil_action_authority",
+            "board_enforcement_authority",
+            "code_supplement_distribution",
+            "district_columbia_code_supplement",
+            "rail_carrier_injunction",
+            "rail_carrier_violation_enforcement",
+            "transportation_order_certificate_enforcement",
+            "united_states_code_supplement",
+        }:
+            add("epistemic")
+        if normalized_atom in {
+            "code_supplement_distribution",
+            "juvenile_delinquency_prevention",
+            "juvenile_justice_program",
+            "juvenile_justice_system_improvement",
+            "justice_system_improvement",
+            "state_water_pollution_revolving_fund",
+            "treatment_works_construction_assistance",
+            "water_pollution_control_program",
+            "water_pollution_control_revolving_fund",
+            "water_quality_management_program",
+        }:
+            add("temporal")
         if normalized_atom in _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS:
             add("deontic")
             add("frame")
@@ -16008,6 +16107,41 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ) and re.search(r"\b(?:penalt(?:y|ies)|shall\s+be\s+subject)\b", lowered):
         add("uscode_postal_nonmailable_penalty_surface")
+    if re.search(
+        r"\b(?:exceptions?\s+from\s+operation|excepted\s+from\s+the\s+operation|"
+        r"tracts?\s+or\s+parcels?\s+of\s+land|accretions\s+thereto|"
+        r"resources\s+therein|improvements\s+thereon)\b",
+        lowered,
+    ):
+        add("uscode_land_operation_exception_surface")
+    if re.search(
+        r"\b(?:additional\s+distribution|additional\s+copies\s+of\s+supplements|"
+        r"code\s+of\s+laws\s+of\s+the\s+united\s+states|"
+        r"district\s+of\s+columbia\s+code)\b",
+        lowered,
+    ):
+        add("uscode_code_supplement_distribution_surface")
+    if re.search(
+        r"\b(?:enforcement\s+by\s+the\s+board|board\s+may\s+bring\s+a\s+civil\s+action|"
+        r"enjoin\s+a\s+rail\s+carrier|rail\s+carrier\s+from\s+violating|"
+        r"regulation\s+prescribed\s+or\s+order\s+or\s+certificate\s+issued)\b",
+        lowered,
+    ):
+        add("uscode_board_enforcement_surface")
+    if re.search(
+        r"\b(?:juvenile\s+justice|delinquency\s+prevention|"
+        r"justice\s+system\s+improvement)\b",
+        lowered,
+    ):
+        add("uscode_juvenile_justice_program_surface")
+    if re.search(
+        r"\b(?:state\s+water\s+pollution\s+control\s+revolving\s+funds?|"
+        r"water\s+pollution\s+control\s+revolving\s+fund|"
+        r"construction\s+of\s+treatment\s+works|"
+        r"implementation\s+of\s+management\s+programs)\b",
+        lowered,
+    ):
+        add("uscode_water_pollution_revolving_fund_surface")
     return profiles
 
 
