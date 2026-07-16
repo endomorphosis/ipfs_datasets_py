@@ -3418,6 +3418,159 @@ def test_modal_decompiler_guided_semantics_follow_family_pair_target() -> None:
     assert "legal frame source reconstructs temporal deadline period" in decoded.text
 
 
+def test_modal_decompiler_packet_000843_reconstructs_guided_family_pair_surfaces() -> None:
+    frame_source = (
+        "The Secretary determines separation rules for Foreign Service officers "
+        "after review by the Board."
+    )
+    frame_document = ModalIRDocument(
+        document_id="packet-000843-frame-guided-doxastic",
+        source="us_code",
+        normalized_text=frame_source,
+        metadata={
+            "hint_evidence": [
+                {
+                    "bridge_failure_name": "source_decompiled_text_embedding_cosine_loss",
+                    "predicted_family": "frame",
+                    "target_family": "doxastic",
+                    "target_view": "CEC.native",
+                    "legal_ir_underrepresented_components": [
+                        "modal.frame_logic",
+                        "zkp.circuits",
+                    ],
+                    "bundle": {
+                        "action": "refine_semantic_decompiler_reconstruction",
+                        "program_synthesis_scope": "ir_decompiler",
+                        "target_component": "modal.ir_decompiler",
+                        "family_pairs": [
+                            "frame->doxastic",
+                            "frame->frame",
+                            "frame->temporal",
+                        ],
+                    },
+                }
+            ],
+        },
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000843-frame",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="secretary determination foreign service separation",
+                    arguments=[
+                        "actor:secretary",
+                        "action:determines",
+                        "object:separation_rules",
+                    ],
+                    role="frame",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000843-frame-guided-doxastic",
+                    start_char=0,
+                    end_char=len(frame_source),
+                    citation="22 U.S.C. 1002",
+                ),
+                conditions=["after review by the Board"],
+                metadata={"cue": "after"},
+            )
+        ],
+    )
+    temporal_source = (
+        "Within 30 days after inspection, the importer shall pay penalties "
+        "for milk and cream violations."
+    )
+    temporal_document = ModalIRDocument(
+        document_id="packet-000843-temporal-guided-deontic",
+        source="us_code",
+        normalized_text=temporal_source,
+        metadata={
+            "hint_evidence": [
+                {
+                    "bridge_failure_name": "source_decompiled_text_token_loss",
+                    "predicted_family": "temporal",
+                    "target_family": "deontic",
+                    "target_view": "deontic.ir",
+                    "bundle": {
+                        "action": "refine_semantic_decompiler_reconstruction",
+                        "program_synthesis_scope": "ir_decompiler",
+                        "target_component": "modal.ir_decompiler",
+                        "family_pairs": ["temporal->deontic"],
+                    },
+                }
+            ],
+        },
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000843-temporal",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="future",
+                ),
+                predicate=ModalIRPredicate(
+                    name="importer pay penalties",
+                    arguments=[
+                        "actor:importer",
+                        "action:pay",
+                        "object:penalties",
+                    ],
+                    role="event",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000843-temporal-guided-deontic",
+                    start_char=0,
+                    end_char=len(temporal_source),
+                    citation="21 U.S.C. 145",
+                ),
+                conditions=["within 30 days after inspection"],
+                metadata={"cue": "within"},
+            )
+        ],
+    )
+
+    frame_decoded = decode_modal_ir_document(frame_document)
+    frame_slots = decoded_modal_phrase_slot_text_map(frame_decoded)
+    frame_semantic_slots = decoded_modal_phrase_slot_text_map(
+        frame_decoded,
+        include_provenance_only=False,
+    )
+    temporal_decoded = decode_modal_ir_document(temporal_document)
+    temporal_slots = decoded_modal_phrase_slot_text_map(temporal_decoded)
+    temporal_semantic_slots = decoded_modal_phrase_slot_text_map(
+        temporal_decoded,
+        include_provenance_only=False,
+    )
+
+    assert {"frame->doxastic", "frame->frame", "frame->temporal"}.issubset(
+        set(frame_slots["typed_ir_cross_family_semantic_support"])
+    )
+    assert (
+        "legal frame reconstructs belief and intent state"
+        in frame_semantic_slots["typed_ir_family_pair_semantic_bridge"]
+    )
+    assert any(
+        "belief intent knowledge state" in value
+        for value in frame_semantic_slots["typed_ir_target_view_semantic_clause"]
+    )
+    assert "temporal->deontic" in temporal_slots[
+        "typed_ir_cross_family_semantic_support"
+    ]
+    assert (
+        "temporal rule reconstructs deontic duty"
+        in temporal_semantic_slots["typed_ir_family_pair_semantic_bridge"]
+    )
+    assert any(
+        "shall" in value and "deontic legal obligations" in value
+        for value in temporal_semantic_slots["typed_ir_target_view_semantic_clause"]
+    )
+
+
 def test_modal_decompiler_packet_005035_promotes_typed_self_pair_semantics() -> None:
     source = (
         "Not later than 180 days after enactment, the Secretary shall submit "

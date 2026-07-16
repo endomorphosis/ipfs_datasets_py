@@ -4532,10 +4532,12 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
             "legal frame reconstructs conditional obligation"
         ),
         "frame->deontic": "legal frame reconstructs deontic duty",
+        "frame->doxastic": "legal frame reconstructs belief and intent state",
         "frame->dynamic": "legal frame reconstructs dynamic action",
         "frame->epistemic": "legal frame reconstructs knowledge finding",
         "frame->frame": "legal frame preserves ontology frame",
         "frame->temporal": "legal frame reconstructs temporal deadline",
+        "temporal->deontic": "temporal rule reconstructs deontic duty",
         "temporal->temporal": "temporal rule preserves deadline period",
     }
     return labels.get(pair, "")
@@ -4614,6 +4616,7 @@ def _typed_ir_target_view_semantic_clause_text(
     if not source or target not in {
         "conditional_normative",
         "deontic",
+        "doxastic",
         "dynamic",
         "frame",
         "temporal",
@@ -4677,7 +4680,16 @@ def _typed_ir_target_view_semantic_clause_text(
         add(subject)
     elif target == "deontic":
         add(subject)
-        if force == "permission":
+        source_support_tokens = {
+            token
+            for value in support_values
+            for token in _tokenize_for_similarity(value)
+        }
+        if source_support_tokens.intersection({"shall", "must", "required"}):
+            add("shall")
+        elif source_support_tokens.intersection({"may", "authorized", "permitted"}):
+            add("may")
+        elif force == "permission":
             add("may")
         elif force == "prohibition" or polarity == "negative_scope":
             add("must not")
@@ -4685,6 +4697,13 @@ def _typed_ir_target_view_semantic_clause_text(
             add("shall")
         else:
             add("legal duty")
+    elif target == "doxastic":
+        add("belief intent knowledge state")
+        add(subject)
+        if force == "knowledge":
+            add("knowledge finding")
+        else:
+            add("belief state")
     elif target == "frame":
         add("legal frame")
         add(subject)
