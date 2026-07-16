@@ -3553,6 +3553,106 @@ def test_modal_ir_graph_projection_promotes_packet_component_gap_evidence() -> N
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_modal_ir_graph_projection_routes_temporal_deadline_scope_to_deontic_view() -> None:
+    document = ModalIRDocument(
+        document_id="deadline-doc",
+        source="us_code",
+        normalized_text=(
+            "The Secretary submits the report not later than 180 days after "
+            "enactment."
+        ),
+        formulas=[
+            ModalIRFormula(
+                formula_id="deadline-doc:f1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="F-logic",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="secretary_submit_report_deadline",
+                    arguments=["secretary", "report"],
+                    role="temporal_deadline",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="deadline-doc",
+                    start_char=0,
+                    end_char=90,
+                ),
+            )
+        ],
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "deadline-doc",
+                    "predicate": "type",
+                    "object": "legal_modal_document",
+                }
+            ],
+            ontology_name="sample_flogic",
+        ),
+    )
+
+    graph_data = modal_ir_to_neo4j_graph_data(document)
+    learned_facts = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+        if relationship.properties["flogic_predicate"].startswith("learned_legal_ir_")
+    }
+
+    assert ("learned_legal_ir_target_view", "deontic.ir") in learned_facts
+    assert ("learned_legal_ir_view_gap", "deontic.ir:1.000000") in learned_facts
+    assert "LegalIRViewAlignment" in graph_data.schema.node_labels
+
+
+def test_modal_ir_graph_projection_uses_predicted_view_weights_to_bound_frame_distribution() -> None:
+    document = ModalIRDocument(
+        document_id="weighted-view-doc",
+        source="compiler_guidance_distillation_v1",
+        normalized_text="The Secretary may prescribe regulations effective on enactment.",
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "weighted-view-doc",
+                    "predicate": "type",
+                    "object": "legal_modal_document",
+                },
+                {
+                    "subject": "weighted-view-doc",
+                    "predicate": "selected_ontology_frame",
+                    "object": "regulatory_authority",
+                },
+            ],
+            ontology_name="sample_flogic",
+        ),
+        metadata={
+            "compiler_guidance_legal_ir_predicted_view_distribution": {
+                "modal.frame_logic": 0.474,
+                "deontic.ir": 0.212,
+                "conditional_normative": 0.115,
+                "knowledge_graphs.neo4j_compat": 0.199,
+            },
+            "compiler_guidance_legal_ir_view_gap_distribution": {
+                "modal.frame_logic": -0.181,
+            },
+        },
+    )
+
+    graph_data = modal_ir_to_neo4j_graph_data(document)
+    distribution = graph_data.metadata[
+        "canonical_legal_ir_projection_view_distribution"
+    ]
+
+    assert distribution["modal.frame_logic"] == 0.474
+    assert distribution["deontic.ir"] == 0.212
+    assert distribution["knowledge_graphs.neo4j_compat"] == 0.199
+    assert distribution["conditional_normative"] == 0.115
+
+
 def test_flogic_graph_projection_extracts_weighted_packet_evidence_json() -> None:
     graph_data = flogic_triples_to_graph_data(
         [

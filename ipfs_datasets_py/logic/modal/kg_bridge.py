@@ -230,6 +230,15 @@ _DEONTIC_SURFACE_CUE_RE = re.compile(
     r")\b",
     re.IGNORECASE,
 )
+_DEONTIC_TEMPORAL_SCOPE_CUE_RE = re.compile(
+    r"\b("
+    r"deadline|due\s+date|effective\s+date|effective\s+on|"
+    r"not\s+later\s+than|no\s+later\s+than|within\s+\d+|"
+    r"after\s+enactment|before\s+the\s+end\s+of|"
+    r"on\s+or\s+before|until|expires?|expiration"
+    r")\b",
+    re.IGNORECASE,
+)
 
 
 def flogic_triples_to_graph_data(
@@ -575,6 +584,7 @@ def _projection_alignment_metadata(
     canonical_view_distribution = _canonical_component_distribution(
         projection_view_counts,
         relationship_count=relationship_count,
+        triples=triples,
     )
     graph_failure_penalty = 0.0 if node_count > 0 and relationship_count > 0 else 1.0
     graph_projection_signal_count = _graph_projection_signal_count(
@@ -800,6 +810,7 @@ def _canonical_component_distribution(
     projection_view_counts: Mapping[str, int],
     *,
     relationship_count: int,
+    triples: Sequence[Mapping[str, str]] = (),
 ) -> Dict[str, float]:
     if relationship_count <= 0:
         return {}
@@ -824,10 +835,93 @@ def _canonical_component_distribution(
         "knowledge_graphs.neo4j_compat": max(1, structural_count),
         "modal.frame_logic": max(1, modal_count),
     }
+    learned_distribution = _learned_legal_ir_view_distribution(triples)
+    if learned_distribution:
+        return learned_distribution
     total = float(sum(distribution.values()))
     return {
         component: count / total
         for component, count in sorted(distribution.items())
+    }
+
+
+def _learned_legal_ir_view_distribution(
+    triples: Sequence[Mapping[str, str]],
+) -> Dict[str, float]:
+    """Prefer explicit compiler view weights over count-derived frame mass."""
+
+    predicted = _learned_legal_ir_weight_triples(
+        triples,
+        weight_predicate="learned_legal_ir_predicted_view_weight",
+    )
+    if predicted:
+        return predicted
+
+    target = _learned_legal_ir_weight_triples(
+        triples,
+        weight_predicate="learned_legal_ir_target_view_weight",
+    )
+    if target:
+        gaps = _learned_legal_ir_gap_triples(triples)
+        if gaps.get("modal.frame_logic", 0.0) >= 0.0:
+            return {}
+        if len(target) > 1:
+            target = {
+                view: weight
+                for view, weight in target.items()
+                if view != "modal.frame_logic"
+            }
+        return _normalize_view_distribution(target)
+    return {}
+
+
+def _learned_legal_ir_weight_triples(
+    triples: Sequence[Mapping[str, str]],
+    *,
+    weight_predicate: str,
+) -> Dict[str, float]:
+    weights: Dict[str, float] = {}
+    for triple in triples:
+        if str(triple.get("predicate") or "") != weight_predicate:
+            continue
+        view, weight = _weighted_view_object(str(triple.get("object") or ""))
+        if not view or weight is None or weight <= 0.0:
+            continue
+        weights[view] = max(weights.get(view, 0.0), weight)
+    return _normalize_view_distribution(weights)
+
+
+def _learned_legal_ir_gap_triples(
+    triples: Sequence[Mapping[str, str]],
+) -> Dict[str, float]:
+    gaps: Dict[str, float] = {}
+    for triple in triples:
+        if str(triple.get("predicate") or "") != "learned_legal_ir_view_gap":
+            continue
+        view, gap = _weighted_view_object(str(triple.get("object") or ""))
+        if not view or gap is None:
+            continue
+        gaps[view] = gaps.get(view, 0.0) + gap
+    return dict(sorted(gaps.items()))
+
+
+def _weighted_view_object(value: str) -> Tuple[str, Optional[float]]:
+    raw_view, separator, raw_weight = str(value or "").strip().rpartition(":")
+    if not separator:
+        return "", None
+    view = _canonical_legal_ir_view_name(raw_view)
+    weight = _finite_float(raw_weight)
+    return view, weight
+
+
+def _normalize_view_distribution(distribution: Mapping[str, float]) -> Dict[str, float]:
+    total = sum(max(0.0, float(value)) for value in distribution.values())
+    if total <= 0.0:
+        return {}
+    return {
+        view: max(0.0, float(value)) / total
+        for view, value in sorted(distribution.items())
+        if max(0.0, float(value)) > 0.0
     }
 
 
@@ -1090,12 +1184,17 @@ def _modal_formula_legal_ir_view_targets(
     if not formulas:
         return {}, {}
 
+    document_text = str(getattr(modal_ir, "normalized_text", "") or "")
     deontic_count = sum(
         1
         for formula in formulas
         if _formula_has_deontic_operator_pattern(
             formula,
-            document_text=str(getattr(modal_ir, "normalized_text", "") or ""),
+            document_text=document_text,
+        )
+        or _formula_has_deontic_temporal_scope(
+            formula,
+            document_text=document_text,
         )
     )
     if deontic_count <= 0:
@@ -1140,6 +1239,31 @@ def _formula_has_deontic_operator_pattern(
         for key in ("modal_cue", "cue", "source_text", "surface_text"):
             text_parts.append(str(metadata.get(key) or ""))
     return bool(_DEONTIC_SURFACE_CUE_RE.search(" ".join(text_parts)))
+
+
+def _formula_has_deontic_temporal_scope(
+    formula: Any,
+    *,
+    document_text: str,
+) -> bool:
+    operator = getattr(formula, "operator", None)
+    family = str(getattr(operator, "family", "") or "").strip().lower()
+    if family == "deontic":
+        return False
+    text_parts = [document_text]
+    predicate = getattr(formula, "predicate", None)
+    text_parts.append(str(getattr(predicate, "role", "") or ""))
+    text_parts.append(str(getattr(predicate, "name", "") or "").replace("_", " "))
+    for field_name in ("conditions", "exceptions"):
+        text_parts.extend(
+            str(value or "")
+            for value in (getattr(formula, field_name, []) or [])
+        )
+    metadata = getattr(formula, "metadata", {}) or {}
+    if isinstance(metadata, Mapping):
+        for key in ("modal_cue", "cue", "source_text", "surface_text"):
+            text_parts.append(str(metadata.get(key) or ""))
+    return bool(_DEONTIC_TEMPORAL_SCOPE_CUE_RE.search(" ".join(text_parts)))
 
 
 def _metadata_implies_neo4j_projection_guidance(metadata: Mapping[str, Any]) -> bool:
