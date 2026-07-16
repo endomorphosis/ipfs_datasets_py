@@ -3653,6 +3653,57 @@ def test_modal_ir_graph_projection_uses_predicted_view_weights_to_bound_frame_di
     assert distribution["conditional_normative"] == 0.115
 
 
+def test_modal_ir_graph_projection_repairs_underweighted_frame_family_distribution() -> None:
+    document = ModalIRDocument(
+        document_id="frame-family-guidance-doc",
+        source="compiler_guidance_distillation_v1",
+        normalized_text=(
+            "The Secretary maintains the statutory catalog until the "
+            "effective date and subject to the applicable condition."
+        ),
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "frame-family-guidance-doc",
+                    "predicate": "type",
+                    "object": "legal_modal_document",
+                },
+                {
+                    "subject": "frame-family-guidance-doc",
+                    "predicate": "selected_ontology_frame",
+                    "object": "statutory_catalog_record",
+                },
+            ],
+            ontology_name="sample_flogic",
+        ),
+        metadata={
+            "compiler_guidance_legal_ir_predicted_view_distribution": {
+                "frame": 0.415535,
+                "temporal": 0.158000,
+                "alethic": 0.004000,
+                "conditional_normative": 0.422465,
+            },
+            "compiler_guidance_legal_ir_target_view_distribution": {
+                "frame": 0.916667,
+                "temporal": 0.040000,
+                "conditional_normative": 0.043333,
+            },
+            "compiler_guidance_legal_ir_view_gap_distribution": {
+                "frame": 0.501132,
+            },
+        },
+    )
+
+    graph_data = modal_ir_to_neo4j_graph_data(document)
+    distribution = graph_data.metadata[
+        "canonical_legal_ir_projection_view_distribution"
+    ]
+
+    assert distribution["modal.frame_logic"] == 0.916667
+    assert distribution["modal.frame_logic"] > distribution["temporal"]
+    assert "frame" not in distribution
+
+
 def test_flogic_graph_projection_extracts_weighted_packet_evidence_json() -> None:
     graph_data = flogic_triples_to_graph_data(
         [

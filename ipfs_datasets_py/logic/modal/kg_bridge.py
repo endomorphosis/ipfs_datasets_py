@@ -854,13 +854,17 @@ def _learned_legal_ir_view_distribution(
         triples,
         weight_predicate="learned_legal_ir_predicted_view_weight",
     )
-    if predicted:
-        return predicted
-
     target = _learned_legal_ir_weight_triples(
         triples,
         weight_predicate="learned_legal_ir_target_view_weight",
     )
+    if predicted:
+        repaired = _frame_logic_repaired_view_distribution(
+            predicted=predicted,
+            target=target,
+        )
+        return repaired or predicted
+
     if target:
         gaps = _learned_legal_ir_gap_triples(triples)
         if gaps.get("modal.frame_logic", 0.0) >= 0.0:
@@ -873,6 +877,42 @@ def _learned_legal_ir_view_distribution(
             }
         return _normalize_view_distribution(target)
     return {}
+
+
+def _frame_logic_repaired_view_distribution(
+    *,
+    predicted: Mapping[str, float],
+    target: Mapping[str, float],
+) -> Dict[str, float]:
+    """Preserve canonical frame-family mass when learned logits underweight it."""
+
+    frame_target = max(0.0, float(target.get("modal.frame_logic", 0.0) or 0.0))
+    if frame_target <= 0.0:
+        return {}
+    frame_target = min(1.0, frame_target)
+    frame_predicted = max(
+        0.0,
+        float(predicted.get("modal.frame_logic", 0.0) or 0.0),
+    )
+    if frame_target <= frame_predicted:
+        return {}
+
+    non_frame_predicted = {
+        view: weight
+        for view, weight in predicted.items()
+        if view != "modal.frame_logic" and weight > 0.0
+    }
+    repaired: Dict[str, float] = {"modal.frame_logic": frame_target}
+    remainder = max(0.0, 1.0 - frame_target)
+    non_frame_total = sum(non_frame_predicted.values())
+    if remainder > 0.0 and non_frame_total > 0.0:
+        for view, weight in sorted(non_frame_predicted.items()):
+            repaired[view] = remainder * (weight / non_frame_total)
+    return {
+        view: weight
+        for view, weight in sorted(repaired.items())
+        if weight > 0.0
+    }
 
 
 def _learned_legal_ir_weight_triples(
@@ -1603,6 +1643,7 @@ def _canonical_legal_ir_view_name(value: str) -> str:
         "knowledge_graphs_neo4j_compat": _NEO4J_COMPAT_TARGET_COMPONENT,
         "knowledge_graphs.neo4j_compat": _NEO4J_COMPAT_TARGET_COMPONENT,
         "neo4j_compat": _NEO4J_COMPAT_TARGET_COMPONENT,
+        "frame": "modal.frame_logic",
         "modal_frame_logic": "modal.frame_logic",
         "modal.frame_logic": "modal.frame_logic",
         "tdfol_prover": "TDFOL.prover",
