@@ -3140,20 +3140,23 @@ class DeterministicModalCompiler:
             signals.get("has_deontic_scope")
             or signals.get("has_deontic_cue")
         )
-        if not has_deontic_scope and target_share <= 0.0:
-            return []
-        family_margin = target_share - predicted_share
-        if family_margin >= self.config.modal_deontic_target_family_outvote_margin:
-            return []
         is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
             predicted_family,
             target_family,
         )
+        policy_pair_family_evidence = bool(
+            is_compiler_ambiguity_bundle_pair and target_share > 0.0
+        )
+        if not has_deontic_scope and not policy_pair_family_evidence:
+            return []
+        family_margin = target_share - predicted_share
+        if family_margin >= self.config.modal_deontic_target_family_outvote_margin:
+            return []
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="deontic_scope_family_outvoted",
                 message=(
-                    "Deontic-force cues are present, but non-deontic cue evidence "
+                    "Deontic-force evidence is present, but non-deontic cue evidence "
                     "outvotes deontic family evidence."
                 ),
                 candidate_ids=[predicted_family, target_family],
@@ -3178,6 +3181,7 @@ class DeterministicModalCompiler:
                     "outvote_margin_threshold": self.config.modal_deontic_target_family_outvote_margin,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
+                    "policy_pair_family_evidence": policy_pair_family_evidence,
                     "target_family": target_family,
                     "target_share": round(target_share, 6),
                 },
@@ -3276,7 +3280,14 @@ class DeterministicModalCompiler:
             if target_family == ModalLogicFamily.DEONTIC.value
             else signals.get("has_temporal_scope")
         )
-        if not has_target_scope and target_share <= 0.0:
+        is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
+        policy_pair_family_evidence = bool(
+            is_compiler_ambiguity_bundle_pair and target_share > 0.0
+        )
+        if not has_target_scope and not policy_pair_family_evidence:
             return []
         family_margin = target_share - predicted_share
         outvote_margin_threshold = (
@@ -3286,10 +3297,6 @@ class DeterministicModalCompiler:
         )
         if family_margin >= outvote_margin_threshold:
             return []
-        is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
-            predicted_family,
-            target_family,
-        )
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="temporal_deontic_scope_family_outvoted",
@@ -3317,6 +3324,7 @@ class DeterministicModalCompiler:
                     ),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": outvote_margin_threshold,
+                    "policy_pair_family_evidence": policy_pair_family_evidence,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
                     "target_family": target_family,

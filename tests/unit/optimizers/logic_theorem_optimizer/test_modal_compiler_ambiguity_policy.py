@@ -177,6 +177,86 @@ def test_frame_policy_ambiguity_canonicalizes_namespaced_family_tokens(
     assert ambiguity.metadata["family_margin"] == -0.01
 
 
+def test_deontic_policy_ambiguity_uses_family_evidence_without_signal(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="regex")
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "modal_ambiguity_signals",
+        lambda _encoding: {"has_deontic_scope": False, "has_deontic_cue": False},
+    )
+    ranking = _ranking_for_margin(
+        predicted_family=ModalLogicFamily.TEMPORAL.value,
+        target_family=ModalLogicFamily.DEONTIC.value,
+        family_margin=-0.01,
+    )
+
+    ambiguities = compiler._deontic_scope_target_family_ambiguities(
+        object(),
+        ranking=ranking,
+        family_shares={
+            ModalLogicFamily.TEMPORAL.value: 0.7,
+            ModalLogicFamily.DEONTIC.value: 0.69,
+        },
+    )
+
+    assert len(ambiguities) == 1
+    ambiguity = ambiguities[0]
+    assert ambiguity.ambiguity_type == "deontic_scope_family_outvoted"
+    assert ambiguity.candidate_ids == [
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ]
+    assert ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+    assert ambiguity.metadata["compiler_ambiguity_policy_pair"] == "temporal->deontic"
+    assert ambiguity.metadata["policy_pair_family_evidence"] is True
+    assert ambiguity.metadata["family_margin"] == -0.01
+
+
+def test_temporal_deontic_policy_ambiguity_uses_family_evidence_without_signal(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="regex")
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "modal_ambiguity_signals",
+        lambda _encoding: {"has_deontic_scope": False, "has_deontic_cue": False},
+    )
+    ranking = _ranking_for_margin(
+        predicted_family=ModalLogicFamily.TEMPORAL.value,
+        target_family=ModalLogicFamily.DEONTIC.value,
+        family_margin=-0.01,
+    )
+
+    ambiguities = compiler._temporal_deontic_scope_family_ambiguities(
+        object(),
+        ranking=ranking,
+        family_shares={
+            ModalLogicFamily.TEMPORAL.value: 0.7,
+            ModalLogicFamily.DEONTIC.value: 0.69,
+        },
+    )
+
+    assert len(ambiguities) == 1
+    ambiguity = ambiguities[0]
+    assert ambiguity.ambiguity_type == "temporal_deontic_scope_family_outvoted"
+    assert ambiguity.candidate_ids == [
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ]
+    assert ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+    assert ambiguity.metadata["compiler_ambiguity_policy_pair"] == "temporal->deontic"
+    assert ambiguity.metadata["policy_pair_family_evidence"] is True
+    assert ambiguity.metadata["family_margin"] == -0.01
+
+
 @pytest.mark.parametrize(
     (
         "sample_id",
