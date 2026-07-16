@@ -2204,16 +2204,36 @@ def _proof_gate_from_tdfol_records(
     attempted = len(records)
     valid = sum(1 for record in records if record.get("parse_ok"))
     failed = attempted - valid
+    verified_by = ["tdfol:parser"] if valid else []
+    for record in records:
+        if not record.get("parse_ok"):
+            continue
+        route = str(record.get("compiler_guidance_route") or "").strip()
+        if not route:
+            continue
+        verifier = f"tdfol:compiler_guidance:{route}"
+        if verifier not in verified_by:
+            verified_by.append(verifier)
     return ProofGateResult(
         attempted_count=attempted,
         valid_count=valid,
         failed_count=failed,
-        verified_by=("tdfol:parser",) if valid else (),
+        verified_by=tuple(verified_by),
         details=tuple(
             {
                 "formula": record.get("formula"),
                 "parse_ok": bool(record.get("parse_ok")),
                 "source_id": record.get("source_id"),
+                **(
+                    {
+                        "compiler_guidance_route": record.get(
+                            "compiler_guidance_route"
+                        ),
+                        "proof_rule": "compiler_guidance_parse_repair",
+                    }
+                    if record.get("parse_ok") and record.get("compiler_guidance_route")
+                    else {}
+                ),
             }
             for record in records
         ),

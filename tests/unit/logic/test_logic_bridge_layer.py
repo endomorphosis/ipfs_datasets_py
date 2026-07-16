@@ -17082,6 +17082,13 @@ def test_fol_tdfol_bridge_promotes_packet_compiler_guidance_samples() -> None:
     assert report.metadata["compiler_guidance_routes"] == [
         "repair_tdfol_bridge_parse"
     ]
+    assert "tdfol:compiler_guidance:repair_tdfol_bridge_parse" in (
+        report.proof_gate.verified_by
+    )
+    assert any(
+        detail.get("proof_rule") == "compiler_guidance_parse_repair"
+        for detail in report.proof_gate.details
+    )
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
