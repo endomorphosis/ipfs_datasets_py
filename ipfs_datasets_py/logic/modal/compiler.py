@@ -2800,7 +2800,21 @@ class DeterministicModalCompiler:
         target_family = ModalLogicFamily.TEMPORAL.value
         target_share = float(family_shares.get(target_family, 0.0))
         signals = _modal_ambiguity_signals(encoding)
-        if not bool(signals.get("has_temporal_scope")) and target_share <= 0.0:
+        has_temporal_scope = bool(signals.get("has_temporal_scope"))
+        supports_signal_free_pair_policy = self._supports_signal_free_adaptive_pair(
+            predicted_family,
+            target_family,
+        )
+        signal_free_pair_policy_applied = bool(
+            not has_temporal_scope
+            and target_share <= 0.0
+            and supports_signal_free_pair_policy
+        )
+        if (
+            not has_temporal_scope
+            and target_share <= 0.0
+            and not supports_signal_free_pair_policy
+        ):
             return []
         family_margin = target_share - predicted_share
         if family_margin >= self.config.modal_temporal_target_family_outvote_margin:
@@ -2838,6 +2852,9 @@ class DeterministicModalCompiler:
                     "outvote_margin_threshold": self.config.modal_temporal_target_family_outvote_margin,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
+                    "signal_free_pair_policy_applied": (
+                        signal_free_pair_policy_applied
+                    ),
                     "target_family": target_family,
                     "target_share": round(target_share, 6),
                 },
@@ -3083,15 +3100,28 @@ class DeterministicModalCompiler:
         target_share = float(family_shares.get(target_family, 0.0))
         signals = _modal_ambiguity_signals(encoding)
         has_condition_scope = bool(signals.get("has_condition_or_exception_scope"))
-        if not has_condition_scope and target_share <= 0.0:
-            return []
-        family_margin = target_share - predicted_share
-        if family_margin >= self.config.modal_conditional_target_family_outvote_margin:
-            return []
         is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
             predicted_family,
             target_family,
         )
+        supports_signal_free_pair_policy = self._supports_signal_free_adaptive_pair(
+            predicted_family,
+            target_family,
+        )
+        signal_free_pair_policy_applied = bool(
+            not has_condition_scope
+            and target_share <= 0.0
+            and supports_signal_free_pair_policy
+        )
+        if (
+            not has_condition_scope
+            and target_share <= 0.0
+            and not supports_signal_free_pair_policy
+        ):
+            return []
+        family_margin = target_share - predicted_share
+        if family_margin >= self.config.modal_conditional_target_family_outvote_margin:
+            return []
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="conditional_scope_family_outvoted",
@@ -3121,6 +3151,9 @@ class DeterministicModalCompiler:
                     "outvote_margin_threshold": self.config.modal_conditional_target_family_outvote_margin,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
+                    "signal_free_pair_policy_applied": (
+                        signal_free_pair_policy_applied
+                    ),
                     "target_family": target_family,
                     "target_share": round(target_share, 6),
                 },
@@ -3245,8 +3278,18 @@ class DeterministicModalCompiler:
             predicted_family,
             target_family,
         )
+        supports_signal_free_pair_policy = self._supports_signal_free_adaptive_pair(
+            predicted_family,
+            target_family,
+        )
+        signal_free_pair_policy_applied = bool(
+            not has_deontic_scope
+            and target_share <= 0.0
+            and supports_signal_free_pair_policy
+        )
         policy_pair_family_evidence = bool(
-            is_compiler_ambiguity_bundle_pair and target_share > 0.0
+            is_compiler_ambiguity_bundle_pair
+            and (target_share > 0.0 or signal_free_pair_policy_applied)
         )
         if not has_deontic_scope and not policy_pair_family_evidence:
             return []
@@ -3283,6 +3326,9 @@ class DeterministicModalCompiler:
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
                     "policy_pair_family_evidence": policy_pair_family_evidence,
+                    "signal_free_pair_policy_applied": (
+                        signal_free_pair_policy_applied
+                    ),
                     "target_family": target_family,
                     "target_share": round(target_share, 6),
                 },
