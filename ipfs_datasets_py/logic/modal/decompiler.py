@@ -1592,12 +1592,18 @@ _SOURCE_ANCHOR_QUANTIFIER_TOKENS = frozenset(
 )
 _ALETHIC_SCOPE_CUE_OPERATOR_SYMBOLS: Mapping[str, str] = {
     "able": "◇",
+    "actuality": "□",
+    "actually": "□",
     "capable": "◇",
     "can": "◇",
     "cannot": "□",
     "impossible": "□",
     "may_be": "◇",
+    "necessarily": "□",
+    "necessity": "□",
     "necessary": "□",
+    "possibility": "◇",
+    "possibly": "◇",
     "possible": "◇",
 }
 _CANONICAL_MODAL_OPERATOR_LABELS: Mapping[Tuple[str, str], str] = {
@@ -10692,6 +10698,24 @@ def _typed_decompiler_target_reconstruction_slots(
         force=force,
         polarity=polarity,
     )
+    for corrected_family, correction_reason in _typed_decompiler_corrected_source_families(
+        encoded_family=source_family,
+        text=reconstruction_text,
+        temporal_cues=temporal_cues,
+        condition_cues=condition_cues,
+        has_temporal_scope=has_temporal_scope,
+    ):
+        slots.extend(
+            _typed_decompiler_corrected_source_family_slots(
+                encoded_family=source_family,
+                corrected_family=corrected_family,
+                reason=correction_reason,
+                targets=targets,
+                force=force,
+                polarity=polarity,
+                predicate_key=predicate_key,
+            )
+        )
     for target in targets:
         pair = f"{source_family}->{target}"
         slots.extend(
@@ -11742,6 +11766,24 @@ def _typed_decompiler_source_reconstruction_slots(
             f"{topology}:{source_family}:{source_symbol or 'none'}",
         ),
     ]
+    for corrected_family, correction_reason in _typed_decompiler_corrected_source_families(
+        encoded_family=source_family,
+        text=reconstruction_text,
+        temporal_cues=temporal_cues,
+        condition_cues=condition_cues,
+        has_temporal_scope="temporal" in topology_parts,
+    ):
+        slots.extend(
+            _typed_decompiler_corrected_source_family_slots(
+                encoded_family=source_family,
+                corrected_family=corrected_family,
+                reason=correction_reason,
+                targets=targets,
+                force=force,
+                polarity=polarity,
+                predicate_key=predicate_head,
+            )
+        )
     if raw_predicate_head and raw_predicate_head != predicate_head:
         slots.append(
             (
@@ -16721,6 +16763,142 @@ def _typed_decompiler_directional_target_families(source_family: str) -> List[st
         if normalized_target and normalized_target not in targets:
             targets.append(normalized_target)
     return targets
+
+
+def _typed_decompiler_corrected_source_families(
+    *,
+    encoded_family: str,
+    text: str,
+    temporal_cues: Sequence[str],
+    condition_cues: Sequence[str] = (),
+    has_temporal_scope: bool = False,
+) -> List[Tuple[str, str]]:
+    """Classify source semantics from modal cues when a fallback encoded frame drifts."""
+    normalized_family = _clean_text(encoded_family).lower()
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_family or not normalized_text:
+        return []
+
+    corrections: List[Tuple[str, str]] = []
+
+    def add(family: str, reason: str) -> None:
+        normalized_target = _clean_text(family).lower()
+        normalized_reason = _slot_safe_family_pair_key(reason)
+        if not normalized_target or normalized_target == normalized_family:
+            return
+        pair = (normalized_target, normalized_reason or normalized_target)
+        if pair not in corrections:
+            corrections.append(pair)
+
+    alethic_cues = _alethic_scope_cues_from_text(normalized_text)
+    if alethic_cues:
+        add("alethic", "+".join(alethic_cues[:4]))
+
+    temporal_reason_values = list(temporal_cues)
+    if not temporal_reason_values:
+        temporal_reason_values = [
+            cue
+            for cue in condition_cues
+            if _temporal_clause_prefix_relation(cue)
+        ]
+    if temporal_reason_values or has_temporal_scope:
+        add("temporal", "+".join(temporal_reason_values[:4]) or "temporal_scope")
+
+    return corrections
+
+
+def _typed_decompiler_corrected_source_family_slots(
+    *,
+    encoded_family: str,
+    corrected_family: str,
+    reason: str,
+    targets: Sequence[str],
+    force: str,
+    polarity: str,
+    predicate_key: str,
+) -> List[Tuple[str, str]]:
+    """Emit source-family correction anchors without removing encoded-family slots."""
+    source = _clean_text(encoded_family).lower()
+    corrected = _clean_text(corrected_family).lower()
+    reason_key = _slot_safe_family_pair_key(reason) or corrected
+    if not source or not corrected or source == corrected:
+        return []
+
+    corrected_targets: List[str] = []
+
+    def add_target(target: str) -> None:
+        normalized = _clean_text(target).lower()
+        if normalized and normalized not in corrected_targets:
+            corrected_targets.append(normalized)
+
+    add_target(corrected)
+    for target in targets:
+        add_target(target)
+    for target in _typed_decompiler_directional_target_families(corrected):
+        add_target(target)
+
+    slots: List[Tuple[str, str]] = [
+        ("typed-decompiler-source-semantic-family", corrected),
+        ("typed-decompiler-source-family-correction", f"{source}->{corrected}:{reason_key}"),
+        ("typed-decompiler-source-family-correction-reason", f"{corrected}:{reason_key}"),
+        (
+            "family_semantic_slot_prototype",
+            f"{corrected}||slot:typed-decompiler-source-family-correction:{source}->{corrected}",
+        ),
+    ]
+    if predicate_key:
+        slots.append(
+            (
+                "typed-decompiler-source-predicate-family-correction",
+                f"{source}:{predicate_key}->{corrected}",
+            )
+        )
+    for target in corrected_targets:
+        pair = f"{corrected}->{target}"
+        slots.extend(
+            (
+                ("typed-decompiler-target-reconstruction-pair", pair),
+                ("typed-decompiler-source-target-family", pair),
+                (
+                    "typed-decompiler-source-family-corrected-target-pair",
+                    f"{source}->{pair}:{reason_key}",
+                ),
+            )
+        )
+        if predicate_key:
+            slots.append(
+                (
+                    "typed-decompiler-source-predicate-family-pair",
+                    f"{corrected}:{predicate_key}->{target}",
+                )
+            )
+        slots.extend(
+            _typed_decompiler_force_polarity_family_pair_slots(
+                source_family=corrected,
+                target_family=target,
+                force=force,
+                polarity=polarity,
+            )
+        )
+        for view in _typed_decompiler_family_pair_legal_ir_views(corrected, target):
+            slots.extend(
+                (
+                    ("legal_ir_view_prototype", view),
+                    (
+                        "typed-decompiler-target-reconstruction-view",
+                        f"{pair}||{view}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{corrected}||slot:typed-decompiler-family-pair:{pair}||{view}",
+                    ),
+                    (
+                        "family_semantic_slot_legal_ir_view_prototype",
+                        f"{target}||slot:typed-decompiler-family-pair:{pair}||{view}",
+                    ),
+                )
+            )
+    return _unique_slot_values(slots)
 
 
 def _typed_decompiler_temporal_target_role_slots(
