@@ -1205,6 +1205,16 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ),
     ("indian energy resource development", "indian_energy_resource_development"),
     ("tribal energy resource agreement", "tribal_energy_resource_agreement"),
+    ("measurement", "measurement_determination"),
+    ("measurement of vessels", "vessel_measurement"),
+    ("vessel measurement", "vessel_measurement"),
+    ("assign a length", "agency_measurement_assignment"),
+    ("assign the length", "agency_measurement_assignment"),
+    ("secretary shall assign", "agency_measurement_assignment"),
+    ("length means the horizontal distance", "hull_length_definition"),
+    ("horizontal distance of the hull", "hull_length_definition"),
+    ("foremost part of the stem", "maritime_hull_measurement"),
+    ("aftermost part of the stern", "maritime_hull_measurement"),
 )
 _PROGRAM_RECONSTRUCTION_ATOMS = frozenset(
     {
@@ -1307,6 +1317,15 @@ _CATALOG_CONTRACT_RECONSTRUCTION_ATOMS = frozenset(
         "deaf_blind_services_registry",
         "helen_keller_national_center_registry",
         "uscode_registry_record",
+    }
+)
+_MEASUREMENT_ASSIGNMENT_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "agency_measurement_assignment",
+        "hull_length_definition",
+        "maritime_hull_measurement",
+        "measurement_determination",
+        "vessel_measurement",
     }
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
@@ -5204,6 +5223,22 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("statutory_implementation_authority")
+    if re.search(r"\bmeasurement\b.{0,80}\b(?:vessels?|hulls?)\b", normalized):
+        add("vessel_measurement")
+        add("measurement_determination")
+    if re.search(
+        r"\blength\b.{0,80}\bmeans\b.{0,120}\b(?:horizontal\s+distance|hull)\b|"
+        r"\bhorizontal\s+distance\b.{0,120}\b(?:hull|stem|stern)\b",
+        normalized,
+    ):
+        add("hull_length_definition")
+        add("maritime_hull_measurement")
+    if re.search(
+        r"\b(?:secretary|administrator|commission)\b.{0,80}\bshall\s+assign\b|"
+        r"\bshall\s+assign\b.{0,80}\b(?:length|measurement|number|rating)\b",
+        normalized,
+    ):
+        add("agency_measurement_assignment")
     if re.search(
         r"\birrigation\s+projects?\b.{0,80}\breclamation\s+act\b|"
         r"\breclamation\s+act\b.{0,80}\birrigation\s+projects?\b",
@@ -12610,6 +12645,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _MEASUREMENT_ASSIGNMENT_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
 
     if normalized_atom in {
         "administration_enforcement",
@@ -13811,6 +13852,11 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _MEASUREMENT_ASSIGNMENT_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+            add("temporal")
         if normalized_atom in _CATALOG_CONTRACT_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
@@ -15827,6 +15873,14 @@ def _typed_decompiler_target_surface_profiles(
     ):
         add("uscode_construction_contract_surface")
     if re.search(
+        r"\b(?:measurement|assign(?:s|ed)?\s+(?:a\s+)?length|"
+        r"length\s+means\s+the\s+horizontal\s+distance|"
+        r"horizontal\s+distance\s+of\s+the\s+hull|foremost\s+part\s+of\s+the\s+stem|"
+        r"aftermost\s+part\s+of\s+the\s+stern)\b",
+        lowered,
+    ):
+        add("uscode_measurement_assignment_surface")
+    if re.search(
         r"\b(?:transferred|editorial\s+notes|codification|reclassified)\b",
         lowered,
     ):
@@ -16387,6 +16441,11 @@ def _typed_decompiler_predicate_classes(
         add("authorization")
         add("program")
         add("statutory")
+    if normalized_atoms.intersection(_MEASUREMENT_ASSIGNMENT_RECONSTRUCTION_ATOMS):
+        add("administration")
+        add("authorization")
+        add("statutory")
+        add("temporal")
     if normalized_atoms.intersection(
         {
             "award_proposal_review",

@@ -48678,6 +48678,61 @@ def test_decompiler_reconstructs_packet_000572_contract_registry_slots() -> None
     )
 
 
+def test_decompiler_reconstructs_packet_000587_measurement_and_status_slots() -> None:
+    measurement = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            '46 U.S.C. 14522. Measurement. In this section, "length" means '
+            "the horizontal distance of the hull between the foremost part of "
+            "the stem and the aftermost part of the stern. The Secretary shall "
+            "assign a length to a vessel."
+        ),
+        predicate="secretary_assign_vessel_length_measurement",
+    )
+    repealed_status = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "47 U.S.C. 84a. Repealed. Pub. L. 89-554 provided for "
+            "appointment and pay of general counsel and assistants."
+        ),
+        predicate="general_counsel_repealed_status",
+    )
+
+    measurement_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(measurement)
+    )
+    status_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(repealed_status)
+    )
+
+    assert {
+        "agency_measurement_assignment",
+        "hull_length_definition",
+        "maritime_hull_measurement",
+        "measurement_determination",
+    }.issubset(set(measurement_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"frame->frame", "frame->deontic", "frame->temporal"}.issubset(
+        set(measurement_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "uscode_measurement_assignment_surface" in measurement_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "deontic.ir", "TDFOL.prover", "modal.frame_logic"}.issubset(
+        set(measurement_slots["legal_ir_view_prototype"])
+    )
+    assert "repealed" in status_slots["typed-decompiler-source-semantic-atom"]
+    assert {"frame->frame", "frame->temporal", "frame->deontic"}.issubset(
+        set(status_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "uscode_editorial_status_surface" in status_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+
+
 def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> None:
     floodway_report = _single_formula_document(
         family="deontic",
