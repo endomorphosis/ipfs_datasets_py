@@ -101,3 +101,44 @@ def test_subject_to_obligation_maps_to_conditional_normative_family():
     capability = build_deterministic_parser_capability_profile_record(norm)
     assert capability["capability_family"] == "conditional_normative"
     assert "conditions" in capability["checked_slots"]
+
+
+def test_enumerated_conditional_obligation_keeps_conditional_normative_family():
+    text = (
+        "(1) Subject to subsection (b), the Secretary shall provide assistance "
+        "to eligible veterans."
+    )
+    element = {
+        "schema_version": "legal-norm-ir/v1",
+        "source_id": "us-code-38-118-test-enum",
+        "text": text,
+        "support_text": text,
+        "source_span": [0, len(text)],
+        "support_span": [0, len(text)],
+        "parent_source_id": "us-code-38-118-test",
+        "enumeration_label": "(1)",
+        "norm_type": "obligation",
+        "deontic_operator": "O",
+        "subject": ["the Secretary"],
+        "action": ["provide assistance to eligible veterans"],
+        "field_spans": {
+            "subject": [
+                text.index("the Secretary"),
+                text.index("the Secretary") + len("the Secretary"),
+            ],
+            "modality": [text.index("shall"), text.index("shall") + len("shall")],
+            "action": [
+                text.index("provide assistance"),
+                text.index("eligible veterans") + len("eligible veterans"),
+            ],
+        },
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    capability = build_deterministic_parser_capability_profile_record(norm)
+
+    assert norm.is_enumerated_child is True
+    assert norm.semantic_family == "conditional_normative"
+    assert capability["capability_family"] == "conditional_normative"
+    assert capability["decoded_slots"] == ["actor", "modality", "action", "conditions"]
+    assert capability["decoder_requires_validation"] is False

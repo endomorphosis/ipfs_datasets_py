@@ -1849,6 +1849,9 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "canonical_citation": norm.canonical_citation,
         "source_text": norm.source_text,
         "support_text": norm.support_text,
+        "semantic_family": norm.semantic_family,
+        "modal_family": norm.modal_family,
+        "semantic_family_evidence": norm.semantic_family_evidence,
         "decoded_text": decoded.text,
         "support_span": decoded.support_span,
         "phrase_count": len(phrase_rows),
@@ -4947,9 +4950,6 @@ def _deterministic_capability_profile_slots(
 
 
 def _deterministic_norm_family(norm: LegalNormIR) -> str:
-    if norm.is_enumerated_child:
-        return "enumerated_child_duty"
-
     legal_frame = norm.legal_frame if isinstance(norm.legal_frame, Mapping) else {}
     category = str(legal_frame.get("category") or "").strip().lower()
 
@@ -4970,6 +4970,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "instrument_lifecycle"
     if norm.semantic_family == "conditional_normative":
         return "conditional_normative"
+    if norm.is_enumerated_child:
+        return "enumerated_child_duty"
 
     formula = build_deontic_formula_record_from_ir(norm)["formula"]
     action_predicate = _deterministic_formula_action_predicate(formula)
