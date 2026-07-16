@@ -67,6 +67,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000373_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_003976_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_001287_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_001288_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003763_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001592_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001621_FAMILY_PAIRS,
@@ -500,6 +501,58 @@ def test_packet_001287_registry_refines_frame_to_typed_family_cue_policy() -> No
             "conditional_normative",
         )
         >= 1.0
+    )
+
+
+def test_packet_001288_registry_refines_weak_modal_family_cue_policy() -> None:
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_001288_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_001288_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer(
+            "deontic",
+            "conditional_normative",
+        )
+        >= 0.53
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer(
+            "frame",
+            "temporal",
+        )
+        >= 1.01
     )
 
 
