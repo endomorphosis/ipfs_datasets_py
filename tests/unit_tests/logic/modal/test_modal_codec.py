@@ -134,6 +134,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_005157_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001559_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001560_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001624_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005912_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_006116_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_007710_FAMILY_PAIRS,
@@ -190,6 +191,144 @@ def _assert_refined_margin_buffer_at_least(
         )
         >= expected_floor - 1e-12
     )
+
+
+def test_modal_registry_packet_001624_exposes_self_family_ambiguity_policy() -> None:
+    expected_pairs = {
+        ("deontic", "deontic"),
+        ("frame", "frame"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_001624_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_modal_compiler_packet_001624_emits_explicit_self_family_ambiguities() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    cases = (
+        ("deontic", "KD", "O", "obligation", 0.535703258455, 0.5),
+        ("frame", "FRAME_BM25", "Frame", "ontology_frame", 0.626117349288, 0.5),
+    )
+
+    for family, system, symbol, label, primary_share, duplicate_share in cases:
+        text = f"Synthetic {family} low-margin self-family evidence."
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-001624-{family}-self-family",
+            text=text,
+            normalized_text=text,
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=family,
+                    system=system,
+                    symbol=symbol,
+                    label=label,
+                    cue=family,
+                    start_char=10,
+                    end_char=10 + len(family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="legal_text",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-001624-{family}",
+                    operator=ModalIROperator(
+                        family=family,
+                        system=system,
+                        symbol=symbol,
+                        label=label,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{family}_low_margin_predicate",
+                        arguments=["actor:agency"],
+                        role=label,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=encoding.document_id,
+                        start_char=0,
+                        end_char=len(text),
+                        citation="packet-001624",
+                    ),
+                ),
+            ],
+        )
+        ranking = [
+            {
+                "family": family,
+                "count": 1,
+                "share": round(primary_share, 6),
+                "share_raw": primary_share,
+            },
+            {
+                "family": family,
+                "count": 1,
+                "share": round(duplicate_share, 6),
+                "share_raw": duplicate_share,
+            },
+        ]
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares={family: primary_share},
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{family}->{family}"
+        expected_explicit_type = f"adaptive_{family}_{family}_outvoted_margin_low"
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["effective_ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert any(
+            ambiguity.ambiguity_type == expected_explicit_type
+            and ambiguity.candidate_ids == [family]
+            and ambiguity.metadata["is_explicit_adaptive_ambiguity"] is True
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
 
 
 def test_modal_registry_packet_000202_refines_modal_family_cue_pairs() -> None:
