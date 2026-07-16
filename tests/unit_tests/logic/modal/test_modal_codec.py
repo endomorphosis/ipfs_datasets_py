@@ -140,6 +140,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_006116_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_007710_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_007716_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_002400_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_008285_FAMILY_PAIRS,
     COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
@@ -640,6 +641,43 @@ def test_packet_007816_exposes_modal_ambiguity_policy() -> None:
 
     assert set(COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS) == expected_pairs
     for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_002400_exposes_modal_ambiguity_policy() -> None:
+    expected_pairs = {
+        ("doxastic", "deontic"),
+        ("frame", "deontic"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_002400_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in COMPILER_AMBIGUITY_PACKET_002400_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
         assert target_family in compiler_required_adaptive_ambiguity_targets(
             predicted_family
