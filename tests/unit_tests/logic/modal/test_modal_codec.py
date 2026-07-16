@@ -3554,7 +3554,7 @@ def test_modal_ir_graph_projection_promotes_packet_component_gap_evidence() -> N
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
-def test_modal_ir_graph_projection_routes_temporal_deadline_scope_to_deontic_view() -> None:
+def test_modal_ir_graph_projection_routes_temporal_deadline_scope_to_temporal_view() -> None:
     document = ModalIRDocument(
         document_id="deadline-doc",
         source="us_code",
@@ -3605,8 +3605,66 @@ def test_modal_ir_graph_projection_routes_temporal_deadline_scope_to_deontic_vie
         if relationship.properties["flogic_predicate"].startswith("learned_legal_ir_")
     }
 
+    assert ("learned_legal_ir_target_view", "temporal") in learned_facts
+    assert ("learned_legal_ir_view_gap", "temporal:1.000000") in learned_facts
+    assert "LegalIRViewAlignment" in graph_data.schema.node_labels
+
+
+def test_modal_ir_graph_projection_preserves_temporal_view_for_deontic_deadline_text() -> None:
+    document = ModalIRDocument(
+        document_id="shall-within-deadline-doc",
+        source="us_code",
+        normalized_text=(
+            "The State shall provide vocational rehabilitation services within "
+            "the fiscal year."
+        ),
+        formulas=[
+            ModalIRFormula(
+                formula_id="shall-within-deadline-doc:f1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="F-logic",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="state_provide_services",
+                    arguments=["state", "services"],
+                    role="obligation",
+                ),
+                conditions=["within the fiscal year"],
+                provenance=ModalIRProvenance(
+                    source_id="shall-within-deadline-doc",
+                    start_char=0,
+                    end_char=82,
+                ),
+            )
+        ],
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "shall-within-deadline-doc",
+                    "predicate": "type",
+                    "object": "legal_modal_document",
+                }
+            ],
+            ontology_name="sample_flogic",
+        ),
+    )
+
+    graph_data = modal_ir_to_neo4j_graph_data(document)
+    learned_facts = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+        if relationship.properties["flogic_predicate"].startswith("learned_legal_ir_")
+    }
+
+    assert ("learned_legal_ir_target_view", "temporal") in learned_facts
+    assert ("learned_legal_ir_view_gap", "temporal:1.000000") in learned_facts
     assert ("learned_legal_ir_target_view", "deontic.ir") in learned_facts
-    assert ("learned_legal_ir_view_gap", "deontic.ir:1.000000") in learned_facts
     assert "LegalIRViewAlignment" in graph_data.schema.node_labels
 
 

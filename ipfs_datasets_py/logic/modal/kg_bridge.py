@@ -214,6 +214,7 @@ _IDENTIFIER_RE = re.compile(r"[^A-Za-z0-9_]+")
 _GRAPH_PROJECTION_GUIDANCE_ROUTE = "repair_multiview_legal_ir_graph_projection"
 _NEO4J_COMPAT_TARGET_COMPONENT = "knowledge_graphs.neo4j_compat"
 _DEONTIC_IR_TARGET_VIEW = "deontic.ir"
+_TEMPORAL_IR_TARGET_VIEW = "temporal"
 _DEONTIC_OPERATOR_SYMBOLS = {"F", "O", "P"}
 _DEONTIC_OPERATOR_LABEL_TOKENS = (
     "duty",
@@ -233,8 +234,11 @@ _DEONTIC_SURFACE_CUE_RE = re.compile(
 _DEONTIC_TEMPORAL_SCOPE_CUE_RE = re.compile(
     r"\b("
     r"deadline|due\s+date|effective\s+date|effective\s+on|"
-    r"not\s+later\s+than|no\s+later\s+than|within\s+\d+|"
+    r"not\s+later\s+than|no\s+later\s+than|"
+    r"within\s+(?:\d+|the\s+)?(?:applicable\s+)?"
+    r"(?:day|days|month|months|year|years|period|fiscal\s+year)|"
     r"after\s+enactment|before\s+the\s+end\s+of|"
+    r"annual|annually|periodic|periodically|"
     r"on\s+or\s+before|until|expires?|expiration"
     r")\b",
     re.IGNORECASE,
@@ -1225,26 +1229,29 @@ def _modal_formula_legal_ir_view_targets(
         return {}, {}
 
     document_text = str(getattr(modal_ir, "normalized_text", "") or "")
-    deontic_count = sum(
-        1
-        for formula in formulas
+    deontic_count = 0
+    temporal_count = 0
+    for formula in formulas:
         if _formula_has_deontic_operator_pattern(
             formula,
             document_text=document_text,
-        )
-        or _formula_has_deontic_temporal_scope(
+        ):
+            deontic_count += 1
+        if _formula_has_deontic_temporal_scope(
             formula,
             document_text=document_text,
-        )
-    )
-    if deontic_count <= 0:
+        ):
+            temporal_count += 1
+
+    targets: Dict[str, float] = {}
+    if deontic_count > 0:
+        targets[_DEONTIC_IR_TARGET_VIEW] = deontic_count / len(formulas)
+    if temporal_count > 0:
+        targets[_TEMPORAL_IR_TARGET_VIEW] = temporal_count / len(formulas)
+    if not targets:
         return {}, {}
 
-    weight = deontic_count / len(formulas)
-    return (
-        {_DEONTIC_IR_TARGET_VIEW: weight},
-        {_DEONTIC_IR_TARGET_VIEW: weight},
-    )
+    return targets, dict(targets)
 
 
 def _formula_has_deontic_operator_pattern(
