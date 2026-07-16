@@ -47559,6 +47559,110 @@ def test_decompiler_reconstructs_packet_000348_fund_and_reclamation_slots() -> N
     )
 
 
+def test_decompiler_reconstructs_packet_000572_contract_registry_slots() -> None:
+    tariff_penalty = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "46 U.S.C. 42108. Penalty for operating under suspended tariff or "
+            "service contract. A common carrier that accepts or handles cargo "
+            "for carriage under a tariff or service contract that has been "
+            "suspended under section 42104(d)(1) shall be liable for a penalty."
+        ),
+        predicate="common_carrier_suspended_tariff_penalty",
+        conditions=["under section 42104(d)(1)"],
+    )
+    registry = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "29 U.S.C. 1908. Registry. Helen Keller National Center for "
+            "Youths and Adults Who Are Deaf-Blind registry from the U.S. "
+            "Government Publishing Office."
+        ),
+        predicate="helen_keller_registry",
+    )
+    construction = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "2 U.S.C. 1816. Construction contracts. The Architect of the "
+            "Capitol may enter into construction contracts with respect to "
+            "subsection (a) as described in this section."
+        ),
+        predicate="architect_capitol_construction_contracts",
+        conditions=["with respect to subsection (a)", "as described in this section"],
+    )
+
+    tariff_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(tariff_penalty)
+    )
+    registry_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(registry)
+    )
+    construction_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(construction)
+    )
+
+    assert {
+        "cargo_carriage",
+        "common_carrier_cargo_carriage",
+        "suspended_tariff_service_contract",
+        "suspended_tariff_service_contract_penalty",
+        "tariff_suspension",
+    }.issubset(set(tariff_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"deontic->deontic", "deontic->temporal"}.issubset(
+        set(tariff_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "uscode_suspended_tariff_service_contract_surface" in tariff_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
+        set(tariff_slots["legal_ir_view_prototype"])
+    )
+
+    assert {
+        "deaf_blind_services_registry",
+        "helen_keller_national_center_registry",
+        "uscode_registry_record",
+    }.issubset(set(registry_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"deontic->deontic", "deontic->frame"}.issubset(
+        set(registry_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "uscode_registry_record_surface" in registry_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(registry_slots["legal_ir_view_prototype"])
+    )
+
+    assert {
+        "architect_capitol_administration",
+        "construction_contract",
+    }.issubset(set(construction_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"frame->deontic", "frame->temporal", "frame->frame"}.issubset(
+        set(construction_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert {"with_respect_to", "as_described_in"}.issubset(
+        set(construction_slots["bridge_cue"])
+    )
+    assert "frame->deontic:with_respect_to" in construction_slots[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert "as_described_in:frame->deontic" in construction_slots[
+        "typed-decompiler-surface-cue-family-pair"
+    ]
+    assert "uscode_construction_contract_surface" in construction_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "TDFOL.prover", "modal.frame_logic"}.issubset(
+        set(construction_slots["legal_ir_view_prototype"])
+    )
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

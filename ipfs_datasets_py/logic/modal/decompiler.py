@@ -280,6 +280,27 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
         "federal_building_energy_standard",
     ),
     ("prescribe regulations governing", "regulation_prescription_authority"),
+    (
+        "penalty for operating under suspended tariff or service contract",
+        "suspended_tariff_service_contract_penalty",
+    ),
+    ("operating under suspended tariff", "suspended_tariff_operation"),
+    ("suspended tariff or service contract", "suspended_tariff_service_contract"),
+    (
+        "tariff or service contract that has been suspended",
+        "suspended_tariff_service_contract",
+    ),
+    ("service contract that has been suspended", "service_contract_suspension"),
+    ("tariff that has been suspended", "tariff_suspension"),
+    (
+        "common carrier that accepts or handles cargo",
+        "common_carrier_cargo_carriage",
+    ),
+    ("accepts or handles cargo for carriage", "cargo_carriage"),
+    ("cargo for carriage", "cargo_carriage"),
+    ("common carrier", "common_carrier"),
+    ("service contract", "service_contract"),
+    ("suspended tariff", "tariff_suspension"),
     ("risk of loss and destruction", "loss_damage_risk_mitigation"),
     ("annual report", "annual_report"),
     ("reports to congress", "congressional_report_duty"),
@@ -777,6 +798,23 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("prize proceeds", "prize_proceeds_charge"),
     ("effect of act", "effect_of_act"),
     ("construction", "statutory_construction"),
+    ("construction contracts", "construction_contract"),
+    ("construction contract", "construction_contract"),
+    ("architect of the capitol", "architect_capitol_administration"),
+    ("architect of capitol", "architect_capitol_administration"),
+    (
+        "construction contracts from the u.s. government publishing office",
+        "construction_contract",
+    ),
+    (
+        "registry from the u.s. government publishing office",
+        "uscode_registry_record",
+    ),
+    ("registry from the us government publishing office", "uscode_registry_record"),
+    ("registry", "uscode_registry_record"),
+    ("helen keller national center", "helen_keller_national_center_registry"),
+    ("deaf-blind", "deaf_blind_services_registry"),
+    ("deaf blind", "deaf_blind_services_registry"),
     ("shall not be construed", "construction_no_effect"),
     ("nothing in this", "construction_no_effect"),
     ("force and effect", "statutory_force_effect"),
@@ -1200,11 +1238,20 @@ _PROGRAM_RECONSTRUCTION_ATOMS = frozenset(
 )
 _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS = frozenset(
     {
+        "cargo_carriage",
+        "common_carrier",
+        "common_carrier_cargo_carriage",
         "customs_administration",
         "customs_duty_administration",
         "customs_enforcement_provision",
         "internal_revenue_administration",
+        "service_contract",
+        "service_contract_suspension",
+        "suspended_tariff_operation",
+        "suspended_tariff_service_contract",
+        "suspended_tariff_service_contract_penalty",
         "tariff_administration",
+        "tariff_suspension",
         "tax_general_rule_administration",
         "tax_procedure_administration",
     }
@@ -1244,6 +1291,15 @@ _PROJECT_LOAN_AWARD_RECONSTRUCTION_ATOMS = frozenset(
         "military_award_review",
         "project_loan_limit",
         "project_loan_program",
+    }
+)
+_CATALOG_CONTRACT_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "architect_capitol_administration",
+        "construction_contract",
+        "deaf_blind_services_registry",
+        "helen_keller_national_center_registry",
+        "uscode_registry_record",
     }
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
@@ -13565,27 +13621,49 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("modal.frame_logic")
     if normalized_atom in {
         "chapter_administration",
+        "architect_capitol_administration",
+        "cargo_carriage",
+        "common_carrier",
+        "common_carrier_cargo_carriage",
+        "construction_contract",
         "contracting_authority",
         "cooperative_agreement_authority",
+        "deaf_blind_services_registry",
         "developing_institution_program",
         "fund_transfer_authority",
+        "helen_keller_national_center_registry",
         "higher_education_student_assistance",
         "rental_rate_authority",
         "reserved_land",
         "reserved_land_lease_authority",
         "revenue_disposition",
+        "service_contract",
+        "service_contract_suspension",
+        "suspended_tariff_operation",
+        "suspended_tariff_service_contract",
+        "suspended_tariff_service_contract_penalty",
+        "tariff_suspension",
+        "uscode_registry_record",
     }:
         add("CEC.native")
         add("deontic.ir")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
     if normalized_atom in {
+        "cargo_carriage",
+        "common_carrier_cargo_carriage",
+        "construction_contract",
         "contracting_authority",
         "cooperative_agreement_authority",
         "fund_transfer_authority",
         "rental_rate_authority",
         "reserved_land_lease_authority",
         "revenue_disposition",
+        "service_contract_suspension",
+        "suspended_tariff_operation",
+        "suspended_tariff_service_contract",
+        "suspended_tariff_service_contract_penalty",
+        "tariff_suspension",
     }:
         add("TDFOL.prover")
     if normalized_atom in {
@@ -13716,6 +13794,18 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _CATALOG_CONTRACT_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in {
+            "service_contract_suspension",
+            "suspended_tariff_operation",
+            "suspended_tariff_service_contract",
+            "suspended_tariff_service_contract_penalty",
+            "tariff_suspension",
+        }:
+            add("temporal")
         if normalized_atom in {
             "expert_consultant_service_authority",
             "historic_site_preservation_designation",
@@ -15686,6 +15776,27 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_rehabilitation_service_surface")
     if re.search(r"\b(?:patents?\s+for\s+designs?|ornamental\s+design)\b", lowered):
         add("uscode_design_patent_surface")
+    if re.search(
+        r"\b(?:suspended\s+tariff|service\s+contract\s+that\s+has\s+been\s+suspended|"
+        r"operating\s+under\s+suspended\s+tariff|cargo\s+for\s+carriage)\b",
+        lowered,
+    ):
+        add("uscode_suspended_tariff_service_contract_surface")
+    if re.search(
+        r"\b(?:registry|helen\s+keller\s+national\s+center|deaf[-\s]+blind)\b",
+        lowered,
+    ):
+        add("uscode_registry_record_surface")
+    if re.search(
+        r"\b(?:construction\s+contracts?|architect\s+of\s+the\s+capitol)\b",
+        lowered,
+    ):
+        add("uscode_construction_contract_surface")
+    if re.search(
+        r"\b(?:transferred|editorial\s+notes|codification|reclassified)\b",
+        lowered,
+    ):
+        add("uscode_transfer_status_surface")
     return profiles
 
 
