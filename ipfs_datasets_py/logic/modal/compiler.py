@@ -642,6 +642,13 @@ class DeterministicModalCompiler:
             )
         )
         ambiguities.extend(
+            self._temporal_deadline_semantic_family_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
+        ambiguities.extend(
             self._conditional_scope_target_family_ambiguities(
                 encoding,
                 ranking=ranking,
@@ -3112,6 +3119,100 @@ class DeterministicModalCompiler:
                     ),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_conditional_target_family_outvote_margin,
+                    "predicted_family": predicted_family,
+                    "predicted_share": round(predicted_share, 6),
+                    "target_family": target_family,
+                    "target_share": round(target_share, 6),
+                },
+            )
+        ]
+
+    def _temporal_deadline_semantic_family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        """Map deadline cues to temporal or conditional-normative targets."""
+        if not ranking:
+            return []
+        predicted_family = str(ranking[0]["family"])
+        if predicted_family not in {
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.TEMPORAL.value,
+        }:
+            return []
+
+        signals = _modal_ambiguity_signals(encoding)
+        has_temporal_deadline = bool(
+            signals.get("has_temporal_scope")
+            and (
+                signals.get("has_temporal_deadline_cue")
+                or signals.get("has_temporal_scope_phrase")
+                or signals.get("has_temporal_within_scope")
+                or signals.get("has_calendar_date_scope")
+            )
+        )
+        if not has_temporal_deadline:
+            return []
+
+        has_normative_force = bool(
+            signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
+            or signals.get("has_condition_or_exception_scope")
+        )
+        target_family = (
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+            if has_normative_force
+            else ModalLogicFamily.TEMPORAL.value
+        )
+        if predicted_family == target_family:
+            return []
+
+        predicted_share = self._ranking_share(ranking[0])
+        target_share = float(family_shares.get(target_family, 0.0))
+        outvote_margin_threshold = (
+            self.config.modal_conditional_target_family_outvote_margin
+            if target_family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+            else self.config.modal_temporal_target_family_outvote_margin
+        )
+        family_margin = target_share - predicted_share
+        if family_margin >= outvote_margin_threshold:
+            return []
+
+        is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="temporal_deadline_semantic_family_outvoted",
+                message=(
+                    "Temporal deadline markers are present, but the dominant compiled "
+                    "family outvotes the deterministic deadline semantic family."
+                ),
+                candidate_ids=[predicted_family, target_family],
+                severity="requires_rule",
+                metadata={
+                    "family_margin": round(family_margin, 6),
+                    "family_ranking": list(ranking),
+                    "has_normative_force": has_normative_force,
+                    "is_compiler_ambiguity_bundle_pair": (
+                        is_compiler_ambiguity_bundle_pair
+                    ),
+                    "ambiguity_policy_bundle": (
+                        "compiler_ambiguity"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
+                    "compiler_ambiguity_policy_pair": (
+                        f"{predicted_family}->{target_family}"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
+                    "lexical_signals": dict(sorted(signals.items())),
+                    "outvote_margin_threshold": outvote_margin_threshold,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
                     "target_family": target_family,
