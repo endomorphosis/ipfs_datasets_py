@@ -42567,6 +42567,102 @@ def test_decompiler_renders_frame_conditional_deontic_source_semantics() -> None
     assert "conditioned on subject to section 314" in structural_text
 
 
+def test_decompiler_packet_000847_source_sentence_names_guided_family_pairs() -> None:
+    cases = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "The Secretary shall appoint employees subject to the "
+                    "availability of appropriations."
+                ),
+                predicate="secretary_appoint_employees",
+                conditions=["subject to the availability of appropriations"],
+            ),
+            "deontic source reconstructs conditional obligation",
+            "deontic->conditional_normative",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "The labeling requirements do not apply to food served in "
+                    "a restaurant if the food is not packaged for sale."
+                ),
+                predicate="food_labeling_restaurant_exclusion",
+                conditions=["if the food is not packaged for sale"],
+            ),
+            "legal frame source reconstructs conditional obligation",
+            "frame->conditional_normative",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "The Secretary may provide medical care to eligible "
+                    "veterans under this section."
+                ),
+                predicate="secretary_provide_veterans_medical_care",
+                conditions=["under this section"],
+            ),
+            "legal frame source reconstructs obligation permission prohibition",
+            "frame->deontic",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "The office record identifies the legal frame for program "
+                    "administration."
+                ),
+                predicate="program_administration_frame_record",
+            ),
+            "legal frame source reconstruction",
+            "frame->frame",
+        ),
+    ]
+
+    for document, expected_sentence, expected_pair in cases:
+        document.metadata["hint_evidence"] = [
+            {
+                "action": "refine_semantic_decompiler_reconstruction",
+                "target_component": "modal.ir_decompiler",
+                "program_synthesis_scope": "ir_decompiler",
+                "bundle": {
+                    "family_pairs": [
+                        "deontic->conditional_normative",
+                        "frame->conditional_normative",
+                        "frame->deontic",
+                        "frame->frame",
+                    ],
+                },
+            }
+        ]
+
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_pair in slot_texts["typed_ir_cross_family_semantic_support"]
+        assert any(
+            expected_sentence in value
+            for value in slot_texts["typed_ir_source_semantic_sentence"]
+        )
+        assert expected_sentence in structural_text
+
+
 def test_decompiler_uses_heading_semantics_for_deontic_temporal_reconstruction() -> None:
     text = (
         "Sec. 1531 - Buying Power Maintenance accounts for International Trade "

@@ -3776,6 +3776,8 @@ def _typed_ir_reconstruction_phrases(
         max_tokens=max_tokens,
     )
     source_semantic_sentence = _typed_ir_source_semantic_sentence_text(
+        source_family=family,
+        include_family_pair_labels=_should_emit_guided_semantic_reconstruction(document),
         roles=roles,
         force=force,
         polarity=polarity,
@@ -4927,6 +4929,7 @@ def _typed_ir_semantic_surface_reconstruction_text(
 
 def _typed_ir_source_semantic_sentence_text(
     *,
+    source_family: str,
     roles: Mapping[str, str],
     force: str,
     polarity: str,
@@ -4935,6 +4938,7 @@ def _typed_ir_source_semantic_sentence_text(
     semantic_atoms: Sequence[str],
     targets: Sequence[str],
     max_tokens: int = 48,
+    include_family_pair_labels: bool = False,
 ) -> str:
     """Render source-like legal semantics from typed slots, not raw spans."""
     parts: List[str] = []
@@ -4945,6 +4949,7 @@ def _typed_ir_source_semantic_sentence_text(
             parts.append(cleaned)
 
     target_set = {_clean_text(target).lower() for target in targets}
+    normalized_source = _clean_text(source_family).lower()
     has_conditional_scope = bool(condition_values or exception_values)
     if "conditional_normative" in target_set and "deontic" in target_set:
         add("conditional legal duty")
@@ -4960,6 +4965,24 @@ def _typed_ir_source_semantic_sentence_text(
         add("dynamic legal action")
     elif "frame" in target_set:
         add("legal frame")
+
+    if include_family_pair_labels and normalized_source:
+        for target in targets[:4]:
+            target_family = _clean_text(target).lower()
+            if not target_family:
+                continue
+            add(
+                _typed_ir_source_family_pair_surface_label(
+                    normalized_source,
+                    target_family,
+                )
+            )
+            add(
+                _typed_ir_family_pair_reconstruction_label(
+                    normalized_source,
+                    target_family,
+                )
+            )
 
     if force in {"obligation", "permission", "prohibition"}:
         add(force)
@@ -4989,6 +5012,8 @@ def _typed_ir_source_semantic_sentence_text(
     for atom in semantic_atoms[:6]:
         add(atom)
 
+    if include_family_pair_labels:
+        return _bounded_surface_text(parts, max_tokens=max_tokens)
     return _bounded_reconstruction_text(parts, max_tokens=max_tokens)
 
 
@@ -5249,6 +5274,16 @@ def _typed_ir_family_pair_reconstruction_label(source: str, target: str) -> str:
     if normalized_source == normalized_target:
         return f"{target_label} source reconstruction"
     return f"{source_label} source reconstructs {target_label}"
+
+
+def _typed_ir_source_family_pair_surface_label(source: str, target: str) -> str:
+    source_key = _slot_safe_family_key(_clean_text(source).lower())
+    target_label = _typed_ir_target_family_label(target)
+    if not source_key or not target_label:
+        return ""
+    if source_key == _slot_safe_family_key(_clean_text(target).lower()):
+        return f"{source_key} source reconstruction"
+    return f"{source_key} source reconstructs {target_label}"
 
 
 def _typed_ir_reconstruction_target_order(target: str) -> Tuple[int, str]:
