@@ -359,6 +359,33 @@ class TestParserPredicates:
         assert formula.name == "Q"
         assert formula.arguments == ()
 
+    def test_parse_empty_argument_predicate_export(self):
+        """Test parsing compiler exports that spell nullary predicates with ()."""
+        # GIVEN a zero-argument predicate application from an external proof view
+        formula_str = "Notice()"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN it should be accepted as a nullary predicate
+        assert isinstance(formula, Predicate)
+        assert formula.name == "Notice"
+        assert formula.arguments == ()
+
+    def test_parse_deontic_empty_argument_predicate_export(self):
+        """Test parsing deontic proof obligations over nullary predicates."""
+        # GIVEN a TDFOL proof obligation whose payload has an empty arg list
+        formula_str = "O(Repealed())"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN the deontic payload should be a nullary predicate
+        assert isinstance(formula, DeonticFormula)
+        assert isinstance(formula.formula, Predicate)
+        assert formula.formula.name == "Repealed"
+        assert formula.formula.arguments == ()
+
     def test_parse_reserved_single_letter_nullary_predicates(self):
         """Test reserved modal symbols as atoms when no modal payload follows."""
         # GIVEN single-letter atom names that are modal operators with (...)
@@ -427,6 +454,21 @@ class TestParserPredicates:
         assert len(formula.arguments) == 1
         assert isinstance(formula.arguments[0], FunctionApplication)
         assert formula.arguments[0].function_name == "myfunc"
+
+    def test_parse_zero_argument_function_application(self):
+        """Test parsing zero-argument function terms in proof exports."""
+        # GIVEN a predicate with a zero-argument function term
+        formula_str = "Effective(clock())"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN the function application should preserve an empty argument tuple
+        assert isinstance(formula, Predicate)
+        assert len(formula.arguments) == 1
+        assert isinstance(formula.arguments[0], FunctionApplication)
+        assert formula.arguments[0].function_name == "clock"
+        assert formula.arguments[0].arguments == ()
     
     def test_parse_predicate_mixed_arguments(self):
         """Test parsing predicate with mixed argument types."""

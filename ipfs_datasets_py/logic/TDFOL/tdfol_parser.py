@@ -681,15 +681,17 @@ class TDFOLParser:
         # Check if it has arguments
         if self.current_token().type == TokenType.LPAREN:
             self.advance()
-            arguments = self.parse_term_list()
+            arguments = self.parse_term_list(allow_empty=True)
             self.expect(TokenType.RPAREN)
             return Predicate(name, tuple(arguments))
         else:
             # Nullary predicate (propositional variable)
             return Predicate(name, ())
     
-    def parse_term_list(self) -> List[Term]:
+    def parse_term_list(self, *, allow_empty: bool = False) -> List[Term]:
         """Parse a comma-separated list of terms."""
+        if allow_empty and self.current_token().type == TokenType.RPAREN:
+            return []
         terms = [self.parse_term()]
         
         while self.current_token().type == TokenType.COMMA:
@@ -709,7 +711,7 @@ class TDFOLParser:
             # Check if it's a function application
             if self.current_token().type == TokenType.LPAREN:
                 self.advance()
-                arguments = self.parse_term_list()
+                arguments = self.parse_term_list(allow_empty=True)
                 self.expect(TokenType.RPAREN)
                 return FunctionApplication(name, tuple(arguments))
             elif self.current_token().type == TokenType.COLON:
