@@ -48872,6 +48872,97 @@ def test_decompiler_reconstructs_packet_000591_uscode_status_semantic_slots() ->
     )
 
 
+def test_decompiler_reconstructs_packet_000598_definition_and_wildlife_slots() -> None:
+    child_abduction = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="definition",
+        text=(
+            "22 U.S.C. 9002. Definitions. International Child Abduction "
+            "Remedies. For purposes of this chapter, the term applicant means "
+            "any person who claims that there has been a breach of custody rights."
+        ),
+        predicate="international_child_abduction_remedies_definitions",
+        conditions=["for purposes of this chapter"],
+    )
+    wildlife_omitted = _single_formula_document(
+        family="temporal",
+        symbol="F",
+        label="future",
+        text=(
+            "16 U.S.C. 668kk to 668ss. Omitted. Protection and Conservation "
+            "of Wildlife. Endangered Species of Fish and Wildlife. These "
+            "sections were omitted under this subchapter."
+        ),
+        predicate="endangered_species_wildlife_omitted_status",
+        conditions=["under this subchapter"],
+    )
+    for document, predicted, target in (
+        (child_abduction, "frame", "conditional_normative"),
+        (wildlife_omitted, "temporal", "frame"),
+    ):
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_typed_ir_or_decompiler_slots",
+                    "family_pairs": [
+                        "frame->conditional_normative",
+                        "frame->deontic",
+                        "temporal->frame",
+                    ],
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "predicted_family": predicted,
+                "target_family": target,
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "modal.frame_logic",
+                    "zkp.circuits",
+                ],
+            }
+        ]
+
+    child_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(child_abduction)
+    )
+    wildlife_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(wildlife_omitted)
+    )
+
+    assert {"child_abduction_remedy", "definition"}.issubset(
+        set(child_slots["typed-decompiler-source-semantic-atom"])
+    )
+    assert {"frame->conditional_normative", "frame->deontic"}.issubset(
+        set(child_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "definition:positive_scope:frame->conditional_normative" in child_slots[
+        "typed-decompiler-force-polarity-family-pair"
+    ]
+    assert "uscode_child_abduction_definition_surface" in child_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+
+    assert {
+        "endangered_species_wildlife",
+        "fish_wildlife_conservation",
+        "omitted",
+        "wildlife_conservation_protection",
+    }.issubset(set(wildlife_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"temporal->frame", "temporal->deontic"}.issubset(
+        set(wildlife_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "under:temporal->frame" in wildlife_slots[
+        "typed-decompiler-surface-cue-family-pair"
+    ]
+    assert "uscode_wildlife_omitted_status_surface" in wildlife_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+        set(wildlife_slots["legal_ir_view_prototype"])
+    )
+
+
 def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> None:
     floodway_report = _single_formula_document(
         family="deontic",

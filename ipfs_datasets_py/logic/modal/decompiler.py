@@ -524,6 +524,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("interagency coordination", "interagency_coordination"),
     ("international child abduction remedies", "child_abduction_remedy"),
     ("child abduction remedies", "child_abduction_remedy"),
+    ("protection and conservation of wildlife", "wildlife_conservation_protection"),
+    ("endangered species of fish and wildlife", "endangered_species_wildlife"),
+    ("endangered species", "endangered_species_protection"),
+    ("fish and wildlife", "fish_wildlife_conservation"),
     ("permanently nonirrigable lands", "permanent_nonirrigable_land_status"),
     ("permanently nonirrigable land", "permanent_nonirrigable_land_status"),
     ("permanently non-irrigable lands", "permanent_nonirrigable_land_status"),
@@ -1340,6 +1344,14 @@ _MEASUREMENT_ASSIGNMENT_RECONSTRUCTION_ATOMS = frozenset(
         "vessel_measurement",
     }
 )
+_WILDLIFE_STATUS_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "endangered_species_protection",
+        "endangered_species_wildlife",
+        "fish_wildlife_conservation",
+        "wildlife_conservation_protection",
+    }
+)
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
     {
         "uscode_transferred_heading_v1",
@@ -2096,7 +2108,13 @@ _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = 
         "frame",
         "temporal",
     ),
-    "temporal": ("conditional_normative", "deontic", "epistemic", "temporal"),
+    "temporal": (
+        "conditional_normative",
+        "deontic",
+        "epistemic",
+        "frame",
+        "temporal",
+    ),
 }
 _DEONTIC_BRIDGE_REINFORCEMENT_OPERATORS: frozenset[str] = frozenset(
     {
@@ -5802,6 +5820,21 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("interagency_coordination")
     if re.search(r"\bchild\s+abduction\b.{0,60}\bremed(?:y|ies)\b", normalized):
         add("child_abduction_remedy")
+    if re.search(
+        r"\bendangered\s+species\b.{0,120}\b(?:fish|wildlife)\b|"
+        r"\b(?:fish|wildlife)\b.{0,120}\bendangered\s+species\b",
+        normalized,
+    ):
+        add("endangered_species_protection")
+        add("endangered_species_wildlife")
+    if re.search(
+        r"\bprotection\s+and\s+conservation\b.{0,80}\bwildlife\b|"
+        r"\bwildlife\b.{0,80}\bprotection\s+and\s+conservation\b",
+        normalized,
+    ):
+        add("wildlife_conservation_protection")
+    if re.search(r"\bfish\s+and\s+wildlife\b", normalized):
+        add("fish_wildlife_conservation")
     if re.search(
         r"\bcongress\s+finds?\b.{0,80}\b(?:declares?|declaration|findings?)\b",
         normalized,
@@ -12670,6 +12703,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _WILDLIFE_STATUS_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
 
     if normalized_atom in {
         "administration_enforcement",
@@ -13904,6 +13943,11 @@ def _typed_decompiler_semantic_atom_target_families(
             add("deontic")
             add("conditional_normative")
         if normalized_atom in _MEASUREMENT_ASSIGNMENT_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+            add("temporal")
+        if normalized_atom in _WILDLIFE_STATUS_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
             add("conditional_normative")
@@ -15919,6 +15963,14 @@ def _typed_decompiler_target_surface_profiles(
     ):
         add("uscode_registry_record_surface")
     if re.search(
+        r"\b(?:definitions?|defined|means|includes?)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:child\s+abduction|remed(?:y|ies)|convention|central\s+authority)\b",
+        lowered,
+    ):
+        add("uscode_child_abduction_definition_surface")
+    if re.search(
         r"\b(?:construction\s+contracts?|architect\s+of\s+the\s+capitol)\b",
         lowered,
     ):
@@ -15938,6 +15990,12 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_transfer_status_surface")
     if re.search(r"\b(?:job\s+corps|workforce\s+investment\s+systems?)\b", lowered):
         add("uscode_job_corps_program_status_surface")
+    if re.search(
+        r"\b(?:endangered\s+species|fish\s+and\s+wildlife|"
+        r"protection\s+and\s+conservation\s+of\s+wildlife)\b",
+        lowered,
+    ) and re.search(r"\b(?:omitted|secs?\.?|sections?)\b", lowered):
+        add("uscode_wildlife_omitted_status_surface")
     if re.search(
         r"\b(?:preservation\s+of\s+friendly\s+foreign\s+relations|"
         r"friendly\s+foreign\s+relations)\b",
@@ -16509,6 +16567,10 @@ def _typed_decompiler_predicate_classes(
     if normalized_atoms.intersection(_MEASUREMENT_ASSIGNMENT_RECONSTRUCTION_ATOMS):
         add("administration")
         add("authorization")
+        add("statutory")
+        add("temporal")
+    if normalized_atoms.intersection(_WILDLIFE_STATUS_RECONSTRUCTION_ATOMS):
+        add("conservation")
         add("statutory")
         add("temporal")
     if normalized_atoms.intersection(
