@@ -3418,6 +3418,87 @@ def test_modal_decompiler_guided_semantics_follow_family_pair_target() -> None:
     assert "legal frame source reconstructs temporal deadline period" in decoded.text
 
 
+def test_modal_decompiler_packet_000844_guides_purpose_context_clauses() -> None:
+    source = (
+        "In order to save and preserve a national seashore, the Secretary is "
+        "authorized to take appropriate action in connection with any contract."
+    )
+    modal_ir = ModalIRDocument(
+        document_id="packet-000844-purpose-context-guided",
+        source="us_code",
+        normalized_text=source,
+        metadata={
+            "hint_evidence": [
+                {
+                    "bridge_failure_name": "source_decompiled_text_token_loss",
+                    "predicted_family": "frame",
+                    "target_family": "conditional_normative",
+                    "target_view": "deontic.ir",
+                    "target_file_lane": "ir_decompiler",
+                    "bundle": {
+                        "action": "refine_semantic_decompiler_reconstruction",
+                        "program_synthesis_scope": "ir_decompiler",
+                        "target_component": "modal.ir_decompiler",
+                        "family_pairs": [
+                            "deontic->deontic",
+                            "deontic->frame",
+                            "frame->conditional_normative",
+                        ],
+                    },
+                }
+            ],
+        },
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000844-frame-conditional",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="secretary national seashore action",
+                    arguments=[
+                        "actor:secretary",
+                        "action:take",
+                        "object:appropriate_action",
+                    ],
+                    role="frame",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000844-purpose-context-guided",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="16 U.S.C. 459c",
+                ),
+                metadata={"cue": "authorized"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+
+    assert "frame->conditional_normative" in slot_texts[
+        "typed_ir_cross_family_semantic_support"
+    ]
+    assert "frame->conditional_normative:in_order_to" in slot_texts[
+        "typed_decompiler_target_reconstruction_cue"
+    ]
+    assert "frame->conditional_normative:in_connection_with" in slot_texts[
+        "typed_decompiler_target_reconstruction_cue"
+    ]
+    assert any(
+        "legal frame source reconstructs conditional obligation" in value
+        for value in semantic_slot_texts["guided_typed_ir_semantic_reconstruction"]
+    )
+
+
 def test_modal_decompiler_packet_000843_reconstructs_guided_family_pair_surfaces() -> None:
     frame_source = (
         "The Secretary determines separation rules for Foreign Service officers "

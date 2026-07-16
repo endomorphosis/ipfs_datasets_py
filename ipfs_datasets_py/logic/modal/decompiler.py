@@ -61,6 +61,8 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("subject to", "subject_to"),
     ("in the case of", "in_the_case_of"),
     ("in the event that", "in_the_event_that"),
+    ("in connection with", "in_connection_with"),
+    ("in order to", "in_order_to"),
     ("notwithstanding", "notwithstanding"),
     ("for the purposes of", "for_the_purposes_of"),
     ("for purposes of", "for_purposes_of"),
@@ -2063,6 +2065,14 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
     ),
     "in_the_event_that": (("conditional_normative", "O|"),),
     "in_the_case_of": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "in_connection_with": (
+        ("conditional_normative", "O|"),
+        ("frame", "Frame"),
+    ),
+    "in_order_to": (
         ("conditional_normative", "O|"),
         ("frame", "Frame"),
     ),
