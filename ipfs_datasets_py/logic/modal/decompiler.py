@@ -3542,6 +3542,16 @@ def _typed_ir_reconstruction_phrases(
         legal_ir_view_support=legal_ir_view_support,
         max_tokens=max_tokens,
     )
+    scope_frame_texts = _typed_ir_scope_frame_texts(
+        source_family=family,
+        targets=ordered_targets,
+        force=force,
+        polarity=polarity,
+        roles=roles,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        semantic_atoms=semantic_atoms,
+    )
 
     phrases: List[DecodedModalPhrase] = []
     if semantic_surface:
@@ -3578,6 +3588,23 @@ def _typed_ir_reconstruction_phrases(
                 slot="typed_ir_semantic_reconstruction_clause",
                 spans=spans,
                 provenance_only=provenance_only,
+            )
+        )
+    for scope_frame_text in scope_frame_texts:
+        phrases.append(
+            DecodedModalPhrase(
+                text=scope_frame_text,
+                slot="typed_ir_scope_frame_reconstruction",
+                spans=spans,
+                provenance_only=provenance_only,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=_slot_safe_family_pair_key(scope_frame_text),
+                slot="typed_ir_scope_frame_signature",
+                spans=spans,
+                provenance_only=True,
             )
         )
     if summary:
@@ -3760,6 +3787,159 @@ def _typed_ir_reconstruction_phrases(
                     )
                 )
     return phrases
+
+
+def _typed_ir_scope_frame_texts(
+    *,
+    source_family: str,
+    targets: Sequence[str],
+    force: str,
+    polarity: str,
+    roles: Mapping[str, str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    semantic_atoms: Sequence[str],
+    max_tokens: int = 28,
+) -> List[str]:
+    """Render family-target scope frames from typed clauses and roles."""
+    source = _clean_text(source_family).lower()
+    if not source:
+        return []
+    normalized_targets = [
+        _clean_text(target).lower()
+        for target in targets
+        if _clean_text(target).lower()
+    ]
+    if not normalized_targets:
+        normalized_targets = [source]
+
+    condition_scopes = _typed_clause_scope_units(
+        condition_values,
+        clause_type="condition",
+    )
+    exception_scopes = _typed_clause_scope_units(
+        exception_values,
+        clause_type="exception",
+    )
+    has_temporal_scope = any(scope["temporal_relation"] for scope in condition_scopes)
+    has_condition_scope = bool(condition_scopes or exception_scopes)
+    if not has_condition_scope and not any(
+        target in {"conditional_normative", "temporal"} for target in normalized_targets
+    ):
+        return []
+
+    subject = _humanize_typed_ir_value(roles.get("subject", ""))
+    action = _humanize_typed_ir_value(roles.get("action", ""))
+    object_value = _humanize_typed_ir_value(roles.get("object", ""))
+    temporal = _humanize_typed_ir_value(roles.get("temporal", ""))
+    atom_values = [
+        _humanize_typed_ir_value(atom)
+        for atom in semantic_atoms
+        if atom
+        not in {
+            "exception_or_condition",
+            "obligation",
+            "permission",
+            "prohibition",
+            "temporal_condition",
+        }
+    ]
+    texts: List[str] = []
+
+    def add_text(parts: Sequence[str]) -> None:
+        text = _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+        if text and text not in texts:
+            texts.append(text)
+
+    for target in normalized_targets:
+        if target == "conditional_normative" and has_condition_scope:
+            parts: List[str] = [
+                _typed_ir_family_pair_reconstruction_label(source, target),
+                f"{force} force" if force else "",
+                polarity.replace("_", " ") if polarity != "positive_scope" else "",
+                "conditioned legal scope",
+                subject,
+                action,
+                object_value,
+            ]
+            for scope in condition_scopes[:2]:
+                parts.extend(
+                    (
+                        scope["prefix"],
+                        scope["value"],
+                    )
+                )
+            for scope in exception_scopes[:2]:
+                parts.extend(("except", scope["value"]))
+            parts.extend(atom_values[:3])
+            add_text(parts)
+        if target == "temporal" and (has_temporal_scope or temporal):
+            parts = [
+                _typed_ir_family_pair_reconstruction_label(source, target),
+                f"{force} force" if force else "",
+                "temporal deadline scope",
+                subject,
+                action,
+                object_value,
+                temporal,
+            ]
+            for scope in condition_scopes[:3]:
+                if scope["temporal_relation"]:
+                    parts.extend(
+                        (
+                            scope["temporal_relation"],
+                            scope["prefix"],
+                            scope["value"],
+                        )
+                    )
+            parts.extend(atom_values[:3])
+            add_text(parts)
+        if target == "frame" and source == "frame":
+            parts = [
+                _typed_ir_family_pair_reconstruction_label(source, target),
+                "frame scope",
+                subject,
+                action,
+                object_value,
+                *(scope["value"] for scope in condition_scopes[:2]),
+                *(scope["value"] for scope in exception_scopes[:2]),
+                *atom_values[:4],
+            ]
+            add_text(parts)
+    return texts
+
+
+def _typed_clause_scope_units(
+    clauses: Sequence[str],
+    *,
+    clause_type: str,
+) -> List[Dict[str, str]]:
+    """Return normalized prefix/value units for reconstruction scope text."""
+    units: List[Dict[str, str]] = []
+    slot = "condition" if clause_type == "condition" else "exception"
+    for clause in clauses:
+        cleaned = _clean_text(clause)
+        if not cleaned:
+            continue
+        parsed = _typed_clause_slot(cleaned, slot=slot)
+        if parsed is None and slot == "exception":
+            parsed = _typed_clause_slot(cleaned, slot="condition")
+        if parsed is None:
+            prefix_text = slot
+            prefix_key = slot
+            scoped_value = cleaned
+        else:
+            prefix_text, prefix_key, scoped_value = parsed
+            scoped_value = scoped_value or cleaned
+        units.append(
+            {
+                "prefix": prefix_text.replace("_", " "),
+                "prefix_key": prefix_key,
+                "temporal_relation": _temporal_clause_prefix_relation(prefix_key),
+                "value": scoped_value,
+            }
+        )
+    return units
 
 
 def _typed_ir_semantic_bridge_phrases(

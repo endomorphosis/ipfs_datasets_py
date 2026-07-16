@@ -613,6 +613,182 @@ def test_modal_ir_decompiler_emits_legal_action_semantic_atoms_for_packet_000122
     ) in triple_pairs
 
 
+def test_modal_ir_decompiler_emits_scope_frame_reconstruction_for_deadlines() -> None:
+    text = (
+        "Within 3 years after October 24, 1992, the Secretary shall report to "
+        "the Congress on progress under this subchapter."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000571-temporal",
+        source="42 U.S.C. 2297g-4",
+        normalized_text=text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="report",
+                    arguments=[
+                        "subject: Secretary",
+                        "object: Congress progress report",
+                    ],
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000571-temporal",
+                    start_char=0,
+                    end_char=len(text),
+                    citation="42 U.S.C. 2297g-4",
+                ),
+                conditions=["Within 3 years after October 24, 1992"],
+            ),
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+    triple_values = [
+        str(triple.get("object", ""))
+        for triple in triples
+        if triple.get("predicate") == "typed_ir_scope_frame_reconstruction"
+    ]
+
+    assert any(
+        "temporal deadline" in value
+        and "within 3 years" in value
+        and "october 24" in value
+        for value in slot_map["typed_ir_scope_frame_reconstruction"]
+    )
+    assert any(
+        "temporal deadline" in value
+        and "within 3" in value
+        and "october 24 1992" in value
+        for value in triple_values
+    )
+
+
+def test_modal_ir_decompiler_emits_scope_frame_reconstruction_for_conditions() -> None:
+    text = (
+        "Subject to section 1491, the Secretary may guarantee loans for Indian "
+        "organizations."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000571-conditional",
+        source="25 U.S.C. 1495",
+        normalized_text=text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="KD",
+                    symbol="P",
+                    label="permission",
+                ),
+                predicate=ModalIRPredicate(
+                    name="guarantee_loans",
+                    arguments=[
+                        "subject: Secretary",
+                        "object: Indian organization loans",
+                    ],
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000571-conditional",
+                    start_char=0,
+                    end_char=len(text),
+                    citation="25 U.S.C. 1495",
+                ),
+                conditions=["Subject to section 1491"],
+            ),
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+    triple_values = [
+        str(triple.get("object", ""))
+        for triple in triples
+        if triple.get("predicate") == "typed_ir_scope_frame_reconstruction"
+    ]
+
+    assert any(
+        "conditioned legal scope" in value
+        and "subject to section" in value
+        and "1491" in value
+        for value in slot_map["typed_ir_scope_frame_reconstruction"]
+    )
+    assert any(
+        "conditioned legal scope" in value
+        and "section 1491" in value
+        for value in triple_values
+    )
+
+
+def test_modal_ir_decompiler_emits_scope_frame_reconstruction_for_frame_scope() -> None:
+    text = (
+        "In the case of a contested election, the committee shall preserve "
+        "election records."
+    )
+    document = ModalIRDocument(
+        document_id="packet-000571-frame",
+        source="2 U.S.C. 61-1",
+        normalized_text=text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FLogic",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="contested_election_records",
+                    arguments=[
+                        "subject: committee",
+                        "object: election records",
+                    ],
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000571-frame",
+                    start_char=0,
+                    end_char=len(text),
+                    citation="2 U.S.C. 61-1",
+                ),
+                conditions=["In the case of a contested election"],
+            ),
+        ],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+    triple_values = [
+        str(triple.get("object", ""))
+        for triple in triples
+        if triple.get("predicate") == "typed_ir_scope_frame_reconstruction"
+    ]
+
+    assert any(
+        "legal frame source reconstruction" in value
+        and "scope" in value
+        and "contested" in value
+        for value in slot_map["typed_ir_scope_frame_reconstruction"]
+    )
+    assert any(
+        "legal frame source reconstruction" in value
+        and "scope" in value
+        and "contested" in value
+        for value in triple_values
+    )
+
+
 def test_modal_slots_emit_terminal_and_profile_alignment_slots_for_todo_cluster_sections() -> None:
     expected_by_section = {
         ("50", "31 to 39."): {

@@ -75,8 +75,11 @@ from .decompiler import (
     decode_modal_ir_document,
     decoded_modal_phrase_slot_text_map,
     _legal_semantic_atoms_from_text,
+    _modal_force_label,
     _modal_polarity_slots,
+    _modal_scope_polarity,
     _typed_decompiler_role_slots,
+    _typed_ir_scope_frame_texts,
     _uscode_status_clause_text,
     modal_text_token_similarity,
 )
@@ -201,6 +204,7 @@ _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "by": "deadline",
     "no_later_than": "deadline",
     "not_later_than": "deadline",
+    "within": "deadline",
     "upon": "after",
 }
 _USC_CITATION_RE = re.compile(
@@ -4569,6 +4573,19 @@ def modal_ir_to_flogic_triples(
                     "object": predicate_value,
                 }
             )
+        for predicate_name, predicate_value in _typed_ir_scope_frame_components(
+            modal_ir=modal_ir,
+            formula=formula,
+            condition_values=resolved_conditions,
+            exception_values=resolved_exceptions,
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate_name,
+                    "object": predicate_value,
+                }
+            )
         for condition in resolved_conditions:
             triples.append(
                 {
@@ -5569,6 +5586,88 @@ def _source_role_anchor_components(
             components.append((f"source_{role_name}_role", f"{anchor}:{predicate_role}"))
         if predicate_head and role_name in {"action", "object"}:
             components.append((f"source_{role_name}_predicate", f"{anchor}:{predicate_head}"))
+    return _unique_preserve_order_tuples(components)
+
+
+def _typed_ir_scope_frame_components(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[tuple[str, str]]:
+    """Project typed decompiler scope-frame reconstructions into triples."""
+    source_family = _clean_non_empty_string(formula.operator.family).lower()
+    if not source_family:
+        return []
+
+    targets: List[str] = [source_family]
+    has_condition_scope = bool(condition_values or exception_values)
+    has_temporal_scope = False
+    for clause_type, clauses in (
+        ("condition", condition_values),
+        ("exception", exception_values),
+    ):
+        for clause in clauses:
+            typed_clause = _typed_clause_key_value(clause, clause_type=clause_type)
+            if typed_clause is None and clause_type == "exception":
+                typed_clause = _typed_clause_key_value(clause, clause_type="condition")
+            if typed_clause is None:
+                continue
+            prefix_key, _scoped_value = typed_clause
+            if _temporal_clause_prefix_relation(prefix_key):
+                has_temporal_scope = True
+    if has_condition_scope and "conditional_normative" not in targets:
+        targets.append("conditional_normative")
+    if has_temporal_scope and "temporal" not in targets:
+        targets.append("temporal")
+    if source_family == "frame" and "frame" not in targets:
+        targets.append("frame")
+
+    role_values = _source_role_anchor_values(modal_ir=modal_ir, formula=formula)
+    roles = {
+        role: value
+        for role, value in role_values.items()
+        if role in {"subject", "action", "object", "temporal"} and value
+    }
+    semantic_atoms = _legal_semantic_atoms_from_text(
+        " ".join(
+            value
+            for value in (
+                formula.predicate.name,
+                " ".join(condition_values),
+                " ".join(exception_values),
+                _fallback_section_heading_tail_text(
+                    modal_ir=modal_ir,
+                    formula=formula,
+                ),
+            )
+            if _clean_non_empty_string(value)
+        )
+    )
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=modal_ir,
+    )
+
+    components: List[tuple[str, str]] = []
+    for text in _typed_ir_scope_frame_texts(
+        source_family=source_family,
+        targets=targets,
+        force=force,
+        polarity=polarity,
+        roles=roles,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        semantic_atoms=semantic_atoms,
+    ):
+        components.append(("typed_ir_scope_frame_reconstruction", text))
+        signature = _slot_safe_family_pair_key(text)
+        if signature:
+            components.append(("typed_ir_scope_frame_signature", signature))
     return _unique_preserve_order_tuples(components)
 
 
