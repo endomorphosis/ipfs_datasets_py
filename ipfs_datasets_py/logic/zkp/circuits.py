@@ -8,6 +8,7 @@ proofs for various logic operations, and MVP circuits for statement proving.
 from typing import List, Dict, Any, Tuple, Mapping
 from dataclasses import dataclass
 import json
+import re
 
 from .canonicalization import canonicalize_axioms, hash_axioms_commitment, tdfol_v1_axioms_commitment_hex_v2
 from .canonicalization import hash_theorem
@@ -72,6 +73,11 @@ _COMPILER_GUIDANCE_EVIDENCE_KEYS = (
     "evidence",
     "passing_compiler_guidance_evidence",
     "autoencoder_evidence",
+)
+_US_CODE_CITATION_RE = re.compile(
+    r"\b(?P<title>\d+)\s+U\.?\s*S\.?\s*C\.?\s+"
+    r"(?:§\s*)?(?P<section>[A-Za-z0-9][A-Za-z0-9.\-]*)",
+    re.IGNORECASE,
 )
 
 
@@ -777,6 +783,22 @@ def _first_nonempty(*values: object) -> str:
     return ""
 
 
+def _us_code_citation_from_text(text: object) -> str:
+    """Extract a normalized U.S. Code citation from free text when present."""
+    if not isinstance(text, str):
+        return ""
+    match = _US_CODE_CITATION_RE.search(text)
+    if not match:
+        return ""
+    title = match.group("title").strip()
+    section = match.group("section").strip()
+    if section.endswith(":"):
+        section = section[:-1].rstrip()
+    if not title or not section:
+        return ""
+    return f"{title} U.S.C. {section}"
+
+
 def _us_code_source_id_from_fields(
     record: Mapping[str, Any],
     metadata: Mapping[str, Any],
@@ -842,6 +864,20 @@ def _source_id_from_record(
     citation = _first_nonempty(record.get("citation"), metadata.get("citation"))
     if citation:
         return citation
+    embedded_citation = _us_code_citation_from_text(
+        _first_nonempty(
+            record.get("text"),
+            record.get("source_text"),
+            record.get("normalized_text"),
+            record.get("content"),
+            record.get("body"),
+            metadata.get("text"),
+            metadata.get("source_text"),
+            metadata.get("normalized_text"),
+        )
+    )
+    if embedded_citation:
+        return embedded_citation
 
     title = _first_nonempty(record.get("title"), metadata.get("title"))
     section = _first_nonempty(record.get("section"), metadata.get("section"))
@@ -886,7 +922,11 @@ def _is_legal_source_record(record: Mapping[str, Any], metadata: Mapping[str, An
         return True
 
     sample_id = _first_nonempty(record.get("sample_id"), metadata.get("sample_id"))
-    return sample_id.lower().startswith("us-code-")
+    if sample_id.lower().startswith("us-code-"):
+        return True
+
+    source_text = _source_text_from_record(record, metadata)
+    return bool(_us_code_citation_from_text(source_text))
 
 
 def _synthetic_source_proof_data(
