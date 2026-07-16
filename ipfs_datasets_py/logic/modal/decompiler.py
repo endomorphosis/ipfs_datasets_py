@@ -15916,6 +15916,8 @@ def _typed_decompiler_family_pair_legal_ir_views(
     }:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
+    if pair == "frame->frame":
+        add("TDFOL.prover")
     return views
 
 
@@ -16468,6 +16470,15 @@ def _typed_decompiler_family_pair_role_topology_slots(
             )
         )
 
+    slots.extend(
+        _typed_decompiler_conditional_role_binding_slots(
+            source_family=source,
+            target_family=target,
+            roles=roles,
+            has_conditioned_scope=bool(condition_cues),
+        )
+    )
+
     for view in _typed_decompiler_family_pair_legal_ir_views(source, target):
         slots.extend(
             (
@@ -16499,6 +16510,90 @@ def _typed_decompiler_family_pair_role_topology_slots(
                     ),
                 )
             )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_conditional_role_binding_slots(
+    *,
+    source_family: str,
+    target_family: str,
+    roles: Mapping[str, str],
+    has_conditioned_scope: bool,
+) -> List[Tuple[str, str]]:
+    """Bind conditional clauses to role edges for frame-origin reconstruction."""
+    source = _clean_text(source_family).lower()
+    target = _clean_text(target_family).lower()
+    if target != "conditional_normative":
+        return []
+
+    pair = f"{source}->{target}"
+    slots: List[Tuple[str, str]] = [
+        ("family-role", "conditional_normative:clause"),
+        ("semantic-slot", "family-role:conditional_normative:clause"),
+        ("modal-transition", "conditional_normative->deontic"),
+        ("typed-decompiler-family-pair-clause-role", f"{pair}:clause"),
+        (
+            "semantic_slot_legal_ir_view_prototype",
+            "slot:family-role:conditional_normative:clause||TDFOL.prover",
+        ),
+        (
+            "family_semantic_slot_legal_ir_view_prototype",
+            (
+                "conditional_normative||slot:family-role:"
+                "conditional_normative:clause||TDFOL.prover"
+            ),
+        ),
+    ]
+    if has_conditioned_scope:
+        slots.extend(
+            (
+                ("logical-variable-map", "condition:none:v_condition"),
+                ("clause-topology", "surface-role-edge:condition->action"),
+                ("clause-topology", "surface-role-transition:condition->subject"),
+                (
+                    "semantic_slot_legal_ir_view_prototype",
+                    (
+                        "slot:clause-topology:surface-role-edge:"
+                        "condition->action||TDFOL.prover"
+                    ),
+                ),
+            )
+        )
+
+    symbol_by_role = {
+        "subject": "s",
+        "action": "a",
+        "object": "o",
+        "temporal": "t",
+    }
+    for role, symbol in symbol_by_role.items():
+        role_value = _slot_safe_family_pair_key(roles.get(role, ""))
+        if not role_value:
+            continue
+        slots.extend(
+            (
+                (
+                    "entity-binding",
+                    f"source-ir-role:{role}:none:conditional_normative:{symbol}:clause",
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        "conditional_normative||slot:source-ir-role:"
+                        f"{role}:{role_value}:conditional_normative:{symbol}||"
+                        "knowledge_graphs.neo4j_compat"
+                    ),
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        "conditional_normative||slot:source-ir-role:"
+                        f"{role}:{role_value}:conditional_normative:{symbol}||"
+                        "TDFOL.prover"
+                    ),
+                ),
+            )
+        )
     return _unique_slot_values(slots)
 
 

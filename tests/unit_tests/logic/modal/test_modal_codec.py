@@ -43707,6 +43707,43 @@ def test_decompiler_preserves_frame_normative_pair_role_topology_slots() -> None
         "conditional_normative||slot:typed-decompiler-family-pair-bridge:"
         f"{conditional_bridge}||TDFOL.prover"
     ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    assert (
+        "source-ir-role:object:none:conditional_normative:o:clause"
+        in slot_texts["entity-binding"]
+    )
+    assert "condition:none:v_condition" in slot_texts["logical-variable-map"]
+    assert "surface-role-edge:condition->action" in slot_texts["clause-topology"]
+    assert "conditional_normative->deontic" in slot_texts["modal-transition"]
+    assert "family-role:conditional_normative:clause" in slot_texts["semantic-slot"]
+
+
+def test_decompiler_anchors_frame_self_transfer_status_to_tdfol_view() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "42 U.S.C. 3712: Section 3712 was editorially reclassified as "
+            "section 10102 of Title 34, Crime Control and Law Enforcement."
+        ),
+        predicate="section_reclassified",
+    )
+    document.formulas[0].metadata["fallback_rule"] = (
+        "uscode_editorial_status_heading_v1"
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "frame->frame" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in slot_texts["legal_ir_view_prototype"]
+    assert (
+        "frame||slot:typed-decompiler-target-reconstruction-pair:"
+        "frame->frame||TDFOL.prover"
+    ) in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
 
 
 def test_decompiler_treats_not_later_than_as_temporal_not_negative_scope() -> None:
