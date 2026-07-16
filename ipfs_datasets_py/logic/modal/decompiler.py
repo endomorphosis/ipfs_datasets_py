@@ -312,6 +312,19 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("government losses in shipment", "government_shipment_loss_prevention"),
     ("shipment of valuables", "valuable_shipment_regulation"),
     ("valuables in shipment", "valuable_shipment_regulation"),
+    ("obligations of public housing agencies", "public_housing_agency_obligation"),
+    ("obligations issued by a public housing agency", "public_housing_agency_obligation"),
+    ("public housing agencies", "public_housing_agency"),
+    ("public housing agency", "public_housing_agency"),
+    ("low-income housing projects", "low_income_housing_project"),
+    ("low income housing projects", "low_income_housing_project"),
+    ("full faith and credit of united states", "federal_full_faith_credit_security"),
+    ("full faith and credit of the united states", "federal_full_faith_credit_security"),
+    ("pledged as security", "federal_security_pledge"),
+    ("contestability", "obligation_contestability"),
+    ("tax exemption", "tax_exemption"),
+    ("exempt from taxation", "tax_exemption"),
+    ("shall be exempt from taxation", "tax_exemption"),
     ("negotiable bill of lading", "negotiable_bill_of_lading"),
     ("bill of lading", "bill_of_lading"),
     ("may be negotiated by indorsement", "bill_lading_indorsement_negotiation"),
@@ -667,6 +680,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("international monuments and memorials", "monument_memorial_administration"),
     ("national park", "national_park_resource"),
     ("national parks", "national_park_resource"),
+    ("everglades national park", "everglades_national_park"),
+    ("limitation of fees", "fee_limitation"),
+    ("limitation on fees", "fee_limitation"),
+    ("fees for admission", "admission_fee_collection"),
     ("judicial sales", "judicial_sale_execution"),
     ("executions and judicial sales", "judicial_sale_execution"),
     ("marshal's incapacity", "marshal_incapacity"),
@@ -13971,7 +13988,17 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "taxable_income_determination",
         "vocational_rehabilitation_services",
         "colorado_river_floodway_report",
+        "admission_fee_collection",
+        "everglades_national_park",
+        "fee_limitation",
+        "federal_full_faith_credit_security",
+        "federal_security_pledge",
         "generation_skipping_transfer_tax",
+        "low_income_housing_project",
+        "national_park_resource",
+        "obligation_contestability",
+        "public_housing_agency",
+        "public_housing_agency_obligation",
         "secretary_recommendation_report",
         "tax_computation_rule",
         "taxable_amount_determination",
@@ -14059,6 +14086,16 @@ def _typed_decompiler_semantic_atom_target_families(
             "taxable_amount_determination",
             "taxable_income_determination",
             "vocational_rehabilitation_services",
+            "admission_fee_collection",
+            "everglades_national_park",
+            "fee_limitation",
+            "federal_full_faith_credit_security",
+            "federal_security_pledge",
+            "low_income_housing_project",
+            "national_park_resource",
+            "obligation_contestability",
+            "public_housing_agency",
+            "public_housing_agency_obligation",
         }:
             add("deontic")
             add("conditional_normative")
@@ -14077,6 +14114,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "taxable_amount_determination",
             "taxable_income_determination",
             "vocational_rehabilitation_services",
+            "admission_fee_collection",
+            "fee_limitation",
+            "federal_security_pledge",
+            "low_income_housing_project",
+            "public_housing_agency_obligation",
         }:
             add("temporal")
         if normalized_atom in {
@@ -16233,6 +16275,22 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ) and re.search(r"\b(?:omitted|secs?\.?|sections?)\b", lowered):
         add("uscode_wildlife_omitted_status_surface")
+    if re.search(
+        r"\b(?:obligations?\s+of\s+public\s+housing\s+agenc(?:y|ies)|"
+        r"public\s+housing\s+agenc(?:y|ies)|low[-\s]+income\s+housing\s+projects?)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:obligations?|full\s+faith\s+and\s+credit|pledged\s+as\s+security|"
+        r"contestability|tax\s+exemption|exempt\s+from\s+taxation)\b",
+        lowered,
+    ):
+        add("uscode_public_housing_obligation_security_surface")
+    if re.search(
+        r"\b(?:everglades\s+national\s+park|national\s+parks?|"
+        r"monuments?\s+and\s+seashores?)\b",
+        lowered,
+    ) and re.search(r"\b(?:limitation\s+(?:of|on)\s+fees?|fees?)\b", lowered):
+        add("uscode_national_park_fee_limitation_surface")
     if re.search(
         r"\b(?:preservation\s+of\s+friendly\s+foreign\s+relations|"
         r"friendly\s+foreign\s+relations)\b",

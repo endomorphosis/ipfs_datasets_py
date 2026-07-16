@@ -49744,6 +49744,82 @@ def test_decompiler_reconstructs_packet_000600_uscode_residual_surfaces() -> Non
         )
 
 
+def test_decompiler_reconstructs_packet_000846_uscode_security_and_fee_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 1437i. Obligations of public housing agencies; "
+                    "contestability; full faith and credit of United States "
+                    "pledged as security; tax exemption. Obligations issued by "
+                    "a public housing agency in connection with low-income "
+                    "housing projects shall be exempt from taxation."
+                ),
+                predicate="public_housing_agency_obligations",
+            ),
+            {
+                "public_housing_agency_obligation",
+                "public_housing_agency",
+                "low_income_housing_project",
+                "federal_full_faith_credit_security",
+                "federal_security_pledge",
+                "obligation_contestability",
+                "tax_exemption",
+            },
+            {"frame->deontic", "frame->conditional_normative"},
+            "uscode_public_housing_obligation_security_surface",
+        ),
+        (
+            _single_formula_document(
+                family="temporal",
+                symbol="F",
+                label="future",
+                text=(
+                    "16 U.S.C. 410f. Everglades National Park. Limitation of "
+                    "fees. The Secretary shall limit fees for admission to the "
+                    "national park as provided in this section."
+                ),
+                predicate="everglades_national_park_fee_limitation",
+                conditions=["as provided in this section"],
+            ),
+            {
+                "everglades_national_park",
+                "national_park_resource",
+                "fee_limitation",
+                "admission_fee_collection",
+            },
+            {"temporal->deontic", "temporal->conditional_normative"},
+            "uscode_national_park_fee_limitation_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
