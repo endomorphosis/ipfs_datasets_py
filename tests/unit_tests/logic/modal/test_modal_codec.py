@@ -48733,6 +48733,96 @@ def test_decompiler_reconstructs_packet_000587_measurement_and_status_slots() ->
     ]
 
 
+def test_decompiler_reconstructs_packet_000591_uscode_status_semantic_slots() -> None:
+    job_corps = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "29 U.S.C. 2883a. U.S.C. Title 29 - LABOR CHAPTER 30 - "
+            "WORKFORCE INVESTMENT SYSTEMS SUBCHAPTER III - JOB CORPS "
+            "Sec. 2883a - Omitted From the U.S. Government Publishing "
+            "Office, www.gpo.gov. Omitted. Editorial Notes Codification."
+        ),
+        predicate="job_corps_omitted_status",
+    )
+    foreign_relations = _single_formula_document(
+        family="temporal",
+        symbol="F",
+        label="future",
+        text=(
+            "22 U.S.C. 233. U.S.C. Title 22 - FOREIGN RELATIONS AND "
+            "INTERCOURSE CHAPTER 5 - PRESERVATION OF FRIENDLY FOREIGN "
+            "RELATIONS GENERALLY Secs. 233 to 233g - Transferred From "
+            "the U.S. Government Publishing Office. Transferred. "
+            "Editorial Notes Codification."
+        ),
+        predicate="friendly_foreign_relations_transferred_status",
+    )
+    postal_penalty = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "18 U.S.C. 3362. Postal matter. Whoever deposits in the mail "
+            "any nonmailable matter shall be subject to penalties under "
+            "this section."
+        ),
+        predicate="postal_matter_deposit_penalty",
+    )
+
+    job_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(job_corps))
+    foreign_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(foreign_relations)
+    )
+    postal_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(postal_penalty)
+    )
+
+    assert {"job_corps_program", "workforce_investment_system", "omitted"}.issubset(
+        set(job_slots["typed-decompiler-source-semantic-atom"])
+    )
+    assert {"frame->deontic", "frame->frame", "frame->temporal"}.issubset(
+        set(job_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "uscode_job_corps_program_status_surface" in job_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "deontic.ir", "TDFOL.prover"}.issubset(
+        set(job_slots["legal_ir_view_prototype"])
+    )
+
+    assert {
+        "friendly_foreign_relations",
+        "friendly_foreign_relations_preservation",
+        "transferred",
+    }.issubset(set(foreign_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"temporal->temporal", "temporal->frame", "temporal->deontic"}.issubset(
+        set(foreign_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "uscode_friendly_foreign_relations_status_surface" in foreign_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "knowledge_graphs.neo4j_compat", "TDFOL.prover"}.issubset(
+        set(foreign_slots["legal_ir_view_prototype"])
+    )
+
+    assert {
+        "nonmailable_matter",
+        "nonmailable_matter_penalty",
+        "postal_matter_deposit",
+    }.issubset(set(postal_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"frame->deontic", "frame->frame"}.issubset(
+        set(postal_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "uscode_postal_nonmailable_penalty_surface" in postal_slots[
+        "typed-decompiler-target-surface-profile"
+    ]
+    assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(postal_slots["legal_ir_view_prototype"])
+    )
+
+
 def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> None:
     floodway_report = _single_formula_document(
         family="deontic",

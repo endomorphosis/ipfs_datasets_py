@@ -170,6 +170,8 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ),
     ("higher education resources", "higher_education_student_assistance"),
     ("student assistance", "higher_education_student_assistance"),
+    ("job corps", "job_corps_program"),
+    ("workforce investment systems", "workforce_investment_system"),
     ("sense of congress", "sense_of_congress"),
     ("alaskan ownership", "alaskan_ownership_policy"),
     ("alaska natural gas pipeline", "alaska_natural_gas_pipeline"),
@@ -221,6 +223,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("director means the", "director_government_actor_definition"),
     ("the term director", "director_government_actor"),
     ("consultation and cooperation", "consultation_cooperation"),
+    (
+        "preservation of friendly foreign relations",
+        "friendly_foreign_relations_preservation",
+    ),
+    ("friendly foreign relations", "friendly_foreign_relations"),
     ("following consultation", "consultation"),
     ("initiation of discussions", "interinstitutional_discussion"),
     ("initiate discussions", "interinstitutional_discussion"),
@@ -254,6 +261,11 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("matter declared nonmailable", "nonmailable_matter"),
     ("nonmailable by law", "nonmailable_matter"),
     ("obscene matter", "obscene_matter"),
+    ("penalty for nonmailable matter", "nonmailable_matter_penalty"),
+    (
+        "nonmailable matter shall be subject to penalties",
+        "nonmailable_matter_penalty",
+    ),
     ("mail any matter", "postal_mail_matter"),
     ("free use of the general public", "public_access_requirement"),
     ("retiring members to documents", "retiring_member_document_right"),
@@ -12713,6 +12725,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "exchange_program",
         "foreign_commercial_service",
         "foreign_relations_exchange_program",
+        "friendly_foreign_relations",
+        "friendly_foreign_relations_preservation",
         "foreign_service_building",
         "foreign_service",
         "false_claim_knowledge",
@@ -12748,6 +12762,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "interagency_coordination",
         "interinstitutional_discussion",
         "irrigation_project",
+        "job_corps_program",
         "reclamation_act_authority",
         "reclamation_act_irrigation_project",
         "international_agreement_authority",
@@ -12861,6 +12876,8 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "workforce_performance_accountability",
         "workforce_performance_reporting",
         "perishable_commodity_container_exemption",
+        "nonmailable_matter_penalty",
+        "workforce_investment_system",
     }:
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
@@ -12878,6 +12895,16 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("CEC.native")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in {
+        "friendly_foreign_relations",
+        "friendly_foreign_relations_preservation",
+        "job_corps_program",
+        "nonmailable_matter_penalty",
+        "workforce_investment_system",
+    }:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
     if normalized_atom in {
         "admission_fee_collection",
         "appropriated_amount",
@@ -13755,6 +13782,23 @@ def _typed_decompiler_semantic_atom_target_families(
 
     for atom in semantic_atoms:
         normalized_atom = _clean_text(atom).lower()
+        if normalized_atom in {
+            "friendly_foreign_relations",
+            "friendly_foreign_relations_preservation",
+            "job_corps_program",
+            "nonmailable_matter_penalty",
+            "workforce_investment_system",
+        }:
+            add("deontic")
+            add("frame")
+            add("conditional_normative")
+        if normalized_atom in {
+            "friendly_foreign_relations",
+            "friendly_foreign_relations_preservation",
+            "job_corps_program",
+            "workforce_investment_system",
+        }:
+            add("temporal")
         if normalized_atom in {
             "department_office_seal",
             "excise_tax",
@@ -15885,6 +15929,20 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_transfer_status_surface")
+    if re.search(r"\b(?:job\s+corps|workforce\s+investment\s+systems?)\b", lowered):
+        add("uscode_job_corps_program_status_surface")
+    if re.search(
+        r"\b(?:preservation\s+of\s+friendly\s+foreign\s+relations|"
+        r"friendly\s+foreign\s+relations)\b",
+        lowered,
+    ):
+        add("uscode_friendly_foreign_relations_status_surface")
+    if re.search(
+        r"\b(?:nonmailable\s+matter|deposits?\s+in\s+(?:the\s+)?mail\s+any\s+matter|"
+        r"postal\s+matter)\b",
+        lowered,
+    ) and re.search(r"\b(?:penalt(?:y|ies)|shall\s+be\s+subject)\b", lowered):
+        add("uscode_postal_nonmailable_penalty_surface")
     return profiles
 
 
