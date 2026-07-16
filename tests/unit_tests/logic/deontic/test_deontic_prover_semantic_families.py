@@ -132,10 +132,10 @@ def test_prover_target_role_matrix_covers_local_dialect_roles():
         "complete": len(LOCAL_PROVER_TARGETS)
     }
     assert role_summary["target_semantic_family_by_target"] == {
-        target: "ordinary_duty" for target in LOCAL_PROVER_TARGETS
+        target: "temporal_deontic_duty" for target in LOCAL_PROVER_TARGETS
     }
     assert role_summary["target_semantic_family_distribution"] == {
-        "ordinary_duty": len(LOCAL_PROVER_TARGETS)
+        "temporal_deontic_duty": len(LOCAL_PROVER_TARGETS)
     }
     assert role_summary["target_syntax_status_by_target"] == {
         target: "passed" for target in LOCAL_PROVER_TARGETS
@@ -177,6 +177,46 @@ def test_prover_target_role_matrix_covers_local_dialect_roles():
     }
     assert role_summary["mismatched_role_targets"] == []
     assert role_summary["mismatched_dialect_targets"] == []
+
+
+def test_deontic_ir_semantic_family_uses_temporal_and_deontic_slots():
+    temporal_norm = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "The Secretary shall submit a report within 30 days after enactment."
+        )[0]
+    )
+    permission_norm = LegalNormIR.from_parser_element(
+        extract_normative_elements("The Director may inspect records.")[0]
+    )
+
+    temporal_capability = build_deterministic_parser_capability_profile_record(
+        temporal_norm
+    )
+    temporal_coverage = build_prover_syntax_target_coverage_records_from_irs(
+        [temporal_norm]
+    )[0]
+    permission_coverage = build_prover_syntax_target_coverage_records_from_irs(
+        [permission_norm]
+    )[0]
+
+    assert temporal_norm.temporal_constraints
+    assert temporal_capability["capability_family"] == "temporal_deontic_duty"
+    assert temporal_coverage["semantic_formula_families"] == [
+        "temporal_deontic_duty"
+    ]
+    assert temporal_coverage["semantic_formula_family_distribution"] == {
+        "temporal_deontic_duty": len(LOCAL_PROVER_TARGETS)
+    }
+    assert set(
+        temporal_coverage["semantic_family_summary"][
+            "semantic_formula_family_by_target"
+        ].values()
+    ) == {"temporal_deontic_duty"}
+    assert permission_norm.modality == "P"
+    assert permission_coverage["semantic_formula_families"] == ["permission"]
+    assert permission_coverage["semantic_formula_family_distribution"] == {
+        "permission": len(LOCAL_PROVER_TARGETS)
+    }
 
 
 def test_prover_target_role_matrix_reports_role_and_dialect_mismatches():
@@ -229,7 +269,7 @@ def test_prover_target_role_matrix_reports_role_and_dialect_mismatches():
         LOCAL_PROVER_TARGETS
     )
     assert role_summary["target_semantic_family_distribution"] == {
-        "ordinary_duty": len(LOCAL_PROVER_TARGETS)
+        "temporal_deontic_duty": len(LOCAL_PROVER_TARGETS)
     }
     assert role_summary["target_roles_by_target"]["fol"] == "frame_record"
     assert role_summary["target_dialect_families_by_target"]["fol"] == "frame_logic"
@@ -330,7 +370,7 @@ def test_prover_target_role_matrix_reports_duplicate_failed_target_statuses():
     assert role_summary["target_syntax_status_by_target"]["fol"] == "passed"
     assert role_summary["target_role_matrix_coverage_rate"] == 0.8
     assert role_summary["target_semantic_family_distribution"] == {
-        "ordinary_duty": len(LOCAL_PROVER_TARGETS)
+        "temporal_deontic_duty": len(LOCAL_PROVER_TARGETS)
     }
 
 

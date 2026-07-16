@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 import hashlib
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
 from .formula_builder import (
     build_deontic_formula_from_ir,
@@ -211,6 +211,7 @@ def _validate_target_formula(
     target_components = _target_components(
         target,
         exported_formula,
+        norm,
         ir_slot_summary,
         alignment_summary,
         symbol_alignment,
@@ -569,6 +570,7 @@ def _slot_name_aliases(slot: str) -> set[str]:
 def _target_components(
     target: str,
     exported_formula: str,
+    norm: LegalNormIR | None = None,
     ir_slot_summary: Dict[str, Any] | None = None,
     alignment_summary: Dict[str, Any] | None = None,
     symbol_alignment: Dict[str, Any] | None = None,
@@ -603,7 +605,7 @@ def _target_components(
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
     semantic_predicate = _semantic_formula_predicate(source_symbols, exported_symbols)
-    semantic_family = _semantic_formula_family(semantic_predicate)
+    semantic_family = _semantic_formula_family_for_norm(norm, semantic_predicate)
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
@@ -753,6 +755,68 @@ def _semantic_formula_family(action_predicate: str) -> str:
         if predicate.startswith(tuple(prefixes)):
             return family
     return "ordinary_duty"
+
+
+def _semantic_formula_family_for_norm(
+    norm: LegalNormIR | None,
+    action_predicate: str,
+) -> str:
+    """Classify prover formulas from typed deontic IR before predicate fallback."""
+
+    if norm is None:
+        return _semantic_formula_family(action_predicate)
+
+    norm_type = str(norm.norm_type or "").strip().lower()
+    modality = canonical_modality_operator(norm.modality, norm.norm_type)
+
+    if norm_type == "definition":
+        return "definition"
+    if norm_type == "purpose":
+        return "purpose"
+    if norm_type == "applicability":
+        return "applicability_rule"
+    if norm_type == "exemption":
+        return "exemption_rule"
+    if norm_type == "instrument_lifecycle":
+        return "instrument_lifecycle"
+
+    if _has_temporal_semantic_anchor(norm):
+        return "temporal_deontic_duty"
+
+    predicate_family = _semantic_formula_family(action_predicate)
+    if predicate_family != "ordinary_duty":
+        return predicate_family
+
+    if norm_type == "penalty" or norm.penalty:
+        return "sanction_clause"
+    if modality == "P":
+        return "permission"
+    if modality == "F" or norm_type == "prohibition":
+        return "prohibition"
+    if modality == "O" or norm_type in {"obligation", "duty"}:
+        return "ordinary_duty"
+    return norm_type or modality or "ordinary_duty"
+
+
+def _has_temporal_semantic_anchor(norm: LegalNormIR) -> bool:
+    if norm.temporal_constraints:
+        return True
+    for record in norm.conditions or []:
+        if isinstance(record, Mapping):
+            condition_type = str(record.get("type") or "").strip().lower()
+            value = str(
+                record.get("value")
+                or record.get("normalized_text")
+                or record.get("text")
+                or ""
+            ).strip().lower()
+            if condition_type in {"temporal", "deadline", "duration"}:
+                return True
+            if value.startswith(
+                ("within ", "before ", "after ", "until ", "not later than ", "no later than ")
+            ):
+                return True
+    return False
 
 
 def _target_quality_gate(

@@ -4970,6 +4970,9 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
 
     formula = build_deontic_formula_record_from_ir(norm)["formula"]
     action_predicate = _deterministic_formula_action_predicate(formula)
+    if _has_temporal_semantic_anchor(norm):
+        return "temporal_deontic_duty"
+
     semantic_family = _deterministic_action_predicate_family(norm, action_predicate)
     if semantic_family:
         return semantic_family
@@ -5110,8 +5113,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:
         return "sanction_clause"
-    if _has_deadline_temporal_constraint(norm):
-        return "temporal_deadline_duty"
     if norm.procedure:
         return "procedural_event_duty"
     if norm.modality == "O" and norm.norm_type == "obligation":
@@ -5129,6 +5130,33 @@ def _deterministic_action_predicate_family(
     if action_predicate.startswith("Waive") and action_text.startswith("file "):
         return "consent_release_instrument_duty"
     return _semantic_family_for_action_predicate(action_predicate)
+
+
+def _has_temporal_semantic_anchor(norm: LegalNormIR) -> bool:
+    if norm.temporal_constraints:
+        return True
+    return _has_temporal_condition_anchor(norm)
+
+
+def _has_temporal_condition_anchor(norm: LegalNormIR) -> bool:
+    for record in norm.conditions or []:
+        if not isinstance(record, Mapping):
+            continue
+        condition_type = str(record.get("type") or "").strip().lower()
+        value = str(
+            record.get("value")
+            or record.get("normalized_text")
+            or record.get("raw_text")
+            or record.get("text")
+            or ""
+        ).strip().lower()
+        if condition_type in {"temporal", "deadline", "duration"}:
+            return True
+        if value.startswith(
+            ("within ", "before ", "after ", "until ", "not later than ", "no later than ")
+        ):
+            return True
+    return False
 
 
 def _semantic_family_for_action_predicate(action_predicate: str) -> str:
@@ -5180,20 +5208,6 @@ def _predicate_mentions_regulated_instrument(action_predicate: str) -> bool:
             "Variance",
         )
     )
-
-
-def _has_deadline_temporal_constraint(norm: LegalNormIR) -> bool:
-    for record in norm.temporal_constraints or []:
-        if not isinstance(record, Mapping):
-            continue
-        constraint_type = str(record.get("type") or "").strip().lower()
-        relation = str(record.get("relation") or "").strip().lower()
-        value = str(record.get("value") or record.get("normalized_text") or "").strip().lower()
-        if constraint_type == "deadline" or relation in {"deadline", "due_by"}:
-            return True
-        if value.startswith(("within ", "not later than ", "no later than ", "by ", "before ")):
-            return True
-    return False
 
 
 def _deterministic_formula_action_predicate(formula: str) -> str:
