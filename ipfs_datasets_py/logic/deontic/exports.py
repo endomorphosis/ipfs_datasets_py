@@ -107,6 +107,7 @@ DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS = (
 )
 
 DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS_BY_FAMILY = {
+    "conditional_normative": ("actor", "modality", "action", "conditions"),
     "definition": ("actor", "modality", "action"),
     "applicability_rule": ("actor", "modality", "action", "cross_references"),
     "exemption_rule": ("actor", "modality", "action"),
@@ -4967,6 +4968,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         if action.startswith("expires "):
             return "instrument_lifecycle_expiration"
         return "instrument_lifecycle"
+    if norm.semantic_family == "conditional_normative":
+        return "conditional_normative"
 
     formula = build_deontic_formula_record_from_ir(norm)["formula"]
     action_predicate = _deterministic_formula_action_predicate(formula)

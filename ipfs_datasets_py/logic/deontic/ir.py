@@ -1037,7 +1037,7 @@ _UNLAWFUL_FOR_CLAUSE_RE = re.compile(
     re.IGNORECASE,
 )
 _SOURCE_CONDITION_RE = re.compile(
-    r"\b(?P<connector>if|when|where|provided\s+that|unless)\s+"
+    r"\b(?P<connector>if|when|where|provided\s+that|unless|subject\s+to)\s+"
     r"(?P<body>.+?)"
     r"(?=(?:[,;.]|\s+(?:shall|must|may)\b)|$)",
     re.IGNORECASE,
@@ -2571,6 +2571,56 @@ class LegalNormIR:
 
         return canonical_modality_operator(self.modality, self.norm_type)
 
+    @property
+    def semantic_family(self) -> str:
+        """Return the canonical modal/deontic semantic family for this norm."""
+
+        norm_type = str(self.norm_type or "").strip().lower()
+        modality = self.canonical_modality
+        if norm_type in {
+            "definition",
+            "purpose",
+            "applicability",
+            "exemption",
+            "instrument_lifecycle",
+        }:
+            return norm_type
+        if _norm_has_conditional_scope(self) and (
+            modality in {"O", "P", "F"}
+            or norm_type in {"obligation", "permission", "prohibition", "duty"}
+        ):
+            return "conditional_normative"
+        if norm_type == "penalty" or self.penalty:
+            return "sanction_clause"
+        if modality == "P":
+            return "permission"
+        if modality == "F" or norm_type == "prohibition":
+            return "prohibition"
+        if modality == "O" or norm_type in {"obligation", "duty"}:
+            return "deontic"
+        return norm_type or modality or "unknown"
+
+    @property
+    def semantic_family_evidence(self) -> List[str]:
+        """Return deterministic IR features used for semantic-family routing."""
+
+        evidence: List[str] = []
+        if self.conditions:
+            evidence.append("conditions")
+        if self.exceptions:
+            evidence.append("exceptions")
+        if self.overrides:
+            evidence.append("overrides")
+        if self.temporal_constraints:
+            evidence.append("temporal_constraints")
+        modality = self.canonical_modality
+        if modality:
+            evidence.append(f"modality:{modality}")
+        norm_type = str(self.norm_type or "").strip().lower()
+        if norm_type:
+            evidence.append(f"norm_type:{norm_type}")
+        return evidence
+
     def to_dict(self) -> Dict[str, Any]:
         """Return a stable JSON-friendly dictionary."""
 
@@ -2579,6 +2629,8 @@ class LegalNormIR:
         data["support_span"] = self.support_span.to_list()
         data["proof_ready"] = self.proof_ready
         data["blockers"] = self.blockers
+        data["semantic_family"] = self.semantic_family
+        data["semantic_family_evidence"] = self.semantic_family_evidence
         return data
 
 
@@ -2586,6 +2638,12 @@ def parser_element_to_ir(element: Dict[str, Any]) -> LegalNormIR:
     """Compatibility helper for callers that prefer a function API."""
 
     return LegalNormIR.from_parser_element(element)
+
+
+def _norm_has_conditional_scope(norm: LegalNormIR) -> bool:
+    """Return whether this deontic norm is scoped by condition/exception slots."""
+
+    return bool(norm.conditions or norm.exceptions or norm.overrides)
 
 
 DEFAULT_IR_PROVENANCE_SLOTS = (

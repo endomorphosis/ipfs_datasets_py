@@ -782,6 +782,8 @@ def _semantic_formula_family_for_norm(
 
     if _has_temporal_semantic_anchor(norm):
         return "temporal_deontic_duty"
+    if norm.semantic_family == "conditional_normative":
+        return "conditional_normative"
 
     predicate_family = _semantic_formula_family(action_predicate)
     if predicate_family != "ordinary_duty":
