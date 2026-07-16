@@ -804,6 +804,19 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("vessels and other property acquired", "fishery_vessel_property_disposition"),
     ("fishery loans", "fishery_loan_property"),
     ("arising out of fishery loans", "fishery_loan_property"),
+    (
+        "technical requirements of equipment on radiotelephone equipped ships",
+        "radiotelephone_ship_equipment_requirement",
+    ),
+    ("radiotelephone equipped ships", "radiotelephone_ship_equipment"),
+    ("radiotelephone station", "radiotelephone_station"),
+    ("radiotelephone installation", "radiotelephone_installation"),
+    ("radiotelegraph station", "radiotelegraph_station"),
+    ("distress and safety of navigation", "navigation_safety_communication"),
+    ("minimum normal range", "communication_range_requirement"),
+    ("reserve source of electrical energy", "reserve_energy_requirement"),
+    ("main source of electrical energy", "main_energy_requirement"),
+    ("cargo ships", "cargo_ship"),
     ("recreational equipment", "recreational_equipment_tax"),
     ("sport fishing equipment", "recreational_equipment_tax"),
     ("wages due or accruing", "seaman_wage_tax_withholding"),
@@ -866,6 +879,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("nontaxation", "tax_exemption"),
     ("taxable income", "taxable_income_determination"),
     ("internal revenue code", "internal_revenue_code"),
+    ("consolidated returns", "consolidated_return_rule"),
+    ("related rules", "tax_related_rule"),
+    ("graduated corporate rates", "graduated_corporate_rate_benefit"),
+    ("accumulated earnings credit", "accumulated_earnings_credit"),
     ("deposits under", "deposit_tax_treatment"),
     ("moneys deposited by unknown parties", "unknown_party_deposit"),
     ("treasurer of the united states", "treasury_deposit"),
@@ -912,6 +929,20 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("policy disclosure", "policy_disclosure_requirement"),
     ("national flood insurance program", "flood_insurance_program"),
     ("flood insurance program", "flood_insurance_program"),
+    ("north american wetlands conservation", "wetlands_conservation_program"),
+    ("wetlands conservation projects", "wetlands_conservation_project"),
+    ("report to congress", "congressional_report_duty"),
+    ("biennial assessment", "biennial_assessment_report"),
+    ("annual assessment", "annual_assessment_report"),
+    ("migratory birds", "migratory_bird_conservation"),
+    ("waterfowl and other migratory birds", "migratory_bird_conservation"),
+    ("western hemisphere", "western_hemisphere_conservation_agreement"),
+    ("nutrition monitoring", "nutrition_monitoring_program"),
+    ("food intakes of individuals", "food_intake_survey"),
+    ("food consumption survey", "food_consumption_survey"),
+    ("nutrient data base", "nutrient_database_maintenance"),
+    ("nutritional and dietary status", "nutrition_status_assessment"),
+    ("department of agriculture", "agriculture_department_program"),
     ("conditions, exclusion", "policy_condition_exclusion_disclosure"),
     ("conditions exclusion", "policy_condition_exclusion_disclosure"),
     ("conditions and exclusions", "policy_condition_exclusion_disclosure"),
@@ -1414,6 +1445,37 @@ _WILDLIFE_STATUS_RECONSTRUCTION_ATOMS = frozenset(
         "endangered_species_wildlife",
         "fish_wildlife_conservation",
         "wildlife_conservation_protection",
+    }
+)
+_PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "accumulated_earnings_credit",
+        "agriculture_department_program",
+        "annual_assessment_report",
+        "biennial_assessment_report",
+        "cargo_ship",
+        "communication_range_requirement",
+        "congressional_report_duty",
+        "consolidated_return_rule",
+        "food_consumption_survey",
+        "food_intake_survey",
+        "graduated_corporate_rate_benefit",
+        "main_energy_requirement",
+        "migratory_bird_conservation",
+        "navigation_safety_communication",
+        "nutrient_database_maintenance",
+        "nutrition_monitoring_program",
+        "nutrition_status_assessment",
+        "radiotelegraph_station",
+        "radiotelephone_installation",
+        "radiotelephone_ship_equipment",
+        "radiotelephone_ship_equipment_requirement",
+        "radiotelephone_station",
+        "reserve_energy_requirement",
+        "tax_related_rule",
+        "western_hemisphere_conservation_agreement",
+        "wetlands_conservation_program",
+        "wetlands_conservation_project",
     }
 )
 _USCODE_STATUS_DERIVATION_RULES = frozenset(
@@ -12727,6 +12789,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -13999,6 +14067,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in {
             "additional_distribution",
             "board_civil_action_authority",
@@ -14013,17 +14085,28 @@ def _typed_decompiler_semantic_atom_target_families(
             add("epistemic")
         if normalized_atom in {
             "code_supplement_distribution",
+            "congressional_report_duty",
             "juvenile_delinquency_prevention",
             "juvenile_justice_program",
             "juvenile_justice_system_improvement",
             "justice_system_improvement",
+            "nutrition_monitoring_program",
             "state_water_pollution_revolving_fund",
             "treatment_works_construction_assistance",
             "water_pollution_control_program",
             "water_pollution_control_revolving_fund",
             "water_quality_management_program",
+            "wetlands_conservation_program",
         }:
             add("temporal")
+        if normalized_atom in {
+            "annual_assessment_report",
+            "biennial_assessment_report",
+            "congressional_report_duty",
+            "migratory_bird_conservation",
+            "wetlands_conservation_project",
+        }:
+            add("epistemic")
         if normalized_atom in _ADMIN_ENFORCEMENT_RECONSTRUCTION_ATOMS:
             add("deontic")
             add("frame")
@@ -15999,6 +16082,12 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_policy_disclosure_surface")
     if re.search(r"\b(?:nontaxation|tax\s+treatment|taxable\s+income|internal\s+revenue\s+code)\b", lowered):
         add("uscode_tax_treatment_surface")
+    if re.search(
+        r"\b(?:consolidated\s+returns?|graduated\s+corporate\s+rates?|"
+        r"accumulated\s+earnings\s+credit|taxable\s+years?\s+beginning)\b",
+        lowered,
+    ):
+        add("uscode_consolidated_return_tax_surface")
     if re.search(r"\b(?:audit(?:s)?\s+by\s+comptroller\s+general|government\s+accountability\s+office)\b", lowered):
         add("uscode_audit_oversight_surface")
     if re.search(r"\b(?:reports?\s+to\s+congress|submit\s+reports?|transmit\s+.+\breport|report\s+on\s+use)\b", lowered):
@@ -16019,6 +16108,13 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_severability_surface")
     if re.search(r"\b(?:management\s+and\s+disposition\s+of\s+vessels|disposition\s+of\s+vessels\s+and\s+other\s+property|arising\s+out\s+of\s+fishery\s+loans?)\b", lowered):
         add("uscode_property_disposition_surface")
+    if re.search(
+        r"\b(?:radiotelephone\s+(?:equipped\s+ships?|station|installation)|"
+        r"radiotelegraph\s+station|distress\s+and\s+safety\s+of\s+navigation|"
+        r"minimum\s+normal\s+range|source\s+of\s+electrical\s+energy)\b",
+        lowered,
+    ):
+        add("uscode_radiotelephone_ship_equipment_surface")
     if re.search(
         r"\b(?:penalt(?:y|ies)|civil\s+penalt(?:y|ies)|liable)\b",
         lowered,
@@ -16089,6 +16185,19 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_transfer_status_surface")
     if re.search(r"\b(?:job\s+corps|workforce\s+investment\s+systems?)\b", lowered):
         add("uscode_job_corps_program_status_surface")
+    if re.search(
+        r"\b(?:north\s+american\s+wetlands\s+conservation|wetlands\s+conservation\s+projects?|"
+        r"migratory\s+birds?|waterfowl|report\s+to\s+congress|biennial\s+assessment|"
+        r"annual\s+assessment)\b",
+        lowered,
+    ):
+        add("uscode_wetlands_conservation_report_surface")
+    if re.search(
+        r"\b(?:nutrition\s+monitoring|food\s+intakes?|food\s+consumption\s+survey|"
+        r"nutrient\s+data\s+base|nutritional\s+and\s+dietary\s+status)\b",
+        lowered,
+    ):
+        add("uscode_nutrition_monitoring_surface")
     if re.search(
         r"\b(?:endangered\s+species|fish\s+and\s+wildlife|"
         r"protection\s+and\s+conservation\s+of\s+wildlife)\b",
@@ -16707,6 +16816,29 @@ def _typed_decompiler_predicate_classes(
         add("conservation")
         add("statutory")
         add("temporal")
+    if normalized_atoms.intersection(_PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS):
+        add("administration")
+        add("duty")
+        add("program")
+        add("statutory")
+    if normalized_atoms.intersection(
+        {
+            "annual_assessment_report",
+            "biennial_assessment_report",
+            "congressional_report_duty",
+            "wetlands_conservation_project",
+        }
+    ):
+        add("report")
+        add("epistemic")
+    if normalized_atoms.intersection(
+        {
+            "radiotelephone_installation",
+            "radiotelephone_ship_equipment_requirement",
+            "reserve_energy_requirement",
+        }
+    ):
+        add("authorization")
     if normalized_atoms.intersection(
         {
             "award_proposal_review",

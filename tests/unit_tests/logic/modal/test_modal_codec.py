@@ -48524,6 +48524,123 @@ def test_decompiler_reconstructs_packet_003768_residual_uscode_surfaces() -> Non
         assert expected_fragment in structural_text
 
 
+def test_decompiler_reconstructs_packet_000819_uscode_semantic_surfaces() -> None:
+    cases = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "26 U.S.C. 1551: Internal Revenue Code. Consolidated "
+                    "returns. Related rules. Section related to disallowance "
+                    "of the benefits of the graduated corporate rates and "
+                    "accumulated earnings credit. Repeal applies to taxable "
+                    "years beginning after December 31, 2017."
+                ),
+                predicate="consolidated_return_tax_repeal",
+            ),
+            {
+                "internal_revenue_code",
+                "consolidated_return_rule",
+                "graduated_corporate_rate_benefit",
+                "accumulated_earnings_credit",
+            },
+            {"frame->conditional_normative", "frame->deontic"},
+            "uscode_consolidated_return_tax_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "47 U.S.C. 354a: Technical requirements of equipment on "
+                    "radiotelephone equipped ships. Cargo ships may be equipped "
+                    "with a radiotelephone station. The radiotelephone "
+                    "installation shall be capable of transmitting and "
+                    "receiving for distress and safety of navigation."
+                ),
+                predicate="radiotelephone_ship_equipment_requirement",
+            ),
+            {
+                "radiotelephone_ship_equipment_requirement",
+                "radiotelephone_station",
+                "navigation_safety_communication",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_radiotelephone_ship_equipment_surface",
+        ),
+        (
+            _single_formula_document(
+                family="epistemic",
+                symbol="K",
+                label="knowledge",
+                text=(
+                    "16 U.S.C. 4409: North American Wetlands Conservation. "
+                    "Report to Congress. The Secretary shall report on "
+                    "wetlands conservation projects, migratory birds, and a "
+                    "biennial assessment of conservation efforts."
+                ),
+                predicate="wetlands_conservation_report_to_congress",
+            ),
+            {
+                "wetlands_conservation_program",
+                "congressional_report_duty",
+                "biennial_assessment_report",
+                "migratory_bird_conservation",
+            },
+            {"epistemic->epistemic", "epistemic->conditional_normative"},
+            "uscode_wetlands_conservation_report_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "7 U.S.C. 3178a: Nutrition monitoring. The Secretary of "
+                    "Agriculture shall include food intakes of individuals in "
+                    "a food consumption survey, maintain the nutrient data "
+                    "base, and encourage research on nutritional and dietary "
+                    "status."
+                ),
+                predicate="nutrition_monitoring_program",
+            ),
+            {
+                "nutrition_monitoring_program",
+                "food_intake_survey",
+                "food_consumption_survey",
+                "nutrient_database_maintenance",
+                "nutrition_status_assessment",
+            },
+            {"frame->deontic", "frame->conditional_normative"},
+            "uscode_nutrition_monitoring_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in cases:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts["typed-decompiler-target-surface-profile"]
+        assert {"CEC.native", "knowledge_graphs.neo4j_compat"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def test_decompiler_emits_normative_status_narrative_for_packet_000346_slots() -> None:
     document = _single_formula_document(
         family="frame",
