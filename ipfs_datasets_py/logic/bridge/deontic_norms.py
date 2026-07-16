@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Sequence
 
@@ -86,6 +87,7 @@ class DeonticNormsBridgeAdapter:
         norm_objects = _legal_norm_objects_from_parser_elements(deontic_source_rows)
         if not norms and norm_objects:
             norms = [norm.to_dict() for norm in norm_objects]
+        deontic_family_metadata = _deontic_norm_family_metadata(norms)
         formula_records = _list_of_dicts(metadata.get("legal_formula_records"))
         coverage_records = _list_of_dicts(
             metadata.get("legal_prover_syntax_target_coverage_records")
@@ -144,7 +146,10 @@ class DeonticNormsBridgeAdapter:
                 format="legal-norm-ir",
                 source_component="deontic.ir",
                 payload={"norms": norms},
-                metadata={"norm_count": len(norms)},
+                metadata={
+                    "norm_count": len(norms),
+                    **deontic_family_metadata,
+                },
             ),
             "deontic_formula_records": LogicIRView(
                 name="deontic_formula_records",
@@ -527,6 +532,59 @@ def _coverage_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[dic
     )
 
     return build_prover_syntax_target_coverage_records_from_irs(norm_objects)
+
+
+def _deontic_norm_family_metadata(
+    norm_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Return deterministic deontic-family metadata for legal-IR routing."""
+
+    semantic_distribution: Counter[str] = Counter()
+    modal_distribution: Counter[str] = Counter()
+    for row in norm_rows or []:
+        if not isinstance(row, Mapping):
+            continue
+        semantic_family = str(row.get("semantic_family") or "").strip()
+        modal_family = str(row.get("modal_family") or "").strip()
+        if not modal_family:
+            modal_family = _coarse_deontic_modal_family(semantic_family, row)
+        if semantic_family:
+            semantic_distribution[semantic_family] += 1
+        if modal_family:
+            modal_distribution[modal_family] += 1
+
+    primary_modal_family = ""
+    if modal_distribution:
+        primary_modal_family = sorted(
+            modal_distribution.items(),
+            key=lambda item: (-item[1], item[0]),
+        )[0][0]
+
+    return {
+        "logic_family": "deontic",
+        "view_family": primary_modal_family or "deontic",
+        "semantic_family_distribution": dict(sorted(semantic_distribution.items())),
+        "modal_family_distribution": dict(sorted(modal_distribution.items())),
+    }
+
+
+def _coarse_deontic_modal_family(
+    semantic_family: str,
+    row: Mapping[str, Any],
+) -> str:
+    semantic = str(semantic_family or "").strip()
+    if semantic in {
+        "conditional_normative",
+        "deontic",
+        "permission",
+        "prohibition",
+        "sanction_clause",
+    }:
+        return "deontic"
+    modality = str(row.get("modality") or row.get("canonical_modality") or "").strip()
+    if modality in {"O", "P", "F"}:
+        return "deontic"
+    return semantic
 
 
 def _coverage_records_from_embedded_prover_records(

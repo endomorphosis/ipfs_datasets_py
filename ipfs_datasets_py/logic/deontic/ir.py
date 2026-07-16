@@ -2601,6 +2601,23 @@ class LegalNormIR:
         return norm_type or modality or "unknown"
 
     @property
+    def modal_family(self) -> str:
+        """Return the coarse modal family used for legal-IR view routing."""
+
+        semantic_family = self.semantic_family
+        if semantic_family in {
+            "conditional_normative",
+            "deontic",
+            "permission",
+            "prohibition",
+            "sanction_clause",
+        }:
+            return "deontic"
+        if self.canonical_modality in {"O", "P", "F"}:
+            return "deontic"
+        return semantic_family
+
+    @property
     def semantic_family_evidence(self) -> List[str]:
         """Return deterministic IR features used for semantic-family routing."""
 
@@ -2630,6 +2647,7 @@ class LegalNormIR:
         data["proof_ready"] = self.proof_ready
         data["blockers"] = self.blockers
         data["semantic_family"] = self.semantic_family
+        data["modal_family"] = self.modal_family
         data["semantic_family_evidence"] = self.semantic_family_evidence
         return data
 

@@ -1,6 +1,7 @@
 """Tests for the deterministic legal norm intermediate representation."""
 
 from ipfs_datasets_py.logic.deontic import LegalNormIR, parser_element_to_ir
+from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 from ipfs_datasets_py.logic.deontic.ir import legal_norm_ir_slot_provenance
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
@@ -325,6 +326,8 @@ def test_legal_norm_ir_recovers_source_text_conditions_for_reduced_rows() -> Non
     ir = LegalNormIR.from_parser_element(element)
 
     assert ir.modality == "P"
+    assert ir.semantic_family == "conditional_normative"
+    assert ir.modal_family == "deontic"
     assert ir.conditions == [
         {
             "type": "condition",
@@ -336,3 +339,55 @@ def test_legal_norm_ir_recovers_source_text_conditions_for_reduced_rows() -> Non
             "value": "such application is otherwise approvable",
         }
     ]
+
+
+def test_deontic_bridge_view_metadata_prefers_deontic_family_for_conditional_norms() -> None:
+    source_text = (
+        "The Secretary shall approve the application if the applicant satisfies "
+        "the requirements."
+    )
+    norm = LegalNormIR.from_parser_element(
+        {
+            "schema_version": "legal_norm_ir-v1",
+            "source_id": "packet-002127:conditional-deontic",
+            "text": source_text,
+            "support_text": source_text,
+            "support_span": [0, len(source_text)],
+            "norm_type": "obligation",
+            "deontic_operator": "shall",
+            "subject": ["Secretary"],
+            "action": ["approve the application"],
+            "field_spans": {
+                "subject": [4, 13],
+                "modal": [14, 19],
+                "action": [20, 43],
+            },
+            "promotable_to_theorem": True,
+            "export_readiness": {"blockers": []},
+        }
+    )
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_elements": [norm.to_dict()],
+            "legal_norm_irs": [norm.to_dict()],
+        }
+
+    class _FakeConverter:
+        def convert(self, text: str):
+            return _FakeResult()
+
+    document, _ = DeonticNormsBridgeAdapter(converter=_FakeConverter()).encode(
+        source_text,
+        document_id="packet-002127",
+    )
+
+    metadata = document.views["deontic_ir"].metadata
+    assert document.views["deontic_ir"].payload["norms"][0]["semantic_family"] == (
+        "conditional_normative"
+    )
+    assert metadata["logic_family"] == "deontic"
+    assert metadata["view_family"] == "deontic"
+    assert metadata["modal_family_distribution"] == {"deontic": 1}
+    assert metadata["semantic_family_distribution"] == {"conditional_normative": 1}
