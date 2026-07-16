@@ -40674,6 +40674,39 @@ def test_decompiler_emits_frame_target_reconstruction_slots_for_conditioned_temp
     )
 
 
+def test_decompiler_corrects_frame_source_family_for_deontic_legal_cues() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "The Administrator shall implement a flood mapping program for "
+            "the National Flood Insurance Program only after review by the "
+            "Technical Mapping Advisory Council."
+        ),
+        predicate="administrator_implement_flood_mapping_program",
+        conditions=["only after review by the Technical Mapping Advisory Council"],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "deontic" in slot_texts["typed-decompiler-source-semantic-family"]
+    assert any(
+        value.startswith("frame->deontic:shall")
+        for value in slot_texts["typed-decompiler-source-family-correction"]
+    )
+    assert "deontic->deontic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_texts["legal_ir_view_prototype"]
+    assert (
+        "deontic||slot:typed-decompiler-family-pair:deontic->deontic||deontic.ir"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+
+
 def test_decompiler_binds_frame_conditional_deontic_cues_to_deontic_view() -> None:
     document = _single_formula_document(
         family="frame",

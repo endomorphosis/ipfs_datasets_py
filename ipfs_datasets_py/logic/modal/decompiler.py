@@ -17085,6 +17085,10 @@ def _typed_decompiler_corrected_source_families(
     if alethic_cues:
         add("alethic", "+".join(alethic_cues[:4]))
 
+    deontic_cues = _deontic_surface_cues_from_text(normalized_text)
+    if deontic_cues and normalized_family in {"frame", "temporal", "doxastic"}:
+        add("deontic", "+".join(deontic_cues[:4]))
+
     temporal_reason_values = list(temporal_cues)
     if not temporal_reason_values:
         temporal_reason_values = [
