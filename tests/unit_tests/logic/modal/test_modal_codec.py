@@ -48287,6 +48287,99 @@ def test_decompiler_reconstructs_packet_000572_contract_registry_slots() -> None
     )
 
 
+def test_decompiler_reconstructs_packet_000580_conditional_temporal_slots() -> None:
+    floodway_report = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "43 U.S.C. 1600i. Reports to Congress. Within one year after "
+            "October 8, 1986, the Secretary shall prepare and submit to the "
+            "Committees a report regarding the Colorado River Floodway, the "
+            "task force's report, and the Secretary's recommendations."
+        ),
+        predicate="secretary_submit_colorado_river_floodway_report",
+        conditions=["within one year after October 8, 1986"],
+    )
+    generation_skipping_tax = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "26 U.S.C. 2622. Taxable amount. If a generation-skipping "
+            "transfer is made, the tax shall be computed as provided in this "
+            "section except as otherwise provided."
+        ),
+        predicate="generation_skipping_transfer_taxable_amount",
+        conditions=["if a generation-skipping transfer is made"],
+    )
+    generation_skipping_tax.formulas[0].exceptions.append(
+        "except as otherwise provided"
+    )
+    epistemic_frame = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "2 U.S.C. 5541. If the Archivist determines that records are "
+            "subject to this chapter, the Archivist shall preserve them and "
+            "report the determination to Congress."
+        ),
+        predicate="archivist_records_preservation_determination",
+        conditions=[
+            "if the Archivist determines that records are subject to this chapter"
+        ],
+    )
+
+    floodway_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(floodway_report)
+    )
+    tax_decoded = decode_modal_ir_document(generation_skipping_tax)
+    tax_slots = decoded_modal_phrase_slot_text_map(tax_decoded)
+    tax_structural_text = _structural_decoded_text(
+        tax_decoded,
+        modal_ir=generation_skipping_tax,
+        selected_frame=None,
+    )
+    frame_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(epistemic_frame)
+    )
+
+    assert {
+        "colorado_river_floodway_report",
+        "secretary_recommendation_report",
+        "congressional_report_duty",
+    }.issubset(set(floodway_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"deontic->conditional_normative", "deontic->temporal"}.issubset(
+        set(floodway_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert {"CEC.native", "TDFOL.prover", "knowledge_graphs.neo4j_compat"}.issubset(
+        set(floodway_slots["legal_ir_view_prototype"])
+    )
+
+    assert {
+        "generation_skipping_transfer_tax",
+        "taxable_amount_determination",
+        "tax_computation_rule",
+    }.issubset(set(tax_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"deontic->conditional_normative", "deontic->dynamic"}.issubset(
+        set(tax_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "generation skipping transfer tax" in tax_structural_text
+    assert "conditional obligation" in tax_structural_text
+    assert "dynamic action transfer change" in tax_structural_text
+
+    assert {"frame->conditional_normative", "frame->epistemic"}.issubset(
+        set(frame_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "legal frame reconstructs conditional obligation" in frame_slots[
+        "typed_ir_family_pair_semantic_bridge"
+    ]
+    assert "legal frame reconstructs knowledge finding" in frame_slots[
+        "typed_ir_family_pair_semantic_bridge"
+    ]
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

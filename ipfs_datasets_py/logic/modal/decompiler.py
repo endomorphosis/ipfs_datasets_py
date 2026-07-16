@@ -308,9 +308,16 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("report to congress; contents", "report_contents"),
     ("report contents", "report_contents"),
     ("contents within one year", "report_contents"),
+    ("colorado river floodway", "colorado_river_floodway_report"),
+    ("secretary's recommendations", "secretary_recommendation_report"),
+    ("secretary recommendations", "secretary_recommendation_report"),
     ("comprehensive inventory", "inventory_study_report"),
     ("uranium inventory study", "uranium_inventory_study"),
     ("inventory study", "inventory_study_report"),
+    ("generation-skipping transfer", "generation_skipping_transfer_tax"),
+    ("generation skipping transfer", "generation_skipping_transfer_tax"),
+    ("taxable amount", "taxable_amount_determination"),
+    ("tax shall be computed", "tax_computation_rule"),
     ("university based research and development grant program", "university_research_grant_program"),
     ("university-based research and development grant program", "university_research_grant_program"),
     ("university based research and development program", "university_research_program"),
@@ -13682,6 +13689,11 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "tax_treatment",
         "taxable_income_determination",
         "vocational_rehabilitation_services",
+        "colorado_river_floodway_report",
+        "generation_skipping_transfer_tax",
+        "secretary_recommendation_report",
+        "tax_computation_rule",
+        "taxable_amount_determination",
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -13736,6 +13748,7 @@ def _typed_decompiler_semantic_atom_target_families(
             "deposit_tax_treatment",
             "design_patent_protection",
             "flood_insurance_program",
+            "generation_skipping_transfer_tax",
             "independent_living_center",
             "independent_living_services",
             "internal_revenue_code",
@@ -13744,6 +13757,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "rehabilitation_services",
             "tax_exemption",
             "tax_treatment",
+            "tax_computation_rule",
+            "taxable_amount_determination",
             "taxable_income_determination",
             "vocational_rehabilitation_services",
         }:
@@ -13760,6 +13775,8 @@ def _typed_decompiler_semantic_atom_target_families(
             "rehabilitation_services",
             "tax_exemption",
             "tax_treatment",
+            "tax_computation_rule",
+            "taxable_amount_determination",
             "taxable_income_determination",
             "vocational_rehabilitation_services",
         }:
@@ -14846,6 +14863,21 @@ def _typed_decompiler_semantic_atom_target_families(
         }:
             add("conditional_normative")
         if normalized_atom in {
+            "colorado_river_floodway_report",
+            "congressional_report_duty",
+            "report_contents",
+            "secretary_recommendation_report",
+        }:
+            add("deontic")
+            add("temporal")
+            add("conditional_normative")
+            add("frame")
+        if normalized_atom in {
+            "colorado_river_floodway_report",
+            "secretary_recommendation_report",
+        }:
+            add("epistemic")
+        if normalized_atom in {
             "benefit_claim_adjudication",
             "bill_lading_indorsement_negotiation",
             "black_lung_benefit_claim",
@@ -14971,9 +15003,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "contracting_authority",
             "cooperative_agreement_authority",
             "fund_transfer_authority",
+            "generation_skipping_transfer_tax",
             "rental_rate_authority",
             "reserved_land_lease_authority",
             "revenue_disposition",
+            "tax_computation_rule",
         }:
             add("deontic")
             add("dynamic")
