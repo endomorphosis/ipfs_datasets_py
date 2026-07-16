@@ -213,6 +213,23 @@ _NODE_LABELS_BY_PROJECTION_VIEW = {
 _IDENTIFIER_RE = re.compile(r"[^A-Za-z0-9_]+")
 _GRAPH_PROJECTION_GUIDANCE_ROUTE = "repair_multiview_legal_ir_graph_projection"
 _NEO4J_COMPAT_TARGET_COMPONENT = "knowledge_graphs.neo4j_compat"
+_DEONTIC_IR_TARGET_VIEW = "deontic.ir"
+_DEONTIC_OPERATOR_SYMBOLS = {"F", "O", "P"}
+_DEONTIC_OPERATOR_LABEL_TOKENS = (
+    "duty",
+    "obligation",
+    "permission",
+    "prohibition",
+    "required",
+)
+_DEONTIC_SURFACE_CUE_RE = re.compile(
+    r"\b("
+    r"shall|shall\s+not|must|must\s+not|may|may\s+not|"
+    r"required\s+to|requires?\s+that|duty\s+to|"
+    r"obligated\s+to|prohibited\s+from|authorized\s+to"
+    r")\b",
+    re.IGNORECASE,
+)
 
 
 def flogic_triples_to_graph_data(
@@ -977,6 +994,11 @@ def _guided_legal_ir_projection_triples(
         target = {**target, **packet_gap_targets}
     if packet_gap_values:
         gaps = {**gaps, **packet_gap_values}
+    formula_target, formula_gaps = _modal_formula_legal_ir_view_targets(modal_ir)
+    if formula_target:
+        target = {**target, **formula_target}
+    if formula_gaps:
+        gaps = {**gaps, **formula_gaps}
     if _metadata_implies_neo4j_projection_guidance(metadata):
         if _NEO4J_COMPAT_TARGET_COMPONENT not in target:
             target = {
@@ -1057,6 +1079,67 @@ def _guided_legal_ir_projection_triples(
             ]
         )
     return triples
+
+
+def _modal_formula_legal_ir_view_targets(
+    modal_ir: ModalIRDocument,
+) -> Tuple[Dict[str, float], Dict[str, float]]:
+    """Infer LegalIR view targets from deterministic modal-operator evidence."""
+
+    formulas = list(getattr(modal_ir, "formulas", []) or [])
+    if not formulas:
+        return {}, {}
+
+    deontic_count = sum(
+        1
+        for formula in formulas
+        if _formula_has_deontic_operator_pattern(
+            formula,
+            document_text=str(getattr(modal_ir, "normalized_text", "") or ""),
+        )
+    )
+    if deontic_count <= 0:
+        return {}, {}
+
+    weight = deontic_count / len(formulas)
+    return (
+        {_DEONTIC_IR_TARGET_VIEW: weight},
+        {_DEONTIC_IR_TARGET_VIEW: weight},
+    )
+
+
+def _formula_has_deontic_operator_pattern(
+    formula: Any,
+    *,
+    document_text: str,
+) -> bool:
+    operator = getattr(formula, "operator", None)
+    family = str(getattr(operator, "family", "") or "").strip().lower()
+    if family == "deontic":
+        return True
+
+    symbol = str(getattr(operator, "symbol", "") or "").strip().upper()
+    if symbol in _DEONTIC_OPERATOR_SYMBOLS:
+        return True
+
+    label = str(getattr(operator, "label", "") or "").strip().lower()
+    if any(token in label for token in _DEONTIC_OPERATOR_LABEL_TOKENS):
+        return True
+
+    text_parts = [document_text]
+    predicate = getattr(formula, "predicate", None)
+    text_parts.append(str(getattr(predicate, "role", "") or ""))
+    text_parts.append(str(getattr(predicate, "name", "") or "").replace("_", " "))
+    for field_name in ("conditions", "exceptions"):
+        text_parts.extend(
+            str(value or "")
+            for value in (getattr(formula, field_name, []) or [])
+        )
+    metadata = getattr(formula, "metadata", {}) or {}
+    if isinstance(metadata, Mapping):
+        for key in ("modal_cue", "cue", "source_text", "surface_text"):
+            text_parts.append(str(metadata.get(key) or ""))
+    return bool(_DEONTIC_SURFACE_CUE_RE.search(" ".join(text_parts)))
 
 
 def _metadata_implies_neo4j_projection_guidance(metadata: Mapping[str, Any]) -> bool:
