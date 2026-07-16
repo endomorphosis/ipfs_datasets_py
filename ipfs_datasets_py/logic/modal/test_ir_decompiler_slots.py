@@ -4567,6 +4567,44 @@ def test_decode_modal_ir_document_emits_refined_cross_family_slots_for_frame_fal
     )
 
 
+def test_decode_modal_ir_document_preserves_frame_semantic_reconstruction_targets() -> None:
+    decoded = decode_modal_ir_document(
+        _frame_fallback_refined_cross_family_cue_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert {
+        "conditional_normative",
+        "deontic",
+        "frame",
+        "temporal",
+    }.issubset(
+        set(slot_map["frame_typed_decompiler_semantic_reconstruction_target"])
+    )
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+    }.issubset(
+        set(slot_map["typed_decompiler_semantic_reconstruction_family_pair"])
+    )
+    assert (
+        "frame->deontic:shall:uscode:obligation:mandatory"
+        in slot_map["typed_decompiler_semantic_reconstruction_signature"]
+    )
+    assert (
+        "frame->temporal:not_later_than:uscode:obligation:conditional"
+        in slot_map["typed_decompiler_semantic_reconstruction_signature"]
+    )
+    assert any(
+        "slot:typed-decompiler-semantic-reconstruction:"
+        "frame->temporal:not_later_than:uscode:obligation:conditional||"
+        in value
+        for value in slot_map["semantic_slot_legal_ir_view_prototype"]
+    )
+
+
 def test_modal_ir_to_flogic_triples_emit_refined_cross_family_slots_for_frame_fallback_surface() -> None:
     triples = modal_ir_to_flogic_triples(
         _frame_fallback_refined_cross_family_cue_sample_document()

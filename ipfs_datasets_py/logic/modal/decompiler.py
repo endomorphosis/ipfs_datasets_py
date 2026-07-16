@@ -17648,6 +17648,17 @@ def _typed_decompiler_cue_force_slots(
                     )
                 )
                 slots.extend(
+                    _typed_decompiler_semantic_reconstruction_family_pair_slots(
+                        document=document,
+                        source_family=family,
+                        target_family=target_family,
+                        cue=cue,
+                        predicate_head=predicate_head,
+                        force=cue_force,
+                        polarity=polarity,
+                    )
+                )
+                slots.extend(
                     _typed_decompiler_force_polarity_family_pair_slots(
                         source_family=family,
                         target_family=target_family,
@@ -17665,6 +17676,99 @@ def _typed_decompiler_cue_force_slots(
                             polarity=polarity,
                         )
                     )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_semantic_reconstruction_family_pair_slots(
+    *,
+    document: ModalIRDocument | None,
+    source_family: str,
+    target_family: str,
+    cue: str,
+    predicate_head: str,
+    force: str,
+    polarity: str,
+) -> List[Tuple[str, str]]:
+    """Preserve typed source semantics for frame-origin reconstruction."""
+    normalized_source = _clean_text(source_family).lower()
+    normalized_target = _clean_text(target_family).lower()
+    cue_key = _slot_safe_family_pair_key(cue)
+    predicate_key = _slot_safe_family_pair_key(predicate_head)
+    force_key = _slot_safe_family_pair_key(force)
+    polarity_key = _slot_safe_family_pair_key(polarity)
+    if (
+        not normalized_source
+        or not normalized_target
+        or not cue_key
+        or not predicate_key
+        or not force_key
+        or not polarity_key
+    ):
+        return []
+
+    pair = f"{normalized_source}->{normalized_target}"
+    signature = f"{pair}:{cue_key}:{predicate_key}:{force_key}:{polarity_key}"
+    slots: List[Tuple[str, str]] = [
+        ("typed_decompiler_semantic_reconstruction_family_pair", pair),
+        ("typed_decompiler_semantic_reconstruction_signature", signature),
+        (
+            "typed_decompiler_semantic_reconstruction_cue_family_pair",
+            f"{pair}:{cue_key}",
+        ),
+        (
+            "typed_decompiler_semantic_reconstruction_predicate_family_pair",
+            f"{pair}:{predicate_key}",
+        ),
+        (
+            "typed_decompiler_semantic_reconstruction_force_polarity",
+            f"{pair}:{force_key}:{polarity_key}",
+        ),
+    ]
+    if normalized_source == "frame":
+        slots.append(
+            (
+                "frame_typed_decompiler_semantic_reconstruction_target",
+                normalized_target,
+            )
+        )
+
+    views = (
+        _typed_decompiler_force_view_family_pair_views(document)
+        if document is not None
+        else []
+    )
+    if not views:
+        views = _default_force_view_family_pair_views(
+            source_family=normalized_source,
+            target_family=normalized_target,
+        )
+    for view in views:
+        slots.extend(
+            (
+                ("legal_ir_view_prototype", view),
+                (
+                    "semantic_slot_legal_ir_view_prototype",
+                    (
+                        "slot:typed-decompiler-semantic-reconstruction:"
+                        f"{signature}||{view}"
+                    ),
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{normalized_source}||slot:typed-decompiler-semantic-reconstruction:"
+                        f"{signature}||{view}"
+                    ),
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{normalized_target}||slot:typed-decompiler-semantic-reconstruction:"
+                        f"{signature}||{view}"
+                    ),
+                ),
+            )
+        )
     return _unique_slot_values(slots)
 
 
