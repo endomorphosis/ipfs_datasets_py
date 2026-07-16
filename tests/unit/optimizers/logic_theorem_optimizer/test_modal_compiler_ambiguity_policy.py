@@ -15,6 +15,7 @@ from ipfs_datasets_py.logic.modal.compiler import (
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000164_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_002449_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001623_FAMILY_PAIRS,
     ModalLogicFamily,
     compiler_ambiguity_policy_targets,
@@ -123,6 +124,73 @@ def test_packet_000164_pairs_are_explicit_compiler_ambiguity_policy_entries() ->
             predicted_family,
             target_family,
         )
+
+
+def test_packet_002449_pairs_are_explicit_compiler_ambiguity_policy_entries() -> None:
+    expected_pairs = {
+        (ModalLogicFamily.EPISTEMIC.value, ModalLogicFamily.EPISTEMIC.value),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ),
+        (ModalLogicFamily.FRAME.value, ModalLogicFamily.DEONTIC.value),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_002449_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+
+def test_packet_002449_epistemic_self_margin_surfaces_explicit_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="regex")
+    )
+    family_margin = 0.082930274255
+    ranking = _ranking_for_margin(
+        predicted_family=ModalLogicFamily.EPISTEMIC.value,
+        target_family=ModalLogicFamily.EPISTEMIC.value,
+        family_margin=family_margin,
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "ranked_modal_families",
+        lambda _encoding, ranking=ranking: list(ranking),
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "modal_ambiguity_signals",
+        lambda _encoding: {"has_epistemic_scope": True},
+    )
+
+    result = compiler.compile(
+        "Congress finds that the Secretary has reason to believe the action is necessary.",
+        document_id="packet-002449-epistemic-self-margin",
+    )
+    ambiguity = _adaptive_explicit_ambiguity_from_source(
+        result,
+        predicted_family=ModalLogicFamily.EPISTEMIC.value,
+        target_family=ModalLogicFamily.EPISTEMIC.value,
+        predicted_family_source="ranked_modal_families",
+    )
+
+    assert ambiguity is not None
+    assert ambiguity.ambiguity_type == "adaptive_epistemic_epistemic_contested_margin_low"
+    assert ambiguity.severity == "review"
+    assert ambiguity.candidate_ids == [ModalLogicFamily.EPISTEMIC.value]
+    assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+    assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+    assert ambiguity.metadata.get("adaptive_policy_pair") == "epistemic->epistemic"
+    assert (
+        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - family_margin)
+        <= 1e-12
+    )
 
 
 def test_packet_001623_pairs_are_explicit_compiler_ambiguity_policy_entries() -> None:
