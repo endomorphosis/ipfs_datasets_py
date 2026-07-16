@@ -163,6 +163,18 @@ _PACKET_000600_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "water_quality_management_program",
     }
 )
+_PACKET_000901_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "adverse_action_procedure",
+        "employee_adverse_action",
+        "employee_notice_period",
+        "government_agency_equipment_transfer",
+        "government_printing_equipment",
+        "program_payment_authority",
+        "rural_development_grant_program",
+        "secretary_payment_adjustment",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -174,6 +186,21 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("make cooperative agreements", "cooperative_agreement_authority"),
     ("cooperative agreements", "cooperative_agreement_authority"),
     ("cooperative agreement", "cooperative_agreement_authority"),
+    ("machinery, material, equipment, or supplies", "government_printing_equipment"),
+    ("printing, binding, and blank-book work", "government_printing_equipment"),
+    ("photolithography", "government_printing_equipment"),
+    ("lithography", "government_printing_equipment"),
+    ("other government agencies", "government_agency_equipment_transfer"),
+    ("adverse actions", "employee_adverse_action"),
+    ("adverse action", "employee_adverse_action"),
+    ("advance written notice", "employee_notice_period"),
+    ("30 days' advance written notice", "employee_notice_period"),
+    ("reasonable time to answer", "adverse_action_procedure"),
+    ("is entitled to", "adverse_action_procedure"),
+    ("make payments", "program_payment_authority"),
+    ("payment adjustment", "secretary_payment_adjustment"),
+    ("rural development", "rural_development_grant_program"),
+    ("grant program", "rural_development_grant_program"),
     ("lease of reserved lands", "reserved_land_lease_authority"),
     ("reserved lands", "reserved_land"),
     ("reservation of lands", "reserved_land"),
@@ -5492,6 +5519,60 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("international_agreement_authority")
+    if re.search(
+        r"\b(?:machinery|material|equipment|supplies)\b.{0,120}"
+        r"\b(?:printing|binding|blank[-\s]+book|lithograph|photolithograph)\b|"
+        r"\b(?:printing|binding|blank[-\s]+book|lithograph|photolithograph)\b.{0,120}"
+        r"\b(?:machinery|material|equipment|supplies)\b",
+        normalized,
+    ):
+        add("government_printing_equipment")
+    if re.search(
+        r"\b(?:officer|agency|agencies)\b.{0,120}\bgovernment\b.{0,120}"
+        r"\b(?:machinery|material|equipment|supplies)\b|"
+        r"\b(?:machinery|material|equipment|supplies)\b.{0,120}"
+        r"\b(?:government\s+agenc(?:y|ies)|other\s+government)\b",
+        normalized,
+    ):
+        add("government_agency_equipment_transfer")
+    if re.search(
+        r"\b(?:employee|employees)\b.{0,80}\b(?:adverse\s+actions?|suspension|removal)\b|"
+        r"\b(?:adverse\s+actions?|suspension|removal)\b.{0,80}\b(?:employee|employees)\b",
+        normalized,
+    ):
+        add("employee_adverse_action")
+    if re.search(
+        r"\b(?:30|thirty)\s+days?'?\s+advance\s+written\s+notice\b|"
+        r"\badvance\s+written\s+notice\b.{0,80}\b(?:30|thirty)\s+days?\b",
+        normalized,
+    ):
+        add("employee_notice_period")
+    if re.search(
+        r"\b(?:reasonable\s+time\s+to\s+answer|answer\s+orally\s+and\s+in\s+writing|"
+        r"represented\s+by\s+an\s+attorney|employee\s+is\s+entitled\s+to)\b",
+        normalized,
+    ):
+        add("adverse_action_procedure")
+    if re.search(
+        r"\b(?:secretary|administrator)\b.{0,120}\b(?:make|adjust|reduce|increase)\b"
+        r".{0,80}\bpayments?\b|"
+        r"\bpayments?\b.{0,120}\b(?:secretary|administrator)\b",
+        normalized,
+    ):
+        add("program_payment_authority")
+    if re.search(
+        r"\b(?:adjust(?:ment|ed|s)?|reduc(?:e|ed|tion)|increas(?:e|ed))\b"
+        r".{0,100}\bpayments?\b|"
+        r"\bpayments?\b.{0,100}\b(?:adjust(?:ment|ed|s)?|reduc(?:e|ed|tion)|increas(?:e|ed))\b",
+        normalized,
+    ):
+        add("secretary_payment_adjustment")
+    if re.search(
+        r"\b(?:rural\s+development|rural\s+business|community\s+facilit(?:y|ies)|"
+        r"grants?\s+to\s+(?:eligible\s+)?(?:entities|recipients)|grant\s+program)\b",
+        normalized,
+    ):
+        add("rural_development_grant_program")
     for phrase, atom in _LEGAL_SEMANTIC_ATOM_PHRASES:
         phrase_tokens = _CUE_TOKEN_RE.findall(phrase)
         if phrase in normalized or (
@@ -14037,6 +14118,14 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "secretary_recommendation_report",
         "tax_computation_rule",
         "taxable_amount_determination",
+        "adverse_action_procedure",
+        "employee_adverse_action",
+        "employee_notice_period",
+        "government_agency_equipment_transfer",
+        "government_printing_equipment",
+        "program_payment_authority",
+        "rural_development_grant_program",
+        "secretary_payment_adjustment",
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -14173,6 +14262,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000901_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
@@ -14203,6 +14296,17 @@ def _typed_decompiler_semantic_atom_target_families(
             "water_pollution_control_revolving_fund",
             "water_quality_management_program",
             "wetlands_conservation_program",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "program_payment_authority",
+            "rural_development_grant_program",
+            "secretary_payment_adjustment",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "adverse_action_procedure",
+            "employee_notice_period",
         }:
             add("temporal")
         if normalized_atom in {
@@ -16375,6 +16479,33 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_water_pollution_revolving_fund_surface")
+    if re.search(
+        r"\b(?:adverse\s+actions?|suspension|removal)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:employees?|advance\s+written\s+notice|reasonable\s+time\s+to\s+answer|"
+        r"represented\s+by\s+an\s+attorney)\b",
+        lowered,
+    ):
+        add("uscode_employee_adverse_action_surface")
+    if re.search(
+        r"\b(?:machinery|material|equipment|supplies)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:printing|binding|blank[-\s]+book|lithograph|photolithograph|"
+        r"government\s+agenc(?:y|ies))\b",
+        lowered,
+    ):
+        add("uscode_government_printing_equipment_surface")
+    if re.search(
+        r"\b(?:payments?|payment\s+adjustment|make\s+payments?|"
+        r"adjust(?:ment|ed|s)?\s+payments?)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:secretary|rural\s+development|grants?|program)\b",
+        lowered,
+    ):
+        add("uscode_program_payment_adjustment_surface")
     return profiles
 
 

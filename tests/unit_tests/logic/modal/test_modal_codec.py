@@ -49953,6 +49953,97 @@ def test_decompiler_reconstructs_packet_000846_uscode_security_and_fee_surfaces(
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000901_adverse_action_equipment_payment_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "5 U.S.C. 7503. Cause and procedure. An employee against "
+                    "whom an adverse action is proposed is entitled to 30 days' "
+                    "advance written notice, a reasonable time to answer orally "
+                    "and in writing, and representation by an attorney."
+                ),
+                predicate="employee_adverse_action_procedure",
+            ),
+            {
+                "employee_adverse_action",
+                "employee_notice_period",
+                "adverse_action_procedure",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_employee_adverse_action_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "44 U.S.C. 312. Machinery, material, equipment, or supplies "
+                    "from other Government agencies. An officer of the Government "
+                    "having machinery, material, equipment, or supplies for "
+                    "printing, binding, and blank-book work, including lithography "
+                    "and photolithography, shall transfer them as required."
+                ),
+                predicate="government_printing_equipment_transfer",
+            ),
+            {
+                "government_printing_equipment",
+                "government_agency_equipment_transfer",
+            },
+            {"frame->deontic", "frame->frame"},
+            "uscode_government_printing_equipment_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "7 U.S.C. 2009. Rural development grants. The Secretary "
+                    "may make payments and payment adjustments for eligible "
+                    "rural development grant programs subject to this section."
+                ),
+                predicate="secretary_rural_development_payment_adjustment",
+                conditions=["subject to this section"],
+            ),
+            {
+                "program_payment_authority",
+                "secretary_payment_adjustment",
+                "rural_development_grant_program",
+            },
+            {"frame->conditional_normative", "frame->deontic"},
+            "uscode_program_payment_adjustment_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
