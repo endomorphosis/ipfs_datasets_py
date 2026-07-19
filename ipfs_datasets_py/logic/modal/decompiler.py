@@ -2095,6 +2095,17 @@ _TEMPORAL_BRIDGE_CONTEXT_PHRASES: tuple[tuple[str, str], ...] = (
     ("for each year thereafter", "year_thereafter"),
 )
 _TEMPORAL_BRIDGE_YEAR_RE = re.compile(r"(?<!\d)(?:18|19|20)\d{2}(?!\d)")
+_TEMPORAL_ORIGIN_FROM_RE = re.compile(
+    r"(?<!\w)from\s+(?:"
+    r"(?:the\s+)?(?:date|effective\s+date|date\s+of\s+enactment|"
+    r"enactment|beginning|start|commencement|fiscal\s+year|calendar\s+year|"
+    r"taxable\s+year|school\s+year|program\s+year|year)\b"
+    r"|(?:january|february|march|april|may|june|july|august|september|"
+    r"october|november|december)\s+\d{1,2}\b"
+    r"|(?:18|19|20)\d{2}\b"
+    r")",
+    re.IGNORECASE,
+)
 _MODAL_OPERATOR_SYMBOL_FEATURE_KEYS: Mapping[str, str] = {
     "O|": "o_pipe",
     "[a]": "a_box",
@@ -16808,6 +16819,9 @@ def _typed_decompiler_family_pair_cues(
     ):
         for residual_cue in _uscode_residual_fallback_decompiler_cues(formula):
             add(residual_cue)
+    if normalized_target == "temporal":
+        for cue in _temporal_origin_cues_from_text(normalized_text):
+            add(cue)
     return cues
 
 
@@ -18244,7 +18258,19 @@ def _temporal_transition_context_cues_from_text(text: str) -> List[str]:
             cues.append("year")
         if "edition" in token_set and "edition_year" not in cues:
             cues.append("edition_year")
+    for cue in _temporal_origin_cues_from_text(normalized_text):
+        if cue not in cues:
+            cues.append(cue)
     return cues
+
+
+def _temporal_origin_cues_from_text(text: str) -> List[str]:
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    if _TEMPORAL_ORIGIN_FROM_RE.search(normalized_text):
+        return ["from"]
+    return []
 
 
 def _refined_temporal_transition_slots(
