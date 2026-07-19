@@ -4049,6 +4049,14 @@ COMPILER_REFINED_PACKET_005786_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
 
 COMPILER_REFINED_PACKET_000165_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DEONTIC.value,
     ),
@@ -14482,7 +14490,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
             ),
             0.0,
         ),
-        0.16,
+        0.31,
     ),
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
@@ -14495,7 +14503,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
             ),
             0.0,
         ),
-        0.075,
+        0.18,
     ),
     (
         ModalLogicFamily.DEONTIC.value,

@@ -147,6 +147,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REFINED_PACKET_000112_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000192_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000194_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000165_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000126_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000170_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000496_FAMILY_PAIRS,
@@ -7274,6 +7275,30 @@ def test_modal_registry_applies_refined_cue_policy_for_packet_002346_pairs() -> 
     )
 
     assert tuple(COMPILER_REFINED_PACKET_002346_FAMILY_PAIRS) == tuple(
+        pair for pair, _ in packet_pair_buffers
+    )
+    for pair, expected_min_buffer in packet_pair_buffers:
+        assert is_compiler_ambiguity_policy_pair(*pair) is True
+        assert is_compiler_required_adaptive_ambiguity_pair(*pair) is True
+        assert is_signal_free_adaptive_ambiguity_pair(*pair) is True
+        assert supports_signal_free_adaptive_ambiguity_pair(*pair) is True
+        assert (
+            compiler_refined_modal_family_cue_margin_buffer(*pair)
+            >= expected_min_buffer
+        )
+
+
+def test_modal_registry_applies_refined_cue_policy_for_packet_000165_pairs() -> None:
+    packet_pair_buffers = (
+        (("conditional_normative", "conditional_normative"), 0.18),
+        (("conditional_normative", "deontic"), 0.31),
+        (("deontic", "deontic"), 0.12),
+        (("frame", "conditional_normative"), 0.84),
+        (("frame", "deontic"), 0.94),
+        (("frame", "temporal"), 0.76),
+    )
+
+    assert tuple(COMPILER_REFINED_PACKET_000165_FAMILY_PAIRS) == tuple(
         pair for pair, _ in packet_pair_buffers
     )
     for pair, expected_min_buffer in packet_pair_buffers:
