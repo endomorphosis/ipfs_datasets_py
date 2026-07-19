@@ -10498,6 +10498,84 @@ def test_cec_dcec_bridge_falls_back_from_unstructured_event_formula_export(
     assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_falls_back_from_quantified_modal_event_export(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import cec_dcec as cec_dcec_mod
+
+    class _NormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "dcec:section:quantified-export-1",
+                    "actor": "Secretary",
+                    "action": "administer and enforce the convention",
+                    "modality": "obligated",
+                }
+            ]
+        }
+
+    class _NormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _NormResult()
+
+    def _fake_event_formula_exports(_norms):
+        return {
+            "dcec:section:quantified-export-1": [
+                {
+                    "event_calculus_formula": (
+                        "Happens(legal_norm(bridge_quantified_export_1), t) => "
+                        "HoldsAt(O(forall x. "
+                        "(Secretary(x) -> AdministerAndEnforceConvention(x))), t)."
+                    ),
+                    "event_formula_source": "deontic.prover_syntax",
+                    "event_formula_syntax_valid": True,
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        cec_dcec_mod,
+        "_event_formula_exports_from_norms",
+        _fake_event_formula_exports,
+    )
+
+    adapter = cec_dcec_mod.CecDcecBridgeAdapter(converter=_NormConverter())
+    report = adapter.evaluate(
+        "The Secretary shall administer and enforce the Convention.",
+        document_id="cec-bridge-quantified-event-export",
+        citation="CEC Bridge Quantified Event Export",
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert event_record["event_formula_source"] == (
+        "deontic.prover_syntax:bridge_fallback"
+    )
+    assert event_record["event_calculus_formula"] == (
+        "Happens(legal_norm(dcec_section_quantified_export_1), t) "
+        "=> HoldsAt(O(Happens(secretary,administer_and_enforce_the_convention,t0)), t)"
+    )
+    assert "forall" not in event_record["event_calculus_formula"]
+    assert event_record["event_formula_syntax_valid"] is True
+    assert (
+        event_record["event_formula_target_quality_gate"][
+            "cec_dcec_bridge_fallback_from_invalid_export"
+        ]
+        is False
+    )
+    assert (
+        event_record["event_formula_target_quality_gate"][
+            "cec_dcec_bridge_fallback_from_quantified_export"
+        ]
+        is True
+    )
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_accepts_case_variant_event_formula_predicates(
     monkeypatch,
 ) -> None:
