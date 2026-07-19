@@ -300,6 +300,9 @@ run_audit_if_due() {
   update_input_signature || return 0
   signature="${current_input_signature}"
   now="$(date +%s)"
+  if (( now < next_retry_epoch )); then
+    return 0
+  fi
   if [[ "${signature}" == "${last_signature}" ]] && (( now < next_retry_epoch )); then
     return 0
   fi
