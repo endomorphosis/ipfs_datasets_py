@@ -355,7 +355,19 @@ _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES = {
     "predicted_view": "legal-ir-view:",
 }
 _FRAME_ONTOLOGY_VIEW_LIST_KEY_FEATURE_PREFIXES = {
+    "canonical_legal_ir_projection_components": "legal-ir-view:",
+    "canonical_legal_ir_projection_view_distribution": "legal-ir-view:",
+    "compiler_guidance_legal_ir_predicted_view_distribution": "legal-ir-view:",
+    "compiler_guidance_legal_ir_target_view_distribution": "legal-ir-view:",
+    "compiler_guidance_legal_ir_view_distribution": "legal-ir-view:",
+    "frame_logic_projection_legal_view_missing": "legal-ir-view:",
+    "frame_logic_projection_legal_view_required": "legal-ir-view:",
+    "frame_logic_projection_view_distribution": "legal-ir-view:",
+    "legal_ir_predicted_view_distribution": "legal-ir-view:",
+    "legal_ir_target_view_distribution": "legal-ir-view:",
     "legal_ir_underrepresented_components": "legal-ir-view:",
+    "legal_ir_view_distribution": "legal-ir-view:",
+    "legal_ir_view_gap_distribution": "legal-ir-view:",
     "underrepresented_components": "legal-ir-view:",
     "top_predicted_views": "legal-ir-view:",
     "top_target_views": "legal-ir-view:",
@@ -954,7 +966,9 @@ def _synthetic_frame_feature_candidates_from_key_value(
         return []
     candidates: List[str] = []
     values: Sequence[Any]
-    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+    if sequence_prefix and isinstance(value, Mapping):
+        values = tuple(value.keys())
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
         values = value
     else:
         values = (value,)
@@ -1529,7 +1543,7 @@ def _frame_ontology_value_from_feature(
                 feature[len(prefix) :].strip(),
                 False,
                 False,
-                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
             )
     for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES:
         if lowered.startswith(prefix):
@@ -1560,7 +1574,7 @@ def _frame_ontology_value_from_feature(
                 ),
                 False,
                 False,
-                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
             )
     for prefix in _FRAME_ONTOLOGY_QUALITY_AUDIT_PREFIXES:
         if lowered.startswith(prefix):
@@ -1571,7 +1585,7 @@ def _frame_ontology_value_from_feature(
                 ),
                 False,
                 False,
-                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
             )
     for prefix in _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES:
         if lowered.startswith(prefix):
@@ -1582,7 +1596,7 @@ def _frame_ontology_value_from_feature(
                 ),
                 False,
                 False,
-                _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
             )
 
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:

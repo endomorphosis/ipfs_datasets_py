@@ -2152,6 +2152,65 @@ def test_frame_ontology_feature_keys_from_values_audits_prototype_and_component_
     assert "frame_bm25_frame" in terms
 
 
+def test_frame_ontology_feature_keys_from_values_audits_view_distribution_metadata() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "canonical_legal_ir_projection_components": [
+                "knowledge_graphs.neo4j_compat",
+                "modal.frame_logic",
+            ],
+            "legal_ir_target_view_distribution": {
+                "deontic.ir": 0.42,
+                "CEC.native": 0.31,
+            },
+            "compiler_guidance_legal_ir_predicted_view_distribution": {
+                "TDFOL.prover": 0.18,
+            },
+            "legal_ir_view_gap_distribution": {
+                "quality:symbolic:has-formula": 0.27,
+            },
+        }
+    )
+
+    assert keys == [
+        "legal-ir-view:knowledge_graphs.neo4j_compat",
+        "legal-ir-view:modal.frame_logic",
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:CEC.native",
+        "legal-ir-view:TDFOL.prover",
+        "quality:symbolic:has-formula",
+    ]
+    assert frame_ontology_terms_from_feature_keys(keys) == [
+        "knowledge_graphs_neo4j_compat",
+        "modal_frame_logic",
+        "deontic_ir",
+        "cec_native",
+        "tdfol_prover",
+        "symbolic_has_formula",
+    ]
+
+
+def test_frame_ontology_feature_keys_prioritize_view_and_quality_audit_signals() -> None:
+    keys = frame_ontology_feature_keys(
+        [
+            *(
+                f"flogic:citation_section_component_kind_positioned:{index}:numeric"
+                for index in range(8)
+            ),
+            "legal-ir-view:deontic.ir",
+            "quality:symbolic:has-formula",
+            "signature:operator:frame:frame_bm25:frame",
+        ],
+        max_keys=3,
+    )
+
+    assert keys == [
+        "legal-ir-view:deontic.ir",
+        "quality:symbolic:has-formula",
+        "signature:operator:frame:frame_bm25:frame",
+    ]
+
+
 def test_frame_ontology_feature_keys_audit_condition_consequence_edges() -> None:
     keys = frame_ontology_feature_keys_from_values(
         {
