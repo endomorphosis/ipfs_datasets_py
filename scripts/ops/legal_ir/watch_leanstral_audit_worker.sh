@@ -107,6 +107,16 @@ export LEANSTRAL_AUDIT_BATCH_MAX_WORKERS="${LEANSTRAL_AUDIT_BATCH_MAX_WORKERS:-$
 export LEANSTRAL_AUDIT_BATCH_USE_MESH="${LEANSTRAL_AUDIT_BATCH_USE_MESH:-1}"
 export IPFS_ACCELERATE_LLM_ROUTER_BATCH_WORKERS="${IPFS_ACCELERATE_LLM_ROUTER_BATCH_WORKERS:-${LEANSTRAL_AUDIT_BATCH_MAX_WORKERS}}"
 export IPFS_DATASETS_PY_LLM_ROUTER_BATCH_WORKERS="${IPFS_DATASETS_PY_LLM_ROUTER_BATCH_WORKERS:-${LEANSTRAL_AUDIT_BATCH_MAX_WORKERS}}"
+AUDIT_PROVIDER_TIMEOUT_SECONDS="${LEANSTRAL_AUDIT_TIMEOUT_SECONDS:-600}"
+AUDIT_RUN_TIMEOUT_SECONDS="${LEANSTRAL_AUDIT_RUN_TIMEOUT_SECONDS:-}"
+if [[ -z "${AUDIT_RUN_TIMEOUT_SECONDS}" ]]; then
+  if [[ "${AUDIT_PROVIDER_TIMEOUT_SECONDS}" =~ ^[0-9]+$ ]]; then
+    AUDIT_RUN_TIMEOUT_SECONDS="$((AUDIT_PROVIDER_TIMEOUT_SECONDS + 60))"
+  else
+    AUDIT_RUN_TIMEOUT_SECONDS="${AUDIT_PROVIDER_TIMEOUT_SECONDS}"
+  fi
+fi
+AUDIT_RUN_KILL_AFTER_SECONDS="${LEANSTRAL_AUDIT_RUN_KILL_AFTER_SECONDS:-30}"
 mkdir -p "${WORK_DIR}"
 
 timestamp() {
@@ -220,7 +230,7 @@ update_input_signature() {
 }
 
 run_audit_if_due() {
-  local signature now batch_use_mesh_args
+  local signature now batch_use_mesh_args audit_status audit_timeout_cmd
   update_input_signature || return 0
   signature="${current_input_signature}"
   now="$(date +%s)"
@@ -247,15 +257,24 @@ run_audit_if_due() {
       batch_use_mesh_args=(--batch-use-mesh)
       ;;
   esac
+  audit_timeout_cmd=()
+  if [[ "${AUDIT_RUN_TIMEOUT_SECONDS}" != "0" ]] && command -v timeout >/dev/null 2>&1; then
+    audit_timeout_cmd=(
+      timeout
+      --kill-after="${AUDIT_RUN_KILL_AFTER_SECONDS}s"
+      "${AUDIT_RUN_TIMEOUT_SECONDS}s"
+    )
+  fi
   log_line "audit_started signature=${signature}"
-  if "${PYTHON_BIN}" scripts/ops/legal_ir/run_leanstral_audit_worker.py \
+  audit_status=0
+  "${audit_timeout_cmd[@]}" "${PYTHON_BIN}" scripts/ops/legal_ir/run_leanstral_audit_worker.py \
     --input "${INPUT_PATH}" \
     --cache-dir "${CACHE_DIR}" \
     --checkpoint-path "${CHECKPOINT_PATH}" \
     --max-concurrency "${LEANSTRAL_AUDIT_MAX_CONCURRENCY:-1}" \
     --max-retries "${LEANSTRAL_AUDIT_MAX_RETRIES:-1}" \
     --validation-repair-retries "${LEANSTRAL_AUDIT_VALIDATION_REPAIR_RETRIES:-1}" \
-    --timeout-seconds "${LEANSTRAL_AUDIT_TIMEOUT_SECONDS:-600}" \
+    --timeout-seconds "${AUDIT_PROVIDER_TIMEOUT_SECONDS}" \
     --retry-backoff-seconds "${LEANSTRAL_AUDIT_RETRY_BACKOFF_SECONDS:-2}" \
     --snapshot-selection "${LEANSTRAL_AUDIT_SNAPSHOT_SELECTION:-latest_canonical_snapshot}" \
     --min-snapshot-records "${LEANSTRAL_AUDIT_MIN_SNAPSHOT_RECORDS:-25}" \
@@ -279,12 +298,18 @@ run_audit_if_due() {
     --lean-parallel-workers "${LEANSTRAL_LEAN_PARALLEL_WORKERS:-4}" \
     --lean-slice-size "${LEANSTRAL_LEAN_SLICE_SIZE:-4}" \
     --lean-proof-cache-path "${PROOF_CACHE_PATH}" \
-    --prover-timeout-seconds "${LEANSTRAL_PROVER_TIMEOUT_SECONDS:-5}"; then
+    --prover-timeout-seconds "${LEANSTRAL_PROVER_TIMEOUT_SECONDS:-5}" \
+    || audit_status=$?
+  if (( audit_status == 0 )); then
     next_retry_epoch=0
     log_line "audit_completed signature=${signature} report=${PUBLISHED_REPORT_OUTPUT}"
   else
     next_retry_epoch=$((now + FAILURE_BACKOFF_SECONDS))
-    log_line "audit_failed signature=${signature} retry_after_epoch=${next_retry_epoch}"
+    if (( audit_status == 124 || audit_status == 137 )); then
+      log_line "audit_timed_out signature=${signature} timeout_seconds=${AUDIT_RUN_TIMEOUT_SECONDS} status=${audit_status} retry_after_epoch=${next_retry_epoch}"
+    else
+      log_line "audit_failed signature=${signature} status=${audit_status} retry_after_epoch=${next_retry_epoch}"
+    fi
   fi
 }
 
@@ -292,6 +317,7 @@ configure_reference_example_args
 resolve_input_path
 log_line "audit_companion_started parent_pid=${PARENT_PID} input=${INPUT_PATH} reference_example_paths=${REFERENCE_EXAMPLE_COUNT}"
 log_line "llama_cpp_accelerator_resolved requested=${LLAMA_CPP_ACCELERATOR_REQUEST} resolved=${LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR} context=${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE} gpu_layers=${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS} extra_args=${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS}"
+log_line "audit_timeouts provider_seconds=${AUDIT_PROVIDER_TIMEOUT_SECONDS} run_seconds=${AUDIT_RUN_TIMEOUT_SECONDS} kill_after_seconds=${AUDIT_RUN_KILL_AFTER_SECONDS}"
 while parent_alive; do
   run_audit_if_due
   sleep "${POLL_SECONDS}"
