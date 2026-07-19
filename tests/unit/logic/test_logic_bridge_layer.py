@@ -6700,6 +6700,87 @@ def test_tdfol_bridge_coerce_handles_nested_proof_obligation_payload_view() -> N
     assert coerced.to_string() == payload["obligations"][0]["formula"]
 
 
+def test_tdfol_bridge_coerce_handles_compiler_ast_formula_object() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import TemporalFormula, TemporalOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    payload = {
+        "type": "temporal",
+        "operator": "always",
+        "formula": {
+            "type": "binary",
+            "operator": "implies",
+            "left": {
+                "type": "predicate",
+                "name": "application_complete",
+                "arguments": ["context"],
+            },
+            "right": {
+                "type": "deontic",
+                "operator": "obligation",
+                "agent": "agency",
+                "formula": {
+                    "type": "predicate",
+                    "name": "publish_notice",
+                    "arguments": ["agency"],
+                },
+            },
+        },
+    }
+
+    coerced = coerce_tdfol_formula(payload)
+
+    assert isinstance(coerced, TemporalFormula)
+    assert coerced.operator == TemporalOperator.ALWAYS
+    assert coerced.to_string() == (
+        "□((→ application_complete(context) O(publish_notice(agency))))"
+    )
+
+
+def test_tdfol_bridge_accepts_ast_only_proof_obligation_rows() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _AstProofObligationResult:
+        success = True
+        metadata = {
+            "proof_obligations": [
+                {
+                    "proof_obligation_id": "tdfol:ast:notice",
+                    "target_logic": "TDFOL",
+                    "formula_object": {
+                        "type": "deontic",
+                        "operator": "obligation",
+                        "agent": "agency",
+                        "formula": {
+                            "type": "predicate",
+                            "name": "publish_notice",
+                            "arguments": ["agency"],
+                        },
+                    },
+                }
+            ],
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _AstProofObligationConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _AstProofObligationResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_AstProofObligationConverter())
+    report = adapter.evaluate(
+        "The agency shall publish notice.",
+        document_id="tdfol-ast-proof-row",
+    )
+    records = report.ir_document.views["tdfol_formula"].payload["records"]
+
+    assert records[0]["source_id"] == "tdfol:ast:notice"
+    assert records[0]["formula"] == "O(publish_notice(agency))"
+    assert records[0]["parse_ok"] is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
 def test_tdfol_bridge_coerce_parses_textual_logical_connectives() -> None:
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import QuantifiedFormula
     from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula

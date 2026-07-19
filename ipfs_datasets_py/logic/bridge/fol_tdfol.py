@@ -405,12 +405,14 @@ def _formula_records_from_proof_obligation_rows(
     records: list[dict[str, Any]] = []
     for index, row in enumerate(rows):
         formula_text = str(_formula_text_from_proof_obligation_row(row)).strip()
-        if not formula_text:
-            continue
         formula_source = (
             row.get("formula_object") or row.get("proof_formula_object") or formula_text
         )
         formula_object = coerce_tdfol_formula(formula_source)
+        if not formula_text and formula_object is not None:
+            formula_text = formula_object.to_string()
+        if not formula_text:
+            continue
         if formula_object is None:
             formula_object = _tdfol_formula_from_raw_proof_obligation_row(
                 row,
@@ -1391,6 +1393,9 @@ def _coerce_tdfol_formula(formula: Any, *, seen: set[int]) -> Optional[Any]:
         if object_id in seen:
             return None
         seen.add(object_id)
+        ast_formula = _tdfol_formula_from_ast_mapping(formula)
+        if ast_formula is not None:
+            return ast_formula
         formula_keys = (
             "formula_object",
             "proof_formula_object",
@@ -1448,6 +1453,297 @@ def _coerce_tdfol_formula(formula: Any, *, seen: set[int]) -> Optional[Any]:
         return None
     except Exception:
         return None
+
+
+def _tdfol_formula_from_ast_mapping(formula: Mapping[str, Any]) -> Optional[Any]:
+    """Coerce compiler-emitted TDFOL AST dictionaries into core formulas."""
+
+    node_type = _tdfol_ast_tag(formula)
+    if node_type not in {
+        "predicate",
+        "atom",
+        "deontic",
+        "temporal",
+        "not",
+        "unary",
+        "binary",
+        "binary_temporal",
+        "quantified",
+        "forall",
+        "exists",
+    }:
+        return None
+
+    try:
+        from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
+            BinaryFormula,
+            BinaryTemporalFormula,
+            Constant,
+            DeonticFormula,
+            DeonticOperator,
+            FunctionApplication,
+            LogicOperator,
+            Predicate,
+            QuantifiedFormula,
+            Quantifier,
+            Sort,
+            TemporalFormula,
+            TemporalOperator,
+            UnaryFormula,
+            Variable,
+        )
+    except Exception:
+        return None
+
+    def formula_from(value: Any) -> Optional[Any]:
+        if isinstance(value, Mapping):
+            return _tdfol_formula_from_ast_mapping(value)
+        return coerce_tdfol_formula(value)
+
+    def term_from(value: Any) -> Optional[Any]:
+        if isinstance(value, Mapping):
+            kind = str(
+                value.get("type")
+                or value.get("node_type")
+                or value.get("kind")
+                or ""
+            ).strip().lower()
+            name = str(value.get("name") or value.get("value") or "").strip()
+            sort = _tdfol_ast_sort(value.get("sort"), Sort)
+            if kind in {"function", "function_application", "call"}:
+                args = tuple(
+                    term
+                    for term in (
+                        term_from(item)
+                        for item in value.get("arguments")
+                        or value.get("args")
+                        or ()
+                    )
+                    if term is not None
+                )
+                return FunctionApplication(name or "f", args, sort)
+            if kind == "variable" or value.get("variable") is True:
+                return Variable(name or "x", sort)
+            if kind == "constant" or name:
+                return Constant(name, sort)
+            return None
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            return None
+        text = str(value or "").strip()
+        if not text:
+            return None
+        return Constant(_symbol(text))
+
+    if node_type in {"predicate", "atom"}:
+        name = str(
+            formula.get("name")
+            or formula.get("predicate")
+            or formula.get("symbol")
+            or formula.get("value")
+            or ""
+        ).strip()
+        if not name:
+            return None
+        arguments = tuple(
+            term
+            for term in (
+                term_from(item)
+                for item in formula.get("arguments")
+                or formula.get("args")
+                or formula.get("terms")
+                or ()
+            )
+            if term is not None
+        )
+        return Predicate(_predicate_name(name), arguments)
+
+    if node_type == "deontic":
+        operator = _tdfol_ast_deontic_operator(
+            formula.get("operator") or formula.get("modality"),
+            DeonticOperator,
+        )
+        inner = formula_from(
+            formula.get("formula")
+            or formula.get("operand")
+            or formula.get("body")
+        )
+        if operator is None or inner is None:
+            return None
+        agent = term_from(formula.get("agent"))
+        return DeonticFormula(operator, inner, agent=agent)
+
+    if node_type == "temporal":
+        operator = _tdfol_ast_temporal_operator(
+            formula.get("operator") or formula.get("modality"),
+            TemporalOperator,
+        )
+        inner = formula_from(
+            formula.get("formula")
+            or formula.get("operand")
+            or formula.get("body")
+        )
+        if operator is None or inner is None:
+            return None
+        return TemporalFormula(operator, inner)
+
+    if node_type in {"not", "unary"}:
+        operator = _tdfol_ast_logic_operator(formula.get("operator"), LogicOperator)
+        if node_type == "not" and operator is None:
+            operator = LogicOperator.NOT
+        inner = formula_from(
+            formula.get("formula")
+            or formula.get("operand")
+            or formula.get("body")
+        )
+        if operator != LogicOperator.NOT or inner is None:
+            return None
+        return UnaryFormula(operator, inner)
+
+    if node_type in {"binary", "binary_temporal"}:
+        operator = _tdfol_ast_logic_operator(formula.get("operator"), LogicOperator)
+        left = formula_from(formula.get("left") or formula.get("antecedent"))
+        right = formula_from(formula.get("right") or formula.get("consequent"))
+        if left is None or right is None:
+            return None
+        if operator is not None:
+            return BinaryFormula(operator, left, right)
+        temporal_operator = _tdfol_ast_temporal_operator(
+            formula.get("operator"),
+            TemporalOperator,
+        )
+        if temporal_operator in {
+            TemporalOperator.UNTIL,
+            TemporalOperator.SINCE,
+            TemporalOperator.WEAK_UNTIL,
+            TemporalOperator.RELEASE,
+        }:
+            return BinaryTemporalFormula(temporal_operator, left, right)
+        return None
+
+    if node_type in {"quantified", "forall", "exists"}:
+        quantifier = _tdfol_ast_quantifier(
+            formula.get("quantifier") or node_type,
+            Quantifier,
+        )
+        variable_value = formula.get("variable") or formula.get("var") or "x"
+        variable_term = term_from(variable_value)
+        body = formula_from(
+            formula.get("formula")
+            or formula.get("body")
+            or formula.get("scope")
+        )
+        if quantifier is None or body is None:
+            return None
+        if not isinstance(variable_term, Variable):
+            variable_name = getattr(variable_term, "name", str(variable_value or "x"))
+            variable_term = Variable(_symbol(variable_name))
+        return QuantifiedFormula(quantifier, variable_term, body)
+
+    return None
+
+
+def _tdfol_ast_tag(formula: Mapping[str, Any]) -> str:
+    return str(
+        formula.get("type")
+        or formula.get("node_type")
+        or formula.get("kind")
+        or formula.get("formula_type")
+        or ""
+    ).strip().lower().replace("-", "_")
+
+
+def _tdfol_ast_enum(
+    value: Any,
+    enum_type: Any,
+    aliases: Mapping[str, str],
+) -> Optional[Any]:
+    token = str(value or "").strip()
+    if not token:
+        return None
+    normalized = token.lower().replace("-", "_").replace(" ", "_")
+    normalized = aliases.get(normalized, normalized)
+    for member in enum_type:
+        if normalized == member.name.lower() or token == member.value:
+            return member
+    return None
+
+
+def _tdfol_ast_deontic_operator(value: Any, enum_type: Any) -> Optional[Any]:
+    return _tdfol_ast_enum(
+        value,
+        enum_type,
+        {
+            "o": "obligation",
+            "obligatory": "obligation",
+            "required": "obligation",
+            "p": "permission",
+            "permissible": "permission",
+            "permitted": "permission",
+            "f": "prohibition",
+            "forbidden": "prohibition",
+        },
+    )
+
+
+def _tdfol_ast_temporal_operator(value: Any, enum_type: Any) -> Optional[Any]:
+    return _tdfol_ast_enum(
+        value,
+        enum_type,
+        {
+            "g": "always",
+            "box": "always",
+            "[]": "always",
+            "diamond": "eventually",
+            "<>": "eventually",
+            "x": "next",
+            "u": "until",
+            "s": "since",
+            "w": "weak_until",
+            "r": "release",
+        },
+    )
+
+
+def _tdfol_ast_logic_operator(value: Any, enum_type: Any) -> Optional[Any]:
+    return _tdfol_ast_enum(
+        value,
+        enum_type,
+        {
+            "&": "and",
+            "&&": "and",
+            "∧": "and",
+            "|": "or",
+            "||": "or",
+            "∨": "or",
+            "not": "not",
+            "!": "not",
+            "¬": "not",
+            "->": "implies",
+            "=>": "implies",
+            "→": "implies",
+            "<->": "iff",
+            "<=>": "iff",
+            "↔": "iff",
+            "⊕": "xor",
+        },
+    )
+
+
+def _tdfol_ast_quantifier(value: Any, enum_type: Any) -> Optional[Any]:
+    return _tdfol_ast_enum(
+        value,
+        enum_type,
+        {
+            "all": "forall",
+            "∀": "forall",
+            "some": "exists",
+            "∃": "exists",
+        },
+    )
+
+
+def _tdfol_ast_sort(value: Any, enum_type: Any) -> Optional[Any]:
+    return _tdfol_ast_enum(value, enum_type, {})
 
 
 def _tdfol_parse_candidates(text: str) -> list[str]:
