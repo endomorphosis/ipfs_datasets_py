@@ -8174,6 +8174,60 @@ def test_cec_dcec_bridge_promotes_raw_todo_semantic_bundle_guidance() -> None:
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
 
 
+def test_cec_dcec_bridge_promotes_action_and_view_gap_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _PlainNormResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [
+                {
+                    "source_id": "cec-action-view-gap-guided",
+                    "actor": "Secretary",
+                    "action": "publish notice",
+                    "modality": "obligated",
+                    "support_text": "The Secretary shall publish notice.",
+                }
+            ]
+        }
+
+    class _PlainNormConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _PlainNormResult()
+
+    adapter = CecDcecBridgeAdapter(converter=_PlainNormConverter())
+    report = adapter.evaluate(
+        "The Secretary shall publish notice.",
+        document_id="cec-action-view-gap-guided",
+        citation="CEC Action View Gap Guided",
+        compiler_guidance={
+            "action": "repair_cec_dcec_bridge",
+            "compiler_guidance_attribution_summary": {
+                "fail_legal_ir_view_gaps": ["cec_native:underrepresented"],
+            },
+            "compiler_guidance_legal_ir_view_gaps": {
+                "cec_native:underrepresented": 23,
+            },
+            "compiler_guidance_quality_gate": "pass",
+            "source": "compiler_guidance_distillation_v1",
+        },
+    )
+
+    event_record = report.ir_document.views["event_calculus"].payload["records"][0]
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_routes"] == ["repair_cec_dcec_bridge"]
+    assert report.metadata["compiler_guidance_target_component"] == "CEC.native"
+    assert event_record["event_formula_source"] == (
+        "compiler_guidance.top_level.materialized_event_formula"
+    )
+    assert event_record["compiler_guidance_source"] == "repair_cec_dcec_bridge"
+    assert event_record["event_formula_syntax_valid"] is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_activates_from_target_metric_evidence() -> None:
     from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
 

@@ -1771,6 +1771,7 @@ def _compiler_guidance_top_level_supports_cec_materialization(
     return (
         scope == "cec"
         or target == "cec.native"
+        or _cec_guidance_record_targets_cec(guidance)
         or any(
             metric.startswith("cec_dcec_")
             for metric in _guidance_metric_names(guidance)
@@ -2819,6 +2820,8 @@ def _selected_frame_from_compiler_guidance(
 
 def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool:
     for key in (
+        "action",
+        "compiler_guidance_action",
         "route",
         "compiler_guidance_route",
         "target_component",
@@ -2857,6 +2860,8 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
         if not bundle:
             continue
         for bundle_key in (
+            "action",
+            "compiler_guidance_action",
             "route",
             "compiler_guidance_route",
             "target_component",
@@ -2903,8 +2908,12 @@ def _cec_compiler_guidance_signal(
     )
     routes: list[str] = []
     for value in (
+        guidance.get("action"),
+        guidance.get("compiler_guidance_action"),
         guidance.get("route"),
         guidance.get("compiler_guidance_route"),
+        bundle.get("action"),
+        bundle.get("compiler_guidance_action"),
         bundle.get("route"),
         bundle.get("compiler_guidance_route"),
     ):
@@ -3094,6 +3103,17 @@ def _cec_guidance_record_targets_cec(row: Mapping[str, Any]) -> bool:
         if not _cec_guidance_token_targets_cec(str(gap_key).split(":", 1)[0]):
             continue
         if _coerce_guidance_gap_value(gap_value) > 0.0:
+            return True
+    for key in (
+        "fail_legal_ir_view_gaps",
+        "warn_legal_ir_view_gaps",
+        "fail_legal_ir_view_family_gaps",
+        "warn_legal_ir_view_family_gaps",
+    ):
+        if any(
+            _cec_guidance_token_targets_cec(str(item).split(":", 1)[0])
+            for item in _sequence_values(row.get(key))
+        ):
             return True
     return False
 
