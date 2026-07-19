@@ -196,6 +196,13 @@ _EDITORIAL_NOTES_START_RE = re.compile(
     r"\b(?:Editorial Notes?|Statutory Notes?|Historical and Revision Notes?)\b",
     re.IGNORECASE,
 )
+_EDITORIAL_STATUS_TARGET_RE = re.compile(
+    r"\b(?:transferred|reclassified|renumbered)(?:\s+editorially)?\s+"
+    r"(?:as|to)\s+sections?\s+"
+    r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)\s+"
+    r"of\s+Title\s+(?P<title>\d+[A-Za-z]*)\b",
+    re.IGNORECASE,
+)
 _CATCHLINE_BODY_START_RE = re.compile(
     r"\s+(?:A|An|Each|For|In|It|No|Nothing|Not|The|There|This|Whoever|"
     r"Pub\. L\.)\b.*$"
@@ -566,6 +573,7 @@ def _editorial_status_components(text: str) -> List[Tuple[str, str]]:
     for keyword in _editorial_reference_status_keywords(normalized, primary_keywords):
         components.append(("editorial_reference_status_keyword", keyword))
         components.append((f"editorial_reference_status_keyword_{keyword}", "true"))
+    components.extend(_editorial_status_target_components(normalized))
     return components
 
 
@@ -603,6 +611,38 @@ def _editorial_reference_status_keywords(
         for keyword, pattern in _EDITORIAL_STATUS_KEYWORDS
         if keyword not in primary and pattern.search(notes_text)
     ]
+
+
+def _editorial_status_target_components(text: str) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    seen: set[Tuple[str, str]] = set()
+    for index, match in enumerate(_EDITORIAL_STATUS_TARGET_RE.finditer(text), start=1):
+        title = _clean_hierarchy_label(match.group("title"))
+        section = _normalize_section(match.group("section"))
+        if not title or not section:
+            continue
+        citation = _canonical_usc_citation(title, section)
+        target_components = [
+            ("editorial_status_target_title", title),
+            ("editorial_status_target_title_number", _leading_number(title)),
+            ("editorial_status_target_section", section),
+            ("editorial_status_target_citation", citation),
+            ("editorial_status_target_title_section_key", f"{title}:{section}"),
+            (
+                "editorial_status_target_section_component_profile",
+                _section_profile(section),
+            ),
+        ]
+        if index == 1:
+            target_components.append(
+                ("editorial_status_target_primary_citation", citation)
+            )
+        for component in target_components:
+            if component in seen:
+                continue
+            seen.add(component)
+            components.append(component)
+    return components[:42]
 
 
 def _clean_heading_text(text: str) -> str:

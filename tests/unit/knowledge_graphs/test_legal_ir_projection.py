@@ -66,6 +66,25 @@ def test_legal_ir_projection_keeps_prior_provision_transfer_out_of_primary_statu
     assert predicates["section_catchline"] == ["Law enforcement authority"]
 
 
+def test_legal_ir_projection_surfaces_editorial_transfer_target_citation() -> None:
+    predicates = _projection_predicates(
+        "42 U.S.C. 2751.: \u00a72751. Transferred Editorial Notes Codification "
+        "Section 2751, originally enacted as section 121 of Pub. L. 88-452, "
+        "was renumbered section 441 of Pub. L. 89-329 and transferred to "
+        "section 1087-51 of Title 20, Education."
+    )
+
+    assert predicates["status_keyword"] == ["transferred"]
+    assert predicates["section_catchline"] == ["Transferred"]
+    assert predicates["editorial_status_target_title"] == ["20"]
+    assert predicates["editorial_status_target_section"] == ["1087-51"]
+    assert predicates["editorial_status_target_citation"] == ["20 U.S.C. 1087-51"]
+    assert predicates["editorial_status_target_title_section_key"] == ["20:1087-51"]
+    assert predicates["learned_legal_ir_target_view"] == [
+        "knowledge_graphs.neo4j_compat"
+    ]
+
+
 def test_legal_ir_projection_promotes_sparse_graph_guidance_to_view_alignment() -> None:
     triples = augment_legal_ir_projection_triples(
         [
