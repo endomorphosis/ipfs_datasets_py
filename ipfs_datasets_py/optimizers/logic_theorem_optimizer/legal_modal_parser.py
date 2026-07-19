@@ -3658,6 +3658,10 @@ class LegalModalParser:
             normalized_text=normalized_text,
             citation=citation,
         )
+        candidate_segment = self._trim_uscode_section_heading_boilerplate(
+            candidate_segment=candidate_segment,
+            normalized_text=normalized_text,
+        )
 
         profile = self.registry.get_profile(ModalLogicFamily.FRAME)
         if not profile.operators:
@@ -3751,6 +3755,39 @@ class LegalModalParser:
             text=expanded_text,
             start_char=expanded_start + leading_offset,
             end_char=expanded_start + leading_offset + len(expanded_text),
+            role=candidate_segment.role,
+        )
+
+    def _trim_uscode_section_heading_boilerplate(
+        self,
+        *,
+        candidate_segment: LegalSegment,
+        normalized_text: str,
+    ) -> LegalSegment:
+        """Stop compact heading spans before common U.S. Code source boilerplate."""
+        if ";" in candidate_segment.text:
+            return candidate_segment
+        source_window = normalized_text[
+            candidate_segment.start_char : min(len(normalized_text), candidate_segment.end_char + 96)
+        ]
+        stop_match = re.search(
+            r"\s+From\s+the\s+U(?:\.|nited\s+States\b)",
+            source_window,
+            re.IGNORECASE,
+        )
+        if stop_match is None:
+            return candidate_segment
+        stop_char = candidate_segment.start_char + stop_match.start()
+        trimmed_text = normalized_text[candidate_segment.start_char : stop_char].rstrip()
+        if not trimmed_text:
+            return candidate_segment
+        trailing_trim = len(
+            normalized_text[candidate_segment.start_char : stop_char]
+        ) - len(trimmed_text)
+        return LegalSegment(
+            text=trimmed_text,
+            start_char=candidate_segment.start_char,
+            end_char=stop_char - trailing_trim,
             role=candidate_segment.role,
         )
 

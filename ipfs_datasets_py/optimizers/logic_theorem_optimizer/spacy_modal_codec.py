@@ -1352,6 +1352,13 @@ class SpaCyLegalEncoder:
                         ):
                             continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
+                            if self._is_scope_only_temporal_cue(
+                                normalized_text=normalized,
+                                cue=lowered_cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            ):
+                                continue
                             if self._fallback_parser._is_non_temporal_editorial_status_heading_cue(
                                 normalized_text=normalized,
                                 start_char=match.start(),
@@ -1424,6 +1431,28 @@ class SpaCyLegalEncoder:
         return self._prune_negated_permission_cues(
             found.values(),
         )
+
+    def _is_scope_only_temporal_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Keep temporal status/date markers as ranking scope, not direct cues."""
+        cue_tokens = {
+            token
+            for token in re.findall(r"[a-z]+", cue.lower())
+            if token
+        }
+        if cue in {"repealed", "repealed by", "repealed effective"}:
+            return True
+        if cue_tokens & _MONTH_NAME_TOKENS:
+            local = normalized_text[start_char : min(len(normalized_text), end_char + 16)]
+            if _CALENDAR_DATE_RE.search(local):
+                return True
+        return False
 
     def _prune_negated_permission_cues(
         self,

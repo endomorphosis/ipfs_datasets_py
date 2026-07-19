@@ -7118,6 +7118,10 @@ COMPILER_AMBIGUITY_PACKET_014167_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
 COMPILER_AMBIGUITY_PACKET_002920_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.FRAME.value,
     ),
     (
@@ -7127,6 +7131,10 @@ COMPILER_AMBIGUITY_PACKET_002920_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
     ),
 )
 
