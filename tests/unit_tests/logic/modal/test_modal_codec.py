@@ -3951,6 +3951,61 @@ def test_modal_decompiler_preserves_operator_temporal_self_target_without_surfac
     ]
 
 
+def test_modal_decompiler_reconstructs_temporal_origin_from_permission_slots() -> None:
+    source = (
+        "From fiscal year 2025, States may provide vocational rehabilitation "
+        "services."
+    )
+    document = ModalIRDocument(
+        document_id="packet-003202-temporal-origin-permission",
+        source="us_code",
+        normalized_text=source,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-003202-temporal-origin",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="state_independent_living_services",
+                    arguments=[
+                        "actor:states",
+                        "action:provide",
+                        "object:vocational_rehabilitation_services",
+                    ],
+                    role="temporal",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-003202-temporal-origin-permission",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="29 U.S.C. 796l",
+                ),
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert {"temporal->temporal", "temporal->deontic"}.issubset(
+        set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "temporal->temporal:from" in slot_texts[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert "temporal->deontic:may" in slot_texts[
+        "typed-decompiler-target-reconstruction-cue"
+    ]
+    assert "temporal:F:from" in slot_texts["refined_temporal_bridge_signature"]
+    assert "fiscal_year+fiscal+year+from" in slot_texts["typed_decompiler_temporal"]
+
+
 def test_flogic_graph_projection_metadata_tracks_frame_logic_alignment() -> None:
     graph_data = flogic_triples_to_graph_data(
         [
