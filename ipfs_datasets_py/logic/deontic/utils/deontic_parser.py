@@ -2008,7 +2008,14 @@ def _extract_section_status_lifecycle_elements(
         return []
 
     elements: List[Dict[str, Any]] = []
-    for match in _SECTION_STATUS_RE.finditer(normalized_text):
+    matches = list(_SECTION_STATUS_RE.finditer(normalized_text))
+    for index, match in enumerate(matches):
+        if _is_superseded_editorial_status_heading(
+            normalized_text,
+            match,
+            later_matches=matches[index + 1 :],
+        ):
+            continue
         elements.append(
             _finalize_element(
                 _build_section_status_lifecycle_element(
@@ -2019,6 +2026,37 @@ def _extract_section_status_lifecycle_elements(
             )
         )
     return elements
+
+
+def _is_superseded_editorial_status_heading(
+    text: str,
+    match: re.Match[str],
+    *,
+    later_matches: List[re.Match[str]],
+) -> bool:
+    """Return true for bare editorial-note headings refined by later statuses."""
+
+    if not later_matches:
+        return False
+    status = _clean_phrase(match.group("status")).lower()
+    if status not in {"transferred", "renumbered", "redesignated"}:
+        return False
+    detail = str(match.group("detail") or "")
+    if not _SECTION_STATUS_DETAIL_STOP_RE.search(detail):
+        return False
+    first_later = later_matches[0]
+    bridge_text = f"{detail} {text[match.end() : first_later.start()]}"
+    if not re.search(
+        r"\b(?:editorial\s+notes?|codification)\b",
+        bridge_text,
+        re.IGNORECASE,
+    ):
+        return False
+    return any(
+        _clean_phrase(later.group("status")).lower()
+        in {"transferred", "renumbered", "redesignated"}
+        for later in later_matches
+    )
 
 
 def _section_status_should_short_circuit(

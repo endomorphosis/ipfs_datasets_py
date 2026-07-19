@@ -4169,6 +4169,40 @@ def test_deontic_bridge_recovers_us_code_section_status_lifecycle_notes() -> Non
         )
 
 
+def test_deontic_bridge_skips_superseded_editorial_transfer_heading() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("deontic_norms")
+    report = adapter.evaluate(
+        (
+            "42 U.S.C. 2751.: §2751. Transferred Editorial Notes Codification "
+            "Section 2751, originally enacted as section 121 of Pub. L. 88-452, "
+            "was renumbered section 441 of Pub. L. 89-329 and transferred to "
+            "section 1087-51 of Title 20, Education."
+        ),
+        document_id="deontic-bridge-superseded-editorial-transfer-heading",
+        citation="42 U.S.C. 2751",
+    )
+
+    norms = report.ir_document.views["deontic_ir"].payload["norms"]
+    actions = [norm["action"] for norm in norms]
+    phase8_summary = report.ir_document.views["deontic_phase8_quality"].payload[
+        "summary"
+    ]
+
+    assert len(norms) == 2
+    assert any(action.startswith("renumbered as section 441") for action in actions)
+    assert any(action.startswith("transferred to section 1087-51") for action in actions)
+    assert "transferred" not in actions
+    assert phase8_summary["phase8_quality_complete"] is True
+    assert phase8_summary["requires_validation"] is False
+    assert report.round_trip.extra_losses["deontic_decoder_slot_loss"] == 0.0
+    assert (
+        report.round_trip.extra_losses["deontic_quality_requires_validation_loss"]
+        == 0.0
+    )
+
+
 def test_deontic_bridge_grounds_lifecycle_actor_from_us_code_citation() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
