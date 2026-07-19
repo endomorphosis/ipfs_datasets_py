@@ -97,7 +97,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-008 Add policy-controlled parallel ATP and SMT portfolio execution
 
-- Status: waiting
+- Status: completed
 - Priority: P0
 - Track: execution
 - Depends on: HAMMER-002, HAMMER-007
