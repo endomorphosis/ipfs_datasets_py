@@ -127,7 +127,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-011 Add native-automation and decomposition fallbacks
 
-- Status: waiting
+- Status: completed
 - Priority: P1
 - Track: recovery
 - Depends on: HAMMER-010
