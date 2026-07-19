@@ -30,6 +30,7 @@ from ipfs_datasets_py.logic.modal.codec import (
     _frame_ontology_audit_feature_keys,
     _frame_ontology_audit_terms,
     _structural_decoded_text,
+    target_family_distribution_for_modal_ir,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     BM25FrameSelector,
@@ -180,6 +181,54 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
 )
+
+
+def test_target_family_distribution_preserves_deontic_ir_floor() -> None:
+    formulas = []
+    family_symbols = [
+        ("deontic", "O"),
+        ("frame", "Frame"),
+        ("frame", "Frame"),
+        ("frame", "Frame"),
+        ("frame", "Frame"),
+        ("frame", "Frame"),
+        ("frame", "Frame"),
+        ("frame", "Frame"),
+        ("frame", "Frame"),
+        ("temporal", "G"),
+        ("temporal", "G"),
+    ]
+    for index, (family, symbol) in enumerate(family_symbols, start=1):
+        formulas.append(
+            ModalIRFormula(
+                formula_id=f"packet-000180:f{index:04d}",
+                operator=ModalIROperator(
+                    family=family,
+                    system="deterministic",
+                    symbol=symbol,
+                    label=family,
+                ),
+                predicate=ModalIRPredicate(name="predicate", arguments=[]),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000180",
+                    start_char=0,
+                    end_char=1,
+                    citation="18 U.S.C. 431",
+                ),
+            )
+        )
+    modal_ir = ModalIRDocument(
+        document_id="packet-000180",
+        source="us_code",
+        normalized_text="The officer shall not have an interest in the contract.",
+        formulas=formulas,
+    )
+
+    distribution = target_family_distribution_for_modal_ir(modal_ir)
+
+    assert distribution["deontic"] == 0.368
+    assert round(sum(distribution.values()), 12) == 1.0
+    assert distribution["frame"] < 8 / 11
 
 
 def _assert_refined_margin_buffer_at_least(

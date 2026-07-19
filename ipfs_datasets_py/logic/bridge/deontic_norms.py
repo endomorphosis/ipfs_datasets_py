@@ -17,6 +17,8 @@ from .types import (
     RoundTripMetrics,
 )
 
+_DEONTIC_FAMILY_PROBABILITY_FLOOR = 0.368
+
 
 @dataclass
 class DeonticNormsBridgeAdapter:
@@ -559,13 +561,108 @@ def _deontic_norm_family_metadata(
             modal_distribution.items(),
             key=lambda item: (-item[1], item[0]),
         )[0][0]
+    semantic_family_distribution = dict(sorted(semantic_distribution.items()))
+    modal_family_distribution = dict(sorted(modal_distribution.items()))
+    normalized_semantic_distribution = _normalized_family_distribution(
+        semantic_distribution
+    )
+    normalized_modal_distribution = _normalized_family_distribution(modal_distribution)
+    deontic_family_distribution = _deontic_family_distribution_with_floor(
+        normalized_modal_distribution,
+        semantic_distribution=semantic_distribution,
+        modal_distribution=modal_distribution,
+    )
+    target_family = _primary_deontic_semantic_family(semantic_distribution)
 
     return {
         "logic_family": "deontic",
         "view_family": primary_modal_family or "deontic",
-        "semantic_family_distribution": dict(sorted(semantic_distribution.items())),
-        "modal_family_distribution": dict(sorted(modal_distribution.items())),
+        "semantic_family_distribution": semantic_family_distribution,
+        "modal_family_distribution": modal_family_distribution,
+        "semantic_family_probability_distribution": normalized_semantic_distribution,
+        "modal_family_probability_distribution": normalized_modal_distribution,
+        "deontic_ir_family_distribution": deontic_family_distribution,
+        "family_distribution": deontic_family_distribution,
+        "target_family": target_family or primary_modal_family or "deontic",
     }
+
+
+def _normalized_family_distribution(counts: Counter[str]) -> dict[str, float]:
+    total = float(sum(counts.values()))
+    if total <= 0.0:
+        return {}
+    return {
+        family: round(count / total, 12)
+        for family, count in sorted(counts.items())
+        if count > 0
+    }
+
+
+def _deontic_family_distribution_with_floor(
+    distribution: Mapping[str, float],
+    *,
+    semantic_distribution: Counter[str],
+    modal_distribution: Counter[str],
+) -> dict[str, float]:
+    """Return modal-family probabilities with deterministic deontic evidence."""
+
+    normalized = {
+        str(family): max(0.0, float(weight))
+        for family, weight in distribution.items()
+        if str(family).strip() and float(weight) > 0.0
+    }
+    has_deontic_construct = bool(
+        modal_distribution.get("deontic")
+        or any(
+            semantic_distribution.get(family)
+            for family in (
+                "conditional_normative",
+                "deontic",
+                "permission",
+                "prohibition",
+                "sanction_clause",
+            )
+        )
+    )
+    if not has_deontic_construct:
+        return dict(sorted(normalized.items()))
+    if not normalized:
+        normalized = {"deontic": 1.0}
+    deontic_weight = normalized.get("deontic", 0.0)
+    if deontic_weight < _DEONTIC_FAMILY_PROBABILITY_FLOOR:
+        remainder_before = max(0.0, 1.0 - deontic_weight)
+        remainder_after = 1.0 - _DEONTIC_FAMILY_PROBABILITY_FLOOR
+        scale = remainder_after / remainder_before if remainder_before > 0.0 else 0.0
+        normalized = {
+            family: (
+                _DEONTIC_FAMILY_PROBABILITY_FLOOR
+                if family == "deontic"
+                else weight * scale
+            )
+            for family, weight in normalized.items()
+        }
+        normalized.setdefault("deontic", _DEONTIC_FAMILY_PROBABILITY_FLOOR)
+    total = sum(normalized.values())
+    if total <= 0.0:
+        return {"deontic": 1.0}
+    return {
+        family: round(weight / total, 12)
+        for family, weight in sorted(normalized.items())
+        if weight > 0.0
+    }
+
+
+def _primary_deontic_semantic_family(counts: Counter[str]) -> str:
+    if not counts:
+        return ""
+    return sorted(
+        counts.items(),
+        key=lambda item: (
+            -item[1],
+            0 if item[0] == "conditional_normative" else 1,
+            item[0],
+        ),
+    )[0][0]
 
 
 def _coarse_deontic_modal_family(

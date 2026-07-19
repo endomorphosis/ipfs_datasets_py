@@ -141,6 +141,51 @@ def test_deontic_phase8_quality_soft_passes_stale_coverage_validation() -> None:
     assert merged[0]["coverage_validation_blockers"] == ["legacy_requires_validation"]
 
 
+def test_deontic_bridge_metadata_exposes_family_probability_floor() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+    from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+
+    source_text = (
+        "Subject to subsection (b), taxable income shall be determined without "
+        "regard to deposits."
+    )
+    norm = LegalNormIR.from_parser_element(
+        {
+            "schema_version": "legal-norm-ir/v1",
+            "source_id": "bridge-layer-deontic-floor",
+            "text": source_text,
+            "support_text": source_text,
+            "source_span": [0, len(source_text)],
+            "support_span": [0, len(source_text)],
+            "norm_type": "obligation",
+            "deontic_operator": "O",
+            "subject": ["taxable income"],
+            "action": ["be determined without regard to deposits"],
+        }
+    )
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_elements": [norm.to_dict()],
+            "legal_norm_irs": [norm.to_dict()],
+        }
+
+    class _FakeConverter:
+        def convert(self, text: str):
+            return _FakeResult()
+
+    document, _ = DeonticNormsBridgeAdapter(converter=_FakeConverter()).encode(
+        source_text,
+        document_id="bridge-layer-deontic-floor",
+    )
+
+    metadata = document.views["deontic_ir"].metadata
+    assert metadata["target_family"] == "conditional_normative"
+    assert metadata["family_distribution"]["deontic"] >= 0.368
+    assert metadata["deontic_ir_family_distribution"] == metadata["family_distribution"]
+
+
 def test_modal_frame_logic_bridge_evaluates_ir_graph_and_proof_gate() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 

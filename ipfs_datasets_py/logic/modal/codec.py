@@ -128,6 +128,7 @@ _COMPILER_GUIDANCE_FRAME_AUDIT_COMPONENT_GAP_KEYS = (
     "compiler_guidance_legal_ir_component_gaps",
     "legal_ir_component_gaps",
 )
+_DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR = 0.368
 _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("provided that", "provided_that"),
     ("subject to this subsection", "subject_to_this_subsection"),
@@ -3576,9 +3577,55 @@ def target_family_distribution_for_modal_ir(modal_ir: ModalIRDocument) -> Dict[s
     for family in families:
         counts[family] = counts.get(family, 0) + 1
     total = float(sum(counts.values()))
-    return {
+    distribution = {
         family: count / total
         for family, count in sorted(counts.items())
+    }
+    return _deontic_target_distribution_with_floor(distribution, families=families)
+
+
+def _deontic_target_distribution_with_floor(
+    distribution: Mapping[str, float],
+    *,
+    families: Sequence[str],
+) -> Dict[str, float]:
+    has_deontic_construct = any(
+        family in {
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        }
+        for family in families
+    )
+    if not has_deontic_construct:
+        return dict(sorted(distribution.items()))
+    deontic_family = ModalLogicFamily.DEONTIC.value
+    current = max(0.0, float(distribution.get(deontic_family, 0.0)))
+    if current >= _DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR:
+        return dict(sorted(distribution.items()))
+    adjusted = {
+        family: max(0.0, float(weight))
+        for family, weight in distribution.items()
+        if family and float(weight) > 0.0
+    }
+    remainder_before = max(0.0, 1.0 - current)
+    remainder_after = 1.0 - _DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR
+    scale = remainder_after / remainder_before if remainder_before > 0.0 else 0.0
+    adjusted = {
+        family: (
+            _DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR
+            if family == deontic_family
+            else weight * scale
+        )
+        for family, weight in adjusted.items()
+    }
+    adjusted.setdefault(deontic_family, _DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR)
+    total = sum(adjusted.values())
+    if total <= 0.0:
+        return {deontic_family: 1.0}
+    return {
+        family: round(weight / total, 12)
+        for family, weight in sorted(adjusted.items())
+        if weight > 0.0
     }
 
 

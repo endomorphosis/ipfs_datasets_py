@@ -460,3 +460,7 @@ def test_deontic_bridge_view_metadata_prefers_deontic_family_for_conditional_nor
     assert metadata["view_family"] == "deontic"
     assert metadata["modal_family_distribution"] == {"deontic": 1}
     assert metadata["semantic_family_distribution"] == {"conditional_normative": 1}
+    assert metadata["target_family"] == "conditional_normative"
+    assert metadata["modal_family_probability_distribution"] == {"deontic": 1.0}
+    assert metadata["family_distribution"]["deontic"] >= 0.368
+    assert metadata["deontic_ir_family_distribution"] == metadata["family_distribution"]
