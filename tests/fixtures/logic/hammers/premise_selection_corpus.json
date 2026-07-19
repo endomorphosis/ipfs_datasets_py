@@ -1,0 +1,111 @@
+{
+  "corpus_id": "mathlib4-fixture",
+  "name": "Mathlib4 Fixture Corpus",
+  "source_itp": "lean",
+  "version_ref": "fixture-v1",
+  "license_id": "Apache-2.0",
+  "license_url": "https://www.apache.org/licenses/LICENSE-2.0",
+  "description": "A small, hand-built, topically-clustered fixture corpus used by tests/unit_tests/logic/hammers/test_learned_selector.py and benchmarks/bench_itp_hammer_premise_selection.py (HAMMER-005) for reproducible held-out premise-selection recall/latency comparisons. Not a real excerpt of Mathlib4 -- statements are simplified/synthetic but follow real Lean4 naming and import conventions.",
+  "theorems": [
+    {
+      "theorem_id": "Nat.add_comm",
+      "statement": "theorem add_comm : forall a b : Nat, Nat.add a b = Nat.add b a",
+      "imports": ["Mathlib.Algebra.Group.Defs", "Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Nat.add_assoc",
+      "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)",
+      "imports": ["Mathlib.Algebra.Group.Defs", "Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Nat.add_zero",
+      "statement": "theorem add_zero : forall a : Nat, Nat.add a Nat.zero = a",
+      "imports": ["Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Nat.mul_comm",
+      "statement": "theorem mul_comm : forall a b : Nat, Nat.mul a b = Nat.mul b a",
+      "imports": ["Mathlib.Algebra.Group.Defs", "Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Nat.mul_add",
+      "statement": "theorem mul_add : forall a b c : Nat, Nat.mul a (Nat.add b c) = Nat.add (Nat.mul a b) (Nat.mul a c)",
+      "imports": ["Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "List.append_nil",
+      "statement": "theorem append_nil : forall xs : List Nat, List.append xs List.nil = xs",
+      "imports": ["Mathlib.Data.List.Basic"]
+    },
+    {
+      "theorem_id": "List.append_assoc",
+      "statement": "theorem append_assoc : forall xs ys zs : List Nat, List.append (List.append xs ys) zs = List.append xs (List.append ys zs)",
+      "imports": ["Mathlib.Data.List.Basic"]
+    },
+    {
+      "theorem_id": "List.length_append",
+      "statement": "theorem length_append : forall xs ys : List Nat, List.length (List.append xs ys) = Nat.add (List.length xs) (List.length ys)",
+      "imports": ["Mathlib.Data.List.Basic", "Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "List.reverse_append",
+      "statement": "theorem reverse_append : forall xs ys : List Nat, List.reverse (List.append xs ys) = List.append (List.reverse ys) (List.reverse xs)",
+      "imports": ["Mathlib.Data.List.Basic"]
+    },
+    {
+      "theorem_id": "List.map_append",
+      "statement": "theorem map_append : forall f xs ys, List.map f (List.append xs ys) = List.append (List.map f xs) (List.map f ys)",
+      "imports": ["Mathlib.Data.List.Basic"]
+    },
+    {
+      "theorem_id": "Set.union_comm",
+      "statement": "theorem union_comm : forall a b : Set Nat, Set.union a b = Set.union b a",
+      "imports": ["Mathlib.Data.Set.Basic"]
+    },
+    {
+      "theorem_id": "Set.inter_comm",
+      "statement": "theorem inter_comm : forall a b : Set Nat, Set.inter a b = Set.inter b a",
+      "imports": ["Mathlib.Data.Set.Basic"]
+    },
+    {
+      "theorem_id": "Set.union_assoc",
+      "statement": "theorem union_assoc : forall a b c : Set Nat, Set.union (Set.union a b) c = Set.union a (Set.union b c)",
+      "imports": ["Mathlib.Data.Set.Basic"]
+    },
+    {
+      "theorem_id": "Set.subset_union_left",
+      "statement": "theorem subset_union_left : forall a b : Set Nat, Set.subset a (Set.union a b)",
+      "imports": ["Mathlib.Data.Set.Basic"]
+    },
+    {
+      "theorem_id": "Group.mul_left_inv",
+      "statement": "theorem mul_left_inv : forall a : Group, Group.mul (Group.inv a) a = Group.one",
+      "imports": ["Mathlib.Algebra.Group.Defs"]
+    },
+    {
+      "theorem_id": "Group.mul_one",
+      "statement": "theorem mul_one : forall a : Group, Group.mul a Group.one = a",
+      "imports": ["Mathlib.Algebra.Group.Defs"]
+    },
+    {
+      "theorem_id": "Group.inv_inv",
+      "statement": "theorem inv_inv : forall a : Group, Group.inv (Group.inv a) = a",
+      "imports": ["Mathlib.Algebra.Group.Defs"]
+    },
+    {
+      "theorem_id": "Group.mul_assoc",
+      "statement": "theorem mul_assoc : forall a b c : Group, Group.mul (Group.mul a b) c = Group.mul a (Group.mul b c)",
+      "imports": ["Mathlib.Algebra.Group.Defs"]
+    },
+    {
+      "theorem_id": "Order.le_refl",
+      "statement": "theorem le_refl : forall a : Order, Order.le a a",
+      "imports": ["Mathlib.Order.Basic"]
+    },
+    {
+      "theorem_id": "Order.le_trans",
+      "statement": "theorem le_trans : forall a b c : Order, Order.le a b -> Order.le b c -> Order.le a c",
+      "imports": ["Mathlib.Order.Basic"]
+    }
+  ]
+}

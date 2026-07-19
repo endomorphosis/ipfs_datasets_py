@@ -1,0 +1,243 @@
+{
+  "benchmark_name": "itp_hammer_end_to_end",
+  "corpus": {
+    "fixture_file": "tests/fixtures/logic/hammers/golden_corpus.json",
+    "manifest_id": "hammer-golden-fixture-full-benchmark",
+    "revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "theorem_count": 6
+  },
+  "environment_capability": {
+    "available": true,
+    "generated_at": "2026-07-19T14:50:29Z",
+    "path": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/data/logic/itp_hammer/environment.json",
+    "summary": {
+      "available_count": 9,
+      "surface_count": 12,
+      "unavailable_count": 3,
+      "unavailable_surfaces": [
+        "e",
+        "isabelle",
+        "vampire"
+      ]
+    }
+  },
+  "generated_at": "2026-07-19T14:50:49Z",
+  "pipeline_cases": {
+    "cases": [
+      {
+        "case_id": "candidate_only",
+        "kernel_accepted": null,
+        "kind": "deterministic",
+        "latency_ms": 7.5339,
+        "outcome": "ran",
+        "status": "candidate",
+        "theorem_id": "hammer_golden_candidate"
+      },
+      {
+        "case_id": "counterexample",
+        "kernel_accepted": null,
+        "kind": "deterministic",
+        "latency_ms": 5.9803,
+        "outcome": "ran",
+        "status": "counterexample",
+        "theorem_id": "hammer_golden_counterexample"
+      },
+      {
+        "case_id": "timeout",
+        "kernel_accepted": null,
+        "kind": "deterministic",
+        "latency_ms": 3.934,
+        "outcome": "ran",
+        "status": "timeout",
+        "theorem_id": "hammer_golden_timeout"
+      },
+      {
+        "case_id": "unsupported_translation",
+        "kernel_accepted": null,
+        "kind": "deterministic",
+        "latency_ms": 2.2822,
+        "outcome": "ran",
+        "status": "unsupported_translation",
+        "theorem_id": "hammer_golden_unsupported"
+      },
+      {
+        "case_id": "unavailable_solver",
+        "kernel_accepted": null,
+        "kind": "deterministic",
+        "latency_ms": 3.799,
+        "outcome": "ran",
+        "status": "unavailable",
+        "theorem_id": "hammer_golden_unavailable"
+      },
+      {
+        "case_id": "verified_lean",
+        "kernel_accepted": true,
+        "kind": "real_kernel",
+        "latency_ms": 990.4917,
+        "outcome": "ran",
+        "status": "verified",
+        "theorem_id": "hammer_golden_verified"
+      },
+      {
+        "case_id": "verified_coq",
+        "kernel_accepted": true,
+        "kind": "real_kernel",
+        "latency_ms": 683.3685,
+        "outcome": "ran",
+        "status": "verified",
+        "theorem_id": "hammer_golden_verified_coq"
+      },
+      {
+        "case_id": "verified_native_automation_fallback",
+        "kernel_accepted": true,
+        "kind": "real_kernel",
+        "latency_ms": 1234.5356,
+        "outcome": "ran",
+        "status": "verified",
+        "theorem_id": "hammer_golden_native_automation"
+      }
+    ],
+    "summary": {
+      "case_count": 8,
+      "environment_unavailable_count": 0,
+      "error_count": 0,
+      "kernel_checked_count": 3,
+      "latency": {
+        "max_ms": 1234.5356,
+        "mean_ms": 366.4907,
+        "median_ms": 6.7571,
+        "min_ms": 2.2822,
+        "p95_ms": 990.4917
+      },
+      "ran_count": 8,
+      "verified_count": 3,
+      "verified_rate_of_ran": 0.375
+    }
+  },
+  "pipeline_cases_error": null,
+  "premise_selection": {
+    "latency": {
+      "max_ms": 1.5267,
+      "mean_ms": 1.3558,
+      "median_ms": 1.3498,
+      "min_ms": 1.1962,
+      "p95_ms": 1.5129
+    },
+    "mean_recall_at_k": 1.0,
+    "mean_reciprocal_rank": 1.0,
+    "per_theorem": [
+      {
+        "latency_ms": 1.5129,
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0,
+        "relevant_count": 5,
+        "selected_ids": [
+          "Hammer.Nat.add_comm",
+          "Hammer.Nat.mul_comm",
+          "Hammer.Nat.add_zero",
+          "Hammer.Nat.zero_add",
+          "Hammer.Nat.eq_refl"
+        ],
+        "theorem_id": "Hammer.Nat.add_assoc"
+      },
+      {
+        "latency_ms": 1.4912,
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0,
+        "relevant_count": 5,
+        "selected_ids": [
+          "Hammer.Nat.add_assoc",
+          "Hammer.Nat.mul_comm",
+          "Hammer.Nat.add_zero",
+          "Hammer.Nat.zero_add",
+          "Hammer.Nat.eq_refl"
+        ],
+        "theorem_id": "Hammer.Nat.add_comm"
+      },
+      {
+        "latency_ms": 1.1962,
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0,
+        "relevant_count": 5,
+        "selected_ids": [
+          "Hammer.Nat.zero_add",
+          "Hammer.Nat.add_assoc",
+          "Hammer.Nat.add_comm",
+          "Hammer.Nat.eq_refl",
+          "Hammer.Nat.mul_comm"
+        ],
+        "theorem_id": "Hammer.Nat.add_zero"
+      },
+      {
+        "latency_ms": 1.2085,
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0,
+        "relevant_count": 5,
+        "selected_ids": [
+          "Hammer.Nat.add_assoc",
+          "Hammer.Nat.add_comm",
+          "Hammer.Nat.mul_comm",
+          "Hammer.Nat.add_zero",
+          "Hammer.Nat.zero_add"
+        ],
+        "theorem_id": "Hammer.Nat.eq_refl"
+      },
+      {
+        "latency_ms": 1.1995,
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0,
+        "relevant_count": 5,
+        "selected_ids": [
+          "Hammer.Nat.add_assoc",
+          "Hammer.Nat.add_comm",
+          "Hammer.Nat.eq_refl",
+          "Hammer.Nat.add_zero",
+          "Hammer.Nat.zero_add"
+        ],
+        "theorem_id": "Hammer.Nat.mul_comm"
+      },
+      {
+        "latency_ms": 1.5267,
+        "recall_at_k": 1.0,
+        "reciprocal_rank": 1.0,
+        "relevant_count": 5,
+        "selected_ids": [
+          "Hammer.Nat.add_zero",
+          "Hammer.Nat.add_assoc",
+          "Hammer.Nat.add_comm",
+          "Hammer.Nat.eq_refl",
+          "Hammer.Nat.mul_comm"
+        ],
+        "theorem_id": "Hammer.Nat.zero_add"
+      }
+    ],
+    "selection_method": "deterministic-baseline",
+    "theorem_count": 6,
+    "top_k": 5
+  },
+  "reproducibility": {
+    "machine": "x86_64",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python_version": "3.12.3"
+  },
+  "resource_defaults": {
+    "hammer_policy_defaults": {
+      "allow_learned_premise_selector": false,
+      "allow_llm_decomposition_hints": false,
+      "allow_llm_premise_ranking": false,
+      "allow_native_automation_fallback": false,
+      "allowed_solvers": [],
+      "cpu_seconds": null,
+      "max_decomposition_subgoals": 4,
+      "max_premises": 64,
+      "memory_mb": null,
+      "network_allowed": false,
+      "timeout_seconds": 30.0
+    },
+    "portfolio_policy_defaults": {
+      "cancel_on_first_conclusive": true,
+      "max_parallel_processes": 4
+    }
+  },
+  "schema_version": "1.0.0"
+}

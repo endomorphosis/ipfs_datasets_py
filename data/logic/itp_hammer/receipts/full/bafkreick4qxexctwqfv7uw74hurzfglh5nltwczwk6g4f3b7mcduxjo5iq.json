@@ -1,0 +1,137 @@
+{
+  "created_at": "2026-07-19T13:11:45.553279+00:00",
+  "decomposition_plan": null,
+  "metadata": {},
+  "normalized_evidence": [],
+  "notes": [
+    "HAMMER-015 release-evidence golden case: verified_coq"
+  ],
+  "receipt_id": "bafkreick4qxexctwqfv7uw74hurzfglh5nltwczwk6g4f3b7mcduxjo5iq",
+  "reconstruction_evidence": {
+    "candidate_id": "bafkreidpkzqyvoeiqo3whp532mkfebe3d75pbjhntwde5jsdrcxmana4l4",
+    "checked_source": "Require Import Lia.\nTheorem hammer_golden_verified_coq (n : nat) (h : n = n) : n = n.\nProof.\n  intros.\nsolve [ exact h | apply h | reflexivity | assumption | now auto | now easy | lia | trivial ].\nQed.\nPrint Assumptions hammer_golden_verified_coq.\n",
+    "checked_source_digest": "bafkreibpmbu3c4qwtpsbkv2rnzhr2au7wqt6h4atvux5f3rlpala4ddnqm",
+    "command": [
+      "/home/barberb/.local/bin/coqtop",
+      "-batch",
+      "-load-vernac-source",
+      "/tmp/hammer-coq-recon-g85fl0qj/Reconstruction.v"
+    ],
+    "itp": "coq",
+    "raw_output_digest": "bafkreidl6x7eeeaahbs6mnvwbvfs7nxvgwglgiaiicgbifmoddiw65o2wq",
+    "reconstructed_proof_text": "solve [ exact h | apply h | reflexivity | assumption | now auto | now easy | lia | trivial ].",
+    "reconstruction_id": "bafkreigtfoc65agd3q4wl7qfkt4fqavbwwlbm2fdejorq3ng664madnlu4",
+    "request_id": "golden-verified-coq-1",
+    "returncode": 0,
+    "schema_version": "1.0.0",
+    "stderr": "File \"/tmp/hammer-coq-recon-g85fl0qj/Reconstruction.v\", line 1, characters 15-18:\nWarning: Loading Stdlib without prefix is deprecated.\nUse \"From Stdlib Require Lia\" or the deprecated \"From Coq Require Lia\"\nfor compatibility with older Coq versions.\n[deprecated-missing-stdlib,deprecated-since-9.0,deprecated,default]\n",
+    "stdout": "Closed under the global context\n",
+    "timed_out": false,
+    "wall_time_seconds": 0.49535270799242426
+  },
+  "result": {
+    "completed_at": null,
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "created_at": "2026-07-19T13:11:45.553135+00:00",
+    "environment_lock": {
+      "container_digest": null,
+      "executable_paths": {
+        "coqc": "/home/barberb/.local/bin/coqc",
+        "coqtop": "/home/barberb/.local/bin/coqtop"
+      },
+      "itp": "coq",
+      "itp_version": "The Rocq Prover, version 9.1.1",
+      "kernel_command_template": "{coqtop} -batch -load-vernac-source {source_file}",
+      "lock_id": "bafkreigkztpmurrzahbmoc3zlad37lj2qmrclrnvrcgjekv6cldabzfysa",
+      "os_info": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+      "pinned_at": "2026-07-19T13:11:45.052999+00:00",
+      "policy_digest": "bafkreibz7po4d24j4w72tav3jr2hwuy4li3eopo3lhweh3fifl4uop3pdy",
+      "schema_version": "1.0.0",
+      "solver_versions": {}
+    },
+    "errors": [],
+    "notes": [
+      "kernel-checked via CoqReconstructor (HAMMER-010)"
+    ],
+    "premises": [
+      {
+        "content_digest": "bafkreiex3n5ic2zx3tvo2qh6sdhr4krx7uuv44ak7cbslbxalgm3s7nia4",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_assoc",
+        "rank": 0,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)"
+      },
+      {
+        "content_digest": "bafkreifmsx7rjexmds2a3ikidh65cioocz2h6r4oigvidr27garyhwxbau",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_comm",
+        "rank": 1,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_comm : forall a b : Nat, Nat.add a b = Nat.add b a"
+      }
+    ],
+    "proof_candidate": {
+      "candidate_id": "bafkreidpkzqyvoeiqo3whp532mkfebe3d75pbjhntwde5jsdrcxmana4l4",
+      "certificate": null,
+      "certificate_format": null,
+      "premise_ids": [
+        "h"
+      ],
+      "request_id": "golden-verified-coq-1",
+      "schema_version": "1.0.0",
+      "solver_attempt_id": "native-kernel-direct"
+    },
+    "reconstruction": {
+      "candidate_id": "bafkreidpkzqyvoeiqo3whp532mkfebe3d75pbjhntwde5jsdrcxmana4l4",
+      "environment_lock_id": "bafkreigkztpmurrzahbmoc3zlad37lj2qmrclrnvrcgjekv6cldabzfysa",
+      "failure_reason": null,
+      "finished_at": "2026-07-19T13:11:45.550528+00:00",
+      "kernel_accepted": true,
+      "kernel_command": "/home/barberb/.local/bin/coqtop -batch -load-vernac-source /tmp/hammer-coq-recon-g85fl0qj/Reconstruction.v",
+      "kernel_output_digest": "bafkreidl6x7eeeaahbs6mnvwbvfs7nxvgwglgiaiicgbifmoddiw65o2wq",
+      "reconstruction_id": "bafkreigtfoc65agd3q4wl7qfkt4fqavbwwlbm2fdejorq3ng664madnlu4",
+      "request_id": "golden-verified-coq-1",
+      "schema_version": "1.0.0",
+      "started_at": "2026-07-19T13:11:45.053969+00:00",
+      "target_itp": "coq"
+    },
+    "request": {
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T13:11:45.038375+00:00",
+      "goal_statement": "n = n",
+      "itp": "coq",
+      "metadata": {},
+      "policy": {
+        "allow_learned_premise_selector": false,
+        "allow_llm_decomposition_hints": false,
+        "allow_llm_premise_ranking": false,
+        "allow_native_automation_fallback": false,
+        "allowed_solvers": [],
+        "cpu_seconds": null,
+        "max_decomposition_subgoals": 4,
+        "max_premises": 64,
+        "memory_mb": null,
+        "network_allowed": false,
+        "schema_version": "1.0.0",
+        "timeout_seconds": 20.0
+      },
+      "request_id": "golden-verified-coq-1",
+      "schema_version": "1.0.0",
+      "theorem_id": "hammer_golden_verified_coq"
+    },
+    "result_id": "golden-verified-coq-1:result",
+    "schema_version": "1.0.0",
+    "solver_attempts": [],
+    "status": "verified",
+    "translations": []
+  },
+  "schema_version": "1.0.0",
+  "solver_evidence": []
+}

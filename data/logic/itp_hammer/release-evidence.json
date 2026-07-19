@@ -1,0 +1,131 @@
+{
+  "benchmark_report": {
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "generated_at": "2026-07-19T14:50:49Z",
+    "path": "data/logic/itp_hammer/benchmark.json"
+  },
+  "corpus_lock": {
+    "manifest_id": "hammer-golden-fixture-manifest",
+    "revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "theorem_count": 6
+  },
+  "environment_lock": {
+    "generated_at": "2026-07-19T14:50:29Z",
+    "path": "data/logic/itp_hammer/environment.json",
+    "summary": {
+      "available_count": 9,
+      "surface_count": 12,
+      "unavailable_count": 3,
+      "unavailable_surfaces": [
+        "e",
+        "isabelle",
+        "vampire"
+      ]
+    }
+  },
+  "generated_at": "2026-07-19T14:51:35Z",
+  "golden_report": {
+    "case_count": 8,
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "path": "data/logic/itp_hammer/golden-report.json"
+  },
+  "policy": {
+    "max_benchmark_age_days": 30,
+    "max_environment_lock_age_days": 180,
+    "max_receipt_age_days": 90
+  },
+  "receipts": [
+    {
+      "case_id": "candidate_only",
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T14:51:32.669283+00:00",
+      "expected_status": "candidate",
+      "itp": "lean",
+      "kernel_accepted": null,
+      "receipt_id": "bafkreiam2cxabbwtrdnkvqyjf4kqxxpzjovpalts6b7v5tfdaevccgpmua",
+      "storage_backend": "local-disk",
+      "theorem_id": "hammer_golden_candidate"
+    },
+    {
+      "case_id": "counterexample",
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T14:51:32.681721+00:00",
+      "expected_status": "counterexample",
+      "itp": "lean",
+      "kernel_accepted": null,
+      "receipt_id": "bafkreiewlapdfckqxzzdyj4elwyz75sfhuymu457cv2gmtaefpa2vjhfua",
+      "storage_backend": "local-disk",
+      "theorem_id": "hammer_golden_counterexample"
+    },
+    {
+      "case_id": "timeout",
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T14:51:32.691705+00:00",
+      "expected_status": "timeout",
+      "itp": "lean",
+      "kernel_accepted": null,
+      "receipt_id": "bafkreibk3xbnows2bxiwgmqunllleswqzx3m3gb3x5ligupxuvpldyfura",
+      "storage_backend": "local-disk",
+      "theorem_id": "hammer_golden_timeout"
+    },
+    {
+      "case_id": "unsupported_translation",
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T14:51:32.700315+00:00",
+      "expected_status": "unsupported_translation",
+      "itp": "lean",
+      "kernel_accepted": null,
+      "receipt_id": "bafkreicusrwt32xu3kjcrsxbnrzvghpggsneriye3uowyzoq4km7mwngaa",
+      "storage_backend": "local-disk",
+      "theorem_id": "hammer_golden_unsupported"
+    },
+    {
+      "case_id": "unavailable_solver",
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T14:51:32.708780+00:00",
+      "expected_status": "unavailable",
+      "itp": "lean",
+      "kernel_accepted": null,
+      "receipt_id": "bafkreidndtlpbniyzinty274rwxiygmqu6umjw3er2dfg5wlaial6lrroe",
+      "storage_backend": "local-disk",
+      "theorem_id": "hammer_golden_unavailable"
+    },
+    {
+      "case_id": "verified_lean",
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T14:51:33.758153+00:00",
+      "expected_status": "verified",
+      "itp": "lean",
+      "kernel_accepted": true,
+      "receipt_id": "bafkreigsq4cn6zgqeoqjpek327frsnb756ul7357tukv5pqgmk6g475gvu",
+      "storage_backend": "local-disk",
+      "theorem_id": "hammer_golden_verified"
+    },
+    {
+      "case_id": "verified_coq",
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T14:51:34.424525+00:00",
+      "expected_status": "verified",
+      "itp": "coq",
+      "kernel_accepted": true,
+      "receipt_id": "bafkreibbrt6ifw3ialvamrub5roytioihhjqg52p2bdvvbdx2aog2oalim",
+      "storage_backend": "local-disk",
+      "theorem_id": "hammer_golden_verified_coq"
+    },
+    {
+      "case_id": "verified_native_automation_fallback",
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T14:51:35.651678+00:00",
+      "expected_status": "verified",
+      "itp": "lean",
+      "kernel_accepted": true,
+      "receipt_id": "bafkreigczxvo5xmj7d2gtkpsp3zxz4ift56wt3vef3ieggfbfbxd4kmohu",
+      "storage_backend": "local-disk",
+      "theorem_id": "hammer_golden_native_automation"
+    }
+  ],
+  "receipts_store": {
+    "root_dir": "data/logic/itp_hammer/receipts"
+  },
+  "schema_version": "1.0.0"
+}

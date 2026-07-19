@@ -50,6 +50,7 @@ _SUBMODULE_EXPORTS = {
     "flogic",
     "flogic_optimizer",
     "fol",
+    "hammers",
     "integration",
     "integrations",
     "ml_confidence",

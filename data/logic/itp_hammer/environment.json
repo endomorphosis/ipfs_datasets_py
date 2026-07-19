@@ -1,0 +1,645 @@
+{
+  "generated_at": "2026-07-19T14:50:29Z",
+  "probe_options": {
+    "install_attempted": false,
+    "solver_invoked": false,
+    "version_probe_enabled": true
+  },
+  "schema_version": "itp-hammer-environment-probe/v1",
+  "summary": {
+    "available_count": 9,
+    "surface_count": 12,
+    "unavailable_count": 3,
+    "unavailable_surfaces": [
+      "e",
+      "isabelle",
+      "vampire"
+    ]
+  },
+  "surfaces": {
+    "cec": {
+      "available": true,
+      "category": "native_logic_framework",
+      "display_name": "CEC (Cognitive Event Calculus / DCEC)",
+      "executables": {},
+      "native_proof_trace_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+          "ipfs_datasets_py/logic/CEC/native/prover_core.py",
+          "ipfs_datasets_py/logic/CEC/native/shadow_prover.py",
+          "ipfs_datasets_py/logic/CEC/provers/prover_manager.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.CEC.native.prover_core implements a native inference-rule engine (documented as covering 87 rules) and ipfs_datasets_py.logic.CEC.native.shadow_prover provides ShadowProver-style modal proof search, both producing an in-process proof trace independent of any external solver. ipfs_datasets_py.logic.CEC.provers.prover_manager additionally coordinates external Z3/Vampire/E attempts (see those surfaces) as untrusted candidates.",
+        "supported": true
+      },
+      "notes": "CEC is an in-repo, pure-Python logic framework (with vendored ShadowProver/Talos/DCEC_Library components) \u2014 its 'availability' is a static source-file presence check. It also wires up the external vampire/e-prover adapters inventoried as their own surfaces above.",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/CEC/native/problem_parser.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.CEC.native.problem_parser parses TPTP-format and ShadowProver-native problem files into DCEC/CEC-compatible structures.",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "core",
+          "path": "ipfs_datasets_py/logic/CEC/native/dcec_core.py"
+        },
+        {
+          "exists": true,
+          "kind": "prover",
+          "path": "ipfs_datasets_py/logic/CEC/native/prover_core.py"
+        },
+        {
+          "exists": true,
+          "kind": "prover",
+          "path": "ipfs_datasets_py/logic/CEC/native/shadow_prover.py"
+        },
+        {
+          "exists": true,
+          "kind": "parser",
+          "path": "ipfs_datasets_py/logic/CEC/native/problem_parser.py"
+        },
+        {
+          "exists": true,
+          "kind": "prover_manager",
+          "path": "ipfs_datasets_py/logic/CEC/provers/prover_manager.py"
+        },
+        {
+          "exists": true,
+          "kind": "adapter",
+          "path": "ipfs_datasets_py/logic/CEC/provers/vampire_adapter.py"
+        },
+        {
+          "exists": true,
+          "kind": "adapter",
+          "path": "ipfs_datasets_py/logic/CEC/provers/e_prover_adapter.py"
+        }
+      ],
+      "surface_id": "cec",
+      "unavailable_reason": null
+    },
+    "coq": {
+      "available": true,
+      "category": "interactive_theorem_prover",
+      "display_name": "Coq / Rocq Prover",
+      "executables": {
+        "coqc": {
+          "candidates": [
+            "coqc"
+          ],
+          "found": true,
+          "resolved_name": "coqc",
+          "resolved_path": "/home/barberb/.local/bin/coqc",
+          "version": "The Rocq Prover, version 9.1.1",
+          "version_command": [
+            "/home/barberb/.local/bin/coqc",
+            "--version"
+          ],
+          "version_probe_attempted": true,
+          "version_probe_error": null
+        },
+        "coqtop": {
+          "candidates": [
+            "coqtop"
+          ],
+          "found": true,
+          "resolved_name": "coqtop",
+          "resolved_path": "/home/barberb/.local/bin/coqtop",
+          "version": "The Rocq Prover, version 9.1.1",
+          "version_command": [
+            "/home/barberb/.local/bin/coqtop",
+            "--version"
+          ],
+          "version_probe_attempted": true,
+          "version_probe_error": null
+        },
+        "rocq": {
+          "candidates": [
+            "rocq"
+          ],
+          "found": false,
+          "resolved_name": null,
+          "resolved_path": null,
+          "version": null,
+          "version_command": null,
+          "version_probe_attempted": false,
+          "version_probe_error": null
+        }
+      },
+      "native_proof_trace_support": {
+        "evidence": [
+          "coqc",
+          "coqtop",
+          "rocq"
+        ],
+        "mechanism": "The Coq/Rocq kernel independently re-checks compiled proof terms (`coqc` producing a `.vo`, or `coqtop`/`rocq` interactively); a reconstruction is only accepted on a successful, warning-free kernel check. Coq was rebranded 'Rocq' starting with the 9.x series \u2014 `coqc`/`coqtop` remain compatibility wrapper names.",
+        "supported": true
+      },
+      "notes": "HAMMER-006 (ipfs_datasets_py/logic/hammers/frontends/coq.py) is still 'waiting' on the taskboard, so there is no native goal-snapshot adapter yet \u2014 only the lower-level bridge above.",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/external_provers/interactive/coq_prover_bridge.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.external_provers.interactive.coq_prover_bridge wraps `coqc`/`coqtop` invocation and result parsing; it does not yet implement the HAMMER-006 native goal/hypothesis snapshot frontend.",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "bridge",
+          "path": "ipfs_datasets_py/logic/external_provers/interactive/coq_prover_bridge.py"
+        }
+      ],
+      "surface_id": "coq",
+      "unavailable_reason": null
+    },
+    "cvc5": {
+      "available": true,
+      "category": "smt_solver",
+      "display_name": "CVC5 SMT Solver",
+      "executables": {
+        "cvc5": {
+          "candidates": [
+            "cvc5"
+          ],
+          "found": true,
+          "resolved_name": "cvc5",
+          "resolved_path": "/home/barberb/.local/bin/cvc5",
+          "version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "version_command": [
+            "/home/barberb/.local/bin/cvc5",
+            "--version"
+          ],
+          "version_probe_attempted": true,
+          "version_probe_error": null
+        },
+        "cvc5_python_binding": {
+          "found": false,
+          "module": "cvc5"
+        }
+      },
+      "native_proof_trace_support": {
+        "evidence": [
+          "cvc5"
+        ],
+        "mechanism": "CVC5 supports `--produce-proofs --proof-format-mode={alethe,lfsc,cpc}` for proof certificates and `--produce-models`/`--produce-unsat-cores` for counterexamples and unsat cores. These remain untrusted candidates per the HAMMER-001 trust contract.",
+        "supported": true
+      },
+      "notes": "The `cvc5` CLI is present in this environment; the python `cvc5` package is not.",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/external_provers/smt/cvc5_prover_bridge.py",
+          "ipfs_datasets_py/logic/security_models/crypto_exchange/runners/cvc5_runner.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.external_provers.smt.cvc5_prover_bridge wraps the cvc5 solver; ipfs_datasets_py/logic/security_models/crypto_exchange/runners/cvc5_runner.py drives batch SMT-LIB query execution.",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "bridge",
+          "path": "ipfs_datasets_py/logic/external_provers/smt/cvc5_prover_bridge.py"
+        },
+        {
+          "exists": true,
+          "kind": "runner",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/runners/cvc5_runner.py"
+        }
+      ],
+      "surface_id": "cvc5",
+      "unavailable_reason": null
+    },
+    "e": {
+      "available": false,
+      "category": "automated_theorem_prover",
+      "display_name": "E Theorem Prover",
+      "executables": {
+        "eprover": {
+          "candidates": [
+            "eprover",
+            "eprover-ho",
+            "E"
+          ],
+          "found": false,
+          "resolved_name": null,
+          "resolved_path": null,
+          "version": null,
+          "version_command": null,
+          "version_probe_attempted": false,
+          "version_probe_error": null
+        }
+      },
+      "native_proof_trace_support": {
+        "evidence": [],
+        "mechanism": "E can emit a TSTP proof object with `--tstp-out` / `--proof-object`, which is the untrusted proof candidate normalized by HAMMER-009.",
+        "supported": false
+      },
+      "notes": "No `eprover`/`eprover-ho`/`E` executable is present in this environment.",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/CEC/provers/e_prover_adapter.py",
+          "ipfs_datasets_py/logic/integration/bridges/external_provers.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.CEC.provers.e_prover_adapter builds TPTP problems (via tptp_utils) and invokes `eprover` as a subprocess, parsing its stdout into an EProverProofResult.",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "adapter",
+          "path": "ipfs_datasets_py/logic/CEC/provers/e_prover_adapter.py"
+        },
+        {
+          "exists": true,
+          "kind": "bridge",
+          "path": "ipfs_datasets_py/logic/integration/bridges/external_provers.py"
+        }
+      ],
+      "surface_id": "e",
+      "unavailable_reason": "eprover_executable_not_found_on_path_or_common_install_dirs"
+    },
+    "isabelle": {
+      "available": false,
+      "category": "interactive_theorem_prover",
+      "display_name": "Isabelle/HOL",
+      "executables": {
+        "isabelle": {
+          "candidates": [
+            "isabelle"
+          ],
+          "found": false,
+          "resolved_name": null,
+          "resolved_path": null,
+          "version": null,
+          "version_command": null,
+          "version_probe_attempted": false,
+          "version_probe_error": null
+        }
+      },
+      "native_proof_trace_support": {
+        "evidence": [],
+        "mechanism": "Isabelle/HOL's LCF-style kernel natively re-checks proof terms produced by its tactic language, in principle making kernel-checked reconstruction possible. No such reconstruction path exists in this repository yet.",
+        "supported": false
+      },
+      "notes": "Isabelle is named in the HAMMER-006 taskboard entry (ipfs_datasets_py/logic/hammers/frontends/isabelle.py) but that entry is still 'waiting' and no code for it exists yet, unlike Lean and Coq which already have lower-level bridges.",
+      "parser_support": {
+        "evidence": [],
+        "mechanism": "No Isabelle bridge, frontend, or theory-file parser exists under ipfs_datasets_py/logic at this revision.",
+        "supported": false
+      },
+      "repo_modules": [],
+      "surface_id": "isabelle",
+      "unavailable_reason": "isabelle_executable_not_found_on_path_or_common_install_dirs;no_isabelle_bridge_or_frontend_module_in_repo"
+    },
+    "lean": {
+      "available": true,
+      "category": "interactive_theorem_prover",
+      "display_name": "Lean 4 / Lake",
+      "executables": {
+        "lake": {
+          "candidates": [
+            "lake"
+          ],
+          "found": true,
+          "resolved_name": "lake",
+          "resolved_path": "/home/barberb/.elan/bin/lake",
+          "version": "Lake version 5.0.0-src+68218e8 (Lean version 4.31.0)",
+          "version_command": [
+            "/home/barberb/.elan/bin/lake",
+            "--version"
+          ],
+          "version_probe_attempted": true,
+          "version_probe_error": null
+        },
+        "lean": {
+          "candidates": [
+            "lean"
+          ],
+          "found": true,
+          "resolved_name": "lean",
+          "resolved_path": "/home/barberb/.elan/bin/lean",
+          "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+          "version_command": [
+            "/home/barberb/.elan/bin/lean",
+            "--version"
+          ],
+          "version_probe_attempted": true,
+          "version_probe_error": null
+        }
+      },
+      "native_proof_trace_support": {
+        "evidence": [
+          "lean",
+          "lake"
+        ],
+        "mechanism": "Lean 4 elaborates a term and the Lean *kernel* independently type-checks it; a reconstruction is only accepted if `lean`/`lake build` exits 0 on the target file. This is a native, trusted proof-trace mechanism (the kernel check itself), not a solver-produced certificate.",
+        "supported": true
+      },
+      "notes": "Elan-managed Lean toolchain. HAMMER-006 (ipfs_datasets_py/logic/hammers/frontends/lean.py) is still 'waiting' on the taskboard, so there is no native goal-snapshot adapter yet \u2014 only the lower-level bridge above.",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/external_provers/interactive/lean_prover_bridge.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.external_provers.interactive.lean_prover_bridge wraps `lean`/`lake` invocation and result parsing; it does not yet implement the HAMMER-006 native goal/hypothesis snapshot frontend.",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "bridge",
+          "path": "ipfs_datasets_py/logic/external_provers/interactive/lean_prover_bridge.py"
+        }
+      ],
+      "surface_id": "lean",
+      "unavailable_reason": null
+    },
+    "prover_installer": {
+      "available": true,
+      "category": "prover_installer",
+      "display_name": "Prover installer surfaces",
+      "executables": {},
+      "native_proof_trace_support": {
+        "evidence": [],
+        "mechanism": "The installer surfaces do not themselves produce proof traces; they exist only to make an executable available for the surfaces above to invoke.",
+        "supported": false
+      },
+      "notes": "ipfs_datasets_py.logic.external_provers.lazy_installer performs an opt-in, single best-effort install for a requested prover (gated by IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS / per-prover IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER> env vars \u2014 disabled unless explicitly enabled); ipfs_datasets_py.logic.integration.bridges.prover_installer exposes the same behavior as the `ipfs-datasets-install-provers` console script; ipfs_datasets_py.logic.external_provers.prover_router discovers/selects among already-installed provers at runtime. This probe script never calls any of these \u2014 it only checks whether their source files exist in this checkout.",
+      "parser_support": {
+        "evidence": [],
+        "mechanism": "Not applicable \u2014 installers do not parse proof content.",
+        "supported": false
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "lazy_installer",
+          "path": "ipfs_datasets_py/logic/external_provers/lazy_installer.py"
+        },
+        {
+          "exists": true,
+          "kind": "cli_installer",
+          "path": "ipfs_datasets_py/logic/integration/bridges/prover_installer.py"
+        },
+        {
+          "exists": true,
+          "kind": "router",
+          "path": "ipfs_datasets_py/logic/external_provers/prover_router.py"
+        }
+      ],
+      "surface_id": "prover_installer",
+      "unavailable_reason": null
+    },
+    "smtlib": {
+      "available": true,
+      "category": "translation_format",
+      "display_name": "SMT-LIB(2)",
+      "executables": {},
+      "native_proof_trace_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/to_smtlib.py",
+          "ipfs_datasets_py/logic/types/translation_types.py",
+          "ipfs_datasets_py/logic/types/fol_types.py",
+          "ipfs_datasets_py/logic/integration/converters/logic_translation_core.py"
+        ],
+        "mechanism": "SMT-LIB models/unsat-cores/proofs come from the invoking solver (see the `z3`/`cvc5` surfaces above); SMT-LIB itself is the *query* format.",
+        "supported": true
+      },
+      "notes": "SMT-LIB writer support exists; a dedicated SMT-LIB2 *parser* is an explicit gap this inventory surfaces for HAMMER-007 (typed translation to TPTP and SMT-LIB).",
+      "parser_support": {
+        "evidence": [],
+        "mechanism": "This repository only *generates* SMT-LIB2 text (see to_smtlib.py, logic_translation_core.SMTTranslator) via Python-side term construction and the z3/cvc5 python APIs. There is no standalone SMT-LIB *reader/parser* for arbitrary external `.smt2` input in ipfs_datasets_py at this revision \u2014 text is only ever produced, never parsed back.",
+        "supported": false
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "writer",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/to_smtlib.py"
+        },
+        {
+          "exists": true,
+          "kind": "types",
+          "path": "ipfs_datasets_py/logic/types/translation_types.py"
+        },
+        {
+          "exists": true,
+          "kind": "types",
+          "path": "ipfs_datasets_py/logic/types/fol_types.py"
+        },
+        {
+          "exists": true,
+          "kind": "translator",
+          "path": "ipfs_datasets_py/logic/integration/converters/logic_translation_core.py"
+        }
+      ],
+      "surface_id": "smtlib",
+      "unavailable_reason": null
+    },
+    "tdfol": {
+      "available": true,
+      "category": "native_logic_framework",
+      "display_name": "TDFOL (Temporal Deontic First-Order Logic)",
+      "executables": {},
+      "native_proof_trace_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+          "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.TDFOL.tdfol_prover implements forward/backward chaining, modal tableaux, and temporal/deontic reasoning, producing `ProofResult`/`ProofStep` records (defined in tdfol_core.py) \u2014 a native, in-process proof trace, not an external solver certificate.",
+        "supported": true
+      },
+      "notes": "TDFOL is an in-repo, pure-Python logic framework \u2014 its 'availability' is a static source-file presence check, not an external executable/install check.",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+          "ipfs_datasets_py/logic/TDFOL/tdfol_dcec_parser.py",
+          "ipfs_datasets_py/logic/TDFOL/tdfol_converter.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.TDFOL.tdfol_parser parses symbolic, natural-language, and JSON/dict representations into TDFOL formulas; tdfol_dcec_parser bridges TDFOL and DCEC/CEC syntax; tdfol_converter round-trips TDFOL to string representations (TPTP, SMT-LIB, etc.).",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "core",
+          "path": "ipfs_datasets_py/logic/TDFOL/tdfol_core.py"
+        },
+        {
+          "exists": true,
+          "kind": "parser",
+          "path": "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py"
+        },
+        {
+          "exists": true,
+          "kind": "parser",
+          "path": "ipfs_datasets_py/logic/TDFOL/tdfol_dcec_parser.py"
+        },
+        {
+          "exists": true,
+          "kind": "prover",
+          "path": "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py"
+        },
+        {
+          "exists": true,
+          "kind": "converter",
+          "path": "ipfs_datasets_py/logic/TDFOL/tdfol_converter.py"
+        }
+      ],
+      "surface_id": "tdfol",
+      "unavailable_reason": null
+    },
+    "tptp": {
+      "available": true,
+      "category": "translation_format",
+      "display_name": "TPTP (Thousands of Problems for Theorem Provers)",
+      "executables": {
+        "tptp4X": {
+          "candidates": [
+            "tptp4X"
+          ],
+          "found": false,
+          "resolved_name": null,
+          "resolved_path": null,
+          "version": null,
+          "version_command": null,
+          "version_probe_attempted": false,
+          "version_probe_error": null
+        }
+      },
+      "native_proof_trace_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/CEC/provers/tptp_utils.py"
+        ],
+        "mechanism": "TPTP's companion proof-trace format, TSTP (used by Vampire and E, see the `vampire`/`e` surfaces above), is what the hammer pipeline normalizes into candidate evidence \u2014 TPTP itself is the *input* problem format.",
+        "supported": true
+      },
+      "notes": "The optional `tptp4X` reference tool is not present in this environment; it is not required for the repo's own TPTP reader/writer support.",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/CEC/native/problem_parser.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.CEC.native.problem_parser parses TPTP-format problem files (axiom/conjecture roles) into TPTPFormula records for ShadowProver; ipfs_datasets_py.logic.CEC.provers.tptp_utils writes CEC formulas out as TPTP problems for Vampire/E.",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "writer",
+          "path": "ipfs_datasets_py/logic/CEC/provers/tptp_utils.py"
+        },
+        {
+          "exists": true,
+          "kind": "parser",
+          "path": "ipfs_datasets_py/logic/CEC/native/problem_parser.py"
+        }
+      ],
+      "surface_id": "tptp",
+      "unavailable_reason": null
+    },
+    "vampire": {
+      "available": false,
+      "category": "automated_theorem_prover",
+      "display_name": "Vampire ATP",
+      "executables": {
+        "vampire": {
+          "candidates": [
+            "vampire"
+          ],
+          "found": false,
+          "resolved_name": null,
+          "resolved_path": null,
+          "version": null,
+          "version_command": null,
+          "version_probe_attempted": false,
+          "version_probe_error": null
+        }
+      },
+      "native_proof_trace_support": {
+        "evidence": [],
+        "mechanism": "Vampire can emit a TPTP/TSTP derivation with `--proof tptp` and `--output_axiom_names on`, which is the untrusted proof candidate normalized by HAMMER-009.",
+        "supported": false
+      },
+      "notes": "The `vampire` executable is not present in this environment (download: https://vprover.github.io/).",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/CEC/provers/vampire_adapter.py",
+          "ipfs_datasets_py/logic/integration/bridges/external_provers.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.CEC.provers.vampire_adapter builds TPTP problems (via tptp_utils) and invokes `vampire` as a subprocess, parsing its stdout into a VampireProofResult.",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "adapter",
+          "path": "ipfs_datasets_py/logic/CEC/provers/vampire_adapter.py"
+        },
+        {
+          "exists": true,
+          "kind": "bridge",
+          "path": "ipfs_datasets_py/logic/integration/bridges/external_provers.py"
+        }
+      ],
+      "surface_id": "vampire",
+      "unavailable_reason": "vampire_executable_not_found_on_path_or_common_install_dirs"
+    },
+    "z3": {
+      "available": true,
+      "category": "smt_solver",
+      "display_name": "Z3 SMT Solver",
+      "executables": {
+        "z3": {
+          "candidates": [
+            "z3"
+          ],
+          "found": true,
+          "resolved_name": "z3",
+          "resolved_path": "/home/barberb/miniforge3/bin/z3",
+          "version": "Z3 version 4.16.0 - 64 bit",
+          "version_command": [
+            "/home/barberb/miniforge3/bin/z3",
+            "--version"
+          ],
+          "version_probe_attempted": true,
+          "version_probe_error": null
+        },
+        "z3_python_binding": {
+          "found": false,
+          "module": "z3"
+        }
+      },
+      "native_proof_trace_support": {
+        "evidence": [
+          "z3"
+        ],
+        "mechanism": "Z3 can emit unsat cores (`(get-unsat-core)`) and proof objects (`(set-option :produce-proofs true)` + `(get-proof)`), and satisfying models (`(get-model)`) for `sat`/counterexample results. These are untrusted candidates per the HAMMER-001 trust contract until independently reconstructed.",
+        "supported": true
+      },
+      "notes": "Neither the `z3` CLI nor the `z3` python package is present in this environment.",
+      "parser_support": {
+        "evidence": [
+          "ipfs_datasets_py/logic/external_provers/smt/z3_prover_bridge.py",
+          "ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/to_z3.py"
+        ],
+        "mechanism": "ipfs_datasets_py.logic.external_provers.smt.z3_prover_bridge wraps the z3 solver; ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/to_z3.py compiles security-model IR to Z3 expressions via the z3 python API.",
+        "supported": true
+      },
+      "repo_modules": [
+        {
+          "exists": true,
+          "kind": "bridge",
+          "path": "ipfs_datasets_py/logic/external_provers/smt/z3_prover_bridge.py"
+        },
+        {
+          "exists": true,
+          "kind": "compiler",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/to_z3.py"
+        }
+      ],
+      "surface_id": "z3",
+      "unavailable_reason": null
+    }
+  }
+}

@@ -1,0 +1,7 @@
+% Deliberately malformed TSTP derivation trace used by
+% tests/integration/logic/hammers/test_adversarial_hammer.py (HAMMER-014) to
+% exercise ipfs_datasets_py.logic.hammers.provenance.parse_tstp_proof's
+% "malformed" detection path: this statement's terminating `.` is missing,
+% which must resolve to EvidenceKind.MALFORMED / HammerResultStatus.UNKNOWN
+% rather than ever being treated as a usable proof.
+fof(f1, plain, p(a), file('src', 'premise_a'))
