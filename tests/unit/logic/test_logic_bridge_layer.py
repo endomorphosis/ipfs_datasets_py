@@ -14162,6 +14162,50 @@ def test_zkp_guidance_contract_compacts_autoencoder_packet_metadata() -> None:
     }
 
 
+def test_zkp_guidance_contract_promotes_nested_autoencoder_todo_row() -> None:
+    from ipfs_datasets_py.logic.zkp import (
+        compiler_guidance_contract_from_metadata,
+        compiler_guidance_ref_from_metadata,
+    )
+
+    row = {
+        "action": "repair_zkp_attestation_bridge",
+        "metadata": {
+            "compiler_guidance_quality_gate": "pass",
+            "compiler_guidance_route": "repair_zkp_attestation_bridge",
+            "program_synthesis_scope": "zkp",
+            "semantic_bundle_key": json.dumps(
+                {
+                    "program_synthesis_scope": "zkp",
+                    "route": "repair_zkp_attestation_bridge",
+                    "source": "compiler_guidance_distillation_v1",
+                    "target_component": "zkp.circuits",
+                },
+                sort_keys=True,
+            ),
+            "source": "compiler_guidance_distillation_v1",
+            "support_count": 1,
+            "target_component": "zkp.circuits",
+            "target_metrics": ["zkp_verification_failure_ratio"],
+        },
+        "sample_ids": ["compiler-guidance:repair_zkp_attestation_bridge"],
+        "target": "zkp.circuits",
+    }
+    explicit = {
+        "compiler_guidance_contract": row["metadata"],
+    }
+
+    contract = compiler_guidance_contract_from_metadata(row)
+
+    assert contract == compiler_guidance_contract_from_metadata(explicit)
+    assert contract["compiler_guidance_route"] == "repair_zkp_attestation_bridge"
+    assert contract["program_synthesis_scope"] == "zkp"
+    assert contract["target_component"] == "zkp.circuits"
+    assert compiler_guidance_ref_from_metadata(row) == (
+        compiler_guidance_ref_from_metadata(explicit)
+    )
+
+
 def test_zkp_attestation_completion_promotes_record_level_packet_guidance() -> None:
     from ipfs_datasets_py.logic.zkp import (
         ZKPProver,

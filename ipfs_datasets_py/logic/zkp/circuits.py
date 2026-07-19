@@ -443,6 +443,12 @@ def compiler_guidance_contract_from_metadata(
     if not metadata_dict:
         return {}
 
+    nested_metadata = _decode_json_guidance_value(metadata_dict.get("metadata"))
+    if isinstance(nested_metadata, Mapping):
+        nested_contract = compiler_guidance_contract_from_metadata(nested_metadata)
+        if nested_contract not in ({}, [], ""):
+            return nested_contract
+
     selected: Dict[str, Any] = {}
     for key, value in sorted(metadata_dict.items(), key=lambda pair: str(pair[0])):
         name = str(key)
@@ -479,6 +485,13 @@ def compiler_guidance_contract_from_metadata(
     evidence_contract = _evidence_contract_from_metadata(metadata_dict)
     if evidence_contract:
         return evidence_contract
+
+    if _guidance_has_zkp_attestation_route(metadata_dict) or _guidance_targets_zkp(
+        metadata_dict
+    ):
+        compact_contract = _compact_zkp_guidance_packet_contract(metadata_dict)
+        if compact_contract:
+            return compact_contract
 
     for key in _COMPILER_GUIDANCE_CONTAINER_KEYS:
         if key not in metadata_dict:
