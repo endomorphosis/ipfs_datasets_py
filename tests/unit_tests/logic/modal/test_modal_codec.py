@@ -172,6 +172,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     compiler_required_adaptive_ambiguity_targets,
     compiler_weak_typed_self_family_cue_margin_buffer,
     compiler_refined_modal_family_cue_margin_buffer,
+    compiler_guardrail_packet_001002_deontic_target_cues,
     compiler_ambiguity_policy_targets,
     is_compiler_ambiguity_policy_pair,
     is_compiler_required_adaptive_ambiguity_pair,
@@ -425,6 +426,55 @@ def test_modal_registry_packet_000202_refines_modal_family_cue_pairs() -> None:
             target_family,
             0.2,
         )
+
+
+def test_modal_registry_packet_001002_refines_deontic_target_cue_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "deontic"),
+        ("frame", "deontic"),
+        ("temporal", "deontic"),
+    }
+
+    assert (
+        set(compiler_guardrail_packet_001002_deontic_target_cues())
+        == expected_pairs
+    )
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    _assert_refined_margin_buffer_at_least("deontic", "deontic", 0.18)
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
+        >= 0.206
+    )
+    _assert_refined_margin_buffer_at_least("frame", "deontic", 1.02)
+    _assert_refined_margin_buffer_at_least("temporal", "deontic", 0.43)
 
 
 def test_modal_registry_packet_003901_exposes_frame_policy_ambiguity_pairs() -> None:

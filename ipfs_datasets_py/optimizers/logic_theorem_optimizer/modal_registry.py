@@ -11022,6 +11022,26 @@ COMPILER_AMBIGUITY_PACKET_001002_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+def compiler_guardrail_packet_001002_deontic_target_cues() -> Tuple[
+    Tuple[str, str],
+    ...
+]:
+    """Return deontic-target family cue pairs tracked by packet 001002."""
+    return (
+        (
+            ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+        (
+            ModalLogicFamily.FRAME.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+        (
+            ModalLogicFamily.TEMPORAL.value,
+            ModalLogicFamily.DEONTIC.value,
+        ),
+    )
+
 COMPILER_AMBIGUITY_PACKET_001309_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
