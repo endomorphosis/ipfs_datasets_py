@@ -67,7 +67,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-005 Add an optional learned premise selector behind evaluation gates
 
-- Status: waiting
+- Status: completed
 - Priority: P1
 - Track: retrieval
 - Depends on: HAMMER-004
