@@ -121,6 +121,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_003057_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003171_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003229_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_003901_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003360_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_005348_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003762_FAMILY_PAIRS,
@@ -230,6 +231,46 @@ def test_modal_registry_packet_000202_refines_modal_family_cue_pairs() -> None:
             target_family,
             0.2,
         )
+
+
+def test_modal_registry_packet_003901_exposes_frame_policy_ambiguity_pairs() -> None:
+    expected_pairs = {
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_003901_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    _assert_refined_margin_buffer_at_least("frame", "deontic", 0.74)
+    _assert_refined_margin_buffer_at_least("frame", "temporal", 0.74)
 
 
 def test_modal_registry_packet_001314_refines_deontic_dynamic_frame_pairs() -> None:
