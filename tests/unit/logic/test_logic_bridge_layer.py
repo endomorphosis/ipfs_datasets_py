@@ -13962,6 +13962,56 @@ def test_zkp_guidance_contract_promotes_route_before_attribution_container() -> 
     assert "compiler_guidance_attribution" not in contract
 
 
+def test_zkp_guidance_contract_compacts_autoencoder_packet_metadata() -> None:
+    from ipfs_datasets_py.logic.zkp import compiler_guidance_contract_from_metadata
+
+    contract = compiler_guidance_contract_from_metadata(
+        {
+            "compiler_guidance_attribution_summary": {
+                "basis": "sample_records",
+                "matched_sample_count": 26,
+                "pass_legal_ir_view_gaps": ["zkp_circuits:overrepresented"],
+            },
+            "compiler_guidance_legal_ir_view_gaps": {
+                "zkp_circuits:overrepresented": 22,
+            },
+            "compiler_guidance_quality_gate": "pass",
+            "compiler_guidance_route": "repair_zkp_attestation_bridge",
+            "compiler_guidance_surface_features": {
+                "decompiler-surface:bias": 24,
+            },
+            "compiler_guidance_todo_routes_inferred_from_features": True,
+            "program_synthesis_scope": "zkp",
+            "sample_ids": ["compiler-guidance:repair_zkp_attestation_bridge"],
+            "semantic_bundle_key": json.dumps(
+                {
+                    "program_synthesis_scope": "zkp",
+                    "route": "repair_zkp_attestation_bridge",
+                    "source": "compiler_guidance_distillation_v1",
+                    "target_component": "zkp.circuits",
+                },
+                sort_keys=True,
+            ),
+            "source": "compiler_guidance_distillation_v1",
+            "support_count": 1,
+            "target_component": "zkp.circuits",
+            "target_metrics": ["zkp_verification_failure_ratio"],
+        }
+    )
+
+    assert contract == {
+        "compiler_guidance_quality_gate": "pass",
+        "compiler_guidance_route": "repair_zkp_attestation_bridge",
+        "compiler_guidance_todo_routes_inferred_from_features": True,
+        "program_synthesis_scope": "zkp",
+        "sample_ids": ["compiler-guidance:repair_zkp_attestation_bridge"],
+        "source": "compiler_guidance_distillation_v1",
+        "support_count": 1,
+        "target_component": "zkp.circuits",
+        "target_metrics": ["zkp_verification_failure_ratio"],
+    }
+
+
 def test_zkp_attestation_completion_promotes_record_level_packet_guidance() -> None:
     from ipfs_datasets_py.logic.zkp import (
         ZKPProver,

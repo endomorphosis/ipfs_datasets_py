@@ -45,6 +45,8 @@ _COMPILER_GUIDANCE_PACKET_KEYS = frozenset(
         "compiler_guidance_route",
         "compiler_guidance_target_metrics",
         "compiler_guidance_todo_routes",
+        "compiler_guidance_todo_routes_augmented_from_features",
+        "compiler_guidance_todo_routes_inferred_from_features",
         "feature_groups",
         "legal_ir_target_view_distribution",
         "objective",
@@ -65,6 +67,7 @@ _COMPILER_GUIDANCE_PACKET_KEYS = frozenset(
         "target_file_lane",
         "target_view",
         "todo_routes",
+        "vector_bundle",
     }
 )
 _COMPILER_GUIDANCE_EVIDENCE_KEYS = (
@@ -357,6 +360,48 @@ def _contract_from_guidance_evidence_row(value: Any) -> Dict[str, Any]:
     return selected
 
 
+def _compact_zkp_guidance_packet_contract(value: Any) -> Dict[str, Any]:
+    """Return a compact ZKP guidance contract from packet-shaped metadata.
+
+    Autoencoder TODO metadata often includes large diagnostic maps alongside
+    the route/scope/target evidence.  The ZKP attestation circuit only needs a
+    stable public commitment to the passing repair contract, so keep the compact
+    packet fields and infer the same route defaults used for evidence rows.
+    """
+    decoded = _decode_json_guidance_value(value)
+    if not isinstance(decoded, Mapping):
+        return {}
+
+    row = dict(decoded)
+    route_matches = _guidance_has_zkp_attestation_route(row)
+    target_matches = _guidance_targets_zkp(row)
+    if not _guidance_quality_passes(row):
+        return {}
+    if not (route_matches or target_matches):
+        return {}
+
+    selected: Dict[str, Any] = {}
+    for key, item in sorted(row.items(), key=lambda pair: str(pair[0])):
+        name = str(key)
+        if name in _COMPILER_GUIDANCE_PACKET_KEYS:
+            selected[name] = _canonical_guidance_value(item)
+
+    if route_matches and not (
+        selected.get("route") or selected.get("compiler_guidance_route")
+    ):
+        selected["route"] = "repair_zkp_attestation_bridge"
+    if (route_matches or target_matches) and not selected.get("target_component"):
+        selected["target_component"] = "zkp.circuits"
+    if not selected.get("program_synthesis_scope") and (route_matches or target_matches):
+        selected["program_synthesis_scope"] = "zkp"
+    if not selected.get("source") and (
+        route_matches or "compiler_guidance_distillation_v1" in _guidance_text_tokens(row)
+    ):
+        selected["source"] = "compiler_guidance_distillation_v1"
+
+    return selected
+
+
 def _evidence_contract_from_metadata(metadata: Mapping[str, Any]) -> Dict[str, Any]:
     for key in _COMPILER_GUIDANCE_EVIDENCE_KEYS:
         for row in _sequence_values(metadata.get(key)):
@@ -428,7 +473,8 @@ def compiler_guidance_contract_from_metadata(
         or _guidance_has_zkp_attestation_route(selected)
     )
     if explicit_route_signal:
-        return selected
+        compact_selected = _compact_zkp_guidance_packet_contract(selected)
+        return compact_selected or selected
 
     evidence_contract = _evidence_contract_from_metadata(metadata_dict)
     if evidence_contract:
@@ -439,6 +485,10 @@ def compiler_guidance_contract_from_metadata(
             continue
         contract = _guidance_container_contract(metadata_dict.get(key))
         if contract not in ({}, [], ""):
+            if isinstance(contract, Mapping):
+                compact_contract = _compact_zkp_guidance_packet_contract(contract)
+                if compact_contract:
+                    return compact_contract
             return contract
 
     if selected:
