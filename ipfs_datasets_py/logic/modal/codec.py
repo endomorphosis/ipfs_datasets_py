@@ -1571,6 +1571,36 @@ def _compiler_guidance_bundle_mapping(
     return {}
 
 
+def _compiler_guidance_evidence_items(
+    compiler_guidance: Mapping[str, Any],
+) -> List[Mapping[str, Any]]:
+    """Return structured evidence records from parsed or JSON-string guidance."""
+    raw_evidence = compiler_guidance.get("evidence")
+    if raw_evidence is None:
+        raw_evidence = compiler_guidance.get("evidences")
+
+    def collect(value: Any, items: List[Mapping[str, Any]], *, depth: int) -> None:
+        if value is None or depth > 2:
+            return
+        if isinstance(value, Mapping):
+            items.append(value)
+            return
+        if isinstance(value, str) and value.strip():
+            try:
+                decoded = json.loads(value)
+            except json.JSONDecodeError:
+                return
+            collect(decoded, items, depth=depth + 1)
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                collect(item, items, depth=depth + 1)
+
+    evidence_items: List[Mapping[str, Any]] = []
+    collect(raw_evidence, evidence_items, depth=0)
+    return evidence_items
+
+
 def _compiler_guidance_route_features(
     compiler_guidance: Mapping[str, Any],
 ) -> List[str]:
@@ -1631,21 +1661,7 @@ def _compiler_guidance_route_features(
 
     for frame in _compiler_guidance_selected_frame_evidence(compiler_guidance):
         features.append(f"selected_ontology_frame:{frame}")
-    raw_evidence = compiler_guidance.get("evidence")
-    if raw_evidence is None:
-        raw_evidence = compiler_guidance.get("evidences")
-    if isinstance(raw_evidence, Mapping):
-        evidence_items: Iterable[Any] = [raw_evidence]
-    elif isinstance(raw_evidence, Sequence) and not isinstance(
-        raw_evidence,
-        (str, bytes),
-    ):
-        evidence_items = raw_evidence
-    else:
-        evidence_items = []
-    for item in evidence_items:
-        if not isinstance(item, Mapping):
-            continue
+    for item in _compiler_guidance_evidence_items(compiler_guidance):
         route = str(
             item.get("compiler_guidance_route")
             or item.get("route")
@@ -1774,18 +1790,7 @@ def _compiler_guidance_selected_frame_evidence(
         if frame:
             frames.append(frame)
 
-    raw_evidence = compiler_guidance.get("evidence")
-    if raw_evidence is None:
-        raw_evidence = compiler_guidance.get("evidences")
-    if isinstance(raw_evidence, Mapping):
-        evidence_items: Iterable[Any] = [raw_evidence]
-    elif isinstance(raw_evidence, Sequence) and not isinstance(raw_evidence, (str, bytes)):
-        evidence_items = raw_evidence
-    else:
-        evidence_items = []
-    for item in evidence_items:
-        if not isinstance(item, Mapping):
-            continue
+    for item in _compiler_guidance_evidence_items(compiler_guidance):
         for key in ("selected_frame_after", "selected_frame", "selected_frame_before"):
             frame = str(item.get(key) or "").strip()
             if frame:
@@ -1860,10 +1865,8 @@ def _compiler_guidance_has_frame_logic_view_signal(
     if not isinstance(compiler_guidance, Mapping):
         return False
     target_component = str(compiler_guidance.get("target_component") or "").strip()
-    raw_bundle = compiler_guidance.get("bundle")
-    if not isinstance(raw_bundle, Mapping):
-        raw_bundle = compiler_guidance.get("semantic_bundle")
-    if not target_component and isinstance(raw_bundle, Mapping):
+    raw_bundle = _compiler_guidance_bundle_mapping(compiler_guidance)
+    if not target_component and raw_bundle:
         target_component = str(raw_bundle.get("target_component") or "").strip()
     if target_component == _MODAL_FRAME_LOGIC_TARGET_COMPONENT:
         return True
@@ -1882,8 +1885,7 @@ def _compiler_guidance_has_frame_logic_view_signal(
         [
             compiler_guidance.get("compiler_guidance_feature_groups"),
             compiler_guidance.get("compiler_guidance_ranked_features"),
-            compiler_guidance.get("evidence"),
-            compiler_guidance.get("evidences"),
+            _compiler_guidance_evidence_items(compiler_guidance),
             compiler_guidance.get("feature_groups"),
             compiler_guidance.get("frame_features"),
             compiler_guidance.get("top_family_features"),
@@ -2088,20 +2090,24 @@ def _compiler_guidance_frame_audit_features(
             add_feature_values(mapping.get(key))
         for key in _COMPILER_GUIDANCE_FRAME_AUDIT_STAGE_KEYS:
             add_stage_values(mapping.get(key))
+        for key in ("sample_id", "sample_ids", "source_id", "source_ids"):
+            for source_id in _guidance_feature_list(mapping.get(key), limit=0):
+                candidates.append(f"flogic:source_id:{source_id}")
+        for key in ("citation", "citations"):
+            for citation in _guidance_feature_list(mapping.get(key), limit=0):
+                candidates.append(f"flogic:citation:{citation}")
+        for key in ("action", "original_action", "route"):
+            for route in _guidance_feature_list(mapping.get(key), limit=0):
+                candidates.append(f"flogic:statement_hint:{route}")
+        target_component = _clean_non_empty_string(
+            mapping.get("target_component") or mapping.get("target")
+        )
+        if target_component:
+            candidates.append(f"legal-ir-view:{target_component}")
 
     collect(compiler_guidance)
-    raw_evidence = compiler_guidance.get("evidence")
-    if raw_evidence is None:
-        raw_evidence = compiler_guidance.get("evidences")
-    if isinstance(raw_evidence, Mapping):
-        evidence_items: Iterable[Any] = [raw_evidence]
-    elif isinstance(raw_evidence, Sequence) and not isinstance(raw_evidence, (str, bytes)):
-        evidence_items = raw_evidence
-    else:
-        evidence_items = []
-    for item in evidence_items:
-        if isinstance(item, Mapping):
-            collect(item)
+    for item in _compiler_guidance_evidence_items(compiler_guidance):
+        collect(item)
 
     return frame_ontology_feature_keys(
         _unique_preserve_order(candidates),

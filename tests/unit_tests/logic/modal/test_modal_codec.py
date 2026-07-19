@@ -19169,6 +19169,58 @@ def test_modal_codec_frame_logic_target_guidance_infers_audit_route() -> None:
     assert "audit_frame_logic_terms" in selected_terms
 
 
+def test_modal_codec_frame_logic_guidance_decodes_json_evidence() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="10",
+        section="2263",
+        text=(
+            "Sec. 2263. United States contributions to common-funded budgets. "
+            "The Secretary shall provide administrative records."
+        ),
+    )
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+        compiler_guidance={
+            "evidence": json.dumps(
+                {
+                    "original_action": "audit_frame_logic_terms",
+                    "sample_ids": [
+                        "us-code-10-2263-571407a5044f94b2",
+                        "us-code-38-1731-7736f9e2e50472ec",
+                    ],
+                    "target_component": "modal.frame_logic",
+                }
+            )
+        },
+    )
+
+    assert "audit_frame_logic_terms" in result.modal_ir.metadata[
+        "compiler_guidance_synthesis_focus"
+    ]
+    selected_terms = {
+        triple["object"]
+        for triple in result.kg_triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+    audit_terms = set(result.modal_ir.metadata["frame_ontology_term_audit_terms"])
+    high_signal_terms = set(
+        result.modal_ir.metadata["frame_ontology_high_signal_term_audit_terms"]
+    )
+
+    assert "audit_frame_logic_terms" in selected_terms
+    assert "modal_frame_logic" in selected_terms
+    assert "10_2263" in audit_terms
+    assert "38_1731" in audit_terms
+    assert "10_2263" in high_signal_terms
+
+
 def test_frame_ontology_audit_terms_contextualize_low_signal_frame_features() -> None:
     frame_terms = _frame_ontology_audit_terms(
         frame_feature_keys=[
