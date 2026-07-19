@@ -40289,6 +40289,53 @@ def test_decompiler_emits_frame_target_reconstruction_slots_for_conditioned_temp
     )
 
 
+def test_decompiler_preserves_conditional_normative_family_from_source_cues() -> None:
+    conditional_document = _single_formula_document(
+        family="conditional_normative",
+        symbol="O|",
+        label="conditional obligation",
+        text=(
+            "The Secretary shall make grants, provided that the applicant "
+            "meets the matching requirement."
+        ),
+        predicate="secretary_grant_award",
+        conditions=["provided that the applicant meets the matching requirement"],
+    )
+    frame_document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "The program is available to eligible applicants provided that "
+            "funds remain available."
+        ),
+        predicate="program_funding_eligibility",
+    )
+
+    conditional_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(conditional_document)
+    )
+    frame_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(frame_document)
+    )
+
+    assert "conditional_normative" in conditional_slots[
+        "typed_decompiler_family_preservation"
+    ]
+    assert "conditional_normative->conditional_normative" in conditional_slots[
+        "typed_decompiler_family_preservation_pair"
+    ]
+    assert "conditional_normative->conditional_normative:provided_that" in (
+        conditional_slots["typed_decompiler_family_pair_cue"]
+    )
+    assert "frame->conditional_normative" in frame_slots[
+        "typed_decompiler_family_pair"
+    ]
+    assert "frame->conditional_normative:provided_that" in frame_slots[
+        "typed_decompiler_family_pair_cue"
+    ]
+
+
 def test_decompiler_binds_frame_conditional_deontic_cues_to_deontic_view() -> None:
     document = _single_formula_document(
         family="frame",

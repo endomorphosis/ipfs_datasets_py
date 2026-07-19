@@ -2673,6 +2673,22 @@ def _decode_formula_phrases(
                 provenance_only=True,
             )
         )
+    for slot, value in _typed_decompiler_conditional_normative_preservation_slots(
+        formula=formula,
+        document=document,
+        predicate_text=predicate_text,
+        cue_values=cue_values,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     for condition in condition_values:
         phrases.append(
             DecodedModalPhrase(
@@ -10246,6 +10262,18 @@ def _is_deontic_bridge_cue(cue: str) -> bool:
     )
 
 
+def _is_conditional_normative_bridge_cue(cue: str) -> bool:
+    normalized = _clean_text(cue).lower().replace(" ", "_")
+    if not normalized:
+        return False
+    if normalized in _CLAUSE_PREFIX_BRIDGE_CUES:
+        return True
+    return any(
+        bridge_family == "conditional_normative"
+        for bridge_family, _bridge_symbol in _cue_bridge_operator_pairs(normalized)
+    )
+
+
 def _deontic_symbol_for_cue(cue: str, *, fallback_force: str) -> str:
     normalized = _clean_text(cue).lower().replace(" ", "_")
     for bridge_family, bridge_symbol in _cue_bridge_operator_pairs(normalized):
@@ -11977,6 +12005,167 @@ def _typed_decompiler_source_reconstruction_slots(
                         ),
                     )
                 )
+    return _unique_slot_values(slots)
+
+
+def _typed_decompiler_conditional_normative_preservation_slots(
+    *,
+    formula: ModalIRFormula,
+    document: ModalIRDocument,
+    predicate_text: str,
+    cue_values: Sequence[str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+) -> List[Tuple[str, str]]:
+    """Expose conditional-normative family evidence with stable slot names."""
+    source_family = _clean_text(formula.operator.family).lower()
+    source_symbol = _clean_text(formula.operator.symbol)
+    if not source_family:
+        return []
+
+    source_span_text = _formula_source_span_text(document=document, formula=formula)
+    reconstruction_text = _typed_decompiler_semantic_reconstruction_text(
+        document=document,
+        formula=formula,
+        predicate_text=predicate_text,
+        source_span_text=source_span_text,
+        condition_values=condition_values,
+        exception_values=exception_values,
+    )
+    condition_cues = _typed_decompiler_condition_cues(
+        condition_values=condition_values,
+        exception_values=exception_values,
+        text=reconstruction_text,
+    )
+    bridge_cues = _unique_text_values(
+        (
+            *(
+                _clean_text(cue).lower().replace(" ", "_")
+                for cue in cue_values
+                if _clean_text(cue)
+            ),
+            *_formula_bridge_cues(
+                formula,
+                extra_clauses=(*condition_values, *exception_values),
+            ),
+            *_bridge_cues_from_text(reconstruction_text),
+            *condition_cues,
+        )
+    )
+    conditional_cues = [
+        cue
+        for cue in bridge_cues
+        if _is_conditional_normative_bridge_cue(cue)
+    ]
+    has_conditional_scope = bool(
+        condition_values
+        or exception_values
+        or conditional_cues
+        or source_symbol == "O|"
+        or source_family == "conditional_normative"
+    )
+    if not has_conditional_scope:
+        return []
+
+    target_family = "conditional_normative"
+    pair = f"{source_family}->{target_family}"
+    force = _modal_force_label(formula)
+    polarity = _modal_scope_polarity(
+        formula,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        document=document,
+    )
+    predicate_key = _slot_safe_family_pair_key(predicate_text)
+    semantic_atoms = _legal_semantic_atoms_from_text(reconstruction_text)
+    slots: List[Tuple[str, str]] = [
+        ("typed_decompiler_family_pair", pair),
+        ("typed_decompiler_conditional_normative_family", target_family),
+        ("typed_decompiler_conditional_normative_source_family", source_family),
+        (
+            "typed_decompiler_conditional_normative_signature",
+            f"{pair}:{force}:{polarity}",
+        ),
+        (
+            "typed_decompiler_force_polarity_family_pair",
+            f"{force}:{polarity}:{pair}",
+        ),
+        (
+            "decompiler-plan",
+            f"conditional-normative-preservation:{force}:{polarity}:{pair}",
+        ),
+    ]
+    if source_family == target_family:
+        slots.extend(
+            (
+                ("typed_decompiler_family_preservation", target_family),
+                ("typed_decompiler_family_preservation_pair", pair),
+            )
+        )
+    if predicate_key:
+        slots.extend(
+            (
+                (
+                    "typed_decompiler_conditional_normative_predicate_pair",
+                    f"{predicate_key}:{pair}",
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed_decompiler_family_pair:"
+                        f"{pair}||CEC.native"
+                    ),
+                ),
+            )
+        )
+    for cue in conditional_cues or ["conditional_scope"]:
+        cue_pair = f"{pair}:{cue}"
+        slots.extend(
+            (
+                ("typed_decompiler_family_pair_cue", cue_pair),
+                ("typed_decompiler_conditional_normative_cue", cue),
+                (
+                    "typed_decompiler_conditional_normative_cue_pair",
+                    cue_pair,
+                ),
+                (
+                    "semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"slot:typed_decompiler_family_pair_cue:"
+                        f"{cue_pair}||CEC.native"
+                    ),
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot:typed_decompiler_family_pair_cue:"
+                        f"{cue_pair}||CEC.native"
+                    ),
+                ),
+            )
+        )
+    for atom in semantic_atoms:
+        if not _typed_decompiler_semantic_atom_supports_target(
+            atom,
+            target_family=target_family,
+            source_family=source_family,
+        ):
+            continue
+        slots.extend(
+            (
+                (
+                    "typed_decompiler_conditional_normative_semantic_pair",
+                    f"{atom}:{pair}",
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        f"{target_family}||slot-pair:semantic-atom:{atom}|"
+                        f"typed_decompiler_family_pair:{pair}||CEC.native"
+                    ),
+                ),
+            )
+        )
     return _unique_slot_values(slots)
 
 
