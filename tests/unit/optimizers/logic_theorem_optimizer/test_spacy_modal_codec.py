@@ -10690,6 +10690,72 @@ def test_spacy_compiler_adds_modal_heading_prefix_coverage_for_security_evaluati
     assert "Security response evaluations" in prefix_spans
 
 
+def test_spacy_compiler_adds_packet_000165_program_authority_heading_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-42-6244.-3e0d2b124eabe490",
+            "42 U.S.C. 6244.",
+            "Sec. 6244 - Authorization of appropriations. There are authorized to be appropriated such sums as may be necessary.",
+            "Authorization of appropriations",
+            "authorized",
+        ),
+        (
+            "us-code-42-2751.-d7af5ae7f6f1c93a",
+            "42 U.S.C. 2751.",
+            "Sec. 2751 - Congressional declaration of purpose. It is the purpose of this chapter to promote peace and security.",
+            "Congressional declaration of purpose",
+            "__uscode_declarative_statement_fallback__",
+        ),
+        (
+            "us-code-43-433a.-f13d8a3ff4f56a04",
+            "43 U.S.C. 433a.",
+            "§433a. Environmental impact statements All agencies of the Federal Government shall include environmental impact statements.",
+            "Environmental impact statements",
+            "shall",
+        ),
+        (
+            "us-code-36-150903-b0591f45ce9a3faf",
+            "36 U.S.C. 150903",
+            "§150903. Powers The corporation may adopt bylaws and carry out activities.",
+            "Powers",
+            "may",
+        ),
+    ]
+
+    for document_id, citation, text, expected_heading, expected_modal_cue in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.document_id == document_id
+        assert any(
+            formula.operator.family in {"deontic", "frame"}
+            and formula.metadata.get("cue") == expected_modal_cue
+            for formula in modal_ir.formulas
+        )
+        frame_coverage_text_spans = {
+            modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip()
+            for formula in modal_ir.formulas
+            if formula.operator.family == "frame"
+            and formula.metadata.get("fallback_rule")
+            in {
+                "uscode_modal_heading_prefix_coverage_v1",
+                "uscode_residual_span_coverage_v1",
+                "uscode_section_catchline_coverage_v1",
+            }
+        }
+
+        assert any(expected_heading in span for span in frame_coverage_text_spans)
+
+
 def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
