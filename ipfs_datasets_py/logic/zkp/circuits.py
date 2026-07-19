@@ -32,6 +32,7 @@ _COMPILER_GUIDANCE_CONTAINER_KEYS = (
     "guidance_contract",
     "guidance",
     "semantic_bundle",
+    "semantic_bundle_key",
     "bundle",
     "compiler_guidance_attribution",
 )
