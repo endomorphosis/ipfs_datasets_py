@@ -50838,6 +50838,115 @@ def test_decompiler_reconstructs_packet_000190_modal_ir_residual_slots() -> None
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000626_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "16 U.S.C. 430x. Authorization of appropriations. "
+                    "There are authorized to be appropriated such sums as may "
+                    "be necessary for fiscal years to carry out this "
+                    "subchapter for national military parks."
+                ),
+                predicate="appropriation_authorization",
+            ),
+            {
+                "appropriation_authorization",
+                "national_military_park_resource",
+                "national_park_resource",
+                "uscode_appropriation_authorization_record",
+            },
+            {"frame->conditional_normative", "frame->frame", "frame->temporal"},
+            "uscode_national_park_appropriation_authorization_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "2 U.S.C. 31a. U.S.C. Title 2 - THE CONGRESS CHAPTER "
+                    "3 - COMPENSATION AND ALLOWANCES OF MEMBERS. Sec. 31a - "
+                    "Repealed. Mar. 2, 1955, ch. 9, section 4(b), "
+                    "69 Stat. 11, effective Mar. 1, 1955."
+                ),
+                predicate="member_compensation_repealed_status",
+            ),
+            {"congressional_member_compensation_allowance", "repealed"},
+            {"frame->conditional_normative", "frame->frame", "frame->temporal"},
+            "uscode_congress_member_compensation_repealed_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "50 U.S.C. 403-3g. Transferred Editorial Notes "
+                    "Codification. Section 403-3g, comprising section 103G "
+                    "of the National Security Act of 1947, was editorially "
+                    "reclassified as section 3032 of this title."
+                ),
+                predicate="editorial_reclassification_status",
+            ),
+            {
+                "editorial_reclassification",
+                "national_security_act_reclassification",
+                "transferred",
+            },
+            {"frame->conditional_normative", "frame->frame", "frame->temporal"},
+            "uscode_national_security_reclassification_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "22 U.S.C. 6531. Office of the Capitol Visitor Center. "
+                    "The Chief Executive Officer shall appoint an Assistant "
+                    "to the Chief Executive Officer for the Capitol Visitor "
+                    "Center."
+                ),
+                predicate="capitol_visitor_center_assistant",
+            ),
+            {
+                "capitol_visitor_center",
+                "uscode_capitol_visitor_center_administration",
+                "visitor_center_assistant",
+            },
+            {"frame->conditional_normative", "frame->frame"},
+            "uscode_capitol_visitor_center_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

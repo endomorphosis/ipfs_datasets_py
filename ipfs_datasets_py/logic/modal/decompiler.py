@@ -235,6 +235,15 @@ _PACKET_000190_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "uscode_repealed_editorial_record",
     }
 )
+_PACKET_000626_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "congressional_member_compensation_allowance",
+        "national_military_park_resource",
+        "national_security_act_reclassification",
+        "uscode_appropriation_authorization_record",
+        "uscode_capitol_visitor_center_administration",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -302,6 +311,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("authorization of appropriations", "appropriation_authorization"),
     ("authorized to be appropriated", "appropriation_authorization"),
     ("appropriations are authorized", "appropriation_authorization"),
+    ("authorization of appropriations", "uscode_appropriation_authorization_record"),
+    ("authorized to be appropriated", "uscode_appropriation_authorization_record"),
+    ("national military parks", "national_military_park_resource"),
+    ("national military park", "national_military_park_resource"),
     ("developing institutions", "developing_institution_program"),
     (
         "higher education resources and student assistance",
@@ -946,6 +959,7 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("plantship", "facility_operation"),
     ("editorially reclassified", "editorial_reclassification"),
     ("reclassified as section", "editorial_reclassification"),
+    ("national security act of 1947", "national_security_act_reclassification"),
     ("crime control and law enforcement", "crime_control_law_enforcement"),
     ("law enforcement", "law_enforcement"),
     ("transferred editorial notes codification", "editorial_transfer_status"),
@@ -961,6 +975,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("judicial notice shall be taken", "judicial_notice"),
     ("judicial notice", "judicial_notice"),
     ("capitol visitor center", "capitol_visitor_center"),
+    (
+        "office of the capitol visitor center",
+        "uscode_capitol_visitor_center_administration",
+    ),
     ("assistant to the chief executive officer", "visitor_center_assistant"),
     ("assistant to chief executive officer", "visitor_center_assistant"),
     ("chief executive officer", "chief_executive_officer"),
@@ -5629,6 +5647,26 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     if re.search(r"\bcompact\s+of\s+free\s+association\b", normalized):
         add("compact_free_association")
     if re.search(
+        r"\b(?:members?\s+of\s+congress|the\s+congress)\b.{0,120}"
+        r"\b(?:compensation|allowances?)\b|"
+        r"\b(?:compensation|allowances?)\b.{0,120}"
+        r"\b(?:members?\s+of\s+congress|the\s+congress)\b",
+        normalized,
+    ):
+        add("congressional_member_compensation_allowance")
+    if re.search(
+        r"\bauthorization\s+of\s+appropriations\b|"
+        r"\bauthorized\s+to\s+be\s+appropriated\b|"
+        r"\bappropriations\s+are\s+authorized\b",
+        normalized,
+    ):
+        add("appropriation_authorization")
+        add("uscode_appropriation_authorization_record")
+    if re.search(r"\bnational\s+military\s+parks?\b", normalized):
+        add("national_military_park_resource")
+    if re.search(r"\bnational\s+security\s+act\s+of\s+1947\b", normalized):
+        add("national_security_act_reclassification")
+    if re.search(
         r"\b(?:export\s+credit|credit\s+authority|federal\s+financing\s+bank)\b",
         normalized,
     ):
@@ -6353,6 +6391,7 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("official_seal")
     if re.search(r"\bcapitol\s+visitor\s+center\b", normalized):
         add("capitol_visitor_center")
+        add("uscode_capitol_visitor_center_administration")
     if re.search(
         r"\bassistant\b.{0,80}\bchief\s+executive\s+officer\b|"
         r"\bchief\s+executive\s+officer\b.{0,80}\bassistant\b",
@@ -14651,6 +14690,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "uranium_reserve_resource",
         "uscode_omitted_codification_record",
         "uscode_repealed_editorial_record",
+        *_PACKET_000626_USCODE_RECONSTRUCTION_ATOMS,
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -14807,6 +14847,23 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000626_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in {
+            "congressional_member_compensation_allowance",
+            "national_military_park_resource",
+            "national_security_act_reclassification",
+            "uscode_appropriation_authorization_record",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "congressional_member_compensation_allowance",
+            "national_security_act_reclassification",
+            "uscode_capitol_visitor_center_administration",
+        }:
+            add("epistemic")
         if normalized_atom in {
             "administrative_coordination_duty",
             "flood_map_certification",
@@ -16986,6 +17043,31 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_transfer_status_surface")
+    if re.search(
+        r"\b(?:members?\s+of\s+congress|the\s+congress)\b.{0,120}"
+        r"\b(?:compensation|allowances?)\b|"
+        r"\b(?:compensation|allowances?)\b.{0,120}"
+        r"\b(?:members?\s+of\s+congress|the\s+congress)\b",
+        lowered,
+    ) and re.search(r"\brepealed\b", lowered):
+        add("uscode_congress_member_compensation_repealed_surface")
+    if re.search(
+        r"\b(?:authorization\s+of\s+appropriations|authorized\s+to\s+be\s+appropriated|"
+        r"appropriations\s+are\s+authorized)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:national\s+military\s+parks?|national\s+parks?|fiscal\s+years?|"
+        r"such\s+sums\s+as\s+may\s+be\s+necessary)\b",
+        lowered,
+    ):
+        add("uscode_national_park_appropriation_authorization_surface")
+    if re.search(r"\bnational\s+security\s+act\s+of\s+1947\b", lowered) and re.search(
+        r"\b(?:reclassified|transferred|codification)\b",
+        lowered,
+    ):
+        add("uscode_national_security_reclassification_surface")
+    if re.search(r"\bcapitol\s+visitor\s+center\b", lowered):
+        add("uscode_capitol_visitor_center_surface")
     if re.search(r"\b(?:job\s+corps|workforce\s+investment\s+systems?)\b", lowered):
         add("uscode_job_corps_program_status_surface")
     if re.search(
