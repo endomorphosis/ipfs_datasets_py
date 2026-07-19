@@ -16683,6 +16683,53 @@ COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
     ),
 }
 
+COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+)
+
+COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS,
+        )
+    )
+)
+
+COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS,
+        )
+    )
+)
+
+SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS,
+        )
+    )
+)
+
+PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS,
+        )
+    )
+)
+
 
 DEFAULT_MODAL_REGISTRY = ModalRegistry()
 
@@ -16693,6 +16740,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_001592_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_001618_FAMILY_PAIRS",
+    "COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000751_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_006115_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_002055_FAMILY_PAIRS",
