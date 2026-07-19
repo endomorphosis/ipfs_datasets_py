@@ -588,7 +588,8 @@ _USCODE_SECTION_CATCHLINE_STOP_RE = re.compile(
     r"§+\s*\d|"
     r"\([a-z0-9ivxlcdm]{1,6}\)\s+|"
     r"The\s+(?:Secretary|Foundation|Commission|Administrator|Director|"
-    r"consolidated\s+bank)\b|"
+    r"consolidated\s+bank|corporation)\b|"
+    r"All\s+agencies\b|"
     r"Any\s+\w+\b|"
     r"Each\s+\w+\b|"
     r"Whoever\s+\w+\b|"
@@ -599,7 +600,7 @@ _USCODE_SECTION_CATCHLINE_STOP_RE = re.compile(
     r"As\s+soon\s+as\b|"
     r"Under\s+such\s+terms\b|"
     r"It\s+is\s+(?:critical|the\s+purpose|the\s+sense)\b|"
-    r"There\s+(?:is|are)\s+established\b))",
+    r"There\s+(?:is|are)\s+(?:authorized|established)\b))",
     re.IGNORECASE,
 )
 _USCODE_DEFINITION_RESIDUAL_HINT_RE = re.compile(
