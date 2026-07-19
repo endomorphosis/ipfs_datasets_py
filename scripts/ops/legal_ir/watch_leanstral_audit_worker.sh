@@ -296,7 +296,7 @@ update_input_signature() {
 }
 
 run_audit_if_due() {
-  local signature now batch_use_mesh_args audit_status audit_timeout_cmd audit_launch_cmd
+  local signature now failure_now batch_use_mesh_args audit_status audit_timeout_cmd audit_launch_cmd
   update_input_signature || return 0
   signature="${current_input_signature}"
   now="$(date +%s)"
@@ -379,7 +379,8 @@ run_audit_if_due() {
     next_retry_epoch=0
     log_line "audit_completed signature=${signature} report=${PUBLISHED_REPORT_OUTPUT}"
   else
-    next_retry_epoch=$((now + FAILURE_BACKOFF_SECONDS))
+    failure_now="$(date +%s)"
+    next_retry_epoch=$((failure_now + FAILURE_BACKOFF_SECONDS))
     if (( audit_status == 124 || audit_status == 137 )); then
       kill_leanstral_llama_servers "audit_timeout"
       log_line "audit_timed_out signature=${signature} timeout_seconds=${AUDIT_RUN_TIMEOUT_SECONDS} status=${audit_status} retry_after_epoch=${next_retry_epoch}"
