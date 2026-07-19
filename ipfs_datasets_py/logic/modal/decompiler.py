@@ -16108,6 +16108,9 @@ def _default_force_view_family_pair_views(
     if "deontic" in families:
         add("deontic.ir")
         add("TDFOL.prover")
+        add("CEC.native")
+    if "deontic" in families and source_family != target_family:
+        add("knowledge_graphs.neo4j_compat")
     if "frame" in families:
         add("knowledge_graphs.neo4j_compat")
         add("CEC.native")
