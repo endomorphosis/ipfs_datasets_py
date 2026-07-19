@@ -17589,6 +17589,27 @@ def test_fol_tdfol_bridge_promotes_packet_compiler_guidance_samples() -> None:
     assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
 
 
+def test_fol_tdfol_proof_gate_revalidates_compiler_guidance_formula_payload() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import _proof_gate_from_tdfol_records
+
+    proof_gate = _proof_gate_from_tdfol_records(
+        [
+            {
+                "formula": "O(publish_notice(agency))",
+                "proof_input": "O(publish_notice(agency))",
+                "parse_ok": False,
+                "source_id": "tdfol:compiler_guidance:repair_tdfol_bridge_parse",
+                "compiler_guidance_route": "repair_tdfol_bridge_parse",
+            }
+        ]
+    )
+
+    assert proof_gate.compiles is True
+    assert proof_gate.valid_count == 1
+    assert "tdfol:compiler_guidance:repair_tdfol_bridge_parse" in proof_gate.verified_by
+    assert proof_gate.details[0]["proof_rule"] == "compiler_guidance_parse_repair"
+
+
 def test_logic_manifest_includes_bridge_layer() -> None:
     from ipfs_datasets_py.logic.submodule_registry import logic_integration_manifest
 

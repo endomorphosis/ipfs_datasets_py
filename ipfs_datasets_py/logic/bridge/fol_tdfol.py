@@ -2617,11 +2617,12 @@ def _proof_gate_from_tdfol_records(
     records: Sequence[Mapping[str, Any]],
 ) -> ProofGateResult:
     attempted = len(records)
-    valid = sum(1 for record in records if record.get("parse_ok"))
+    record_parse_results = tuple(_tdfol_record_parse_ok(record) for record in records)
+    valid = sum(1 for parse_ok in record_parse_results if parse_ok)
     failed = attempted - valid
     verified_by = ["tdfol:parser"] if valid else []
-    for record in records:
-        if not record.get("parse_ok"):
+    for record, parse_ok in zip(records, record_parse_results):
+        if not parse_ok:
             continue
         route = str(record.get("compiler_guidance_route") or "").strip()
         if not route:
@@ -2637,7 +2638,7 @@ def _proof_gate_from_tdfol_records(
         details=tuple(
             {
                 "formula": record.get("formula"),
-                "parse_ok": bool(record.get("parse_ok")),
+                "parse_ok": parse_ok,
                 "source_id": record.get("source_id"),
                 **(
                     {
@@ -2646,13 +2647,26 @@ def _proof_gate_from_tdfol_records(
                         ),
                         "proof_rule": "compiler_guidance_parse_repair",
                     }
-                    if record.get("parse_ok") and record.get("compiler_guidance_route")
+                    if parse_ok and record.get("compiler_guidance_route")
                     else {}
                 ),
             }
-            for record in records
+            for record, parse_ok in zip(records, record_parse_results)
         ),
     )
+
+
+def _tdfol_record_parse_ok(record: Mapping[str, Any]) -> bool:
+    """Validate a bridge record against its normalized proof payload."""
+
+    formula_object = record.get("formula_object")
+    if formula_object is not None and coerce_tdfol_formula(formula_object) is not None:
+        return True
+    for key in ("proof_input", "formula"):
+        value = record.get(key)
+        if value and coerce_tdfol_formula(value) is not None:
+            return True
+    return bool(record.get("parse_ok"))
 
 
 def _tdfol_frame_logic_triples(
