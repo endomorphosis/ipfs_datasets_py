@@ -29,6 +29,7 @@ from ipfs_datasets_py.logic.modal.codec import (
     _frame_decoder_audit_features,
     _frame_ontology_audit_feature_keys,
     _frame_ontology_audit_terms,
+    _modal_ir_semantic_family_distribution_with_floors,
     _structural_decoded_text,
     target_family_distribution_for_modal_ir,
 )
@@ -230,6 +231,47 @@ def test_target_family_distribution_preserves_deontic_ir_floor() -> None:
     assert distribution["deontic"] == 0.368
     assert round(sum(distribution.values()), 12) == 1.0
     assert distribution["frame"] < 8 / 11
+
+
+def test_predicted_family_distribution_uses_deontic_ir_semantic_floors() -> None:
+    modal_ir = ModalIRDocument(
+        document_id="packet-000065",
+        source="us_code",
+        normalized_text="Subject to this section, the officer shall file notice.",
+        formulas=[
+            ModalIRFormula(
+                formula_id="packet-000065:f0001",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="deterministic",
+                    symbol="O|",
+                    label="conditional_obligation",
+                ),
+                predicate=ModalIRPredicate(name="FileNotice", arguments=["officer"]),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000065",
+                    start_char=0,
+                    end_char=58,
+                    citation="18 U.S.C. 431",
+                ),
+            )
+        ],
+    )
+
+    distribution = _modal_ir_semantic_family_distribution_with_floors(
+        {
+            "conditional_normative": 0.1998,
+            "deontic": 0.087,
+            "frame": 0.572,
+            "temporal": 0.134,
+        },
+        modal_ir,
+    )
+
+    assert distribution["conditional_normative"] == 0.368
+    assert distribution["deontic"] == 0.368
+    assert distribution["frame"] < 0.572
+    assert round(sum(distribution.values()), 12) == 1.0
 
 
 def _assert_refined_margin_buffer_at_least(

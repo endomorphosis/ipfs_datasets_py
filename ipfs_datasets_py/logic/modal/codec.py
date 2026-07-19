@@ -129,6 +129,7 @@ _COMPILER_GUIDANCE_FRAME_AUDIT_COMPONENT_GAP_KEYS = (
     "legal_ir_component_gaps",
 )
 _DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR = 0.368
+_CONDITIONAL_NORMATIVE_TARGET_FAMILY_PROBABILITY_FLOOR = 0.368
 _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("provided that", "provided_that"),
     ("subject to this subsection", "subject_to_this_subsection"),
@@ -2885,6 +2886,12 @@ class DeterministicModalLogicCodec:
         family_probabilities = _softmax(family_logits)
         target_family = target_family_for_modal_ir(modal_ir)
         target_family_distribution = target_family_distribution_for_modal_ir(modal_ir)
+        semantic_family_probabilities = (
+            _modal_ir_semantic_family_distribution_with_floors(
+                family_probabilities,
+                modal_ir,
+            )
+        )
         kg_triples = modal_ir_to_flogic_triples(modal_ir, selected_frame=selected_frame)
         flogic_ontology = flogic_triples_to_ontology(
             kg_triples,
@@ -3091,11 +3098,11 @@ class DeterministicModalLogicCodec:
                 target_family_distribution,
             ),
             "cross_entropy_excess_loss": cross_entropy_excess_distribution_loss(
-                family_probabilities,
+                semantic_family_probabilities,
                 target_family_distribution,
             ),
             "cross_entropy_loss": cross_entropy_distribution_loss(
-                family_probabilities,
+                semantic_family_probabilities,
                 target_family_distribution,
             ),
             "flogic_similarity_loss": 1.0 - flogic_similarity_score,
@@ -3205,6 +3212,7 @@ class DeterministicModalLogicCodec:
             "modal_decompiler_source_span_copy_ratio": source_span_copy_ratio,
             "modal_decompiler_structural_text": structural_decoded_text,
             "modal_decompiler_structural_text_reconstruction_similarity": structural_text_similarity,
+            "modal_ir_semantic_family_probabilities": semantic_family_probabilities,
             "modal_families": sorted({formula.operator.family for formula in modal_ir.formulas}),
             "modal_systems": sorted({formula.operator.system for formula in modal_ir.formulas}),
             "parser_backend": self.config.parser_backend,
@@ -3624,6 +3632,96 @@ def _deontic_target_distribution_with_floor(
     total = sum(adjusted.values())
     if total <= 0.0:
         return {deontic_family: 1.0}
+    return {
+        family: round(weight / total, 12)
+        for family, weight in sorted(adjusted.items())
+        if weight > 0.0
+    }
+
+
+def _modal_ir_semantic_family_distribution_with_floors(
+    distribution: Mapping[str, float],
+    modal_ir: ModalIRDocument,
+) -> Dict[str, float]:
+    """Make explicit modal IR operators authoritative for semantic families."""
+
+    floors: Dict[str, float] = {}
+    has_deontic_force = False
+    has_conditional_normative = False
+    for formula in modal_ir.formulas:
+        family = str(formula.operator.family or "").strip()
+        symbol = str(formula.operator.symbol or "").strip()
+        if family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value:
+            has_conditional_normative = True
+            has_deontic_force = True
+        if family == ModalLogicFamily.DEONTIC.value or symbol in {"O", "P", "F"}:
+            has_deontic_force = True
+
+    if has_deontic_force:
+        floors[ModalLogicFamily.DEONTIC.value] = _DEONTIC_TARGET_FAMILY_PROBABILITY_FLOOR
+    if has_conditional_normative:
+        floors[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] = (
+            _CONDITIONAL_NORMATIVE_TARGET_FAMILY_PROBABILITY_FLOOR
+        )
+    if not floors:
+        return dict(sorted(distribution.items()))
+    return _distribution_with_probability_floors(distribution, floors)
+
+
+def _distribution_with_probability_floors(
+    distribution: Mapping[str, float],
+    floors: Mapping[str, float],
+) -> Dict[str, float]:
+    """Return a normalized distribution with selected family minima enforced."""
+
+    adjusted = {
+        str(family): max(0.0, float(weight))
+        for family, weight in distribution.items()
+        if str(family) and float(weight) > 0.0
+    }
+    normalized_floors = {
+        str(family): max(0.0, float(floor))
+        for family, floor in floors.items()
+        if str(family) and float(floor) > 0.0
+    }
+    if not normalized_floors:
+        return dict(sorted(adjusted.items()))
+
+    floor_total = sum(normalized_floors.values())
+    if floor_total >= 1.0:
+        return {
+            family: round(weight / floor_total, 12)
+            for family, weight in sorted(normalized_floors.items())
+        }
+
+    fixed_total = 0.0
+    scalable_total = 0.0
+    for family, weight in list(adjusted.items()):
+        floor = normalized_floors.get(family, 0.0)
+        if floor and weight < floor:
+            adjusted[family] = floor
+            fixed_total += floor
+        else:
+            scalable_total += weight
+    for family, floor in normalized_floors.items():
+        if family not in adjusted:
+            adjusted[family] = floor
+            fixed_total += floor
+
+    remaining = max(0.0, 1.0 - fixed_total)
+    scale = remaining / scalable_total if scalable_total > 0.0 else 0.0
+    for family, weight in list(adjusted.items()):
+        floor = normalized_floors.get(family, 0.0)
+        if floor and weight <= floor:
+            continue
+        adjusted[family] = weight * scale
+
+    total = sum(adjusted.values())
+    if total <= 0.0:
+        return {
+            family: round(weight / floor_total, 12)
+            for family, weight in sorted(normalized_floors.items())
+        }
     return {
         family: round(weight / total, 12)
         for family, weight in sorted(adjusted.items())
