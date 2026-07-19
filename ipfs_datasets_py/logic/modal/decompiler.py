@@ -268,6 +268,19 @@ _PACKET_000629_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "uscode_voting_elections_reclassification",
     }
 )
+_PACKET_000630_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "army_officer_school_detail",
+        "marine_corps_medical_officer",
+        "marine_corps_headquarters_staff",
+        "military_post_school_use",
+        "preventive_health_demonstration_project",
+        "preventive_health_service_grant",
+        "public_housing_agency_assistance",
+        "supplemental_preventive_health_grant",
+        "wildlife_conservation_order",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -5724,6 +5737,49 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("national_military_park_resource")
     if re.search(r"\bnational\s+security\s+act\s+of\s+1947\b", normalized):
         add("national_security_act_reclassification")
+    if re.search(
+        r"\b(?:supplemental\s+grants?|additional\s+preventive\s+health\s+services?|"
+        r"preventive\s+health\s+services?)\b",
+        normalized,
+    ):
+        add("supplemental_preventive_health_grant")
+        add("preventive_health_service_grant")
+    if re.search(r"\bdemonstration\s+projects?\b", normalized) and re.search(
+        r"\b(?:preventive\s+health|grants?|states?)\b",
+        normalized,
+    ):
+        add("preventive_health_demonstration_project")
+    if re.search(
+        r"\b(?:medical\s+officer\s+of\s+the\s+marine\s+corps|"
+        r"marine\s+corps\b.{0,80}\bmedical\s+officer|"
+        r"headquarters,\s+marine\s+corps)\b",
+        normalized,
+    ):
+        add("marine_corps_medical_officer")
+        add("marine_corps_headquarters_staff")
+    if re.search(
+        r"\b(?:vacant\s+military\s+posts?|military\s+posts?\s+or\s+barracks|"
+        r"barracks\s+for\s+schools?)\b",
+        normalized,
+    ):
+        add("military_post_school_use")
+    if re.search(
+        r"\b(?:detail\s+of\s+army\s+officers?|army\s+officers?\b.{0,80}\bschools?)\b",
+        normalized,
+    ):
+        add("army_officer_school_detail")
+    if re.search(
+        r"\b(?:wildlife|migratory\s+birds?|fish\s+and\s+wildlife|"
+        r"conservation\s+order|hunting\s+regulations?)\b",
+        normalized,
+    ) and re.search(r"\b(?:shall|may|order|secretary|regulations?)\b", normalized):
+        add("wildlife_conservation_order")
+    if re.search(
+        r"\b(?:public\s+housing\s+agenc(?:y|ies)|low[-\s]+income\s+housing|"
+        r"assistance\s+payments?|housing\s+assistance)\b",
+        normalized,
+    ):
+        add("public_housing_agency_assistance")
     if re.search(
         r"\b(?:export\s+credit|credit\s+authority|federal\s+financing\s+bank)\b",
         normalized,
@@ -13567,6 +13623,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000630_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -14756,6 +14818,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "uscode_repealed_editorial_record",
         *_PACKET_000626_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000627_USCODE_RECONSTRUCTION_ATOMS,
+        *_PACKET_000630_USCODE_RECONSTRUCTION_ATOMS,
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -14924,6 +14987,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000630_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in {
             "congressional_member_compensation_allowance",
             "national_military_park_resource",
@@ -14959,6 +15026,15 @@ def _typed_decompiler_semantic_atom_target_families(
         if normalized_atom in {
             "cuyahoga_valley_national_park_status",
             "uscode_voting_elections_reclassification",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "army_officer_school_detail",
+            "marine_corps_medical_officer",
+            "marine_corps_headquarters_staff",
+            "military_post_school_use",
+            "public_housing_agency_assistance",
+            "wildlife_conservation_order",
         }:
             add("temporal")
         if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
@@ -17342,6 +17418,36 @@ def _typed_decompiler_target_surface_profiles(
     ):
         add("uscode_drug_free_communities_support_surface")
     if re.search(
+        r"\b(?:supplemental\s+grants?|additional\s+preventive\s+health\s+services?|"
+        r"preventive\s+health\s+services?|demonstration\s+projects?)\b",
+        lowered,
+    ) and re.search(r"\b(?:secretary|director|centers?\s+for\s+disease|states?|grants?)\b", lowered):
+        add("uscode_preventive_health_grant_surface")
+    if re.search(
+        r"\b(?:medical\s+officer\s+of\s+the\s+marine\s+corps|"
+        r"headquarters,\s+marine\s+corps|marine\s+corps\b.{0,80}\bmedical\s+officer)\b",
+        lowered,
+    ):
+        add("uscode_marine_corps_medical_officer_surface")
+    if re.search(
+        r"\b(?:vacant\s+military\s+posts?|military\s+posts?\s+or\s+barracks|"
+        r"barracks\s+for\s+schools?|detail\s+of\s+army\s+officers?)\b",
+        lowered,
+    ):
+        add("uscode_military_post_school_use_surface")
+    if re.search(
+        r"\b(?:wildlife|migratory\s+birds?|fish\s+and\s+wildlife|"
+        r"conservation\s+order|hunting\s+regulations?)\b",
+        lowered,
+    ) and re.search(r"\b(?:shall|may|order|secretary|regulations?)\b", lowered):
+        add("uscode_wildlife_conservation_order_surface")
+    if re.search(
+        r"\b(?:public\s+housing\s+agenc(?:y|ies)|low[-\s]+income\s+housing|"
+        r"housing\s+assistance|assistance\s+payments?)\b",
+        lowered,
+    ):
+        add("uscode_public_housing_assistance_surface")
+    if re.search(
         r"\bcuyahoga\s+valley\s+national\s+park\b",
         lowered,
     ) and re.search(r"\b(?:repealed|editorial\s+notes|codification)\b", lowered):
@@ -18085,6 +18191,22 @@ def _typed_decompiler_predicate_classes(
             }
         ):
             add("reporting")
+    if normalized_atoms.intersection(_PACKET_000630_USCODE_RECONSTRUCTION_ATOMS):
+        add("authorization")
+        add("duty")
+        add("program")
+        add("statutory")
+        if normalized_atoms.intersection(
+            {
+                "army_officer_school_detail",
+                "marine_corps_medical_officer",
+                "marine_corps_headquarters_staff",
+                "military_post_school_use",
+                "public_housing_agency_assistance",
+                "wildlife_conservation_order",
+            }
+        ):
+            add("temporal")
     if normalized_atoms.intersection(
         {
             "annual_assessment_report",

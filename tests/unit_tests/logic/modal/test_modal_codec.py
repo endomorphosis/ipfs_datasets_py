@@ -51193,6 +51193,160 @@ def test_decompiler_reconstructs_packet_000629_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000630_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "42 U.S.C. 300n-4a. Supplemental grants for additional "
+                    "preventive health services. In the case of States "
+                    "receiving grants under section 300k, the Secretary, "
+                    "acting through the Director of the Centers for Disease "
+                    "Control and Prevention, shall make demonstration project "
+                    "grants for preventive health services."
+                ),
+                predicate="supplemental_preventive_health_grant",
+                conditions=["in the case of States receiving grants under section 300k"],
+            ),
+            {
+                "preventive_health_demonstration_project",
+                "preventive_health_service_grant",
+                "supplemental_preventive_health_grant",
+            },
+            {"deontic->conditional_normative", "deontic->frame"},
+            "uscode_preventive_health_grant_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "10 U.S.C. 8048. Medical Officer of the Marine Corps. "
+                    "Headquarters, Marine Corps shall include a Medical "
+                    "Officer of the Marine Corps on the headquarters staff."
+                ),
+                predicate="marine_corps_medical_officer",
+            ),
+            {"marine_corps_medical_officer", "marine_corps_headquarters_staff"},
+            {"deontic->frame", "deontic->temporal"},
+            "uscode_marine_corps_medical_officer_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "25 U.S.C. 276. Vacant military posts or barracks for "
+                    "schools; detail of Army officers. Vacant military posts "
+                    "and barracks may be used for Indian schools, and Army "
+                    "officers may be detailed for those schools."
+                ),
+                predicate="military_post_school_use",
+            ),
+            {"army_officer_school_detail", "military_post_school_use"},
+            {"frame->deontic", "frame->temporal"},
+            "uscode_military_post_school_use_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "16 U.S.C. 715k-5. Wildlife conservation order. The "
+                    "Secretary may issue regulations and orders for migratory "
+                    "birds, fish and wildlife conservation, and hunting."
+                ),
+                predicate="wildlife_conservation_order",
+            ),
+            {"wildlife_conservation_order"},
+            {"frame->deontic", "frame->temporal"},
+            "uscode_wildlife_conservation_order_surface",
+        ),
+        (
+            _single_formula_document(
+                family="temporal",
+                symbol="F",
+                label="future",
+                text=(
+                    "19 U.S.C. 3738. Economic development related issues. "
+                    "This subchapter concerns extension of certain trade "
+                    "benefits to sub-Saharan Africa."
+                ),
+                predicate="sub_saharan_africa_trade_benefits",
+            ),
+            {
+                "economic_development_trade_benefit",
+                "sub_saharan_africa_trade_benefit",
+            },
+            {"temporal->deontic"},
+            "uscode_sub_saharan_trade_benefit_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 1397n. Public housing agency assistance. "
+                    "Public housing agencies may receive housing assistance "
+                    "payments for low-income housing projects."
+                ),
+                predicate="public_housing_agency_assistance",
+            ),
+            {"public_housing_agency_assistance"},
+            {"frame->deontic", "frame->temporal"},
+            "uscode_public_housing_assistance_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": sorted(expected_pairs),
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "knowledge_graphs.neo4j_compat",
+                    "modal.frame_logic",
+                ],
+            }
+        ]
+
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert slot_texts["guided_typed_ir_semantic_reconstruction"]
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
