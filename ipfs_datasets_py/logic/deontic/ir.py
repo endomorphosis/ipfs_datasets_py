@@ -1130,9 +1130,15 @@ _UNLAWFUL_FOR_CLAUSE_RE = re.compile(
     re.IGNORECASE,
 )
 _SOURCE_CONDITION_RE = re.compile(
-    r"\b(?P<connector>if|when|where|provided\s+that|unless|subject\s+to)\s+"
+    r"\b(?P<connector>if|when|where|provided\s+that|subject\s+to)\s+"
     r"(?P<body>.+?)"
-    r"(?=(?:[,;.]|\s+(?:shall|must|may)\b)|$)",
+    r"(?=(?:[,;.]|\s+(?:shall|must|may|unless|except(?:\s+that)?)\b)|$)",
+    re.IGNORECASE,
+)
+_SOURCE_EXCEPTION_RE = re.compile(
+    r"\b(?P<connector>unless|except(?:\s+that)?)\s+"
+    r"(?P<body>.+?)"
+    r"(?=(?:[,;.]|\s+(?:shall|must|may|if|when|where|provided\s+that)\b)|$)",
     re.IGNORECASE,
 )
 _SECTION_APPLICATION_ACTOR_RE = re.compile(
@@ -1490,7 +1496,7 @@ def _condition_records_from_source_text(
     element: Mapping[str, Any],
     support_span: "SourceSpan",
 ) -> List[Dict[str, Any]]:
-    """Recover explicit if/when/unless conditions for reduced IR rows."""
+    """Recover explicit conditional clauses for reduced IR rows."""
 
     text = str(element.get("support_text") or element.get("text") or element.get("source_text") or "")
     if not text:
@@ -1509,6 +1515,40 @@ def _condition_records_from_source_text(
         records.append(
             {
                 "type": "condition",
+                "clause_type": connector,
+                "raw_text": match.group(0).strip(),
+                "normalized_text": body,
+                "span": [base_offset + match.start("body"), base_offset + match.end("body")],
+                "clause_span": [base_offset + match.start(), base_offset + match.end()],
+                "value": body,
+            }
+        )
+    return records
+
+
+def _exception_records_from_source_text(
+    element: Mapping[str, Any],
+    support_span: "SourceSpan",
+) -> List[Dict[str, Any]]:
+    """Recover explicit unless/except exception clauses for reduced IR rows."""
+
+    text = str(element.get("support_text") or element.get("text") or element.get("source_text") or "")
+    if not text:
+        return []
+    base_offset = 0
+    support_values = support_span.to_list()
+    if str(element.get("support_text") or "") == text and len(support_values) == 2:
+        base_offset = support_values[0]
+
+    records: List[Dict[str, Any]] = []
+    for match in _SOURCE_EXCEPTION_RE.finditer(text):
+        connector = re.sub(r"\s+", " ", match.group("connector").lower()).strip()
+        body = _clean_source_label(match.group("body"))
+        if not body:
+            continue
+        records.append(
+            {
+                "type": connector,
                 "clause_type": connector,
                 "raw_text": match.group(0).strip(),
                 "normalized_text": body,
@@ -2616,6 +2656,11 @@ class LegalNormIR:
         if not conditions:
             conditions = _support_scoped_slot_records(
                 _condition_records_from_source_text(element, support_span),
+                slot_scope_span,
+            )
+        if not exceptions:
+            exceptions = _support_scoped_slot_records(
+                _exception_records_from_source_text(element, support_span),
                 slot_scope_span,
             )
         quality = _quality_with_scoped_slot_blockers(

@@ -3,6 +3,7 @@
 from ipfs_datasets_py.logic.deontic import LegalNormIR, parser_element_to_ir
 from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 from ipfs_datasets_py.logic.deontic.exports import build_decoder_record_from_ir
+from ipfs_datasets_py.logic.deontic.formula_builder import build_deontic_formula_from_ir
 from ipfs_datasets_py.logic.deontic.ir import legal_norm_ir_slot_provenance
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
@@ -408,6 +409,45 @@ def test_legal_norm_ir_recovers_source_text_conditions_for_reduced_rows() -> Non
             "value": "such application is otherwise approvable",
         }
     ]
+
+
+def test_legal_norm_ir_recovers_source_text_unless_as_exception_for_reduced_rows() -> None:
+    source_text = "The applicant shall obtain a permit unless approval is denied."
+    element = {
+        "schema_version": "legal_norm_ir-v1",
+        "source_id": "legacy:deontic:source-unless-exception",
+        "text": source_text,
+        "support_text": source_text,
+        "support_span": [0, len(source_text)],
+        "norm_type": "obligation",
+        "deontic_operator": "shall",
+        "subject": ["applicant"],
+        "action": ["obtain a permit"],
+        "field_spans": {
+            "subject": [4, 13],
+            "modal": [14, 19],
+            "action": [20, 35],
+        },
+        "parser_warnings": ["exception_requires_scope_review"],
+        "export_readiness": {"blockers": ["exception_requires_scope_review"]},
+    }
+
+    ir = LegalNormIR.from_parser_element(element)
+
+    assert ir.conditions == []
+    assert ir.exceptions == [
+        {
+            "type": "unless",
+            "clause_type": "unless",
+            "raw_text": "unless approval is denied",
+            "normalized_text": "approval is denied",
+            "span": [43, 61],
+            "clause_span": [36, 61],
+            "value": "approval is denied",
+        }
+    ]
+    assert ir.semantic_family == "conditional_normative"
+    assert "ApprovalIsDenied" in build_deontic_formula_from_ir(ir)
 
 
 def test_deontic_bridge_view_metadata_prefers_deontic_family_for_conditional_norms() -> None:
