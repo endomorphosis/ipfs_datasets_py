@@ -13844,12 +13844,19 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "not earlier than",
                     "not later than",
                     "at such time",
+                    "at least once every",
+                    "at least once every 3 years",
+                    "at least once every 3 years thereafter",
                     "as of",
                     "on the date before",
                     "at any reasonable time",
                     "regular and periodic",
+                    "once every 3 years",
+                    "once every 3 years thereafter",
                     "periodic audits",
                     "preceding 2 years",
+                    "within 3 years",
+                    "within 3 years after",
                     "time prescribed",
                     "time and manner",
                     "due date",
@@ -15575,6 +15582,17 @@ COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_001246_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_AMBIGUITY_PACKET_000349_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
@@ -15608,6 +15626,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001246_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_000349_FAMILY_PAIRS,
         )
     )
@@ -15623,6 +15642,7 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001246_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_002508_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_000349_FAMILY_PAIRS,
         )
@@ -15639,6 +15659,7 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001246_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_002508_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_000349_FAMILY_PAIRS,
         )
@@ -15655,6 +15676,7 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001246_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_002508_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_000349_FAMILY_PAIRS,
         )
@@ -15671,6 +15693,7 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001246_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_000349_FAMILY_PAIRS,
         )
     )
@@ -15780,7 +15803,20 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
             ),
             0.0,
         ),
-        0.55,
+        0.58,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.DEONTIC.value,
+                ModalLogicFamily.TEMPORAL.value,
+            ),
+            0.0,
+        ),
+        0.40,
     ),
     (
         ModalLogicFamily.FRAME.value,
@@ -16366,6 +16402,7 @@ __all__ = [
     "COMPILER_REFINED_PACKET_002892_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_001246_FAMILY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",
     "COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",
