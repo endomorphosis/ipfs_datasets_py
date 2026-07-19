@@ -6527,6 +6527,55 @@ def test_tdfol_bridge_recovers_raw_statutory_proof_obligation_rows() -> None:
     assert report.round_trip.extra_losses["tdfol_no_formula_loss"] == 0.0
 
 
+def test_tdfol_bridge_prefers_nested_formula_over_source_text_row() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _MixedProofRowResult:
+        success = True
+        metadata = {
+            "proof_obligations": [
+                {
+                    "proof_obligation_id": "mixed:tdfol-view",
+                    "text": (
+                        "33 U.S.C. 3803: The Secretary shall administer "
+                        "and enforce this chapter."
+                    ),
+                    "target_view": "TDFOL.prover",
+                    "payload": {
+                        "records": [
+                            {
+                                "target_logic": "TDFOL",
+                                "formula": "O(enforce_clean_hulls(secretary))",
+                            }
+                        ]
+                    },
+                }
+            ],
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _MixedProofRowConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _MixedProofRowResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_MixedProofRowConverter())
+    report = adapter.evaluate(
+        "33 U.S.C. 3803: The Secretary shall administer and enforce this chapter.",
+        document_id="tdfol-mixed-proof-row",
+        citation="33 U.S.C. 3803",
+    )
+
+    records = report.ir_document.views["tdfol_formula"].payload["records"]
+    mixed = [record for record in records if record["source_id"] == "mixed:tdfol-view"]
+
+    assert mixed
+    assert mixed[0]["formula"] == "O(enforce_clean_hulls(secretary))"
+    assert mixed[0]["parse_ok"] is True
+    assert report.round_trip.extra_losses["tdfol_parse_failure_ratio"] == 0.0
+
+
 def test_tdfol_bridge_coerce_handles_core_prefix_binary_round_trip() -> None:
     from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
         BinaryFormula,
