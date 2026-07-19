@@ -77,7 +77,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-006 Create native ITP frontend adapters and goal snapshots
 
-- Status: waiting
+- Status: completed
 - Priority: P0
 - Track: integration
 - Depends on: HAMMER-001, HAMMER-002
