@@ -257,6 +257,17 @@ _PACKET_000627_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "state_program_allotment_authority",
     }
 )
+_PACKET_000629_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "agricultural_college_aid_appropriation",
+        "college_racial_discrimination_prohibition",
+        "cuyahoga_valley_national_park_status",
+        "drug_free_communities_support_program",
+        "ready_reserve_muster_duty",
+        "reserve_muster_authority",
+        "uscode_voting_elections_reclassification",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -1562,6 +1573,27 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("ready reserve muster duty", "ready_reserve_muster_duty"),
     ("muster duty", "reserve_muster_authority"),
     ("ready reserve", "reserve_muster_authority"),
+    (
+        "racial discrimination by colleges",
+        "college_racial_discrimination_prohibition",
+    ),
+    ("racial discrimination", "college_racial_discrimination_prohibition"),
+    (
+        "agricultural and mechanical colleges",
+        "agricultural_college_aid_appropriation",
+    ),
+    ("college-aid annual appropriation", "agricultural_college_aid_appropriation"),
+    ("college aid annual appropriation", "agricultural_college_aid_appropriation"),
+    ("drug-free communities support program", "drug_free_communities_support_program"),
+    ("drug free communities support program", "drug_free_communities_support_program"),
+    ("drug-free communities", "drug_free_communities_support_program"),
+    ("drug free communities", "drug_free_communities_support_program"),
+    ("cuyahoga valley national park", "cuyahoga_valley_national_park_status"),
+    (
+        "editorially reclassified as section 20504 of title 52",
+        "uscode_voting_elections_reclassification",
+    ),
+    ("title 52, voting and elections", "uscode_voting_elections_reclassification"),
 )
 _PROGRAM_RECONSTRUCTION_ATOMS = frozenset(
     {
@@ -13529,6 +13561,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000629_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -14882,6 +14920,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000629_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in {
             "congressional_member_compensation_allowance",
             "national_military_park_resource",
@@ -14914,6 +14956,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "uscode_repealed_editorial_record",
         }:
             add("epistemic")
+        if normalized_atom in {
+            "cuyahoga_valley_national_park_status",
+            "uscode_voting_elections_reclassification",
+        }:
+            add("temporal")
         if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
@@ -17277,6 +17324,34 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_crisis_counseling_assistance_surface")
+    if re.search(
+        r"\b(?:ready\s+reserve|muster\s+duty|reserve\s+muster)\b",
+        lowered,
+    ):
+        add("uscode_ready_reserve_muster_duty_surface")
+    if re.search(
+        r"\b(?:racial\s+discrimination|agricultural\s+and\s+mechanical\s+colleges?|"
+        r"college[-\s]+aid\s+annual\s+appropriation)\b",
+        lowered,
+    ):
+        add("uscode_college_racial_discrimination_surface")
+    if re.search(
+        r"\b(?:drug[-\s]+free\s+communities|drug[-\s]+free\s+communities\s+support\s+program|"
+        r"national\s+drug\s+control\s+program)\b",
+        lowered,
+    ):
+        add("uscode_drug_free_communities_support_surface")
+    if re.search(
+        r"\bcuyahoga\s+valley\s+national\s+park\b",
+        lowered,
+    ) and re.search(r"\b(?:repealed|editorial\s+notes|codification)\b", lowered):
+        add("uscode_cuyahoga_valley_national_park_repealed_surface")
+    if re.search(
+        r"\b(?:title\s+52,\s+voting\s+and\s+elections|"
+        r"editorially\s+reclassified\s+as\s+section\s+20504)\b",
+        lowered,
+    ):
+        add("uscode_voting_elections_reclassification_surface")
     if re.search(
         r"\b(?:flood\s+insurance\s+rate\s+maps?|flood\s+mapping\s+program|"
         r"technical\s+mapping\s+advisory\s+council)\b",

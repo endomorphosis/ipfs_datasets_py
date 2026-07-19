@@ -51060,6 +51060,139 @@ def test_decompiler_reconstructs_packet_000627_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000629_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="prohibition",
+                text=(
+                    "7 U.S.C. 323. Racial discrimination by colleges. "
+                    "Agricultural and Mechanical Colleges. College-aid annual "
+                    "appropriation. No college shall discriminate in admissions."
+                ),
+                predicate="college_racial_discrimination_prohibition",
+            ),
+            {
+                "agricultural_college_aid_appropriation",
+                "college_racial_discrimination_prohibition",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_college_racial_discrimination_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="P",
+                label="permission",
+                text=(
+                    "10 U.S.C. 12319. Ready Reserve: muster duty. A member "
+                    "of the Ready Reserve may be ordered to muster duty."
+                ),
+                predicate="ready_reserve_muster_duty",
+            ),
+            {"ready_reserve_muster_duty", "reserve_muster_authority"},
+            {"deontic->deontic", "deontic->frame"},
+            "uscode_ready_reserve_muster_duty_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "16 U.S.C. 460ff-4. Cuyahoga Valley National Park. "
+                    "Repealed. Pub. L. 106-291. Editorial Notes Codification."
+                ),
+                predicate="cuyahoga_valley_national_park_repealed_status",
+            ),
+            {
+                "cuyahoga_valley_national_park_status",
+                "repealed",
+                "uscode_repealed_editorial_record",
+            },
+            {"frame->frame", "frame->deontic", "frame->temporal"},
+            "uscode_cuyahoga_valley_national_park_repealed_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "21 U.S.C. 1534. Drug-Free Communities Support Program. "
+                    "Subject to this subsection, the Director shall make "
+                    "grants for drug-free communities support."
+                ),
+                predicate="drug_free_communities_support_program",
+                conditions=["subject to this subsection"],
+            ),
+            {"drug_free_communities_support_program"},
+            {"deontic->conditional_normative", "deontic->frame"},
+            "uscode_drug_free_communities_support_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 1973gg-3. Transferred. Editorial Notes "
+                    "Codification. Section 1973gg-3 was editorially "
+                    "reclassified as section 20504 of Title 52, Voting and "
+                    "Elections."
+                ),
+                predicate="voting_elections_reclassified_status",
+            ),
+            {"transferred", "reclassified", "uscode_voting_elections_reclassification"},
+            {"frame->frame", "frame->deontic", "frame->temporal"},
+            "uscode_voting_elections_reclassification_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": sorted(expected_pairs),
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "knowledge_graphs.neo4j_compat",
+                    "modal.frame_logic",
+                ],
+            }
+        ]
+
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert slot_texts["guided_typed_ir_semantic_reconstruction"]
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
