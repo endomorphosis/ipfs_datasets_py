@@ -175,6 +175,19 @@ _PACKET_000901_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "secretary_payment_adjustment",
     }
 )
+_PACKET_000184_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "crisis_counseling_assistance",
+        "crisis_counseling_training",
+        "disaster_mental_health_service",
+        "investigation_oath_authority",
+        "investigation_testimony_authority",
+        "ready_reserve_muster_duty",
+        "reserve_muster_authority",
+        "student_assignment_transportation",
+        "student_transportation_assignment",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -1372,6 +1385,27 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("horizontal distance of the hull", "hull_length_definition"),
     ("foremost part of the stem", "maritime_hull_measurement"),
     ("aftermost part of the stern", "maritime_hull_measurement"),
+    ("oaths in investigations", "investigation_oath_authority"),
+    ("oath in investigations", "investigation_oath_authority"),
+    ("administer oaths", "investigation_oath_authority"),
+    ("administer an oath", "investigation_oath_authority"),
+    ("take testimony", "investigation_testimony_authority"),
+    ("assignment and transportation of students", "student_assignment_transportation"),
+    ("assignment and transportation of student", "student_assignment_transportation"),
+    ("transportation of students", "student_transportation_assignment"),
+    ("transportation of student", "student_transportation_assignment"),
+    ("assignment of students", "student_assignment_transportation"),
+    ("assignment of student", "student_assignment_transportation"),
+    ("crisis counseling assistance and training", "crisis_counseling_assistance"),
+    ("crisis counseling assistance", "crisis_counseling_assistance"),
+    ("crisis counseling training", "crisis_counseling_training"),
+    ("professional counseling services", "crisis_counseling_assistance"),
+    ("mental health organizations", "disaster_mental_health_service"),
+    ("private mental health organizations", "disaster_mental_health_service"),
+    ("ready reserve: muster duty", "ready_reserve_muster_duty"),
+    ("ready reserve muster duty", "ready_reserve_muster_duty"),
+    ("muster duty", "reserve_muster_authority"),
+    ("ready reserve", "reserve_muster_authority"),
 )
 _PROGRAM_RECONSTRUCTION_ATOMS = frozenset(
     {
@@ -13169,6 +13203,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000184_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -14484,6 +14524,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000184_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
@@ -14520,6 +14564,16 @@ def _typed_decompiler_semantic_atom_target_families(
             "program_payment_authority",
             "rural_development_grant_program",
             "secretary_payment_adjustment",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "crisis_counseling_assistance",
+            "crisis_counseling_training",
+            "disaster_mental_health_service",
+            "ready_reserve_muster_duty",
+            "reserve_muster_authority",
+            "student_assignment_transportation",
+            "student_transportation_assignment",
         }:
             add("temporal")
         if normalized_atom in {
@@ -17387,6 +17441,23 @@ def _typed_decompiler_predicate_classes(
         add("duty")
         add("program")
         add("statutory")
+    if normalized_atoms.intersection(_PACKET_000184_USCODE_RECONSTRUCTION_ATOMS):
+        add("administration")
+        add("authorization")
+        add("duty")
+        add("statutory")
+        if normalized_atoms.intersection(
+            {
+                "crisis_counseling_assistance",
+                "crisis_counseling_training",
+                "disaster_mental_health_service",
+                "ready_reserve_muster_duty",
+                "reserve_muster_authority",
+                "student_assignment_transportation",
+                "student_transportation_assignment",
+            }
+        ):
+            add("temporal")
     if normalized_atoms.intersection(
         {
             "annual_assessment_report",

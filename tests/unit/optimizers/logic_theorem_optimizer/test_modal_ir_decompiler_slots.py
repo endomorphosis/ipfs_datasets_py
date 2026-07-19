@@ -2936,3 +2936,180 @@ def test_modal_decompiler_reconstructs_packet_000447_frame_deontic_samples() -> 
     assert "frame->deontic" in set(
         workforce_slots["typed-decompiler-target-reconstruction-pair"]
     )
+
+
+def _packet_000184_guided_document(
+    *,
+    source_id: str,
+    citation: str,
+    source_text: str,
+    family: str,
+    symbol: str,
+    predicate: str,
+    cue: str,
+    family_pairs: list[str],
+    target_view: str = "CEC.native",
+    conditions: list[str] | None = None,
+    exceptions: list[str] | None = None,
+) -> ModalIRDocument:
+    document = _packet_000447_document(
+        source_id=source_id,
+        citation=citation,
+        source_text=source_text,
+        family=family,
+        symbol=symbol,
+        predicate=predicate,
+        cue=cue,
+        conditions=conditions,
+        exceptions=exceptions,
+    )
+    return replace(
+        document,
+        metadata={
+            "action": "refine_semantic_decompiler_reconstruction",
+            "family_pairs": family_pairs,
+            "program_synthesis_scope": "ir_decompiler",
+            "target_component": "modal.ir_decompiler",
+            "target_view": target_view,
+            "legal_ir_underrepresented_components": [
+                "CEC.native",
+                "modal.frame_logic",
+                "knowledge_graphs.neo4j_compat",
+            ],
+        },
+    )
+
+
+def test_modal_decompiler_reconstructs_packet_000184_semantic_slots() -> None:
+    transfer = _packet_000184_guided_document(
+        source_id="us-code-16-556i-32e4432ee41bc5bb",
+        citation="16 U.S.C. 556i",
+        source_text=(
+            "Transfer of funds made available. The Secretary may transfer "
+            "funds made available and the funds shall remain available until "
+            "expended."
+        ),
+        family="temporal",
+        symbol="F",
+        predicate="secretary_transfer_available_funds",
+        cue="until",
+        family_pairs=["temporal->conditional_normative"],
+        conditions=["until expended"],
+    )
+    oaths = _packet_000184_guided_document(
+        source_id="us-code-25-376-4d9e29ea72db0c0e",
+        citation="25 U.S.C. 376",
+        source_text=(
+            "Oaths in investigations. The Secretary may administer oaths "
+            "and take testimony in investigations under this chapter."
+        ),
+        family="frame",
+        symbol="Frame",
+        predicate="secretary_oath_investigation_authority",
+        cue="may",
+        family_pairs=["frame->deontic", "frame->temporal"],
+        conditions=["under this chapter"],
+        target_view="knowledge_graphs.neo4j_compat",
+    )
+    students = _packet_000184_guided_document(
+        source_id="us-code-20-1756-e035c813bb1d867b",
+        citation="20 U.S.C. 1756",
+        source_text=(
+            "Assignment and transportation of students. A State shall provide "
+            "for assignment and transportation of students subject to this "
+            "subchapter."
+        ),
+        family="deontic",
+        symbol="O",
+        predicate="state_student_assignment_transportation",
+        cue="shall",
+        family_pairs=["deontic->conditional_normative"],
+        conditions=["subject to this subchapter"],
+    )
+    crisis = _packet_000184_guided_document(
+        source_id="us-code-42-5183.-f1276b109cf80b41",
+        citation="42 U.S.C. 5183",
+        source_text=(
+            "Crisis counseling assistance and training. The President is "
+            "authorized to provide professional counseling services and "
+            "financial assistance to private mental health organizations."
+        ),
+        family="temporal",
+        symbol="F",
+        predicate="president_crisis_counseling_assistance",
+        cue="authorized",
+        family_pairs=["temporal->deontic"],
+        target_view="deontic.ir",
+    )
+    muster = _packet_000184_guided_document(
+        source_id="us-code-10-12319-f76009e4befd7d13",
+        citation="10 U.S.C. 12319",
+        source_text=(
+            "Ready Reserve: muster duty. A member of the Ready Reserve may "
+            "be ordered to muster duty under regulations prescribed by the "
+            "Secretary."
+        ),
+        family="deontic",
+        symbol="P",
+        predicate="ready_reserve_muster_duty",
+        cue="may",
+        family_pairs=["deontic->deontic"],
+        target_view="deontic.ir",
+    )
+
+    transfer_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(transfer)
+    )
+    oaths_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(oaths))
+    students_slots = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(students)
+    )
+    crisis_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(crisis))
+    muster_slots = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(muster))
+
+    assert {"fund_transfer_authority", "no_year_funding_availability"}.issubset(
+        set(transfer_slots["typed-decompiler-source-semantic-atom"])
+    )
+    assert "temporal->conditional_normative" in set(
+        transfer_slots["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert {"CEC.native", "modal.frame_logic"}.issubset(
+        set(transfer_slots["legal_ir_view_prototype"])
+    )
+
+    assert {
+        "investigation_oath_authority",
+        "investigation_testimony_authority",
+    }.issubset(set(oaths_slots["typed-decompiler-source-semantic-atom"]))
+    assert {"frame->deontic", "frame->temporal"}.issubset(
+        set(oaths_slots["typed-decompiler-target-reconstruction-pair"])
+    )
+    assert "knowledge_graphs.neo4j_compat" in set(
+        oaths_slots["legal_ir_view_prototype"]
+    )
+
+    assert {
+        "student_assignment_transportation",
+        "student_transportation_assignment",
+    }.issubset(set(students_slots["typed-decompiler-source-semantic-atom"]))
+    assert "deontic->conditional_normative" in set(
+        students_slots["typed-decompiler-target-reconstruction-pair"]
+    )
+
+    assert {
+        "crisis_counseling_assistance",
+        "disaster_mental_health_service",
+    }.issubset(set(crisis_slots["typed-decompiler-source-semantic-atom"]))
+    assert "temporal->deontic" in set(
+        crisis_slots["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "deontic.ir" in set(crisis_slots["legal_ir_view_prototype"])
+
+    assert {
+        "ready_reserve_muster_duty",
+        "reserve_muster_authority",
+    }.issubset(set(muster_slots["typed-decompiler-source-semantic-atom"]))
+    assert "deontic->deontic" in set(
+        muster_slots["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "TDFOL.prover" in set(muster_slots["legal_ir_view_prototype"])
