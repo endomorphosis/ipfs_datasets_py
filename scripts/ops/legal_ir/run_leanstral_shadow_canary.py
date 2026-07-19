@@ -49,6 +49,18 @@ GUARDRAIL_CODES = (
     "schema",
     "verifier",
 )
+EVIDENCE_PROVENANCE_KINDS = (
+    "synthetic_fixture",
+    "cached_real_packet",
+    "live_canonical_state_packet",
+    "unknown",
+)
+PRODUCTION_RECORD_KINDS = frozenset(
+    {
+        "cached_real_packet",
+        "live_canonical_state_packet",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -127,6 +139,7 @@ class ShadowClusterAudit:
     projected_todo: ProjectedTodoSpecificity
     estimated_compiler_impact: Mapping[str, float]
     guardrails: Mapping[str, Any]
+    evidence_provenance: Mapping[str, Any]
     request_id: str = ""
     response_hash: str = ""
 
@@ -144,6 +157,7 @@ class ShadowClusterAudit:
                 key: round(float(value), 6)
                 for key, value in sorted(self.estimated_compiler_impact.items())
             },
+            "evidence_provenance": _json_ready(self.evidence_provenance),
             "formal_severity": round(float(self.formal_severity), 6),
             "guardrails": _json_ready(self.guardrails),
             "heldout_impact": round(float(self.heldout_impact), 6),
@@ -179,6 +193,7 @@ class ShadowCanaryResult:
     runtime_seconds: float
     estimated_compiler_impact: Mapping[str, float]
     no_mutation: Mapping[str, Any]
+    evidence_provenance: Mapping[str, Any]
     analysis_error: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
@@ -193,6 +208,7 @@ class ShadowCanaryResult:
                 key: round(float(value), 6)
                 for key, value in sorted(self.estimated_compiler_impact.items())
             },
+            "evidence_provenance": _json_ready(self.evidence_provenance),
             "no_mutation": _json_ready(self.no_mutation),
             "projected_todo_specificity": {
                 key: round(float(value), 6)
@@ -257,11 +273,17 @@ def run_shadow_canary(
         )
 
     runtime = time.monotonic() - started
+    evidence_provenance = _shadow_evidence_provenance_summary(
+        records,
+        audits=audits,
+        dry_run=cfg.dry_run,
+    )
     promotion_allowed, blockers = _promotion_decision(
         audits,
         dry_run=cfg.dry_run,
         analysis_error=analysis_error,
         selected_cluster_count=len(selected_clusters),
+        evidence_provenance=evidence_provenance,
     )
     return ShadowCanaryResult(
         schema_version=SHADOW_CANARY_SCHEMA_VERSION,
@@ -285,7 +307,10 @@ def run_shadow_canary(
             "todo_queue_seeded": False,
             "mode": "shadow",
             "report_only": True,
+            "production_eligible": False,
+            "non_production_reason": "dry_run" if cfg.dry_run else "",
         },
+        evidence_provenance=evidence_provenance,
         analysis_error=analysis_error,
     )
 
@@ -308,6 +333,7 @@ def render_markdown_report(result: ShadowCanaryResult) -> str:
         "",
         f"- Schema: `{result.schema_version}`",
         f"- Mode: `{'dry-run' if result.config.dry_run else 'shadow'}`",
+        f"- Production evidence eligible: `{str(bool(result.evidence_provenance.get('production_eligible', False))).lower()}`",
         f"- Selected clusters: {result.selected_cluster_count} of {result.source_record_count} source records",
         f"- Runtime seconds: {result.runtime_seconds:.6f}",
         f"- Promotion allowed: `{str(result.promotion_allowed).lower()}`",
@@ -340,6 +366,9 @@ def render_markdown_report(result: ShadowCanaryResult) -> str:
             "## No-Mutation Contract",
             _markdown_kv(result.no_mutation),
             "",
+            "## Evidence Provenance",
+            _markdown_kv(result.evidence_provenance),
+            "",
             "## Cluster Audits",
         ]
     )
@@ -356,6 +385,7 @@ def render_markdown_report(result: ShadowCanaryResult) -> str:
                 f"- Signature: `{audit.semantic_signature}`",
                 f"- Score: {audit.rank_score:.6f}; recurrence: {audit.recurrence}; held-out impact: {audit.heldout_impact:.6f}",
                 f"- Cache hit: `{str(audit.cache_hit).lower()}`; LLM called: `{str(audit.llm_called).lower()}`",
+                f"- Evidence provenance: `{audit.evidence_provenance.get('dominant_record_kind', 'unknown')}`; production eligible records `{audit.evidence_provenance.get('real_record_count', 0)}`",
                 f"- Audit valid: `{str(audit.audit_valid).lower()}`; verified: `{str(audit.audit_verified).lower()}`",
                 f"- Guardrails: `{_guardrail_status(audit.guardrails)}`",
                 f"- Projected TODO: `{audit.projected_todo.action}` on `{audit.projected_todo.target_component}`; specificity {audit.projected_todo.specificity_score:.3f}",
