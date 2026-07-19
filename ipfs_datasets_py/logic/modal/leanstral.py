@@ -33,15 +33,12 @@ from .leanstral_theorems import (
     lean_theorem_proof_rejection_reasons,
 )
 
-from .leanstral_theorems import (
-    LEGAL_IR_THEOREM_LEAN_KERNEL,
-    LeanstralTheoremRegistry,
-    generate_legal_semantics_theorem_registry,
-    lean_theorem_proof_rejection_reasons,
-)
-
 
 LEANSTRAL_PROPOSAL_SCHEMA_VERSION = "legal-ir-leanstral-proposal-v1"
+LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION = "legal-ir-leanstral-draft-guidance-v1"
+_LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION = "legal-ir-leanstral-drafted-logic-v1"
+_LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES = 6
+_LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS = 240
 _LEANSTRAL_PROOF_FORBIDDEN = re.compile(
     r"\b(?:admit|axiom|import|namespace|noncomputable|run_tac|set_option|sorry|theorem|unsafe)\b",
     re.IGNORECASE,
@@ -164,7 +161,7 @@ class LeanstralConfig:
     """Configuration for the explicit, non-mutating Leanstral proof lane."""
 
     enabled: bool = False
-    provider: str = "mistral_vibe"
+    provider: str = "leanstral_local"
     model: str = "Leanstral"
     vibe_agent: str = "lean"
     timeout_seconds: float = 300.0
@@ -469,6 +466,7 @@ class LeanstralProposal:
     proof: str
     python_patch: Optional[PythonPatchProposal] = None
     deterministic_rule_hints: Sequence[Dict[str, str]] = field(default_factory=tuple)
+    drafted_logic_candidates: Sequence[Dict[str, Any]] = field(default_factory=tuple)
     theorem_proofs: Mapping[str, str] = field(default_factory=dict)
     forbidden_statement_keys: Sequence[str] = field(default_factory=tuple)
     notes: str = ""
@@ -521,6 +519,9 @@ class LeanstralProposal:
             if isinstance(data.get("python_patch"), Mapping)
             else None,
             deterministic_rule_hints=tuple(normalized_hints),
+            drafted_logic_candidates=tuple(
+                _drafted_logic_candidates(data.get("drafted_logic_candidates"))
+            ),
             theorem_proofs=normalized_theorem_proofs,
             forbidden_statement_keys=forbidden_statement_keys,
             notes=str(data.get("notes", "")).strip(),
@@ -530,6 +531,9 @@ class LeanstralProposal:
         return {
             "compiler_change_spec_id": self.compiler_change_spec_id,
             "deterministic_rule_hints": [dict(hint) for hint in self.deterministic_rule_hints],
+            "drafted_logic_candidates": [
+                dict(candidate) for candidate in self.drafted_logic_candidates
+            ],
             "notes": self.notes,
             "proof": self.proof,
             "python_patch": self.python_patch.to_dict() if self.python_patch else None,
@@ -564,6 +568,102 @@ class LeanstralProofValidation:
 
 
 @dataclass(frozen=True)
+class LeanstralDraftGuidance:
+    """Validated Leanstral proof output distilled into compiler guidance."""
+
+    schema_version: str
+    guidance_id: str
+    source: str
+    task_id: str
+    sample_id: str
+    modal_ir_hash: str
+    compiler_change_spec_id: str
+    action: str
+    target_component: str
+    accepted: bool
+    trusted: bool
+    intended_use: str
+    validation_reasons: Sequence[str] = field(default_factory=tuple)
+    proof_sha256: str = ""
+    deterministic_rule_hints: Sequence[Dict[str, str]] = field(default_factory=tuple)
+    drafted_logic_candidates: Sequence[Dict[str, Any]] = field(default_factory=tuple)
+    ranked_guidance_features: Sequence[Dict[str, Any]] = field(default_factory=tuple)
+    synthesis_focus: Sequence[str] = field(default_factory=tuple)
+    feature_groups: Mapping[str, Sequence[str]] = field(default_factory=dict)
+    legal_ir_view_gap_distribution: Mapping[str, float] = field(default_factory=dict)
+    legal_ir_view_metrics: Mapping[str, float] = field(default_factory=dict)
+    target_metrics: Sequence[str] = field(default_factory=tuple)
+    allowed_paths: Sequence[str] = field(default_factory=tuple)
+    theorem_templates: Sequence[str] = field(default_factory=tuple)
+    mutation_cases: Sequence[str] = field(default_factory=tuple)
+    proof_obligation_ids: Sequence[str] = field(default_factory=tuple)
+
+    @property
+    def report_only(self) -> bool:
+        return not bool(self.trusted)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "accepted": bool(self.accepted),
+            "action": self.action,
+            "allowed_paths": list(self.allowed_paths),
+            "compiler_change_spec_id": self.compiler_change_spec_id,
+            "deterministic_rule_hints": [
+                dict(hint) for hint in self.deterministic_rule_hints
+            ],
+            "drafted_logic_candidates": [
+                dict(candidate) for candidate in self.drafted_logic_candidates
+            ],
+            "feature_groups": {
+                str(key): [str(item) for item in value]
+                for key, value in sorted(self.feature_groups.items())
+            },
+            "guidance_id": self.guidance_id,
+            "intended_use": self.intended_use,
+            "legal_ir_view_gap_distribution": dict(
+                sorted(self.legal_ir_view_gap_distribution.items())
+            ),
+            "legal_ir_view_metrics": dict(sorted(self.legal_ir_view_metrics.items())),
+            "modal_ir_hash": self.modal_ir_hash,
+            "mutation_cases": list(self.mutation_cases),
+            "proof_obligation_ids": list(self.proof_obligation_ids),
+            "proof_sha256": self.proof_sha256,
+            "ranked_guidance_features": [
+                dict(feature) for feature in self.ranked_guidance_features
+            ],
+            "report_only": self.report_only,
+            "sample_id": self.sample_id,
+            "schema_version": self.schema_version,
+            "source": self.source,
+            "synthesis_focus": list(self.synthesis_focus),
+            "target_component": self.target_component,
+            "target_metrics": list(self.target_metrics),
+            "task_id": self.task_id,
+            "theorem_templates": list(self.theorem_templates),
+            "trusted": bool(self.trusted),
+            "validation_reasons": list(self.validation_reasons),
+        }
+
+    def to_compiler_guidance_overlay(self) -> Dict[str, Any]:
+        """Return only fields shaped like AdaptiveModalAutoencoder guidance."""
+
+        return {
+            "feature_groups": {
+                str(key): [str(item) for item in value]
+                for key, value in sorted(self.feature_groups.items())
+            },
+            "legal_ir_view_gap_distribution": dict(
+                sorted(self.legal_ir_view_gap_distribution.items())
+            ),
+            "legal_ir_view_metrics": dict(sorted(self.legal_ir_view_metrics.items())),
+            "ranked_guidance_features": [
+                dict(feature) for feature in self.ranked_guidance_features
+            ],
+            "synthesis_focus": list(self.synthesis_focus),
+        }
+
+
+@dataclass(frozen=True)
 class LeanstralShadowResult:
     """Auditable output of a shadow-only autoencoder-to-Leanstral pass."""
 
@@ -573,10 +673,12 @@ class LeanstralShadowResult:
     llm_called: bool
     raw_response: str = ""
     artifact_path: Optional[str] = None
+    guidance: Optional[LeanstralDraftGuidance] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "artifact_path": self.artifact_path,
+            "guidance": self.guidance.to_dict() if self.guidance else None,
             "llm_called": self.llm_called,
             "proposal": self.proposal.to_dict() if self.proposal else None,
             "raw_response": self.raw_response,
@@ -613,14 +715,20 @@ class LeanstralShadowRunner:
             prover_signal=prover_signal,
         )
         if not self.config.enabled:
+            validation = LeanstralProofValidation(
+                accepted=False,
+                reasons=("leanstral_shadow_disabled",),
+            )
             return LeanstralShadowResult(
                 task=task,
                 proposal=None,
-                validation=LeanstralProofValidation(
-                    accepted=False,
-                    reasons=("leanstral_shadow_disabled",),
-                ),
+                validation=validation,
                 llm_called=False,
+                guidance=leanstral_draft_guidance(
+                    task,
+                    None,
+                    validation,
+                ),
             )
 
         generate = self.llm_generate
@@ -647,11 +755,17 @@ class LeanstralShadowRunner:
             timeout_seconds=self.config.timeout_seconds,
             repo_root=self.config.repo_root,
         )
+        guidance = leanstral_draft_guidance(
+            task,
+            proposal,
+            validation,
+        )
         artifact_path = self._write_artifact(
             task=task,
             proposal=proposal,
             validation=validation,
             raw_response=raw_response,
+            guidance=guidance,
         )
         return LeanstralShadowResult(
             task=task,
@@ -660,6 +774,7 @@ class LeanstralShadowRunner:
             llm_called=True,
             raw_response=raw_response,
             artifact_path=artifact_path,
+            guidance=guidance,
         )
 
     def _write_artifact(
@@ -669,6 +784,7 @@ class LeanstralShadowRunner:
         proposal: Optional[LeanstralProposal],
         validation: LeanstralProofValidation,
         raw_response: str,
+        guidance: Optional[LeanstralDraftGuidance] = None,
     ) -> Optional[str]:
         if not self.config.artifact_dir:
             return None
@@ -676,6 +792,7 @@ class LeanstralShadowRunner:
         directory.mkdir(parents=True, exist_ok=True)
         path = directory / f"{task.task_id}.json"
         payload = {
+            "guidance": guidance.to_dict() if guidance else None,
             "proposal": proposal.to_dict() if proposal else None,
             "raw_response": raw_response,
             "task": task.to_dict(),
@@ -857,6 +974,176 @@ def validate_python_patch_proposal(
     )
 
 
+def leanstral_draft_guidance(
+    task: LegalIRLeanTask,
+    proposal: Optional[LeanstralProposal],
+    validation: LeanstralProofValidation,
+) -> LeanstralDraftGuidance:
+    """Distill one Leanstral result into guidance for autoencoder/Codex loops."""
+
+    change_spec = task.compiler_change_spec if isinstance(task.compiler_change_spec, Mapping) else {}
+    projection_evidence = (
+        task.projection_evidence if isinstance(task.projection_evidence, Mapping) else {}
+    )
+    autoencoder_evidence = (
+        task.autoencoder_evidence if isinstance(task.autoencoder_evidence, Mapping) else {}
+    )
+    action = str(change_spec.get("action") or projection_evidence.get("action") or "").strip()
+    target_component = str(
+        change_spec.get("target_component")
+        or projection_evidence.get("target_component")
+        or ""
+    ).strip()
+    accepted = bool(validation.accepted)
+    candidates = (
+        [dict(candidate) for candidate in proposal.drafted_logic_candidates]
+        if proposal is not None
+        else []
+    )
+    rule_hints = (
+        [dict(hint) for hint in proposal.deterministic_rule_hints]
+        if proposal is not None
+        else []
+    )
+    legal_ir_view_metrics = _numeric_mapping(
+        autoencoder_evidence.get("legal_ir_view_metrics")
+        or projection_evidence.get("losses")
+    )
+    legal_ir_view_gaps = _numeric_mapping(
+        autoencoder_evidence.get("legal_ir_view_gap_distribution")
+        or projection_evidence.get("legal_ir_view_gaps")
+    )
+    proof_obligation_ids = _theorem_registry_ids(task.theorem_registry)
+    target_metrics = _string_sequence(change_spec.get("target_metrics"))
+    allowed_paths = _string_sequence(change_spec.get("allowed_paths"))
+    theorem_templates = _string_sequence(change_spec.get("theorem_templates"))
+    mutation_cases = _string_sequence(change_spec.get("mutation_cases"))
+    ranked_features, feature_groups = _leanstral_guidance_features(
+        action=action,
+        target_component=target_component,
+        accepted=accepted,
+        drafted_logic_candidates=candidates,
+        deterministic_rule_hints=rule_hints,
+        target_metrics=target_metrics,
+        theorem_templates=theorem_templates,
+        proof_obligation_ids=proof_obligation_ids,
+    )
+    synthesis_focus = _unique_string_values(
+        [
+            *_string_sequence(autoencoder_evidence.get("synthesis_focus")),
+            action,
+            target_component,
+            "leanstral_draft_logic_guidance",
+        ]
+    )
+    payload = {
+        "accepted": accepted,
+        "action": action,
+        "compiler_change_spec_id": str(change_spec.get("spec_id") or ""),
+        "drafted_logic_candidates": candidates,
+        "modal_ir_hash": task.modal_ir_hash,
+        "proof_sha256": validation.proof_sha256,
+        "rule_hints": rule_hints,
+        "sample_id": task.sample_id,
+        "target_component": target_component,
+        "task_id": task.task_id,
+        "validation_reasons": list(validation.reasons),
+    }
+    guidance_id = "leanstral-guidance-" + hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()[:16]
+    return LeanstralDraftGuidance(
+        schema_version=LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION,
+        guidance_id=guidance_id,
+        source="leanstral_shadow_proof",
+        task_id=task.task_id,
+        sample_id=task.sample_id,
+        modal_ir_hash=task.modal_ir_hash,
+        compiler_change_spec_id=str(change_spec.get("spec_id") or ""),
+        action=action,
+        target_component=target_component,
+        accepted=accepted,
+        trusted=accepted,
+        intended_use="guidance_only",
+        validation_reasons=tuple(str(reason) for reason in validation.reasons),
+        proof_sha256=validation.proof_sha256,
+        deterministic_rule_hints=tuple(rule_hints),
+        drafted_logic_candidates=tuple(candidates),
+        ranked_guidance_features=tuple(ranked_features),
+        synthesis_focus=tuple(synthesis_focus),
+        feature_groups=feature_groups,
+        legal_ir_view_gap_distribution=legal_ir_view_gaps,
+        legal_ir_view_metrics=legal_ir_view_metrics,
+        target_metrics=tuple(target_metrics),
+        allowed_paths=tuple(allowed_paths),
+        theorem_templates=tuple(theorem_templates),
+        mutation_cases=tuple(mutation_cases),
+        proof_obligation_ids=tuple(proof_obligation_ids),
+    )
+
+
+def merge_leanstral_guidance_into_compiler_guidance(
+    compiler_guidance: Mapping[str, Any],
+    leanstral_guidance: Mapping[str, Any] | LeanstralDraftGuidance,
+) -> Dict[str, Any]:
+    """Overlay trusted Leanstral draft guidance onto autoencoder guidance."""
+
+    base = dict(compiler_guidance or {})
+    guidance = (
+        leanstral_guidance.to_dict()
+        if isinstance(leanstral_guidance, LeanstralDraftGuidance)
+        else dict(leanstral_guidance or {})
+    )
+    if not guidance:
+        return base
+    external = [
+        dict(item)
+        for item in base.get("external_guidance", [])
+        if isinstance(item, Mapping)
+    ]
+    external.append(guidance)
+    base["external_guidance"] = external[-16:]
+    base["latest_leanstral_guidance"] = guidance
+    base["leanstral_guidance_hash"] = hashlib.sha256(
+        json.dumps(guidance, ensure_ascii=True, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    if not bool(guidance.get("trusted")):
+        return base
+
+    overlay_feature_groups = guidance.get("feature_groups")
+    if isinstance(overlay_feature_groups, Mapping):
+        feature_groups = {
+            str(key): [str(item) for item in value]
+            for key, value in dict(base.get("feature_groups") or {}).items()
+            if isinstance(value, Sequence) and not isinstance(value, (str, bytes))
+        }
+        for key, values in overlay_feature_groups.items():
+            current = feature_groups.setdefault(str(key), [])
+            for value in _string_sequence(values):
+                if value not in current:
+                    current.append(value)
+        base["feature_groups"] = feature_groups
+
+    ranked = [
+        dict(item)
+        for item in guidance.get("ranked_guidance_features", [])
+        if isinstance(item, Mapping)
+    ]
+    ranked.extend(
+        dict(item)
+        for item in base.get("ranked_guidance_features", [])
+        if isinstance(item, Mapping)
+    )
+    base["ranked_guidance_features"] = _dedupe_guidance_features(ranked)[:64]
+    base["synthesis_focus"] = _unique_string_values(
+        [
+            *_string_sequence(base.get("synthesis_focus")),
+            *_string_sequence(guidance.get("synthesis_focus")),
+        ]
+    )
+    return base
+
+
 def _proposal_rejection_reasons(
     task: LegalIRLeanTask,
     proposal: LeanstralProposal,
@@ -899,6 +1186,22 @@ def _proposal_rejection_reasons(
             break
         if hint.get("target_component") != str(change_spec.get("target_component", "")):
             reasons.append("rule_hint_target_component_mismatch")
+            break
+    theorem_ids = set(_theorem_registry_ids(task.theorem_registry))
+    for candidate in proposal.drafted_logic_candidates:
+        candidate_text = str(candidate.get("candidate") or "").strip()
+        if not candidate_text:
+            reasons.append("missing_drafted_logic_candidate")
+            break
+        if len(candidate_text) > _LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS:
+            reasons.append("drafted_logic_candidate_too_large")
+            break
+        proof_obligation_id = str(candidate.get("proof_obligation_id") or "").strip()
+        if proof_obligation_id and theorem_ids and proof_obligation_id not in theorem_ids:
+            reasons.append("unknown_drafted_logic_proof_obligation_id")
+            break
+        if _drafted_logic_candidate_copies_source_span(candidate_text, task.source_span):
+            reasons.append("drafted_logic_candidate_copies_source_span")
             break
     return reasons
 
@@ -957,6 +1260,273 @@ def _mapping_sequence(value: Any) -> Sequence[Mapping[str, Any]]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         return ()
     return tuple(dict(item) for item in value if isinstance(item, Mapping))
+
+
+def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        return ()
+    candidates: list[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in value:
+        if not isinstance(item, Mapping):
+            continue
+        candidate_text = str(
+            item.get("candidate")
+            or item.get("logic")
+            or item.get("formula")
+            or item.get("ir")
+            or ""
+        ).strip()
+        if len(candidate_text) > _LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS:
+            candidate_text = candidate_text[:_LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS].rstrip()
+        if not candidate_text:
+            continue
+        payload: Dict[str, Any] = {
+            "candidate": candidate_text,
+            "guidance_only": True,
+            "intended_use": "guidance_only",
+            "logic_family": _feature_key_part(
+                item.get("logic_family")
+                or item.get("family")
+                or item.get("view")
+                or "legal_ir"
+            ),
+            "schema_version": _LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION,
+        }
+        for key in (
+            "compiler_surface",
+            "evidence_id",
+            "example_id",
+            "proof_obligation_id",
+            "request_id",
+            "source_span_hash",
+            "target_component",
+            "target_metric",
+            "theorem_template",
+        ):
+            text = str(item.get(key) or "").strip()
+            if text:
+                payload[key] = text[:140].rstrip()
+        rationale = str(item.get("rationale") or "").strip()
+        if rationale:
+            payload["rationale"] = rationale[:140].rstrip()
+        try:
+            confidence = float(item.get("confidence"))
+        except (TypeError, ValueError):
+            confidence = float("nan")
+        if confidence == confidence and confidence not in (float("inf"), float("-inf")):
+            payload["confidence"] = max(0.0, min(1.0, confidence))
+        identity = json.dumps(
+            {
+                "candidate": payload.get("candidate"),
+                "logic_family": payload.get("logic_family"),
+                "proof_obligation_id": payload.get("proof_obligation_id"),
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        )
+        if identity in seen:
+            continue
+        seen.add(identity)
+        candidates.append(payload)
+        if len(candidates) >= _LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES:
+            break
+    return tuple(candidates)
+
+
+def _string_sequence(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, (str, bytes)):
+        sequence: Sequence[Any] = (value,)
+    elif isinstance(value, Sequence):
+        sequence = value
+    else:
+        return []
+    return _unique_string_values(str(item).strip() for item in sequence if str(item).strip())
+
+
+def _unique_string_values(values: Any) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values or ():
+        text = str(value or "").strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
+def _theorem_registry_ids(registry: Optional[Mapping[str, Any]]) -> list[str]:
+    if not isinstance(registry, Mapping):
+        return []
+    raw_theorems = registry.get("theorems", ())
+    if not isinstance(raw_theorems, Sequence) or isinstance(raw_theorems, (str, bytes)):
+        return []
+    return _unique_string_values(
+        theorem.get("theorem_id")
+        for theorem in raw_theorems
+        if isinstance(theorem, Mapping)
+    )
+
+
+def _first_theorem_id(task: LegalIRLeanTask) -> str:
+    ids = _theorem_registry_ids(task.theorem_registry)
+    return ids[0] if ids else ""
+
+
+def _leanstral_guidance_features(
+    *,
+    action: str,
+    target_component: str,
+    accepted: bool,
+    drafted_logic_candidates: Sequence[Mapping[str, Any]],
+    deterministic_rule_hints: Sequence[Mapping[str, Any]],
+    target_metrics: Sequence[str],
+    theorem_templates: Sequence[str],
+    proof_obligation_ids: Sequence[str],
+) -> tuple[list[Dict[str, Any]], Dict[str, list[str]]]:
+    feature_groups: Dict[str, list[str]] = {
+        "leanstral_drafted_logic": [],
+        "leanstral_rule_hints": [],
+        "leanstral_target_metrics": [],
+        "leanstral_theorem_templates": [],
+        "leanstral_proof_obligations": [],
+    }
+    features: list[Dict[str, Any]] = []
+    trust_score = 1.0 if accepted else 0.0
+
+    for candidate in drafted_logic_candidates:
+        text = str(candidate.get("candidate") or "").strip()
+        if not text:
+            continue
+        family = _feature_key_part(candidate.get("logic_family") or "legal_ir")
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:10]
+        feature = f"leanstral:logic:{family}:{digest}"
+        feature_groups["leanstral_drafted_logic"].append(feature)
+        try:
+            confidence = float(candidate.get("confidence", trust_score))
+        except (TypeError, ValueError):
+            confidence = trust_score
+        score = trust_score * max(0.05, min(1.0, confidence))
+        features.append(
+            {
+                "feature": feature,
+                "score": round(score, 12),
+                "logic_family": family,
+                "source": "leanstral_drafted_logic",
+            }
+        )
+
+    for hint in deterministic_rule_hints:
+        hint_action = _feature_key_part(hint.get("action") or "rule_hint")
+        hint_target = _feature_key_part(hint.get("target_component") or target_component)
+        feature = f"leanstral:rule_hint:{hint_action}:{hint_target}"
+        feature_groups["leanstral_rule_hints"].append(feature)
+        features.append(
+            {
+                "feature": feature,
+                "score": round(0.9 * trust_score, 12),
+                "source": "leanstral_rule_hint",
+                "target_component": target_component,
+            }
+        )
+
+    if action:
+        action_feature = f"leanstral:action:{_feature_key_part(action)}"
+        feature_groups.setdefault("leanstral_actions", []).append(action_feature)
+        features.append(
+            {
+                "feature": action_feature,
+                "score": round(0.85 * trust_score, 12),
+                "source": "leanstral_compiler_change_spec",
+                "target_component": target_component,
+            }
+        )
+    for metric in target_metrics:
+        feature = f"leanstral:target_metric:{_feature_key_part(metric)}"
+        feature_groups["leanstral_target_metrics"].append(feature)
+        features.append(
+            {
+                "feature": feature,
+                "score": round(0.75 * trust_score, 12),
+                "source": "leanstral_target_metric",
+            }
+        )
+    for template in theorem_templates:
+        feature = f"leanstral:theorem_template:{_feature_key_part(template)}"
+        feature_groups["leanstral_theorem_templates"].append(feature)
+        features.append(
+            {
+                "feature": feature,
+                "score": round(0.65 * trust_score, 12),
+                "source": "leanstral_theorem_template",
+            }
+        )
+    for obligation_id in proof_obligation_ids[:8]:
+        feature = f"leanstral:proof_obligation:{_feature_key_part(obligation_id)}"
+        feature_groups["leanstral_proof_obligations"].append(feature)
+        features.append(
+            {
+                "feature": feature,
+                "score": round(0.55 * trust_score, 12),
+                "source": "leanstral_proof_obligation",
+            }
+        )
+
+    feature_groups = {
+        key: _unique_string_values(values)
+        for key, values in feature_groups.items()
+        if values
+    }
+    return _dedupe_guidance_features(features), feature_groups
+
+
+def _dedupe_guidance_features(features: Sequence[Mapping[str, Any]]) -> list[Dict[str, Any]]:
+    deduped: list[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in sorted(
+        (dict(feature) for feature in features if isinstance(feature, Mapping)),
+        key=lambda feature: (
+            -float(feature.get("score", 0.0) or 0.0),
+            str(feature.get("feature") or ""),
+        ),
+    ):
+        feature_name = str(item.get("feature") or "").strip()
+        if not feature_name or feature_name in seen:
+            continue
+        seen.add(feature_name)
+        deduped.append(item)
+    return deduped
+
+
+def _feature_key_part(value: Any) -> str:
+    text = str(value or "").strip()
+    text = re.sub(r"[^A-Za-z0-9_.:-]+", "_", text).strip("_")
+    return text[:96] or "unknown"
+
+
+def _drafted_logic_candidate_copies_source_span(
+    candidate_text: str,
+    source_span: str,
+) -> bool:
+    candidate = _plain_text_tokens(candidate_text)
+    source = _plain_text_tokens(source_span)
+    if len(candidate) < 40 or len(source) < 40:
+        return False
+    if candidate in source:
+        return True
+    candidate_terms = {term for term in candidate.split() if len(term) >= 4}
+    source_terms = {term for term in source.split() if len(term) >= 4}
+    if len(candidate_terms) < 8 or not source_terms:
+        return False
+    overlap = candidate_terms & source_terms
+    return len(overlap) / len(candidate_terms) >= 0.75
+
+
+def _plain_text_tokens(value: Any) -> str:
+    return " ".join(re.findall(r"[A-Za-z0-9]+", str(value or "").lower()))
 
 
 def _action_from_focus(value: Any, losses: Mapping[str, float]) -> str:
@@ -1072,10 +1642,20 @@ def _leanstral_prompt(task: LegalIRLeanTask) -> str:
             "Do not return theorem statements, Lean source files, imports, namespaces, or theorem declarations.",
             "Do not change the theorem, introduce axioms, imports, sorry, admit, or executable tactics.",
             "Rule hints are review-only and must be grounded in the supplied modal IR and source span.",
+            "Optionally include drafted_logic_candidates as guidance-only compact frame/modal/deontic/TDFOL/KG/CEC/prover logic.",
+            "Drafted logic candidates must use abstract predicates, slots, symbols, hashes, or theorem IDs; do not copy full source text spans.",
             "When compiler_change_spec.patchable is false, do not propose a code change.",
             "When compiler_change_spec.patchable is true, rule hints may only target its allowed_paths and target_component.",
             "Set compiler_change_spec_id to task.compiler_change_spec.spec_id exactly.",
         ],
+        "drafted_logic_candidate_shape": {
+            "candidate": "obligation(actor, action) unless exception_condition",
+            "compiler_surface": "task.compiler_change_spec.target_component",
+            "confidence": 0.0,
+            "intended_use": "guidance_only",
+            "logic_family": "deontic",
+            "proof_obligation_id": _first_theorem_id(task),
+        },
         "proposal_schema_version": LEANSTRAL_PROPOSAL_SCHEMA_VERSION,
         "python_patch_shape": {
             "compiler_change_spec_id": "task.compiler_change_spec.spec_id",
@@ -1129,10 +1709,12 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = [
+    "LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION",
     "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
     "CompilerChangeSpec",
     "LegalIRLeanTask",
     "LeanstralConfig",
+    "LeanstralDraftGuidance",
     "LeanstralMetricComparison",
     "LeanstralProjectedChangeValidation",
     "LeanstralProjectedChangeValidator",
@@ -1147,6 +1729,8 @@ __all__ = [
     "PythonPatchProposal",
     "PythonPatchValidation",
     "compare_leanstral_holdout_pareto",
+    "leanstral_draft_guidance",
+    "merge_leanstral_guidance_into_compiler_guidance",
     "validate_leanstral_projected_change",
     "validate_leanstral_proposal",
     "validate_python_patch_proposal",

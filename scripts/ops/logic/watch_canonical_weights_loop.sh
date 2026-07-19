@@ -47,6 +47,27 @@ runner_pid() {
   fi
 }
 
+latest_activity_epoch() {
+  local latest=0
+  local path
+  shopt -s nullglob
+  for path in \
+    "${PIPELINE_LOG}" \
+    "${LOG_DIR}/${RUN_ID}.summary" \
+    "${LOG_DIR}/${RUN_ID}.jsonl" \
+    "${LOG_DIR}/${RUN_ID}"-*.summary \
+    "${LOG_DIR}/${RUN_ID}"-*.jsonl; do
+    [[ -f "${path}" ]] || continue
+    local mtime_epoch
+    mtime_epoch="$(stat -c %Y "${path}" 2>/dev/null || echo 0)"
+    if (( mtime_epoch > latest )); then
+      latest="${mtime_epoch}"
+    fi
+  done
+  shopt -u nullglob
+  echo "${latest}"
+}
+
 log_line "watchdog_started run_id=${RUN_ID} interval=${INTERVAL_SECONDS}s stale=${STALE_SECONDS}s"
 write_state "running" "watchdog_started"
 
@@ -64,13 +85,13 @@ while true; do
     exit 4
   fi
 
-  if [[ -f "${PIPELINE_LOG}" ]]; then
-    mtime_epoch="$(stat -c %Y "${PIPELINE_LOG}")"
+  mtime_epoch="$(latest_activity_epoch)"
+  if (( mtime_epoch > 0 )); then
     now_epoch="$(date +%s)"
     age_seconds=$((now_epoch - mtime_epoch))
     if (( age_seconds > STALE_SECONDS )); then
-      log_line "runner_alive_log_stale pid=${pid} age_seconds=${age_seconds}"
-      write_state "running" "runner_alive_log_stale"
+      log_line "runner_alive_artifacts_stale pid=${pid} age_seconds=${age_seconds}"
+      write_state "running" "runner_alive_artifacts_stale"
     else
       write_state "running" "runner_alive"
     fi

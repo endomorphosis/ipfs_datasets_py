@@ -17,16 +17,29 @@ def test_router_reports_tdfol_tableaux_available_without_formula() -> None:
     assert result.metadata["logic_type"] == "S5"
 
 
-def test_router_returns_unavailable_for_kd45_until_adapter_exists() -> None:
+def test_router_uses_sound_weaker_fallback_for_kd45() -> None:
     result = ModalProverRouter().route(formula=None, system=ModalSystem.KD45)
 
-    assert result.status == ModalProverStatus.UNAVAILABLE
+    assert result.status == ModalProverStatus.AVAILABLE
     assert result.system == "KD45"
-    assert "no KD/KD45 tableaux adapter" in result.reason
+    assert result.backend == "tdfol_modal_tableaux_fallback"
+    assert result.metadata["fallback_system"] == "D"
+    assert result.metadata["fallback_sound_when_proved"] is True
 
 
-def test_router_returns_unavailable_for_frame_bm25() -> None:
+def test_router_returns_compile_only_for_frame_bm25() -> None:
     result = ModalProverRouter().route(formula=None, system="FRAME_BM25")
 
-    assert result.status == ModalProverStatus.UNAVAILABLE
-    assert result.metadata["registered"] is False
+    assert result.status == ModalProverStatus.AVAILABLE
+    assert result.backend == "frame_bm25_compile_only"
+    assert result.metadata["registered"] is True
+    assert result.metadata["validation_mode"] == "compile_only"
+
+
+def test_router_returns_compile_only_for_ltl() -> None:
+    result = ModalProverRouter().route(formula=None, system="LTL")
+
+    assert result.status == ModalProverStatus.AVAILABLE
+    assert result.backend == "ltl_compile_only"
+    assert result.metadata["registered"] is True
+    assert result.metadata["validation_mode"] == "compile_only"

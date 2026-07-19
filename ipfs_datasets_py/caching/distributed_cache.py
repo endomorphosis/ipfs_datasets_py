@@ -1,26 +1,43 @@
 """
-Distributed GitHub API Cache using libp2p
+Distributed GitHub API Cache
 
-This module implements a peer-to-peer cache for GitHub API responses
-to reduce API rate limit usage across multiple GitHub Actions runners.
+This module implements a local persistent cache for GitHub API responses. The
+older raw libp2p cache stream protocol is intentionally disabled; distributed
+cache sharing must be provided by a canonical MCP++ service.
 
 Key features:
 - Content-addressable storage using IPFS multiformats
-- P2P gossip for cache updates via pylibp2p
+- Local persistent cache updates
 - Cache staleness detection via content hashing
-- Automatic peer discovery and synchronization
 """
 
-import anyio
+import base64
 import inspect
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Set
 from pathlib import Path
 import hashlib
+
+from ipfs_datasets_py.caching.task_p2p_cache import TaskP2PCacheAdapter
+
+try:
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+    CRYPTO_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    Fernet = None  # type: ignore[assignment]
+    PBKDF2HMAC = None  # type: ignore[assignment]
+    default_backend = None  # type: ignore[assignment]
+    hashes = None  # type: ignore[assignment]
+    CRYPTO_AVAILABLE = False
 
 try:
     from ipfs_datasets_py.deps_resolver import resolve_module as _resolve_module
@@ -30,7 +47,6 @@ except Exception:  # pragma: no cover
     _resolve_module = None  # type: ignore
     _deps_get = None  # type: ignore
     _deps_set = None  # type: ignore
-
 
 try:
     from multiformats import CID, multihash, multicodec
@@ -54,12 +70,6 @@ except ImportError:
             logging.warning("ipfs_multiformats not available, using SHA256 hashing")
 
 LIBP2P_AVAILABLE = False
-new_host = None
-create_new_key_pair = None
-info_from_p2p_addr = None
-Multiaddr = None
-TProtocol = str  # type: ignore
-INetStream = Any  # type: ignore
 
 
 _default_deps: object | None = None
@@ -71,62 +81,21 @@ def set_default_deps(deps: object | None) -> None:
 
 
 def configure_libp2p(*, deps: object | None = None, libp2p_module=None) -> bool:
-    """Resolve and configure libp2p symbols.
+    """Compatibility stub for the retired raw distributed-cache transport."""
+    global LIBP2P_AVAILABLE
 
-    - Supports injection via `libp2p_module`.
-    - Supports caching via a deps container implementing get_cached/set_cached.
-    """
-    global LIBP2P_AVAILABLE, new_host, create_new_key_pair, info_from_p2p_addr, Multiaddr, TProtocol, INetStream
-
+    _ = libp2p_module
+    LIBP2P_AVAILABLE = False
     if deps is None:
         deps = _default_deps
-
-    if deps is not None and callable(_deps_get):
-        try:
-            if _deps_get(deps, "pip::libp2p") is not None and _deps_get(deps, "ipfs_datasets_py::libp2p_configured"):
-                return bool(LIBP2P_AVAILABLE)
-        except Exception:
-            pass
-
-    libp2p = libp2p_module
-    if libp2p is None and callable(_resolve_module):
-        libp2p = _resolve_module("libp2p", deps=deps, cache_key="pip::libp2p")
-    if libp2p is None:
-        try:
-            import libp2p as libp2p  # type: ignore
-        except Exception:
-            logging.warning("pylibp2p not available, distributed cache will be disabled")
-            LIBP2P_AVAILABLE = False
-            return False
-
-    try:
-        from libp2p import new_host as _new_host  # type: ignore
-        from libp2p.crypto.secp256k1 import create_new_key_pair as _create_new_key_pair  # type: ignore
-        from libp2p.network.stream.net_stream import INetStream as _INetStream  # type: ignore
-        from libp2p.peer.peerinfo import info_from_p2p_addr as _info_from_p2p_addr  # type: ignore
-        from libp2p.custom_types import TProtocol as _TProtocol  # type: ignore
-        from multiaddr import Multiaddr as _Multiaddr  # type: ignore
-    except Exception:
-        logging.warning("libp2p components not available, distributed cache will be disabled")
-        LIBP2P_AVAILABLE = False
-        return False
-
-    new_host = _new_host
-    create_new_key_pair = _create_new_key_pair
-    info_from_p2p_addr = _info_from_p2p_addr
-    INetStream = _INetStream  # type: ignore
-    TProtocol = _TProtocol  # type: ignore
-    Multiaddr = _Multiaddr
-    LIBP2P_AVAILABLE = True
-
     if deps is not None and callable(_deps_set):
         try:
-            _deps_set(deps, "pip::libp2p", libp2p)
-            _deps_set(deps, "ipfs_datasets_py::libp2p_configured", True)
+            _deps_set(deps, "pip::libp2p", None)
+            _deps_set(deps, "ipfs_datasets_py::libp2p_configured", False)
         except Exception:
             pass
-
-    return True
+    logging.warning("Legacy raw DistributedGitHubCache libp2p transport is disabled")
+    return False
 
 try:
     from multiformats import CID, multihash, multicodec
@@ -228,13 +197,13 @@ class ContentHasher:
 
 class DistributedGitHubCache:
     """
-    Distributed cache for GitHub API responses using libp2p
+    Local cache for GitHub API responses.
     
-    This cache reduces API rate limit usage by sharing responses
-    between GitHub Actions runners via a P2P gossip network.
+    Raw cache gossip is retired; use a canonical MCP++ cache service for
+    distributed sharing.
     """
     
-    PROTOCOL_ID = TProtocol("/github-cache/1.0.0")
+    PROTOCOL_ID = "github-cache-retired"
     
     def __init__(
         self,
@@ -243,6 +212,10 @@ class DistributedGitHubCache:
         bootstrap_peers: Optional[List[str]] = None,
         default_ttl: int = 300,  # 5 minutes
         *,
+        enable_p2p: bool = False,
+        enable_task_p2p_cache: bool | None = None,
+        task_p2p_timeout_s: float = 10.0,
+        p2p_shared_secret: Optional[str] = None,
         deps: object | None = None,
         libp2p_module=None,
     ):
@@ -261,9 +234,21 @@ class DistributedGitHubCache:
         self.host = None
         self.peer_id = None
         self.connected_peers: Set[str] = set()
-        # Resolve libp2p lazily and allow injection/caching.
-        configure_libp2p(deps=deps, libp2p_module=libp2p_module)
-        self.libp2p_enabled = bool(LIBP2P_AVAILABLE)
+        self.raw_p2p_cache_requested = bool(enable_p2p)
+        self._p2p_cipher = self._init_p2p_cipher(p2p_shared_secret) if enable_p2p else None
+        if enable_p2p and self._p2p_cipher is None:
+            logger.warning("Distributed cache p2p disabled: encrypted shared secret is required")
+        elif enable_p2p:
+            logger.warning("Legacy raw distributed cache P2P is disabled; running cache in local-only mode")
+        _ = deps, libp2p_module
+        self.libp2p_enabled = False
+        self._task_p2p_cache = TaskP2PCacheAdapter(
+            enabled=enable_task_p2p_cache,
+            namespace="distributed-github-cache",
+            shared_secret=p2p_shared_secret,
+            timeout_s=float(task_p2p_timeout_s),
+        )
+        self.p2p_transport = self._task_p2p_cache.transport
         
         # Statistics
         self.stats = {
@@ -277,8 +262,49 @@ class DistributedGitHubCache:
         self._load_cache()
         
         logger.info(f"Initialized distributed GitHub cache")
-        logger.info(f"  libp2p: {'enabled' if self.libp2p_enabled else 'disabled'}")
+        logger.info("  raw libp2p: disabled")
+        logger.info(f"  task p2p cache: {'enabled' if self._task_p2p_cache.enabled else 'disabled'}")
         logger.info(f"  multiformats: {'enabled' if MULTIFORMATS_AVAILABLE else 'disabled'}")
+
+    def _init_p2p_cipher(self, explicit_secret: Optional[str]) -> Optional["Fernet"]:
+        if not CRYPTO_AVAILABLE or Fernet is None or PBKDF2HMAC is None or hashes is None:
+            return None
+        secret = (
+            explicit_secret
+            or os.environ.get("IPFS_DATASETS_PY_CACHE_P2P_SHARED_SECRET")
+            or os.environ.get("IPFS_ACCELERATE_PY_CACHE_P2P_SHARED_SECRET")
+            or os.environ.get("CACHE_P2P_SHARED_SECRET")
+            or os.environ.get("GH_TOKEN")
+            or os.environ.get("GITHUB_TOKEN")
+            or ""
+        ).strip()
+        if not secret:
+            return None
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=b"ipfs-datasets-distributed-cache-p2p-v1",
+            iterations=200_000,
+            backend=default_backend(),
+        )
+        return Fernet(base64.urlsafe_b64encode(kdf.derive(secret.encode("utf-8"))))
+
+    def _encode_p2p_message(self, message: Dict[str, Any]) -> bytes:
+        if self._p2p_cipher is None:
+            raise RuntimeError("Distributed cache p2p encryption is not configured")
+        payload = json.dumps(message, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        return self._p2p_cipher.encrypt(payload)
+
+    def _decode_p2p_message(self, payload: bytes) -> Optional[Dict[str, Any]]:
+        if self._p2p_cipher is None:
+            logger.warning("Distributed cache rejected plaintext p2p payload")
+            return None
+        try:
+            raw = self._p2p_cipher.decrypt(bytes(payload or b""))
+            message = json.loads(raw.decode("utf-8"))
+            return message if isinstance(message, dict) else None
+        except Exception:
+            return None
     
     def _load_cache(self):
         """Load cache from disk"""
@@ -304,118 +330,41 @@ class DistributedGitHubCache:
             logger.error(f"Failed to save cache: {e}")
     
     async def start(self):
-        """Start the P2P network and begin listening"""
-        if not self.libp2p_enabled:
-            logger.warning("libp2p not available, running in local-only mode")
-            return
-        
-        try:
-            # Generate or load key pair
-            if not callable(create_new_key_pair) or not callable(new_host) or Multiaddr is None or info_from_p2p_addr is None:
-                raise RuntimeError("libp2p is not configured")
+        """Start the cache service.
 
-            key_pair = create_new_key_pair()
-            
-            # Create libp2p host
-            self.host = await new_host(key_pair=key_pair)
-            self.peer_id = str(self.host.get_id())
-            
-            # Set up stream handler for cache protocol
-            self.host.set_stream_handler(self.PROTOCOL_ID, self._handle_cache_stream)
-            
-            # Start listening
-            listen_addr = Multiaddr(f"/ip4/0.0.0.0/tcp/{self.listen_port}")
-            await self.host.get_network().listen(listen_addr)
-            
-            logger.info(f"P2P cache node started")
-            logger.info(f"  Peer ID: {self.peer_id}")
-            logger.info(f"  Listening on: {listen_addr}")
-            
-            # Connect to bootstrap peers
-            for peer_addr in self.bootstrap_peers:
-                await self._connect_to_peer(peer_addr)
-            
-        except Exception as e:
-            logger.error(f"Failed to start P2P network: {e}")
-            self.libp2p_enabled = False
+        The retired raw P2P transport is never started from this compatibility
+        class; distributed sharing belongs in MCP++.
+        """
+        self.libp2p_enabled = False
+        self.host = None
+        logger.warning("Legacy raw distributed cache P2P is disabled; running in local-only mode")
+        return None
     
     async def stop(self):
-        """Stop the P2P network"""
-        if self.host:
-            await self.host.close()
+        """Stop the cache service and persist local entries."""
+        self.host = None
+        self.libp2p_enabled = False
         self._save_cache()
     
     async def _connect_to_peer(self, peer_addr: str):
-        """Connect to a peer"""
-        try:
-            peer_info = info_from_p2p_addr(Multiaddr(peer_addr))
-            await self.host.connect(peer_info)
-            peer_id = str(peer_info.peer_id)
-            self.connected_peers.add(peer_id)
-            logger.info(f"Connected to peer: {peer_id}")
-        except Exception as e:
-            logger.warning(f"Failed to connect to {peer_addr}: {e}")
+        """Legacy raw cache peer connection is retired."""
+        _ = peer_addr
+        return None
     
     async def _handle_cache_stream(self, stream: Any):
-        """Handle incoming cache synchronization stream"""
-        try:
-            peer_id = str(stream.muxed_conn.peer_id)
-            logger.debug(f"Handling cache stream from {peer_id}")
-            
-            # Read message
-            data = await stream.read()
-            message = json.loads(data.decode('utf-8'))
-            
-            msg_type = message.get('type')
-            
-            if msg_type == 'cache_entry':
-                # Peer is sharing a cache entry
-                entry_dict = message.get('entry')
-                entry = CacheEntry.from_dict(entry_dict)
-                
-                # Verify content hash
-                if ContentHasher.verify_hash(entry.data, entry.content_hash):
-                    self._update_local_cache(entry)
-                    logger.debug(f"Received valid cache entry: {entry.key}")
-                else:
-                    logger.warning(f"Invalid cache entry hash from {peer_id}")
-            
-            elif msg_type == 'cache_request':
-                # Peer is requesting a cache entry
-                key = message.get('key')
-                if key in self.local_cache and not self.local_cache[key].is_stale():
-                    await self._send_cache_entry(stream, self.local_cache[key])
-            
-            await stream.close()
-            
-        except Exception as e:
-            logger.error(f"Error handling cache stream: {e}")
+        """Legacy raw cache stream handler is disabled."""
+        _ = stream
+        raise RuntimeError("Legacy raw DistributedGitHubCache stream handler is disabled")
     
     async def _send_cache_entry(self, stream: Any, entry: CacheEntry):
-        """Send a cache entry to a peer"""
-        try:
-            message = {
-                'type': 'cache_entry',
-                'entry': entry.to_dict()
-            }
-            data = json.dumps(message).encode('utf-8')
-            await stream.write(data)
-        except Exception as e:
-            logger.error(f"Error sending cache entry: {e}")
+        """Legacy raw cache send is disabled."""
+        _ = stream, entry
+        return None
     
     async def _broadcast_cache_entry(self, entry: CacheEntry):
-        """Broadcast a cache entry to all connected peers"""
-        if not self.libp2p_enabled or not self.host:
-            return
-        
-        for peer_id in self.connected_peers:
-            try:
-                # Open stream to peer
-                stream = await self.host.new_stream(peer_id, [self.PROTOCOL_ID])
-                await self._send_cache_entry(stream, entry)
-                await stream.close()
-            except Exception as e:
-                logger.debug(f"Failed to broadcast to {peer_id}: {e}")
+        """Legacy raw cache broadcast is disabled."""
+        _ = entry
+        return None
     
     def _update_local_cache(self, entry: CacheEntry):
         """Update local cache with new entry"""
@@ -442,7 +391,22 @@ class DistributedGitHubCache:
             else:
                 # Remove stale entry
                 del self.local_cache[key]
-        
+
+        remote_entry = self._task_p2p_cache.get(key)
+        if isinstance(remote_entry, dict):
+            try:
+                entry_data = remote_entry.get("entry", remote_entry)
+                entry = CacheEntry.from_dict(entry_data)
+            except Exception:
+                entry = None
+
+            if entry is not None and not entry.is_stale() and ContentHasher.verify_hash(entry.data, entry.content_hash):
+                self._update_local_cache(entry)
+                self.stats['peer_hits'] += 1
+                self.stats['api_calls_saved'] += 1
+                logger.debug(f"Cache hit from MCP++ TaskQueue cache: {key}")
+                return entry.data
+
         self.stats['misses'] += 1
         logger.debug(f"Cache miss: {key}")
         return None
@@ -474,7 +438,13 @@ class DistributedGitHubCache:
         
         # Update local cache
         self._update_local_cache(entry)
-        
+
+        await self._task_p2p_cache.set_async(
+            key,
+            {"entry": entry.to_dict()},
+            ttl_s=float(entry.ttl),
+        )
+
         # Broadcast to peers
         if broadcast and self.libp2p_enabled:
             await self._broadcast_cache_entry(entry)
@@ -527,7 +497,13 @@ class DistributedGitHubCache:
             'hit_rate': hit_rate,
             'cache_size': len(self.local_cache),
             'connected_peers': len(self.connected_peers),
-            'peer_id': self.peer_id
+            'peer_id': self.peer_id,
+            'p2p_enabled': bool(self._task_p2p_cache.enabled),
+            'raw_p2p_cache_enabled': False,
+            'raw_p2p_cache_requested': bool(getattr(self, "raw_p2p_cache_requested", False)),
+            'p2p_transport': self._task_p2p_cache.transport,
+            'task_p2p_cache_enabled': bool(self._task_p2p_cache.enabled),
+            'task_p2p_cache_mode': self._task_p2p_cache.mode(),
         }
     
     def clear_stale(self):
@@ -554,12 +530,17 @@ def get_cache() -> DistributedGitHubCache:
 
 async def initialize_cache(
     listen_port: int = 9000,
-    bootstrap_peers: Optional[List[str]] = None
+    bootstrap_peers: Optional[List[str]] = None,
+    *,
+    enable_p2p: bool = False,
+    p2p_shared_secret: Optional[str] = None,
 ) -> DistributedGitHubCache:
     """Initialize and start the distributed cache"""
     cache = DistributedGitHubCache(
         listen_port=listen_port,
-        bootstrap_peers=bootstrap_peers
+        bootstrap_peers=bootstrap_peers,
+        enable_p2p=enable_p2p,
+        p2p_shared_secret=p2p_shared_secret,
     )
     await cache.start()
     

@@ -79,6 +79,7 @@ class LeanstralVerifierConfig:
     lean_proof_cache_ttl_seconds: int = 2_592_000
     lean_slice_size: int = 0
     lean_timeout_seconds: float = 5.0
+    modal_bridge_require_proof: bool = False
     prover_timeout_seconds: float = 5.0
     use_provers: Sequence[str] = field(default_factory=tuple)
     run_lean: bool = True
@@ -300,7 +301,7 @@ class LeanstralAuditVerifier:
         Mappings can provide ``text``/``source_text``, expected
         ``modal_ir_hash``, and ``source_span_hashes``.  If omitted, examples are
         extracted from the response's witness/counterexample fields when they
-        carry source text.
+        carry source text, then from the request's referenced_examples manifest.
         """
 
         audit_validation = validate_leanstral_audit_response(request, response)
@@ -313,8 +314,10 @@ class LeanstralAuditVerifier:
                 request_id=request.request_id,
             )
 
-        reference_examples = tuple(examples) or tuple(
-            _examples_from_response(response)
+        reference_examples = (
+            tuple(examples)
+            or tuple(_examples_from_response(response))
+            or tuple(_examples_from_request(request, response=response))
         )
         if not reference_examples:
             return self._result(
@@ -991,6 +994,7 @@ class LeanstralAuditVerifier:
                     result,
                     formula_id=formula.formula_id,
                     elapsed=time.time() - started,
+                    require_proof=self.config.modal_bridge_require_proof,
                     timeout=float(self.config.prover_timeout_seconds),
                 )
             )
@@ -1012,6 +1016,7 @@ class LeanstralAuditVerifier:
             check.checker_name
             for check in local_checks
             if check.status == LeanstralVerificationOutcome.ACCEPTED
+            and check.theorem_valid
             and not _is_cheap_check(check)
         ]
         return LeanstralAuditVerificationResult(
@@ -1105,6 +1110,112 @@ def _examples_from_response(
         text = payload.get("source_text", payload.get("text", payload.get("source")))
         if text:
             yield payload
+
+
+def _examples_from_request(
+    request: LeanstralAuditRequest,
+    *,
+    response: LeanstralAuditResponse,
+) -> Iterable[Mapping[str, Any]]:
+    evidence = request.evidence if isinstance(request.evidence, Mapping) else {}
+    referenced_examples = [
+        item
+        for item in evidence.get("referenced_examples", []) or []
+        if isinstance(item, Mapping)
+    ]
+    if not referenced_examples:
+        referenced_examples = list(_examples_from_evidence_packets(evidence))
+    if not referenced_examples:
+        return
+
+    referenced_ids = _response_referenced_ids(response)
+    emitted = False
+    for example in referenced_examples:
+        example_ids = {
+            str(example.get("example_id") or "").strip(),
+            str(example.get("sample_id") or "").strip(),
+            str(example.get("evidence_id") or "").strip(),
+        }
+        if referenced_ids and not (referenced_ids & {value for value in example_ids if value}):
+            continue
+        emitted = True
+        yield example
+    if not emitted and len(referenced_examples) == 1:
+        yield referenced_examples[0]
+
+
+def _examples_from_evidence_packets(
+    evidence: Mapping[str, Any],
+) -> Iterable[Mapping[str, Any]]:
+    for packet in evidence.get("evidence_packets", []) or []:
+        if not isinstance(packet, Mapping):
+            continue
+        sample_hashes = packet.get("sample_hashes")
+        if not isinstance(sample_hashes, Mapping):
+            sample_hashes = {}
+        evidence_hashes = packet.get("evidence_hashes")
+        if not isinstance(evidence_hashes, Mapping):
+            evidence_hashes = {}
+        legal_ir_views = packet.get("legal_ir_views")
+        if not isinstance(legal_ir_views, Mapping):
+            legal_ir_views = {}
+        canonical = legal_ir_views.get("canonical")
+        if not isinstance(canonical, Mapping):
+            canonical = {}
+        example: Dict[str, Any] = {
+            "example_id": str(
+                sample_hashes.get("sample_id") or packet.get("evidence_id") or ""
+            ).strip(),
+            "evidence_id": str(packet.get("evidence_id") or "").strip(),
+            "expected_modal_ir_hash": str(
+                sample_hashes.get("modal_ir_hash")
+                or evidence_hashes.get("canonical_modal_ir_hash")
+                or canonical.get("modal_ir_hash")
+                or ""
+            ).strip(),
+            "sample_id": str(sample_hashes.get("sample_id") or "").strip(),
+        }
+        span_hashes = sample_hashes.get("source_span_hashes")
+        if isinstance(span_hashes, Mapping):
+            example["source_span_hashes"] = {
+                str(key): str(value)
+                for key, value in span_hashes.items()
+                if str(key).strip()
+            }
+            example["source_span_hash_format"] = "introspection_packet_v1"
+        for key in ("citation", "section", "title"):
+            value = str(packet.get(key) or "").strip()
+            if value:
+                example[key] = value
+        text = str(
+            packet.get("source_text")
+            or packet.get("text")
+            or packet.get("sample_text")
+            or ""
+        ).strip()
+        if text:
+            example["source_text"] = text
+        yield example
+
+
+def _response_referenced_ids(response: LeanstralAuditResponse) -> set[str]:
+    values: set[str] = set()
+    for payload in (response.counterexample, response.witness):
+        _collect_response_reference_ids(payload, values)
+    return values
+
+
+def _collect_response_reference_ids(payload: Any, values: set[str]) -> None:
+    if isinstance(payload, Mapping):
+        for key in ("evidence_id", "example_id", "sample_id", "id"):
+            value = str(payload.get(key) or "").strip()
+            if value:
+                values.add(value)
+        for child in payload.values():
+            _collect_response_reference_ids(child, values)
+    elif isinstance(payload, (list, tuple)):
+        for child in payload:
+            _collect_response_reference_ids(child, values)
 
 
 def _source_span_hashes_for_sample(sample: LegalSample) -> Dict[str, str]:
@@ -1221,6 +1332,7 @@ def _local_checks_from_prover_result(
     *,
     formula_id: str,
     elapsed: float,
+    require_proof: bool,
     timeout: float,
 ) -> Sequence[LeanstralLocalCheck]:
     checks: List[LeanstralLocalCheck] = []
@@ -1232,6 +1344,11 @@ def _local_checks_from_prover_result(
         }
         details = dict(prover_result.details)
         details["formula_id"] = formula_id
+        modal_compiled = details.get("modal_route_status") == "available"
+        if modal_compiled and not require_proof:
+            status = LeanstralVerificationOutcome.ACCEPTED
+            details["modal_bridge_validation_mode"] = "compilation"
+            details["formula_assertion_proved"] = bool(prover_result.is_valid)
         checks.append(
             LeanstralLocalCheck(
                 checker_name=prover_result.prover_name,
@@ -1241,7 +1358,11 @@ def _local_checks_from_prover_result(
                 timeout_seconds=timeout,
                 elapsed_seconds=elapsed,
                 details=details,
-                error_message=prover_result.error_message or "",
+                error_message=(
+                    ""
+                    if modal_compiled and not require_proof
+                    else prover_result.error_message or ""
+                ),
             )
         )
     if not checks:

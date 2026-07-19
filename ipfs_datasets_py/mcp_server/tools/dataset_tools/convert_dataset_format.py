@@ -81,17 +81,15 @@ async def convert_dataset_format(
         if options is None:
             options = {}
 
-        # For testing purposes, return a mock conversion result
-        # In production, this would use actual dataset conversion logic
+        # For testing purposes, return a mock conversion result.
+        # In production, this should use an actual dataset registry/conversion backend.
         try:
-            # Try to import and use the actual dataset manager
-            from ipfs_datasets_py.libp2p_kit import DistributedDatasetManager
-            manager = DistributedDatasetManager()
-            dataset = manager.shard_manager.get_dataset(dataset_id)
-            original_format = dataset.format if hasattr(dataset, "format") else "unknown"
+            dataset = None
+            manager = None
+            original_format = "unknown"
             
             # Attempt actual conversion
-            if hasattr(dataset, 'convert_format'):
+            if dataset is not None and hasattr(dataset, 'convert_format'):
                 converted_dataset = dataset.convert_format(target_format, **options)
                 converted_id = manager.shard_manager.add_dataset(converted_dataset)
                 

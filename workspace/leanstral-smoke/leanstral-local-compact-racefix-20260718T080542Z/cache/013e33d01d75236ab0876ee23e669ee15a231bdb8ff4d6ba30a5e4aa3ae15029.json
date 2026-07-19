@@ -1,0 +1,47 @@
+{
+  "cache_key": "013e33d01d75236ab0876ee23e669ee15a231bdb8ff4d6ba30a5e4aa3ae15029",
+  "request_hash": "b7b19efba372cf57b0ea4c9ad6ba4e8a97c050cf6ad44b05e0b4cadfb17b71d3",
+  "request_schema_hash": "9254d72e22b459bb578488956d599e085a3ef517fad997a3c2a13386d387620d",
+  "response": {
+    "abstention_reason": "",
+    "affected_ir_families": [],
+    "classification": "missing_semantic_rule",
+    "confidence": 0.0,
+    "counterexample": {
+      "evidence_id": "lir-disagree-06131857657840c7cdfa",
+      "expected": "legal semantics should be preserved",
+      "observed": "compiler loses or distorts this semantic signal"
+    },
+    "missing_semantic_rule": {
+      "description": "missing deterministic compiler or decompiler rule"
+    },
+    "proof_obligation_ids": [
+      "PO-async-frame-logic-9de349f60855"
+    ],
+    "proposed_compiler_surface": [
+      {
+        "component": "modal.frame_logic",
+        "operation": "add deterministic compiler or decompiler rule"
+      }
+    ],
+    "rationale": "",
+    "request_cache_key": "",
+    "request_id": "PO-async-frame-logic-9de349f60855",
+    "schema_version": "legal-ir-leanstral-audit-response-v1",
+    "witness": null
+  },
+  "response_hash": "38a08b61613845d147e5e489806cf56f1c9148ce33cec7ab00fc1c10ec9b65c4",
+  "response_schema_hash": "9b82aca7bcc4797fc9f85860946b912cd000ee7c8b081ffe928b85f1e138e92b",
+  "schema_version": "legal-ir-leanstral-audit-cache-v1",
+  "validation": {
+    "accepted": false,
+    "cache_key": "013e33d01d75236ab0876ee23e669ee15a231bdb8ff4d6ba30a5e4aa3ae15029",
+    "reasons": [
+      "request_id_mismatch",
+      "missing_affected_ir_families"
+    ],
+    "response_hash": "38a08b61613845d147e5e489806cf56f1c9148ce33cec7ab00fc1c10ec9b65c4",
+    "verified": false,
+    "verified_by": []
+  }
+}

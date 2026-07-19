@@ -374,6 +374,7 @@ class LegalModalAutoencoderLoop:
         introspection, introspection_summary = self._run_introspection(
             sample,
             prover_signal=prover_signal,
+            leanstral_shadow=leanstral_shadow,
             cycle_budget=_cycle_budget,
         )
         mark_timing("introspection", started)
@@ -563,6 +564,7 @@ class LegalModalAutoencoderLoop:
         sample: LegalSample,
         *,
         prover_signal: Optional[ProverCompilationSignal],
+        leanstral_shadow: Optional[LeanstralShadowResult] = None,
         cycle_budget: Optional[Dict[str, int]] = None,
     ) -> tuple[Optional[Dict[str, Any]], ModalIntrospectionSummary]:
         mode = _normalise_introspection_mode(self.config.introspection_mode)
@@ -602,7 +604,11 @@ class LegalModalAutoencoderLoop:
             audits_attempted = 1
             introspection = self.autoencoder.introspect_sample(sample).to_dict()
             if mode in {"export", "shadow", "seed", "enforce"}:
-                export_path = self._export_introspection(sample, introspection)
+                export_path = self._export_introspection(
+                    sample,
+                    introspection,
+                    leanstral_shadow=leanstral_shadow,
+                )
                 audits_exported = 1 if export_path else 0
             if mode in {"seed", "enforce"} and _consume_cycle_budget(cycle_budget, "todos"):
                 todos_seeded = 1
@@ -634,7 +640,13 @@ class LegalModalAutoencoderLoop:
             sample_id=sample.sample_id,
         )
 
-    def _export_introspection(self, sample: LegalSample, introspection: Mapping[str, Any]) -> str:
+    def _export_introspection(
+        self,
+        sample: LegalSample,
+        introspection: Mapping[str, Any],
+        *,
+        leanstral_shadow: Optional[LeanstralShadowResult] = None,
+    ) -> str:
         raw_path = str(self.config.introspection_export_path or "").strip()
         if not raw_path:
             return ""
@@ -642,10 +654,16 @@ class LegalModalAutoencoderLoop:
         if target.suffix.lower() != ".json":
             target = target / f"{sample.sample_id}.introspection.json"
         target.parent.mkdir(parents=True, exist_ok=True)
+        leanstral_guidance = (
+            leanstral_shadow.guidance.to_dict()
+            if leanstral_shadow is not None and leanstral_shadow.guidance is not None
+            else None
+        )
         target.write_text(
             json.dumps(
                 {
                     "introspection": dict(introspection),
+                    "leanstral_guidance": leanstral_guidance,
                     "sample_id": sample.sample_id,
                     "schema_version": "legal-modal-autoencoder-introspection-loop-v1",
                 },

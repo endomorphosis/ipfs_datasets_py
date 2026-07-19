@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 
 from ipfs_datasets_py.logic.modal import (
@@ -31,9 +32,13 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import 
     state_to_compiler_patch_lag,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
+    _budgeted_audit_samples_with_indices,
+    _introspection_export_samples_with_indices,
     autoencoder_enforce_fail_closed_reason,
+    autoencoder_introspection_export_due,
     autoencoder_rollout_control,
     export_canonical_state_disagreement_packets,
+    skipped_introspection_export_report,
     update_leanstral_projection_summary,
 )
 
@@ -134,12 +139,14 @@ def test_daemon_rollout_control_defaults_off_and_enforce_fails_closed() -> None:
     defaults = autoencoder_rollout_control(SimpleNamespace())
 
     assert defaults["introspection_mode"] == "off"
+    assert defaults["min_export_samples"] == 0
     assert defaults["max_audits_per_cycle"] == 0
     assert defaults["max_todos_per_cycle"] == 0
 
     enforce = autoencoder_rollout_control(
         SimpleNamespace(
             autoencoder_introspection_mode="enforce",
+            autoencoder_introspection_min_export_samples=25,
             autoencoder_max_audits_per_cycle=1,
             autoencoder_max_todos_per_cycle=2,
             autoencoder_require_prover_confirmation=True,
@@ -148,6 +155,7 @@ def test_daemon_rollout_control_defaults_off_and_enforce_fails_closed() -> None:
     )
 
     assert enforce["introspection_mode"] == "enforce"
+    assert enforce["min_export_samples"] == 25
     assert enforce["target_scope_filters"] == ["modal.compiler", "deontic"]
     assert (
         autoencoder_enforce_fail_closed_reason(
@@ -304,15 +312,19 @@ def test_production_runner_exports_canonical_disagreement_packets(
     }
 
     calls = {"guidance": 0, "introspection": 0}
+    guidance_kwargs = []
+    introspection_kwargs = []
     original_guidance = autoencoder.compiler_guidance_for_sample
     original_introspection = autoencoder.introspect_sample
 
     def counting_guidance(*args, **kwargs):
         calls["guidance"] += 1
+        guidance_kwargs.append(dict(kwargs))
         return original_guidance(*args, **kwargs)
 
     def counting_introspection(*args, **kwargs):
         calls["introspection"] += 1
+        introspection_kwargs.append(dict(kwargs))
         return original_introspection(*args, **kwargs)
 
     monkeypatch.setattr(autoencoder, "compiler_guidance_for_sample", counting_guidance)
@@ -340,9 +352,20 @@ def test_production_runner_exports_canonical_disagreement_packets(
     assert report["shared_sample_analysis_count"] == 1
     assert report["shared_sample_analysis_cache_hit_count"] == 1
     assert report["schema_failure_count"] == 0
-    # Guidance performs one internal introspection. Both calls are shared by
+    assert report["reference_example_count"] == 1
+    assert report["reference_example_path"] == str(
+        tmp_path / "run.reference-examples.json"
+    )
+    assert report["reference_example_source_policy"] == (
+        "local_verifier_only_not_prompt_evidence"
+    )
+    # Guidance reuses the full audit introspection. Both calls are shared by
     # the guided and unguided export roles instead of being repeated per role.
-    assert calls == {"guidance": 1, "introspection": 2}
+    assert calls == {"guidance": 1, "introspection": 1}
+    assert all(
+        call.get("include_causal_attribution") is False
+        for call in guidance_kwargs + introspection_kwargs
+    )
     assert report["paths"] == [str(tmp_path / "run.canonical-disagreements.jsonl")]
     lines = (tmp_path / "run.canonical-disagreements.jsonl").read_text(
         encoding="utf-8"
@@ -363,3 +386,175 @@ def test_production_runner_exports_canonical_disagreement_packets(
         encoded = json.dumps(packet, sort_keys=True)
         assert "decoded_embedding" not in encoded
         assert "feature_embedding_weights" not in encoded
+    reference_manifest = json.loads(
+        (tmp_path / "run.reference-examples.json").read_text(encoding="utf-8")
+    )
+    assert reference_manifest["source_policy"] == (
+        "local_verifier_only_not_prompt_evidence"
+    )
+    assert reference_manifest["example_count"] == 1
+    assert reference_manifest["examples"][0]["sample_id"] == sample.sample_id
+    assert reference_manifest["examples"][0]["source_text"] == sample.text
+
+
+def test_introspection_export_skips_empty_guided_metric_block(tmp_path) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide notice before denying a request.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    autoencoder.evaluate([sample], use_sample_memory=False)
+    compiler_metrics = {
+        "autoencoder_guidance_enabled": False,
+        "cross_entropy_loss": 0.42,
+        "cosine_similarity": 0.76,
+        "evaluated_count": 1,
+        "sample_count": 1,
+        "sample_metric_records": [
+            {
+                "compiler_guidance_applied": False,
+                "metric_sample_id": sample.sample_id,
+                "metrics": {
+                    "cross_entropy_loss": 0.42,
+                    "cosine_similarity": 0.76,
+                },
+                "sample_id": sample.sample_id,
+            }
+        ],
+    }
+
+    report = export_canonical_state_disagreement_packets(
+        autoencoder=autoencoder,
+        compiler_ir_validation=compiler_metrics,
+        compiler_ir_guided_validation={},
+        cycle=1,
+        export_mode="export",
+        root=tmp_path,
+        run_id="pre-todo-contract-run",
+        samples=[sample],
+        state=autoencoder.state,
+        summary_path=tmp_path / "run.summary",
+        validation_indices=[3],
+        validation_mode="fixed_canary",
+        evaluate_provers=False,
+    )
+
+    assert report["packet_count"] == 1
+    assert report["reference_example_count"] == 1
+    lines = (tmp_path / "run.canonical-disagreements.jsonl").read_text(
+        encoding="utf-8"
+    ).splitlines()
+    packets = [json.loads(line) for line in lines]
+    assert [packet["run_context"]["evaluation_role"] for packet in packets] == [
+        "unguided"
+    ]
+
+
+def test_introspection_export_cadence_runs_first_cycle_and_periodically(tmp_path) -> None:
+    control = {
+        "export_every_n_cycles": 4,
+        "introspection_mode": "seed",
+    }
+
+    assert autoencoder_introspection_export_due(control, cycle=1) is True
+    assert autoencoder_introspection_export_due(control, cycle=2) is False
+    assert autoencoder_introspection_export_due(control, cycle=4) is True
+
+    skipped = skipped_introspection_export_report(
+        cycle=2,
+        rollout_control=control,
+        summary_path=tmp_path / "run.summary",
+    )
+    assert skipped["enabled"] is True
+    assert skipped["packet_count"] == 0
+    assert skipped["skip_reason"] == "cadence"
+    assert skipped["next_due_cycle"] == 4
+
+
+def test_introspection_export_budget_preserves_canary_indices() -> None:
+    samples = [
+        SimpleNamespace(source="us_code", title="5", section=str(index))
+        for index in range(4)
+    ]
+
+    selected, selected_indices = _budgeted_audit_samples_with_indices(
+        samples,
+        [17, 19, 23, 29],
+        {
+            "introspection_mode": "export",
+            "max_audits_per_cycle": 2,
+            "target_scope_filters": [],
+        },
+    )
+
+    assert selected == samples[:2]
+    assert selected_indices == [17, 19]
+
+
+def test_introspection_export_floor_can_exceed_todo_audit_budget() -> None:
+    samples = [
+        SimpleNamespace(source="us_code", title="5", section=str(index))
+        for index in range(30)
+    ]
+    indices = list(range(100, 130))
+
+    audit_samples, audit_indices = _budgeted_audit_samples_with_indices(
+        samples,
+        indices,
+        {
+            "introspection_mode": "export",
+            "max_audits_per_cycle": 4,
+            "target_scope_filters": [],
+        },
+    )
+    export_samples, export_indices = _introspection_export_samples_with_indices(
+        samples,
+        indices,
+        {
+            "introspection_mode": "export",
+            "max_audits_per_cycle": 4,
+            "min_export_samples": 25,
+            "target_scope_filters": [],
+        },
+    )
+
+    assert audit_samples == samples[:4]
+    assert audit_indices == [100, 101, 102, 103]
+    assert export_samples == samples[:25]
+    assert export_indices == list(range(100, 125))
+
+
+def test_introspection_export_floor_preserves_scope_filters() -> None:
+    samples = [
+        SimpleNamespace(source="us_code", title="5", section=str(index))
+        for index in range(8)
+    ]
+
+    selected, selected_indices = _introspection_export_samples_with_indices(
+        samples,
+        list(range(8)),
+        {
+            "introspection_mode": "export",
+            "max_audits_per_cycle": 1,
+            "min_export_samples": 5,
+            "target_scope_filters": ["3", "6", "7"],
+        },
+    )
+
+    assert [sample.section for sample in selected] == ["3", "6", "7"]
+    assert selected_indices == [3, 6, 7]
+
+
+def test_canonical_restart_requests_real_leanstral_snapshot_floor() -> None:
+    script = Path("scripts/ops/logic/restart_canonical_weights_loop.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert '--validation-count "${VALIDATION_COUNT:-25}"' in script
+    assert '--validation-canary-count "${VALIDATION_CANARY_COUNT:-25}"' in script
+    assert (
+        '--autoencoder-introspection-min-export-samples '
+        '"${AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES:-25}"'
+    ) in script
+    assert '--autoencoder-max-audits-per-cycle "${AUTOENCODER_MAX_AUDITS_PER_CYCLE:-4}"' in script

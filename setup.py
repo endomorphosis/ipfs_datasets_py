@@ -192,6 +192,9 @@ if _include_vcs_dependencies():
         [
             ipfs_kit_dependency,
             ipfs_accelerate_dependency,
+            "protobuf>=5.27.0",
+            "pymultihash>=0.8.2",
+            "dnspython>=2.2.1",
             "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
         ]
     )
@@ -268,7 +271,8 @@ setup(
 
         # libp2p crypto/pubsub dependencies (avoid runtime warnings)
         "pymultihash>=0.8.2",
-        "protobuf>=3.20.0",
+        "protobuf>=5.27.0",
+        "dnspython>=2.2.1",
         "eth-hash>=0.3.2",
         "eth-keys>=0.5.0",
 
@@ -403,7 +407,9 @@ setup(
             # libp2p networking for distributed inference / cache sharing.
             # Keep this as an extra because py-libp2p is typically installed from git.
             'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main',
+            'protobuf>=5.27.0',
             'pymultihash>=0.8.2',
+            'dnspython>=2.2.1',
         ],
         'email': [
             # Email processing - all stdlib except optional HTML parsing

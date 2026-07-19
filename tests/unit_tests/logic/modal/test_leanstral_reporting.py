@@ -74,7 +74,7 @@ def _verification(
             verified=True,
             response_hash=response.content_hash,
             cache_key=response.request_cache_key,
-            verified_by=("leanstral-audit-schema-v1",),
+            verified_by=("leanstral-audit-schema-v2",),
         ),
         response_hash=response.content_hash,
         request_id=response.request_id,
@@ -114,6 +114,58 @@ def test_report_collapses_duplicate_audits_and_preserves_examples() -> None:
     assert len(gap.validation_set["regression_examples"]) == 2
     assert "source_decompiled_text_token_loss" in gap.validation_set["held_out_compiler_ir_metrics"]
     assert "exception_scope_preserved" in gap.validation_set["formal_validity_checks"]
+
+
+def test_report_collapses_family_preservation_paraphrases() -> None:
+    frame_shift = _response(
+        request_id="leanstral-audit-frame-shift",
+        missing_semantic_rule={
+            "description": (
+                "The decompiler must preserve the conditional_normative family, "
+                "but it currently emits frame output."
+            )
+        },
+        affected_ir_families=["conditional_normative", "frame"],
+        counterexample={
+            "example_id": "family-frame",
+            "expected": "Preserve conditional_normative source classification.",
+            "observed": "Predicted frame.",
+        },
+    )
+    deontic_shift = _response(
+        request_id="leanstral-audit-deontic-shift",
+        missing_semantic_rule={
+            "description": (
+                "Round-trip decompilation does not preserve the source legal IR "
+                "family classification and maps it to deontic."
+            )
+        },
+        affected_ir_families=["decompiler", "conditional_normative", "deontic"],
+        counterexample={
+            "example_id": "family-deontic",
+            "expected": "The source family is conditional_normative.",
+            "observed": "The decompiler emits deontic.",
+        },
+    )
+
+    report = aggregate_verified_audits(
+        [
+            (frame_shift, _verification(frame_shift)),
+            (deontic_shift, _verification(deontic_shift)),
+        ]
+    )
+
+    assert len(report.gaps) == 1
+    gap = report.gaps[0]
+    assert gap.normalized_rule_key == (
+        "round_trip_family_preservation_conditional_normative"
+    )
+    assert gap.affected_ir_families == (
+        "conditional_normative",
+        "frame",
+        "deontic",
+    )
+    assert len(gap.supporting_evidence) == 2
 
 
 def test_report_retains_conflicting_verified_or_rejected_examples() -> None:
@@ -220,8 +272,147 @@ def test_report_maps_each_gap_to_one_owned_surface_and_bounds_outputs() -> None:
     ]
 
 
+def test_report_aliases_tdfol_roundtrip_surface_and_preserves_metric_attribution() -> None:
+    response = _response(
+        counterexample={
+            "evidence_id": "packet-1",
+            "expected": "Preserve conditional_normative source family.",
+            "observed": "Round-trip emitted a TDFOL frame-family projection.",
+        },
+        missing_semantic_rule={
+            "description": (
+                "Decompiler round-trip must preserve frame-family and LegalIR "
+                "family classification before TDFOL proof routing."
+            )
+        },
+        affected_ir_families=["conditional_normative", "tdfol", "frame"],
+        proposed_compiler_surface=[
+            {
+                "component": "TDFOL.prover",
+                "operation": "preserve decompiler round-trip family",
+            }
+        ],
+    )
+    report = aggregate_verified_audits(
+        [
+            {
+                "request": {
+                    "evidence": {
+                        "referenced_examples": [
+                            {
+                                "compiler_decompiler_metrics": {
+                                    "compiler_ir_ce": 2.1,
+                                    "compiler_ir_cosine_similarity": 0.18,
+                                },
+                                "evidence_id": "packet-1",
+                                "sample_id": "sample-1",
+                            }
+                        ]
+                    }
+                },
+                "response": response,
+                "verification": _verification(response),
+            }
+        ]
+    )
+
+    assert len(report.gaps) == 1
+    gap = report.gaps[0]
+    assert gap.target_component == "modal.ir_decompiler"
+    attribution = gap.validation_set["metric_attribution"]
+    assert attribution["status"] == "pre_patch_observed"
+    assert attribution["pre_patch_metrics"]["compiler_ir_ce"] == 2.1
+    hints = synthesis_hints_from_leanstral_rule_gap_report(report)
+    assert hints[0].evidence["pre_patch_metrics"]["compiler_ir_ce"] == 2.1
+
+
+def test_report_keeps_direct_tdfol_prover_work_on_tdfol_surface() -> None:
+    response = _response(
+        missing_semantic_rule={
+            "rule_id": "tdfol_quantifier_scope",
+            "description": "TDFOL prover parse loses first-order quantifier scope.",
+        },
+        affected_ir_families=["tdfol", "first_order"],
+        proposed_compiler_surface=[
+            {
+                "component": "TDFOL.prover",
+                "operation": "repair quantifier scope parse",
+            }
+        ],
+    )
+
+    report = aggregate_verified_audits([(response, _verification(response))])
+
+    assert len(report.gaps) == 1
+    gap = report.gaps[0]
+    assert gap.target_component == "TDFOL.prover"
+    assert gap.action == "repair_tdfol_bridge_parse_and_proof_gate"
+    assert gap.validation_set["target_file_lane"] == "tdfol_prover"
+    assert "tdfol_parse_failure_ratio" in gap.validation_set["held_out_compiler_ir_metrics"]
+
+
+def test_report_maps_event_calculus_to_cec_native_surface() -> None:
+    response = _response(
+        missing_semantic_rule={
+            "rule_id": "cec_event_interval",
+            "description": "Event calculus projection drops the terminating interval.",
+        },
+        affected_ir_families=["CEC", "event_calculus"],
+        proposed_compiler_surface=[
+            {
+                "component": "event calculus",
+                "operation": "repair DCEC event interval projection",
+            }
+        ],
+    )
+
+    report = aggregate_verified_audits([(response, _verification(response))])
+
+    assert len(report.gaps) == 1
+    gap = report.gaps[0]
+    assert gap.target_component == "CEC.native"
+    assert gap.action == "repair_cec_dcec_bridge_projection"
+    assert gap.validation_set["target_file_lane"] == "cec_native"
+    assert "event_interval_preserved" in gap.validation_set["formal_validity_checks"]
+
+
+def test_report_maps_zero_knowledge_attestation_to_zkp_circuit_surface() -> None:
+    response = _response(
+        missing_semantic_rule={
+            "rule_id": "zkp_attestation_binding",
+            "description": "Zero knowledge attestation circuit omits the source hash binding.",
+        },
+        affected_ir_families=["zkp", "tdfol"],
+        proposed_compiler_surface=[
+            {
+                "component": "zero knowledge circuits",
+                "operation": "repair attestation circuit binding",
+            }
+        ],
+    )
+
+    report = aggregate_verified_audits([(response, _verification(response))])
+
+    assert len(report.gaps) == 1
+    gap = report.gaps[0]
+    assert gap.target_component == "zkp.circuits"
+    assert gap.action == "repair_zkp_attestation_bridge"
+    assert gap.validation_set["target_file_lane"] == "zkp_circuits"
+    assert "zkp_attestation_failure_ratio" in gap.validation_set["held_out_compiler_ir_metrics"]
+
+
 def test_rule_gap_report_projects_to_synthesis_hints_and_json() -> None:
-    response = _response()
+    response = _response(
+        drafted_logic_candidates=[
+            {
+                "logic_family": "deontic",
+                "candidate": "obligation(agency, notify(applicant)) unless emergency_review",
+                "proof_obligation_id": "PO-modal-001",
+                "compiler_surface": "modal.ir_decompiler",
+                "confidence": 0.73,
+            }
+        ]
+    )
     report = aggregate_verified_audits([(response, _verification(response))])
 
     hints = synthesis_hints_from_leanstral_rule_gap_report(report)
@@ -234,6 +425,15 @@ def test_rule_gap_report_projects_to_synthesis_hints_and_json() -> None:
     assert hints[0].target_component == "modal.ir_decompiler"
     assert hints[0].evidence["gap_id"] == report.gaps[0].gap_id
     assert hints[0].evidence["supporting_evidence_count"] == 1
+    assert parsed["gaps"][0]["supporting_evidence"][0][
+        "drafted_logic_candidates"
+    ][0]["guidance_only"] is True
+    assert hints[0].evidence["leanstral_guidance_mode"] == (
+        "draft_logic_guidance_only"
+    )
+    assert hints[0].evidence["leanstral_drafted_logic_candidates"][0][
+        "candidate"
+    ].startswith("obligation")
 
 
 def _patch_result(todo_id: str, *, status: str, metadata: dict) -> dict:
@@ -274,8 +474,23 @@ def test_patch_feedback_journals_lineage_and_retains_verified_compiler_targets()
             "completed_validation_report": {
                 "main_apply_validation_status": "passed",
                 "metric_deltas": {"modal_ir_formula_recall": 0.04},
+                "post_patch_metrics": {"modal_ir_formula_recall": 0.54},
                 "target_metric_status": "improved",
             },
+            "leanstral_metric_attribution": {
+                "pre_patch_metrics": {"modal_ir_formula_recall": 0.5},
+                "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+                "status": "pre_patch_observed",
+            },
+            "leanstral_drafted_logic_candidates": [
+                {
+                    "candidate": "obligation(agency, disclose(record))",
+                    "guidance_only": True,
+                    "intended_use": "guidance_only",
+                    "logic_family": "deontic",
+                    "proof_obligation_id": "PO-1",
+                }
+            ],
             "validation_gate": {"accepted": True},
         },
     )
@@ -295,6 +510,21 @@ def test_patch_feedback_journals_lineage_and_retains_verified_compiler_targets()
     assert outcome.compiler_target is not None
     assert outcome.compiler_target["verified_compiler_rule"] is True
     assert outcome.compiler_target["write_to_autoencoder_weights"] is False
+    assert outcome.compiler_target["metric_attribution"]["pre_patch_metrics"][
+        "modal_ir_formula_recall"
+    ] == 0.5
+    assert outcome.compiler_target["metric_attribution"]["post_patch_metrics"][
+        "modal_ir_formula_recall"
+    ] == 0.54
+    assert outcome.compiler_target["leanstral_guidance_mode"] == (
+        "draft_logic_guidance_only"
+    )
+    assert outcome.compiler_target["leanstral_drafted_logic_candidates"][0][
+        "candidate"
+    ].startswith("obligation")
+    assert outcome.compiler_target["leanstral_drafted_logic_candidates"][0][
+        "guidance_only"
+    ] is True
     assert report.compiler_targets_for_autoencoder_evaluation
 
 

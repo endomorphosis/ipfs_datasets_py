@@ -18,6 +18,7 @@ from ipfs_datasets_py.logic.modal.synthesis import (
     ModalProgramSynthesisHint,
     residual_signature_for_hint,
     synthesis_hints_from_autoencoder_introspections,
+    synthesis_hints_from_leanstral_guidance,
     synthesis_hints_from_leanstral_rule_gap_report,
 )
 from ipfs_datasets_py.logic.modal.leanstral_reporting import (
@@ -1467,7 +1468,11 @@ class ModalProgramSynthesisTodoGenerator:
             samples_by_id=validation_samples_by_id,
         )
         introspections = [
-            autoencoder.introspect_sample(sample, use_sample_memory=False).to_dict()
+            autoencoder.introspect_sample(
+                sample,
+                use_sample_memory=False,
+                include_causal_attribution=False,
+            ).to_dict()
             for sample in sample_list
         ]
         hints = synthesis_hints_from_autoencoder_introspections(introspections)
@@ -1625,6 +1630,11 @@ class ModalProgramSynthesisTodoGenerator:
                 str(value) for value in _as_list(evidence.get("mutation_cases"))
             )
             compact_evidence = _compact_hint_evidence(hint)
+            metric_attribution = _leanstral_metric_attribution(
+                evidence,
+                target_metrics,
+            )
+            drafted_logic_candidates = _leanstral_drafted_logic_candidates(evidence)
             metadata = {
                 **self.policy.metadata_for(
                     action=action,
@@ -1649,11 +1659,17 @@ class ModalProgramSynthesisTodoGenerator:
                 "hint_evidence": [compact_evidence],
                 "hint_ids": [hint.hint_id],
                 "leanstral_dedup_key": dedupe_signature,
+                "leanstral_drafted_logic_candidates": drafted_logic_candidates,
                 "leanstral_gap_id": str(evidence.get("gap_id") or ""),
+                "leanstral_guidance_mode": str(
+                    evidence.get("leanstral_guidance_mode")
+                    or "draft_logic_guidance_only"
+                ),
                 "leanstral_local_verifiers": _unique_preserve_order(
                     str(value)
                     for value in _as_list(evidence.get("supporting_verified_by"))
                 ),
+                "leanstral_metric_attribution": metric_attribution,
                 "leanstral_projection": True,
                 "leanstral_report_only": False,
                 "leanstral_verified": bool(evidence.get("leanstral_verified")),
@@ -1661,6 +1677,8 @@ class ModalProgramSynthesisTodoGenerator:
                 "negative_examples": negative_examples,
                 "normalized_rule_key": str(evidence.get("normalized_rule_key") or ""),
                 "owned_ast_scope": program_synthesis_scope,
+                "post_patch_metrics": dict(metric_attribution.get("post_patch_metrics") or {}),
+                "pre_patch_metrics": dict(metric_attribution.get("pre_patch_metrics") or {}),
                 "positive_examples": positive_examples,
                 "program_synthesis_scope": program_synthesis_scope,
                 "proof_ids": _unique_preserve_order(
@@ -1684,6 +1702,9 @@ class ModalProgramSynthesisTodoGenerator:
                     )
                 ),
                 "target_component": target_component,
+                "post_patch_metric_goals": list(
+                    metric_attribution.get("post_patch_metric_goals") or []
+                ),
                 "target_metric_goals": _leanstral_target_metric_goals(target_metrics),
                 "target_metrics": target_metrics,
                 "theorem_templates": _unique_preserve_order(
@@ -1707,6 +1728,151 @@ class ModalProgramSynthesisTodoGenerator:
                 loss_name="leanstral_verified_rule_gap",
                 loss_value=round(max(0.0, float(hint.priority)), 12),
                 priority=round((max(0.0, float(hint.priority)) * 100.0) + 50.0, 6),
+                metadata=metadata,
+            )
+            todos.append(todo)
+        return sorted(todos, key=lambda todo: (-todo.priority, todo.todo_id))
+
+    def generate_from_leanstral_guidance(
+        self,
+        guidance: Any,
+        *,
+        require_trusted: bool = True,
+    ) -> List[ModalTodo]:
+        """Create Codex TODOs from direct Leanstral draft guidance artifacts."""
+
+        if not self.policy.enable_program_synthesis_todos:
+            return []
+        hints = synthesis_hints_from_leanstral_guidance(
+            guidance,
+            require_trusted=bool(require_trusted),
+        )
+        todos: List[ModalTodo] = []
+        for hint in hints:
+            evidence = dict(hint.evidence or {})
+            if require_trusted and not bool(evidence.get("leanstral_verified")):
+                continue
+            if evidence.get("leanstral_report_only"):
+                continue
+            action = str(hint.action or "").strip()
+            target_component = str(hint.target_component or "").strip()
+            if not action or not target_component:
+                continue
+            program_synthesis_scope = _program_synthesis_scope(
+                action=action,
+                target_component=target_component,
+            )
+            sample_ids = _leanstral_hint_sample_ids(evidence)
+            citations = _leanstral_hint_citations(evidence)
+            dedupe_signature = str(
+                evidence.get("leanstral_dedup_key")
+                or evidence.get("dedupe_key")
+                or ""
+            ).strip()
+            if not dedupe_signature:
+                dedupe_signature = _program_todo_signature(
+                    action=action,
+                    target_component=target_component,
+                    sample_ids=sample_ids or [str(evidence.get("gap_id") or hint.hint_id)],
+                )
+            target_metrics = _unique_preserve_order(
+                [
+                    *[
+                        str(metric)
+                        for metric in _as_list(evidence.get("target_metrics"))
+                    ],
+                    *_program_synthesis_target_metrics(
+                        action=action,
+                        target_component=target_component,
+                    ),
+                ]
+            )
+            validation_commands = _program_synthesis_validation_commands(
+                action=action,
+                target_component=target_component,
+                program_synthesis_scope=program_synthesis_scope,
+            )
+            mutation_cases = _unique_preserve_order(
+                str(value) for value in _as_list(evidence.get("mutation_cases"))
+            )
+            compact_evidence = _compact_hint_evidence(hint)
+            metric_attribution = _leanstral_metric_attribution(
+                evidence,
+                target_metrics,
+            )
+            drafted_logic_candidates = _leanstral_drafted_logic_candidates(evidence)
+            metadata = {
+                **self.policy.metadata_for(
+                    action=action,
+                    loss_name="leanstral_verified_draft_guidance",
+                ),
+                "allowed_paths": _unique_preserve_order(
+                    str(path) for path in _as_list(evidence.get("allowed_paths"))
+                ),
+                "dedupe_signature": dedupe_signature,
+                "evidence_ids": _unique_preserve_order(
+                    str(value) for value in _as_list(evidence.get("evidence_ids"))
+                ),
+                "hint_evidence": [compact_evidence],
+                "hint_ids": [hint.hint_id],
+                "leanstral_dedup_key": dedupe_signature,
+                "leanstral_drafted_logic_candidates": drafted_logic_candidates,
+                "leanstral_gap_id": str(evidence.get("gap_id") or ""),
+                "leanstral_guidance_mode": str(
+                    evidence.get("leanstral_guidance_mode")
+                    or "draft_logic_guidance_only"
+                ),
+                "leanstral_local_verifiers": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("supporting_verified_by"))
+                ),
+                "leanstral_metric_attribution": metric_attribution,
+                "leanstral_projection": True,
+                "leanstral_report_only": False,
+                "leanstral_verified": bool(evidence.get("leanstral_verified")),
+                "mutation_cases": mutation_cases,
+                "normalized_rule_key": str(evidence.get("normalized_rule_key") or ""),
+                "owned_ast_scope": program_synthesis_scope,
+                "post_patch_metrics": dict(metric_attribution.get("post_patch_metrics") or {}),
+                "pre_patch_metrics": dict(metric_attribution.get("pre_patch_metrics") or {}),
+                "program_synthesis_scope": program_synthesis_scope,
+                "proof_ids": _unique_preserve_order(
+                    str(value) for value in _as_list(evidence.get("proof_ids"))
+                ),
+                "proof_obligation_ids": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("proof_obligation_ids"))
+                ),
+                "semantic_bundle_key": dedupe_signature,
+                "source": "leanstral_direct_guidance_projection_v1",
+                "spec_id": str(evidence.get("spec_id") or evidence.get("gap_id") or ""),
+                "spec_ids": _unique_preserve_order(
+                    str(value) for value in _as_list(evidence.get("spec_ids"))
+                ),
+                "support_count": int(evidence.get("supporting_evidence_count") or 0),
+                "supporting_verification_outcomes": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("supporting_verification_outcomes"))
+                ),
+                "target_component": target_component,
+                "target_metric_goals": _leanstral_target_metric_goals(target_metrics),
+                "target_metrics": target_metrics,
+                "theorem_templates": _unique_preserve_order(
+                    str(value)
+                    for value in _as_list(evidence.get("theorem_templates"))
+                ),
+                "validation_commands": validation_commands,
+                "validation_set": dict(evidence.get("validation_set") or {}),
+            }
+            todo = ModalTodo(
+                todo_id=_leanstral_program_todo_id(dedupe_signature),
+                action=action,
+                objective=_leanstral_objective(hint, evidence),
+                sample_ids=sample_ids,
+                citations=citations,
+                loss_name="leanstral_verified_draft_guidance",
+                loss_value=round(max(0.0, float(hint.priority)), 12),
+                priority=round((max(0.0, float(hint.priority)) * 100.0) + 45.0, 6),
                 metadata=metadata,
             )
             todos.append(todo)
@@ -1988,14 +2154,22 @@ class ModalTodoQueue:
         self,
         *,
         optimizer_role: Optional[str] = None,
+        statuses: Optional[Iterable[str]] = None,
     ) -> Dict[str, int]:
         """Return transient retry counters without treating them as validation failures."""
+        included_statuses = (
+            {str(status) for status in statuses}
+            if statuses is not None
+            else None
+        )
         todo_count = 0
         transient_todo_count = 0
         transient_attempt_count = 0
         pending_transient_todo_count = 0
         for todo in self._todos.values():
             if optimizer_role is not None and _todo_optimizer_role(todo) != optimizer_role:
+                continue
+            if included_statuses is not None and todo.status not in included_statuses:
                 continue
             todo_count += 1
             attempts = _safe_int(todo.metadata.get("transient_failure_count"))
@@ -2016,9 +2190,13 @@ class ModalTodoQueue:
         self,
         *,
         optimizer_role: Optional[str] = None,
+        statuses: Optional[Iterable[str]] = None,
     ) -> float:
         """Return the share of queued TODOs that are pending after transient failures."""
-        counts = self.transient_failure_counts(optimizer_role=optimizer_role)
+        counts = self.transient_failure_counts(
+            optimizer_role=optimizer_role,
+            statuses=statuses,
+        )
         denominator = max(1, int(counts.get("todo_count", 0)))
         return float(counts.get("transient_todo_count", 0)) / float(denominator)
 
@@ -2431,6 +2609,47 @@ class ModalTodoSupervisor:
         self.last_failed_validation_superseded_count = 0
         self.last_program_synthesis_deduped_count = 0
 
+    def backfill_leanstral_patch_feedback_evidence(self) -> Dict[str, Any]:
+        """Refresh deterministic Leanstral feedback metadata on existing todos."""
+
+        scanned = 0
+        updated = 0
+        category_counts: Dict[str, int] = {}
+        outcome_counts: Dict[str, int] = {}
+        tracked_keys = (
+            "compiler_target_for_autoencoder_evaluation",
+            "feature_cluster_id",
+            "leanstral_disproven_feature_cluster",
+            "leanstral_feedback_never_write_to_autoencoder_weights",
+            "leanstral_feedback_rescue_action",
+            "leanstral_feedback_rescue_category",
+            "leanstral_operational_failure",
+            "leanstral_patch_outcome",
+            "leanstral_stale_evidence",
+            "leanstral_verified_compiler_target",
+        )
+        for todo in self.queue.all():
+            if not bool(todo.metadata.get("leanstral_projection")):
+                continue
+            scanned += 1
+            before = {key: todo.metadata.get(key) for key in tracked_keys}
+            _record_leanstral_patch_feedback_evidence(todo)
+            after = {key: todo.metadata.get(key) for key in tracked_keys}
+            if before != after:
+                updated += 1
+            outcome = str(todo.metadata.get("leanstral_patch_outcome") or "unknown")
+            category = str(
+                todo.metadata.get("leanstral_feedback_rescue_category") or "unknown"
+            )
+            outcome_counts[outcome] = outcome_counts.get(outcome, 0) + 1
+            category_counts[category] = category_counts.get(category, 0) + 1
+        return {
+            "category_counts": dict(sorted(category_counts.items())),
+            "outcome_counts": dict(sorted(outcome_counts.items())),
+            "scanned_count": scanned,
+            "updated_count": updated,
+        }
+
     def seed_from_evaluation(
         self,
         samples: Sequence[LegalSample],
@@ -2707,6 +2926,87 @@ class ModalTodoSupervisor:
             executor_health=dict(gate["executor_health"]),
             suppressed_feature_clusters=sorted(suppressed_clusters),
             compiler_targets_for_autoencoder_evaluation=compiler_targets,
+            transient_failure_rate=float(gate["transient_failure_rate"]),
+            queue_pressure=float(gate["queue_pressure"]),
+            pending_count=int(gate["pending_count"]),
+            pending_cap=int(gate["pending_cap"]),
+        )
+
+    def seed_program_synthesis_from_leanstral_guidance(
+        self,
+        guidance: Any,
+        *,
+        config: Optional[LeanstralTodoProjectionConfig] = None,
+    ) -> LeanstralTodoProjectionResult:
+        """Project trusted Leanstral draft guidance into the Codex TODO queue."""
+
+        cfg = config or LeanstralTodoProjectionConfig()
+        self.last_program_synthesis_deduped_count = 0
+        gate = _leanstral_projection_seed_gate(
+            self.queue,
+            policy=self.policy,
+            config=cfg,
+        )
+        if gate["blocked"]:
+            return LeanstralTodoProjectionResult(
+                seeded_todo_ids=[],
+                deduped_count=0,
+                budget_skipped_count=0,
+                stale_count=0,
+                report_only_count=0,
+                scope_counts={},
+                report_only_audits=[],
+                seed_block_reasons=list(gate["seed_block_reasons"]),
+                executor_health=dict(gate["executor_health"]),
+                suppressed_feature_clusters=[],
+                compiler_targets_for_autoencoder_evaluation=[],
+                transient_failure_rate=float(gate["transient_failure_rate"]),
+                queue_pressure=float(gate["queue_pressure"]),
+                pending_count=int(gate["pending_count"]),
+                pending_cap=int(gate["pending_cap"]),
+            )
+        candidates = self.program_synthesis_generator.generate_from_leanstral_guidance(
+            guidance,
+            require_trusted=bool(cfg.require_verified_support),
+        )
+        target_scope_filters = _normalise_projection_scope_filters(
+            cfg.target_scope_filters
+        )
+        if target_scope_filters:
+            candidates = [
+                todo
+                for todo in candidates
+                if _leanstral_projection_todo_matches_scope(todo, target_scope_filters)
+            ]
+        candidates = self._bounded_new_todos(candidates, track_program_deduped=True)
+        pre_budget_deduped_count = int(self.last_program_synthesis_deduped_count)
+        selected, budget_skipped_count, scope_counts = _apply_leanstral_projection_budgets(
+            candidates,
+            max_todos_per_cycle=max(0, int(cfg.max_todos_per_cycle)),
+            max_todos_per_scope=max(0, int(cfg.max_todos_per_scope)),
+            existing_scope_counts=_leanstral_active_projection_scope_counts(
+                self.queue,
+                optimizer_role=self.policy.program_synthesis_role,
+            ),
+        )
+        added = self.queue.add_many(selected)
+        deduped_count = pre_budget_deduped_count + max(
+            0,
+            len(selected) - added,
+        )
+        self.last_program_synthesis_deduped_count = deduped_count
+        return LeanstralTodoProjectionResult(
+            seeded_todo_ids=[todo.todo_id for todo in selected if self.queue.get(todo.todo_id)],
+            deduped_count=deduped_count,
+            budget_skipped_count=budget_skipped_count,
+            stale_count=0,
+            report_only_count=0,
+            scope_counts=scope_counts,
+            report_only_audits=[],
+            seed_block_reasons=[],
+            executor_health=dict(gate["executor_health"]),
+            suppressed_feature_clusters=[],
+            compiler_targets_for_autoencoder_evaluation=[],
             transient_failure_rate=float(gate["transient_failure_rate"]),
             queue_pressure=float(gate["queue_pressure"]),
             pending_count=int(gate["pending_count"]),
@@ -3266,6 +3566,11 @@ class ModalTodoSupervisor:
         *,
         autoencoder: AdaptiveModalAutoencoder,
         validation_samples: Optional[Sequence[LegalSample]] = None,
+        precomputed_before: Optional[AutoencoderEvaluation] = None,
+        precomputed_validation_before: Optional[AutoencoderEvaluation] = None,
+        evaluation_callback: Optional[
+            Callable[..., AutoencoderEvaluation]
+        ] = None,
         worker_id: str = "modal-todo-daemon",
         max_items: int = 4,
         learning_rate: float = 0.35,
@@ -3286,27 +3591,44 @@ class ModalTodoSupervisor:
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         samples_by_id = {sample.sample_id: sample for sample in sample_list}
+
+        def evaluate(
+            rows: Sequence[LegalSample],
+            *,
+            use_sample_memory: bool,
+        ) -> AutoencoderEvaluation:
+            if evaluation_callback is not None:
+                return evaluation_callback(
+                    rows,
+                    use_sample_memory=use_sample_memory,
+                )
+            return self._autoencoder_evaluation(
+                autoencoder,
+                rows,
+                use_sample_memory=use_sample_memory,
+            )
+
         report(
             "before_train_evaluation_start",
             sample_count=len(sample_list),
             validation_sample_count=len(validation_list),
         )
-        before = self._autoencoder_evaluation(autoencoder, sample_list)
+        before = precomputed_before or evaluate(
+            sample_list,
+            use_sample_memory=True,
+        )
         report(
             "before_train_evaluation_done",
             cross_entropy_loss=before.cross_entropy_loss,
             cosine_similarity=before.embedding_cosine_similarity,
         )
         report("before_validation_evaluation_start")
-        validation_before = (
-            self._autoencoder_evaluation(
-                autoencoder,
+        validation_before = precomputed_validation_before
+        if validation_before is None and validation_list:
+            validation_before = evaluate(
                 validation_list,
                 use_sample_memory=False,
             )
-            if validation_list
-            else None
-        )
         if validation_before is not None:
             report(
                 "before_validation_evaluation_done",
@@ -3350,6 +3672,8 @@ class ModalTodoSupervisor:
         applied_updates: List[Dict[str, Any]] = []
         completed_ids: List[str] = []
         failed_validation_ids: List[str] = []
+        after = before
+        validation_after = validation_before
         if claimed:
             state_before_batch = autoencoder.state.copy()
             report("apply_todos_start", claimed_count=len(claimed))
@@ -3360,7 +3684,10 @@ class ModalTodoSupervisor:
             )
             report("apply_todos_done", applied_update_count=len(batch_updates))
             report("attempted_train_evaluation_start")
-            attempted_after = self._autoencoder_evaluation(autoencoder, sample_list)
+            attempted_after = evaluate(
+                sample_list,
+                use_sample_memory=True,
+            )
             report(
                 "attempted_train_evaluation_done",
                 cross_entropy_loss=attempted_after.cross_entropy_loss,
@@ -3368,8 +3695,7 @@ class ModalTodoSupervisor:
             )
             report("attempted_validation_evaluation_start")
             attempted_validation_after = (
-                self._autoencoder_evaluation(
-                    autoencoder,
+                evaluate(
                     validation_list,
                     use_sample_memory=False,
                 )
@@ -3402,12 +3728,21 @@ class ModalTodoSupervisor:
                 bool(validation.get("improved")) for validation in validations
             )
             if batch_improved:
+                after = attempted_after
+                validation_after = attempted_validation_after
                 applied_updates.extend(batch_updates)
                 for todo in claimed:
                     self.queue.complete(todo.todo_id)
                     completed_ids.append(todo.todo_id)
             else:
                 autoencoder.state = state_before_batch
+                invalidate_caches = getattr(
+                    autoencoder,
+                    "_invalidate_state_dependent_evaluator_caches",
+                    None,
+                )
+                if callable(invalidate_caches):
+                    invalidate_caches()
                 for todo in claimed:
                     validation = dict(todo.metadata.get("validation", {}))
                     validation["rolled_back"] = True
@@ -3422,23 +3757,13 @@ class ModalTodoSupervisor:
                     )
                     failed_validation_ids.append(todo.todo_id)
 
-        report("after_train_evaluation_start")
-        after = self._autoencoder_evaluation(autoencoder, sample_list)
+        report("after_train_evaluation_reused")
         report(
             "after_train_evaluation_done",
             cross_entropy_loss=after.cross_entropy_loss,
             cosine_similarity=after.embedding_cosine_similarity,
         )
-        report("after_validation_evaluation_start")
-        validation_after = (
-            self._autoencoder_evaluation(
-                autoencoder,
-                validation_list,
-                use_sample_memory=False,
-            )
-            if validation_list
-            else None
-        )
+        report("after_validation_evaluation_reused")
         if validation_after is not None:
             report(
                 "after_validation_evaluation_done",
@@ -3499,6 +3824,11 @@ class ModalTodoSupervisor:
         *,
         autoencoder: AdaptiveModalAutoencoder,
         validation_samples: Optional[Sequence[LegalSample]] = None,
+        precomputed_train_evaluation: Optional[AutoencoderEvaluation] = None,
+        precomputed_validation_evaluation: Optional[AutoencoderEvaluation] = None,
+        evaluation_callback: Optional[
+            Callable[..., AutoencoderEvaluation]
+        ] = None,
         worker_id: str = "modal-todo-daemon",
         max_items: int = 4,
         learning_rate: float = 0.35,
@@ -3517,7 +3847,18 @@ class ModalTodoSupervisor:
             sample_count=len(samples),
             stage="initial_train_evaluation_start",
         )
-        final_evaluation = self._autoencoder_evaluation(autoencoder, list(samples))
+        final_evaluation = precomputed_train_evaluation
+        if final_evaluation is None:
+            if evaluation_callback is not None:
+                final_evaluation = evaluation_callback(
+                    list(samples),
+                    use_sample_memory=True,
+                )
+            else:
+                final_evaluation = self._autoencoder_evaluation(
+                    autoencoder,
+                    list(samples),
+                )
         _emit_optimization_progress(
             progress_callback,
             cross_entropy_loss=final_evaluation.cross_entropy_loss,
@@ -3531,15 +3872,23 @@ class ModalTodoSupervisor:
             sample_count=0 if validation_samples is None else len(validation_samples),
             stage="initial_validation_evaluation_start",
         )
-        validation_final_evaluation = (
-            self._autoencoder_evaluation(
-                autoencoder,
-                list(validation_samples),
-                use_sample_memory=False,
-            )
-            if validation_samples is not None and len(validation_samples) > 0
-            else None
-        )
+        validation_final_evaluation = precomputed_validation_evaluation
+        if (
+            validation_final_evaluation is None
+            and validation_samples is not None
+            and len(validation_samples) > 0
+        ):
+            if evaluation_callback is not None:
+                validation_final_evaluation = evaluation_callback(
+                    list(validation_samples),
+                    use_sample_memory=False,
+                )
+            else:
+                validation_final_evaluation = self._autoencoder_evaluation(
+                    autoencoder,
+                    list(validation_samples),
+                    use_sample_memory=False,
+                )
         if validation_final_evaluation is not None:
             _emit_optimization_progress(
                 progress_callback,
@@ -3583,6 +3932,9 @@ class ModalTodoSupervisor:
                 samples,
                 autoencoder=autoencoder,
                 validation_samples=validation_samples,
+                precomputed_before=final_evaluation,
+                precomputed_validation_before=validation_final_evaluation,
+                evaluation_callback=evaluation_callback,
                 worker_id=worker_id,
                 max_items=max_items,
                 learning_rate=learning_rate,
@@ -4021,6 +4373,134 @@ def _leanstral_counterexamples(evidence: Mapping[str, Any]) -> List[Dict[str, An
     return deduped
 
 
+def _leanstral_drafted_logic_candidates(
+    evidence: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    raw = evidence.get("leanstral_drafted_logic_candidates")
+    if raw is None:
+        raw = evidence.get("drafted_logic_candidates")
+    if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes, bytearray)):
+        return []
+    candidates: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw:
+        if not isinstance(item, Mapping):
+            continue
+        candidate_text = str(item.get("candidate") or "").strip()
+        if not candidate_text:
+            continue
+        payload = {
+            str(key): value
+            for key, value in dict(item).items()
+            if str(key)
+            in {
+                "audit_evidence_id",
+                "candidate",
+                "compiler_surface",
+                "confidence",
+                "evidence_id",
+                "example_id",
+                "guidance_only",
+                "intended_use",
+                "logic_family",
+                "proof_obligation_id",
+                "request_id",
+                "source_span_hash",
+                "target_metric",
+            }
+        }
+        payload["candidate"] = candidate_text[:240]
+        payload.setdefault("guidance_only", True)
+        payload.setdefault("intended_use", "guidance_only")
+        key = json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str)
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(payload)
+        if len(candidates) >= 12:
+            break
+    return candidates
+
+
+def _leanstral_metric_attribution(
+    evidence: Mapping[str, Any],
+    target_metrics: Sequence[str],
+) -> Dict[str, Any]:
+    raw = evidence.get("metric_attribution")
+    attribution = dict(raw) if isinstance(raw, Mapping) else {}
+    validation_set = evidence.get("validation_set")
+    if not attribution and isinstance(validation_set, Mapping):
+        raw_validation = validation_set.get("metric_attribution")
+        if isinstance(raw_validation, Mapping):
+            attribution = dict(raw_validation)
+    pre_patch = _numeric_metric_metadata(
+        attribution.get("pre_patch_metrics")
+        or evidence.get("pre_patch_metrics")
+        or {}
+    )
+    post_patch = _numeric_metric_metadata(
+        attribution.get("post_patch_metrics")
+        or evidence.get("post_patch_metrics")
+        or {}
+    )
+    metric_deltas = _numeric_metric_metadata(attribution.get("metric_deltas") or {})
+    goals = _leanstral_target_metric_goals(target_metrics)
+    return {
+        "metric_deltas": metric_deltas,
+        "post_patch_metric_goals": goals,
+        "post_patch_metrics": post_patch,
+        "pre_patch_metrics": pre_patch,
+        "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+        "source": str(attribution.get("source") or "leanstral_rule_gap_projection"),
+        "status": "pre_patch_observed"
+        if pre_patch
+        else str(attribution.get("status") or "missing_pre_patch_metrics"),
+    }
+
+
+def _numeric_metric_metadata(value: Any, prefix: str = "") -> Dict[str, float]:
+    metrics: Dict[str, float] = {}
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            child_key = f"{prefix}.{key}" if prefix else str(key)
+            metrics.update(_numeric_metric_metadata(item, child_key))
+        return metrics
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        for index, item in enumerate(value):
+            child_key = f"{prefix}.{index}" if prefix else str(index)
+            metrics.update(_numeric_metric_metadata(item, child_key))
+        return metrics
+    if not prefix:
+        return metrics
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return metrics
+    if not (number == number) or number in (float("inf"), float("-inf")):
+        return metrics
+    key = prefix.replace(" ", "_")
+    lowered = key.lower()
+    metric_segments = {
+        segment
+        for segment in lowered.replace("-", "_").replace(".", "_").split("_")
+        if segment
+    }
+    if (
+        "ce" in metric_segments
+        or "cosine" in lowered
+        or "cross_entropy" in lowered
+        or "loss" in lowered
+        or "metric" in lowered
+        or "precision" in lowered
+        or "ratio" in lowered
+        or "recall" in lowered
+        or "similarity" in lowered
+        or "validation" in lowered
+    ):
+        metrics[key] = number
+    return metrics
+
+
 def _dedupe_example_mappings(
     examples: Sequence[Mapping[str, Any]],
     *,
@@ -4160,10 +4640,12 @@ def _leanstral_projection_seed_gate(
         else (1.0 if pending_count > 0 else 0.0)
     )
     transient_counts = queue.transient_failure_counts(
-        optimizer_role=policy.program_synthesis_role
+        optimizer_role=policy.program_synthesis_role,
+        statuses=("pending", "claimed"),
     )
     queue_transient_rate = queue.transient_failure_rate(
-        optimizer_role=policy.program_synthesis_role
+        optimizer_role=policy.program_synthesis_role,
+        statuses=("pending", "claimed"),
     )
     health_transient_rate = _safe_float(
         worker_health.get("codex_transient_failure_rate")
@@ -4173,8 +4655,9 @@ def _leanstral_projection_seed_gate(
     transient_rate = max(queue_transient_rate, health_transient_rate)
     transient_count = max(
         int(transient_counts.get("transient_attempt_count", 0)),
-        _safe_int(worker_health.get("codex_transient_requeue_count")),
-        _safe_int(worker_health.get("transient_failure_count")),
+        _safe_int(worker_health.get("codex_active_transient_failure_count")),
+        _safe_int(worker_health.get("program_synthesis_active_transient_failure_attempts")),
+        _safe_int(worker_health.get("active_transient_failure_count")),
     )
     reasons: List[str] = []
 
@@ -4204,6 +4687,7 @@ def _leanstral_projection_seed_gate(
         "queue_pressure": round(queue_pressure, 6),
         "throttled": _leanstral_executor_throttled(worker_health),
         "transient_failure_count": transient_count,
+        "transient_failure_count_scope": "active_pending_or_claimed",
         "transient_failure_rate": round(transient_rate, 6),
     }
     for key in (
@@ -5569,6 +6053,7 @@ def _merge_program_todo_evidence(target: ModalTodo, duplicate: ModalTodo) -> Non
         ("audit_response_hashes", 64),
         ("conflicting_evidence_ids", 32),
         ("evidence_ids", 64),
+        ("leanstral_drafted_logic_candidates", 12),
         ("proof_ids", 64),
         ("proof_obligation_ids", 64),
         ("supporting_verification_outcomes", 16),
@@ -5608,11 +6093,57 @@ def _merge_program_todo_evidence(target: ModalTodo, duplicate: ModalTodo) -> Non
     )
     if target_metric_goals:
         target.metadata["target_metric_goals"] = target_metric_goals
+    attribution = _merge_metric_attribution_metadata(
+        target.metadata.get("leanstral_metric_attribution"),
+        duplicate.metadata.get("leanstral_metric_attribution"),
+    )
+    if attribution:
+        target.metadata["leanstral_metric_attribution"] = attribution
+        target.metadata["pre_patch_metrics"] = dict(
+            attribution.get("pre_patch_metrics") or {}
+        )
+        target.metadata["post_patch_metrics"] = dict(
+            attribution.get("post_patch_metrics") or {}
+        )
     if target.sample_ids:
         target.metadata["support_count"] = max(
             int(target.metadata.get("support_count", 0) or 0),
             len(target.sample_ids),
         )
+
+
+def _merge_metric_attribution_metadata(left: Any, right: Any) -> Dict[str, Any]:
+    if not isinstance(left, Mapping) and not isinstance(right, Mapping):
+        return {}
+    left_map = dict(left) if isinstance(left, Mapping) else {}
+    right_map = dict(right) if isinstance(right, Mapping) else {}
+    pre_patch = _numeric_metric_metadata(left_map.get("pre_patch_metrics") or {})
+    pre_patch.update(_numeric_metric_metadata(right_map.get("pre_patch_metrics") or {}))
+    post_patch = _numeric_metric_metadata(left_map.get("post_patch_metrics") or {})
+    post_patch.update(_numeric_metric_metadata(right_map.get("post_patch_metrics") or {}))
+    metric_deltas = _numeric_metric_metadata(left_map.get("metric_deltas") or {})
+    metric_deltas.update(_numeric_metric_metadata(right_map.get("metric_deltas") or {}))
+    goals = _merge_jsonish_metadata_values(
+        left_map.get("post_patch_metric_goals") or [],
+        right_map.get("post_patch_metric_goals") or [],
+        limit=32,
+        identity_key="metric",
+    )
+    return {
+        "metric_deltas": metric_deltas,
+        "post_patch_metric_goals": goals,
+        "post_patch_metrics": post_patch,
+        "pre_patch_metrics": pre_patch,
+        "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+        "source": str(
+            left_map.get("source")
+            or right_map.get("source")
+            or "leanstral_rule_gap_projection"
+        ),
+        "status": "pre_patch_observed"
+        if pre_patch
+        else str(left_map.get("status") or right_map.get("status") or ""),
+    }
 
 
 def _merge_jsonish_metadata_values(
@@ -5830,12 +6361,17 @@ def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
         "gap_id",
         "generic_bridge_priority_backoff",
         "leanstral_dedup_key",
+        "leanstral_drafted_logic_candidates",
+        "leanstral_guidance_mode",
         "missing_semantic_rule",
         "normalized_rule_key",
         "legal_ir_component_gaps",
         "legal_ir_underrepresented_components",
+        "metric_attribution",
         "pipeline_stage_diagnostics",
         "pipeline_stage_focus",
+        "post_patch_metrics",
+        "pre_patch_metrics",
         "predicted_family",
         "predicted_view",
         "proof_ids",
@@ -6040,6 +6576,90 @@ def _leanstral_todo_feature_cluster_id(todo: ModalTodo) -> str:
     return f"leanstral-feature-cluster:{digest}"
 
 
+def _leanstral_feedback_rescue_metadata(
+    todo: ModalTodo,
+    *,
+    outcome: str,
+) -> Dict[str, str]:
+    if outcome == LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT:
+        return {
+            "leanstral_feedback_rescue_category": "accepted_compiler_target",
+            "leanstral_feedback_rescue_action": "evaluate_compiler_target_without_weight_update",
+        }
+    if outcome == LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION:
+        return {
+            "leanstral_feedback_rescue_category": "quality_regression",
+            "leanstral_feedback_rescue_action": "suppress_or_require_counterevidence",
+        }
+    if outcome == LEANSTRAL_PATCH_OUTCOME_UNSUPPORTED_HYPOTHESIS:
+        return {
+            "leanstral_feedback_rescue_category": "unsupported_hypothesis",
+            "leanstral_feedback_rescue_action": "keep_report_only_until_verified",
+        }
+    if outcome == LEANSTRAL_PATCH_OUTCOME_STALE_EVIDENCE:
+        return {
+            "leanstral_feedback_rescue_category": "stale_evidence",
+            "leanstral_feedback_rescue_action": "refresh_audit_evidence",
+        }
+    if outcome != LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE:
+        return {}
+
+    evidence = _leanstral_feedback_failure_text(todo)
+    if (
+        "main_apply_validation_failed_rolled_back" in evidence
+        or "validation_timeout" in evidence
+        or "main_apply_baseline_validation_failed_rolled_back" in evidence
+    ):
+        category = "validation_replay_needed"
+        action = "rerun_validation_with_expanded_timeout"
+    elif "lock" in evidence and ("main_apply" in evidence or "timeout" in evidence):
+        category = "main_apply_lock_retry"
+        action = "requeue_with_serial_main_apply"
+    elif (
+        "codex_exec_transient_failure" in evidence
+        or "transient_failure" in evidence
+        or "awaiting_codex_changes" in evidence
+        or "no_changes" in evidence
+    ):
+        category = "codex_retry_or_prompt_repair"
+        action = "requeue_with_smaller_scope"
+    elif "target_metric_unavailable" in evidence:
+        category = "metric_probe_replay"
+        action = "rerun_metric_collection_before_patch_retry"
+    else:
+        category = "operational_retry"
+        action = "requeue_after_worker_health_recovers"
+    return {
+        "leanstral_feedback_rescue_category": category,
+        "leanstral_feedback_rescue_action": action,
+    }
+
+
+def _leanstral_feedback_failure_text(todo: ModalTodo) -> str:
+    fields = [
+        todo.status,
+        todo.metadata.get("failure_reason"),
+        todo.metadata.get("failed_validation_reason"),
+        todo.metadata.get("transient_failure_reason"),
+        todo.metadata.get("failed_validation_patch_status"),
+        todo.metadata.get("failed_validation_codex_exec_status"),
+        todo.metadata.get("last_transient_patch_status"),
+        todo.metadata.get("last_transient_codex_exec_status"),
+        todo.metadata.get("failed_validation_report"),
+        todo.metadata.get("last_transient_validation_report"),
+    ]
+    return " ".join(_jsonish_text(value) for value in fields if value is not None).lower()
+
+
+def _jsonish_text(value: Any) -> str:
+    if isinstance(value, (Mapping, list, tuple)):
+        try:
+            return json.dumps(value, ensure_ascii=True, sort_keys=True)
+        except (TypeError, ValueError):
+            return str(value)
+    return str(value)
+
+
 def _record_leanstral_patch_feedback_evidence(todo: ModalTodo) -> None:
     """Attach Leanstral outcome attribution without creating trainable updates."""
     if not bool(todo.metadata.get("leanstral_projection")):
@@ -6050,6 +6670,9 @@ def _record_leanstral_patch_feedback_evidence(todo: ModalTodo) -> None:
     todo.metadata["feature_cluster_id"] = cluster_id
     todo.metadata["leanstral_feedback_recorded_at"] = _utc_now()
     todo.metadata["leanstral_feedback_never_write_to_autoencoder_weights"] = True
+    todo.metadata.update(
+        _leanstral_feedback_rescue_metadata(todo, outcome=outcome)
+    )
     compiler_target = leanstral_compiler_target_from_patch_record(todo)
     if compiler_target is not None:
         todo.metadata["compiler_target_for_autoencoder_evaluation"] = compiler_target

@@ -13,6 +13,7 @@ from ipfs_datasets_py.logic.modal import (
     LeanstralShadowRunner,
     ModalLogicCodecConfig,
     PythonPatchProposal,
+    merge_leanstral_guidance_into_compiler_guidance,
     validate_python_patch_proposal,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
@@ -64,6 +65,7 @@ def test_shadow_runner_validates_a_fixed_lean_goal_and_persists_artifact(tmp_pat
         calls.append({"prompt": prompt, **kwargs})
         task = json.loads(prompt)["task"]
         change_spec = task["compiler_change_spec"]
+        proof_obligation_id = task["theorem_registry"]["theorems"][0]["theorem_id"]
         return json.dumps(
             {
                 "schema_version": "legal-ir-leanstral-proposal-v1",
@@ -71,6 +73,16 @@ def test_shadow_runner_validates_a_fixed_lean_goal_and_persists_artifact(tmp_pat
                 "target_modal_ir_hash": task["modal_ir_hash"],
                 "compiler_change_spec_id": change_spec["spec_id"],
                 "proof": "by simp [wellFormed, modalityMatches, sourceProvenancePresent, String.length]",
+                "drafted_logic_candidates": [
+                    {
+                        "candidate": "obligation(agency, provide_notice) before deadline(days_30)",
+                        "compiler_surface": change_spec["target_component"],
+                        "confidence": 0.8,
+                        "intended_use": "guidance_only",
+                        "logic_family": "deontic",
+                        "proof_obligation_id": proof_obligation_id,
+                    }
+                ],
                 "deterministic_rule_hints": [
                     {
                         "action": "add_or_refine_spacy_rule",
@@ -94,9 +106,27 @@ def test_shadow_runner_validates_a_fixed_lean_goal_and_persists_artifact(tmp_pat
     assert result.validation.proof_sha256
     assert result.artifact_path is not None
     assert (tmp_path / f"{result.task.task_id}.json").is_file()
-    assert calls[0]["provider"] == "mistral_vibe"
+    assert calls[0]["provider"] == "leanstral_local"
     assert calls[0]["model_name"] == "Leanstral"
     assert calls[0]["mistral_vibe_agent"] == "lean"
+    assert result.proposal.drafted_logic_candidates[0]["guidance_only"] is True
+    assert result.guidance is not None
+    assert result.guidance.accepted is True
+    assert result.guidance.trusted is True
+    assert result.guidance.drafted_logic_candidates[0]["candidate"].startswith("obligation")
+    assert result.guidance.ranked_guidance_features
+    persisted = json.loads((tmp_path / f"{result.task.task_id}.json").read_text(encoding="utf-8"))
+    assert persisted["guidance"]["trusted"] is True
+    merged = merge_leanstral_guidance_into_compiler_guidance(
+        _GuidanceAutoencoder().compiler_guidance_for_sample(sample),
+        result.guidance,
+    )
+    assert merged["latest_leanstral_guidance"]["guidance_id"] == result.guidance.guidance_id
+    assert "leanstral_drafted_logic" in merged["feature_groups"]
+    assert any(
+        feature["feature"].startswith("leanstral:logic:deontic:")
+        for feature in merged["ranked_guidance_features"]
+    )
     task_payload = json.loads(str(calls[0]["prompt"]))["task"]
     assert "legal_ir_view_metrics" in task_payload["autoencoder_evidence"]
     assert task_payload["projection_evidence"]["source_span_hashes"]
@@ -127,6 +157,39 @@ def test_shadow_runner_rejects_proof_that_changes_the_trusted_boundary() -> None
 
     assert result.validation.accepted is False
     assert "forbidden_proof_construct" in result.validation.reasons
+
+
+def test_shadow_runner_rejects_drafted_logic_that_copies_source_span() -> None:
+    sample = _sample()
+
+    def fake_generate(prompt: str, **kwargs: object) -> str:
+        del kwargs
+        task = json.loads(prompt)["task"]
+        return json.dumps(
+            {
+                "schema_version": "legal-ir-leanstral-proposal-v1",
+                "task_id": task["task_id"],
+                "target_modal_ir_hash": task["modal_ir_hash"],
+                "compiler_change_spec_id": task["compiler_change_spec"]["spec_id"],
+                "proof": "by simp [wellFormed, modalityMatches, sourceProvenancePresent, String.length]",
+                "drafted_logic_candidates": [
+                    {
+                        "candidate": task["source_span"],
+                        "logic_family": "deontic",
+                    }
+                ],
+            }
+        )
+
+    result = LeanstralShadowRunner(
+        LeanstralConfig(enabled=True),
+        llm_generate=fake_generate,
+    ).run(sample, autoencoder=_GuidanceAutoencoder())
+
+    assert result.validation.accepted is False
+    assert "drafted_logic_candidate_copies_source_span" in result.validation.reasons
+    assert result.guidance is not None
+    assert result.guidance.trusted is False
 
 
 def test_python_patch_contract_only_admits_allowed_paths_after_git_check(tmp_path) -> None:

@@ -412,6 +412,7 @@ class ProverIntegrationAdapter:
                 "raw_result": route.result,
                 "reason": route.reason,
             }
+            details.update(route.metadata)
 
             if route.status == ModalProverStatus.AVAILABLE:
                 theorem_valid = bool(getattr(route.result, "is_valid", False))

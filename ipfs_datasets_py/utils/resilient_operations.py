@@ -32,8 +32,9 @@ from enum import Enum
 import concurrent.futures
 from datetime import datetime, timedelta
 
-# Import our own modules
-from ipfs_datasets_py.libp2p_kit import (
+# Import legacy distributed-dataset data models. Runtime P2P host creation is
+# handled by the MCP++ libp2p runtime in ipfs_accelerate_py.
+from ipfs_datasets_py.p2p_networking.libp2p_kit_full import (
     P2PError,
     NetworkProtocol,
     LibP2PNotAvailableError,

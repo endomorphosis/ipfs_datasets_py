@@ -19,7 +19,9 @@ import tempfile
 from pathlib import Path
 
 # Setup path
-sys.path.insert(0, str(Path(__file__).parent))
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT / "ipfs_accelerate_py"))
 
 # Configure logging
 logging.basicConfig(
@@ -70,12 +72,15 @@ def test_libp2p_dependencies():
     logger.info("=" * 60)
     
     try:
-        from libp2p import new_host
-        logger.info("✓ libp2p package available")
+        from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import have_libp2p_runtime
+
+        if not have_libp2p_runtime():
+            raise ImportError("MCP++ libp2p runtime compatibility check failed")
+        logger.info("✓ MCP++ libp2p runtime available")
         return True
     except ImportError as e:
-        logger.warning(f"⚠ libp2p package not available: {e}")
-        logger.warning("  Optional but required for P2P: pip install libp2p")
+        logger.warning(f"⚠ MCP++ libp2p runtime not available: {e}")
+        logger.warning("  Optional but required for P2P: pip install 'ipfs_accelerate_py[mcp-p2p]'")
         return False
 
 

@@ -72,6 +72,7 @@ def _leanstral_gap(
     sample_id: str,
     citation: str,
     rule_key: str,
+    drafted_logic_candidates=None,
 ) -> dict:
     return {
         "action": action,
@@ -87,6 +88,7 @@ def _leanstral_gap(
                 "affected_ir_families": ["deontic"],
                 "classification": "missing_semantic_rule",
                 "confidence": priority,
+                "drafted_logic_candidates": drafted_logic_candidates or [],
                 "evidence_id": f"evidence-{gap_id}",
                 "examples": [
                     {
@@ -148,6 +150,17 @@ def _leanstral_gap(
             "held_out_compiler_ir_metrics": ["modal_ir_formula_recall"]
             if component == "modal.compiler"
             else ["reconstruction_loss"],
+            "metric_attribution": {
+                "metric_deltas": {},
+                "post_patch_metrics": {},
+                "pre_patch_metrics": {
+                    "compiler_ir_ce": 2.0 if component == "modal.compiler" else 2.4,
+                    "compiler_ir_cosine_similarity": 0.2,
+                },
+                "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+                "source": "test",
+                "status": "pre_patch_observed",
+            },
             "mutation_cases": ["remove_modal_cue"]
             if component == "modal.compiler"
             else ["remove_exception", "alter_deadline"],
@@ -625,6 +638,20 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
                 sample_id="sample-a",
                 citation="5 U.S.C. 552",
                 rule_key="exception_scope:unless",
+                drafted_logic_candidates=[
+                    {
+                        "audit_evidence_id": "evidence-gap-decompiler-a",
+                        "candidate": (
+                            "obligation(agency, notify(applicant)) "
+                            "unless emergency_review"
+                        ),
+                        "compiler_surface": "modal.ir_decompiler",
+                        "guidance_only": True,
+                        "intended_use": "guidance_only",
+                        "logic_family": "deontic",
+                        "proof_obligation_id": "proof-gap-decompiler-a",
+                    }
+                ],
             ),
             _leanstral_gap(
                 "gap-compiler-a",
@@ -689,6 +716,15 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
         "exception_scope:unless",
     ]
     assert decompiler.metadata["proof_obligation_ids"] == ["proof-gap-decompiler-a"]
+    assert decompiler.metadata["leanstral_guidance_mode"] == (
+        "draft_logic_guidance_only"
+    )
+    assert decompiler.metadata["leanstral_drafted_logic_candidates"][0][
+        "candidate"
+    ].startswith("obligation")
+    assert decompiler.metadata["leanstral_drafted_logic_candidates"][0][
+        "guidance_only"
+    ] is True
     assert decompiler.metadata["proof_ids"] == [
         "proof-gap-decompiler-a",
         "decompiler_round_trip",
@@ -708,6 +744,11 @@ def test_supervisor_projects_verified_leanstral_gaps_into_existing_program_queue
         "target_delta": -0.01,
         "target_value": 0.0,
     }
+    attribution = decompiler.metadata["leanstral_metric_attribution"]
+    assert attribution["status"] == "pre_patch_observed"
+    assert attribution["pre_patch_metrics"]["compiler_ir_ce"] == 2.4
+    assert attribution["post_patch_metrics"] == {}
+    assert attribution["post_patch_metric_goals"][0]["metric"] == "reconstruction_loss"
     assert decompiler.metadata["validation_commands"]
     assert decompiler.metadata["dedupe_signature"].startswith("leanstral-rule-gap:")
     assert all(
@@ -764,6 +805,16 @@ def test_leanstral_patch_feedback_records_accepted_compiler_target() -> None:
                 sample_id="sample-feedback",
                 citation="5 U.S.C. 552",
                 rule_key="modal_cue:shall",
+                drafted_logic_candidates=[
+                    {
+                        "candidate": "obligation(agency, disclose(record))",
+                        "compiler_surface": "modal.compiler",
+                        "guidance_only": True,
+                        "intended_use": "guidance_only",
+                        "logic_family": "deontic",
+                        "proof_obligation_id": "proof-gap-feedback-accepted",
+                    }
+                ],
             )
         ]
     }
@@ -794,17 +845,113 @@ def test_leanstral_patch_feedback_records_accepted_compiler_target() -> None:
     assert completed is not None
     assert completed.status == "completed"
     assert completed.metadata["leanstral_patch_outcome"] == "accepted_improvement"
+    assert completed.metadata["leanstral_feedback_rescue_category"] == (
+        "accepted_compiler_target"
+    )
+    assert completed.metadata["leanstral_feedback_rescue_action"] == (
+        "evaluate_compiler_target_without_weight_update"
+    )
     assert completed.metadata["leanstral_feedback_never_write_to_autoencoder_weights"] is True
     target = completed.metadata["compiler_target_for_autoencoder_evaluation"]
     assert target["feature_cluster_id"] == completed.metadata["feature_cluster_id"]
     assert target["verified_compiler_rule"] is True
     assert target["write_to_autoencoder_weights"] is False
+    assert target["leanstral_guidance_mode"] == "draft_logic_guidance_only"
+    assert target["leanstral_drafted_logic_candidates"][0]["guidance_only"] is True
+    assert target["leanstral_drafted_logic_candidates"][0]["candidate"].startswith(
+        "obligation"
+    )
 
     followup = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
         {"gaps": []}
     )
 
     assert followup.compiler_targets_for_autoencoder_evaluation == [target]
+
+
+def test_leanstral_patch_feedback_categorizes_operational_rescue() -> None:
+    report = {
+        "gaps": [
+            _leanstral_gap(
+                "gap-feedback-operational",
+                component="modal.ir_decompiler",
+                action="refine_typed_ir_or_decompiler_slots",
+                priority=0.91,
+                sample_id="sample-feedback",
+                citation="5 U.S.C. 552",
+                rule_key="exception_scope:unless",
+            )
+        ]
+    }
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+    projection = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        report
+    )
+    assert projection.seeded_count == 1
+    [claimed] = supervisor.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+
+    finalized = supervisor.finalize_program_synthesis_batch(
+        [claimed],
+        codex_exec_status="failed",
+        patch_status="awaiting_codex_changes",
+    )
+
+    requeued = supervisor.queue.get(claimed.todo_id)
+    assert finalized["requeued_count"] == 1
+    assert requeued is not None
+    assert requeued.status == "pending"
+    assert requeued.metadata["leanstral_patch_outcome"] == "operational_failure"
+    assert requeued.metadata["leanstral_feedback_rescue_category"] == (
+        "codex_retry_or_prompt_repair"
+    )
+    assert requeued.metadata["leanstral_feedback_rescue_action"] == (
+        "requeue_with_smaller_scope"
+    )
+
+
+def test_leanstral_feedback_backfill_updates_existing_failed_todos() -> None:
+    gap = _leanstral_gap(
+        "gap-feedback-backfill",
+        component="modal.ir_decompiler",
+        action="refine_typed_ir_or_decompiler_slots",
+        priority=0.91,
+        sample_id="sample-feedback",
+        citation="5 U.S.C. 552",
+        rule_key="exception_scope:unless",
+    )
+    generator = ModalProgramSynthesisTodoGenerator()
+    [template] = generator.generate_from_leanstral_rule_gap_report({"gaps": [gap]})
+    failed = ModalTodo.from_dict(template.to_dict())
+    failed.todo_id = "program-leanstral-backfill"
+    failed.status = "failed_validation"
+    failed.metadata.update(
+        {
+            "failed_validation_codex_exec_status": "succeeded",
+            "failed_validation_patch_status": "main_apply_validation_failed_rolled_back",
+            "failed_validation_reason": "main_apply_validation_failed_rolled_back",
+            "leanstral_patch_outcome": "operational_failure",
+        }
+    )
+    failed.metadata.pop("leanstral_feedback_rescue_category", None)
+    failed.metadata.pop("leanstral_feedback_rescue_action", None)
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([failed]))
+
+    report = supervisor.backfill_leanstral_patch_feedback_evidence()
+    updated = supervisor.queue.get(failed.todo_id)
+
+    assert report["scanned_count"] == 1
+    assert report["updated_count"] == 1
+    assert report["category_counts"] == {"validation_replay_needed": 1}
+    assert updated is not None
+    assert updated.metadata["leanstral_feedback_rescue_category"] == (
+        "validation_replay_needed"
+    )
+    assert updated.metadata["leanstral_feedback_rescue_action"] == (
+        "rerun_validation_with_expanded_timeout"
+    )
 
 
 def test_leanstral_projection_suppresses_repeatedly_disproven_clusters() -> None:
@@ -864,6 +1011,73 @@ def test_leanstral_projection_suppresses_repeatedly_disproven_clusters() -> None
         "suppressed_disproven_cluster"
     )
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 0
+
+
+def test_direct_leanstral_guidance_projects_to_program_synthesis_queue() -> None:
+    guidance = {
+        "accepted": True,
+        "action": "refine_semantic_decompiler_reconstruction",
+        "allowed_paths": ["ipfs_datasets_py/logic/modal/decompiler.py"],
+        "drafted_logic_candidates": [
+            {
+                "candidate": "obligation(agency, provide_notice) unless exception(scope)",
+                "compiler_surface": "modal.ir_decompiler",
+                "confidence": 0.9,
+                "guidance_only": True,
+                "intended_use": "guidance_only",
+                "logic_family": "deontic",
+                "proof_obligation_id": "proof-direct-guidance",
+            }
+        ],
+        "guidance_id": "leanstral-guidance-direct-a",
+        "legal_ir_view_metrics": {
+            "cross_entropy_loss": 0.42,
+            "source_decompiled_text_embedding_cosine_loss": 0.18,
+        },
+        "modal_ir_hash": "modal-hash-direct-a",
+        "mutation_cases": ["remove_exception"],
+        "proof_obligation_ids": ["proof-direct-guidance"],
+        "ranked_guidance_features": [
+            {"feature": "leanstral:logic:deontic:direct", "score": 0.9}
+        ],
+        "sample_id": "sample-direct-guidance",
+        "source": "leanstral_shadow_proof",
+        "target_component": "modal.ir_decompiler",
+        "target_metrics": [
+            "source_decompiled_text_embedding_cosine_loss",
+            "source_decompiled_text_token_loss",
+        ],
+        "theorem_templates": ["exception_scope_preserved"],
+        "trusted": True,
+    }
+    generator = ModalProgramSynthesisTodoGenerator()
+
+    [template] = generator.generate_from_leanstral_guidance(guidance)
+
+    assert template.loss_name == "leanstral_verified_draft_guidance"
+    assert template.metadata["source"] == "leanstral_direct_guidance_projection_v1"
+    assert template.metadata["leanstral_projection"] is True
+    assert template.metadata["leanstral_verified"] is True
+    assert template.metadata["leanstral_drafted_logic_candidates"][0][
+        "candidate"
+    ].startswith("obligation")
+    assert template.metadata["proof_obligation_ids"] == ["proof-direct-guidance"]
+    assert "source_decompiled_text_embedding_cosine_loss" in template.metadata["target_metrics"]
+
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+    result = supervisor.seed_program_synthesis_from_leanstral_guidance(
+        guidance,
+        config=LeanstralTodoProjectionConfig(
+            max_todos_per_cycle=1,
+            max_todos_per_scope=1,
+            require_executor_available=False,
+        ),
+    )
+
+    assert result.seeded_count == 1
+    pending = supervisor.queue.pending(optimizer_role="program_synthesis")
+    assert len(pending) == 1
+    assert pending[0].metadata["leanstral_dedup_key"] == "leanstral-guidance-direct-a"
 
 
 def test_supervisor_keeps_unverified_leanstral_report_in_report_only_state() -> None:
@@ -1036,6 +1250,53 @@ def test_leanstral_projection_blocks_on_pending_and_transient_caps() -> None:
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 1
 
 
+def test_leanstral_projection_ignores_resolved_historical_transient_failures() -> None:
+    resolved = ModalTodo(
+        todo_id="program-resolved-transient",
+        action="add_deterministic_parser_rule",
+        objective="repair parser",
+        sample_ids=["sample-old"],
+        citations=["5 U.S.C. 552"],
+        loss_name="leanstral_verified_rule_gap",
+        loss_value=1.0,
+        priority=5.0,
+        status="completed",
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "transient_failure_count": 30,
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([resolved]))
+    report = {
+        "gaps": [
+            _leanstral_gap(
+                "gap-after-resolved-transient",
+                component="modal.compiler",
+                action="add_deterministic_parser_rule",
+                priority=0.91,
+                sample_id="sample-new",
+                citation="18 U.S.C. 1001",
+                rule_key="modal_cue:shall_not",
+            )
+        ]
+    }
+
+    result = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
+        report,
+        config=LeanstralTodoProjectionConfig(
+            max_transient_failures=2,
+            max_transient_failure_rate=0.25,
+        ),
+    )
+
+    assert result.seeded_count == 1
+    assert result.seed_block_reasons == []
+    assert result.executor_health["transient_failure_count"] == 0
+    assert result.executor_health["transient_failure_count_scope"] == (
+        "active_pending_or_claimed"
+    )
+
+
 def test_runner_projects_verified_leanstral_report_into_existing_queue(
     tmp_path: Path,
 ) -> None:
@@ -1105,6 +1366,115 @@ def test_runner_projects_verified_leanstral_report_into_existing_queue(
     assert pending[0].metadata["leanstral_gap_id"] == "gap-runner"
     assert summary["latest_leanstral_projection_seeded_count"] == 1
     assert summary["latest_leanstral_projection_stale_count"] == 1
+
+
+def test_runner_projects_direct_leanstral_guidance_artifact_into_existing_queue(
+    tmp_path: Path,
+) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide notice unless an exception applies.",
+    )
+    guidance_dir = tmp_path / "leanstral-guidance"
+    guidance_dir.mkdir()
+    guidance_path = guidance_dir / "loop-doc.introspection.json"
+    queue_path = tmp_path / "queue" / "run.jsonl"
+    queue_path.parent.mkdir(parents=True)
+    guidance_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "legal-modal-autoencoder-introspection-loop-v1",
+                "sample_id": sample.sample_id,
+                "leanstral_guidance": {
+                    "accepted": True,
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "allowed_paths": ["ipfs_datasets_py/logic/modal/decompiler.py"],
+                    "drafted_logic_candidates": [
+                        {
+                            "candidate": (
+                                "obligation(agency, provide_notice) unless "
+                                "exception(scope)"
+                            ),
+                            "compiler_surface": "modal.ir_decompiler",
+                            "confidence": 0.9,
+                            "guidance_only": True,
+                            "intended_use": "guidance_only",
+                            "logic_family": "deontic",
+                            "proof_obligation_id": "proof-direct-runner",
+                        }
+                    ],
+                    "guidance_id": "leanstral-guidance-runner-a",
+                    "legal_ir_view_metrics": {
+                        "cross_entropy_loss": 0.42,
+                        "source_decompiled_text_embedding_cosine_loss": 0.18,
+                    },
+                    "modal_ir_hash": "modal-hash-direct-runner-a",
+                    "mutation_cases": ["remove_exception"],
+                    "proof_obligation_ids": ["proof-direct-runner"],
+                    "ranked_guidance_features": [
+                        {
+                            "feature": "leanstral:logic:deontic:runner",
+                            "score": 0.9,
+                        }
+                    ],
+                    "sample_id": sample.sample_id,
+                    "source": "leanstral_shadow_proof",
+                    "target_component": "modal.ir_decompiler",
+                    "target_metrics": [
+                        "source_decompiled_text_embedding_cosine_loss",
+                        "source_decompiled_text_token_loss",
+                    ],
+                    "theorem_templates": ["exception_scope_preserved"],
+                    "trusted": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue())
+    autoencoder = AdaptiveModalAutoencoder()
+
+    projection = runner.project_verified_leanstral_guidance_artifacts_into_queue(
+        args=SimpleNamespace(
+            autoencoder_max_audits_per_cycle=0,
+            autoencoder_max_todos_per_cycle=4,
+            autoencoder_target_scope_filters="",
+            leanstral_direct_guidance_max_todos_per_scope=2,
+            leanstral_direct_guidance_max_training_items=8,
+            leanstral_direct_guidance_path=str(guidance_dir),
+            leanstral_direct_guidance_learning_rate=0.5,
+            leanstral_direct_guidance_projection_enabled=True,
+            leanstral_direct_guidance_require_executor_available=True,
+            leanstral_direct_guidance_train_autoencoder=True,
+            leanstral_direct_guidance_train_missing_samples=False,
+            max_program_synthesis_pending=8,
+            run_id="runner-direct-guidance",
+        ),
+        queue_path=queue_path,
+        root=tmp_path,
+        supervisor=supervisor,
+        autoencoder=autoencoder,
+        samples_by_id={sample.sample_id: sample},
+        worker_health={"codex_executor_available": True},
+    )
+    combined = runner.combine_leanstral_projection_results({}, projection)
+
+    queue = ModalTodoQueue.load_jsonl(queue_path)
+    pending = queue.pending(optimizer_role="program_synthesis")
+    assert projection["status"] == "projected"
+    assert projection["guidance_count"] == 1
+    assert projection["seeded_count"] == 1
+    assert projection["guidance_ids"] == ["leanstral-guidance-runner-a"]
+    assert projection["autoencoder_training"]["applied_count"] == 1
+    assert autoencoder.state.applied_leanstral_guidance_ids == [
+        "leanstral-guidance-runner-a"
+    ]
+    assert combined["seeded_count"] == 1
+    assert len(pending) == 1
+    assert pending[0].metadata["source"] == "leanstral_direct_guidance_projection_v1"
+    assert pending[0].metadata["leanstral_verified"] is True
+    assert pending[0].metadata["proof_obligation_ids"] == ["proof-direct-runner"]
 
 
 def test_queue_semantic_dedupe_rejects_completed_bundle_duplicates() -> None:
@@ -2350,6 +2720,8 @@ def test_autoencoder_metric_bridge_samples_use_bounded_metric_text() -> None:
     assert len(bounded[0].text) <= 80
     assert ":metric-prefix:" in bounded[0].sample_id
     assert len(bounded[0].embedding_vector) == len(sample.embedding_vector)
+    assert bounded[0].embedding_model.startswith("metric-prefix:")
+    assert bounded[0].embedding_vector != sample.embedding_vector
     assert sample.text != bounded[0].text
 
 
@@ -2366,6 +2738,118 @@ def test_autoencoder_metric_bridge_samples_leave_short_text_unchanged() -> None:
     )
 
     assert bounded == [sample]
+
+
+def test_autoencoder_evaluation_bounds_only_expensive_bridge_text() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=" ".join(["The agency must provide records promptly."] * 8),
+    )
+    calls = []
+
+    class FakeAutoencoder:
+        def evaluate(self, samples, **kwargs):
+            rows = list(samples)
+            calls.append((rows, dict(kwargs)))
+            bridge_enabled = bool(kwargs.get("legal_ir_bridge_names"))
+            return runner.AutoencoderEvaluation(
+                sample_count=len(rows),
+                embedding_cosine_similarity=0.75,
+                cosine_loss=0.25,
+                reconstruction_loss=0.2,
+                cross_entropy_loss=0.3,
+                frame_ranking_loss=0.0,
+                symbolic_validity_penalty=0.0,
+                decoded_embeddings={row.sample_id: [0.0] for row in rows},
+                legal_ir_target_count=len(rows) if bridge_enabled else 0,
+                legal_ir_losses={"bridge_loss": 0.4} if bridge_enabled else {},
+                legal_ir_predicted_view_distribution=(
+                    {"deontic.ir": 0.6} if bridge_enabled else {}
+                ),
+                legal_ir_target_hashes=(
+                    {row.sample_id: "hash" for row in rows}
+                    if bridge_enabled
+                    else {}
+                ),
+                legal_ir_view_distribution=(
+                    {"deontic.ir": 1.0} if bridge_enabled else {}
+                ),
+            )
+
+    result = runner.evaluate_autoencoder_with_bounded_metric_bridges(
+        FakeAutoencoder(),
+        [sample],
+        legal_ir_bridge_names=["deontic_norms"],
+        legal_ir_evaluate_provers=False,
+        legal_ir_parallel_workers=2,
+        max_bridge_sample_text_chars=80,
+        use_sample_memory=False,
+    )
+
+    assert len(calls) == 2
+    assert len(calls[0][0][0].text) <= 80
+    assert calls[0][0][0].sample_id != sample.sample_id
+    assert calls[0][1]["legal_ir_bridge_names"] == ["deontic_norms"]
+    assert calls[1][0] == [sample]
+    assert calls[1][1]["legal_ir_bridge_names"] == ()
+    assert result.embedding_cosine_similarity == 0.75
+    assert result.legal_ir_target_count == 1
+    assert result.legal_ir_losses == {"bridge_loss": 0.4}
+
+
+def test_bounded_bridge_targets_are_aliased_before_full_sample_evaluation() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=" ".join(["The agency must provide records promptly."] * 8),
+    )
+    autoencoder = runner.AdaptiveModalAutoencoder()
+    calls = []
+    original_evaluate = autoencoder.evaluate
+
+    def spy_evaluate(samples, **kwargs):
+        rows = list(samples)
+        result = original_evaluate(rows, **kwargs)
+        calls.append(
+            {
+                "bridge": bool(kwargs.get("legal_ir_bridge_names")),
+                "full_target_cached": bool(
+                    autoencoder._legal_ir_view_target_cache.get(sample.sample_id)
+                ),
+            }
+        )
+        return result
+
+    autoencoder.evaluate = spy_evaluate
+    evaluation = runner.evaluate_autoencoder_with_bounded_metric_bridges(
+        autoencoder,
+        [sample],
+        legal_ir_bridge_names=["deontic_norms"],
+        legal_ir_evaluate_provers=False,
+        legal_ir_parallel_workers=1,
+        max_bridge_sample_text_chars=80,
+        use_sample_memory=False,
+    )
+
+    assert [call["bridge"] for call in calls] == [True, False]
+    assert calls[0]["full_target_cached"] is False
+    assert calls[1]["full_target_cached"] is True
+    repeated = original_evaluate(
+        [sample],
+        legal_ir_bridge_names=(),
+        use_sample_memory=False,
+    )
+    assert repeated.cross_entropy_loss == pytest.approx(
+        evaluation.cross_entropy_loss
+    )
+    assert repeated.cross_entropy_excess_loss == pytest.approx(
+        evaluation.cross_entropy_excess_loss
+    )
+    assert autoencoder._nudge_legal_ir_view_global_logits(
+        sample,
+        learning_rate=0.1,
+    ) is True
 
 
 def test_autoencoder_diagnostic_bridge_defaults_to_off(monkeypatch) -> None:
@@ -2443,7 +2927,7 @@ def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
         section="552",
         text="The agency shall publish notice before the permit takes effect.",
     )
-    calls = {"count": 0}
+    calls = {"count": 0, "texts": [], "document_ids": []}
 
     class FakeDocument:
         def canonical_hash(self) -> str:
@@ -2489,6 +2973,8 @@ def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
 
     def fake_evaluate_legal_ir_multiview(*args, **kwargs):
         calls["count"] += 1
+        calls["texts"].append(args[0])
+        calls["document_ids"].append(kwargs["document_id"])
         return FakeMultiview()
 
     with runner._BRIDGE_IR_REPORT_CACHE_LOCK:
@@ -2499,10 +2985,23 @@ def test_bridge_ir_metric_block_caches_multiview_reports(monkeypatch) -> None:
         fake_evaluate_legal_ir_multiview,
     )
 
-    first = bridge_ir_metric_block([sample], ["deontic_norms"], evaluate_provers=False)
-    second = bridge_ir_metric_block([sample], ["deontic_norms"], evaluate_provers=False)
+    first = bridge_ir_metric_block(
+        [sample],
+        ["deontic_norms"],
+        evaluate_provers=False,
+        max_sample_text_chars=40,
+    )
+    second = bridge_ir_metric_block(
+        [sample],
+        ["deontic_norms"],
+        evaluate_provers=False,
+        max_sample_text_chars=40,
+    )
 
     assert calls["count"] == 1
+    assert len(calls["texts"][0]) <= 40
+    assert ":metric-prefix:" in calls["document_ids"][0]
+    assert first["max_sample_text_chars"] == 40
     assert first["cache_hits"] == 0
     assert first["cache_misses"] == 1
     assert second["cache_hits"] == 1
@@ -2771,7 +3270,9 @@ def test_supervisor_caps_loss_derived_program_synthesis_todos() -> None:
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 0
 
 
-def test_program_synthesis_generator_clusters_stable_autoencoder_residuals() -> None:
+def test_program_synthesis_generator_clusters_stable_autoencoder_residuals(
+    monkeypatch,
+) -> None:
     samples = [
         build_us_code_sample(
             title="5",
@@ -2786,10 +3287,23 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals() -> 
     ]
     autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
     generator = ModalProgramSynthesisTodoGenerator(min_support=2)
+    introspection_calls = []
+    original_introspect_sample = autoencoder.introspect_sample
+
+    def record_introspection(*args, **kwargs):
+        introspection_calls.append(dict(kwargs))
+        return original_introspect_sample(*args, **kwargs)
+
+    monkeypatch.setattr(autoencoder, "introspect_sample", record_introspection)
 
     todos = generator.generate(samples, autoencoder=autoencoder)
 
     assert todos
+    assert introspection_calls
+    assert all(
+        call.get("include_causal_attribution") is False
+        for call in introspection_calls
+    )
     assert any(todo.action == "refine_typed_ir_or_decompiler_slots" for todo in todos)
     assert all(todo.metadata["optimizer_role"] == "program_synthesis" for todo in todos)
     assert all(todo.metadata["execution_target"] == "codex_program_repair" for todo in todos)
@@ -4165,6 +4679,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         autoencoder_run_id=None,
         codex_run_id=None,
         duration_seconds=120.0,
+        max_cycles=1,
         train_count=4,
         validation_count=2,
         max_inner_iterations=3,
@@ -4193,6 +4708,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         leanstral_rule_gap_expected_compiler_commit="compiler-sha",
         leanstral_rule_gap_expected_state_hash="state-sha",
         leanstral_rule_gap_max_report_age_seconds=900.0,
+        leanstral_direct_guidance_projection_enabled=True,
+        leanstral_direct_guidance_path="/tmp/leanstral-guidance",
+        leanstral_direct_guidance_max_todos_per_scope=3,
+        leanstral_direct_guidance_require_executor_available=True,
         autoencoder_target_scope_filters="compiler_parser,ir_decompiler",
         autoencoder_require_prover_confirmation=True,
         warm_start_run_id=["warm-a", "warm-b"],
@@ -4210,12 +4729,20 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert "--queue-run-id" in paired["codex_command"]
     queue_index = paired["codex_command"].index("--queue-run-id")
     assert paired["codex_command"][queue_index + 1] == paired["queue_run_id"]
+    direct_guidance_index = paired["autoencoder_command"].index(
+        "--leanstral-direct-guidance-path"
+    )
+    assert paired["autoencoder_command"][direct_guidance_index + 1] == (
+        "/tmp/leanstral-guidance"
+    )
     duration_index = paired["codex_command"].index("--duration-seconds")
     assert paired["codex_command"][duration_index + 1] == "420.0"
     canary_index = paired["autoencoder_command"].index("--validation-canary-count")
     assert paired["autoencoder_command"][canary_index + 1] == str(
         runner.DEFAULT_VALIDATION_CANARY_COUNT
     )
+    max_cycles_index = paired["autoencoder_command"].index("--max-cycles")
+    assert paired["autoencoder_command"][max_cycles_index + 1] == "1"
     prover_index = paired["autoencoder_command"].index("--bridge-evaluate-provers")
     assert paired["autoencoder_command"][prover_index + 1] == "false"
     bridge_text_index = paired["autoencoder_command"].index(
@@ -4250,6 +4777,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "--autoencoder-feature-family-logit-scale"
     )
     assert paired["autoencoder_command"][scale_index + 1] == "1.0"
+    codec_feature_index = paired["autoencoder_command"].index(
+        "--autoencoder-max-codec-feature-keys"
+    )
+    assert paired["autoencoder_command"][codec_feature_index + 1] == "64"
     commit_index = paired["codex_command"].index("--codex-commit-mode")
     assert paired["codex_command"][commit_index + 1] == "commit_applied"
     scope_index = paired["codex_command"].index("--codex-scope")
@@ -4933,6 +5464,8 @@ def test_guarded_daemon_passes_projection_runtime_bounds_to_autoencoder(
     assert captured["projection_prescreen_top_k"] == 2
     assert captured["projection_periodic_full_search_every_n_cycles"] == 9
     assert captured["projection_cycle"] == 1
+    assert captured["precomputed_holdout_evaluation"].cross_entropy_loss == 1.0
+    assert captured["precomputed_training_evaluation"].cross_entropy_loss == 1.0
 
 
 def test_initial_summary_uses_explicit_sampling_seed(tmp_path) -> None:
@@ -8287,6 +8820,9 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses(monkeypatch
     assert block["sample_count"] == 1
     assert block["evaluated_count"] == 1
     assert block["metric_failures"] == 0
+    assert block["metric_profile_version"] == (
+        runner.COMPILER_IR_METRIC_PROFILE_VERSION
+    )
     assert block["llm_call_count"] == 0.0
     assert "cross_entropy_entropy_loss" in block
     assert "cross_entropy_excess_loss" in block
@@ -10219,6 +10755,89 @@ def test_supervisor_optimization_run_reduces_ce_and_reconstruction_loss(tmp_path
     assert run.final_evaluation.embedding_cosine_similarity > 0.999
     assert run.to_dict()["steps"]
     assert path.read_text(encoding="utf-8").startswith("{")
+
+
+def test_supervisor_optimize_reuses_precomputed_cycle_evaluations(monkeypatch) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before adopting a rule.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    supervisor = ModalTodoSupervisor()
+    train_evaluation = autoencoder.evaluate([sample])
+    validation_evaluation = autoencoder.evaluate(
+        [sample],
+        use_sample_memory=False,
+    )
+
+    def unexpected_evaluation(*_args, **_kwargs):
+        raise AssertionError("precomputed cycle evaluation was not reused")
+
+    monkeypatch.setattr(
+        supervisor,
+        "_autoencoder_evaluation",
+        unexpected_evaluation,
+    )
+    run = supervisor.optimize(
+        [sample],
+        validation_samples=[sample],
+        autoencoder=autoencoder,
+        precomputed_train_evaluation=train_evaluation,
+        precomputed_validation_evaluation=validation_evaluation,
+        max_iterations=1,
+        max_items=0,
+    )
+
+    assert run.final_evaluation is train_evaluation
+    assert run.validation_final_evaluation is validation_evaluation
+    assert run.steps[0].before is train_evaluation
+    assert run.steps[0].after is train_evaluation
+
+
+def test_todo_precomputed_evaluations_follow_accepted_projection_state() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice before adopting a rule.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency must publish notice before adopting a rule.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    before_train = autoencoder.evaluate([train])
+    before_validation = autoencoder.evaluate(
+        [validation],
+        use_sample_memory=False,
+    )
+
+    reused_train, reused_validation = runner._todo_supervisor_precomputed_evaluations(
+        feature_projection_report={},
+        train_samples=[train],
+        validation_samples=[validation],
+        before_train=before_train,
+        before_validation=before_validation,
+    )
+    assert reused_train is before_train
+    assert reused_validation is before_validation
+
+    projected_train, projected_validation = (
+        runner._todo_supervisor_precomputed_evaluations(
+            feature_projection_report={
+                "accepted_epochs": 1,
+                "after": before_validation.to_dict(),
+            },
+            train_samples=[train],
+            validation_samples=[validation],
+            before_train=before_train,
+            before_validation=before_validation,
+        )
+    )
+    assert projected_train is None
+    assert projected_validation is not None
+    assert projected_validation.to_dict() == before_validation.to_dict()
 
 
 def test_supervisor_optimize_refreshes_external_program_synthesis_queue_state() -> None:

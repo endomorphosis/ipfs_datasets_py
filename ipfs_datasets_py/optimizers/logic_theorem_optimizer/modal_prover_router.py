@@ -39,6 +39,14 @@ class ModalProverRouter:
         ModalSystem.S4,
         ModalSystem.S5,
     }
+    TDFOL_SOUND_FALLBACK_SYSTEMS = {
+        ModalSystem.KD: ModalSystem.D,
+        ModalSystem.KD45: ModalSystem.D,
+    }
+    COMPILE_ONLY_SYSTEMS = {
+        ModalSystem.FRAME_BM25,
+        ModalSystem.LTL,
+    }
 
     def route(
         self,
@@ -50,13 +58,10 @@ class ModalProverRouter:
         resolved_system = system if isinstance(system, ModalSystem) else ModalSystem(str(system))
         if resolved_system in self.TDFOL_TABLEAUX_SYSTEMS:
             return self._route_tdfol_tableaux(formula, resolved_system)
-        if resolved_system in {ModalSystem.KD, ModalSystem.KD45}:
-            return ModalProverRouteResult(
-                status=ModalProverStatus.UNAVAILABLE,
-                system=resolved_system.value,
-                reason=f"{resolved_system.value} routing is registered, but no KD/KD45 tableaux adapter is available yet.",
-                metadata={"registered": True},
-            )
+        if resolved_system in self.TDFOL_SOUND_FALLBACK_SYSTEMS:
+            return self._route_tdfol_sound_fallback(formula, resolved_system)
+        if resolved_system in self.COMPILE_ONLY_SYSTEMS:
+            return self._route_compile_only(formula, resolved_system)
         return ModalProverRouteResult(
             status=ModalProverStatus.UNAVAILABLE,
             system=resolved_system.value,
@@ -93,6 +98,84 @@ class ModalProverRouter:
                 backend="tdfol_modal_tableaux",
                 reason=str(error),
             )
+
+    def _route_tdfol_sound_fallback(
+        self,
+        formula: Any,
+        system: ModalSystem,
+    ) -> ModalProverRouteResult:
+        """Route stronger registered systems through a sound weaker fallback."""
+
+        fallback = self.TDFOL_SOUND_FALLBACK_SYSTEMS[system]
+        routed = self._route_tdfol_tableaux(formula, fallback)
+        metadata = dict(routed.metadata)
+        metadata.update(
+            {
+                "fallback_complete": False,
+                "fallback_sound_when_proved": True,
+                "fallback_system": fallback.value,
+                "original_system": system.value,
+                "registered": True,
+            }
+        )
+        if routed.status != ModalProverStatus.AVAILABLE:
+            return ModalProverRouteResult(
+                status=routed.status,
+                system=system.value,
+                backend=routed.backend,
+                result=routed.result,
+                reason=(
+                    f"{system.value} fallback to {fallback.value} was attempted, "
+                    f"but the fallback route is unavailable: {routed.reason}"
+                ),
+                metadata=metadata,
+            )
+        return ModalProverRouteResult(
+            status=ModalProverStatus.AVAILABLE,
+            system=system.value,
+            backend="tdfol_modal_tableaux_fallback",
+            result=routed.result,
+            reason=(
+                f"{system.value} routed through sound weaker-system fallback "
+                f"{fallback.value}; non-proofs remain inconclusive for {system.value}."
+            ),
+            metadata=metadata,
+        )
+
+    def _route_compile_only(
+        self,
+        formula: Any,
+        system: ModalSystem,
+    ) -> ModalProverRouteResult:
+        """Expose registered non-tableaux systems as bounded compile checks."""
+
+        compiled = (
+            formula.to_string(pretty=True)
+            if hasattr(formula, "to_string")
+            else str(formula)
+            if formula is not None
+            else ""
+        )
+        return ModalProverRouteResult(
+            status=ModalProverStatus.AVAILABLE,
+            system=system.value,
+            backend=f"{system.value.lower()}_compile_only",
+            result={
+                "compile_only": True,
+                "compiled_formula": compiled,
+                "is_valid": False,
+                "proof_supported": False,
+            },
+            reason=(
+                f"{system.value} has a registered compiler/profile route but no "
+                "complete local theorem prover adapter; treating it as compile-only."
+            ),
+            metadata={
+                "proof_supported": False,
+                "registered": True,
+                "validation_mode": "compile_only",
+            },
+        )
 
 
 __all__ = [

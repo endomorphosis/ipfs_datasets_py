@@ -224,6 +224,51 @@ def test_verifier_recompiles_packet_canonical_legal_parser_ir() -> None:
     assert all(check.accepted for check in result.source_span_checks)
 
 
+def test_modal_bridge_accepts_compiled_legal_assertion_without_tautology() -> None:
+    sample = _sample()
+    request = _request(sample)
+    response = _response(request)
+
+    result = verify_leanstral_audit(
+        request,
+        response,
+        examples=[sample],
+        config=LeanstralVerifierConfig(run_lean=False, run_modal_bridge=True),
+    )
+
+    assert result.outcome == LeanstralVerificationOutcome.ACCEPTED
+    modal_check = next(
+        check
+        for check in result.local_checks
+        if check.details.get("modal_bridge_validation_mode") == "compilation"
+    )
+    assert modal_check.status == LeanstralVerificationOutcome.ACCEPTED
+    assert modal_check.theorem_valid is False
+    assert modal_check.details["modal_bridge_validation_mode"] == "compilation"
+    assert modal_check.details["formula_assertion_proved"] is False
+    assert result.verified_by == ()
+
+
+def test_modal_bridge_can_require_legal_assertion_tautology() -> None:
+    sample = _sample()
+    request = _request(sample)
+    response = _response(request)
+
+    result = verify_leanstral_audit(
+        request,
+        response,
+        examples=[sample],
+        config=LeanstralVerifierConfig(
+            modal_bridge_require_proof=True,
+            run_lean=False,
+            run_modal_bridge=True,
+        ),
+    )
+
+    assert result.outcome == LeanstralVerificationOutcome.REJECTED
+    assert "Modal formula compiled, but the theorem was not proved" in result.reasons
+
+
 def test_verifier_reproduces_introspection_packet_span_attestations() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -466,6 +511,159 @@ def test_verifier_requires_referenced_examples_even_for_well_formed_audit() -> N
 
     assert result.outcome == LeanstralVerificationOutcome.UNSUPPORTED
     assert result.reasons == ("missing_referenced_examples",)
+
+
+def test_verifier_resolves_request_referenced_examples_by_evidence_id() -> None:
+    sample = _sample()
+    request = LeanstralAuditRequest.build(
+        evidence={
+            "evidence_id": "projection-abc",
+            "modal_ir_hash": sample.modal_ir.canonical_hash(),
+            "referenced_examples": [
+                {
+                    "citation": sample.citation,
+                    "evidence_id": "projection-abc",
+                    "example_id": sample.sample_id,
+                    "expected_modal_ir_hash": sample.modal_ir.canonical_hash(),
+                    "sample_id": sample.sample_id,
+                    "section": sample.section,
+                    "source_span_hashes": {
+                        formula.formula_id: _span_hash(sample, formula)
+                        for formula in sample.modal_ir.formulas
+                    },
+                    "source_text": sample.text,
+                    "title": sample.title,
+                }
+            ],
+        },
+        prompt={"template": "audit"},
+        model={
+            "provider": "mistral_vibe",
+            "model": "Leanstral",
+            "vibe_agent": "lean",
+        },
+        theorem_registry={"registry_id": "legal-ir-theorems-v1"},
+        proof_obligation_ids=("PO-modal-001",),
+    )
+    response = _response(
+        request,
+        witness={
+            "evidence_id": "projection-abc",
+            "observed": "obligation notice",
+            "expected": "obligation notice within deadline",
+        },
+    )
+
+    result = verify_leanstral_audit(
+        request,
+        response,
+        config=LeanstralVerifierConfig(run_lean=False, run_modal_bridge=False),
+    )
+
+    assert result.outcome == LeanstralVerificationOutcome.ACCEPTED
+    assert result.compiler_checks[0].example_id == sample.sample_id
+
+
+def test_verifier_resolves_nested_request_reference_ids() -> None:
+    sample = _sample()
+    request = LeanstralAuditRequest.build(
+        evidence={
+            "evidence_id": "projection-nested",
+            "referenced_examples": [
+                {
+                    "citation": sample.citation,
+                    "evidence_id": "projection-nested",
+                    "example_id": sample.sample_id,
+                    "expected_modal_ir_hash": sample.modal_ir.canonical_hash(),
+                    "sample_id": sample.sample_id,
+                    "section": sample.section,
+                    "source_span_hashes": {
+                        formula.formula_id: _span_hash(sample, formula)
+                        for formula in sample.modal_ir.formulas
+                    },
+                    "source_text": sample.text,
+                    "title": sample.title,
+                }
+            ],
+        },
+        prompt={"template": "audit"},
+        model={
+            "provider": "mistral_vibe",
+            "model": "Leanstral",
+            "vibe_agent": "lean",
+        },
+        theorem_registry={"registry_id": "legal-ir-theorems-v1"},
+        proof_obligation_ids=("PO-modal-001",),
+    )
+    response = _response(
+        request,
+        counterexample={
+            "evidence": [{"evidence_id": "projection-nested"}],
+            "observed": "nested citation",
+            "expected": "nested citation is enough",
+        },
+        witness=None,
+    )
+
+    result = verify_leanstral_audit(
+        request,
+        response,
+        config=LeanstralVerifierConfig(run_lean=False, run_modal_bridge=False),
+    )
+
+    assert result.outcome == LeanstralVerificationOutcome.ACCEPTED
+    assert result.compiler_checks[0].example_id == sample.sample_id
+
+
+def test_verifier_reports_hash_only_packets_as_missing_source_text() -> None:
+    sample = _sample()
+    request = LeanstralAuditRequest.build(
+        evidence={
+            "evidence_packets": [
+                {
+                    "evidence_hashes": {
+                        "canonical_modal_ir_hash": sample.modal_ir.canonical_hash(),
+                    },
+                    "evidence_id": "packet-hash-only",
+                    "sample_hashes": {
+                        "modal_ir_hash": sample.modal_ir.canonical_hash(),
+                        "sample_id": sample.sample_id,
+                        "source_span_hashes": {
+                            formula.formula_id: _span_hash(sample, formula)
+                            for formula in sample.modal_ir.formulas
+                        },
+                    },
+                }
+            ],
+        },
+        prompt={"template": "audit"},
+        model={
+            "provider": "mistral_vibe",
+            "model": "Leanstral",
+            "vibe_agent": "lean",
+        },
+        theorem_registry={"registry_id": "legal-ir-theorems-v1"},
+        proof_obligation_ids=("PO-modal-001",),
+    )
+    response = _response(
+        request,
+        counterexample={
+            "evidence_id": "packet-hash-only",
+            "observed": "hash-only evidence cited",
+            "expected": "local verifier needs trusted source text",
+        },
+        witness=None,
+    )
+
+    result = verify_leanstral_audit(
+        request,
+        response,
+        config=LeanstralVerifierConfig(run_lean=False, run_modal_bridge=False),
+    )
+
+    assert result.outcome == LeanstralVerificationOutcome.REJECTED
+    assert result.reasons == ("missing_source_text",)
+    assert result.compiler_checks[0].example_id == sample.sample_id
 
 
 def test_verifier_report_is_json_ready(tmp_path) -> None:

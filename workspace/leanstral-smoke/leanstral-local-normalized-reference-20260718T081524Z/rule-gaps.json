@@ -1,0 +1,28 @@
+{
+  "accepted_supporting_audit_count": 0,
+  "conflicting_audit_count": 1,
+  "gaps": [],
+  "max_examples_per_gap": 5,
+  "max_gaps": 25,
+  "rejected_audits": [
+    {
+      "audit_id": "leanstral-rejected-1319d386ddae7110",
+      "classification": "missing_semantic_rule",
+      "proposed_surfaces": [
+        {
+          "component": "modal.frame_logic",
+          "operation": "add deterministic compiler or decompiler rule"
+        }
+      ],
+      "reasons": [
+        "no_local_checker_results"
+      ],
+      "request_id": "leanstral-audit-013e33d01d75236a",
+      "response_hash": "db67ca34a03e8606905debc042189fae6f09cec9655dd2b49715765637791070",
+      "status": "unsupported",
+      "verification_outcome": "unsupported"
+    }
+  ],
+  "schema_version": "legal-ir-leanstral-rule-gap-report-v1",
+  "source_audit_count": 1
+}

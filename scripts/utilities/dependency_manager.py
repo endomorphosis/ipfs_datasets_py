@@ -239,6 +239,9 @@ class InstallationManager:
                 dependencies=[
                     'requests', 'pyyaml', 'tqdm', 'psutil', 'jsonschema',
                     'pandas', 'numpy',
+                    'protobuf>=5.27.0',
+                    'pymultihash>=0.8.2',
+                    'dnspython>=2.2.1',
                     'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main'
                 ] + ([pyarrow_dep] if pyarrow_dep else [])
             ),

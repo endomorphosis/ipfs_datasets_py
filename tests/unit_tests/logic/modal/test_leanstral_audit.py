@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 
 from ipfs_datasets_py.logic.modal import (
@@ -15,7 +16,42 @@ from ipfs_datasets_py.logic.modal import (
     parse_leanstral_audit_response,
     validate_leanstral_audit_response,
 )
+from ipfs_datasets_py.logic.modal.leanstral_artifact_cache import LeanstralArtifactCache
 from ipfs_datasets_py.logic.modal.leanstral_audit import canonical_sha256
+
+
+class _MemoryArtifactStorage:
+    def __init__(self) -> None:
+        self.objects: dict[str, bytes] = {}
+        self.writes: list[dict[str, object]] = []
+
+    def write_file(
+        self,
+        data: bytes | str,
+        filename: str | None = None,
+        pin: bool = False,
+    ) -> str:
+        raw = data.encode("utf-8") if isinstance(data, str) else bytes(data)
+        identifier = f"mem-{hashlib.sha256(raw).hexdigest()[:16]}"
+        self.objects[identifier] = raw
+        self.writes.append({"filename": filename, "identifier": identifier, "pin": pin})
+        return identifier
+
+    def read_file(self, identifier: str) -> bytes | None:
+        return self.objects.get(identifier)
+
+
+class _FailingArtifactStorage:
+    def write_file(
+        self,
+        data: bytes | str,
+        filename: str | None = None,
+        pin: bool = False,
+    ) -> str:
+        raise RuntimeError("distributed backend unavailable")
+
+    def read_file(self, identifier: str) -> bytes | None:
+        raise RuntimeError("distributed backend unavailable")
 
 
 def _request(**overrides):
@@ -114,7 +150,7 @@ def test_audit_response_validation_requires_machine_readable_evidence() -> None:
     assert validation.accepted is True
     assert validation.verified is True
     assert validation.response_hash == response.content_hash
-    assert validation.verified_by == ("leanstral-audit-schema-v1",)
+    assert validation.verified_by == ("leanstral-audit-schema-v2",)
 
     missing_counterexample = _response(request, counterexample=None, witness=None)
     rejected = validate_leanstral_audit_response(request, missing_counterexample)
@@ -131,12 +167,68 @@ def test_prompt_contract_uses_exact_ids_and_normalizes_null_abstention() -> None
     assert template["request_id"] == request.request_id
     assert template["proof_obligation_ids"] == [request.proof_obligation_ids[0]]
     assert template["abstention_reason"] is None
+    assert payload["response_schema"]["optional"] == ("drafted_logic_candidates",)
+    assert template["drafted_logic_candidates"][0]["intended_use"] == "guidance_only"
+    assert (
+        template["drafted_logic_candidates"][0]["proof_obligation_id"]
+        == request.proof_obligation_ids[0]
+    )
 
     response = _response(request, abstention_reason="None")
     validation = validate_leanstral_audit_response(request, response)
 
     assert response.abstention_reason == ""
     assert validation.accepted is True
+
+
+def test_audit_response_preserves_sanitized_drafted_logic_guidance() -> None:
+    request = _request()
+    response = _response(
+        request,
+        drafted_logic_candidates=[
+            {
+                "logic_family": "deontic",
+                "candidate": "obligation(agency, notify(applicant)) unless emergency_review",
+                "proof_obligation_id": "PO-modal-001",
+                "compiler_surface": "modal.ir_decompiler",
+                "confidence": 0.72,
+                "source_text": "The agency must notify the applicant unless emergency review applies.",
+            },
+            {
+                "logic_family": "deontic",
+                "candidate": "obligation(agency, notify(applicant)) unless emergency_review",
+                "proof_obligation_id": "PO-modal-001",
+            },
+        ],
+    )
+
+    validation = validate_leanstral_audit_response(request, response)
+    candidates = response.to_dict()["drafted_logic_candidates"]
+
+    assert validation.accepted is True
+    assert len(candidates) == 1
+    assert candidates[0]["intended_use"] == "guidance_only"
+    assert candidates[0]["proof_obligation_id"] == "PO-modal-001"
+    assert "source_text" not in candidates[0]
+
+
+def test_audit_response_rejects_unknown_drafted_logic_obligations() -> None:
+    request = _request()
+    response = _response(
+        request,
+        drafted_logic_candidates=[
+            {
+                "logic_family": "tdfol",
+                "candidate": "forall x. permitted(x)",
+                "proof_obligation_id": "PO-not-in-request",
+            }
+        ],
+    )
+
+    validation = validate_leanstral_audit_response(request, response)
+
+    assert validation.accepted is False
+    assert "unknown_drafted_logic_proof_obligation_id" in validation.reasons
 
 
 def test_abstention_requires_reason_and_malformed_json_is_not_a_response() -> None:
@@ -205,6 +297,73 @@ def test_cache_returns_only_current_verified_entries(tmp_path) -> None:
     assert cache.get_accepted(request) is None
 
 
+def test_cache_uses_distributed_artifact_cache_as_local_miss_fallback(tmp_path) -> None:
+    request = _request()
+    response = _response(request)
+    validation = validate_leanstral_audit_response(request, response)
+    storage = _MemoryArtifactStorage()
+    artifact_cache = LeanstralArtifactCache(
+        index_path=tmp_path / "artifact-index.json",
+        storage=storage,
+        pin=True,
+    )
+    local_dir = tmp_path / "local"
+    cache = LeanstralAuditCache(local_dir, artifact_cache=artifact_cache)
+
+    cache.put(request, response, validation)
+
+    assert len(storage.writes) == 1
+    assert storage.writes[0]["filename"] == f"{request.cache_key}.json"
+    assert storage.writes[0]["pin"] is True
+    local_path = local_dir / f"{request.cache_key}.json"
+    local_path.unlink()
+    cold_cache = LeanstralAuditCache(local_dir, artifact_cache=artifact_cache)
+    restored = cold_cache.get_accepted(request)
+
+    assert restored is not None
+    assert restored.content_hash == response.content_hash
+    assert local_path.is_file()
+
+
+def test_cache_rejects_corrupted_distributed_artifact(tmp_path) -> None:
+    request = _request()
+    response = _response(request)
+    validation = validate_leanstral_audit_response(request, response)
+    storage = _MemoryArtifactStorage()
+    artifact_cache = LeanstralArtifactCache(
+        index_path=tmp_path / "artifact-index.json",
+        storage=storage,
+    )
+    local_dir = tmp_path / "local"
+    cache = LeanstralAuditCache(local_dir, artifact_cache=artifact_cache)
+
+    cache.put(request, response, validation)
+    (local_dir / f"{request.cache_key}.json").unlink()
+    index = json.loads((tmp_path / "artifact-index.json").read_text(encoding="utf-8"))
+    index["artifacts"][request.cache_key]["sha256"] = "0" * 64
+    (tmp_path / "artifact-index.json").write_text(json.dumps(index), encoding="utf-8")
+    cold_cache = LeanstralAuditCache(local_dir, artifact_cache=artifact_cache)
+
+    assert cold_cache.get_accepted(request) is None
+
+
+def test_distributed_artifact_cache_failures_do_not_block_local_cache(tmp_path) -> None:
+    request = _request()
+    response = _response(request)
+    validation = validate_leanstral_audit_response(request, response)
+    artifact_cache = LeanstralArtifactCache(
+        index_path=tmp_path / "artifact-index.json",
+        storage=_FailingArtifactStorage(),
+    )
+    cache = LeanstralAuditCache(tmp_path / "local", artifact_cache=artifact_cache)
+
+    cache.put(request, response, validation)
+    restored = cache.get_accepted(request)
+
+    assert restored is not None
+    assert restored.content_hash == response.content_hash
+
+
 def test_audit_runner_uses_verified_content_addressed_cache(tmp_path) -> None:
     calls: list[dict[str, object]] = []
 
@@ -240,8 +399,61 @@ def test_audit_runner_uses_verified_content_addressed_cache(tmp_path) -> None:
     assert second.cache_hit is True
     assert second.validation.accepted is True
     assert len(calls) == 1
-    assert calls[0]["provider"] == "mistral_vibe"
+    assert calls[0]["provider"] == "leanstral_local"
     assert calls[0]["model_name"] == "Leanstral"
+
+
+def test_audit_runner_repairs_schema_invalid_response_once(tmp_path) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_generate(prompt: str, **kwargs: object) -> str:
+        payload = json.loads(prompt)
+        request_payload = payload["request"]
+        calls.append(payload)
+        request = LeanstralAuditRequest.build(
+            evidence=request_payload["evidence"],
+            prompt=request_payload["prompt"],
+            model=request_payload["model"],
+            theorem_registry_hash=request_payload["theorem_registry_hash"],
+            proof_obligation_ids=request_payload["proof_obligation_ids"],
+        )
+        if len(calls) == 1:
+            return json.dumps(
+                _response(
+                    request,
+                    proposed_compiler_surface=[],
+                    counterexample=None,
+                    witness=None,
+                ).to_dict()
+            )
+        assert payload["repair_instructions"]["mode"] == "validation_repair"
+        assert "missing_counterexample_or_witness" in payload["repair_instructions"][
+            "validation_reasons"
+        ]
+        assert "missing_proposed_compiler_surface" in payload["repair_instructions"][
+            "validation_reasons"
+        ]
+        return json.dumps(_response(request).to_dict())
+
+    config = LeanstralAuditConfig(
+        enabled=True,
+        cache_dir=str(tmp_path),
+        validation_repair_retries=1,
+    )
+    runner = LeanstralAuditRunner(config, llm_generate=fake_generate)
+
+    result = runner.run(
+        evidence={"evidence_id": "projection-abc", "modal_ir_hash": "a" * 64},
+        prompt={"template": "audit"},
+        theorem_registry={"registry_id": "legal-ir-theorems-v1"},
+        proof_obligation_ids=("PO-modal-001",),
+    )
+
+    assert result.validation.accepted is True
+    assert result.generation_attempts == 2
+    assert "missing_counterexample_or_witness" in result.repair_reasons
+    assert "missing_proposed_compiler_surface" in result.repair_reasons
+    assert len(calls) == 2
 
 
 def test_request_accepts_precomputed_theorem_registry_hash() -> None:

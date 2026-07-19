@@ -16,11 +16,34 @@ from __future__ import annotations
 
 import json
 import logging
-import subprocess
-import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
+
+try:
+    from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import (
+        LIBP2P_INSTALL_HINT,
+        PY_LIBP2P_MAIN_SPEC,
+        create_libp2p_key_pair,
+        ensure_libp2p_runtime,
+        install_libp2p_runtime,
+        install_libp2p_runtime_async,
+        make_multiaddr,
+        new_libp2p_host,
+        peer_id_from_base58,
+        peerinfo_from_multiaddr,
+    )
+except Exception:  # pragma: no cover - optional MCP++ provider dependency
+    LIBP2P_INSTALL_HINT = "pip install 'ipfs_accelerate_py[mcp-p2p]'"
+    PY_LIBP2P_MAIN_SPEC = "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main"
+    create_libp2p_key_pair = None  # type: ignore[assignment]
+    ensure_libp2p_runtime = None  # type: ignore[assignment]
+    install_libp2p_runtime = None  # type: ignore[assignment]
+    install_libp2p_runtime_async = None  # type: ignore[assignment]
+    make_multiaddr = None  # type: ignore[assignment]
+    new_libp2p_host = None  # type: ignore[assignment]
+    peer_id_from_base58 = None  # type: ignore[assignment]
+    peerinfo_from_multiaddr = None  # type: ignore[assignment]
 
 logger = logging.getLogger("ipfs_datasets.mcp_server.p2p_libp2p")
 
@@ -30,55 +53,37 @@ def ensure_libp2p_installed() -> bool:
 
     Returns True if libp2p is importable after this call.
     """
-    try:
-        import libp2p  # noqa: F401
+    if callable(ensure_libp2p_runtime) and ensure_libp2p_runtime():
         return True
-    except ImportError:
-        pass
 
-    logger.info("libp2p not found — auto-installing from git (py-libp2p@main)...")
-    try:
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "--quiet",
-             "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
-             "multiaddr", "protobuf>=3.20.0"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-            timeout=120,
-        )
-        import libp2p  # noqa: F401
+    if not callable(install_libp2p_runtime):
+        logger.error("MCP++ libp2p runtime provider is unavailable; install ipfs_accelerate_py[mcp-p2p]")
+        return False
+
+    logger.info("libp2p not found — delegating install to MCP++ py-libp2p runtime...")
+    if install_libp2p_runtime(quiet=True, timeout=120, upgrade=True):
         logger.info("libp2p installed successfully")
         return True
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ImportError) as e:
-        logger.error("Failed to auto-install libp2p: %s", e)
-        return False
+    return False
 
 
 async def ensure_libp2p_installed_async() -> bool:
     """Trio-native async version for use within a running Trio context."""
-    try:
-        import libp2p  # noqa: F401
+    if callable(ensure_libp2p_runtime) and ensure_libp2p_runtime():
         return True
-    except ImportError:
-        pass
 
-    import trio
-    logger.info("libp2p not found — async-installing from git (py-libp2p@main)...")
-    try:
-        result = await trio.run_process(
-            [sys.executable, "-m", "pip", "install", "--quiet",
-             "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
-             "multiaddr", "protobuf>=3.20.0"],
-            capture_stdout=True, capture_stderr=True,
-        )
-        if result.returncode != 0:
-            logger.error("pip install failed: %s", result.stderr.decode())
-            return False
-        import libp2p  # noqa: F401
-        logger.info("libp2p installed successfully (async)")
-        return True
-    except (OSError, ImportError) as e:
-        logger.error("Failed to auto-install libp2p: %s", e)
+    if not callable(install_libp2p_runtime_async):
+        logger.error("MCP++ libp2p runtime provider is unavailable; install ipfs_accelerate_py[mcp-p2p]")
         return False
+
+    logger.info("libp2p not found — async-delegating install to MCP++ py-libp2p runtime...")
+    try:
+        if await install_libp2p_runtime_async(quiet=True, timeout=120, upgrade=True):
+            logger.info("libp2p installed successfully (async)")
+            return True
+    except OSError as e:
+        logger.error("Failed to auto-install libp2p: %s", e)
+    return False
 
 # Protocol ID per MCP++ spec
 MCP_P2P_PROTOCOL = "/mcp+p2p/1.0.0"
@@ -223,30 +228,30 @@ class MCPp2pNode:
         """Start the libp2p node with Trio structured concurrency."""
         self._nursery = nursery
 
-        # Auto-install libp2p if missing
-        if not ensure_libp2p_installed():
+        # Auto-install libp2p if missing through MCP++ runtime.
+        if not await ensure_libp2p_installed_async():
             logger.error(
                 "libp2p could not be installed. P2P transport in stub mode. "
-                "Manual install: pip install 'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main'"
+                "Manual install: pip install %r"
+                % (PY_LIBP2P_MAIN_SPEC,)
             )
             self._started = True
             return
 
         try:
-            import trio
-            from libp2p import new_host
-            from libp2p.crypto.secp256k1 import create_new_key_pair
-            from multiaddr import Multiaddr
-
-            key_pair = create_new_key_pair()
-            self._host = new_host(key_pair=key_pair)
+            if not callable(create_libp2p_key_pair):
+                raise ImportError("ipfs_accelerate_py MCP++ libp2p runtime is unavailable")
+            key_pair = create_libp2p_key_pair()
+            if not callable(new_libp2p_host) or not callable(make_multiaddr):
+                raise ImportError("ipfs_accelerate_py MCP++ libp2p runtime is unavailable")
+            self._host = await new_libp2p_host(key_pair=key_pair)
 
             # Register protocol handler
             self._host.set_stream_handler(MCP_P2P_PROTOCOL, self._handle_stream)
 
             # Start listening
             for addr in self._listen_addrs:
-                await self._host.get_network().listen(Multiaddr(addr))
+                await self._host.get_network().listen(make_multiaddr(addr))
 
             self._started = True
             logger.info(f"P2P node started: peer_id={self.peer_id}, addrs={self.multiaddrs}")
@@ -270,10 +275,9 @@ class MCPp2pNode:
     async def _connect_peer(self, peer_addr: str) -> None:
         """Connect to a peer by multiaddr."""
         try:
-            from libp2p.peer.peerinfo import info_from_p2p_addr
-            from multiaddr import Multiaddr
-
-            peer_info = info_from_p2p_addr(Multiaddr(peer_addr))
+            if not callable(peerinfo_from_multiaddr):
+                raise ImportError("ipfs_accelerate_py MCP++ libp2p runtime is unavailable")
+            peer_info = peerinfo_from_multiaddr(peer_addr)
             await self._host.connect(peer_info)
             self._peers[str(peer_info.peer_id)] = PeerInfo(
                 peer_id=str(peer_info.peer_id),
@@ -337,9 +341,10 @@ class MCPp2pNode:
 
         try:
             import trio
-            from libp2p.peer.id import ID as PeerID
 
-            target = PeerID.from_base58(peer_id)
+            if not callable(peer_id_from_base58):
+                raise ImportError("ipfs_accelerate_py MCP++ libp2p runtime is unavailable")
+            target = peer_id_from_base58(peer_id)
             stream = await self._host.new_stream(target, [MCP_P2P_PROTOCOL])
 
             request = P2PMessage(
@@ -367,7 +372,7 @@ class MCPp2pNode:
             return response.result
 
         except ImportError:
-            raise ConnectionError("libp2p not available")
+            raise ConnectionError(f"libp2p not available. Install via MCP++ runtime: {LIBP2P_INSTALL_HINT}")
 
     async def discover_local(self, service_tag: str = "mcp-datasets") -> List[PeerInfo]:
         """Discover local peers via mDNS."""

@@ -18,7 +18,9 @@ hypercorn[trio]
 # libp2p (required for MCP++ Profile E: P2P transport)
 libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
 multiaddr
-protobuf>=3.20.0
+protobuf>=5.27.0
+pymultihash>=0.8.2
+dnspython>=2.2.1
 
 # Basic utilities
 tqdm>=4.60.0,<5.0.0

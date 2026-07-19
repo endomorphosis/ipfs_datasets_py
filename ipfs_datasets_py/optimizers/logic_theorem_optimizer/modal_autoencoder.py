@@ -687,10 +687,14 @@ class ModalAutoencoderTrainingState:
     semantic_slot_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     semantic_slot_legal_ir_view_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     semantic_slot_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    applied_leanstral_guidance_ids: List[str] = field(default_factory=list)
     applied_todo_ids: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "applied_leanstral_guidance_ids": list(
+                self.applied_leanstral_guidance_ids
+            ),
             "applied_todo_ids": list(self.applied_todo_ids),
             "decoded_embeddings": {
                 sample_id: list(vector)
@@ -871,6 +875,9 @@ class ModalAutoencoderTrainingState:
             sample_id: dict(logits)
             for sample_id, logits in self.family_logits.items()
         }
+        copied.applied_leanstral_guidance_ids = list(
+            self.applied_leanstral_guidance_ids
+        )
         copied.applied_todo_ids = list(self.applied_todo_ids)
         return copied
 
@@ -1344,6 +1351,9 @@ class ModalAutoencoderTrainingState:
         )
         return {
             "architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+            "applied_leanstral_guidance_count": len(
+                self.applied_leanstral_guidance_ids
+            ),
             "applied_todo_count": len(self.applied_todo_ids),
             "decoded_embedding_count": len(self.decoded_embeddings),
             "family_logit_sample_count": len(self.family_logits),
@@ -1494,6 +1504,9 @@ class ModalAutoencoderTrainingState:
                 feature: dict(logits)
                 for feature, logits in self.feature_legal_ir_view_logits.items()
             },
+            applied_leanstral_guidance_ids=list(
+                self.applied_leanstral_guidance_ids
+            ),
         )
 
     def merge_generalizable_from(
@@ -1793,6 +1806,10 @@ class ModalAutoencoderTrainingState:
                 current_logits[view] = current_logits.get(view, 0.0) + (
                     float(value) * scale
                 )
+        for guidance_id in other.applied_leanstral_guidance_ids:
+            text = str(guidance_id).strip()
+            if text and text not in self.applied_leanstral_guidance_ids:
+                self.applied_leanstral_guidance_ids.append(text)
 
     @classmethod
     def average_generalizable(
@@ -1837,6 +1854,11 @@ class ModalAutoencoderTrainingState:
         semantic_slot_legal_view_counts: Dict[tuple[str, str], int] = {}
 
         for state in state_list:
+            for guidance_id in state.applied_leanstral_guidance_ids:
+                text = str(guidance_id).strip()
+                if text and text not in merged.applied_leanstral_guidance_ids:
+                    merged.applied_leanstral_guidance_ids.append(text)
+
             for slot, vector in state.compiler_quality_embedding_weights.items():
                 if slot not in merged.compiler_quality_embedding_weights:
                     merged.compiler_quality_embedding_weights[slot] = [
@@ -2570,6 +2592,10 @@ class ModalAutoencoderTrainingState:
                     data.get("feature_legal_ir_view_logits", {})
                 ).items()
             },
+            applied_leanstral_guidance_ids=[
+                str(value)
+                for value in data.get("applied_leanstral_guidance_ids", [])
+            ],
             applied_todo_ids=[str(value) for value in data.get("applied_todo_ids", [])],
         )
 
@@ -3307,6 +3333,72 @@ class AdaptiveModalAutoencoder:
                     if str(key).startswith("objective_residual_feature_keys:"):
                         cache.pop(key, None)
 
+    def alias_cached_legal_ir_targets(
+        self,
+        samples: Sequence[LegalSample],
+        evaluated_samples: Sequence[LegalSample],
+    ) -> None:
+        """Attach bounded bridge targets to their corresponding full samples.
+
+        Metric bridges may evaluate a bounded clone with a synthetic sample ID.
+        Projection updates operate on the full sample, so they need an explicit
+        alias instead of relying on the bounded clone's cache identity.
+        """
+        source_rows = list(samples)
+        evaluated_rows = list(evaluated_samples)
+        if len(source_rows) != len(evaluated_rows):
+            raise ValueError("LegalIR target aliases require aligned sample sequences")
+
+        for sample, evaluated_sample in zip(source_rows, evaluated_rows):
+            evaluated_id = str(evaluated_sample.sample_id)
+            evaluated_content_id = _sample_content_cache_id(evaluated_sample)
+            target_distribution = self._legal_ir_view_target_cache.get(
+                evaluated_id,
+                self._legal_ir_view_target_cache.get(evaluated_content_id),
+            )
+            target_losses = self._legal_ir_loss_target_cache.get(
+                evaluated_id,
+                self._legal_ir_loss_target_cache.get(evaluated_content_id),
+            )
+            if target_distribution:
+                cached_distribution = dict(target_distribution)
+                self._legal_ir_view_target_cache[sample.sample_id] = cached_distribution
+                self._legal_ir_view_target_cache[
+                    _sample_content_cache_id(sample)
+                ] = cached_distribution
+            if target_losses:
+                cached_losses = dict(target_losses)
+                self._legal_ir_loss_target_cache[sample.sample_id] = cached_losses
+                self._legal_ir_loss_target_cache[
+                    _sample_content_cache_id(sample)
+                ] = cached_losses
+            if not target_distribution and not target_losses:
+                continue
+            cache = self._sample_cache_for(sample)
+            for key in (
+                "feature_keys",
+                "fallback_feature_keys",
+                "legal_ir_view_feature_keys",
+                "legal_ir_view_core_feature_keys",
+            ):
+                cache.pop(key, None)
+                for key in list(cache.keys()):
+                    if str(key).startswith("objective_residual_feature_keys:"):
+                        cache.pop(key, None)
+
+    def _invalidate_state_dependent_evaluator_caches(self) -> None:
+        """Discard cached feature selections after swapping model state.
+
+        Codec feature selection prioritizes keys represented by the current
+        learned state. Projection line search swaps several candidate states,
+        so retaining those selections would let a rejected candidate affect
+        later evaluations even after its weights were rolled back.
+        """
+        for cache in self._sample_feature_cache.values():
+            cache.pop("feature_keys", None)
+            cache.pop("legal_ir_view_feature_keys", None)
+        self._invalidate_legal_ir_view_family_candidates()
+
     def encode(self, sample: LegalSample, *, use_sample_memory: bool = True) -> Dict[str, object]:
         """Encode sample into the current intermediate representation state."""
         return {
@@ -3334,6 +3426,7 @@ class AdaptiveModalAutoencoder:
         *,
         use_sample_memory: bool = False,
         top_k: int = 8,
+        include_causal_attribution: bool = True,
     ) -> AutoencoderIntrospection:
         """Explain which adaptive features influenced this sample.
 
@@ -3447,9 +3540,13 @@ class AdaptiveModalAutoencoder:
         pipeline_stage_focus = _pipeline_stage_focus_from_diagnostics(
             pipeline_stage_diagnostics
         )
-        causal_attribution = self.causal_feature_attribution_for_sample(
-            sample,
-            top_k=max(top_k, 0),
+        causal_attribution = (
+            self.causal_feature_attribution_for_sample(
+                sample,
+                top_k=max(top_k, 0),
+            )
+            if include_causal_attribution
+            else {}
         )
         return AutoencoderIntrospection(
             sample_id=sample.sample_id,
@@ -3549,6 +3646,8 @@ class AdaptiveModalAutoencoder:
         *,
         use_sample_memory: bool = False,
         top_k: int = 16,
+        include_causal_attribution: bool = True,
+        introspection: Optional[AutoencoderIntrospection] = None,
     ) -> Dict[str, Any]:
         """Export learned compiler/decompiler guidance for deterministic IR code.
 
@@ -3559,11 +3658,18 @@ class AdaptiveModalAutoencoder:
         consume without depending on sample-specific memory.
         """
         limit = max(0, int(top_k))
-        introspection = self.introspect_sample(
-            sample,
-            use_sample_memory=use_sample_memory,
-            top_k=limit,
-        )
+        if introspection is not None:
+            if introspection.sample_id != sample.sample_id:
+                raise ValueError("introspection sample_id does not match guidance sample")
+            if introspection.sample_memory_used != use_sample_memory:
+                raise ValueError("introspection sample-memory mode does not match guidance request")
+        else:
+            introspection = self.introspect_sample(
+                sample,
+                use_sample_memory=use_sample_memory,
+                top_k=limit,
+                include_causal_attribution=include_causal_attribution,
+            )
         legal_ir_target_distribution = dict(
             self._legal_ir_view_target_cache.get(
                 sample.sample_id,
@@ -4263,6 +4369,449 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._feature_keys_for(sample))
         return _unique_preserve_order(keys)
 
+    def apply_leanstral_guidance(
+        self,
+        guidance: Any,
+        samples_by_id: Optional[Mapping[str, LegalSample]] = None,
+        *,
+        learning_rate: float = 0.05,
+        allow_global_updates: bool = True,
+        max_items: int = 64,
+        require_trusted: bool = True,
+    ) -> Dict[str, Any]:
+        """Train LegalIR view logits from trusted Leanstral draft guidance.
+
+        Leanstral guidance is intentionally treated as a view-selection target,
+        not as text reconstruction data. The method uses candidate families,
+        proof obligations, and target components while ignoring raw drafted
+        logic text as a learnable token target.
+        """
+
+        items = self._leanstral_guidance_items(guidance)
+        item_limit = max(0, int(max_items))
+        step = _clamp_learning_rate(learning_rate)
+        sample_lookup = dict(samples_by_id or {})
+        report: Dict[str, Any] = {
+            "applied_count": 0,
+            "candidate_count": len(items),
+            "duplicate_count": 0,
+            "guidance_ids": [],
+            "missing_sample_count": 0,
+            "sample_aware_update_count": 0,
+            "schema_version": "legal-ir-leanstral-autoencoder-training-v1",
+            "skipped_invalid_count": 0,
+            "skipped_missing_sample_count": 0,
+            "skipped_no_target_count": 0,
+            "skipped_untrusted_count": 0,
+            "target_view_counts": {},
+            "updated_guidance_feature_count": 0,
+        }
+        if item_limit <= 0 or not items or step <= 0.0:
+            report["status"] = "disabled" if step <= 0.0 else "no_guidance"
+            return report
+
+        applied_ids = set(self.state.applied_leanstral_guidance_ids)
+        for raw_item in items[:item_limit]:
+            item = self._normalize_leanstral_guidance_item(raw_item)
+            if not item:
+                report["skipped_invalid_count"] += 1
+                continue
+            guidance_id = self._leanstral_guidance_id(item)
+            if guidance_id in applied_ids:
+                report["duplicate_count"] += 1
+                continue
+            if require_trusted and not self._leanstral_guidance_is_trusted(item):
+                report["skipped_untrusted_count"] += 1
+                continue
+            target_distribution = self._leanstral_guidance_target_distribution(item)
+            if not target_distribution:
+                report["skipped_no_target_count"] += 1
+                continue
+
+            sample_id = str(item.get("sample_id") or "").strip()
+            sample = sample_lookup.get(sample_id)
+            if sample is not None:
+                changed = self._nudge_legal_ir_view_logits_toward_distribution(
+                    sample,
+                    target_distribution,
+                    learning_rate=step,
+                    update_sample_memory=False,
+                )
+                if changed:
+                    report["sample_aware_update_count"] += 1
+            else:
+                report["missing_sample_count"] += 1
+                if not allow_global_updates:
+                    report["skipped_missing_sample_count"] += 1
+                    continue
+                self._nudge_legal_ir_view_global_logits_toward_distribution(
+                    target_distribution,
+                    learning_rate=step,
+                )
+
+            report["updated_guidance_feature_count"] += (
+                self._nudge_leanstral_guidance_feature_logits(
+                    self._leanstral_guidance_feature_keys(item),
+                    target_distribution,
+                    learning_rate=step,
+                )
+            )
+            self.state.applied_leanstral_guidance_ids.append(guidance_id)
+            applied_ids.add(guidance_id)
+            report["guidance_ids"].append(guidance_id)
+            report["applied_count"] += 1
+            target_counts = report["target_view_counts"]
+            for view, weight in target_distribution.items():
+                target_counts[view] = round(
+                    float(target_counts.get(view, 0.0)) + float(weight),
+                    12,
+                )
+
+        report["status"] = (
+            "applied" if int(report["applied_count"]) > 0 else "no_applicable_guidance"
+        )
+        report["guidance_ids"] = report["guidance_ids"][:64]
+        report["target_view_counts"] = dict(sorted(report["target_view_counts"].items()))
+        return report
+
+    def _leanstral_guidance_items(self, guidance: Any) -> List[Mapping[str, Any]]:
+        if guidance is None:
+            return []
+        normalized = self._normalize_leanstral_guidance_item(guidance)
+        if isinstance(guidance, Mapping):
+            nested: List[Mapping[str, Any]] = []
+            for key in (
+                "leanstral_guidance",
+                "guidance",
+                "latest_leanstral_guidance",
+                "external_guidance",
+            ):
+                value = guidance.get(key)
+                if value is not None:
+                    nested.extend(self._leanstral_guidance_items(value))
+            for key in (
+                "guidance_items",
+                "items",
+                "compiler_guidance",
+                "leanstral_shadow",
+            ):
+                value = guidance.get(key)
+                if value is not None:
+                    nested.extend(self._leanstral_guidance_items(value))
+            if nested:
+                return nested
+            return [normalized] if normalized else []
+        if isinstance(guidance, Sequence) and not isinstance(
+            guidance,
+            (bytes, bytearray, str),
+        ):
+            items: List[Mapping[str, Any]] = []
+            for value in guidance:
+                items.extend(self._leanstral_guidance_items(value))
+            return items
+        return [normalized] if normalized else []
+
+    def _normalize_leanstral_guidance_item(
+        self,
+        item: Any,
+    ) -> Dict[str, Any]:
+        if item is None:
+            return {}
+        if hasattr(item, "to_dict") and callable(getattr(item, "to_dict")):
+            try:
+                item = item.to_dict()
+            except (TypeError, ValueError):
+                return {}
+        elif hasattr(item, "guidance"):
+            item = getattr(item, "guidance")
+        if isinstance(item, Mapping):
+            return {str(key): value for key, value in dict(item).items()}
+        return {}
+
+    def _leanstral_guidance_id(self, item: Mapping[str, Any]) -> str:
+        for key in ("guidance_id", "task_id", "leanstral_task_id", "modal_ir_hash"):
+            value = str(item.get(key) or "").strip()
+            if value:
+                return value
+        return "leanstral-guidance-" + _hash_json(dict(item))[:16]
+
+    def _leanstral_guidance_is_trusted(self, item: Mapping[str, Any]) -> bool:
+        rejected_keys = (
+            "copy_source_span_rejected",
+            "copied_source_span_rejected",
+            "draft_rejected",
+            "rejected",
+        )
+        if any(bool(item.get(key)) for key in rejected_keys):
+            return False
+        if item.get("accepted") is False:
+            return False
+        trusted_keys = (
+            "accepted",
+            "trusted",
+            "leanstral_verified",
+            "verified",
+            "proof_checked",
+        )
+        if any(bool(item.get(key)) for key in trusted_keys):
+            return True
+        source = str(item.get("source") or "").strip().lower()
+        return source in {
+            "leanstral_direct_guidance_projection_v1",
+            "leanstral_shadow_proof",
+            "leanstral_verified_guidance",
+        }
+
+    def _leanstral_guidance_target_distribution(
+        self,
+        item: Mapping[str, Any],
+    ) -> Dict[str, float]:
+        scores: Dict[str, float] = {}
+
+        def bump(view: str, weight: float) -> None:
+            name = str(view or "").strip()
+            normalized_weight = max(0.0, float(weight))
+            if not name or normalized_weight <= 0.0:
+                return
+            scores[name] = scores.get(name, 0.0) + normalized_weight
+
+        def bump_hint(value: Any, weight: float) -> None:
+            text = str(value or "").strip()
+            if not text:
+                return
+            if text in {
+                "CEC.native",
+                "TDFOL.prover",
+                "deontic.ir",
+                "external_provers.router",
+                "knowledge_graphs.neo4j_compat",
+                "modal.autoencoder",
+                "modal.frame_logic",
+                "zkp.circuits",
+            }:
+                bump(text, weight)
+                return
+            bump(_legal_ir_timeout_view_for_bridge_name(text), weight)
+
+        for key, weight in (
+            ("target_component", 0.70),
+            ("compiler_surface", 0.35),
+            ("program_synthesis_scope", 0.30),
+            ("action", 0.20),
+        ):
+            bump_hint(item.get(key), weight)
+
+        for metric in self._leanstral_sequence(item.get("target_metrics")):
+            bump_hint(metric, 0.18)
+            metric_text = str(metric).lower()
+            if "graph" in metric_text or "kg" in metric_text:
+                bump("knowledge_graphs.neo4j_compat", 0.25)
+            if "proof" in metric_text or "prover" in metric_text:
+                bump("external_provers.router", 0.20)
+            if "deontic" in metric_text or "norm" in metric_text:
+                bump("deontic.ir", 0.25)
+
+        for template in self._leanstral_sequence(item.get("theorem_templates")):
+            bump_hint(template, 0.16)
+            template_text = str(template).lower()
+            if "exception" in template_text or "scope" in template_text:
+                bump("deontic.ir", 0.22)
+            if "round_trip" in template_text or "decompiler" in template_text:
+                bump("modal.frame_logic", 0.18)
+            if "graph" in template_text:
+                bump("knowledge_graphs.neo4j_compat", 0.24)
+
+        for mutation in self._leanstral_sequence(item.get("mutation_cases")):
+            mutation_text = str(mutation).lower()
+            if "exception" in mutation_text or "modality" in mutation_text:
+                bump("deontic.ir", 0.18)
+            if "deadline" in mutation_text or "temporal" in mutation_text:
+                bump("CEC.native", 0.12)
+                bump("TDFOL.prover", 0.16)
+
+        proof_ids = self._leanstral_sequence(item.get("proof_obligation_ids"))
+        if proof_ids:
+            bump("TDFOL.prover", 0.12 * min(3, len(proof_ids)))
+            bump("external_provers.router", 0.08 * min(3, len(proof_ids)))
+
+        for candidate in self._leanstral_sequence(item.get("drafted_logic_candidates")):
+            if not isinstance(candidate, Mapping):
+                continue
+            confidence = _float_or_zero(candidate.get("confidence"))
+            if confidence <= 0.0:
+                confidence = 0.5
+            confidence = min(1.0, confidence)
+            family = _feature_atom(
+                candidate.get("logic_family") or candidate.get("family"),
+                max_tokens=3,
+            )
+            if family:
+                mapped_views = _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(
+                    family,
+                    (),
+                )
+                if mapped_views:
+                    for view in mapped_views:
+                        bump(view, 0.55 * confidence / len(mapped_views))
+                else:
+                    bump_hint(family, 0.35 * confidence)
+            bump_hint(candidate.get("compiler_surface"), 0.20 * confidence)
+            if candidate.get("proof_obligation_id"):
+                bump("TDFOL.prover", 0.10 * confidence)
+
+        return _normalized_distribution(scores)
+
+    def _leanstral_sequence(self, value: Any) -> List[Any]:
+        if value is None:
+            return []
+        if isinstance(value, Mapping):
+            return [value]
+        if isinstance(value, Sequence) and not isinstance(
+            value,
+            (bytes, bytearray, str),
+        ):
+            return list(value)
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return [value]
+
+    def _leanstral_guidance_feature_keys(
+        self,
+        item: Mapping[str, Any],
+    ) -> List[str]:
+        keys: List[str] = []
+        for ranked in self._leanstral_sequence(item.get("ranked_guidance_features")):
+            if isinstance(ranked, Mapping):
+                feature = str(ranked.get("feature") or "").strip()
+            else:
+                feature = str(ranked or "").strip()
+            if feature:
+                keys.append(feature)
+        for key in ("action", "target_component", "source"):
+            atom = _feature_atom(item.get(key), max_tokens=5)
+            if atom:
+                keys.append(f"leanstral:{key}:{atom}")
+        for candidate in self._leanstral_sequence(item.get("drafted_logic_candidates")):
+            if not isinstance(candidate, Mapping):
+                continue
+            family = _feature_atom(
+                candidate.get("logic_family") or candidate.get("family"),
+                max_tokens=3,
+            )
+            if family:
+                keys.append(f"leanstral:logic-family:{family}")
+        for proof_id in self._leanstral_sequence(item.get("proof_obligation_ids"))[:8]:
+            atom = _feature_atom(proof_id, max_tokens=8)
+            if atom:
+                keys.append(f"leanstral:proof-obligation:{atom}")
+        return _unique_preserve_order(keys)[:48]
+
+    def _nudge_legal_ir_view_logits_toward_distribution(
+        self,
+        sample: LegalSample,
+        target_distribution: Mapping[str, float],
+        *,
+        learning_rate: float,
+        update_sample_memory: bool = False,
+    ) -> bool:
+        normalized_target = _normalized_distribution(
+            {
+                str(view): _float_or_zero(weight)
+                for view, weight in dict(target_distribution or {}).items()
+                if _float_or_zero(weight) > 0.0
+            }
+        )
+        if not normalized_target:
+            return False
+        cache_key = sample.sample_id
+        had_previous = cache_key in self._legal_ir_view_target_cache
+        previous = self._legal_ir_view_target_cache.get(cache_key)
+        self._legal_ir_view_target_cache[cache_key] = dict(normalized_target)
+        try:
+            return self._nudge_legal_ir_view_logits(
+                sample,
+                learning_rate=learning_rate,
+                update_sample_memory=update_sample_memory,
+            )
+        finally:
+            if had_previous and previous is not None:
+                self._legal_ir_view_target_cache[cache_key] = previous
+            else:
+                self._legal_ir_view_target_cache.pop(cache_key, None)
+
+    def _nudge_legal_ir_view_global_logits_toward_distribution(
+        self,
+        target_distribution: Mapping[str, float],
+        *,
+        learning_rate: float,
+    ) -> bool:
+        normalized_target = _normalized_distribution(
+            {
+                str(view): _float_or_zero(weight)
+                for view, weight in dict(target_distribution or {}).items()
+                if _float_or_zero(weight) > 0.0
+            }
+        )
+        if not normalized_target:
+            return False
+        step = _clamp_learning_rate(learning_rate)
+        families = _unique_preserve_order(
+            list(normalized_target.keys()) + list(self._legal_ir_view_family_candidates())
+        )
+        predicted = _softmax(
+            {
+                family: self.state.legal_ir_view_logits.get(family, 0.0)
+                for family in families
+            }
+        )
+        for family in families:
+            gradient = float(normalized_target.get(family, 0.0)) - float(
+                predicted.get(family, 0.0)
+            )
+            self.state.legal_ir_view_logits[family] = (
+                self.state.legal_ir_view_logits.get(family, 0.0)
+                + (step * gradient)
+            )
+        self._invalidate_legal_ir_view_family_candidates()
+        return True
+
+    def _nudge_leanstral_guidance_feature_logits(
+        self,
+        feature_keys: Sequence[str],
+        target_distribution: Mapping[str, float],
+        *,
+        learning_rate: float,
+    ) -> int:
+        features = _unique_preserve_order(str(feature) for feature in feature_keys)[:48]
+        normalized_target = _normalized_distribution(
+            {
+                str(view): _float_or_zero(weight)
+                for view, weight in dict(target_distribution or {}).items()
+                if _float_or_zero(weight) > 0.0
+            }
+        )
+        if not features or not normalized_target:
+            return 0
+        step = _clamp_learning_rate(learning_rate) * 0.35 / math.sqrt(len(features))
+        families = _unique_preserve_order(
+            list(normalized_target.keys()) + list(self._legal_ir_view_family_candidates())
+        )
+        updated = 0
+        for feature in features:
+            logits = self.state.feature_legal_ir_view_logits.setdefault(feature, {})
+            predicted = _softmax(
+                {family: float(logits.get(family, 0.0)) for family in families}
+            )
+            for family in families:
+                gradient = float(normalized_target.get(family, 0.0)) - float(
+                    predicted.get(family, 0.0)
+                )
+                logits[family] = logits.get(family, 0.0) + (step * gradient)
+            updated += 1
+        if updated:
+            self._invalidate_legal_ir_view_family_candidates()
+        return updated
+
     def apply_todos(
         self,
         todos: Iterable[object],
@@ -4432,6 +4981,8 @@ class AdaptiveModalAutoencoder:
         projection_prescreen_top_k: int = 3,
         projection_periodic_full_search_every_n_cycles: int = 0,
         projection_cycle: Optional[int] = None,
+        precomputed_holdout_evaluation: Optional[AutoencoderEvaluation] = None,
+        precomputed_training_evaluation: Optional[AutoencoderEvaluation] = None,
         progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     ) -> Dict[str, Any]:
         """Train feature-level weights with rollback on holdout regression.
@@ -4516,12 +5067,11 @@ class AdaptiveModalAutoencoder:
             stage: str,
         ) -> AutoencoderEvaluation:
             row_list = list(rows)
-            if bridge_sample_cap is None:
+            if bridge_sample_cap is None and not bridge_text_cap:
                 return self.evaluate(row_list, **evaluation_kwargs)
-            base = self.evaluate(row_list, **base_evaluation_kwargs)
             bridge_rows = projection_bridge_samples(row_list)
             if not bridge_rows:
-                return base
+                return self.evaluate(row_list, **base_evaluation_kwargs)
             emit_progress(
                 f"{stage}_bridge_evaluation",
                 bridge_sample_count=len(bridge_rows),
@@ -4534,6 +5084,8 @@ class AdaptiveModalAutoencoder:
                 sample_count=len(row_list),
             )
             bridge = self.evaluate(bridge_rows, **evaluation_kwargs)
+            self.alias_cached_legal_ir_targets(row_list, bridge_rows)
+            base = self.evaluate(row_list, **base_evaluation_kwargs)
             return replace(
                 base,
                 legal_ir_target_count=bridge.legal_ir_target_count,
@@ -4545,15 +5097,28 @@ class AdaptiveModalAutoencoder:
                 legal_ir_view_distribution=dict(bridge.legal_ir_view_distribution),
             )
 
+        def restore_projection_state(
+            state: ModalAutoencoderTrainingState,
+        ) -> None:
+            self.state = state.copy()
+            self._invalidate_state_dependent_evaluator_caches()
+
         emit_progress(
             "before_holdout_evaluation",
             sample_count=len(sample_list),
             validation_sample_count=len(target_samples),
         )
-        before = evaluate_projection_rows(
-            target_samples,
-            stage="before_holdout_evaluation",
-        )
+        if precomputed_holdout_evaluation is None:
+            before = evaluate_projection_rows(
+                target_samples,
+                stage="before_holdout_evaluation",
+            )
+        else:
+            before = precomputed_holdout_evaluation
+            emit_progress(
+                "before_holdout_evaluation_reused",
+                sample_count=len(target_samples),
+            )
         if sample_list and validation_list:
             # Prime LegalIR target caches for training samples before feature-level
             # nudges.  Validation-only evaluation intentionally does not touch
@@ -4563,10 +5128,16 @@ class AdaptiveModalAutoencoder:
                 sample_count=len(sample_list),
                 validation_sample_count=len(target_samples),
             )
-            evaluate_projection_rows(
-                sample_list,
-                stage="training_cache_prime",
-            )
+            if precomputed_training_evaluation is None:
+                evaluate_projection_rows(
+                    sample_list,
+                    stage="training_cache_prime",
+                )
+            else:
+                emit_progress(
+                    "training_cache_prime_reused",
+                    sample_count=len(sample_list),
+                )
         emit_progress("initial_state_snapshot")
         best_state = self.state.copy()
         best = before
@@ -4606,6 +5177,11 @@ class AdaptiveModalAutoencoder:
         effective_prescreen_mode = "shadow" if prescreen_periodic_full_search else prescreen_mode
         projection_prescreen_config = {
             "effective_mode": effective_prescreen_mode,
+            "holdout_evaluation_limit": (
+                prescreen_top_k
+                if effective_prescreen_mode == "enforce" and prescreen_top_k > 0
+                else None
+            ),
             "mode": prescreen_mode,
             "periodic_full_search": prescreen_periodic_full_search,
             "periodic_full_search_every_n_cycles": prescreen_full_search_every,
@@ -4614,10 +5190,10 @@ class AdaptiveModalAutoencoder:
         }
 
         candidate_updates = (
-            ("family_logits", ("family_logits",)),
-            ("decoded_embedding", ("decoded_embedding",)),
             ("legal_ir_view_global_logits", ("legal_ir_view_global_logits",)),
             ("legal_ir_view_logits", ("legal_ir_view_logits",)),
+            ("family_logits", ("family_logits",)),
+            ("decoded_embedding", ("decoded_embedding",)),
             (
                 "combined",
                 ("family_logits", "decoded_embedding", "legal_ir_view_logits"),
@@ -4663,6 +5239,12 @@ class AdaptiveModalAutoencoder:
             epoch_before_state = self.state.copy()
             candidate_reports: List[Dict[str, Any]] = []
             selected: Optional[tuple[float, AutoencoderEvaluation, ModalAutoencoderTrainingState, str]] = None
+            prescreen_holdout_evaluation_count = 0
+            prescreen_holdout_evaluation_limit = (
+                prescreen_top_k
+                if effective_prescreen_mode == "enforce" and prescreen_top_k > 0
+                else None
+            )
             emit_progress(
                 "hard_example_selection",
                 epoch=epoch,
@@ -4689,6 +5271,23 @@ class AdaptiveModalAutoencoder:
             for update_name, update_targets in candidate_updates:
                 if timed_out():
                     projection_stopped_reason = "projection_timeout"
+                    break
+                if (
+                    prescreen_holdout_evaluation_limit is not None
+                    and prescreen_holdout_evaluation_count
+                    >= prescreen_holdout_evaluation_limit
+                ):
+                    emit_progress(
+                        "projection_prescreen_holdout_budget_exhausted",
+                        epoch=epoch,
+                        holdout_evaluation_count=(
+                            prescreen_holdout_evaluation_count
+                        ),
+                        holdout_evaluation_limit=(
+                            prescreen_holdout_evaluation_limit
+                        ),
+                        next_update=update_name,
+                    )
                     break
                 head_scale = head_learning_rate_scales.get(update_name, 1.0)
                 attempt_reports: List[Dict[str, Any]] = []
@@ -4717,7 +5316,7 @@ class AdaptiveModalAutoencoder:
                     AutoencoderEvaluation,
                     ModalAutoencoderTrainingState,
                 ]:
-                    self.state = candidate_state.copy()
+                    restore_projection_state(candidate_state)
                     emit_progress(
                         "line_search_evaluation",
                         epoch=epoch,
@@ -4893,7 +5492,7 @@ class AdaptiveModalAutoencoder:
                         state_entry_count=state_entry_count,
                         update=update_name,
                     )
-                    self.state = epoch_before_state.copy()
+                    restore_projection_state(epoch_before_state)
                     for sample in update_samples:
                         if "family_logits" in update_targets:
                             self._nudge_family_logits(
@@ -5036,7 +5635,7 @@ class AdaptiveModalAutoencoder:
                     ):
                         multipliers_to_try.extend(line_search_refinement_multipliers)
                         refinement_added = True
-                if projection_stopped_reason:
+                if projection_stopped_reason and not attempt_tuples:
                     break
                 _annotate_projection_prescreen_rankings(
                     attempt_reports,
@@ -5060,12 +5659,30 @@ class AdaptiveModalAutoencoder:
                         if bool(attempt_report.get("holdout_evaluated", False)):
                             selected_tuples.append(attempt)
                             continue
+                        if (
+                            prescreen_holdout_evaluation_limit is not None
+                            and prescreen_holdout_evaluation_count
+                            >= prescreen_holdout_evaluation_limit
+                        ):
+                            if isinstance(prescreen, MutableMapping):
+                                prescreen["global_holdout_budget_filtered"] = True
+                                prescreen["selected_for_holdout"] = False
+                            attempt_report["acceptance_source"] = "prescreen_filtered"
+                            continue
+                        if timed_out():
+                            projection_stopped_reason = "projection_timeout"
+                            if isinstance(prescreen, MutableMapping):
+                                prescreen["projection_timeout_filtered"] = True
+                                prescreen["selected_for_holdout"] = False
+                            attempt_report["acceptance_source"] = "projection_timeout"
+                            continue
                         selected_tuples.append(
                             finalize_attempt_report(
                                 attempt_report=attempt_report,
                                 candidate_state=candidate_state,
                             )
                         )
+                        prescreen_holdout_evaluation_count += 1
                     best_attempt = max(
                         selected_tuples,
                         key=lambda attempt: attempt[0],
@@ -5083,6 +5700,23 @@ class AdaptiveModalAutoencoder:
                     )
                 chosen = best_improved_attempt or best_attempt
                 if chosen is None:
+                    if attempt_tuples:
+                        _score, candidate_report, _after, _candidate_state = max(
+                            attempt_tuples,
+                            key=lambda attempt: attempt[0],
+                        )
+                        candidate_reports.append(
+                            {
+                                **candidate_report,
+                                "attempt_reports": attempt_reports,
+                                "line_search_attempt_count": len(attempt_reports),
+                                "line_search_refinement_attempt_count": sum(
+                                    1
+                                    for report in attempt_reports
+                                    if report.get("line_search_refinement")
+                                ),
+                            }
+                        )
                     continue
                 objective_delta, candidate_report, after, candidate_state = chosen
                 candidate_reports.append(
@@ -5108,26 +5742,49 @@ class AdaptiveModalAutoencoder:
                     )
 
             if projection_stopped_reason:
-                self.state = epoch_before_state
+                if selected is None:
+                    restore_projection_state(epoch_before_state)
+                    epoch_reports.append(
+                        {
+                            "accepted": False,
+                            "candidate_reports": candidate_reports,
+                            "epoch": epoch,
+                            "objective_delta": max(
+                                (
+                                    float(report.get("objective_delta", 0.0))
+                                    for report in candidate_reports
+                                ),
+                                default=0.0,
+                            ),
+                            "selected_update": None,
+                            "stopped_reason": projection_stopped_reason,
+                        }
+                    )
+                    break
+                objective_delta, after, selected_state, update_name = selected
+                restore_projection_state(selected_state)
+                best = after
+                best_state = self.state.copy()
+                accepted_epochs += 1
+                selected_report = next(
+                    report
+                    for report in candidate_reports
+                    if report["update"] == update_name
+                )
                 epoch_reports.append(
                     {
-                        "accepted": False,
+                        **selected_report,
+                        "accepted": True,
                         "candidate_reports": candidate_reports,
                         "epoch": epoch,
-                        "objective_delta": max(
-                            (
-                                float(report.get("objective_delta", 0.0))
-                                for report in candidate_reports
-                            ),
-                            default=0.0,
-                        ),
-                        "selected_update": None,
+                        "objective_delta": objective_delta,
+                        "selected_update": update_name,
                         "stopped_reason": projection_stopped_reason,
                     }
                 )
                 break
             if selected is None:
-                self.state = epoch_before_state
+                restore_projection_state(epoch_before_state)
                 epoch_reports.append(
                     {
                         "accepted": False,
@@ -5146,7 +5803,7 @@ class AdaptiveModalAutoencoder:
                 break
 
             objective_delta, after, selected_state, update_name = selected
-            self.state = selected_state
+            restore_projection_state(selected_state)
             best = after
             best_state = self.state.copy()
             accepted_epochs += 1
@@ -5166,7 +5823,7 @@ class AdaptiveModalAutoencoder:
                 }
             )
 
-        self.state = best_state
+        restore_projection_state(best_state)
         emit_progress(
             "finished",
             accepted_epochs=accepted_epochs,
@@ -5177,6 +5834,7 @@ class AdaptiveModalAutoencoder:
             "after": best.to_dict(),
             "before": before.to_dict(),
             "compute_backend": self.compute_backend_metadata(),
+            "candidate_update_order": [name for name, _targets in candidate_updates],
             "epoch_reports": epoch_reports,
             "elapsed_seconds": round(elapsed_seconds(), 3),
             "effective_max_line_search_attempts": effective_max_line_search_attempts,
@@ -5191,6 +5849,12 @@ class AdaptiveModalAutoencoder:
             "sample_memory_used": False,
             "legal_ir_bridge_max_samples": bridge_sample_cap,
             "legal_ir_bridge_max_sample_text_chars": bridge_text_cap,
+            "precomputed_holdout_evaluation_reused": (
+                precomputed_holdout_evaluation is not None
+            ),
+            "precomputed_training_evaluation_reused": (
+                precomputed_training_evaluation is not None
+            ),
             "state_entry_count": state_entry_count,
             "stopped_reason": projection_stopped_reason,
             "validation_sample_count": len(target_samples),
@@ -6682,7 +7346,14 @@ class AdaptiveModalAutoencoder:
             for family in families
         }
         feature_keys = self._legal_ir_view_feature_keys_for(sample)
-        feature_scale = 1.0 / self._feature_activity_scale(len(feature_keys))
+        feature_scale = 1.0 / self._feature_activity_scale(
+            self._learned_feature_activity_count(
+                sample,
+                feature_keys,
+                self.state.feature_legal_ir_view_logits,
+                self.state.feature_family_logits,
+            )
+        )
         for feature in feature_keys:
             for family, value in self.state.feature_legal_ir_view_logits.get(feature, {}).items():
                 family = str(family)
@@ -6976,7 +7647,13 @@ class AdaptiveModalAutoencoder:
     ) -> Dict[str, float]:
         logits = self._base_logits_for(sample)
         feature_keys = self._feature_keys_for(sample)
-        feature_scale = 1.0 / self._feature_activity_scale(len(feature_keys))
+        feature_scale = 1.0 / self._feature_activity_scale(
+            self._learned_feature_activity_count(
+                sample,
+                feature_keys,
+                self.state.feature_family_logits,
+            )
+        )
         for feature in feature_keys:
             for family, value in self.state.feature_family_logits.get(feature, {}).items():
                 if family in logits:
@@ -7022,7 +7699,13 @@ class AdaptiveModalAutoencoder:
             for family in families
         }
         feature_keys = self._feature_keys_for(sample)
-        feature_scale = 1.0 / self._feature_activity_scale(len(feature_keys))
+        feature_scale = 1.0 / self._feature_activity_scale(
+            self._learned_feature_activity_count(
+                sample,
+                feature_keys,
+                self.state.feature_family_logits,
+            )
+        )
         for feature in feature_keys:
             for family, value in self.state.feature_family_logits.get(feature, {}).items():
                 family = str(family)
@@ -21539,17 +22222,24 @@ class AdaptiveModalAutoencoder:
             self.feature_codec,
             "feature_keys_for_sample",
         ) and self.max_codec_feature_keys > 0:
-            feature_keys_for_sample = self.feature_codec.feature_keys_for_sample
-            try:
-                codec_keys = feature_keys_for_sample(
-                    sample,
-                    max_features=self.max_codec_feature_keys,
-                )
-            except TypeError:
-                codec_keys = feature_keys_for_sample(sample)
+            codec_cache_key = f"codec_feature_keys:{self.max_codec_feature_keys}"
+            cached_codec_keys = cache.get(codec_cache_key)
+            if isinstance(cached_codec_keys, list):
+                codec_keys = [str(value) for value in cached_codec_keys]
+            else:
+                feature_keys_for_sample = self.feature_codec.feature_keys_for_sample
+                try:
+                    raw_codec_keys = feature_keys_for_sample(
+                        sample,
+                        max_features=self.max_codec_feature_keys,
+                    )
+                except TypeError:
+                    raw_codec_keys = feature_keys_for_sample(sample)
+                codec_keys = [str(value) for value in raw_codec_keys]
+                cache[codec_cache_key] = list(codec_keys)
             keys.extend(
                 self._select_codec_feature_keys(
-                    [str(value) for value in codec_keys],
+                    codec_keys,
                     limit=self.max_codec_feature_keys,
                 )
             )
@@ -22014,6 +22704,31 @@ class AdaptiveModalAutoencoder:
             return 1.0
         return math.sqrt(feature_count / max(1.0, float(self.feature_activity_reference)))
 
+    def _learned_feature_activity_count(
+        self,
+        sample: LegalSample,
+        feature_keys: Sequence[str],
+        *learned_mappings: Mapping[str, Any],
+    ) -> int:
+        """Count baseline features plus newly introduced keys with learned state.
+
+        Fallback and dedicated LegalIR features define the historical
+        normalization baseline. Optional codec keys must remain output-neutral
+        until one of the supplied heads has actually learned a value for them.
+        """
+        cache = self._sample_cache_for(sample)
+        fallback_keys = cache.get("fallback_feature_key_set")
+        if not isinstance(fallback_keys, frozenset):
+            fallback_keys = frozenset(self._fallback_feature_keys_for(sample))
+            cache["fallback_feature_key_set"] = fallback_keys
+        return sum(
+            1
+            for feature in feature_keys
+            if feature in fallback_keys
+            or str(feature).startswith("legal-ir:")
+            or any(bool(mapping.get(feature)) for mapping in learned_mappings)
+        )
+
     def _clip_logits(self, logits: Dict[str, float]) -> Dict[str, float]:
         clip = float(self.feature_logit_clip)
         if clip <= 0.0:
@@ -22063,7 +22778,13 @@ class AdaptiveModalAutoencoder:
         use_sample_memory: bool,
     ) -> List[AutoencoderFeatureContribution]:
         target_distribution = _observed_family_distribution(sample)
-        feature_scale = 1.0 / self._feature_activity_scale(len(feature_keys))
+        feature_scale = 1.0 / self._feature_activity_scale(
+            self._learned_feature_activity_count(
+                sample,
+                feature_keys,
+                self.state.feature_family_logits,
+            )
+        )
         contributions: List[AutoencoderFeatureContribution] = []
         for feature in feature_keys:
             logits = self.state.feature_family_logits.get(feature, {})
@@ -22994,7 +23715,18 @@ class AdaptiveModalAutoencoder:
                     },
                 )
             )
-        feature_scale = 1.0 / self._feature_activity_scale(len(feature_keys))
+        active_embedding_feature_count = sum(
+            1
+            for feature in feature_keys
+            if (
+                (weights := self.state.feature_embedding_weights.get(feature))
+                is not None
+                and len(weights) == dimensions
+            )
+        )
+        feature_scale = 1.0 / self._feature_activity_scale(
+            active_embedding_feature_count
+        )
         for feature in feature_keys:
             weights = self.state.feature_embedding_weights.get(feature)
             if weights is None or len(weights) != dimensions:

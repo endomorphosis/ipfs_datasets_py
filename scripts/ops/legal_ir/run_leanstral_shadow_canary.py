@@ -15,13 +15,21 @@ import asyncio
 import hashlib
 import json
 import math
-import os
+import sys
 import time
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+ACCELERATE_ROOT = REPO_ROOT.parent / "ipfs_accelerate_py"
+for import_root in (ACCELERATE_ROOT, REPO_ROOT):
+    if import_root.exists():
+        import_root_text = str(import_root)
+        if import_root_text not in sys.path:
+            sys.path.insert(0, import_root_text)
 
 from ipfs_datasets_py.logic.modal import (
     INTROSPECTION_ANALYSIS_SCHEMA_VERSION,
@@ -48,7 +56,10 @@ from ipfs_datasets_py.logic.modal import (
     validate_disagreement_packet,
     verify_leanstral_audit,
 )
-from ipfs_datasets_py.logic.modal.leanstral_audit import canonical_sha256
+from ipfs_datasets_py.logic.modal.leanstral_audit import (
+    LEANSTRAL_EVIDENCE_REFRESH_POLICIES,
+    canonical_sha256,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
     HF_USCODE_DATASET_ID,
     USCODE_LAWS_PARQUET,
@@ -60,12 +71,16 @@ SHADOW_CANARY_SCHEMA_VERSION = "legal-ir-leanstral-shadow-canary-v1"
 REAL_SHADOW_CANARY_SCHEMA_VERSION = "legal-ir-leanstral-real-shadow-canary-v1"
 DEFAULT_REPORT_PATH = Path("docs/implementation/reports/leanstral_real_shadow_canary.md")
 LEGACY_REPORT_PATH = Path("docs/implementation/reports/leanstral_shadow_canary.md")
+DEFAULT_CANONICAL_PACKET_LOG_DIR = Path("workspace/test-logs")
 DEFAULT_LEAN_PROOF_CACHE_PATH = Path(
     "workspace/leanstral-audit-worker/lean-proof-cache.json"
 )
 MAX_CANARY_CLUSTERS = 50
 MIN_REAL_CANARY_PACKETS = 25
-DEFAULT_LEAN_PARALLEL_WORKERS = min(8, max(1, (os.cpu_count() or 1) // 2))
+DEFAULT_LEAN_MAX_FORMULAS = 12
+DEFAULT_LEAN_PARALLEL_WORKERS = 2
+DEFAULT_LEAN_SLICE_SIZE = 6
+DEFAULT_LEAN_TIMEOUT_SECONDS = 30.0
 GUARDRAIL_CODES = (
     "provenance",
     "anti_copy",
@@ -78,6 +93,7 @@ LIVE_CANONICAL_STATE_PACKET = "live_canonical_state_packet"
 REAL_PACKET_WITHOUT_PROMOTION_EVIDENCE = "real_packet_without_provider_or_verified_cache"
 UNKNOWN_PACKET_PROVENANCE = "unknown_packet_provenance"
 PRODUCTION_PACKET_KINDS = frozenset({CACHED_REAL_PACKET, LIVE_CANONICAL_STATE_PACKET})
+LATEST_INPUT_SENTINELS = frozenset({"latest", "@latest", "latest-real", "latest_real"})
 
 
 @dataclass(frozen=True)
@@ -94,6 +110,7 @@ class ShadowCanaryConfig:
     model: str = "Leanstral"
     vibe_agent: str = "lean"
     timeout_seconds: float = 300.0
+    validation_repair_retries: int = 1
 
     def bounded_max_clusters(self) -> int:
         return max(0, min(MAX_CANARY_CLUSTERS, int(self.max_clusters or 0)))
@@ -254,13 +271,17 @@ class RealShadowCanaryConfig:
     report_path: str = str(DEFAULT_REPORT_PATH)
     expected_state_hash: str = ""
     expected_compiler_commit: str = ""
+    evidence_refresh_policy: str = "latest_compiler_snapshot"
+    max_evidence_packets_per_item: int = 1
     max_concurrency: int = 2
     max_retries: int = 0
     timeout_seconds: float = 300.0
     retry_backoff_seconds: float = 0.25
     provider: str = "mistral_vibe"
+    provider_fallbacks: str = ""
     model: str = "Leanstral"
     vibe_agent: str = "lean"
+    validation_repair_retries: int = 1
     require_leanstral_model: bool = True
     require_local_verifier: bool = True
     resolve_verifier_examples: bool = False
@@ -271,13 +292,14 @@ class RealShadowCanaryConfig:
     run_syntax_check: bool = True
     run_graph_check: bool = True
     run_provenance_check: bool = True
-    lean_max_formulas: int = 0
+    lean_max_formulas: int = DEFAULT_LEAN_MAX_FORMULAS
     lean_parallel_workers: int = DEFAULT_LEAN_PARALLEL_WORKERS
     lean_proof_cache_max_entries: int = 4096
     lean_proof_cache_path: str = str(DEFAULT_LEAN_PROOF_CACHE_PATH)
     lean_proof_cache_ttl_seconds: int = 2_592_000
-    lean_slice_size: int = 2
-    lean_timeout_seconds: float = 10.0
+    lean_slice_size: int = DEFAULT_LEAN_SLICE_SIZE
+    lean_timeout_seconds: float = DEFAULT_LEAN_TIMEOUT_SECONDS
+    modal_bridge_require_proof: bool = False
 
     def bounded_min_real_packets(self) -> int:
         return max(1, int(self.min_real_packets or 1))
@@ -293,6 +315,10 @@ class RealShadowCanaryConfig:
             cache_dir=self.cache_dir or None,
             checkpoint_path=self.checkpoint_path or None,
             expected_state_hash=self.expected_state_hash,
+            evidence_refresh_policy=self.evidence_refresh_policy,
+            max_evidence_packets_per_item=max(
+                1, int(self.max_evidence_packets_per_item or 1)
+            ),
             max_concurrency=self.max_concurrency,
             max_records=self.max_records,
             max_work_items=self.bounded_max_clusters(),
@@ -300,9 +326,11 @@ class RealShadowCanaryConfig:
             model=self.model,
             provider=self.provider,
             provider_enabled=self.provider_enabled,
+            provider_fallbacks=self.provider_fallbacks,
             request_timeout_seconds=self.timeout_seconds,
             require_leanstral_model=self.require_leanstral_model,
             retry_backoff_seconds=self.retry_backoff_seconds,
+            validation_repair_retries=self.validation_repair_retries,
             vibe_agent=self.vibe_agent,
         )
 
@@ -323,6 +351,7 @@ class RealShadowCanaryConfig:
             ),
             lean_slice_size=max(0, int(self.lean_slice_size or 0)),
             lean_timeout_seconds=max(0.001, float(self.lean_timeout_seconds or 0.0)),
+            modal_bridge_require_proof=self.modal_bridge_require_proof,
             run_graph_check=self.run_graph_check,
             run_lean=self.run_lean,
             run_modal_bridge=self.run_modal_bridge,
@@ -348,6 +377,8 @@ class RealShadowAudit:
     source_record_hashes: Sequence[str]
     cache_hit: bool
     llm_called: bool
+    generation_attempts: int
+    repair_reasons: Sequence[str]
     audit_valid: bool
     audit_verified: bool
     response_hash: str
@@ -371,6 +402,7 @@ class RealShadowAudit:
             "compiler_commit": self.compiler_commit,
             "compiler_surface": self.compiler_surface,
             "evidence_ids": list(self.evidence_ids),
+            "generation_attempts": int(self.generation_attempts),
             "llm_called": self.llm_called,
             "local_check_count": int(self.local_check_count),
             "local_verifier_accepted": self.local_verifier_accepted,
@@ -382,6 +414,7 @@ class RealShadowAudit:
             "lean_slice_count": int(self.lean_slice_count),
             "lean_verified_formula_count": int(self.lean_verified_formula_count),
             "request_id": self.request_id,
+            "repair_reasons": list(self.repair_reasons),
             "response_hash": self.response_hash,
             "semantic_family": self.semantic_family,
             "semantic_signature": self.semantic_signature,
@@ -486,6 +519,7 @@ def run_shadow_canary(
             vibe_agent=cfg.vibe_agent,
             timeout_seconds=cfg.timeout_seconds,
             cache_dir=cfg.cache_dir or None,
+            validation_repair_retries=cfg.validation_repair_retries,
         ),
         llm_generate=llm_generate,
     )
@@ -556,18 +590,34 @@ def run_real_shadow_canary(
     started = time.monotonic()
     cfg = config or RealShadowCanaryConfig()
     source_records = [dict(_mapping(record.get("payload")) or record) for record in records]
-    if cfg.max_records:
-        source_records = source_records[: max(0, int(cfg.max_records))]
 
-    valid_records, invalid_records = _validate_real_packets(source_records, config=cfg)
+    candidate_records, invalid_records = _validate_real_packets(
+        source_records,
+        config=cfg,
+        enforce_expected_state=False,
+    )
+    valid_records, snapshot_selection = _select_real_canary_snapshot(
+        candidate_records,
+        config=cfg,
+    )
+    selected_valid_records, selected_invalid_records = _validate_real_packets(
+        valid_records,
+        config=cfg,
+        enforce_expected_state=True,
+    )
+    valid_records = selected_valid_records
+    invalid_records = list(invalid_records) + list(selected_invalid_records)
     source_digest = canonical_sha256(
         {
             "records": [canonical_sha256(record) for record in valid_records],
             "source_record_count": len(source_records),
+            "source_valid_packet_count": len(candidate_records),
+            "snapshot_selection": snapshot_selection,
             "valid_real_packet_count": len(valid_records),
         }
     )
     canonical_state = _canonical_state_summary(valid_records, config=cfg)
+    canonical_state["snapshot_selection"] = snapshot_selection
     blocked_reasons: List[str] = []
     if not source_records:
         blocked_reasons.append("no_canonical_packet_input")
@@ -660,6 +710,10 @@ def run_real_shadow_canary(
     )
     if worker_summary is not None and worker_summary.unavailable_count:
         blocked_reasons.append("leanstral_labs_access_unavailable")
+    if worker_summary is not None and worker_summary.failed_count:
+        blocked_reasons.append("leanstral_worker_failures")
+    if any(audit.status == "timeout" for audit in real_audits):
+        blocked_reasons.append("leanstral_worker_timeouts")
     if stale_rejections:
         blocked_reasons.append("stale_state_rejections")
     if worker_summary is not None and worker_summary.work_item_count == 0:
@@ -952,6 +1006,65 @@ def load_disagreement_records(paths: Sequence[str | Path]) -> List[Dict[str, Any
     return records
 
 
+def discover_latest_disagreement_inputs(
+    log_dir: str | Path = DEFAULT_CANONICAL_PACKET_LOG_DIR,
+    *,
+    min_records: int = 1,
+) -> List[str]:
+    """Return the newest canonical disagreement export with enough records."""
+
+    root = Path(log_dir).expanduser()
+    if not root.is_absolute():
+        root = REPO_ROOT / root
+    if not root.is_dir():
+        return []
+    minimum = max(1, int(min_records or 1))
+    candidates = [
+        path
+        for path in root.glob("*.canonical-disagreements.jsonl")
+        if path.is_file() and path.stat().st_size > 0
+    ]
+    candidates.sort(key=lambda path: (path.stat().st_mtime, path.name), reverse=True)
+    for path in candidates:
+        if _jsonl_record_count(path) >= minimum:
+            return [str(path)]
+    return []
+
+
+def resolve_disagreement_input_paths(
+    paths: Sequence[str | Path],
+    *,
+    min_records: int = 1,
+) -> List[str]:
+    """Resolve operator-friendly input aliases without hiding missing explicit paths."""
+
+    resolved: List[str] = []
+    for raw_path in paths:
+        value = str(raw_path).strip()
+        if value in LATEST_INPUT_SENTINELS:
+            resolved.extend(
+                discover_latest_disagreement_inputs(
+                    DEFAULT_CANONICAL_PACKET_LOG_DIR,
+                    min_records=min_records,
+                )
+            )
+        elif value:
+            resolved.append(value)
+    return resolved
+
+
+def _jsonl_record_count(path: Path) -> int:
+    count = 0
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                if line.strip():
+                    count += 1
+    except OSError:
+        return 0
+    return count
+
+
 def build_dry_run_fixture_records(count: int = 8) -> List[Dict[str, Any]]:
     """Return deterministic canary packets used when dry-run has no input."""
 
@@ -1060,7 +1173,7 @@ def _audit_cluster(
                 verified=True,
                 response_hash=cache_entry.response_hash,
                 cache_key=request.cache_key,
-                verified_by=("leanstral-audit-schema-v1", "leanstral-audit-cache-v1"),
+                verified_by=("leanstral-audit-schema-v2", "leanstral-audit-cache-v1"),
             ),
             llm_called=False,
             cache_hit=True,
@@ -1533,6 +1646,7 @@ def _validate_real_packets(
     records: Sequence[Mapping[str, Any]],
     *,
     config: RealShadowCanaryConfig,
+    enforce_expected_state: bool = True,
 ) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     valid: List[Dict[str, Any]] = []
     invalid: List[Dict[str, Any]] = []
@@ -1553,10 +1667,18 @@ def _validate_real_packets(
         state_hash = str(context.get("state_hash") or "")
         if state_hash and str(evidence_hashes.get("state_hash") or "") != state_hash:
             failures.append("state_hash_evidence_mismatch")
-        if config.expected_state_hash and state_hash != config.expected_state_hash:
+        if (
+            enforce_expected_state
+            and config.expected_state_hash
+            and state_hash != config.expected_state_hash
+        ):
             failures.append("expected_state_hash_mismatch")
         commit = str(context.get("compiler_commit") or "")
-        if config.expected_compiler_commit and commit != config.expected_compiler_commit:
+        if (
+            enforce_expected_state
+            and config.expected_compiler_commit
+            and commit != config.expected_compiler_commit
+        ):
             failures.append("expected_compiler_commit_mismatch")
         if failures:
             invalid.append(
@@ -1569,6 +1691,150 @@ def _validate_real_packets(
         else:
             valid.append(root)
     return valid, invalid
+
+
+def _select_real_canary_snapshot(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: RealShadowCanaryConfig,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Select one coherent canonical state/commit snapshot from append-only logs."""
+
+    groups: Dict[tuple[str, str], List[Dict[str, Any]]] = {}
+    for record in records:
+        root = dict(record)
+        groups.setdefault(_real_snapshot_key(root), []).append(root)
+    if not groups:
+        return [], {
+            "dropped_valid_packet_count": 0,
+            "max_records_applied": 0,
+            "candidate_snapshot_count": 0,
+            "selected_group_packet_count": 0,
+            "selected_packet_count": 0,
+            "selection_reason": "no_valid_canonical_packets",
+            "source_valid_packet_count": 0,
+        }
+
+    pool = groups
+    expected_filters: Dict[str, str] = {}
+    if config.expected_state_hash:
+        expected_filters["state_hash"] = config.expected_state_hash
+    if config.expected_compiler_commit:
+        expected_filters["compiler_commit"] = config.expected_compiler_commit
+    if expected_filters:
+        expected_pool = {
+            key: group
+            for key, group in groups.items()
+            if (not config.expected_state_hash or key[0] == config.expected_state_hash)
+            and (
+                not config.expected_compiler_commit
+                or key[1] == config.expected_compiler_commit
+            )
+        }
+        if expected_pool:
+            pool = expected_pool
+
+    minimum = config.bounded_min_real_packets()
+    sufficient = {key: group for key, group in pool.items() if len(group) >= minimum}
+    candidates = pool
+    selected_key = max(candidates, key=lambda key: _real_snapshot_rank(candidates[key]))
+    selected_group = list(candidates[selected_key])
+    selected_group.sort(key=_real_record_rank)
+    limit = max(0, int(config.max_records or 0))
+    selected_records = selected_group[-limit:] if limit else selected_group
+    reason_parts = []
+    if expected_filters and pool is not groups:
+        reason_parts.append("expected")
+    reason_parts.append("newest")
+    reason_parts.append("min_satisfying" if selected_key in sufficient else "available")
+    reason_parts.append("snapshot")
+    selection_reason = "_".join(reason_parts)
+    top_candidates = [
+        _real_snapshot_candidate_summary(key, group)
+        for key, group in sorted(
+            groups.items(),
+            key=lambda item: _real_snapshot_rank(item[1]),
+            reverse=True,
+        )[:10]
+    ]
+    return selected_records, {
+        "candidate_snapshot_count": len(groups),
+        "dropped_valid_packet_count": max(0, len(records) - len(selected_records)),
+        "expected_filters": expected_filters,
+        "max_records_applied": limit,
+        "selected_compiler_commit": selected_key[1],
+        "selected_group_packet_count": len(selected_group),
+        "selected_packet_count": len(selected_records),
+        "selected_state_hash": selected_key[0],
+        "selection_reason": selection_reason,
+        "snapshot_candidates": top_candidates,
+        "source_valid_packet_count": len(records),
+    }
+
+
+def _real_snapshot_key(record: Mapping[str, Any]) -> tuple[str, str]:
+    context = _mapping(record.get("run_context"))
+    evidence_hashes = _mapping(record.get("evidence_hashes"))
+    return (
+        str(context.get("state_hash") or evidence_hashes.get("state_hash") or ""),
+        str(context.get("compiler_commit") or ""),
+    )
+
+
+def _real_snapshot_rank(records: Sequence[Mapping[str, Any]]) -> tuple[float, float, int]:
+    if not records:
+        return (0.0, 0.0, 0)
+    ranks = [_real_record_rank(record) for record in records]
+    return max(ranks)
+
+
+def _real_record_rank(record: Mapping[str, Any]) -> tuple[float, float, int]:
+    context = _mapping(record.get("run_context"))
+    exported_at = _timestamp_rank(
+        context.get("exported_at", record.get("exported_at"))
+    )
+    cycle = _finite_float(context.get("cycle"), 0.0)
+    frozen_canary = _mapping(context.get("frozen_canary"))
+    canary_index = int(_finite_float(frozen_canary.get("index"), 0.0))
+    return (exported_at, cycle, canary_index)
+
+
+def _real_snapshot_candidate_summary(
+    key: tuple[str, str],
+    records: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    cycles = sorted(
+        {
+            int(_finite_float(_mapping(record.get("run_context")).get("cycle"), 0.0))
+            for record in records
+        }
+    )
+    return {
+        "compiler_commit": key[1],
+        "cycle_max": max(cycles) if cycles else None,
+        "cycle_min": min(cycles) if cycles else None,
+        "packet_count": len(records),
+        "state_hash": key[0],
+    }
+
+
+def _timestamp_rank(value: Any) -> float:
+    number = _finite_float(value, float("nan"))
+    if math.isfinite(number):
+        return number
+    if isinstance(value, str):
+        text = value.strip()
+        if text:
+            try:
+                if text.endswith("Z"):
+                    text = text[:-1] + "+00:00"
+                parsed = datetime.fromisoformat(text)
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+                return parsed.timestamp()
+            except ValueError:
+                return 0.0
+    return 0.0
 
 
 def _canonical_state_summary(
@@ -1704,6 +1970,12 @@ def _verify_real_shadow_audits(
                 source_record_hashes=tuple(item.source_record_hashes),
                 cache_hit=bool(result.cache_hit if result is not None else entry is not None),
                 llm_called=bool(result.llm_called if result is not None else False),
+                generation_attempts=int(
+                    result.generation_attempts if result is not None else 0
+                ),
+                repair_reasons=tuple(
+                    result.repair_reasons if result is not None else ()
+                ),
                 audit_valid=audit_valid,
                 audit_verified=audit_verified,
                 response_hash=str(
@@ -1960,11 +2232,18 @@ def _real_cache_summary(
         "cache_hits": sum(1 for audit in audits if audit.cache_hit),
         "cache_misses": max(0, len(audits) - sum(1 for audit in audits if audit.cache_hit)),
         "checkpoint_skips": int(_finite_float(worker_summary.get("skipped_checkpoint_count"), 0.0)),
+        "failed": int(_finite_float(worker_summary.get("failed_count"), 0.0)),
+        "generation_attempts": sum(audit.generation_attempts for audit in audits),
         "llm_calls": sum(1 for audit in audits if audit.llm_called),
         "provider_disabled_or_missed": sum(
             1 for audit in audits if audit.status == "provider_disabled"
         ),
+        "repair_attempts": sum(
+            max(0, int(audit.generation_attempts) - 1) for audit in audits
+        ),
+        "repaired_audits": sum(1 for audit in audits if audit.repair_reasons),
         "requests": len(audits),
+        "timeouts": sum(1 for audit in audits if audit.status == "timeout"),
         "unavailable": int(_finite_float(worker_summary.get("unavailable_count"), 0.0)),
     }
 
@@ -2333,22 +2612,46 @@ def _json_ready(value: Any) -> Any:
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", action="append", default=[], help="JSON/JSONL packet file or directory")
+    parser.add_argument(
+        "--input",
+        action="append",
+        default=[],
+        help=(
+            "JSON/JSONL packet file or directory; use 'latest' for the newest "
+            "workspace/test-logs/*.canonical-disagreements.jsonl export."
+        ),
+    )
     parser.add_argument("--max-clusters", type=int, default=MAX_CANARY_CLUSTERS)
     parser.add_argument("--max-records", type=int, default=0)
     parser.add_argument("--min-real-packets", type=int, default=MIN_REAL_CANARY_PACKETS)
+    parser.add_argument("--max-evidence-packets-per-item", type=int, default=1)
+    parser.add_argument(
+        "--evidence-refresh-policy",
+        choices=LEANSTRAL_EVIDENCE_REFRESH_POLICIES,
+        default="latest_compiler_snapshot",
+        help=(
+            "Use latest_compiler_snapshot to match the production Leanstral "
+            "audit watcher, or full_manifest for strict append-only attestation."
+        ),
+    )
     parser.add_argument("--cache-dir", default="", help="Leanstral audit cache directory")
     parser.add_argument("--checkpoint-path", default="", help="Optional Leanstral worker checkpoint path")
     parser.add_argument("--report-path", default="")
     parser.add_argument("--dry-run", action="store_true", help="Do not call Leanstral; use cache-only shadow audit")
     parser.add_argument("--run-provider", action="store_true", help="Call Leanstral for cache misses")
     parser.add_argument("--provider", default="mistral_vibe")
+    parser.add_argument(
+        "--provider-fallbacks",
+        default="",
+        help="Comma- or colon-separated fallback providers explicitly enabled for this canary run.",
+    )
     parser.add_argument("--model", default="Leanstral")
     parser.add_argument("--vibe-agent", default="lean")
     parser.add_argument("--expected-state-hash", default="")
     parser.add_argument("--expected-compiler-commit", default="")
     parser.add_argument("--max-concurrency", type=int, default=2)
     parser.add_argument("--max-retries", type=int, default=0)
+    parser.add_argument("--validation-repair-retries", type=int, default=1)
     parser.add_argument("--timeout-seconds", type=float, default=300.0)
     parser.add_argument("--retry-backoff-seconds", type=float, default=0.25)
     parser.add_argument(
@@ -2360,7 +2663,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--skip-graph-check", action="store_true")
     parser.add_argument("--skip-provenance-check", action="store_true")
     parser.add_argument("--run-lean", action="store_true")
-    parser.add_argument("--lean-max-formulas", type=int, default=0)
+    parser.add_argument(
+        "--lean-max-formulas",
+        type=int,
+        default=DEFAULT_LEAN_MAX_FORMULAS,
+    )
     parser.add_argument(
         "--lean-parallel-workers",
         type=int,
@@ -2372,9 +2679,18 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         default=str(DEFAULT_LEAN_PROOF_CACHE_PATH),
     )
     parser.add_argument("--lean-proof-cache-ttl-seconds", type=int, default=2_592_000)
-    parser.add_argument("--lean-slice-size", type=int, default=2)
-    parser.add_argument("--lean-timeout-seconds", type=float, default=10.0)
+    parser.add_argument(
+        "--lean-slice-size",
+        type=int,
+        default=DEFAULT_LEAN_SLICE_SIZE,
+    )
+    parser.add_argument(
+        "--lean-timeout-seconds",
+        type=float,
+        default=DEFAULT_LEAN_TIMEOUT_SECONDS,
+    )
     parser.add_argument("--run-modal-bridge", action="store_true")
+    parser.add_argument("--require-modal-bridge-proof", action="store_true")
     parser.add_argument(
         "--resolve-verifier-examples",
         action="store_true",
@@ -2388,12 +2704,20 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
-    legacy_mode = bool(args.legacy_cluster_canary or (not args.input and not args.run_provider))
+    explicit_input_requested = bool(args.input)
+    legacy_mode = bool(
+        args.legacy_cluster_canary
+        or (not explicit_input_requested and not args.run_provider)
+    )
+    input_paths = resolve_disagreement_input_paths(
+        args.input,
+        min_records=1 if legacy_mode else args.min_real_packets,
+    )
     if legacy_mode:
         report_path_arg = args.report_path or str(LEGACY_REPORT_PATH)
         dry_run = True if args.dry_run or not args.run_provider else False
-        records = load_disagreement_records(args.input) if args.input else []
-        if not records and dry_run:
+        records = load_disagreement_records(input_paths) if input_paths else []
+        if not records and dry_run and not explicit_input_requested:
             records = build_dry_run_fixture_records(
                 count=max(1, min(args.max_clusters, MAX_CANARY_CLUSTERS))
             )
@@ -2406,6 +2730,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             model=args.model,
             vibe_agent=args.vibe_agent,
             timeout_seconds=args.timeout_seconds,
+            validation_repair_retries=args.validation_repair_retries,
         )
         result = run_shadow_canary(records, config=config)
         report_path = write_markdown_report(result, report_path_arg)
@@ -2427,17 +2752,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return 2
         return 0
 
-    records = load_disagreement_records(args.input) if args.input else []
+    records = load_disagreement_records(input_paths) if input_paths else []
     if not records:
         raise SystemExit("--input is required for the real shadow canary")
     report_path_arg = args.report_path or str(DEFAULT_REPORT_PATH)
     config = RealShadowCanaryConfig(
         cache_dir=args.cache_dir,
         checkpoint_path=args.checkpoint_path,
+        evidence_refresh_policy=args.evidence_refresh_policy,
         expected_compiler_commit=args.expected_compiler_commit,
         expected_state_hash=args.expected_state_hash,
         max_concurrency=args.max_concurrency,
         max_clusters=args.max_clusters,
+        max_evidence_packets_per_item=args.max_evidence_packets_per_item,
         max_records=args.max_records,
         max_retries=args.max_retries,
         min_real_packets=args.min_real_packets,
@@ -2448,9 +2775,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         lean_proof_cache_ttl_seconds=args.lean_proof_cache_ttl_seconds,
         lean_slice_size=args.lean_slice_size,
         lean_timeout_seconds=args.lean_timeout_seconds,
+        modal_bridge_require_proof=bool(args.require_modal_bridge_proof),
         model=args.model,
         provider=args.provider,
         provider_enabled=bool(args.run_provider and not args.dry_run),
+        provider_fallbacks=args.provider_fallbacks,
         report_path=report_path_arg,
         retry_backoff_seconds=args.retry_backoff_seconds,
         run_graph_check=not args.skip_graph_check,
@@ -2460,6 +2789,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         run_syntax_check=not args.skip_syntax_check,
         resolve_verifier_examples=bool(args.resolve_verifier_examples),
         timeout_seconds=args.timeout_seconds,
+        validation_repair_retries=args.validation_repair_retries,
         verifier_dataset_repo_id=args.verifier_dataset_repo_id,
         verifier_laws_path=args.verifier_laws_path,
         vibe_agent=args.vibe_agent,

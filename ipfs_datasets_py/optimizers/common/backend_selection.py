@@ -37,6 +37,16 @@ _PROVIDER_ALIASES: Dict[str, str] = {
     "p2p_task_queue": "p2p_task_queue",
     "remote_queue": "p2p_task_queue",
     "task_queue": "p2p_task_queue",
+    "llama_cpp": "llama_cpp",
+    "llama_cpp_native": "llama_cpp_native",
+    "llamacpp": "llama_cpp",
+    "llamacpp_native": "llama_cpp_native",
+    "llama.cpp": "llama_cpp",
+    "llama.cpp_native": "llama_cpp_native",
+    "native_llama_cpp": "llama_cpp_native",
+    "openai_compatible": "llama_cpp",
+    "local_openai": "llama_cpp",
+    "leanstral_local": "llama_cpp",
     "auto": "auto",
 }
 
@@ -52,6 +62,7 @@ _DEFAULT_MODEL_BY_PROVIDER: Dict[str, str] = {
     "codex_cli": DEFAULT_CODEX_MODEL,
     "copilot": "copilot",
     "p2p_task_queue": "gpt2",
+    "llama_cpp": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
 }
 
 

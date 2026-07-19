@@ -8,21 +8,27 @@ evidence, prompt, model, theorem registry, schemas, and local verifier result.
 from __future__ import annotations
 
 import hashlib
-import asyncio
 import errno
 import json
 import math
 import os
 import time
 import tempfile
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from ipfs_datasets_py.utils import anyio_compat as anyio_runtime
+
+from .leanstral_artifact_cache import LeanstralArtifactCache
+
 
 LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION = "legal-ir-leanstral-audit-request-v1"
-LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION = "legal-ir-leanstral-audit-response-v1"
+LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION = "legal-ir-leanstral-audit-response-v2"
 LEANSTRAL_AUDIT_CACHE_SCHEMA_VERSION = "legal-ir-leanstral-audit-cache-v1"
+LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION = "legal-ir-leanstral-drafted-logic-v1"
+LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES = 6
+LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS = 240
 
 LEANSTRAL_AUDIT_REQUEST_SCHEMA: Dict[str, Any] = {
     "schema_version": LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION,
@@ -65,12 +71,19 @@ LEANSTRAL_AUDIT_RESPONSE_SCHEMA: Dict[str, Any] = {
         "proposed_compiler_surface": (
             "Every non-abstain response requires at least one non-empty object."
         ),
+        "drafted_logic_candidates": (
+            "Optional bounded guidance-only draft logic candidates.  Candidates "
+            "must use compact abstract predicates or IR slots, cite request proof "
+            "obligations when possible, and must not copy source text spans."
+        ),
         "request_id": "Copy request.request_id exactly.",
     },
+    "optional": ("drafted_logic_candidates",),
 }
 
 LEANSTRAL_AUDIT_REQUEST_SCHEMA_HASH = ""
 LEANSTRAL_AUDIT_RESPONSE_SCHEMA_HASH = ""
+LEANSTRAL_AUDIT_STOP_TOKENS = ("<|im_end|>", "<|im_start|>")
 
 ALLOWED_AUDIT_CLASSIFICATIONS = frozenset(
     {
@@ -96,10 +109,29 @@ ISSUE_AUDIT_CLASSIFICATIONS = frozenset(
 )
 
 LLMGenerateFn = Callable[..., str]
+LLMGenerateBatchFn = Callable[..., Sequence[str]]
 
 
 LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION = "legal-ir-leanstral-audit-worker-v1"
 LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION = "legal-ir-leanstral-audit-checkpoint-v1"
+LEANSTRAL_EVIDENCE_REFRESH_POLICIES = (
+    "full_manifest",
+    "latest_compiler_snapshot",
+)
+LEANSTRAL_OWNED_COMPILER_SURFACES = (
+    "modal.compiler",
+    "modal.compiler.registry",
+    "modal.compiler.ambiguity",
+    "modal.ir_decompiler",
+    "bridge.contracts",
+    "deontic.ir",
+    "external_provers.router",
+    "TDFOL.prover",
+    "CEC.native",
+    "zkp.circuits",
+    "knowledge_graphs.neo4j_compat",
+    "modal.frame_logic",
+)
 
 
 @dataclass(frozen=True)
@@ -107,12 +139,17 @@ class LeanstralAuditConfig:
     """Configuration for the structured Leanstral audit lane."""
 
     enabled: bool = False
-    provider: str = "mistral_vibe"
+    provider: str = "leanstral_local"
     model: str = "Leanstral"
     vibe_agent: str = "lean"
     timeout_seconds: float = 300.0
     max_new_tokens: int = 1800
     cache_dir: Optional[str] = None
+    validation_repair_retries: int = 1
+    cache_writes_enabled: bool = True
+
+    def bounded_validation_repair_retries(self) -> int:
+        return max(0, min(3, int(self.validation_repair_retries or 0)))
 
     def model_identity(self) -> Dict[str, Any]:
         return {
@@ -139,12 +176,19 @@ class LeanstralAuditWorkerConfig:
     max_records: int = 0
     max_work_items: int = 0
     max_evidence_packets_per_item: int = 6
+    evidence_refresh_policy: str = "full_manifest"
     provider_enabled: bool = True
-    provider: str = "mistral_vibe"
+    provider: str = "leanstral_local"
     model: str = "Leanstral"
     vibe_agent: str = "lean"
     prompt_template: str = "leanstral-async-disagreement-audit-v1"
     require_leanstral_model: bool = True
+    provider_fallbacks: str = "llama_cpp_native,mistral_vibe"
+    validation_repair_retries: int = 1
+    max_new_tokens: int = 1800
+    batch_size: int = 1
+    batch_max_workers: int = 0
+    batch_use_mesh: bool = True
 
     def bounded_concurrency(self) -> int:
         return max(1, int(self.max_concurrency or 1))
@@ -157,6 +201,46 @@ class LeanstralAuditWorkerConfig:
 
     def bounded_max_evidence_packets_per_item(self) -> int:
         return max(1, int(self.max_evidence_packets_per_item or 1))
+
+    def bounded_validation_repair_retries(self) -> int:
+        return max(0, min(3, int(self.validation_repair_retries or 0)))
+
+    def bounded_max_new_tokens(self) -> int:
+        return max(32, min(4096, int(self.max_new_tokens or 1800)))
+
+    def bounded_batch_size(self) -> int:
+        return max(1, min(64, int(self.batch_size or 1)))
+
+    def bounded_batch_max_workers(self) -> Optional[int]:
+        value = int(self.batch_max_workers or 0)
+        return value if value > 0 else None
+
+    def provider_candidates(self) -> tuple[str, ...]:
+        raw_values: List[Any] = [self.provider]
+        raw_values.extend(
+            token
+            for chunk in str(self.provider_fallbacks or "").replace(":", ",").split(",")
+            for token in (chunk.strip(),)
+            if token
+        )
+        values: List[str] = []
+        seen = set()
+        for value in raw_values:
+            provider = str(value or "").strip()
+            provider_key = provider.lower().replace("-", "_").replace(".", "_")
+            if not provider or provider_key in seen:
+                continue
+            values.append(provider)
+            seen.add(provider_key)
+        return tuple(values or (str(self.provider or "leanstral_local").strip(),))
+
+    def normalized_evidence_refresh_policy(self) -> str:
+        value = str(self.evidence_refresh_policy or "full_manifest").strip().lower()
+        return (
+            value
+            if value in LEANSTRAL_EVIDENCE_REFRESH_POLICIES
+            else "full_manifest"
+        )
 
     def timeout(self) -> float:
         value = float(self.request_timeout_seconds or 0.0)
@@ -180,7 +264,9 @@ class LeanstralAuditWorkerConfig:
             model=self.model,
             vibe_agent=self.vibe_agent,
             timeout_seconds=self.timeout(),
+            max_new_tokens=self.bounded_max_new_tokens(),
             cache_dir=self.cache_dir,
+            validation_repair_retries=self.bounded_validation_repair_retries(),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -279,19 +365,59 @@ class LeanstralAuditRequest:
         cluster = _json_ready_mapping(self.evidence.get("cluster"))
         semantic_family = str(cluster.get("semantic_family") or "legal_ir").strip()
         compiler_surface = str(cluster.get("compiler_surface") or "legal_ir.compiler").strip()
+        owned_surfaces = [
+            str(surface)
+            for surface in self.evidence.get(
+                "owned_compiler_surfaces",
+                LEANSTRAL_OWNED_COMPILER_SURFACES,
+            )
+            or ()
+            if str(surface).strip()
+        ]
+        reference_examples = [
+            dict(example)
+            for example in self.evidence.get("referenced_examples", []) or []
+            if isinstance(example, Mapping)
+        ][:8]
+        response_identity = {
+            "request_cache_key": self.cache_key,
+            "request_id": self.request_id,
+            "primary_proof_obligation_id": (
+                str(self.proof_obligation_ids[0])
+                if self.proof_obligation_ids
+                else ""
+            ),
+            "proof_obligation_ids": list(self.proof_obligation_ids),
+        }
         return {
             "allowed_classifications": sorted(ALLOWED_AUDIT_CLASSIFICATIONS),
+            "audit_response_identity": response_identity,
             "instructions": [
                 "Return strict JSON only.",
                 "Classify the legal-IR semantic audit using one allowed classification.",
                 "Copy request.request_id exactly into response.request_id.",
+                "Do not copy request.cache_key into response.request_id.",
                 "For every non-abstain response, include a non-null counterexample or witness grounded in request evidence.",
+                "Counterexamples and witnesses must cite an example_id or evidence_id from request.evidence.referenced_examples when that manifest is non-empty.",
                 "For every non-abstain response, include at least one non-empty proposed_compiler_surface object.",
+                "Set proposed_compiler_surface[].component to one owned compiler surface from request.evidence.owned_compiler_surfaces; use TDFOL, CEC, ZKP, or prover surfaces only when they are present in that owned surface list; do not invent architecture-only components.",
+                "Optionally include drafted_logic_candidates as guidance-only candidate frame/modal/deontic/TDFOL/KG/CEC/prover logic; each candidate must be compact, abstract, and cite a request proof_obligation_id when possible.",
+                "Do not copy full legal text spans into drafted_logic_candidates; use predicates, slots, symbols, hashes, and short identifiers instead.",
                 "For issue findings, identify a non-empty missing_semantic_rule.",
                 "Use only proof_obligation_ids from the request.",
                 "For non-abstain responses, set abstention_reason to JSON null or an empty string, never the text 'None'.",
                 "For abstain responses, set a non-empty abstention_reason and leave issue evidence fields empty.",
             ],
+            "output_contract": [
+                "Return exactly one compact JSON object; the first non-whitespace character must be { and the last must be }.",
+                "Do not emit markdown fences, prose, XML tags, chat-template tokens, or a copy of this prompt.",
+                "Set request_id exactly to audit_response_identity.request_id.",
+                "If request_cache_key is present, set it exactly to audit_response_identity.request_cache_key.",
+                "Keep every free-text string under 140 characters except drafted_logic_candidates[].candidate, which must stay under 240 characters.",
+                "Use one short counterexample or witness; do not narrate the full disagreement packet.",
+            ],
+            "owned_compiler_surfaces": owned_surfaces,
+            "referenced_examples": reference_examples,
             "request": self.to_dict(),
             "response_schema": LEANSTRAL_AUDIT_RESPONSE_SCHEMA,
             "response_template": {
@@ -301,19 +427,34 @@ class LeanstralAuditRequest:
                 "confidence": 0.0,
                 "counterexample": {
                     "evidence_id": "copy a relevant request evidence_id",
-                    "observed": "describe the observed compiler behavior",
-                    "expected": "describe the expected legal semantics",
+                    "observed": "compiler loses or distorts this semantic signal",
+                    "expected": "legal semantics should be preserved",
                 },
+                "drafted_logic_candidates": [
+                    {
+                        "logic_family": semantic_family,
+                        "candidate": "obligation(actor, action) unless exception_condition",
+                        "compiler_surface": compiler_surface,
+                        "confidence": 0.0,
+                        "intended_use": "guidance_only",
+                        "proof_obligation_id": (
+                            str(self.proof_obligation_ids[0])
+                            if self.proof_obligation_ids
+                            else ""
+                        ),
+                    }
+                ],
                 "missing_semantic_rule": {
-                    "description": "describe the missing deterministic semantic rule"
+                    "description": "missing deterministic semantic rule"
                 },
                 "proof_obligation_ids": list(self.proof_obligation_ids[:1]),
                 "proposed_compiler_surface": [
                     {
                         "component": compiler_surface,
-                        "operation": "describe the deterministic compiler or decompiler change",
+                        "operation": "add deterministic compiler or decompiler rule",
                     }
                 ],
+                "request_cache_key": self.cache_key,
                 "request_id": self.request_id,
                 "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
                 "witness": None,
@@ -354,6 +495,7 @@ class LeanstralAuditResponse:
     proposed_compiler_surface: Sequence[Dict[str, Any]]
     confidence: float
     proof_obligation_ids: Sequence[str]
+    drafted_logic_candidates: Sequence[Dict[str, Any]] = field(default_factory=tuple)
     abstention_reason: str = ""
     rationale: str = ""
     request_cache_key: str = ""
@@ -363,6 +505,7 @@ class LeanstralAuditResponse:
         families = _string_tuple(data.get("affected_ir_families"))
         obligations = _string_tuple(data.get("proof_obligation_ids"))
         surfaces = _mapping_tuple(data.get("proposed_compiler_surface"))
+        drafted_logic = _drafted_logic_candidates(data.get("drafted_logic_candidates"))
         counterexample = _optional_mapping(data.get("counterexample"))
         witness = _optional_mapping(data.get("witness"))
         confidence = data.get("confidence", 0.0)
@@ -385,6 +528,7 @@ class LeanstralAuditResponse:
             proposed_compiler_surface=surfaces,
             confidence=confidence_float,
             proof_obligation_ids=obligations,
+            drafted_logic_candidates=drafted_logic,
             abstention_reason=_normalize_optional_text(data.get("abstention_reason")),
             rationale=str(data.get("rationale", "")).strip(),
             request_cache_key=str(data.get("request_cache_key", "")).strip(),
@@ -401,6 +545,9 @@ class LeanstralAuditResponse:
             "classification": self.classification,
             "confidence": self.confidence,
             "counterexample": dict(self.counterexample) if self.counterexample else None,
+            "drafted_logic_candidates": [
+                dict(candidate) for candidate in self.drafted_logic_candidates
+            ],
             "missing_semantic_rule": dict(self.missing_semantic_rule),
             "proof_obligation_ids": list(self.proof_obligation_ids),
             "proposed_compiler_surface": [
@@ -509,12 +656,16 @@ class LeanstralAuditResult:
     llm_called: bool
     cache_hit: bool = False
     raw_response: str = ""
+    generation_attempts: int = 0
+    repair_reasons: Sequence[str] = field(default_factory=tuple)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "cache_hit": self.cache_hit,
+            "generation_attempts": int(self.generation_attempts),
             "llm_called": self.llm_called,
             "raw_response": self.raw_response,
+            "repair_reasons": list(self.repair_reasons),
             "request": self.request.to_dict(),
             "response": self.response.to_dict() if self.response else None,
             "validation": self.validation.to_dict(),
@@ -560,7 +711,9 @@ class LeanstralAuditWorkResult:
     cache_hit: bool = False
     llm_called: bool = False
     attempts: int = 0
+    generation_attempts: int = 0
     reasons: Sequence[str] = field(default_factory=tuple)
+    repair_reasons: Sequence[str] = field(default_factory=tuple)
     response_hash: str = ""
     validation: Optional[LeanstralAuditValidation] = None
     elapsed_seconds: float = 0.0
@@ -571,7 +724,9 @@ class LeanstralAuditWorkResult:
             "cache_hit": bool(self.cache_hit),
             "cache_key": self.cache_key,
             "elapsed_seconds": round(float(self.elapsed_seconds), 6),
+            "generation_attempts": int(self.generation_attempts),
             "llm_called": bool(self.llm_called),
+            "repair_reasons": list(self.repair_reasons),
             "reasons": list(self.reasons),
             "request_id": self.request_id,
             "response_hash": self.response_hash,
@@ -617,8 +772,10 @@ class LeanstralAuditCheckpoint:
         source_digest: Optional[str] = None,
     ) -> "LeanstralAuditCheckpoint":
         completed = set(self.completed_work_keys)
-        if result.status in {"accepted", "cache_hit", "rejected", "provider_disabled", "model_rejected"}:
+        if _checkpoint_result_is_reusable(result):
             completed.add(result.work_key)
+        else:
+            completed.discard(result.work_key)
         next_results = dict(self.results)
         next_results[result.work_key] = result.to_dict()
         return LeanstralAuditCheckpoint(
@@ -688,8 +845,18 @@ class LeanstralAuditWorkerSummary:
 class LeanstralAuditCache:
     """Content-addressed cache for verified audit responses."""
 
-    def __init__(self, directory: Optional[str | Path] = None) -> None:
+    def __init__(
+        self,
+        directory: Optional[str | Path] = None,
+        *,
+        artifact_cache: Optional[LeanstralArtifactCache] = None,
+    ) -> None:
         self.directory = Path(directory).expanduser() if directory else None
+        self.artifact_cache = (
+            artifact_cache
+            if artifact_cache is not None
+            else LeanstralArtifactCache.from_env(self.directory)
+        )
         self._memory: Dict[str, Dict[str, Any]] = {}
         if self.directory:
             self.directory.mkdir(parents=True, exist_ok=True)
@@ -703,20 +870,16 @@ class LeanstralAuditCache:
         entry = LeanstralAuditCacheEntry.build(request, response, validation)
         payload = entry.to_dict()
         self._memory[request.cache_key] = payload
-        if self.directory:
-            path = self._path_for_key(request.cache_key)
-            with tempfile.NamedTemporaryFile(
-                mode="w",
-                encoding="utf-8",
-                dir=self.directory,
-                prefix=f".{request.cache_key}.",
-                suffix=".tmp",
-                delete=False,
-            ) as handle:
-                json.dump(payload, handle, ensure_ascii=True, indent=2, sort_keys=True)
-                handle.write("\n")
-                temporary_path = Path(handle.name)
-            os.replace(temporary_path, path)
+        self._write_local_payload(request.cache_key, payload)
+        if self.artifact_cache is not None:
+            try:
+                self.artifact_cache.put_json(
+                    request.cache_key,
+                    payload,
+                    artifact_type="leanstral_audit_cache_entry",
+                )
+            except Exception:
+                pass
         return entry
 
     def get_entry(self, request: LeanstralAuditRequest) -> Optional[LeanstralAuditCacheEntry]:
@@ -759,6 +922,24 @@ class LeanstralAuditCache:
     def _load_payload(self, cache_key: str) -> Optional[Dict[str, Any]]:
         if cache_key in self._memory:
             return dict(self._memory[cache_key])
+        payload = self._load_local_payload(cache_key)
+        if payload is None and self.artifact_cache is not None:
+            try:
+                payload = self.artifact_cache.get_json(cache_key)
+            except Exception:
+                payload = None
+        if not isinstance(payload, Mapping):
+            return None
+        normalized = dict(payload)
+        self._memory[cache_key] = normalized
+        if self.directory is not None:
+            try:
+                self._write_local_payload(cache_key, normalized)
+            except OSError:
+                pass
+        return normalized
+
+    def _load_local_payload(self, cache_key: str) -> Optional[Dict[str, Any]]:
         if self.directory is None:
             return None
         path = self._path_for_key(cache_key)
@@ -769,11 +950,24 @@ class LeanstralAuditCache:
                 payload = json.load(handle)
         except (OSError, json.JSONDecodeError):
             return None
-        if not isinstance(payload, Mapping):
-            return None
-        normalized = dict(payload)
-        self._memory[cache_key] = normalized
-        return normalized
+        return dict(payload) if isinstance(payload, Mapping) else None
+
+    def _write_local_payload(self, cache_key: str, payload: Mapping[str, Any]) -> None:
+        if self.directory is None:
+            return
+        path = self._path_for_key(cache_key)
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=self.directory,
+            prefix=f".{cache_key}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            json.dump(payload, handle, ensure_ascii=True, indent=2, sort_keys=True)
+            handle.write("\n")
+            temporary_path = Path(handle.name)
+        os.replace(temporary_path, path)
 
 
 class LeanstralAuditRunner:
@@ -784,10 +978,12 @@ class LeanstralAuditRunner:
         config: Optional[LeanstralAuditConfig] = None,
         *,
         llm_generate: Optional[LLMGenerateFn] = None,
+        llm_generate_batch: Optional[LLMGenerateBatchFn] = None,
         cache: Optional[LeanstralAuditCache] = None,
     ) -> None:
         self.config = config or LeanstralAuditConfig()
         self.llm_generate = llm_generate
+        self.llm_generate_batch = llm_generate_batch
         self.cache = cache or LeanstralAuditCache(self.config.cache_dir)
 
     def run(
@@ -798,7 +994,13 @@ class LeanstralAuditRunner:
         theorem_registry: Optional[Mapping[str, Any]] = None,
         theorem_registry_hash: Optional[str] = None,
         proof_obligation_ids: Sequence[str],
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+        vibe_agent: Optional[str] = None,
     ) -> LeanstralAuditResult:
+        provider_name = str(provider or self.config.provider).strip()
+        model_name = str(model or self.config.model).strip()
+        vibe_agent_name = str(vibe_agent or self.config.vibe_agent).strip()
         request = LeanstralAuditRequest.build(
             evidence=evidence,
             prompt=prompt,
@@ -815,6 +1017,7 @@ class LeanstralAuditRunner:
                 validation=validate_leanstral_audit_response(request, cached_entry.response),
                 llm_called=False,
                 cache_hit=True,
+                generation_attempts=0,
             )
         if not self.config.enabled:
             return LeanstralAuditResult(
@@ -827,40 +1030,205 @@ class LeanstralAuditRunner:
                     cache_key=request.cache_key,
                 ),
                 llm_called=False,
+                generation_attempts=0,
             )
 
         generate = self.llm_generate
+        trace_getter = None
         if generate is None:
             from ipfs_datasets_py import llm_router
 
             generate = llm_router.generate_text
-        prompt_payload = json.dumps(
-            request.to_prompt_payload(),
-            ensure_ascii=True,
-            sort_keys=True,
+            trace_getter = llm_router.get_last_generation_trace
+        response = None
+        raw_response = ""
+        validation = LeanstralAuditValidation(
+            accepted=False,
+            verified=False,
+            reasons=("leanstral_audit_not_called",),
+            cache_key=request.cache_key,
         )
-        raw_response = generate(
-            prompt_payload,
-            provider=self.config.provider,
-            model_name=self.config.model,
-            allow_local_fallback=False,
-            disable_model_retry=True,
-            max_new_tokens=int(self.config.max_new_tokens),
-            mistral_vibe_agent=self.config.vibe_agent,
-            temperature=0.0,
-            timeout=float(self.config.timeout_seconds),
-        )
-        response = parse_leanstral_audit_response(raw_response)
-        validation = validate_leanstral_audit_response(request, response)
-        if response is not None:
-            self.cache.put(request, response, validation)
+        repair_reasons: tuple[str, ...] = ()
+        generation_attempts = 0
+        for repair_attempt in range(self.config.bounded_validation_repair_retries() + 1):
+            prompt_payload = json.dumps(
+                _leanstral_audit_prompt_payload(
+                    request,
+                    repair_attempt=repair_attempt,
+                    previous_response_text=raw_response,
+                    previous_validation=validation if generation_attempts else None,
+                ),
+                ensure_ascii=True,
+                sort_keys=True,
+            )
+            raw_response = generate(
+                prompt_payload,
+                provider=provider_name,
+                model_name=model_name,
+                allow_local_fallback=False,
+                disable_model_retry=True,
+                max_new_tokens=int(self.config.max_new_tokens),
+                mistral_vibe_agent=vibe_agent_name,
+                response_format={"type": "json_object"},
+                stop=list(LEANSTRAL_AUDIT_STOP_TOKENS),
+                temperature=0.0,
+                timeout=float(self.config.timeout_seconds),
+            )
+            generation_attempts += 1
+            if trace_getter is not None:
+                trace = trace_getter()
+                effective_provider = str(trace.get("effective_provider_name") or "").strip()
+                allowed = _allowed_effective_provider_identities(provider_name)
+                if effective_provider and _canonical_provider_identity(effective_provider) not in allowed:
+                    raise RuntimeError(
+                        "unexpected_effective_provider:"
+                        f"{effective_provider}:expected:{provider_name}"
+                    )
+            response = parse_leanstral_audit_response(raw_response)
+            response, normalization_reasons = normalize_leanstral_audit_response_for_request(
+                request,
+                response,
+            )
+            repair_reasons = _merge_reasons(repair_reasons, normalization_reasons)
+            validation = validate_leanstral_audit_response(request, response)
+            if response is not None and self.config.cache_writes_enabled:
+                self.cache.put(request, response, validation)
+            if validation.accepted and validation.verified:
+                break
+            repair_reasons = _merge_reasons(repair_reasons, validation.reasons)
+            if repair_attempt >= self.config.bounded_validation_repair_retries():
+                break
+            if not _leanstral_validation_reasons_repairable(validation.reasons):
+                break
         return LeanstralAuditResult(
             request=request,
             response=response,
             validation=validation,
             llm_called=True,
             raw_response=raw_response,
+            generation_attempts=generation_attempts,
+            repair_reasons=repair_reasons,
         )
+
+    def run_initial_batch(
+        self,
+        requests: Sequence[LeanstralAuditRequest],
+        *,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+        vibe_agent: Optional[str] = None,
+        use_mesh: bool = False,
+        max_workers: Optional[int] = None,
+    ) -> List[LeanstralAuditResult]:
+        """Run the first audit generation attempt for an ordered request batch."""
+
+        request_list = list(requests or [])
+        if not request_list:
+            return []
+
+        provider_name = str(provider or self.config.provider).strip()
+        model_name = str(model or self.config.model).strip()
+        vibe_agent_name = str(vibe_agent or self.config.vibe_agent).strip()
+        if not self.config.enabled:
+            return [
+                LeanstralAuditResult(
+                    request=request,
+                    response=None,
+                    validation=LeanstralAuditValidation(
+                        accepted=False,
+                        verified=False,
+                        reasons=("leanstral_audit_disabled",),
+                        cache_key=request.cache_key,
+                    ),
+                    llm_called=False,
+                    generation_attempts=0,
+                )
+                for request in request_list
+            ]
+        generate_batch = self.llm_generate_batch
+        trace_getter = None
+        if generate_batch is None:
+            from ipfs_datasets_py import llm_router
+
+            generate_batch = getattr(llm_router, "generate_text_batch", None)
+            trace_getter = llm_router.get_last_generation_trace
+        if generate_batch is None:
+            return [
+                self.run(
+                    evidence=request.evidence,
+                    prompt=request.prompt,
+                    theorem_registry_hash=request.theorem_registry_hash,
+                    proof_obligation_ids=request.proof_obligation_ids,
+                    provider=provider_name,
+                    model=model_name,
+                    vibe_agent=vibe_agent_name,
+                )
+                for request in request_list
+            ]
+
+        prompt_payloads = [
+            json.dumps(
+                _leanstral_audit_prompt_payload(request, repair_attempt=0),
+                ensure_ascii=True,
+                sort_keys=True,
+            )
+            for request in request_list
+        ]
+        raw_responses = list(
+            generate_batch(
+                prompt_payloads,
+                provider=provider_name,
+                model_name=model_name,
+                allow_local_fallback=False,
+                disable_model_retry=True,
+                max_new_tokens=int(self.config.max_new_tokens),
+                mistral_vibe_agent=vibe_agent_name,
+                response_format={"type": "json_object"},
+                stop=list(LEANSTRAL_AUDIT_STOP_TOKENS),
+                temperature=0.0,
+                timeout=float(self.config.timeout_seconds),
+                use_mesh=bool(use_mesh),
+                max_workers=max_workers,
+            )
+        )
+        if len(raw_responses) != len(request_list):
+            raise RuntimeError(
+                "Leanstral batch returned "
+                f"{len(raw_responses)} responses for {len(request_list)} requests"
+            )
+        if trace_getter is not None:
+            trace = trace_getter()
+            effective_provider = str(trace.get("effective_provider_name") or "").strip()
+            allowed = _allowed_effective_provider_identities(provider_name)
+            if effective_provider and _canonical_provider_identity(effective_provider) not in allowed:
+                raise RuntimeError(
+                    "unexpected_effective_provider:"
+                    f"{effective_provider}:expected:{provider_name}"
+                )
+
+        results: List[LeanstralAuditResult] = []
+        for request, raw_response in zip(request_list, raw_responses):
+            response = parse_leanstral_audit_response(str(raw_response or ""))
+            response, normalization_reasons = normalize_leanstral_audit_response_for_request(
+                request,
+                response,
+            )
+            validation = validate_leanstral_audit_response(request, response)
+            repair_reasons = _merge_reasons(normalization_reasons, validation.reasons)
+            if response is not None and self.config.cache_writes_enabled:
+                self.cache.put(request, response, validation)
+            results.append(
+                LeanstralAuditResult(
+                    request=request,
+                    response=response,
+                    validation=validation,
+                    llm_called=True,
+                    raw_response=str(raw_response or ""),
+                    generation_attempts=1,
+                    repair_reasons=repair_reasons,
+                )
+            )
+        return results
 
 
 class LeanstralAuditWorker:
@@ -872,11 +1240,13 @@ class LeanstralAuditWorker:
         *,
         audit_runner: Optional[LeanstralAuditRunner] = None,
         llm_generate: Optional[LLMGenerateFn] = None,
+        llm_generate_batch: Optional[LLMGenerateBatchFn] = None,
     ) -> None:
         self.config = config or LeanstralAuditWorkerConfig()
         self.runner = audit_runner or LeanstralAuditRunner(
             self.config.runner_config(),
             llm_generate=llm_generate,
+            llm_generate_batch=llm_generate_batch,
         )
 
     async def run_paths(self, paths: Sequence[str | Path]) -> LeanstralAuditWorkerSummary:
@@ -906,7 +1276,7 @@ class LeanstralAuditWorker:
             records,
             config=self.config,
         )
-        completed_keys = set(checkpoint.completed_work_keys)
+        completed_keys = _checkpoint_reusable_work_keys(checkpoint)
         if checkpoint_source_mismatch:
             completed_keys = set()
             stale_rejections = tuple(stale_rejections) + (
@@ -918,9 +1288,9 @@ class LeanstralAuditWorker:
             )
         pending = [item for item in items if item.work_key not in completed_keys]
         skipped = len(items) - len(pending)
-        semaphore = asyncio.Semaphore(self.config.bounded_concurrency())
+        semaphore = anyio_runtime.Semaphore(self.config.bounded_concurrency())
         checkpoint_state = checkpoint
-        checkpoint_lock = asyncio.Lock()
+        checkpoint_lock = anyio_runtime.Lock()
         results: List[LeanstralAuditWorkResult] = []
 
         async def run_one(item: LeanstralAuditWorkItem) -> LeanstralAuditWorkResult:
@@ -938,8 +1308,46 @@ class LeanstralAuditWorker:
                     )
                 return result
 
+        async def run_many(
+            batch: Sequence[LeanstralAuditWorkItem],
+        ) -> Sequence[LeanstralAuditWorkResult]:
+            async with semaphore:
+                batch_results = await self._run_items_batch(batch)
+                async with checkpoint_lock:
+                    nonlocal checkpoint_state
+                    for result in batch_results:
+                        checkpoint_state = checkpoint_state.with_result(
+                            result,
+                            source_digest=source_digest,
+                        )
+                    write_leanstral_audit_checkpoint(
+                        self.config.checkpoint_path,
+                        checkpoint_state,
+                    )
+                return batch_results
+
         if pending:
-            results = list(await asyncio.gather(*(run_one(item) for item in pending)))
+            batch_size = self.config.bounded_batch_size()
+            if batch_size <= 1:
+                gathered = await anyio_runtime.gather(
+                    *(run_one(item) for item in pending),
+                    return_exceptions=False,
+                )
+                results = list(gathered)
+            else:
+                batches = [
+                    pending[idx : idx + batch_size]
+                    for idx in range(0, len(pending), batch_size)
+                ]
+                nested_results = await anyio_runtime.gather(
+                    *(run_many(batch) for batch in batches),
+                    return_exceptions=False,
+                )
+                results = [
+                    result
+                    for batch_results in nested_results
+                    for result in batch_results
+                ]
         skipped_results = [
             _result_from_checkpoint(item.work_key, checkpoint.results.get(item.work_key))
             for item in items
@@ -967,6 +1375,154 @@ class LeanstralAuditWorker:
             unavailable_count=sum(1 for result in all_results if result.status == "unavailable"),
             runtime_seconds=runtime,
         )
+
+    async def _run_items_batch(
+        self,
+        items: Sequence[LeanstralAuditWorkItem],
+    ) -> Sequence[LeanstralAuditWorkResult]:
+        item_list = list(items or [])
+        if not item_list:
+            return ()
+        if len(item_list) <= 1 or self.config.bounded_batch_size() <= 1:
+            return tuple([await self._run_item(item) for item in item_list])
+        if self.runner.llm_generate is not None and self.runner.llm_generate_batch is None:
+            return tuple([await self._run_item(item) for item in item_list])
+
+        starts = {item.work_key: time.monotonic() for item in item_list}
+        results_by_key: Dict[str, LeanstralAuditWorkResult] = {}
+        candidates: List[LeanstralAuditWorkItem] = []
+        for item in item_list:
+            started = starts[item.work_key]
+            if self.config.require_leanstral_model and not _is_leanstral_model_identity(item.request.model):
+                results_by_key[item.work_key] = _work_result(
+                    item,
+                    status="model_rejected",
+                    attempts=0,
+                    reasons=("non_leanstral_model_identity",),
+                    elapsed=time.monotonic() - started,
+                )
+                continue
+            cached = self.runner.cache.get_accepted_entry(item.request)
+            if cached is not None:
+                results_by_key[item.work_key] = _work_result(
+                    item,
+                    status="cache_hit",
+                    attempts=0,
+                    reasons=(),
+                    cache_hit=True,
+                    llm_called=False,
+                    response_hash=cached.response_hash,
+                    validation=validate_leanstral_audit_response(item.request, cached.response),
+                    elapsed=time.monotonic() - started,
+                )
+                continue
+            if not self.config.provider_enabled:
+                results_by_key[item.work_key] = _work_result(
+                    item,
+                    status="provider_disabled",
+                    attempts=0,
+                    reasons=("provider_disabled_cache_miss",),
+                    elapsed=time.monotonic() - started,
+                )
+                continue
+            candidates.append(item)
+
+        if candidates:
+            attempts_by_key = {item.work_key: 0 for item in candidates}
+            last_reasons_by_key: Dict[str, tuple[str, ...]] = {
+                item.work_key: () for item in candidates
+            }
+            providers = self.config.provider_candidates()
+            handled_batch = False
+            for attempt in range(self.config.bounded_retries() + 1):
+                for provider in providers:
+                    for item in candidates:
+                        attempts_by_key[item.work_key] += 1
+                    try:
+                        audit_results = await anyio_runtime.wait_for(
+                            anyio_runtime.to_thread(
+                                self._run_sync_items_initial_batch,
+                                candidates,
+                                provider=provider,
+                            ),
+                            timeout=self.config.timeout(),
+                        )
+                    except TimeoutError:
+                        for item in candidates:
+                            last_reasons_by_key[item.work_key] = _merge_reasons(
+                                last_reasons_by_key[item.work_key],
+                                (
+                                    _provider_attempt_reason(
+                                        provider,
+                                        "leanstral_audit_timeout",
+                                        len(providers),
+                                    ),
+                                ),
+                            )
+                    except Exception as exc:
+                        reason = _provider_unavailable_reason(exc) or _provider_error_reason(exc)
+                        for item in candidates:
+                            last_reasons_by_key[item.work_key] = _merge_reasons(
+                                last_reasons_by_key[item.work_key],
+                                (
+                                    _provider_attempt_reason(
+                                        provider,
+                                        reason,
+                                        len(providers),
+                                    ),
+                                ),
+                            )
+                    else:
+                        handled_batch = True
+                        for item, audit_result in zip(candidates, audit_results):
+                            if audit_result.response is not None:
+                                self.runner.cache.put(
+                                    item.request,
+                                    audit_result.response,
+                                    audit_result.validation,
+                                )
+                            if audit_result.validation.accepted and audit_result.validation.verified:
+                                results_by_key[item.work_key] = _work_result(
+                                    item,
+                                    status="accepted",
+                                    attempts=attempts_by_key[item.work_key],
+                                    reasons=audit_result.validation.reasons,
+                                    cache_hit=audit_result.cache_hit,
+                                    llm_called=audit_result.llm_called,
+                                    generation_attempts=audit_result.generation_attempts,
+                                    repair_reasons=audit_result.repair_reasons,
+                                    response_hash=audit_result.validation.response_hash,
+                                    validation=audit_result.validation,
+                                    elapsed=time.monotonic() - starts[item.work_key],
+                                )
+                            else:
+                                results_by_key[item.work_key] = await self._run_item(item)
+                        break
+                if handled_batch:
+                    break
+                if attempt < self.config.bounded_retries() and self.config.backoff() > 0.0:
+                    await anyio_runtime.sleep(self.config.backoff() * (2**attempt))
+
+            if not handled_batch:
+                for item in candidates:
+                    reasons = last_reasons_by_key[item.work_key]
+                    failed_status = (
+                        "timeout"
+                        if _all_attempt_reasons_match(reasons, "leanstral_audit_timeout")
+                        else "failed"
+                    )
+                    if _all_attempt_reasons_match(reasons, "leanstral_labs_model_unavailable"):
+                        failed_status = "unavailable"
+                    results_by_key[item.work_key] = _work_result(
+                        item,
+                        status=failed_status,
+                        attempts=attempts_by_key[item.work_key],
+                        reasons=reasons,
+                        llm_called=True,
+                        elapsed=time.monotonic() - starts[item.work_key],
+                    )
+
+        return tuple(results_by_key[item.work_key] for item in item_list)
 
     async def _run_item(self, item: LeanstralAuditWorkItem) -> LeanstralAuditWorkResult:
         started = time.monotonic()
@@ -1002,63 +1558,119 @@ class LeanstralAuditWorker:
 
         attempts = 0
         last_reasons: tuple[str, ...] = ()
+        providers = self.config.provider_candidates()
         for attempt in range(self.config.bounded_retries() + 1):
-            attempts = attempt + 1
-            try:
-                audit_result = await asyncio.wait_for(
-                    asyncio.to_thread(self._run_sync_item, item),
-                    timeout=self.config.timeout(),
-                )
-            except asyncio.TimeoutError:
-                last_reasons = ("leanstral_audit_timeout",)
-            except Exception as exc:  # provider failures must fail closed
-                unavailable_reason = _provider_unavailable_reason(exc)
-                if unavailable_reason:
+            for provider in providers:
+                attempts += 1
+                try:
+                    audit_result = await anyio_runtime.wait_for(
+                        anyio_runtime.to_thread(
+                            self._run_sync_item,
+                            item,
+                            provider=provider,
+                        ),
+                        timeout=self.config.timeout(),
+                    )
+                except TimeoutError:
+                    last_reasons = _merge_reasons(
+                        last_reasons,
+                        (_provider_attempt_reason(provider, "leanstral_audit_timeout", len(providers)),),
+                    )
+                except Exception as exc:  # provider failures must fail closed
+                    reason = _provider_unavailable_reason(exc) or _provider_error_reason(exc)
+                    last_reasons = _merge_reasons(
+                        last_reasons,
+                        (_provider_attempt_reason(provider, reason, len(providers)),),
+                    )
+                else:
+                    if audit_result.response is not None:
+                        self.runner.cache.put(
+                            item.request,
+                            audit_result.response,
+                            audit_result.validation,
+                        )
+                    status = (
+                        "cache_hit"
+                        if audit_result.cache_hit
+                        else "accepted"
+                        if audit_result.validation.accepted and audit_result.validation.verified
+                        else "rejected"
+                    )
                     return _work_result(
                         item,
-                        status="unavailable",
+                        status=status,
                         attempts=attempts,
-                        reasons=(unavailable_reason,),
-                        llm_called=True,
+                        reasons=audit_result.validation.reasons,
+                        cache_hit=audit_result.cache_hit,
+                        llm_called=audit_result.llm_called,
+                        generation_attempts=audit_result.generation_attempts,
+                        repair_reasons=audit_result.repair_reasons,
+                        response_hash=audit_result.validation.response_hash,
+                        validation=audit_result.validation,
                         elapsed=time.monotonic() - started,
                     )
-                last_reasons = (_provider_error_reason(exc),)
-            else:
-                status = (
-                    "cache_hit"
-                    if audit_result.cache_hit
-                    else "accepted"
-                    if audit_result.validation.accepted and audit_result.validation.verified
-                    else "rejected"
-                )
-                return _work_result(
-                    item,
-                    status=status,
-                    attempts=attempts,
-                    reasons=audit_result.validation.reasons,
-                    cache_hit=audit_result.cache_hit,
-                    llm_called=audit_result.llm_called,
-                    response_hash=audit_result.validation.response_hash,
-                    validation=audit_result.validation,
-                    elapsed=time.monotonic() - started,
-                )
             if attempt < self.config.bounded_retries() and self.config.backoff() > 0.0:
-                await asyncio.sleep(self.config.backoff() * (2**attempt))
+                await anyio_runtime.sleep(self.config.backoff() * (2**attempt))
+        failed_status = "timeout" if _all_attempt_reasons_match(last_reasons, "leanstral_audit_timeout") else "failed"
+        if _all_attempt_reasons_match(last_reasons, "leanstral_labs_model_unavailable"):
+            failed_status = "unavailable"
         return _work_result(
             item,
-            status="timeout" if "leanstral_audit_timeout" in last_reasons else "failed",
+            status=failed_status,
             attempts=attempts,
             reasons=last_reasons,
             llm_called=True,
             elapsed=time.monotonic() - started,
         )
 
-    def _run_sync_item(self, item: LeanstralAuditWorkItem) -> LeanstralAuditResult:
-        return self.runner.run(
+    def _run_sync_item(
+        self,
+        item: LeanstralAuditWorkItem,
+        *,
+        provider: Optional[str] = None,
+    ) -> LeanstralAuditResult:
+        thread_runner = LeanstralAuditRunner(
+            replace(
+                self.runner.config,
+                cache_dir=None,
+                cache_writes_enabled=False,
+            ),
+            llm_generate=self.runner.llm_generate,
+            cache=LeanstralAuditCache(),
+        )
+        return thread_runner.run(
             evidence=item.request.evidence,
             prompt=item.request.prompt,
             theorem_registry_hash=item.request.theorem_registry_hash,
             proof_obligation_ids=item.request.proof_obligation_ids,
+            provider=provider,
+            model=self.config.model,
+            vibe_agent=self.config.vibe_agent,
+        )
+
+    def _run_sync_items_initial_batch(
+        self,
+        items: Sequence[LeanstralAuditWorkItem],
+        *,
+        provider: Optional[str] = None,
+    ) -> List[LeanstralAuditResult]:
+        thread_runner = LeanstralAuditRunner(
+            replace(
+                self.runner.config,
+                cache_dir=None,
+                cache_writes_enabled=False,
+            ),
+            llm_generate=self.runner.llm_generate,
+            llm_generate_batch=self.runner.llm_generate_batch,
+            cache=LeanstralAuditCache(),
+        )
+        return thread_runner.run_initial_batch(
+            [item.request for item in items],
+            provider=provider,
+            model=self.config.model,
+            vibe_agent=self.config.vibe_agent,
+            use_mesh=bool(self.config.batch_use_mesh),
+            max_workers=self.config.bounded_batch_max_workers(),
         )
 
 
@@ -1193,12 +1805,13 @@ def build_leanstral_audit_work_items(
         ]
         if not cluster_records:
             continue
+        request_records = _worker_request_records(cluster_records, config=cfg)
         request = _build_worker_audit_request(
             cluster,
-            cluster_records,
+            request_records,
             config=cfg,
         )
-        compiler_commit = _records_compiler_commit(cluster_records)
+        compiler_commit = _records_compiler_commit(request_records)
         semantic_signature = str(cluster.semantic_signature)
         state_hashes = tuple(sorted({value for record in cluster_records for value in _record_state_hashes(record)}))
         source_record_hashes = tuple(canonical_sha256(record) for record in cluster_records)
@@ -1231,6 +1844,7 @@ def build_leanstral_audit_work_items(
         items_by_key.values(),
         key=lambda item: (
             item.compiler_commit,
+            -float(item.cluster.get("rank_score", 0.0) or 0.0),
             item.semantic_signature,
             item.work_key,
         ),
@@ -1313,26 +1927,156 @@ def build_leanstral_audit_cache_key(
     return canonical_sha256(material)
 
 
-def parse_leanstral_audit_response(response: str) -> Optional[LeanstralAuditResponse]:
-    """Parse strict JSON Leanstral audit output."""
+def _json_mappings_from_text(text: str) -> List[Mapping[str, Any]]:
+    decoder = json.JSONDecoder()
+    mappings: List[Mapping[str, Any]] = []
+    raw = str(text or "").strip()
+    candidates = [raw]
+    if raw.startswith("```json"):
+        end = raw.find("```", len("```json"))
+        if end >= 0:
+            candidates.insert(0, raw[len("```json") : end].strip())
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+        else:
+            if isinstance(parsed, Mapping):
+                mappings.append(parsed)
+                continue
+        for index, char in enumerate(candidate):
+            if char != "{":
+                continue
+            try:
+                parsed, _ = decoder.raw_decode(candidate[index:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, Mapping):
+                mappings.append(parsed)
+    deduped: List[Mapping[str, Any]] = []
+    seen: set[str] = set()
+    for mapping in mappings:
+        digest = canonical_sha256(mapping)
+        if digest in seen:
+            continue
+        seen.add(digest)
+        deduped.append(mapping)
+    return deduped
 
-    raw = str(response or "").strip()
-    if raw.startswith("```json") and raw.endswith("```"):
-        raw = raw[len("```json") : -len("```")].strip()
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError:
+
+def parse_leanstral_audit_response(response: str) -> Optional[LeanstralAuditResponse]:
+    """Parse strict or recoverably fenced JSON Leanstral audit output."""
+
+    mappings = _json_mappings_from_text(response)
+    if not mappings:
         return None
-    if not isinstance(parsed, Mapping):
-        return None
-    return LeanstralAuditResponse.from_mapping(parsed)
+    for parsed in mappings:
+        if str(parsed.get("schema_version") or "").strip() == LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION:
+            return LeanstralAuditResponse.from_mapping(parsed)
+    return LeanstralAuditResponse.from_mapping(mappings[0])
+
+
+def normalize_leanstral_audit_response_for_request(
+    request: LeanstralAuditRequest,
+    response: Optional[LeanstralAuditResponse],
+) -> tuple[Optional[LeanstralAuditResponse], tuple[str, ...]]:
+    """Repair non-semantic response fields that are determined by the request.
+
+    Leanstral commonly confuses adjacent identifiers in the prompt, especially
+    request_id, cache_key, and proof obligation IDs.  These fields identify the
+    current audit envelope rather than the substantive finding, so we only
+    normalize when the observed value is empty or is another known identifier
+    from the same request.
+    """
+
+    if response is None:
+        return None, ()
+
+    data = response.to_dict()
+    reasons: list[str] = []
+    known_request_identifiers = {
+        request.request_id,
+        request.cache_key,
+        *[str(value) for value in request.proof_obligation_ids],
+    }
+    response_request_id = str(response.request_id or "").strip()
+    if (
+        response_request_id != request.request_id
+        and (
+            not response_request_id
+            or response_request_id in known_request_identifiers
+        )
+    ):
+        data["request_id"] = request.request_id
+        reasons.append("normalized_request_id_from_request_context")
+
+    response_cache_key = str(response.request_cache_key or "").strip()
+    if not response_cache_key:
+        data["request_cache_key"] = request.cache_key
+        reasons.append("filled_request_cache_key_from_request_context")
+    elif response_cache_key != request.cache_key and response_cache_key in known_request_identifiers:
+        data["request_cache_key"] = request.cache_key
+        reasons.append("normalized_request_cache_key_from_request_context")
+
+    if not response.proof_obligation_ids and len(request.proof_obligation_ids) == 1:
+        data["proof_obligation_ids"] = [str(request.proof_obligation_ids[0])]
+        reasons.append("filled_single_proof_obligation_from_request_context")
+
+    if not response.affected_ir_families:
+        cluster = _json_ready_mapping(request.evidence.get("cluster"))
+        semantic_family = str(cluster.get("semantic_family") or "").strip()
+        if semantic_family:
+            data["affected_ir_families"] = [semantic_family]
+            reasons.append("filled_affected_ir_families_from_request_cluster")
+
+    if not reasons:
+        return response, ()
+    return LeanstralAuditResponse.from_mapping(data), tuple(dict.fromkeys(reasons))
+
+
+def _leanstral_audit_prompt_payload(
+    request: LeanstralAuditRequest,
+    *,
+    repair_attempt: int = 0,
+    previous_response_text: str = "",
+    previous_validation: Optional[LeanstralAuditValidation] = None,
+) -> Dict[str, Any]:
+    payload = request.to_prompt_payload()
+    if repair_attempt <= 0 or previous_validation is None:
+        return payload
+    payload["repair_instructions"] = {
+        "mode": "validation_repair",
+        "repair_attempt": int(repair_attempt),
+        "validation_reasons": list(previous_validation.reasons),
+        "required_action": (
+            "Return one corrected JSON object only. Copy request.request_id, "
+            "request.cache_key, and one proof_obligation_id exactly from the "
+            "request. Fix every listed validation reason without changing the "
+            "evidence, request identity, schema version, or model identity."
+        ),
+        "previous_response_excerpt": _bounded_text(previous_response_text, 4000),
+    }
+    return payload
+
+
+def _leanstral_validation_reasons_repairable(reasons: Sequence[str]) -> bool:
+    return bool(tuple(reason for reason in reasons if str(reason).strip()))
+
+
+def _bounded_text(value: Any, max_chars: int) -> str:
+    text = str(value or "")
+    limit = max(0, int(max_chars or 0))
+    if limit <= 0 or len(text) <= limit:
+        return text
+    return text[:limit] + "...[truncated]"
 
 
 def validate_leanstral_audit_response(
     request: LeanstralAuditRequest,
     response: Optional[LeanstralAuditResponse],
     *,
-    verifier_id: str = "leanstral-audit-schema-v1",
+    verifier_id: str = "leanstral-audit-schema-v2",
 ) -> LeanstralAuditValidation:
     """Verify response shape, identity, and evidence-bearing fields."""
 
@@ -1363,6 +2107,18 @@ def validate_leanstral_audit_response(
     ]
     if unknown_obligations:
         reasons.append("unknown_proof_obligation_id")
+    request_obligations = set(request.proof_obligation_ids)
+    for candidate in response.drafted_logic_candidates:
+        if not _mapping_has_content(candidate):
+            reasons.append("empty_drafted_logic_candidate")
+            break
+        if not str(candidate.get("candidate") or "").strip():
+            reasons.append("missing_drafted_logic_candidate")
+            break
+        candidate_obligation = str(candidate.get("proof_obligation_id") or "").strip()
+        if candidate_obligation and candidate_obligation not in request_obligations:
+            reasons.append("unknown_drafted_logic_proof_obligation_id")
+            break
     if not response.affected_ir_families:
         reasons.append("missing_affected_ir_families")
     if response.classification == "abstain":
@@ -1445,23 +2201,54 @@ def _build_worker_audit_request(
             "semantic_signature": str(getattr(cluster, "semantic_signature", "")),
         }
     )
-    source_record_hashes = [canonical_sha256(record) for record in records]
     packet_limit = config.bounded_max_evidence_packets_per_item()
     selected_records = list(records[:packet_limit])
+    snapshot_policy = (
+        config.normalized_evidence_refresh_policy()
+        == "latest_compiler_snapshot"
+    )
+    manifest_records = selected_records if snapshot_policy else list(records)
+    source_record_hashes = [canonical_sha256(record) for record in manifest_records]
+    selected_evidence_ids = {
+        str(record.get("evidence_id") or "")
+        for record in selected_records
+        if str(record.get("evidence_id") or "")
+    }
     evidence = {
-        "cluster": cluster.to_dict(include_gaps=True),
+        "cluster": _bounded_worker_cluster_payload(
+            cluster,
+            selected_evidence_ids=selected_evidence_ids,
+            include_full_hash_manifest=not snapshot_policy,
+        ),
         "compiler_commit": _records_compiler_commit(records),
         "evidence_packets": [_compact_worker_packet(record) for record in selected_records],
+        "owned_compiler_surfaces": list(LEANSTRAL_OWNED_COMPILER_SURFACES),
+        "referenced_examples": _worker_reference_examples(selected_records),
         "semantic_signature": str(getattr(cluster, "semantic_signature", "")),
         "source_record_hashes": source_record_hashes,
-        "state_hashes": sorted({value for record in records for value in _record_state_hashes(record)}),
+        "state_hashes": sorted(
+            {
+                value
+                for record in manifest_records
+                for value in _record_state_hashes(record)
+            }
+        ),
     }
-    if len(selected_records) < len(records):
+    if snapshot_policy:
         evidence.update(
             {
-                "evidence_packet_count": len(records),
+                "evidence_packet_count": len(selected_records),
+                "evidence_packet_selection": "latest_compiler_stable_snapshot",
+            }
+        )
+    elif len(selected_records) < len(records):
+        evidence["evidence_packet_count"] = len(records)
+        evidence.update(
+            {
                 "evidence_packet_selection": "ranked_prefix_with_full_hash_manifest",
-                "omitted_evidence_packet_hashes": source_record_hashes[len(selected_records) :],
+                "omitted_evidence_packet_hashes": source_record_hashes[
+                    len(selected_records) :
+                ],
             }
         )
     prompt = {
@@ -1485,6 +2272,143 @@ def _build_worker_audit_request(
     )
 
 
+def _bounded_worker_cluster_payload(
+    cluster: Any,
+    *,
+    selected_evidence_ids: set[str],
+    include_full_hash_manifest: bool = True,
+) -> Dict[str, Any]:
+    """Keep full cluster lineage while bounding duplicated gap details."""
+
+    payload = cluster.to_dict(include_gaps=True)
+    raw_gaps = payload.get("gaps")
+    if not isinstance(raw_gaps, Sequence) or isinstance(raw_gaps, (str, bytes)):
+        return payload
+    detailed_gaps: List[Dict[str, Any]] = []
+    omitted_gaps: List[Any] = []
+    for gap in raw_gaps:
+        evidence_id = (
+            str(gap.get("evidence_id") or "")
+            if isinstance(gap, Mapping)
+            else ""
+        )
+        if evidence_id and evidence_id in selected_evidence_ids:
+            detailed_gaps.append(dict(gap))
+        else:
+            omitted_gaps.append(gap)
+    detailed_gaps.sort(
+        key=lambda gap: (
+            str(gap.get("evidence_id") or ""),
+            str(gap.get("gap_id") or ""),
+        )
+    )
+    payload["gap_count"] = len(raw_gaps)
+    payload["gaps"] = detailed_gaps
+    if omitted_gaps:
+        if include_full_hash_manifest:
+            payload["gap_detail_selection"] = (
+                "selected_evidence_packets_with_hash_manifest"
+            )
+            payload["omitted_gap_hashes"] = [
+                canonical_sha256(gap) for gap in omitted_gaps
+            ]
+        else:
+            payload = {
+                "compiler_surface": str(payload.get("compiler_surface") or ""),
+                "evidence_ids": sorted(selected_evidence_ids),
+                "gap_count": len(detailed_gaps),
+                "gap_detail_selection": "latest_compiler_stable_snapshot",
+                "gaps": detailed_gaps,
+                "owned_code_paths": sorted(
+                    {
+                        str(path)
+                        for gap in detailed_gaps
+                        if isinstance(gap, Mapping)
+                        for path in gap.get("owned_code_paths", []) or []
+                        if str(path)
+                    }
+                ),
+                "sample_ids": sorted(
+                    {
+                        str(gap.get("sample_id") or "")
+                        for gap in detailed_gaps
+                        if isinstance(gap, Mapping)
+                        and str(gap.get("sample_id") or "")
+                    }
+                ),
+                "schema_version": str(payload.get("schema_version") or ""),
+                "semantic_family": str(payload.get("semantic_family") or ""),
+                "semantic_signature": str(
+                    payload.get("semantic_signature") or ""
+                ),
+            }
+    return payload
+
+
+def _worker_request_records(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: LeanstralAuditWorkerConfig,
+) -> List[Mapping[str, Any]]:
+    """Select stable evidence for the newest compiler revision in a cluster."""
+
+    values = list(records)
+    if (
+        not values
+        or config.normalized_evidence_refresh_policy() != "latest_compiler_snapshot"
+    ):
+        return values
+    indexed = list(enumerate(values))
+
+    def record_order(item: tuple[int, Mapping[str, Any]]) -> tuple[int, int]:
+        index, record = item
+        context = _json_ready_mapping(_root_record(record).get("run_context"))
+        try:
+            cycle = int(context.get("cycle") or 0)
+        except (TypeError, ValueError):
+            cycle = 0
+        return cycle, index
+
+    _, newest_record = max(indexed, key=record_order)
+    newest_context = _json_ready_mapping(
+        _root_record(newest_record).get("run_context")
+    )
+    newest_commit = str(newest_context.get("compiler_commit") or "").strip()
+    if not newest_commit:
+        return values
+    matching = [
+        record
+        for record in values
+        if str(
+            _json_ready_mapping(_root_record(record).get("run_context")).get(
+                "compiler_commit"
+            )
+            or ""
+        ).strip()
+        == newest_commit
+    ]
+    if not matching:
+        return values
+
+    def stable_record_order(record: Mapping[str, Any]) -> tuple[int, int, str, str]:
+        root = _root_record(record)
+        context = _json_ready_mapping(root.get("run_context"))
+        try:
+            cycle = int(context.get("cycle") or 0)
+        except (TypeError, ValueError):
+            cycle = 0
+        role = str(context.get("evaluation_role") or "").strip().lower()
+        role_priority = 0 if role == "unguided" else 1 if role == "guided" else 2
+        return (
+            cycle,
+            role_priority,
+            str(root.get("evidence_id") or ""),
+            canonical_sha256(root),
+        )
+
+    return sorted(matching, key=stable_record_order)
+
+
 def _compact_worker_packet(record: Mapping[str, Any]) -> Dict[str, Any]:
     root = _root_record(record)
     return {
@@ -1502,6 +2426,67 @@ def _compact_worker_packet(record: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _worker_reference_examples(records: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+    examples: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for record in records:
+        root = _root_record(record)
+        sample_hashes = _json_ready_mapping(root.get("sample_hashes"))
+        evidence_hashes = _json_ready_mapping(root.get("evidence_hashes"))
+        legal_ir_views = _json_ready_mapping(root.get("legal_ir_views"))
+        canonical_view = _json_ready_mapping(legal_ir_views.get("canonical"))
+        evidence_id = str(root.get("evidence_id") or "").strip()
+        sample_id = str(
+            sample_hashes.get("sample_id")
+            or root.get("sample_id")
+            or evidence_id
+        ).strip()
+        if not evidence_id and not sample_id:
+            continue
+        expected_hash = str(
+            sample_hashes.get("modal_ir_hash")
+            or evidence_hashes.get("canonical_modal_ir_hash")
+            or canonical_view.get("modal_ir_hash")
+            or ""
+        ).strip()
+        span_hashes = _json_ready_mapping(sample_hashes.get("source_span_hashes"))
+        example: Dict[str, Any] = {
+            "compiler_decompiler_metrics": _json_ready_mapping(
+                root.get("compiler_decompiler_metrics")
+            ),
+            "evidence_id": evidence_id,
+            "example_id": sample_id or evidence_id,
+            "expected_modal_ir_hash": expected_hash,
+            "sample_id": sample_id,
+            "source_text_hash": str(
+                sample_hashes.get("source_text_hash")
+                or evidence_hashes.get("source_text_hash")
+                or ""
+            ).strip(),
+        }
+        if span_hashes:
+            example["source_span_hashes"] = span_hashes
+            example["source_span_hash_format"] = "introspection_packet_v1"
+        for key in ("citation", "section", "title"):
+            value = str(root.get(key) or "").strip()
+            if value:
+                example[key] = value
+        text = str(
+            root.get("source_text")
+            or root.get("text")
+            or root.get("sample_text")
+            or ""
+        ).strip()
+        if text:
+            example["source_text"] = text
+        key = str(example.get("example_id") or example.get("evidence_id") or "")
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        examples.append(example)
+    return examples
+
+
 def _worker_proof_obligation_ids(cluster: Any) -> tuple[str, ...]:
     material = canonical_sha256(
         {
@@ -1516,9 +2501,19 @@ def _worker_proof_obligation_ids(cluster: Any) -> tuple[str, ...]:
 def _records_compiler_commit(records: Sequence[Mapping[str, Any]]) -> str:
     commits = sorted(
         {
-            str(_json_ready_mapping(record.get("run_context")).get("compiler_commit") or "").strip()
+            str(
+                _json_ready_mapping(_root_record(record).get("run_context")).get(
+                    "compiler_commit"
+                )
+                or ""
+            ).strip()
             for record in records
-            if str(_json_ready_mapping(record.get("run_context")).get("compiler_commit") or "").strip()
+            if str(
+                _json_ready_mapping(_root_record(record).get("run_context")).get(
+                    "compiler_commit"
+                )
+                or ""
+            ).strip()
         }
     )
     return ",".join(commits) if commits else "unknown"
@@ -1586,7 +2581,9 @@ def _work_result(
     reasons: Sequence[str],
     cache_hit: bool = False,
     llm_called: bool = False,
+    generation_attempts: int = 0,
     response_hash: str = "",
+    repair_reasons: Sequence[str] = (),
     validation: Optional[LeanstralAuditValidation] = None,
     elapsed: float = 0.0,
 ) -> LeanstralAuditWorkResult:
@@ -1598,7 +2595,9 @@ def _work_result(
         cache_hit=cache_hit,
         llm_called=llm_called,
         attempts=attempts,
+        generation_attempts=generation_attempts,
         reasons=tuple(reasons),
+        repair_reasons=tuple(repair_reasons),
         response_hash=response_hash,
         validation=validation,
         elapsed_seconds=elapsed,
@@ -1630,10 +2629,102 @@ def _result_from_checkpoint(work_key: str, data: Any) -> LeanstralAuditWorkResul
         cache_hit=bool(data.get("cache_hit")),
         llm_called=bool(data.get("llm_called")),
         attempts=int(data.get("attempts") or 0),
+        generation_attempts=int(data.get("generation_attempts") or 0),
         reasons=_string_tuple(data.get("reasons")),
+        repair_reasons=_string_tuple(data.get("repair_reasons")),
         response_hash=str(data.get("response_hash") or ""),
         validation=validation,
         elapsed_seconds=float(data.get("elapsed_seconds") or 0.0),
+    )
+
+
+def _checkpoint_reusable_work_keys(
+    checkpoint: LeanstralAuditCheckpoint,
+) -> set[str]:
+    reusable: set[str] = set()
+    for work_key in checkpoint.completed_work_keys:
+        result = _result_from_checkpoint(work_key, checkpoint.results.get(work_key))
+        if _checkpoint_result_is_reusable(result):
+            reusable.add(work_key)
+    return reusable
+
+
+def _checkpoint_result_is_reusable(result: LeanstralAuditWorkResult) -> bool:
+    if result.status not in {"accepted", "cache_hit"}:
+        return False
+    validation = result.validation
+    return bool(validation is not None and validation.accepted and validation.verified)
+
+
+def _canonical_provider_identity(provider: Any) -> str:
+    value = str(provider or "").strip().lower().replace("-", "_").replace(".", "_")
+    aliases = {
+        "dry_run": "mock",
+        "hf": "local_hf",
+        "huggingface": "local_hf",
+        "llama_cpp": "leanstral_local",
+        "llama_cpp_native": "leanstral_local",
+        "llamacpp": "leanstral_local",
+        "llamacpp_native": "leanstral_local",
+        "local_openai": "leanstral_local",
+        "mistral_vibe": "mistral_vibe",
+        "native_llama_cpp": "leanstral_local",
+        "openai_compatible": "leanstral_local",
+        "vibe": "mistral_vibe",
+    }
+    return aliases.get(value, value)
+
+
+def _allowed_effective_provider_identities(provider: Any) -> set[str]:
+    canonical = _canonical_provider_identity(provider)
+    allowed = {canonical}
+    if canonical == "leanstral_local":
+        allowed.update({"ipfs_accelerate_py", "leanstral_local"})
+    return allowed
+
+
+def _merge_reasons(
+    existing: Sequence[str],
+    additions: Sequence[str],
+) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            str(reason)
+            for reason in [*existing, *additions]
+            if str(reason).strip()
+        )
+    )
+
+
+def _provider_attempt_reason(provider: str, reason: str, provider_count: int) -> str:
+    reason = str(reason or "").strip()
+    if provider_count <= 1:
+        return reason
+    return f"{_canonical_provider_identity(provider)}:{reason}"
+
+
+def _attempt_reason_kind(reason: str) -> str:
+    value = str(reason or "").strip()
+    if ":" not in value:
+        return value
+    prefix, suffix = value.split(":", 1)
+    if _canonical_provider_identity(prefix) in {
+        "ipfs_accelerate_py",
+        "leanstral_local",
+        "local_hf",
+        "mistral_vibe",
+        "mock",
+        "openai",
+        "openrouter",
+    }:
+        return suffix
+    return value
+
+
+def _all_attempt_reasons_match(reasons: Sequence[str], kind: str) -> bool:
+    values = tuple(str(reason) for reason in reasons if str(reason).strip())
+    return bool(values) and all(
+        _attempt_reason_kind(reason) == kind for reason in values
     )
 
 
@@ -1667,6 +2758,9 @@ def _provider_error_reason(exc: Exception) -> str:
             return "provider_error:OSError:out_of_memory"
         if exc.errno == errno.EAGAIN:
             return "provider_error:OSError:resource_temporarily_unavailable"
+    message = " ".join(str(exc).split()).replace(":", ";")
+    if message:
+        return f"provider_error:{exc.__class__.__name__}:{_bounded_text(message, 240)}"
     return f"provider_error:{exc.__class__.__name__}"
 
 
@@ -1740,6 +2834,78 @@ def _mapping_tuple(value: Any) -> Sequence[Dict[str, Any]]:
     return tuple(_json_ready_mapping(item) for item in value if isinstance(item, Mapping))
 
 
+def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        return ()
+    candidates: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in value:
+        if not isinstance(item, Mapping):
+            continue
+        raw_candidate = (
+            item.get("candidate")
+            or item.get("logic")
+            or item.get("formula")
+            or item.get("ir")
+            or ""
+        )
+        candidate_text = str(raw_candidate or "").strip()
+        if len(candidate_text) > LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS:
+            candidate_text = candidate_text[:LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS].rstrip()
+        if not candidate_text:
+            continue
+        logic_family = _normalize_token(
+            item.get("logic_family")
+            or item.get("family")
+            or item.get("view")
+            or "legal_ir"
+        )
+        normalized: Dict[str, Any] = {
+            "candidate": candidate_text,
+            "intended_use": "guidance_only",
+            "logic_family": logic_family or "legal_ir",
+            "schema_version": LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION,
+        }
+        for key in (
+            "compiler_surface",
+            "evidence_id",
+            "example_id",
+            "proof_obligation_id",
+            "request_id",
+            "source_span_hash",
+            "target_metric",
+        ):
+            text = str(item.get(key) or "").strip()
+            if text:
+                normalized[key] = text[:140].rstrip()
+        rationale = str(item.get("rationale") or "").strip()
+        if rationale:
+            normalized["rationale"] = rationale[:140].rstrip()
+        confidence = item.get("confidence")
+        try:
+            confidence_float = float(confidence)
+        except (TypeError, ValueError):
+            confidence_float = float("nan")
+        if math.isfinite(confidence_float):
+            normalized["confidence"] = max(0.0, min(1.0, confidence_float))
+        identity = json.dumps(
+            {
+                "candidate": normalized.get("candidate"),
+                "logic_family": normalized.get("logic_family"),
+                "proof_obligation_id": normalized.get("proof_obligation_id"),
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        )
+        if identity in seen:
+            continue
+        seen.add(identity)
+        candidates.append(normalized)
+        if len(candidates) >= LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES:
+            break
+    return tuple(candidates)
+
+
 def _optional_mapping(value: Any) -> Optional[Dict[str, Any]]:
     if not isinstance(value, Mapping):
         return None
@@ -1775,6 +2941,7 @@ __all__ = [
     "LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION",
     "LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION",
     "LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION",
+    "LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION",
     "LeanstralAuditCache",
     "LeanstralAuditCacheEntry",
     "LeanstralAuditConfig",

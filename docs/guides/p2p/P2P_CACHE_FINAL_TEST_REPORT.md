@@ -41,7 +41,16 @@ The P2P cache system with encryption is **fully implemented, tested, and working
 **Result:** ✅ **VERIFIED**
 
 ```bash
-$ python -c "from libp2p import new_host; host = new_host(); print('Host ID:', host.get_id())"
+$ python - <<'PY'
+import trio
+from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import running_libp2p_host
+
+async def main():
+    async with running_libp2p_host() as host:
+        print("Host ID:", host.get_id())
+
+trio.run(main)
+PY
 Host ID: QmY4jiEYshABWeCFT4e6HGbbrkmgFpeDWKNJwgedTWbVD4
 SUCCESS
 ```

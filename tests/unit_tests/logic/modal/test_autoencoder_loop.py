@@ -473,13 +473,25 @@ def test_autoencoder_loop_runs_leanstral_as_a_non_mutating_shadow_lane(tmp_path)
     def fake_leanstral(prompt: str, **kwargs) -> str:
         requests.append({"prompt": prompt, **kwargs})
         task = json.loads(prompt)["task"]
+        change_spec = task["compiler_change_spec"]
+        proof_obligation_id = task["theorem_registry"]["theorems"][0]["theorem_id"]
         return json.dumps(
             {
                 "schema_version": "legal-ir-leanstral-proposal-v1",
                 "task_id": task["task_id"],
                 "target_modal_ir_hash": task["modal_ir_hash"],
-                "compiler_change_spec_id": task["compiler_change_spec"]["spec_id"],
+                "compiler_change_spec_id": change_spec["spec_id"],
                 "proof": "by unfold wellFormed modalityMatches sourceProvenancePresent; decide",
+                "drafted_logic_candidates": [
+                    {
+                        "candidate": "obligation(agency, provide_notice) before deadline(days_30)",
+                        "compiler_surface": change_spec["target_component"],
+                        "confidence": 0.8,
+                        "intended_use": "guidance_only",
+                        "logic_family": "deontic",
+                        "proof_obligation_id": proof_obligation_id,
+                    }
+                ],
             }
         )
 
@@ -489,8 +501,12 @@ def test_autoencoder_loop_runs_leanstral_as_a_non_mutating_shadow_lane(tmp_path)
             evaluate_provers=False,
             leanstral_config=LeanstralConfig(
                 enabled=True,
-                artifact_dir=str(tmp_path),
+                artifact_dir=str(tmp_path / "leanstral"),
             ),
+            introspection_export_path=str(tmp_path / "introspection"),
+            introspection_mode="export",
+            max_audits_per_cycle=1,
+            require_prover_confirmation=False,
         ),
         leanstral_generate=fake_leanstral,
     )
@@ -506,4 +522,14 @@ def test_autoencoder_loop_runs_leanstral_as_a_non_mutating_shadow_lane(tmp_path)
     assert result.leanstral_shadow.artifact_path is not None
     assert result.repaired_modal_ir is None
     assert result.metadata["leanstral_shadow_error"] == ""
-    assert requests[0]["provider"] == "mistral_vibe"
+    assert requests[0]["provider"] == "leanstral_local"
+    exported = json.loads(
+        (tmp_path / "introspection" / "loop-doc.introspection.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert exported["leanstral_guidance"]["trusted"] is True
+    assert exported["leanstral_guidance"]["drafted_logic_candidates"][0][
+        "guidance_only"
+    ] is True
+    assert exported["leanstral_guidance"]["proof_obligation_ids"]

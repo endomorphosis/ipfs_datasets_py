@@ -332,8 +332,17 @@ The P2P cache system with encryption is **fully implemented, comprehensively tes
 python test_p2p_cache_encryption.py  # 10/10 passing ✅
 python test_p2p_networking.py         # 6/6 passing ✅
 
-# Verify libp2p
-python -c "from libp2p import new_host; host = new_host(); print('✅ libp2p:', host.get_id())"
+# Verify MCP++ libp2p runtime
+python - <<'PY'
+import trio
+from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import running_libp2p_host
+
+async def main():
+    async with running_libp2p_host() as host:
+        print("libp2p:", host.get_id())
+
+trio.run(main)
+PY
 ```
 
 **Deploy Command:**

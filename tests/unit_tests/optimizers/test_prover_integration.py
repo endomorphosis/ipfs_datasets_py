@@ -161,8 +161,8 @@ class TestProverIntegrationAdapter:
         assert verification.prover_results[0].details["modal_theorem_valid"] is False
         assert "compiled, but the theorem was not proved" in verification.prover_results[0].error_message
 
-    def test_modal_statement_reports_unavailable_router(self):
-        """Unsupported modal systems should not fall through to generic SMT strings."""
+    def test_modal_statement_uses_sound_kd45_fallback(self):
+        """Registered KD45 modal systems should use the bounded modal router."""
         adapter = ProverIntegrationAdapter(use_provers=[], enable_cache=False)
         statement = LogicalStatement(
             formula="B[doxastic:KD45](reasonably_believes)",
@@ -180,8 +180,9 @@ class TestProverIntegrationAdapter:
 
         assert verification.overall_valid is False
         assert verification.verified_by == []
-        assert verification.prover_results[0].status == ProverStatus.UNAVAILABLE
-        assert "no KD/KD45 tableaux adapter" in verification.prover_results[0].error_message
+        assert verification.prover_results[0].status == ProverStatus.INVALID
+        assert verification.prover_results[0].details["backend"] == "tdfol_modal_tableaux_fallback"
+        assert verification.prover_results[0].details["fallback_system"] == "D"
 
     def test_adapter_enforces_bounded_per_prover_timeout(self):
         """A hanging prover call should be reported as TIMEOUT by the adapter."""

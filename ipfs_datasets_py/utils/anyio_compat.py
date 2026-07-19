@@ -19,6 +19,7 @@ Keep this module dependency-light; `anyio` already depends on `sniffio`.
 from __future__ import annotations
 
 import asyncio as _stdlib_asyncio
+import os
 from collections.abc import Awaitable, Callable
 from functools import partial
 import inspect
@@ -33,10 +34,13 @@ except ModuleNotFoundError:  # pragma: no cover - exercised in minimal environme
 
 T = TypeVar("T")
 TimeoutError = TimeoutError
+_REAL_ANYIO_AVAILABLE = anyio is not None
 if anyio is not None:
     Semaphore = anyio.Semaphore
+    Lock = anyio.Lock
 else:
     Semaphore = _stdlib_asyncio.Semaphore
+    Lock = _stdlib_asyncio.Lock
 
 
 class AsyncContextError(RuntimeError):
@@ -133,6 +137,33 @@ def run(awaitable: Awaitable[T]) -> T:
     async def _runner() -> T:
         return await awaitable
 
+    backend = os.getenv("IPFS_DATASETS_PY_ANYIO_BACKEND", "").strip()
+    if backend and _REAL_ANYIO_AVAILABLE:
+        try:
+            return anyio.run(_runner, backend=backend)
+        except (LookupError, ModuleNotFoundError):
+            return anyio.run(_runner)
+    return anyio.run(_runner)
+
+
+def run_with_backend(awaitable: Awaitable[T], *, backend: str = "trio") -> T:
+    """Run an awaitable with a preferred AnyIO backend and safe fallback."""
+
+    if in_async_context():
+        raise AsyncContextError(
+            "Cannot call anyio_compat.run_with_backend() from within an async context. "
+            "Use `await` in async code instead."
+        )
+
+    async def _runner() -> T:
+        return await awaitable
+
+    backend_name = str(os.getenv("IPFS_DATASETS_PY_ANYIO_BACKEND", backend) or "").strip()
+    if backend_name and _REAL_ANYIO_AVAILABLE:
+        try:
+            return anyio.run(_runner, backend=backend_name)
+        except (LookupError, ModuleNotFoundError):
+            return anyio.run(_runner)
     return anyio.run(_runner)
 
 

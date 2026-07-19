@@ -88,6 +88,16 @@ if [[ "${CLEAN_STALE_WORKTREES}" == "1" ]]; then
 fi
 
 export CODEX_MODEL="${CODEX_MODEL:-${IPFS_DATASETS_PY_CODEX_MODEL:-gpt-5.5}}"
+if [[ -z "${AUTOENCODER_DEVICE:-}" ]]; then
+  if [[ -x "${ROOT_DIR}/.venv-cuda/bin/python" ]] && \
+    "${ROOT_DIR}/.venv-cuda/bin/python" -c \
+      'import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)' \
+      >/dev/null 2>&1; then
+    export AUTOENCODER_DEVICE="cuda"
+  else
+    export AUTOENCODER_DEVICE="auto"
+  fi
+fi
 export TRIAL_SECONDS="${TRIAL_SECONDS:-120}"
 export TRIAL_COUNT="${TRIAL_COUNT:-2}"
 export FINAL_SECONDS="${FINAL_SECONDS:-28800}"
@@ -111,7 +121,7 @@ export CODEX_VECTOR_MIN_BUNDLE_SIZE="${CODEX_VECTOR_MIN_BUNDLE_SIZE:-1}"
 export CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-0}"
 export CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 
-log_line "starting_legal_ir_autoencoder_codex run_id=${BASE_RUN_ID} codex_model=${CODEX_MODEL}"
+log_line "starting_legal_ir_autoencoder_codex run_id=${BASE_RUN_ID} codex_model=${CODEX_MODEL} autoencoder_device=${AUTOENCODER_DEVICE}"
 setsid bash scripts/ops/logic/run_hparam_then_8h.sh "${BASE_RUN_ID}" > "${PIPELINE_LOG}" 2>&1 &
 echo "$!" > "${PID_FILE}"
 log_line "pipeline_started pid=$(cat "${PID_FILE}") log=${PIPELINE_LOG}"

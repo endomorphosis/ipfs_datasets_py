@@ -9,6 +9,33 @@ PYTHON_BIN="${PYTHON_BIN:-${ROOT_DIR}/.venv-cuda/bin/python}"
 if [[ ! -x "${PYTHON_BIN}" ]]; then
   PYTHON_BIN="$(command -v python3 || command -v python)"
 fi
+AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-auto}"
+if [[ "${AUTOENCODER_DEVICE}" == cuda* ]]; then
+  "${PYTHON_BIN}" - "${AUTOENCODER_DEVICE}" <<'PY'
+import sys
+
+requested_device = sys.argv[1]
+try:
+    import torch
+except Exception as exc:
+    raise SystemExit(f"requested {requested_device}, but torch import failed: {type(exc).__name__}: {exc}")
+
+if not torch.cuda.is_available():
+    raise SystemExit(
+        f"requested {requested_device}, but torch reports cuda_available=False "
+        f"(torch={getattr(torch, '__version__', 'unknown')}, cuda={getattr(torch.version, 'cuda', None)})"
+    )
+
+device = torch.device(requested_device)
+probe = torch.eye(1, device=device)
+torch.cuda.synchronize(device)
+print(
+    "[pipeline] cuda_preflight_ok "
+    f"device={device} torch={torch.__version__} cuda={torch.version.cuda} "
+    f"name={torch.cuda.get_device_name(device)} value={float(probe[0, 0].detach().cpu())}"
+)
+PY
+fi
 
 MODULE="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner"
 BASE_RUN_ID="${1:-legal-ir-hparam-$(date -u +%Y%m%dT%H%M%SZ)}"
@@ -65,8 +92,9 @@ COMMON_ARGS=(
   --max-program-synthesis-pending "${MAX_PROGRAM_SYNTHESIS_PENDING}"
   --program-synthesis-min-residual-occurrences "${PROGRAM_SYNTHESIS_MIN_RESIDUAL_OCCURRENCES}"
   --program-synthesis-min-residual-survival-score "${PROGRAM_SYNTHESIS_MIN_RESIDUAL_SURVIVAL_SCORE}"
-  --autoencoder-device auto
+  --autoencoder-device "${AUTOENCODER_DEVICE}"
   --autoencoder-bridge-workers 2
+  --autoencoder-max-codec-feature-keys 64
   --autoencoder-max-token-features 48
   --autoencoder-max-token-bigram-features 24
   --autoencoder-max-token-trigram-features 12
@@ -149,6 +177,7 @@ echo "[pipeline] codex_model=${CODEX_MODEL}"
 echo "[pipeline] sweep_loop_role=${SWEEP_LOOP_ROLE}"
 echo "[pipeline] hyperparam_budget_seconds=${TOTAL_TRIAL_SECONDS}"
 echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
+echo "[pipeline] autoencoder_device=${AUTOENCODER_DEVICE}"
 echo "[pipeline] bridge_loss_adapters=${BRIDGE_LOSS_ADAPTERS}"
 echo "[pipeline] bridge_evaluate_provers=${BRIDGE_EVALUATE_PROVERS}"
 echo "[pipeline] train_count=${TRAIN_COUNT}"

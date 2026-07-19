@@ -673,6 +673,95 @@ def test_adaptive_autoencoder_sgd_lowers_legal_ir_view_cross_entropy() -> None:
     assert introspection.legal_ir_view_distribution
 
 
+def test_adaptive_autoencoder_applies_trusted_leanstral_guidance_once() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide notice unless an exception applies.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    guidance = {
+        "accepted": True,
+        "drafted_logic_candidates": [
+            {
+                "confidence": 0.95,
+                "logic_family": "deontic",
+                "proof_obligation_id": "proof-guided-exception",
+            }
+        ],
+        "guidance_id": "leanstral-guidance-unit-a",
+        "proof_obligation_ids": ["proof-guided-exception"],
+        "ranked_guidance_features": [
+            {"feature": "legal-ir:bias", "score": 1.0},
+        ],
+        "sample_id": sample.sample_id,
+        "source": "leanstral_shadow_proof",
+        "target_component": "deontic.ir",
+        "target_metrics": ["legal_ir_view_cross_entropy_loss"],
+        "theorem_templates": ["exception_scope_preserved"],
+        "trusted": True,
+    }
+    target_distribution = autoencoder._leanstral_guidance_target_distribution(
+        guidance,
+    )
+    before_distribution = autoencoder._legal_ir_view_distribution(
+        sample,
+        target_distribution,
+        use_sample_memory=False,
+    )
+    before_loss = cross_entropy_distribution_loss(
+        before_distribution,
+        target_distribution,
+    )
+
+    report = autoencoder.apply_leanstral_guidance(
+        [guidance],
+        samples_by_id={sample.sample_id: sample},
+        learning_rate=0.5,
+    )
+    after_distribution = autoencoder._legal_ir_view_distribution(
+        sample,
+        target_distribution,
+        use_sample_memory=False,
+    )
+    after_loss = cross_entropy_distribution_loss(
+        after_distribution,
+        target_distribution,
+    )
+    duplicate = autoencoder.apply_leanstral_guidance(
+        [guidance],
+        samples_by_id={sample.sample_id: sample},
+        learning_rate=0.5,
+    )
+    untrusted = dict(guidance)
+    untrusted["guidance_id"] = "leanstral-guidance-unit-untrusted"
+    untrusted["accepted"] = False
+    untrusted["trusted"] = False
+    untrusted_report = autoencoder.apply_leanstral_guidance(
+        [untrusted],
+        samples_by_id={sample.sample_id: sample},
+        learning_rate=0.5,
+    )
+    reloaded = ModalAutoencoderTrainingState.from_dict(autoencoder.state.to_dict())
+
+    assert report["status"] == "applied"
+    assert report["applied_count"] == 1
+    assert report["sample_aware_update_count"] == 1
+    assert report["target_view_counts"]["deontic.ir"] > 0.0
+    assert after_loss < before_loss
+    assert autoencoder._legal_ir_view_target_cache == {}
+    assert autoencoder.state.applied_leanstral_guidance_ids == [
+        "leanstral-guidance-unit-a"
+    ]
+    assert duplicate["applied_count"] == 0
+    assert duplicate["duplicate_count"] == 1
+    assert untrusted_report["applied_count"] == 0
+    assert untrusted_report["skipped_untrusted_count"] == 1
+    assert reloaded.applied_leanstral_guidance_ids == [
+        "leanstral-guidance-unit-a"
+    ]
+
+
 def test_generalizable_projection_lowers_legal_ir_view_ce_on_holdout() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
@@ -763,6 +852,10 @@ def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
     assert report["projection_deadband"]["max_ce_deadband"] == pytest.approx(1.0e-4)
     assert report["projection_prescreen"]["mode"] == "shadow"
     assert report["projection_prescreen"]["top_k"] == 1
+    assert report["candidate_update_order"][:2] == [
+        "legal_ir_view_global_logits",
+        "legal_ir_view_logits",
+    ]
     assert report["projection_prescreen_summary"]["enabled_attempt_count"] >= 1
     assert report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0][
         "projection_deadband"
@@ -806,7 +899,6 @@ def test_generalizable_projection_bounds_bridge_metric_text(monkeypatch) -> None
         [train_sample],
         validation_samples=[validation_sample],
         legal_ir_bridge_names=("modal_frame_logic",),
-        legal_ir_bridge_max_samples=1,
         legal_ir_bridge_max_sample_text_chars=80,
         legal_ir_targets={},
         epochs=0,
@@ -816,6 +908,48 @@ def test_generalizable_projection_bounds_bridge_metric_text(monkeypatch) -> None
     assert bridge_sample_ids
     assert all(":metric-prefix:" in sample_id for sample_id in bridge_sample_ids)
     assert all(length <= 80 for length in bridge_text_lengths)
+
+
+def test_generalizable_projection_reuses_precomputed_baselines(monkeypatch) -> None:
+    train_sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    validation_sample = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency shall publish notice before a rule takes effect.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    training_evaluation = autoencoder.evaluate(
+        [train_sample],
+        use_sample_memory=False,
+    )
+    holdout_evaluation = autoencoder.evaluate(
+        [validation_sample],
+        use_sample_memory=False,
+    )
+    progress = []
+
+    def unexpected_evaluate(*_args, **_kwargs):
+        raise AssertionError("precomputed projection baselines should be reused")
+
+    monkeypatch.setattr(autoencoder, "evaluate", unexpected_evaluate)
+    report = autoencoder.train_generalizable_projection(
+        [train_sample],
+        validation_samples=[validation_sample],
+        epochs=0,
+        precomputed_holdout_evaluation=holdout_evaluation,
+        precomputed_training_evaluation=training_evaluation,
+        progress_callback=progress.append,
+    )
+
+    assert report["precomputed_holdout_evaluation_reused"] is True
+    assert report["precomputed_training_evaluation_reused"] is True
+    stages = [entry["stage"] for entry in progress]
+    assert "before_holdout_evaluation_reused" in stages
+    assert "training_cache_prime_reused" in stages
 
 
 def test_generalizable_projection_auto_caps_large_state_line_search(
@@ -895,6 +1029,136 @@ def test_legal_ir_view_global_projection_isolates_core_heads() -> None:
     assert autoencoder.state.feature_family_logits == {}
     assert autoencoder.state.feature_legal_ir_view_logits == {}
     assert autoencoder.state.feature_embedding_weights == {}
+
+
+def test_projection_timeout_keeps_best_completed_candidate(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_autoencoder
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    targets = {
+        sample.sample_id: evaluate_legal_ir_multiview(
+            sample.text,
+            bridge_names=("deontic_norms", "fol_tdfol"),
+            document_id=sample.sample_id,
+            citation=sample.citation,
+            source=sample.source,
+            source_embedding=sample.embedding_vector,
+        ).training_target()
+    }
+    clock = [0.0]
+    monkeypatch.setattr(modal_autoencoder.time, "time", lambda: clock[0])
+
+    def expire_after_first_candidate(progress):
+        if (
+            progress.get("stage") == "line_search_evaluation"
+            and progress.get("update") == "legal_ir_view_global_logits"
+        ):
+            clock[0] = 2.0
+
+    autoencoder = AdaptiveModalAutoencoder()
+    report = autoencoder.train_generalizable_projection(
+        [sample],
+        validation_samples=[sample],
+        legal_ir_targets=targets,
+        epochs=1,
+        learning_rate=0.2,
+        max_line_search_attempts=1,
+        max_seconds=1.0,
+        progress_callback=expire_after_first_candidate,
+    )
+
+    assert report["stopped_reason"] == "projection_timeout"
+    assert report["accepted_epochs"] == 1
+    assert report["epoch_reports"][0]["accepted"] is True
+    assert report["epoch_reports"][0]["selected_update"] == (
+        "legal_ir_view_global_logits"
+    )
+
+
+def test_rejected_projection_restores_state_dependent_evaluator_caches(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+    from ipfs_datasets_py.logic.modal import (
+        DeterministicModalLogicCodec,
+        ModalLogicCodecConfig,
+    )
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_autoencoder
+
+    train = build_us_code_sample(
+        title="5",
+        section="551",
+        text="The agency shall issue an order unless an exception applies.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must publish notice before the order takes effect.",
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_codec=codec,
+        max_codec_feature_keys=8,
+        feature_family_logit_scale=1.0,
+        legal_ir_view_family_logit_scale=1.0,
+    )
+    targets = {
+        validation.sample_id: evaluate_legal_ir_multiview(
+            validation.text,
+            bridge_names=("deontic_norms",),
+            document_id=validation.sample_id,
+            citation=validation.citation,
+            source=validation.source,
+            source_embedding=validation.embedding_vector,
+        ).training_target()
+    }
+    before = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+    state_before = autoencoder.state.to_dict()
+    monkeypatch.setattr(
+        modal_autoencoder,
+        "_evaluation_regressions_for_training",
+        lambda *args, **kwargs: {"forced_test_regression": 1.0},
+    )
+
+    report = autoencoder.train_generalizable_projection(
+        [train],
+        validation_samples=[validation],
+        legal_ir_targets=targets,
+        epochs=1,
+        learning_rate=0.2,
+        max_line_search_attempts=1,
+    )
+    after = autoencoder.evaluate(
+        [validation],
+        legal_ir_targets=targets,
+        use_sample_memory=False,
+    )
+
+    assert report["accepted_epochs"] == 0
+    assert autoencoder.state.to_dict() == state_before
+    assert after.cross_entropy_loss == pytest.approx(before.cross_entropy_loss)
+    assert after.cross_entropy_excess_loss == pytest.approx(
+        before.cross_entropy_excess_loss
+    )
+    assert after.embedding_cosine_similarity == pytest.approx(
+        before.embedding_cosine_similarity
+    )
+    assert after.legal_ir_losses == pytest.approx(before.legal_ir_losses)
 
 
 def test_modal_autoencoder_empty_dataset_returns_zero_metrics() -> None:
@@ -1373,7 +1637,9 @@ def test_generalizable_projection_prescreen_enforce_skips_holdout_attempts() -> 
     summary = report["projection_prescreen_summary"]
     assert summary["enabled_attempt_count"] >= 3
     assert summary["evaluated_holdout_count"] < summary["enabled_attempt_count"]
+    assert summary["evaluated_holdout_count"] <= 1
     assert summary["unselected_for_holdout_count"] >= 1
+    assert report["projection_prescreen"]["holdout_evaluation_limit"] == 1
 
     attempts = [
         attempt
@@ -12958,6 +13224,80 @@ def test_sparse_codec_noise_does_not_drown_fallback_family_updates() -> None:
     assert after.cross_entropy_loss < before.cross_entropy_loss
 
 
+def test_unlearned_codec_features_are_cold_output_neutral() -> None:
+    class NewFeatureCodec:
+        def feature_keys_for_sample(self, sample, *, max_features=None):
+            return [f"codec-new:{index}" for index in range(max_features or 100)]
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must make records promptly available.",
+    )
+    state = ModalAutoencoderTrainingState(
+        feature_family_logits={
+            "modal-family:deontic": {"deontic": 0.75},
+        }
+    )
+    fallback_only = AdaptiveModalAutoencoder(
+        state=state.copy(),
+        feature_codec=NewFeatureCodec(),
+        feature_family_logit_scale=1.0,
+        max_codec_feature_keys=0,
+    )
+    codec_enabled = AdaptiveModalAutoencoder(
+        state=state.copy(),
+        feature_codec=NewFeatureCodec(),
+        feature_family_logit_scale=1.0,
+        max_codec_feature_keys=64,
+    )
+
+    fallback_evaluation = fallback_only.evaluate([sample], use_sample_memory=False)
+    codec_evaluation = codec_enabled.evaluate([sample], use_sample_memory=False)
+
+    assert codec_evaluation.cross_entropy_loss == pytest.approx(
+        fallback_evaluation.cross_entropy_loss
+    )
+    assert codec_evaluation.cross_entropy_excess_loss == pytest.approx(
+        fallback_evaluation.cross_entropy_excess_loss
+    )
+    cache = codec_enabled._sample_cache_for(sample)
+    assert isinstance(cache["fallback_feature_key_set"], frozenset)
+
+
+def test_codec_feature_extraction_survives_target_and_state_cache_invalidation() -> None:
+    class CountingFeatureCodec:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def feature_keys_for_sample(self, sample, *, max_features=None):
+            self.calls += 1
+            return [f"codec-stable:{sample.sample_id}"]
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must make records promptly available.",
+    )
+    codec = CountingFeatureCodec()
+    autoencoder = AdaptiveModalAutoencoder(
+        feature_codec=codec,
+        max_codec_feature_keys=8,
+    )
+
+    assert autoencoder._feature_keys_for(sample)
+    autoencoder._cache_legal_ir_targets(
+        [sample],
+        {sample.sample_id: {"deontic_norms": 1.0}},
+        {},
+    )
+    assert autoencoder._feature_keys_for(sample)
+    autoencoder._invalidate_state_dependent_evaluator_caches()
+    assert autoencoder._feature_keys_for(sample)
+
+    assert codec.calls == 1
+
+
 def test_fallback_features_include_structural_and_ngram_signals() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -13198,8 +13538,10 @@ def test_modal_prover_compilation_signal_uses_local_router() -> None:
     assert signal.compiles is True
     assert signal.valid_count == 1
     assert signal.unavailable_count == 0
-    assert signal.details[0]["statuses"] == ["valid"]
-    assert signal.verified_by == ["modal:tdfol_modal_tableaux"]
+    assert signal.proved_count == 0
+    assert signal.details[0]["compiled"] is True
+    assert signal.details[0]["statuses"] == ["invalid"]
+    assert signal.verified_by == []
 
 
 def test_clean_evaluation_ignores_sample_specific_memory() -> None:

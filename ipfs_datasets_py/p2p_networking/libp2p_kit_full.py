@@ -1,15 +1,20 @@
 """
-LibP2P Integration for distributed dataset management.
+MCP++ compatibility facade for distributed dataset management.
 
-This module provides libp2p-based peer-to-peer data transfer and management
-capabilities for IPFS datasets, enabling:
+This module preserves historical distributed dataset data models and manager
+entry points. Runtime network operations are now routed through the MCP++ p2p
+tool transport instead of this module creating raw libp2p hosts or parsing
+plaintext stream messages.
+
+The original libp2p_kit module described peer-to-peer data transfer and
+management capabilities for IPFS datasets, enabling:
 - Sharded datasets across multiple IPFS nodes
 - Collaborative dataset building with P2P synchronization
 - Federated search across distributed dataset fragments
 - Resilient operations with node failure handling
 
-The libp2p_kit module integrates with the core IPFS dataset functionality
-and extends it with distributed capabilities for scalable data management.
+The compatibility layer keeps these APIs importable while preventing stale raw
+libp2p code paths from becoming active again.
 """
 
 import os
@@ -26,15 +31,6 @@ import numpy as np
 # Defer imports for optional dependencies
 try:
     from multiaddr import Multiaddr
-    # import py_libp2p # Commented out due to import issues
-    # import py_libp2p.crypto.rsa as rsa # Commented out due to import issues
-    # from py_libp2p.peer.peerinfo import PeerInfo # Commented out due to import issues
-    # from py_libp2p.peer.id import ID as PeerID # Commented out due to import issues
-    # from py_libp2p.crypto.keys import KeyPair # Commented out due to import issues
-    # from py_libp2p.crypto.serialization import load_private_key, load_public_key # Commented out due to import issues
-    # from py_libp2p.network.stream.net_stream_interface import INetStream # Commented out due to import issues
-    # from py_libp2p.host.basic_host import BasicHost # Commented out due to import issues
-    # from py_libp2p.host.defaults import get_default_network # Commented out due to import issues
     LIBP2P_AVAILABLE = False
 except ImportError:
     LIBP2P_AVAILABLE = False
@@ -124,6 +120,11 @@ class NetworkProtocol(Enum):
     FEDERATED_SEARCH = "/ipfs_datasets/search/1.0.0"
     METADATA_SYNC = "/ipfs_datasets/metadata/1.0.0"
     NODE_DISCOVERY = "/ipfs_datasets/discovery/1.0.0"
+    HEALTH_CHECK = "/ipfs_datasets/health/1.0.0"
+    DATA_SYNC = "/ipfs_datasets/data-sync/1.0.0"
+    DATA_QUERY = "/ipfs_datasets/data-query/1.0.0"
+    SYSTEM_QUERY = "/ipfs_datasets/system-query/1.0.0"
+    SYSTEM_BROADCAST = "/ipfs_datasets/system-broadcast/1.0.0"
 
 
 class P2PError(Exception):
@@ -146,12 +147,22 @@ class ShardTransferError(P2PError):
     pass
 
 
+def _extract_peer_id_from_multiaddr(peer_addr: str) -> str:
+    """Best-effort extraction of a peer id from a multiaddr string."""
+    parts = [part for part in str(peer_addr or "").split("/") if part]
+    for index, part in enumerate(parts):
+        if part == "p2p" and index + 1 < len(parts):
+            return parts[index + 1]
+    return ""
+
+
 class LibP2PNode:
     """
-    Base node for P2P communication with libp2p.
+    Compatibility node for P2P communication via MCP++ tools.
 
-    This class provides the core P2P communication functionality using libp2p,
-    with methods for peer discovery, connection management, and message passing.
+    The class name is retained for older call sites. It no longer starts a raw
+    libp2p host. Peer discovery, status checks, and supported remote calls are
+    delegated to ``ipfs_accelerate_py.mcp_server.tools.p2p.native_p2p_tools``.
     """
 
     def __init__(
@@ -172,26 +183,23 @@ class LibP2PNode:
             bootstrap_peers: List of bootstrap peer multiaddresses
             role: Role of this node in the network
 
-        Raises:
-            LibP2PNotAvailableError: If libp2p dependencies are not installed
+        Notes:
+            ``private_key_path`` and ``listen_addresses`` are retained only for
+            API compatibility. MCP++ owns runtime identity, transport security,
+            and host creation.
         """
-        if not LIBP2P_AVAILABLE:
-            raise LibP2PNotAvailableError(
-                "LibP2P dependencies are not installed. "
-                "Install them with: pip install py-libp2p"
-            )
-
         self.node_id = node_id or f"node-{random.randint(10000, 99999)}"
         self.role = role
         self.listen_addresses = listen_addresses or ["/ip4/0.0.0.0/tcp/0"]
         self.bootstrap_peers = bootstrap_peers or []
         self.private_key_path = private_key_path
 
-        # Will be initialized in start()
+        # Raw host creation is intentionally disabled; MCP++ owns the transport.
         self.host = None
-        self.peer_id = None
+        self.peer_id = self.node_id
         self.running = False
         self.peers = set()
+        self.peer_multiaddrs: Dict[str, str] = {}
         self.protocol_handlers = {}
 
         # Register default protocol handlers
@@ -240,68 +248,35 @@ class LibP2PNode:
 
     def _load_or_create_key_pair(self) -> 'KeyPair':
         """
-        Load or create RSA key pair for the node.
+        Legacy raw keypair creation is disabled.
 
         Returns:
             KeyPair: The loaded or created key pair
         """
-        if self.private_key_path and os.path.exists(self.private_key_path):
-            # Load existing private key
-            with open(self.private_key_path, "rb") as f:
-                private_key_data = f.read()
-            private_key = load_private_key(private_key_data)
-
-            # Derive public key
-            public_key = private_key.get_public_key()
-            return KeyPair(private_key, public_key)
-        else:
-            # Generate new key pair
-            private_key, public_key = rsa.create_new_key_pair(2048)
-            key_pair = KeyPair(private_key, public_key)
-
-            if self.private_key_path:
-                # Save private key
-                os.makedirs(os.path.dirname(os.path.abspath(self.private_key_path)), exist_ok=True)
-                with open(self.private_key_path, "wb") as f:
-                    f.write(private_key.serialize())
-
-            return key_pair
+        raise LibP2PNotAvailableError(
+            "Raw libp2p keypair creation is disabled; use the MCP++ p2p runtime"
+        )
 
     async def start(self):
         """
-        Start the libp2p node.
+        Start the MCP++ compatibility node.
 
-        This method initializes the libp2p host and starts listening for connections.
+        This method records bootstrap peers and marks the node running. It does
+        not create raw libp2p hosts or register stream handlers.
         """
-        # Load or create key pair
-        key_pair = self._load_or_create_key_pair()
-
-        # Get default network with our key
-        network = get_default_network(
-            key_pair,
-            [Multiaddr(addr) for addr in self.listen_addresses]
-        )
-
-        # Create host
-        self.host = BasicHost(network)
-        self.peer_id = self.host.get_id()
-
-        # Set protocol handlers
-        for protocol, handler in self.protocol_handlers.items():
-            self.host.set_stream_handler(protocol, handler)
-
-        # Connect to bootstrap peers
         for peer_addr in self.bootstrap_peers:
             await self._connect_to_peer(peer_addr)
 
         self.running = True
-        logging.info(f"Node {self.node_id} started with peer ID {self.peer_id}")
-        logging.info(f"Listening on: {[str(addr) for addr in self.host.get_addrs()]}")
+        logging.info(
+            "MCP++ dataset compatibility node %s started with peer ID %s",
+            self.node_id,
+            self.peer_id,
+        )
 
     async def stop(self):
         """Stop the libp2p node."""
-        if self.host:
-            await self.host.close()
+        self.host = None
         self.running = False
         logging.info(f"Node {self.node_id} stopped")
 
@@ -316,36 +291,29 @@ class LibP2PNode:
             bool: True if connection was successful
 
         Raises:
-            NodeConnectionError: If connection fails
+            NodeConnectionError: If the peer address is invalid
         """
         try:
-            # Parse multiaddress
-            addr = Multiaddr(peer_addr)
-
-            # Extract peer ID from multiaddress
-            peer_id_str = addr.value_for_protocol("p2p")
-            peer_id = PeerID.from_base58(peer_id_str)
-
-            # Create peer info
-            peer_info = PeerInfo(peer_id, [addr])
-
-            # Connect to peer
-            await self.host.connect(peer_info)
+            peer_id_str = _extract_peer_id_from_multiaddr(peer_addr) or str(peer_addr).strip()
+            if not peer_id_str:
+                raise ValueError("missing peer id")
             self.peers.add(peer_id_str)
-            logging.info(f"Connected to peer: {peer_id_str}")
+            self.peer_multiaddrs[peer_id_str] = str(peer_addr)
+            logging.info("Registered MCP++ peer: %s", peer_id_str)
             return True
         except Exception as e:
             logging.error(f"Error connecting to peer {peer_addr}: {str(e)}")
-            raise NodeConnectionError(f"Failed to connect to peer: {str(e)}")
+            raise NodeConnectionError(f"Failed to register peer: {str(e)}")
 
     async def send_message(
         self,
         peer_id: str,
         protocol: NetworkProtocol,
-        data: Dict[str, Any]
+        data: Dict[str, Any],
+        timeout_ms: int = 10000
     ) -> Dict[str, Any]:
         """
-        Send a message to a peer.
+        Send a compatibility message through MCP++ tooling.
 
         Args:
             peer_id: The base58-encoded peer ID
@@ -356,29 +324,63 @@ class LibP2PNode:
             Dict: The response data
 
         Raises:
-            NodeConnectionError: If connection fails
+            NodeConnectionError: If the MCP++ transport reports failure
         """
+        remote_peer_id = str(peer_id or "").strip()
+        if not remote_peer_id:
+            raise NodeConnectionError("peer_id is required")
+
+        if not isinstance(protocol, NetworkProtocol):
+            protocol = NetworkProtocol(str(protocol))
+
+        timeout_s = max(0.001, float(timeout_ms) / 1000.0)
+        remote_multiaddr = self.peer_multiaddrs.get(remote_peer_id, "")
+
         try:
-            # Open stream to peer
-            stream = await self.host.new_stream(
-                PeerID.from_base58(peer_id),
-                [protocol.value]
-            )
+            if protocol == NetworkProtocol.HEALTH_CHECK:
+                from ipfs_accelerate_py.mcp_server.tools.p2p.native_p2p_tools import (
+                    p2p_taskqueue_status,
+                )
 
-            # Send data
-            await stream.write(json.dumps(data).encode())
+                response = await p2p_taskqueue_status(
+                    remote_multiaddr=remote_multiaddr,
+                    peer_id=remote_peer_id,
+                    timeout_s=timeout_s,
+                    detail=True,
+                )
+                if isinstance(response, dict) and response.get("ok") is False:
+                    raise NodeConnectionError(str(response.get("error") or "health check failed"))
+                return {
+                    "status": "healthy",
+                    "peer_id": remote_peer_id,
+                    "transport": "mcpplusplus-p2p",
+                    "response": response,
+                }
 
-            # Read response
-            response_data = await stream.read()
-            response = json.loads(response_data.decode())
+            if protocol == NetworkProtocol.NODE_DISCOVERY:
+                peers = await self.discover_peers()
+                return {
+                    "status": "success",
+                    "peer_id": remote_peer_id,
+                    "transport": "mcpplusplus-p2p",
+                    "peers": sorted(peers),
+                }
 
-            # Close stream
-            await stream.close()
-
-            return response
+            return {
+                "status": "unsupported",
+                "peer_id": remote_peer_id,
+                "protocol": protocol.value,
+                "transport": "mcpplusplus-p2p",
+                "error": (
+                    "legacy dataset protocol has no MCP++ tool adapter yet; "
+                    "raw libp2p stream fallback is disabled"
+                ),
+            }
+        except NodeConnectionError:
+            raise
         except Exception as e:
-            logging.error(f"Error sending message to peer {peer_id}: {str(e)}")
-            raise NodeConnectionError(f"Failed to send message: {str(e)}")
+            logging.error(f"Error sending MCP++ message to peer {peer_id}: {str(e)}")
+            raise NodeConnectionError(f"Failed to send MCP++ message: {str(e)}")
 
     async def discover_peers(self) -> Set[str]:
         """
@@ -387,23 +389,32 @@ class LibP2PNode:
         Returns:
             Set[str]: Set of discovered peer IDs
         """
-        # Start with known peers
         discovered = set(self.peers)
 
-        # For each known peer, get their known peers
-        for peer_id in list(self.peers):
-            try:
-                response = await self.send_message(
-                    peer_id,
-                    NetworkProtocol.NODE_DISCOVERY,
-                    {"action": "get_peers"}
-                )
-                if "peers" in response:
-                    discovered.update(response["peers"])
-            except Exception as e:
-                logging.warning(f"Error discovering peers from {peer_id}: {str(e)}")
+        try:
+            from ipfs_accelerate_py.mcp_server.tools.p2p.native_p2p_tools import list_peers
+
+            response = await list_peers(discover=True, limit=100)
+            if isinstance(response, dict) and response.get("ok") is not False:
+                for row in response.get("peers", []) or []:
+                    if not isinstance(row, dict):
+                        continue
+                    peer_id = str(row.get("peer_id") or "").strip()
+                    multiaddr = str(row.get("multiaddr") or "").strip()
+                    if not peer_id and multiaddr:
+                        peer_id = _extract_peer_id_from_multiaddr(multiaddr)
+                    if peer_id:
+                        discovered.add(peer_id)
+                    if peer_id and multiaddr:
+                        self.peer_multiaddrs[peer_id] = multiaddr
+        except Exception as e:
+            logging.debug(f"MCP++ peer discovery unavailable: {str(e)}")
 
         return discovered
+
+    def get_connected_peers(self) -> List[str]:
+        """Return known peers for resilience-manager compatibility."""
+        return sorted(self.peers)
 
     def run_in_thread(self, target):
         """

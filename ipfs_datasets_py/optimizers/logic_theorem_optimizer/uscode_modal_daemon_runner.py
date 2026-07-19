@@ -58,6 +58,7 @@ from ipfs_datasets_py.optimizers.agentic.patch_control import PatchManager, Work
 from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
+    AutoencoderEvaluation,
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
@@ -69,6 +70,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import 
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     LeanstralTodoProjectionConfig,
+    ModalOptimizationRun,
     ModalOptimizerPolicy,
     ModalTodo,
     ModalTodoQueue,
@@ -124,6 +126,8 @@ DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "periodic"
 DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "starved"
 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
 DEFAULT_AUTOENCODER_INTROSPECTION_MODE = "off"
+DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES = 4
+DEFAULT_AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES = 0
 AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION = "legal-ir-daemon-metrics-v2"
 AUTOENCODER_CANONICAL_WARM_START_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START"
 AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = (
@@ -331,6 +335,7 @@ COMPILER_IR_METRIC_TEXT_POLICIES = ("skip", "truncate")
 DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS = 400
 DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 10.0
 DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY = "truncate"
+COMPILER_IR_METRIC_PROFILE_VERSION = "compiler-ir-metric-profile-v2-bounded-real"
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV = (
     "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS"
 )
@@ -342,6 +347,18 @@ LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
 LEGAL_IR_METRIC_DISK_CACHE_ENABLED_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE"
 _FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 _BRIDGE_IR_REPORT_CACHE_LOCK = threading.Lock()
+
+
+def _default_compiler_ir_metric_max_sample_text_chars() -> int:
+    raw = str(
+        os.environ.get(COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS_ENV) or ""
+    ).strip()
+    if not raw:
+        return DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS
 _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
@@ -1273,6 +1290,72 @@ def introspection_disagreement_export_path(summary_path: Path) -> Path:
     )
 
 
+def introspection_reference_example_export_path(summary_path: Path) -> Path:
+    return summary_path.with_name(f"{summary_path.stem}.reference-examples.json")
+
+
+def write_introspection_reference_examples(
+    *,
+    cycle: int,
+    run_id: str,
+    samples: Sequence[Any],
+    state_hash: str,
+    summary_path: Path,
+    validation_indices: Sequence[int],
+    validation_mode: str,
+) -> Dict[str, Any]:
+    """Write local-only source text used by the verifier, never the LLM prompt."""
+
+    path = introspection_reference_example_export_path(summary_path)
+    examples: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for position, sample in enumerate(samples):
+        sample_id = str(getattr(sample, "sample_id", "") or "").strip()
+        text = str(getattr(sample, "text", "") or "")
+        if not sample_id or not text or sample_id in seen:
+            continue
+        seen.add(sample_id)
+        examples.append(
+            {
+                "citation": str(getattr(sample, "citation", "") or ""),
+                "example_id": sample_id,
+                "sample_id": sample_id,
+                "section": str(getattr(sample, "section", "") or ""),
+                "source": str(getattr(sample, "source", "") or ""),
+                "source_text": text,
+                "text": text,
+                "title": str(getattr(sample, "title", "") or ""),
+                "validation_index": (
+                    int(validation_indices[position])
+                    if position < len(validation_indices)
+                    else None
+                ),
+            }
+        )
+    payload = {
+        "cycle": int(cycle),
+        "example_count": len(examples),
+        "examples": examples,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "run_id": str(run_id),
+        "schema_version": "legal-ir-leanstral-reference-examples-v1",
+        "source_policy": "local_verifier_only_not_prompt_evidence",
+        "state_hash": str(state_hash),
+        "validation_mode": str(validation_mode or ""),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return {
+        "path": str(path),
+        "reference_example_count": len(examples),
+        "schema_version": payload["schema_version"],
+        "source_policy": payload["source_policy"],
+    }
+
+
 def _sample_metric_records_by_sample_id(block: Mapping[str, Any]) -> Dict[str, Mapping[str, Any]]:
     records = block.get("sample_metric_records")
     if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
@@ -1362,6 +1445,15 @@ def export_canonical_state_disagreement_packets(
         validation_samples=samples,
     )
     sample_indices = list(validation_indices)
+    reference_export = write_introspection_reference_examples(
+        cycle=cycle,
+        run_id=run_id,
+        samples=samples,
+        state_hash=state_hash,
+        summary_path=summary_path,
+        validation_indices=sample_indices,
+        validation_mode=validation_mode,
+    )
     by_role = (
         ("unguided", compiler_ir_validation),
         ("guided", compiler_ir_guided_validation),
@@ -1371,6 +1463,8 @@ def export_canonical_state_disagreement_packets(
     sample_analysis_cache: Dict[int, tuple[Any, Any, Any]] = {}
     sample_analysis_cache_hits = 0
     for evaluation_role, compiler_block in by_role:
+        if not compiler_block:
+            continue
         metric_records = _sample_metric_records_by_sample_id(compiler_block)
         for sample_position, sample in enumerate(samples):
             sample_id = str(getattr(sample, "sample_id", "") or "")
@@ -1385,11 +1479,14 @@ def export_canonical_state_disagreement_packets(
                         sample,
                         use_sample_memory=False,
                         top_k=top_k,
+                        include_causal_attribution=False,
                     )
                     guidance = autoencoder.compiler_guidance_for_sample(
                         sample,
                         use_sample_memory=False,
                         top_k=top_k,
+                        include_causal_attribution=False,
+                        introspection=introspection,
                     )
                     prover_signal = (
                         evaluate_modal_prover_compilation(sample)
@@ -1457,6 +1554,13 @@ def export_canonical_state_disagreement_packets(
         "export_failures": export_failures[:16],
         "export_mode": str(export_mode or ""),
         "paths": [str(path)] if append_report.get("packet_count", 0) else [],
+        "reference_example_count": int(
+            reference_export.get("reference_example_count", 0) or 0
+        ),
+        "reference_example_path": str(reference_export.get("path") or ""),
+        "reference_example_source_policy": str(
+            reference_export.get("source_policy") or ""
+        ),
         "requested_packet_count": len(packets),
         "shared_sample_analysis_count": len(sample_analysis_cache),
         "shared_sample_analysis_cache_hit_count": sample_analysis_cache_hits,
@@ -2029,6 +2133,7 @@ def compiler_ir_metric_block(
         return {
             "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
             "evaluated_count": 0,
+            "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
             "metric_failures": 0,
             "sample_count": 0,
         }
@@ -2081,6 +2186,7 @@ def compiler_ir_metric_block(
                     sample,
                     use_sample_memory=False,
                     top_k=guidance_top_k,
+                    include_causal_attribution=False,
                 )
                 if compiler_guidance:
                     guidance_produced_count += 1
@@ -2141,6 +2247,7 @@ def compiler_ir_metric_block(
             cached["persistent_cache_hit"] = True
             cached["persistent_cache_key"] = persistent_cache_key
             cached["persistent_cache_kind"] = "compiler_ir_metric_block"
+            cached["metric_profile_version"] = COMPILER_IR_METRIC_PROFILE_VERSION
             cached["compiler_ir_guidance_cache_policy"] = (
                 _COMPILER_IR_GUIDANCE_CACHE_POLICY
             )
@@ -2297,6 +2404,7 @@ def compiler_ir_metric_block(
                     sample,
                     use_sample_memory=False,
                     top_k=guidance_top_k,
+                    include_causal_attribution=False,
                 )
                 if compiler_guidance:
                     guidance_produced_count += 1
@@ -2681,6 +2789,7 @@ def compiler_ir_metric_block(
         "compiler_ir_guidance_cache_policy": _COMPILER_IR_GUIDANCE_CACHE_POLICY,
         "evaluated_count": len(formula_counts),
         "max_sample_text_chars": max_sample_text_chars,
+        "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
         "metric_text_policy": metric_text_policy,
         "metric_failures": failures,
         "persistent_sample_cache_hits": persistent_sample_cache_hits,
@@ -3073,10 +3182,14 @@ def bridge_ir_metric_block(
     evaluate_provers: Optional[bool] = None,
     parallel_workers: Optional[int] = None,
     progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
+    max_sample_text_chars: int = 0,
 ) -> Dict[str, Any]:
     """Aggregate bridge-level compiler/prover/KG diagnostics by adapter."""
 
-    sample_list = list(samples)
+    sample_list = autoencoder_metric_bridge_samples_for_evaluation(
+        list(samples),
+        max_sample_text_chars=max_sample_text_chars,
+    )
     adapter_names = [
         name
         for name in dict.fromkeys(str(name).strip() for name in bridge_names)
@@ -3132,6 +3245,7 @@ def bridge_ir_metric_block(
         "persistent_cache_key": persistent_cache_key,
         "persistent_cache_kind": "bridge_ir_metric_block",
         "persistent_sample_cache_hits": 0,
+        "max_sample_text_chars": max(0, int(max_sample_text_chars or 0)),
         "sample_count": len(sample_list),
     }
     if not sample_list or not adapter_names:
@@ -3580,6 +3694,419 @@ def leanstral_rule_gap_report_path(args: argparse.Namespace, *, root: Path) -> P
     )
 
 
+def leanstral_direct_guidance_paths(
+    args: argparse.Namespace,
+    *,
+    root: Path,
+    artifact_paths: Optional[Sequence[str | Path]] = None,
+) -> List[Path]:
+    """Return direct Leanstral guidance artifact paths to scan this cycle."""
+
+    values: List[str | Path] = []
+    explicit = getattr(args, "leanstral_direct_guidance_path", "")
+    if not explicit:
+        explicit = getattr(args, "leanstral_guidance_path", "")
+    values.extend(_split_path_values(explicit))
+    values.extend(path for path in (artifact_paths or []) if str(path).strip())
+    paths: List[Path] = []
+    seen: set[str] = set()
+    for value in values:
+        raw = str(value).strip()
+        if not raw:
+            continue
+        path = Path(raw).expanduser()
+        if not path.is_absolute():
+            path = root / path
+        key = str(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        paths.append(path)
+    return paths
+
+
+def load_leanstral_direct_guidance_artifacts(
+    paths: Sequence[str | Path],
+    *,
+    max_files: int = 512,
+    max_items: int = 512,
+) -> Dict[str, Any]:
+    """Load trusted-guidance candidates from JSON/JSONL autoencoder artifacts."""
+
+    files = _expand_leanstral_guidance_files(paths, max_files=max_files)
+    result: Dict[str, Any] = {
+        "artifact_count": len(files),
+        "guidance_count": 0,
+        "guidance_ids": [],
+        "guidance_items": [],
+        "invalid_artifact_count": 0,
+        "invalid_artifacts": [],
+        "paths": [str(path) for path in files],
+    }
+    seen: set[str] = set()
+    for path in files:
+        try:
+            payloads = _read_leanstral_guidance_payloads(path, max_payloads=max_items)
+        except (OSError, json.JSONDecodeError) as exc:
+            result["invalid_artifact_count"] = int(result["invalid_artifact_count"]) + 1
+            result["invalid_artifacts"].append(
+                {
+                    "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+                    "path": str(path),
+                }
+            )
+            continue
+        for payload in payloads:
+            for guidance in _leanstral_guidance_items_from_payload(payload):
+                guidance_id = str(
+                    guidance.get("guidance_id")
+                    or guidance.get("task_id")
+                    or guidance.get("modal_ir_hash")
+                    or ""
+                ).strip()
+                dedupe_key = guidance_id or hashlib.sha256(
+                    json.dumps(
+                        guidance,
+                        ensure_ascii=True,
+                        sort_keys=True,
+                        default=str,
+                    ).encode("utf-8")
+                ).hexdigest()
+                if dedupe_key in seen:
+                    continue
+                seen.add(dedupe_key)
+                result["guidance_items"].append(guidance)
+                if guidance_id:
+                    result["guidance_ids"].append(guidance_id)
+                if len(result["guidance_items"]) >= max(0, int(max_items)):
+                    break
+            if len(result["guidance_items"]) >= max(0, int(max_items)):
+                break
+        if len(result["guidance_items"]) >= max(0, int(max_items)):
+            break
+    result["guidance_count"] = len(result["guidance_items"])
+    result["guidance_ids"] = list(dict.fromkeys(result["guidance_ids"]))[:64]
+    result["invalid_artifacts"] = result["invalid_artifacts"][:16]
+    return result
+
+
+def project_verified_leanstral_guidance_artifacts_into_queue(
+    *,
+    args: argparse.Namespace,
+    queue_path: Path,
+    root: Path,
+    supervisor: ModalTodoSupervisor,
+    artifact_paths: Optional[Sequence[str | Path]] = None,
+    autoencoder: Optional[AdaptiveModalAutoencoder] = None,
+    samples_by_id: Optional[Mapping[str, Any]] = None,
+    worker_health: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Load direct Leanstral draft-guidance artifacts and seed Codex TODOs."""
+
+    paths = leanstral_direct_guidance_paths(
+        args,
+        root=root,
+        artifact_paths=artifact_paths,
+    )
+    result: Dict[str, Any] = {
+        "artifact_count": 0,
+        "enabled": bool(
+            getattr(args, "leanstral_direct_guidance_projection_enabled", True)
+        ),
+        "guidance_count": 0,
+        "guidance_ids": [],
+        "invalid_artifact_count": 0,
+        "path_count": len(paths),
+        "paths": [str(path) for path in paths],
+        "projection_source": "direct_guidance",
+        "report_loaded": False,
+        "seeded_count": 0,
+        "deduped_count": 0,
+        "stale_count": 0,
+        "budget_blocked_count": 0,
+        "report_only_count": 0,
+        "seeded_todo_ids": [],
+        "autoencoder_training": {
+            "enabled": bool(
+                getattr(args, "leanstral_direct_guidance_train_autoencoder", True)
+            ),
+            "status": "not_run",
+        },
+    }
+    if not result["enabled"]:
+        result["status"] = "disabled"
+        return result
+    if not paths:
+        result["status"] = "no_paths"
+        return result
+    load_report = load_leanstral_direct_guidance_artifacts(paths)
+    result.update(
+        {
+            "artifact_count": int(load_report.get("artifact_count", 0) or 0),
+            "guidance_count": int(load_report.get("guidance_count", 0) or 0),
+            "guidance_ids": list(load_report.get("guidance_ids", []) or []),
+            "invalid_artifact_count": int(
+                load_report.get("invalid_artifact_count", 0) or 0
+            ),
+            "invalid_artifacts": list(load_report.get("invalid_artifacts", []) or []),
+            "loaded_paths": list(load_report.get("paths", []) or []),
+        }
+    )
+    if not result["artifact_count"]:
+        result["status"] = "missing_artifacts"
+        return result
+    guidance_items = [
+        dict(item)
+        for item in load_report.get("guidance_items", [])
+        if isinstance(item, Mapping)
+    ]
+    if not guidance_items:
+        result["status"] = "no_guidance"
+        result["report_loaded"] = True
+        return result
+
+    result["report_loaded"] = True
+    config = LeanstralTodoProjectionConfig(
+        max_audits_per_cycle=max(
+            0,
+            int(getattr(args, "autoencoder_max_audits_per_cycle", 0) or 0),
+        ),
+        max_todos_per_cycle=max(
+            0,
+            int(getattr(args, "autoencoder_max_todos_per_cycle", 0) or 0),
+        ),
+        max_todos_per_scope=max(
+            1,
+            int(
+                getattr(
+                    args,
+                    "leanstral_direct_guidance_max_todos_per_scope",
+                    getattr(args, "leanstral_rule_gap_max_todos_per_scope", 2),
+                )
+                or 2
+            ),
+        ),
+        max_program_synthesis_pending=max(
+            0,
+            int(getattr(args, "max_program_synthesis_pending", 512) or 512),
+        ),
+        require_verified_support=True,
+        require_executor_available=bool(
+            getattr(
+                args,
+                "leanstral_direct_guidance_require_executor_available",
+                getattr(args, "leanstral_rule_gap_require_executor_available", True),
+            )
+        ),
+        target_scope_filters=autoencoder_target_scope_filters(args),
+        worker_health=dict(worker_health or {}),
+    )
+    with queue_file_lock(queue_path):
+        latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+        latest_queue.merge_from(
+            supervisor.queue,
+            preserve_claimed_role=supervisor.policy.program_synthesis_role,
+        )
+        supervisor.queue = latest_queue
+        backfill_report = supervisor.backfill_leanstral_patch_feedback_evidence()
+        projection = supervisor.seed_program_synthesis_from_leanstral_guidance(
+            guidance_items,
+            config=config,
+        )
+        supervisor.queue.save_jsonl(queue_path)
+    result.update(projection.to_dict())
+    result["feedback_backfill"] = dict(backfill_report)
+    if bool(getattr(args, "leanstral_direct_guidance_train_autoencoder", True)):
+        if autoencoder is None:
+            result["autoencoder_training"] = {
+                "enabled": True,
+                "status": "missing_autoencoder",
+            }
+        else:
+            result["autoencoder_training"] = autoencoder.apply_leanstral_guidance(
+                guidance_items,
+                samples_by_id=samples_by_id or {},
+                learning_rate=float(
+                    getattr(args, "leanstral_direct_guidance_learning_rate", 0.05)
+                    or 0.0
+                ),
+                allow_global_updates=bool(
+                    getattr(
+                        args,
+                        "leanstral_direct_guidance_train_missing_samples",
+                        False,
+                    )
+                ),
+                max_items=max(
+                    0,
+                    int(getattr(args, "leanstral_direct_guidance_max_training_items", 64) or 64),
+                ),
+                require_trusted=True,
+            )
+    result["status"] = "projected"
+    return result
+
+
+def combine_leanstral_projection_results(
+    *projections: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Combine rule-gap and direct-guidance projection telemetry for summaries."""
+
+    sources = [
+        dict(projection)
+        for projection in projections
+        if isinstance(projection, Mapping) and projection
+    ]
+    combined: Dict[str, Any] = {
+        "budget_blocked_count": 0,
+        "deduped_count": 0,
+        "enabled": any(bool(item.get("enabled")) for item in sources),
+        "projection_sources": sources,
+        "report_only_count": 0,
+        "seeded_count": 0,
+        "seeded_todo_ids": [],
+        "stale_count": 0,
+        "status": "no_projection_sources" if not sources else "combined",
+    }
+    todo_ids: List[str] = []
+    for item in sources:
+        for key in (
+            "budget_blocked_count",
+            "deduped_count",
+            "report_only_count",
+            "seeded_count",
+            "stale_count",
+        ):
+            combined[key] = int(combined.get(key, 0) or 0) + int(
+                item.get(key, 0) or 0
+            )
+        for todo_id in item.get("seeded_todo_ids", []) or []:
+            text = str(todo_id).strip()
+            if text and text not in todo_ids:
+                todo_ids.append(text)
+    combined["seeded_todo_ids"] = todo_ids
+    combined["source_statuses"] = [
+        str(item.get("status") or "") for item in sources if item.get("status")
+    ]
+    return combined
+
+
+def _split_path_values(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, (str, bytes)):
+        raw_values: Iterable[Any] = str(value).split(",")
+    else:
+        raw_values = value
+    return [str(item).strip() for item in raw_values if str(item).strip()]
+
+
+def _expand_leanstral_guidance_files(
+    paths: Sequence[str | Path],
+    *,
+    max_files: int,
+) -> List[Path]:
+    files: List[Path] = []
+    seen: set[str] = set()
+    limit = max(0, int(max_files))
+    for raw_path in paths:
+        if len(files) >= limit:
+            break
+        path = Path(raw_path).expanduser()
+        candidates: List[Path]
+        if path.is_dir():
+            candidates = sorted(
+                [
+                    *path.rglob("*.json"),
+                    *path.rglob("*.jsonl"),
+                ],
+                key=lambda item: str(item),
+            )
+        elif path.is_file():
+            candidates = [path]
+        else:
+            candidates = []
+        for candidate in candidates:
+            if len(files) >= limit:
+                break
+            key = str(candidate)
+            if key in seen:
+                continue
+            seen.add(key)
+            files.append(candidate)
+    return files
+
+
+def _read_leanstral_guidance_payloads(
+    path: Path,
+    *,
+    max_payloads: int,
+) -> List[Dict[str, Any]]:
+    if path.suffix.lower() == ".jsonl":
+        payloads: List[Dict[str, Any]] = []
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                if len(payloads) >= max(0, int(max_payloads)):
+                    break
+                raw = line.strip()
+                if not raw:
+                    continue
+                payload = json.loads(raw)
+                if isinstance(payload, Mapping):
+                    payloads.append(dict(payload))
+        return payloads
+    text = path.read_text(encoding="utf-8")
+    payload = json.loads(text)
+    if isinstance(payload, Sequence) and not isinstance(payload, (str, bytes)):
+        payloads = []
+        for item in payload:
+            if len(payloads) >= max(0, int(max_payloads)):
+                break
+            if isinstance(item, Mapping):
+                payloads.append(dict(item))
+        return payloads
+    return [dict(payload)] if isinstance(payload, Mapping) else []
+
+
+def _leanstral_guidance_items_from_payload(value: Any) -> List[Dict[str, Any]]:
+    if not isinstance(value, Mapping):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            items: List[Dict[str, Any]] = []
+            for item in value:
+                items.extend(_leanstral_guidance_items_from_payload(item))
+            return items
+        return []
+    payload = dict(value)
+    if (
+        payload.get("schema_version") == "legal-ir-leanstral-draft-guidance-v1"
+        or payload.get("guidance_id")
+        and (
+            "drafted_logic_candidates" in payload
+            or payload.get("source") == "leanstral_shadow_proof"
+        )
+    ):
+        return [payload]
+
+    items: List[Dict[str, Any]] = []
+    for key in (
+        "leanstral_guidance",
+        "latest_leanstral_guidance",
+        "guidance",
+    ):
+        nested = payload.get(key)
+        if nested:
+            items.extend(_leanstral_guidance_items_from_payload(nested))
+    for key in ("external_guidance", "guidance_items", "items"):
+        nested_items = payload.get(key)
+        if nested_items:
+            items.extend(_leanstral_guidance_items_from_payload(nested_items))
+    for key in ("compiler_guidance", "leanstral_shadow"):
+        nested = payload.get(key)
+        if isinstance(nested, Mapping):
+            items.extend(_leanstral_guidance_items_from_payload(nested))
+    return items
+
+
 def project_verified_leanstral_rule_gaps_into_queue(
     *,
     args: argparse.Namespace,
@@ -3659,12 +4186,14 @@ def project_verified_leanstral_rule_gaps_into_queue(
             preserve_claimed_role=supervisor.policy.program_synthesis_role,
         )
         supervisor.queue = latest_queue
+        backfill_report = supervisor.backfill_leanstral_patch_feedback_evidence()
         projection = supervisor.seed_program_synthesis_from_leanstral_rule_gap_report(
             report,
             config=config,
         )
         supervisor.queue.save_jsonl(queue_path)
     result.update(projection.to_dict())
+    result["feedback_backfill"] = dict(backfill_report)
     result["status"] = "projected"
     result["report_schema_version"] = str(report.get("schema_version") or "")
     return result
@@ -3693,6 +4222,29 @@ def update_leanstral_projection_summary(
     summary["latest_leanstral_projection_todo_ids"] = list(
         projection.get("seeded_todo_ids", []) or []
     )
+    training_reports = [
+        dict(item.get("autoencoder_training") or {})
+        for item in projection.get("projection_sources", []) or []
+        if isinstance(item, Mapping) and item.get("autoencoder_training")
+    ]
+    if training_reports:
+        latest_training = training_reports[-1]
+        summary["latest_leanstral_direct_guidance_autoencoder_training"] = (
+            latest_training
+        )
+        for key in (
+            "applied",
+            "duplicate",
+            "sample_aware_update",
+            "skipped_missing_sample",
+            "skipped_untrusted",
+        ):
+            source_key = f"{key}_count"
+            latest_key = f"latest_leanstral_direct_guidance_training_{source_key}"
+            total_key = f"leanstral_direct_guidance_training_{source_key}_total"
+            value = int(latest_training.get(source_key, 0) or 0)
+            summary[latest_key] = value
+            summary[total_key] = int(summary.get(total_key, 0) or 0) + value
     return summary
 
 
@@ -3913,6 +4465,10 @@ def paired_program_synthesis_health(
     transient_counts = queue.transient_failure_counts(
         optimizer_role="program_synthesis"
     )
+    active_transient_counts = queue.transient_failure_counts(
+        optimizer_role="program_synthesis",
+        statuses=("pending", "claimed"),
+    )
     failed_reason_counts: Counter[str] = Counter()
     failed_kind_counts: Counter[str] = Counter()
     failed_test_counts: Counter[str] = Counter()
@@ -3983,6 +4539,12 @@ def paired_program_synthesis_health(
         int(transient_requeue_total),
     )
     transient_todo_count = int(transient_counts.get("transient_todo_count", 0))
+    active_transient_attempt_count = int(
+        active_transient_counts.get("transient_attempt_count", 0)
+    )
+    active_transient_todo_count = int(
+        active_transient_counts.get("transient_todo_count", 0)
+    )
     transient_failure_rate = (
         float(transient_attempt_count) / float(execution_count)
         if execution_count > 0
@@ -4006,6 +4568,7 @@ def paired_program_synthesis_health(
         "codex_executor_throttled": executor_throttled,
         "codex_transient_requeue_count": transient_attempt_count,
         "codex_transient_failure_rate": round(transient_failure_rate, 6),
+        "codex_active_transient_failure_count": active_transient_attempt_count,
         "program_synthesis_claimed": claimed,
         "program_synthesis_claimed_by_worker": dict(claimed_by_worker),
         "program_synthesis_completed": int(status.get("completed", 0) or 0),
@@ -4018,6 +4581,12 @@ def paired_program_synthesis_health(
         "program_synthesis_transient_failure_count": transient_todo_count,
         "program_synthesis_transient_failure_attempts": transient_attempt_count,
         "program_synthesis_transient_failure_rate": round(transient_failure_rate, 6),
+        "program_synthesis_active_transient_failure_attempts": (
+            active_transient_attempt_count
+        ),
+        "program_synthesis_active_transient_failure_count": (
+            active_transient_todo_count
+        ),
         "queue_exists": queue_exists,
         "stale_claimed_codex_worker_ids": stale_claimed_worker_ids,
         "stale_idle_codex_worker_ids": stale_idle_worker_ids,
@@ -5933,28 +6502,122 @@ def autoencoder_metric_bridge_samples_for_evaluation(
             bounded_samples.append(sample)
             continue
         bounded_text = _compiler_ir_metric_bounded_text(text, limit)
-        sample_id = str(getattr(sample, "sample_id", "") or "sample")
-        bounded_id = (
-            f"{sample_id}:metric-prefix:"
-            f"{hashlib.sha256(bounded_text.encode('utf-8')).hexdigest()[:12]}"
-        )
-        try:
-            bounded_samples.append(
-                replace(
-                    sample,
-                    sample_id=bounded_id,
-                    text=bounded_text,
-                    normalized_text=bounded_text,
-                )
+        bounded_samples.append(
+            _compiler_ir_metric_sample_for_text(
+                sample,
+                metric_text=bounded_text,
             )
-        except TypeError:
-            clone = SimpleNamespace(**dict(vars(sample)))
-            clone.sample_id = bounded_id
-            clone.text = bounded_text
-            if hasattr(clone, "normalized_text"):
-                clone.normalized_text = bounded_text
-            bounded_samples.append(clone)
+        )
     return bounded_samples
+
+
+def evaluate_autoencoder_with_bounded_metric_bridges(
+    autoencoder: AdaptiveModalAutoencoder,
+    samples: Sequence[Any],
+    *,
+    legal_ir_bridge_names: Sequence[str],
+    legal_ir_evaluate_provers: Optional[bool],
+    legal_ir_parallel_workers: Optional[int],
+    max_bridge_sample_text_chars: int,
+    use_sample_memory: bool,
+) -> AutoencoderEvaluation:
+    """Evaluate full text embeddings while bounding expensive bridge targets."""
+
+    sample_list = list(samples)
+    bridge_names = [str(name) for name in legal_ir_bridge_names if str(name)]
+    if not sample_list or not bridge_names:
+        return autoencoder.evaluate(
+            sample_list,
+            legal_ir_bridge_names=(),
+            legal_ir_evaluate_provers=legal_ir_evaluate_provers,
+            legal_ir_parallel_workers=legal_ir_parallel_workers,
+            use_sample_memory=use_sample_memory,
+        )
+    bridge_samples = autoencoder_metric_bridge_samples_for_evaluation(
+        sample_list,
+        max_sample_text_chars=max_bridge_sample_text_chars,
+    )
+    bridge = autoencoder.evaluate(
+        bridge_samples,
+        legal_ir_bridge_names=bridge_names,
+        legal_ir_evaluate_provers=legal_ir_evaluate_provers,
+        legal_ir_parallel_workers=legal_ir_parallel_workers,
+        use_sample_memory=use_sample_memory,
+    )
+    alias_targets = getattr(autoencoder, "alias_cached_legal_ir_targets", None)
+    if callable(alias_targets):
+        alias_targets(sample_list, bridge_samples)
+    base = autoencoder.evaluate(
+        sample_list,
+        legal_ir_bridge_names=(),
+        legal_ir_evaluate_provers=legal_ir_evaluate_provers,
+        legal_ir_parallel_workers=legal_ir_parallel_workers,
+        use_sample_memory=use_sample_memory,
+    )
+    if not isinstance(base, AutoencoderEvaluation):
+        # Preserve compatibility with lightweight evaluator adapters that only
+        # implement the reconstruction metrics used by older runner plugins.
+        return base
+    return replace(
+        base,
+        legal_ir_target_count=int(getattr(bridge, "legal_ir_target_count", 0) or 0),
+        legal_ir_losses=dict(getattr(bridge, "legal_ir_losses", {}) or {}),
+        legal_ir_predicted_view_distribution=dict(
+            getattr(bridge, "legal_ir_predicted_view_distribution", {}) or {}
+        ),
+        legal_ir_target_hashes=dict(
+            getattr(bridge, "legal_ir_target_hashes", {}) or {}
+        ),
+        legal_ir_view_distribution=dict(
+            getattr(bridge, "legal_ir_view_distribution", {}) or {}
+        ),
+    )
+
+
+def _todo_supervisor_precomputed_evaluations(
+    *,
+    feature_projection_report: Mapping[str, Any],
+    train_samples: Sequence[Any],
+    validation_samples: Sequence[Any],
+    before_train: AutoencoderEvaluation,
+    before_validation: AutoencoderEvaluation,
+) -> tuple[Optional[AutoencoderEvaluation], Optional[AutoencoderEvaluation]]:
+    """Reuse only evaluations that describe the state entering TODO training."""
+
+    def matches_samples(
+        evaluation: Optional[AutoencoderEvaluation],
+        samples: Sequence[Any],
+    ) -> bool:
+        if evaluation is None or evaluation.sample_count != len(samples):
+            return False
+        expected_ids = {
+            str(getattr(sample, "sample_id", "") or "")
+            for sample in samples
+        }
+        evaluated_ids = set(evaluation.decoded_embeddings)
+        return not evaluated_ids or evaluated_ids == expected_ids
+
+    accepted_epochs = int(feature_projection_report.get("accepted_epochs", 0) or 0)
+    if accepted_epochs <= 0:
+        return (
+            before_train if matches_samples(before_train, train_samples) else None,
+            (
+                before_validation
+                if matches_samples(before_validation, validation_samples)
+                else None
+            ),
+        )
+
+    projection_validation: Optional[AutoencoderEvaluation] = None
+    after_payload = feature_projection_report.get("after")
+    if isinstance(after_payload, Mapping):
+        try:
+            projection_validation = AutoencoderEvaluation(**dict(after_payload))
+        except (TypeError, ValueError):
+            projection_validation = None
+    if not matches_samples(projection_validation, validation_samples):
+        projection_validation = None
+    return None, projection_validation
 
 
 def autoencoder_validation_signal_health(
@@ -6069,7 +6732,29 @@ def autoencoder_target_scope_filters(args: argparse.Namespace) -> List[str]:
 def autoencoder_rollout_control(args: argparse.Namespace) -> Dict[str, Any]:
     mode = autoencoder_introspection_mode(args)
     return {
+        "export_every_n_cycles": max(
+            1,
+            int(
+                getattr(
+                    args,
+                    "autoencoder_introspection_every_n_cycles",
+                    DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES,
+                )
+                or DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES
+            ),
+        ),
         "introspection_mode": mode,
+        "min_export_samples": max(
+            0,
+            int(
+                getattr(
+                    args,
+                    "autoencoder_introspection_min_export_samples",
+                    DEFAULT_AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES,
+                )
+                or 0
+            ),
+        ),
         "max_audits_per_cycle": max(
             0,
             int(getattr(args, "autoencoder_max_audits_per_cycle", 0) or 0),
@@ -6082,6 +6767,65 @@ def autoencoder_rollout_control(args: argparse.Namespace) -> Dict[str, Any]:
             getattr(args, "autoencoder_require_prover_confirmation", True)
         ),
         "target_scope_filters": autoencoder_target_scope_filters(args),
+    }
+
+
+def autoencoder_introspection_export_due(
+    rollout_control: Mapping[str, Any],
+    *,
+    cycle: int,
+) -> bool:
+    """Return whether full Leanstral disagreement evidence is due this cycle."""
+
+    mode = str(rollout_control.get("introspection_mode") or "off")
+    if not introspection_export_mode_enabled(mode):
+        return False
+    cadence = max(
+        1,
+        int(
+            rollout_control.get("export_every_n_cycles")
+            or DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES
+        ),
+    )
+    cycle_number = max(1, int(cycle))
+    return cycle_number == 1 or cycle_number % cadence == 0
+
+
+def skipped_introspection_export_report(
+    *,
+    cycle: int,
+    rollout_control: Mapping[str, Any],
+    summary_path: Path,
+) -> Dict[str, Any]:
+    """Return stable telemetry when a costly evidence export is not due."""
+
+    mode = str(rollout_control.get("introspection_mode") or "off")
+    cadence = max(
+        1,
+        int(
+            rollout_control.get("export_every_n_cycles")
+            or DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES
+        ),
+    )
+    cycle_number = max(1, int(cycle))
+    remainder = cycle_number % cadence
+    next_due_cycle = cycle_number + (cadence - remainder if remainder else cadence)
+    return {
+        "enabled": introspection_export_mode_enabled(mode),
+        "elapsed_seconds": 0.0,
+        "export_mode": mode,
+        "export_every_n_cycles": cadence,
+        "next_due_cycle": next_due_cycle,
+        "packet_count": 0,
+        "path": str(introspection_disagreement_export_path(summary_path)),
+        "paths": [],
+        "requested_packet_count": 0,
+        "schema_failure_count": 0,
+        "schema_failures": [],
+        "skip_reason": (
+            "cadence" if introspection_export_mode_enabled(mode) else "mode_off"
+        ),
+        "skipped": True,
     }
 
 
@@ -6141,6 +6885,59 @@ def _budgeted_audit_samples(
     if max_audits <= 0:
         return []
     return filtered[:max_audits]
+
+
+def _budgeted_audit_samples_with_indices(
+    samples: Sequence[Any],
+    indices: Sequence[int],
+    rollout_control: Mapping[str, Any],
+) -> tuple[List[Any], List[int]]:
+    """Apply the audit budget while preserving frozen-canary index identity."""
+
+    selected = _budgeted_audit_samples(samples, rollout_control)
+    selected_object_ids = {id(sample) for sample in selected}
+    selected_indices = [
+        int(indices[position])
+        for position, sample in enumerate(samples)
+        if id(sample) in selected_object_ids and position < len(indices)
+    ]
+    return selected, selected_indices
+
+
+def _introspection_export_samples_with_indices(
+    samples: Sequence[Any],
+    indices: Sequence[int],
+    rollout_control: Mapping[str, Any],
+) -> tuple[List[Any], List[int]]:
+    """Select validation samples for packet export without raising TODO budget."""
+
+    mode = str(rollout_control.get("introspection_mode") or "off")
+    if mode == "off":
+        return list(samples), [int(index) for index in indices]
+    scope_filters = [
+        str(value)
+        for value in rollout_control.get("target_scope_filters", []) or []
+        if str(value)
+    ]
+    max_audits = max(0, int(rollout_control.get("max_audits_per_cycle", 0) or 0))
+    min_export_samples = max(
+        0,
+        int(rollout_control.get("min_export_samples", 0) or 0),
+    )
+    export_budget = max(max_audits, min_export_samples)
+    if export_budget <= 0:
+        return [], []
+    selected_samples: List[Any] = []
+    selected_indices: List[int] = []
+    for position, sample in enumerate(samples):
+        if not _sample_matches_target_scope(sample, scope_filters):
+            continue
+        selected_samples.append(sample)
+        if position < len(indices):
+            selected_indices.append(int(indices[position]))
+        if len(selected_samples) >= export_budget:
+            break
+    return selected_samples, selected_indices
 
 
 def _effective_todo_budget(default_max_items: int, rollout_control: Mapping[str, Any]) -> int:
@@ -6864,6 +7661,14 @@ def build_paired_daemon_commands(
         ),
         "--compiler-ir-metric-text-policy",
         str(getattr(args, "compiler_ir_metric_text_policy", DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY)),
+        "--compiler-ir-metric-max-sample-text-chars",
+        str(
+            getattr(
+                args,
+                "compiler_ir_metric_max_sample_text_chars",
+                _default_compiler_ir_metric_max_sample_text_chars(),
+            )
+        ),
         "--compiler-ir-metric-sample-timeout-seconds",
         str(
             getattr(
@@ -7018,6 +7823,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "autoencoder_semantic_slot_legal_ir_view_embedding_weight_scale", 0.5)),
         "--autoencoder-cosine-reconstruction-weight",
         str(getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)),
+        "--autoencoder-max-codec-feature-keys",
+        str(getattr(args, "autoencoder_max_codec_feature_keys", 64)),
         "--autoencoder-max-token-features",
         str(getattr(args, "autoencoder_max_token_features", 48)),
         "--autoencoder-max-token-bigram-features",
@@ -7098,6 +7905,22 @@ def build_paired_daemon_commands(
                 DEFAULT_AUTOENCODER_INTROSPECTION_MODE,
             )
         ),
+        "--autoencoder-introspection-every-n-cycles",
+        str(
+            getattr(
+                args,
+                "autoencoder_introspection_every_n_cycles",
+                DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES,
+            )
+        ),
+        "--autoencoder-introspection-min-export-samples",
+        str(
+            getattr(
+                args,
+                "autoencoder_introspection_min_export_samples",
+                DEFAULT_AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES,
+            )
+        ),
         "--autoencoder-max-audits-per-cycle",
         str(getattr(args, "autoencoder_max_audits_per_cycle", 0)),
         "--autoencoder-max-todos-per-cycle",
@@ -7116,6 +7939,34 @@ def build_paired_daemon_commands(
         str(getattr(args, "leanstral_rule_gap_expected_compiler_commit", "")),
         "--leanstral-rule-gap-expected-state-hash",
         str(getattr(args, "leanstral_rule_gap_expected_state_hash", "")),
+        "--leanstral-direct-guidance-projection-enabled",
+        str(
+            getattr(args, "leanstral_direct_guidance_projection_enabled", True)
+        ).lower(),
+        "--leanstral-direct-guidance-path",
+        str(getattr(args, "leanstral_direct_guidance_path", "")),
+        "--leanstral-direct-guidance-max-todos-per-scope",
+        str(getattr(args, "leanstral_direct_guidance_max_todos_per_scope", 2)),
+        "--leanstral-direct-guidance-require-executor-available",
+        str(
+            getattr(
+                args,
+                "leanstral_direct_guidance_require_executor_available",
+                True,
+            )
+        ).lower(),
+        "--leanstral-direct-guidance-train-autoencoder",
+        str(
+            getattr(args, "leanstral_direct_guidance_train_autoencoder", True)
+        ).lower(),
+        "--leanstral-direct-guidance-learning-rate",
+        str(getattr(args, "leanstral_direct_guidance_learning_rate", 0.05)),
+        "--leanstral-direct-guidance-train-missing-samples",
+        str(
+            getattr(args, "leanstral_direct_guidance_train_missing_samples", False)
+        ).lower(),
+        "--leanstral-direct-guidance-max-training-items",
+        str(getattr(args, "leanstral_direct_guidance_max_training_items", 64)),
         "--autoencoder-target-scope-filters",
         str(getattr(args, "autoencoder_target_scope_filters", "")),
         "--autoencoder-require-prover-confirmation",
@@ -7139,6 +7990,9 @@ def build_paired_daemon_commands(
             )
         ),
     ]
+    max_cycles = max(0, int(getattr(args, "max_cycles", 0) or 0))
+    if max_cycles > 0:
+        autoencoder_command.extend(["--max-cycles", str(max_cycles)])
     leanstral_max_report_age_seconds = getattr(
         args,
         "leanstral_rule_gap_max_report_age_seconds",
@@ -10721,6 +11575,7 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "laws_path": USCODE_LAWS_PARQUET,
         "log_path": str(log_path),
         "loop_role": getattr(args, "loop_role", "autoencoder"),
+        "max_cycles": max(0, int(getattr(args, "max_cycles", 0) or 0)),
         "metric_schema_version": AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
         "autoencoder_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
         "autoencoder_state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
@@ -10800,6 +11655,12 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help="Existing run id whose TODO queue should be shared by this loop.",
     )
     parser.add_argument("--duration-seconds", type=float, default=3600.0)
+    parser.add_argument(
+        "--max-cycles",
+        type=int,
+        default=0,
+        help="Stop after this many completed cycles; zero is duration-only.",
+    )
     parser.add_argument("--train-count", type=int, default=4)
     parser.add_argument("--validation-count", type=int, default=4)
     parser.add_argument(
@@ -10952,6 +11813,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         default=DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
     )
     parser.add_argument(
+        "--compiler-ir-metric-max-sample-text-chars",
+        type=int,
+        default=_default_compiler_ir_metric_max_sample_text_chars(),
+        help=(
+            "Dedicated deterministic compiler metric text budget. This does not "
+            "truncate the autoencoder training sample itself."
+        ),
+    )
+    parser.add_argument(
         "--compiler-ir-metric-sample-timeout-seconds",
         type=float,
         default=DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS,
@@ -10986,6 +11856,26 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "Reversible LegalIR introspection rollout mode. 'off' is inert, "
             "'export' emits evidence, 'shadow' observes, 'seed' may create "
             "bounded TODOs, and 'enforce' fails closed when proof/budget gates fail."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-introspection-every-n-cycles",
+        type=int,
+        default=DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES,
+        help=(
+            "Run full disagreement introspection on cycle one and then at this "
+            "cadence; verified Leanstral report projection still runs every cycle."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-introspection-min-export-samples",
+        type=int,
+        default=DEFAULT_AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES,
+        help=(
+            "Minimum validation samples to export as canonical disagreement "
+            "packets when introspection export is due. This can be higher than "
+            "--autoencoder-max-audits-per-cycle because it does not increase "
+            "the Codex TODO audit budget."
         ),
     )
     parser.add_argument("--autoencoder-max-audits-per-cycle", type=int, default=0)
@@ -11031,6 +11921,66 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=None,
         help="Optional freshness cap for verified rule-gap report timestamps.",
+    )
+    parser.add_argument(
+        "--leanstral-direct-guidance-projection-enabled",
+        type=parse_bool_flag,
+        default=True,
+        help=(
+            "Seed Codex TODOs from direct Leanstral draft-guidance artifacts "
+            "exported by the autoencoder/Leanstral shadow lane."
+        ),
+    )
+    parser.add_argument(
+        "--leanstral-direct-guidance-path",
+        default="",
+        help=(
+            "Comma-separated JSON/JSONL files or directories containing direct "
+            "Leanstral guidance. Directories are scanned recursively for .json "
+            "and .jsonl artifacts."
+        ),
+    )
+    parser.add_argument(
+        "--leanstral-direct-guidance-max-todos-per-scope",
+        type=int,
+        default=2,
+        help="Maximum active direct-guidance TODOs per owned compiler/AST scope.",
+    )
+    parser.add_argument(
+        "--leanstral-direct-guidance-require-executor-available",
+        type=parse_bool_flag,
+        default=True,
+        help="Block direct Leanstral guidance seeding when Codex executor health is unavailable.",
+    )
+    parser.add_argument(
+        "--leanstral-direct-guidance-train-autoencoder",
+        type=parse_bool_flag,
+        default=True,
+        help=(
+            "Apply trusted direct Leanstral guidance as LegalIR-view training "
+            "signal for the autoencoder."
+        ),
+    )
+    parser.add_argument(
+        "--leanstral-direct-guidance-learning-rate",
+        type=float,
+        default=0.05,
+        help="Learning rate for trusted direct Leanstral guidance autoencoder updates.",
+    )
+    parser.add_argument(
+        "--leanstral-direct-guidance-train-missing-samples",
+        type=parse_bool_flag,
+        default=False,
+        help=(
+            "Allow direct Leanstral guidance to update global LegalIR view logits "
+            "when its sample is not in the current training batch."
+        ),
+    )
+    parser.add_argument(
+        "--leanstral-direct-guidance-max-training-items",
+        type=int,
+        default=64,
+        help="Maximum direct Leanstral guidance records applied to autoencoder training per cycle.",
     )
     parser.add_argument(
         "--autoencoder-target-scope-filters",
@@ -11683,6 +12633,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Blend cosine-direction error into decoder feature/prototype updates "
             "alongside raw reconstruction error."
+        ),
+    )
+    parser.add_argument(
+        "--autoencoder-max-codec-feature-keys",
+        type=int,
+        default=64,
+        help=(
+            "Maximum deterministic spaCy/modal codec feature keys retained per "
+            "sample for learnable cross-sample projection."
         ),
     )
     parser.add_argument(
@@ -12596,6 +13555,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_introspection_mode"] = str(
         rollout_control["introspection_mode"]
     )
+    summary["autoencoder_introspection_every_n_cycles"] = int(
+        rollout_control["export_every_n_cycles"]
+    )
+    summary["autoencoder_introspection_min_export_samples"] = int(
+        rollout_control["min_export_samples"]
+    )
     summary["autoencoder_max_audits_per_cycle"] = int(
         rollout_control["max_audits_per_cycle"]
     )
@@ -12795,6 +13760,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ),
         cosine_reconstruction_weight=float(
             getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
+        ),
+        max_codec_feature_keys=int(
+            getattr(args, "autoencoder_max_codec_feature_keys", 64)
         ),
         max_token_features=int(getattr(args, "autoencoder_max_token_features", 48)),
         max_token_bigram_features=int(
@@ -13009,6 +13977,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_cosine_reconstruction_weight"] = float(
         getattr(args, "autoencoder_cosine_reconstruction_weight", 0.25)
     )
+    summary["autoencoder_max_codec_feature_keys"] = int(
+        getattr(args, "autoencoder_max_codec_feature_keys", 64)
+    )
     summary["autoencoder_max_token_features"] = int(
         getattr(args, "autoencoder_max_token_features", 48)
     )
@@ -13152,9 +14123,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ),
         bridge_names=bridge_adapters,
         bridge_evaluate_provers=bridge_evaluate_provers,
+        bridge_parallel_workers=bridge_parallel_workers,
         bridge_loss_evaluator=bridge_loss_evaluator_for_names(
             bridge_adapters,
             evaluate_provers=bridge_evaluate_provers,
+            parallel_workers=bridge_parallel_workers,
         ),
     )
     rng = random.Random(int(summary.get("seed", 0)) + int(summary.get("cycles", 0)) + 1)
@@ -13242,6 +14215,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
 
     try:
         while not stop_requested and time.time() + 8.0 < end_at:
+            max_cycles = max(0, int(getattr(args, "max_cycles", 0) or 0))
+            if max_cycles > 0 and int(summary.get("cycles", 0) or 0) >= max_cycles:
+                summary["latest_stop_reason"] = "max_cycles"
+                break
             cycle = int(summary.get("cycles", 0)) + 1
             cycle_started = time.time()
             cycle_phase_timings: Dict[str, float] = {}
@@ -13346,6 +14323,23 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
 
                 return record_metric_progress
 
+            def todo_progress_callback(progress: Mapping[str, Any]) -> None:
+                payload = dict(progress)
+                summary["active_cycle"] = cycle
+                summary["active_cycle_phase"] = "todo_supervisor_optimize"
+                summary["active_cycle_todo_supervisor_progress"] = payload
+                summary["active_cycle_last_heartbeat_at"] = utc_now()
+                save_summary(summary_path, summary)
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "cycle": cycle,
+                        "event": "todo_supervisor_progress",
+                        "progress": payload,
+                    },
+                )
+
             cycle_learning_rate, cycle_lr_policy = _cycle_learning_rate(args, summary)
             mark_cycle_phase("sampling")
             (
@@ -13374,9 +14368,62 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_samples,
                 rollout_control,
             )
+            (
+                audited_validation_samples,
+                audited_validation_indices,
+            ) = _budgeted_audit_samples_with_indices(
+                acceptance_validation_samples,
+                acceptance_validation_indices,
+                rollout_control,
+            )
+            (
+                introspection_export_validation_samples,
+                introspection_export_validation_indices,
+            ) = _introspection_export_samples_with_indices(
+                acceptance_validation_samples,
+                acceptance_validation_indices,
+                rollout_control,
+            )
             effective_max_items = _effective_todo_budget(
                 int(args.max_items),
                 rollout_control,
+            )
+            requested_max_items = effective_max_items
+            todo_supervisor_mode = str(
+                getattr(
+                    args,
+                    "autoencoder_todo_supervisor_mode",
+                    DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE,
+                )
+                or DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE
+            )
+            todo_supervisor_min_open = max(
+                0,
+                int(
+                    getattr(args, "autoencoder_todo_supervisor_min_open", 12)
+                    or 0
+                ),
+            )
+            program_synthesis_status = supervisor.queue.role_status_counts().get(
+                supervisor.policy.program_synthesis_role,
+                {},
+            )
+            todo_supervisor_control = _todo_supervisor_skip_decision(
+                mode=todo_supervisor_mode,
+                program_synthesis_status=program_synthesis_status,
+                min_open=todo_supervisor_min_open,
+            )
+            if todo_supervisor_control["skipped"]:
+                effective_max_items = 0
+            todo_supervisor_control.update(
+                {
+                    "effective_max_items": effective_max_items,
+                    "minimum_open_program_synthesis_count": (
+                        todo_supervisor_min_open
+                    ),
+                    "mode": todo_supervisor_mode,
+                    "requested_max_items": requested_max_items,
+                }
             )
             if (
                 str(rollout_control.get("introspection_mode") or "off") != "off"
@@ -13386,33 +14433,63 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["active_cycle_introspection"] = {
                 **dict(rollout_control),
                 "eligible_audit_sample_count": len(audited_train_samples),
+                "eligible_validation_audit_sample_count": len(
+                    audited_validation_samples
+                ),
+                "eligible_validation_export_sample_count": len(
+                    introspection_export_validation_samples
+                ),
                 "effective_max_items": effective_max_items,
             }
+            summary["active_cycle_todo_supervisor"] = todo_supervisor_control
+            metric_bridge_text_cap = int(
+                getattr(
+                    args,
+                    "autoencoder_metric_bridge_max_sample_text_chars",
+                    DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+                )
+                or 0
+            )
+
+            def evaluate_cycle_samples(
+                rows: Sequence[Any],
+                *,
+                use_sample_memory: bool,
+            ) -> AutoencoderEvaluation:
+                return evaluate_autoencoder_with_bounded_metric_bridges(
+                    autoencoder,
+                    rows,
+                    legal_ir_bridge_names=metric_bridge_adapters,
+                    legal_ir_evaluate_provers=bridge_evaluate_provers,
+                    legal_ir_parallel_workers=bridge_parallel_workers,
+                    max_bridge_sample_text_chars=metric_bridge_text_cap,
+                    use_sample_memory=use_sample_memory,
+                )
             mark_cycle_phase(
                 "before_train_eval",
                 sample_count=len(train_samples),
             )
-            before_train = autoencoder.evaluate(
+            before_train = evaluate_cycle_samples(
                 train_samples,
-                legal_ir_bridge_names=metric_bridge_adapters,
-                legal_ir_evaluate_provers=bridge_evaluate_provers,
-                legal_ir_parallel_workers=bridge_parallel_workers,
+                use_sample_memory=True,
             )
             mark_cycle_phase(
                 "before_validation_eval",
                 sample_count=len(acceptance_validation_samples),
                 validation_mode=validation_mode,
             )
-            before_validation = autoencoder.evaluate(
+            before_validation = evaluate_cycle_samples(
                 acceptance_validation_samples,
-                legal_ir_bridge_names=metric_bridge_adapters,
-                legal_ir_evaluate_provers=bridge_evaluate_provers,
-                legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
             )
             compiler_ir_metric_kwargs = {
                 "max_sample_text_chars": int(
-                    getattr(args, "max_sample_text_chars", 0) or 0
+                    getattr(
+                        args,
+                        "compiler_ir_metric_max_sample_text_chars",
+                        _default_compiler_ir_metric_max_sample_text_chars(),
+                    )
+                    or 0
                 ),
                 "metric_text_policy": str(
                     getattr(
@@ -13456,6 +14533,23 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 for key, value in compiler_ir_validation.items()
                 if isinstance(value, (int, float))
             }
+            compiler_ir_validation_profile = {
+                "max_sample_text_chars": int(
+                    compiler_ir_validation.get("max_sample_text_chars", 0) or 0
+                ),
+                "metric_profile_version": str(
+                    compiler_ir_validation.get("metric_profile_version", "") or ""
+                ),
+                "metric_text_policy": str(
+                    compiler_ir_validation.get("metric_text_policy", "") or ""
+                ),
+                "sample_timeout_cache_policy": str(
+                    compiler_ir_validation.get("sample_timeout_cache_policy", "") or ""
+                ),
+                "sample_timeout_seconds": float(
+                    compiler_ir_validation.get("sample_timeout_seconds", 0.0) or 0.0
+                ),
+            }
             previous_compiler_ir_validation_sample_ids = [
                 str(sample_id)
                 for sample_id in summary.get(
@@ -13467,8 +14561,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             previous_compiler_ir_validation_metrics = dict(
                 summary.get("latest_compiler_ir_validation_metrics", {}) or {}
             )
+            previous_compiler_ir_validation_profile = dict(
+                summary.get("latest_compiler_ir_validation_profile", {}) or {}
+            )
             compiler_ir_validation_comparable = (
                 bool(previous_compiler_ir_validation_metrics)
+                and previous_compiler_ir_validation_profile
+                == compiler_ir_validation_profile
                 and previous_compiler_ir_validation_sample_ids
                 == compiler_ir_validation_sample_ids
             )
@@ -13498,6 +14597,38 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if compiler_ir_validation_comparable
                 else {}
             )
+            mark_cycle_phase(
+                "pre_todo_introspection_disagreement_export",
+                sample_count=len(introspection_export_validation_samples),
+            )
+            if autoencoder_introspection_export_due(rollout_control, cycle=cycle):
+                pre_todo_introspection_export = export_canonical_state_disagreement_packets(
+                    autoencoder=autoencoder,
+                    compiler_ir_validation=compiler_ir_validation,
+                    compiler_ir_guided_validation={},
+                    cycle=cycle,
+                    export_mode=str(
+                        rollout_control.get("introspection_mode") or "off"
+                    ),
+                    root=root,
+                    run_id=args.run_id,
+                    samples=introspection_export_validation_samples,
+                    state=autoencoder.state,
+                    summary_path=summary_path,
+                    validation_indices=introspection_export_validation_indices,
+                    validation_mode=validation_mode,
+                    evaluate_provers=bridge_evaluate_provers,
+                )
+            else:
+                pre_todo_introspection_export = skipped_introspection_export_report(
+                    cycle=cycle,
+                    rollout_control=rollout_control,
+                    summary_path=summary_path,
+                )
+            summary["latest_pre_todo_introspection_disagreement_export"] = (
+                dict(pre_todo_introspection_export)
+            )
+            save_summary(summary_path, summary)
             mark_cycle_phase("bridge_ir_train", sample_count=len(train_samples))
             bridge_ir_train = bridge_ir_metric_block(
                 train_samples,
@@ -13505,6 +14636,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 evaluate_provers=bridge_evaluate_provers,
                 parallel_workers=bridge_parallel_workers,
                 progress_callback=metric_progress_callback("bridge_ir_train"),
+                max_sample_text_chars=metric_bridge_text_cap,
             )
             bridge_ir_train["bridge_loss_adapters"] = list(bridge_adapters)
             bridge_ir_train["diagnostic_bridge_adapters"] = list(
@@ -13521,6 +14653,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 evaluate_provers=bridge_evaluate_provers,
                 parallel_workers=bridge_parallel_workers,
                 progress_callback=metric_progress_callback("bridge_ir_validation"),
+                max_sample_text_chars=metric_bridge_text_cap,
             )
             bridge_ir_validation["bridge_loss_adapters"] = list(bridge_adapters)
             bridge_ir_validation["diagnostic_bridge_adapters"] = list(
@@ -13662,6 +14795,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         or 0
                     ),
                     projection_cycle=cycle,
+                    precomputed_holdout_evaluation=before_validation,
+                    precomputed_training_evaluation=before_train,
                     progress_callback=projection_progress_callback,
                 )
             mark_cycle_phase(
@@ -13670,51 +14805,91 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 max_items=effective_max_items,
                 audit_sample_count=len(audited_train_samples),
             )
-            run = supervisor.optimize(
-                audited_train_samples,
+            (
+                todo_precomputed_train,
+                todo_precomputed_validation,
+            ) = _todo_supervisor_precomputed_evaluations(
+                feature_projection_report=feature_projection_report,
+                train_samples=audited_train_samples,
                 validation_samples=acceptance_validation_samples,
-                autoencoder=autoencoder,
-                worker_id="random-uscode-daemon-detached",
-                max_items=effective_max_items,
-                learning_rate=cycle_learning_rate,
-                max_iterations=args.max_inner_iterations,
-                target_cross_entropy_loss=0.001,
-                target_cosine_similarity=0.999999,
+                before_train=before_train,
+                before_validation=before_validation,
             )
+            if effective_max_items <= 0 or not audited_train_samples:
+                run = ModalOptimizationRun(
+                    steps=[],
+                    final_evaluation=before_train,
+                    stopped_reason="todo_budget_disabled",
+                    validation_final_evaluation=before_validation,
+                )
+            else:
+                run = supervisor.optimize(
+                    audited_train_samples,
+                    validation_samples=acceptance_validation_samples,
+                    autoencoder=autoencoder,
+                    precomputed_train_evaluation=todo_precomputed_train,
+                    precomputed_validation_evaluation=todo_precomputed_validation,
+                    evaluation_callback=evaluate_cycle_samples,
+                    worker_id="random-uscode-daemon-detached",
+                    max_items=effective_max_items,
+                    learning_rate=cycle_learning_rate,
+                    max_iterations=args.max_inner_iterations,
+                    target_cross_entropy_loss=0.001,
+                    target_cosine_similarity=0.999999,
+                    progress_callback=todo_progress_callback,
+                )
             mark_cycle_phase("after_train_eval", sample_count=len(train_samples))
-            after_train = autoencoder.evaluate(
+            after_train = evaluate_cycle_samples(
                 train_samples,
-                legal_ir_bridge_names=metric_bridge_adapters,
-                legal_ir_evaluate_provers=bridge_evaluate_provers,
-                legal_ir_parallel_workers=bridge_parallel_workers,
+                use_sample_memory=True,
             )
             mark_cycle_phase(
                 "after_validation_eval",
                 sample_count=len(acceptance_validation_samples),
                 validation_mode=validation_mode,
             )
-            after_validation = autoencoder.evaluate(
+            after_validation = evaluate_cycle_samples(
                 acceptance_validation_samples,
-                legal_ir_bridge_names=metric_bridge_adapters,
-                legal_ir_evaluate_provers=bridge_evaluate_provers,
-                legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
             )
-            mark_cycle_phase("sample_memory_probe", sample_count=len(train_samples))
-            after_train_generalized_probe = autoencoder.evaluate(
-                train_samples,
-                legal_ir_bridge_names=metric_bridge_adapters,
-                legal_ir_evaluate_provers=bridge_evaluate_provers,
-                legal_ir_parallel_workers=bridge_parallel_workers,
-                use_sample_memory=False,
+            sample_memory_probe_mode = str(
+                getattr(
+                    args,
+                    "autoencoder_sample_memory_probe_mode",
+                    DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE,
+                )
             )
-            after_validation_sample_memory_probe = autoencoder.evaluate(
-                acceptance_validation_samples,
-                legal_ir_bridge_names=metric_bridge_adapters,
-                legal_ir_evaluate_provers=bridge_evaluate_provers,
-                legal_ir_parallel_workers=bridge_parallel_workers,
-                use_sample_memory=True,
+            sample_memory_probe_every_n_cycles = int(
+                getattr(
+                    args,
+                    "autoencoder_sample_memory_probe_every_n_cycles",
+                    4,
+                )
+                or 0
             )
+            sample_memory_probe_enabled = _should_run_cycle_cadence(
+                cycle=cycle,
+                mode=sample_memory_probe_mode,
+                every_n_cycles=sample_memory_probe_every_n_cycles,
+            )
+            mark_cycle_phase(
+                "sample_memory_probe",
+                sample_count=len(train_samples),
+                enabled=sample_memory_probe_enabled,
+                mode=sample_memory_probe_mode,
+                every_n_cycles=sample_memory_probe_every_n_cycles,
+            )
+            after_train_generalized_probe = None
+            after_validation_sample_memory_probe = None
+            if sample_memory_probe_enabled:
+                after_train_generalized_probe = evaluate_cycle_samples(
+                    train_samples,
+                    use_sample_memory=False,
+                )
+                after_validation_sample_memory_probe = evaluate_cycle_samples(
+                    acceptance_validation_samples,
+                    use_sample_memory=True,
+                )
             mark_cycle_phase("compiler_ir_guided_train", sample_count=len(train_samples))
             compiler_ir_guided_train = compiler_ir_metric_block(
                 train_samples,
@@ -13757,23 +14932,41 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             mark_cycle_phase(
                 "introspection_disagreement_export",
-                sample_count=len(acceptance_validation_samples),
+                sample_count=len(introspection_export_validation_samples),
             )
-            introspection_export = export_canonical_state_disagreement_packets(
-                autoencoder=autoencoder,
-                compiler_ir_validation=compiler_ir_validation,
-                compiler_ir_guided_validation=compiler_ir_guided_validation,
-                cycle=cycle,
-                export_mode=str(rollout_control.get("introspection_mode") or "off"),
-                root=root,
-                run_id=args.run_id,
-                samples=acceptance_validation_samples,
-                state=autoencoder.state,
-                summary_path=summary_path,
-                validation_indices=acceptance_validation_indices,
-                validation_mode=validation_mode,
-                evaluate_provers=bridge_evaluate_provers,
-            )
+            if (
+                pre_todo_introspection_export.get("enabled")
+                and not pre_todo_introspection_export.get("skipped")
+            ):
+                introspection_export = dict(pre_todo_introspection_export)
+                introspection_export["reused_pre_todo_export"] = True
+                introspection_export["reuse_reason"] = (
+                    "pre_todo_export_already_written"
+                )
+            elif autoencoder_introspection_export_due(rollout_control, cycle=cycle):
+                introspection_export = export_canonical_state_disagreement_packets(
+                    autoencoder=autoencoder,
+                    compiler_ir_validation=compiler_ir_validation,
+                    compiler_ir_guided_validation=compiler_ir_guided_validation,
+                    cycle=cycle,
+                    export_mode=str(
+                        rollout_control.get("introspection_mode") or "off"
+                    ),
+                    root=root,
+                    run_id=args.run_id,
+                    samples=introspection_export_validation_samples,
+                    state=autoencoder.state,
+                    summary_path=summary_path,
+                    validation_indices=introspection_export_validation_indices,
+                    validation_mode=validation_mode,
+                    evaluate_provers=bridge_evaluate_provers,
+                )
+            else:
+                introspection_export = skipped_introspection_export_report(
+                    cycle=cycle,
+                    rollout_control=rollout_control,
+                    summary_path=summary_path,
+                )
             guidance_todo_candidates_by_kind = {
                 "activation": compiler_guidance_activation_todos(
                     guidance_distillation,
@@ -13807,6 +15000,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "guardrail": [],
             }
             leanstral_projection: Dict[str, Any] = {}
+            leanstral_rule_gap_projection: Dict[str, Any] = {}
+            leanstral_direct_guidance_projection: Dict[str, Any] = {}
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)
             mark_cycle_phase("queue_merge")
             with queue_file_lock(queue_path):
@@ -13878,7 +15073,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     supervisor.queue.save_jsonl(queue_path)
                     queue = supervisor.queue
             mark_cycle_phase("leanstral_rule_gap_projection")
-            leanstral_projection = project_verified_leanstral_rule_gaps_into_queue(
+            leanstral_rule_gap_projection = project_verified_leanstral_rule_gaps_into_queue(
                 args=args,
                 queue_path=queue_path,
                 root=root,
@@ -13886,6 +15081,30 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 worker_health={},
             )
             queue = supervisor.queue
+            mark_cycle_phase("leanstral_direct_guidance_projection")
+            leanstral_direct_guidance_projection = (
+                project_verified_leanstral_guidance_artifacts_into_queue(
+                    args=args,
+                    queue_path=queue_path,
+                    root=root,
+                    supervisor=supervisor,
+                    artifact_paths=[
+                        str(path)
+                        for path in introspection_export.get("paths", []) or []
+                        if str(path)
+                    ],
+                    autoencoder=autoencoder,
+                    samples_by_id={
+                        sample.sample_id: sample for sample in train_samples
+                    },
+                    worker_health={},
+                )
+            )
+            queue = supervisor.queue
+            leanstral_projection = combine_leanstral_projection_results(
+                leanstral_rule_gap_projection,
+                leanstral_direct_guidance_projection,
+            )
             mark_cycle_phase("state_save")
             autoencoder.state.save_json(state_path)
             run.save_json(run_json_path)
@@ -13901,24 +15120,49 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             before_train_metrics = metric_block(before_train)
             before_validation_metrics = metric_block(before_validation)
             after_train_metrics = metric_block(after_train)
-            after_train_generalized_probe_metrics = metric_block(
-                after_train_generalized_probe
+            skipped_sample_memory_probe_metrics = {
+                "every_n_cycles": sample_memory_probe_every_n_cycles,
+                "mode": sample_memory_probe_mode,
+                "skipped": True,
+            }
+            after_train_generalized_probe_metrics = (
+                metric_block(after_train_generalized_probe)
+                if after_train_generalized_probe is not None
+                else dict(skipped_sample_memory_probe_metrics)
             )
             after_validation_metrics = metric_block(after_validation)
-            after_validation_sample_memory_probe_metrics = metric_block(
-                after_validation_sample_memory_probe
+            after_validation_sample_memory_probe_metrics = (
+                metric_block(after_validation_sample_memory_probe)
+                if after_validation_sample_memory_probe is not None
+                else dict(skipped_sample_memory_probe_metrics)
             )
-            train_sample_memory_gap = autoencoder_memory_gap_block(
-                after_train_generalized_probe,
-                after_train,
-                dataset="train",
-                expected_holdout=False,
+            train_sample_memory_gap = (
+                autoencoder_memory_gap_block(
+                    after_train_generalized_probe,
+                    after_train,
+                    dataset="train",
+                    expected_holdout=False,
+                )
+                if after_train_generalized_probe is not None
+                else {
+                    **skipped_sample_memory_probe_metrics,
+                    "dataset": "train",
+                    "expected_holdout": False,
+                }
             )
-            validation_sample_memory_gap = autoencoder_memory_gap_block(
-                after_validation,
-                after_validation_sample_memory_probe,
-                dataset="validation",
-                expected_holdout=True,
+            validation_sample_memory_gap = (
+                autoencoder_memory_gap_block(
+                    after_validation,
+                    after_validation_sample_memory_probe,
+                    dataset="validation",
+                    expected_holdout=True,
+                )
+                if after_validation_sample_memory_probe is not None
+                else {
+                    **skipped_sample_memory_probe_metrics,
+                    "dataset": "validation",
+                    "expected_holdout": True,
+                }
             )
             learned_ir_before_train = learned_ir_metric_block(before_train)
             learned_ir_before_validation = learned_ir_metric_block(before_validation)
@@ -14388,6 +15632,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_validation_metrics"] = (
                 compiler_ir_validation_metrics
             )
+            summary["latest_compiler_ir_validation_profile"] = (
+                compiler_ir_validation_profile
+            )
             summary["latest_compiler_ir_validation_sample_count"] = len(
                 compiler_ir_validation_sample_ids
             )
@@ -14621,6 +15868,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         guidance_todo_ids["guardrail"]
                     ),
                     "leanstral_projection": leanstral_projection,
+                    "leanstral_direct_guidance_projection": (
+                        leanstral_direct_guidance_projection
+                    ),
+                    "leanstral_rule_gap_projection": leanstral_rule_gap_projection,
                     "leanstral_projection_budget_blocked_count": int(
                         leanstral_projection.get("budget_blocked_count", 0) or 0
                     ),
@@ -14687,7 +15938,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         value
                         for key, value in guidance_todo_counts.items()
                         if key.endswith("_seeded_count")
-                    ),
+                    )
+                    + int(leanstral_projection.get("seeded_count", 0) or 0),
                     "program_synthesis_preinsert_deduped_count": preinsert_deduped_count,
                     "program_synthesis_semantic_deduped_count": semantic_deduped_count,
                     "program_synthesis_deduped_total": summary.get(

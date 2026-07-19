@@ -84,6 +84,7 @@ import tempfile
 import threading
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -1092,6 +1093,28 @@ def _response_cache_key(*, provider: Optional[str], model_name: Optional[str], p
 @runtime_checkable
 class LLMProvider(Protocol):
     def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str: ...
+
+
+@runtime_checkable
+class BatchLLMProvider(Protocol):
+    def generate_batch(
+        self,
+        prompts: Sequence[str],
+        *,
+        model_name: Optional[str] = None,
+        **kwargs: object,
+    ) -> Sequence[str]: ...
+
+
+@runtime_checkable
+class TextBatchLLMProvider(Protocol):
+    def generate_text_batch(
+        self,
+        prompts: Sequence[str],
+        *,
+        model_name: Optional[str] = None,
+        **kwargs: object,
+    ) -> Sequence[str]: ...
 
 
 @runtime_checkable
@@ -3240,7 +3263,7 @@ def _get_mistral_vibe_provider(*, auto_install: bool = False) -> Optional[LLMPro
     """Return the Mistral Vibe CLI provider without requiring an SDK dependency."""
 
     configured_command = os.environ.get("IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD", "").strip()
-    command = configured_command or "vibe --prompt --output text --max-turns 1"
+    command = configured_command or "vibe --prompt {prompt} --output text --max-turns 1"
     if not _cli_available(command):
         if configured_command or not auto_install:
             return None
@@ -3255,7 +3278,7 @@ def _get_mistral_vibe_provider(*, auto_install: bool = False) -> Optional[LLMPro
             raise LLMRouterError(f"Mistral Vibe provider unavailable: {detail}")
         command = (
             f"{shlex.quote(install_result.executable)} "
-            "--prompt --output text --max-turns 1"
+            "--prompt {prompt} --output text --max-turns 1"
         )
 
     def _mistral_auth_available() -> bool:
@@ -3594,6 +3617,28 @@ def _provider_cache_key() -> tuple:
         os.getenv("IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL", "").strip(),
         os.getenv("IPFS_DATASETS_PY_MISTRAL_API_KEY", "").strip(),
         os.getenv("MISTRAL_API_KEY", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_BASE_URL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_MODEL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_MODEL_REF", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_HF_FILE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_AUTO_INSTALL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_AUTO_UPDATE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_HOST", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_PORT", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_THREADS", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_MODEL_PATH", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_MODEL_PATH", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_MODEL_REF", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_HF_FILE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_CONTEXT_SIZE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_THREADS", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_GPU_LAYERS", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_AUTO_INSTALL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_PACKAGE", "").strip(),
     )
 
 
@@ -3607,6 +3652,70 @@ def _resolve_provider_cached(preferred: Optional[str], cache_key: tuple) -> LLMP
     _ = cache_key
     # Use default deps here; custom deps are handled in get_llm_provider.
     return _resolve_provider_uncached(preferred, deps=get_default_router_deps())
+
+
+_LLAMA_CPP_SERVER_PROVIDER_ALIASES = {
+    "llama_cpp",
+    "llamacpp",
+    "llama.cpp",
+    "openai_compatible",
+    "local_openai",
+    "leanstral_local",
+}
+
+_LLAMA_CPP_NATIVE_PROVIDER_ALIASES = {
+    "llama_cpp_native",
+    "llamacpp_native",
+    "native_llama_cpp",
+    "llama.cpp_native",
+}
+
+
+def _get_accelerate_llama_cpp_provider(
+    *,
+    auto_install: bool = False,
+    provider_name: str = "llama_cpp",
+) -> Optional[LLMProvider]:
+    """Delegate local llama.cpp serving to ipfs_accelerate_py.llm_router."""
+
+    try:
+        from ipfs_accelerate_py import llm_router as accelerate_llm_router
+    except Exception:
+        return None
+
+    provider = accelerate_llm_router._builtin_provider_by_name(  # type: ignore[attr-defined]
+        provider_name,
+        auto_install=auto_install,
+    )
+    if provider is None:
+        return None
+
+    class _AccelerateLlamaCppProvider:
+        def chat_completions(
+            self,
+            messages: Sequence[ChatMessage],
+            *,
+            model_name: Optional[str] = None,
+            **kwargs: object,
+        ) -> dict:
+            chat = getattr(provider, "chat_completions", None)
+            if not callable(chat):
+                prompt = _messages_to_prompt(messages)
+                return {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": provider.generate(prompt, model_name=model_name, **kwargs)
+                            }
+                        }
+                    ]
+                }
+            return chat(messages, model_name=model_name, **kwargs)
+
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            return provider.generate(prompt, model_name=model_name, **kwargs)
+
+    return _AccelerateLlamaCppProvider()
 
 
 def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLMProvider]:
@@ -3745,6 +3854,13 @@ def _builtin_provider_by_name(name: str, *, auto_install: bool = False) -> Optio
         return _get_openai_provider()
     if key == "openrouter":
         return _get_openrouter_provider()
+    if key in _LLAMA_CPP_SERVER_PROVIDER_ALIASES:
+        return _get_accelerate_llama_cpp_provider(auto_install=auto_install)
+    if key in _LLAMA_CPP_NATIVE_PROVIDER_ALIASES:
+        return _get_accelerate_llama_cpp_provider(
+            auto_install=auto_install,
+            provider_name="llama_cpp_native",
+        )
     if key in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}:
         return _get_hf_inference_api_provider()
     if key in {"codex", "codex_cli"}:
@@ -3998,11 +4114,19 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
                 raise LLMRouterError("Copilot Python SDK not installed (optional dependency).")
             return builtin
 
-        builtin = (
-            _get_mistral_vibe_provider(auto_install=True)
-            if name in {"mistral_vibe", "mistral-vibe", "vibe"}
-            else _builtin_provider_by_name(name)
-        )
+        if name in {"mistral_vibe", "mistral-vibe", "vibe"}:
+            builtin = _get_mistral_vibe_provider(auto_install=True)
+        elif name in _LLAMA_CPP_SERVER_PROVIDER_ALIASES:
+            builtin = _get_accelerate_llama_cpp_provider(auto_install=True)
+        elif name in _LLAMA_CPP_NATIVE_PROVIDER_ALIASES:
+            builtin = _get_accelerate_llama_cpp_provider(
+                auto_install=True,
+                provider_name="llama_cpp_native",
+            )
+            if builtin is None:
+                raise LLMRouterError("llama-cpp-python not installed for llama_cpp_native provider.")
+        else:
+            builtin = _builtin_provider_by_name(name)
         if builtin is not None:
             return builtin
         raise ValueError(f"Unknown LLM provider: {preferred_value}")
@@ -4029,11 +4153,19 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
                 raise LLMRouterError("Copilot Python SDK not installed (optional dependency).")
             return builtin
 
-        builtin = (
-            _get_mistral_vibe_provider(auto_install=True)
-            if forced_name in {"mistral_vibe", "mistral-vibe", "vibe"}
-            else _builtin_provider_by_name(forced_name)
-        )
+        if forced_name in {"mistral_vibe", "mistral-vibe", "vibe"}:
+            builtin = _get_mistral_vibe_provider(auto_install=True)
+        elif forced_name in _LLAMA_CPP_SERVER_PROVIDER_ALIASES:
+            builtin = _get_accelerate_llama_cpp_provider(auto_install=True)
+        elif forced_name in _LLAMA_CPP_NATIVE_PROVIDER_ALIASES:
+            builtin = _get_accelerate_llama_cpp_provider(
+                auto_install=True,
+                provider_name="llama_cpp_native",
+            )
+            if builtin is None:
+                raise LLMRouterError("llama-cpp-python not installed for llama_cpp_native provider.")
+        else:
+            builtin = _builtin_provider_by_name(forced_name)
         if builtin is not None:
             return builtin
         raise ValueError(f"Unknown LLM provider: {forced}")
@@ -4200,6 +4332,265 @@ def generate_text(
                         _cache_result(str(result), used_model_name=None)
                         return result
         raise
+
+
+def _batch_worker_count(
+    *,
+    size: int,
+    max_workers: Optional[int],
+    provider: Optional[str],
+    default_cap: int = 4,
+) -> int:
+    if size <= 1:
+        return 1
+    if max_workers is not None:
+        try:
+            return max(1, min(int(max_workers), size))
+        except (TypeError, ValueError):
+            return 1
+
+    raw = (
+        os.getenv("IPFS_DATASETS_PY_LLM_ROUTER_BATCH_WORKERS", "").strip()
+        or os.getenv("IPFS_ACCELERATE_LLM_ROUTER_BATCH_WORKERS", "").strip()
+        or os.getenv("IPFS_ACCELERATE_PY_LLM_ROUTER_BATCH_WORKERS", "").strip()
+    )
+    if raw:
+        try:
+            return max(1, min(int(raw), size))
+        except (TypeError, ValueError):
+            pass
+
+    provider_key = str(provider or "").strip().lower()
+    if provider_key in _LLAMA_CPP_NATIVE_PROVIDER_ALIASES:
+        return 1
+    return max(1, min(int(default_cap), size))
+
+
+def _provider_supports_accelerate_batch(provider: Optional[str], *, use_mesh: bool) -> bool:
+    if use_mesh:
+        return True
+    provider_key = str(provider or "").strip().lower()
+    if not provider_key:
+        return False
+    return provider_key in {
+        "ipfs_accelerate_py",
+        "accelerate",
+        "p2p_task_queue",
+        "mistral_vibe",
+        "mistral-vibe",
+        "vibe",
+        *_LLAMA_CPP_SERVER_PROVIDER_ALIASES,
+        *_LLAMA_CPP_NATIVE_PROVIDER_ALIASES,
+    }
+
+
+def _normalize_text_batch_result(value: object, *, expected_count: int) -> list[str]:
+    if isinstance(value, str):
+        if expected_count == 1:
+            return [value]
+        raise RuntimeError("Batch LLM provider returned a single string for multiple prompts")
+    try:
+        values = list(value)  # type: ignore[arg-type]
+    except TypeError as exc:
+        raise RuntimeError("Batch LLM provider returned a non-iterable result") from exc
+    if len(values) != expected_count:
+        raise RuntimeError(
+            "Batch LLM provider returned "
+            f"{len(values)} results for {expected_count} prompts"
+        )
+    return [str(item or "") for item in values]
+
+
+def generate_text_batch(
+    prompts: Sequence[str],
+    *,
+    model_name: Optional[str] = None,
+    provider: Optional[str] = None,
+    provider_instance: Optional[LLMProvider] = None,
+    deps: Optional[RouterDeps] = None,
+    allow_local_fallback: bool = True,
+    max_workers: Optional[int] = None,
+    use_mesh: bool = False,
+    **kwargs: object,
+) -> list[str]:
+    """Generate an ordered batch of prompt responses.
+
+    The function prefers native batch-capable providers, then delegates explicit
+    accelerate/llama/mesh requests to ``ipfs_accelerate_py``, and finally falls
+    back to bounded parallel calls to :func:`generate_text`.
+    """
+
+    prompt_list = [str(prompt or "") for prompt in list(prompts or [])]
+    if not prompt_list:
+        return []
+
+    resolved_deps = deps or get_default_router_deps()
+    _clear_last_generation_trace()
+    effective_provider_name = _effective_llm_provider_name(provider)
+    results: list[Optional[str]] = [None] * len(prompt_list)
+    misses: list[tuple[int, str]] = []
+
+    if _response_cache_enabled():
+        for idx, prompt in enumerate(prompt_list):
+            try:
+                cache_key = _response_cache_key(
+                    provider=provider,
+                    model_name=model_name,
+                    prompt=prompt,
+                    kwargs=dict(kwargs),
+                )
+                getter = getattr(resolved_deps, "get_cached_or_remote", None)
+                cached = getter(cache_key) if callable(getter) else resolved_deps.get_cached(cache_key)
+                if isinstance(cached, str):
+                    results[idx] = cached
+                    continue
+            except Exception:
+                pass
+            misses.append((idx, prompt))
+    else:
+        misses = list(enumerate(prompt_list))
+
+    if not misses:
+        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+        return [str(result or "") for result in results]
+
+    miss_indices = [idx for idx, _prompt in misses]
+    miss_prompts = [prompt for _idx, prompt in misses]
+
+    def _cache_batch_outputs(outputs: Sequence[str], *, used_model_name: Optional[str]) -> None:
+        if not _response_cache_enabled():
+            return
+        for idx, value in zip(miss_indices, outputs):
+            try:
+                cache_key = _response_cache_key(
+                    provider=provider,
+                    model_name=used_model_name,
+                    prompt=prompt_list[idx],
+                    kwargs=dict(kwargs),
+                )
+                setter = getattr(resolved_deps, "set_cached_and_remote", None)
+                if callable(setter):
+                    setter(cache_key, str(value))
+                else:
+                    resolved_deps.set_cached(cache_key, str(value))
+            except Exception:
+                pass
+
+    backend = provider_instance
+    if backend is not None:
+        text_batch = getattr(backend, "generate_text_batch", None)
+        if callable(text_batch):
+            outputs = _normalize_text_batch_result(
+                text_batch(miss_prompts, model_name=model_name, **kwargs),
+                expected_count=len(miss_prompts),
+            )
+            _cache_batch_outputs(outputs, used_model_name=model_name)
+            for idx, value in zip(miss_indices, outputs):
+                results[idx] = value
+            _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+            return [str(result or "") for result in results]
+        generic_batch = getattr(backend, "generate_batch", None)
+        if callable(generic_batch):
+            outputs = _normalize_text_batch_result(
+                generic_batch(miss_prompts, model_name=model_name, **kwargs),
+                expected_count=len(miss_prompts),
+            )
+            _cache_batch_outputs(outputs, used_model_name=model_name)
+            for idx, value in zip(miss_indices, outputs):
+                results[idx] = value
+            _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+            return [str(result or "") for result in results]
+
+    if backend is None and _provider_supports_accelerate_batch(provider, use_mesh=use_mesh):
+        try:
+            from ipfs_accelerate_py import llm_router as accelerate_llm_router
+
+            batch_generate = getattr(accelerate_llm_router, "generate_text_batch", None)
+            if callable(batch_generate):
+                outputs = _normalize_text_batch_result(
+                    batch_generate(
+                        miss_prompts,
+                        model_name=model_name,
+                        provider=provider,
+                        deps=deps,
+                        max_workers=max_workers,
+                        use_mesh=use_mesh,
+                        **kwargs,
+                    ),
+                    expected_count=len(miss_prompts),
+                )
+                _cache_batch_outputs(outputs, used_model_name=model_name)
+                for idx, value in zip(miss_indices, outputs):
+                    results[idx] = value
+                _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+                return [str(result or "") for result in results]
+        except Exception:
+            if bool(kwargs.get("require_mesh") or kwargs.get("mesh_required")):
+                raise
+
+    backend = backend or get_llm_provider(provider, deps=resolved_deps)
+
+    text_batch = getattr(backend, "generate_text_batch", None)
+    if callable(text_batch):
+        outputs = _normalize_text_batch_result(
+            text_batch(miss_prompts, model_name=model_name, **kwargs),
+            expected_count=len(miss_prompts),
+        )
+        _cache_batch_outputs(outputs, used_model_name=model_name)
+        for idx, value in zip(miss_indices, outputs):
+            results[idx] = value
+        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+        return [str(result or "") for result in results]
+
+    generic_batch = getattr(backend, "generate_batch", None)
+    if callable(generic_batch):
+        outputs = _normalize_text_batch_result(
+            generic_batch(miss_prompts, model_name=model_name, **kwargs),
+            expected_count=len(miss_prompts),
+        )
+        _cache_batch_outputs(outputs, used_model_name=model_name)
+        for idx, value in zip(miss_indices, outputs):
+            results[idx] = value
+        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+        return [str(result or "") for result in results]
+
+    def _generate_one(prompt: str) -> str:
+        return str(
+            generate_text(
+                prompt,
+                model_name=model_name,
+                provider=provider,
+                provider_instance=backend,
+                deps=resolved_deps,
+                allow_local_fallback=allow_local_fallback,
+                **kwargs,
+            )
+        )
+
+    workers = _batch_worker_count(
+        size=len(miss_prompts),
+        max_workers=max_workers,
+        provider=provider,
+        default_cap=4,
+    )
+    if workers <= 1:
+        outputs = [_generate_one(prompt) for prompt in miss_prompts]
+    else:
+        outputs_by_miss: list[Optional[str]] = [None] * len(miss_prompts)
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(_generate_one, prompt): miss_idx
+                for miss_idx, prompt in enumerate(miss_prompts)
+            }
+            for future in as_completed(futures):
+                outputs_by_miss[futures[future]] = future.result()
+        outputs = [str(value or "") for value in outputs_by_miss]
+
+    _cache_batch_outputs(outputs, used_model_name=model_name)
+    for idx, value in zip(miss_indices, outputs):
+        results[idx] = value
+    _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+    return [str(result or "") for result in results]
 
 
 def clear_llm_router_caches() -> None:

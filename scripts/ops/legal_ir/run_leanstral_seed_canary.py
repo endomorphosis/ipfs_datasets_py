@@ -22,14 +22,20 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+REPO_ROOT = Path(__file__).resolve().parents[3]
+ACCELERATE_ROOT = REPO_ROOT.parent / "ipfs_accelerate_py"
+for import_root in (SCRIPT_DIR, ACCELERATE_ROOT, REPO_ROOT):
+    if import_root.exists():
+        import_root_text = str(import_root)
+        if import_root_text not in sys.path:
+            sys.path.insert(0, import_root_text)
 
 from run_leanstral_shadow_canary import (  # noqa: E402
     GUARDRAIL_CODES as SHADOW_GUARDRAIL_CODES,
     ShadowCanaryConfig,
     build_dry_run_fixture_records,
     load_disagreement_records,
+    resolve_disagreement_input_paths,
     run_shadow_canary,
 )
 from ipfs_datasets_py.logic.modal.leanstral_audit import canonical_sha256  # noqa: E402
@@ -1907,7 +1913,15 @@ def _json_ready(value: Any) -> Any:
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", action="append", default=[], help="JSON/JSONL packet file or directory")
+    parser.add_argument(
+        "--input",
+        action="append",
+        default=[],
+        help=(
+            "JSON/JSONL packet file or directory; use 'latest' for the newest "
+            "workspace/test-logs/*.canonical-disagreements.jsonl export."
+        ),
+    )
     parser.add_argument("--max-todos", type=int, default=MAX_SEED_TODOS)
     parser.add_argument("--cache-dir", default="", help="Leanstral audit cache directory")
     parser.add_argument("--report-path", default=str(DEFAULT_REPORT_PATH))
@@ -1921,8 +1935,13 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
     dry_run = True if args.dry_run or not args.run_seed else False
-    records = load_disagreement_records(args.input) if args.input else []
-    if not records and dry_run:
+    input_paths = resolve_disagreement_input_paths(
+        args.input,
+        min_records=max(1, min(args.max_todos, MAX_SEED_TODOS)),
+    )
+    explicit_input_requested = bool(args.input)
+    records = load_disagreement_records(input_paths) if input_paths else []
+    if not records and dry_run and not explicit_input_requested:
         records = build_dry_run_fixture_records(
             count=max(1, min(args.max_todos, MAX_SEED_TODOS))
         )

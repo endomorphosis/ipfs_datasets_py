@@ -157,6 +157,60 @@ OWNED_LEANSTRAL_RULE_GAP_SURFACES: Dict[str, LeanstralOwnedSurface] = {
         mutation_cases=("unsupported_modal_system",),
         target_file_lane="external_provers",
     ),
+    "TDFOL.prover": LeanstralOwnedSurface(
+        component="TDFOL.prover",
+        action="repair_tdfol_bridge_parse_and_proof_gate",
+        allowed_paths=(
+            "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
+            "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+            "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
+        ),
+        target_metrics=(
+            "tdfol_parse_failure_ratio",
+            "legal_ir_multiview_proof_failure_ratio",
+        ),
+        theorem_templates=(
+            "proof_route_is_distinct_from_proof",
+            "source_provenance_preserved",
+        ),
+        mutation_cases=("unsupported_quantifier_scope", "alter_predicate_arity"),
+        target_file_lane="tdfol_prover",
+    ),
+    "CEC.native": LeanstralOwnedSurface(
+        component="CEC.native",
+        action="repair_cec_dcec_bridge_projection",
+        allowed_paths=(
+            "ipfs_datasets_py/logic/bridge/cec_dcec.py",
+            "ipfs_datasets_py/logic/CEC/native/dcec_parsing.py",
+            "ipfs_datasets_py/logic/CEC/native/event_calculus.py",
+        ),
+        target_metrics=(
+            "cec_event_projection_loss",
+            "legal_ir_view_cross_entropy_loss",
+        ),
+        theorem_templates=("event_interval_preserved", "source_provenance_preserved"),
+        mutation_cases=("alter_event_time", "remove_event_precondition"),
+        target_file_lane="cec_native",
+    ),
+    "zkp.circuits": LeanstralOwnedSurface(
+        component="zkp.circuits",
+        action="repair_zkp_attestation_bridge",
+        allowed_paths=(
+            "ipfs_datasets_py/logic/bridge/zkp_attestation.py",
+            "ipfs_datasets_py/logic/TDFOL/zkp_integration.py",
+            "ipfs_datasets_py/logic/zkp/zkp_prover.py",
+        ),
+        target_metrics=(
+            "zkp_attestation_failure_ratio",
+            "legal_ir_multiview_graph_failure_penalty",
+        ),
+        theorem_templates=(
+            "proof_route_is_distinct_from_proof",
+            "source_provenance_preserved",
+        ),
+        mutation_cases=("tamper_attestation_hash", "remove_frame_relation"),
+        target_file_lane="zkp_circuits",
+    ),
     "knowledge_graphs.neo4j_compat": LeanstralOwnedSurface(
         component="knowledge_graphs.neo4j_compat",
         action="repair_multiview_legal_ir_graph_projection",
@@ -191,7 +245,9 @@ class LeanstralRuleGapEvidence:
     confidence: float
     proof_obligation_ids: Sequence[str]
     affected_ir_families: Sequence[str]
+    drafted_logic_candidates: Sequence[Dict[str, Any]] = field(default_factory=tuple)
     examples: Sequence[Dict[str, Any]] = field(default_factory=tuple)
+    metric_attribution: Mapping[str, Any] = field(default_factory=dict)
     reasons: Sequence[str] = field(default_factory=tuple)
     verified_by: Sequence[str] = field(default_factory=tuple)
 
@@ -200,8 +256,12 @@ class LeanstralRuleGapEvidence:
             "affected_ir_families": list(self.affected_ir_families),
             "classification": self.classification,
             "confidence": self.confidence,
+            "drafted_logic_candidates": [
+                dict(candidate) for candidate in self.drafted_logic_candidates
+            ],
             "evidence_id": self.evidence_id,
             "examples": [dict(example) for example in self.examples],
+            "metric_attribution": _json_ready(self.metric_attribution),
             "proof_obligation_ids": list(self.proof_obligation_ids),
             "reasons": list(self.reasons),
             "request_id": self.request_id,
@@ -437,6 +497,7 @@ class _AuditRecord:
     response: Optional[LeanstralAuditResponse]
     verification: Any
     request_id: str = ""
+    request: Mapping[str, Any] = field(default_factory=dict)
 
 
 def build_leanstral_rule_gap_report(
@@ -495,12 +556,20 @@ def aggregate_verified_audits(
 
         accepted = _verification_accepted(verification)
         is_issue = response.classification in ISSUE_AUDIT_CLASSIFICATIONS
-        rule_key = _rule_key(response.missing_semantic_rule)
+        families = _families(response)
+        rule_key, signature_families = _rule_identity(
+            response,
+            surface=surface,
+            families=families,
+        )
         if not rule_key:
             rejected.append(_rejected_audit(record, ("missing_rule_key",)))
             continue
-        families = _families(response)
-        signature = _gap_signature(rule_key, surface.component, families)
+        signature = _gap_signature(
+            rule_key,
+            surface.component,
+            signature_families,
+        )
         evidence = _evidence_from_record(
             record,
             role="supporting" if accepted and is_issue else "conflicting",
@@ -516,6 +585,10 @@ def aggregate_verified_audits(
                     families=families,
                 )
                 accumulators[signature] = accumulator
+            else:
+                accumulator.families = _dedupe_strings(
+                    [*accumulator.families, *families]
+                )
             accumulator.supporting.append(evidence)
             supporting_count += 1
             for conflict in pending_conflicts.pop(signature, []):
@@ -705,6 +778,24 @@ def leanstral_compiler_target_from_patch_record(record: Any) -> Optional[Dict[st
     if not _leanstral_patch_verified(metadata, validation):
         return None
     target_metrics = _dedupe_strings(_sequence_values(metadata.get("target_metrics")))
+    attribution = (
+        metadata.get("leanstral_metric_attribution")
+        if isinstance(metadata.get("leanstral_metric_attribution"), Mapping)
+        else {}
+    )
+    pre_patch_metrics = _numeric_metric_map(
+        metadata.get("pre_patch_metrics")
+        or attribution.get("pre_patch_metrics")
+        or {}
+    )
+    post_patch_metrics = _numeric_metric_map(
+        metadata.get("post_patch_metrics")
+        or attribution.get("post_patch_metrics")
+        or validation.get("post_patch_metrics")
+        or validation.get("metrics_after")
+        or {}
+    )
+    metric_deltas = _metric_deltas(validation)
     return {
         "allowed_paths": list(_dedupe_strings(_sequence_values(metadata.get("allowed_paths")))),
         "audit_request_ids": list(
@@ -716,9 +807,28 @@ def leanstral_compiler_target_from_patch_record(record: Any) -> Optional[Dict[st
         "evidence_ids": list(_dedupe_strings(_sequence_values(metadata.get("evidence_ids")))),
         "feature_cluster_id": _feature_cluster_id(data, metadata),
         "gap_id": str(metadata.get("leanstral_gap_id") or ""),
+        "leanstral_drafted_logic_candidates": _drafted_logic_candidates_from_metadata(
+            metadata
+        ),
+        "leanstral_guidance_mode": str(
+            metadata.get("leanstral_guidance_mode")
+            or "draft_logic_guidance_only"
+        ),
         "mutation_cases": list(_dedupe_strings(_sequence_values(metadata.get("mutation_cases")))),
         "normalized_rule_key": str(metadata.get("normalized_rule_key") or ""),
         "owned_ast_scope": str(metadata.get("owned_ast_scope") or metadata.get("program_synthesis_scope") or ""),
+        "metric_attribution": {
+            "metric_deltas": metric_deltas,
+            "post_patch_metrics": post_patch_metrics,
+            "pre_patch_metrics": pre_patch_metrics,
+            "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+            "source": "leanstral_patch_feedback",
+            "status": "post_patch_observed"
+            if post_patch_metrics or metric_deltas
+            else "pre_patch_observed"
+            if pre_patch_metrics
+            else "missing_pre_patch_metrics",
+        },
         "target_component": str(metadata.get("target_component") or ""),
         "target_metrics": list(target_metrics),
         "todo_id": str(data.get("todo_id") or ""),
@@ -965,6 +1075,57 @@ def _metric_deltas(validation: Mapping[str, Any]) -> Dict[str, float]:
     return dict(sorted(deltas.items()))
 
 
+def _drafted_logic_candidates_from_metadata(
+    metadata: Mapping[str, Any],
+    *,
+    max_candidates: int = 12,
+) -> List[Dict[str, Any]]:
+    raw = metadata.get("leanstral_drafted_logic_candidates")
+    if raw is None:
+        raw = metadata.get("drafted_logic_candidates")
+    if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes, bytearray)):
+        return []
+    candidates: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    allowed_keys = {
+        "audit_evidence_id",
+        "candidate",
+        "compiler_surface",
+        "confidence",
+        "evidence_id",
+        "example_id",
+        "guidance_only",
+        "intended_use",
+        "logic_family",
+        "proof_obligation_id",
+        "request_id",
+        "source_span_hash",
+        "target_metric",
+    }
+    for item in raw:
+        if not isinstance(item, Mapping):
+            continue
+        candidate_text = _bounded_string(item.get("candidate"), 240)
+        if not candidate_text:
+            continue
+        payload = {
+            str(key): value
+            for key, value in dict(item).items()
+            if str(key) in allowed_keys
+        }
+        payload["candidate"] = candidate_text
+        payload["guidance_only"] = True
+        payload["intended_use"] = "guidance_only"
+        identity = json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        candidates.append(payload)
+        if len(candidates) >= max(0, int(max_candidates)):
+            break
+    return candidates
+
+
 def _sequence_values(value: Any) -> List[str]:
     if value is None:
         return []
@@ -1036,11 +1197,15 @@ def _validation_set(
     for evidence in supporting:
         examples.extend(dict(example) for example in evidence.examples)
     examples = _dedupe_examples(examples)[:max_examples]
+    metric_attribution = _merge_metric_attributions(
+        evidence.metric_attribution for evidence in supporting
+    )
     return {
         "allowed_paths": list(surface.allowed_paths),
         "affected_ir_families": list(families),
         "formal_validity_checks": list(surface.theorem_templates),
         "held_out_compiler_ir_metrics": list(surface.target_metrics),
+        "metric_attribution": metric_attribution,
         "mutation_cases": list(surface.mutation_cases),
         "proof_obligation_ids": list(proof_obligation_ids),
         "regression_examples": examples,
@@ -1082,6 +1247,7 @@ def _surface_for_response(
             rejected_reasons.append("free_form_architecture_task")
             continue
         component = _normalize_component(surface)
+        component = _owned_surface_alias(component, surface, response)
         if component in OWNED_LEANSTRAL_RULE_GAP_SURFACES:
             owned = OWNED_LEANSTRAL_RULE_GAP_SURFACES[component]
             action = str(surface.get("action", surface.get("operation", ""))).strip()
@@ -1121,6 +1287,32 @@ def _infer_surface_from_response(
 ) -> Optional[LeanstralOwnedSurface]:
     families = {family.lower() for family in response.affected_ir_families}
     rule_text = json.dumps(response.missing_semantic_rule, ensure_ascii=True).lower()
+    if (
+        "tdfol" in families
+        or "tdfol" in rule_text
+        or "t.d.fol" in rule_text
+        or "first-order" in rule_text
+        or "temporal deontic" in rule_text
+    ):
+        return OWNED_LEANSTRAL_RULE_GAP_SURFACES["TDFOL.prover"]
+    if (
+        "cec" in families
+        or "dcec" in families
+        or "event_calculus" in families
+        or "event calculus" in rule_text
+        or "dcec" in rule_text
+        or "event interval" in rule_text
+    ):
+        return OWNED_LEANSTRAL_RULE_GAP_SURFACES["CEC.native"]
+    if (
+        "zkp" in families
+        or "zkp" in rule_text
+        or "zero knowledge" in rule_text
+        or "zero-knowledge" in rule_text
+        or "attestation" in rule_text
+        or "circuit" in rule_text
+    ):
+        return OWNED_LEANSTRAL_RULE_GAP_SURFACES["zkp.circuits"]
     if "proof" in rule_text or "prover" in rule_text:
         return OWNED_LEANSTRAL_RULE_GAP_SURFACES["external_provers.router"]
     if "graph" in rule_text:
@@ -1135,7 +1327,7 @@ def _infer_surface_from_response(
 def _normalize_component(surface: Mapping[str, Any]) -> str:
     component = str(surface.get("component", surface.get("target_component", ""))).strip()
     path_text = " ".join(str(path) for path in surface.get("paths", ()) or ())
-    lowered = component.lower().replace("_", ".").replace("-", ".")
+    lowered = re.sub(r"[^a-z0-9]+", ".", component.lower()).strip(".")
     aliases = {
         "compiler": "modal.compiler",
         "modal.compiler.parser": "modal.compiler",
@@ -1152,10 +1344,30 @@ def _normalize_component(surface: Mapping[str, Any]) -> str:
         "deontic.ir": "deontic.ir",
         "external.provers.router": "external_provers.router",
         "external_provers.router": "external_provers.router",
+        "external.prover": "external_provers.router",
+        "external.prover.router": "external_provers.router",
         "knowledge.graphs.neo4j.compat": "knowledge_graphs.neo4j_compat",
         "knowledge_graphs.neo4j_compat": "knowledge_graphs.neo4j_compat",
+        "frame.logic": "modal.frame_logic",
+        "flogic": "modal.frame_logic",
         "modal.frame.logic": "modal.frame_logic",
         "modal.frame_logic": "modal.frame_logic",
+        "prover": "external_provers.router",
+        "tdfol": "TDFOL.prover",
+        "tdfol.prover": "TDFOL.prover",
+        "t.d.fol": "TDFOL.prover",
+        "t.d.fol.prover": "TDFOL.prover",
+        "cec": "CEC.native",
+        "cec.native": "CEC.native",
+        "dcec": "CEC.native",
+        "event.calculus": "CEC.native",
+        "event.calculus.native": "CEC.native",
+        "zkp": "zkp.circuits",
+        "zkp.circuit": "zkp.circuits",
+        "zkp.circuits": "zkp.circuits",
+        "zero.knowledge": "zkp.circuits",
+        "zero.knowledge.circuit": "zkp.circuits",
+        "zero.knowledge.circuits": "zkp.circuits",
     }
     if lowered in aliases:
         return aliases[lowered]
@@ -1167,6 +1379,57 @@ def _normalize_component(surface: Mapping[str, Any]) -> str:
         return "modal.compiler"
     if "codec.py" in path_text:
         return "modal.compiler.registry"
+    return component
+
+
+def _owned_surface_alias(
+    component: str,
+    surface: Mapping[str, Any],
+    response: LeanstralAuditResponse,
+) -> str:
+    normalized = component.lower().replace("_", ".").replace("-", ".")
+    raw_normalized = str(
+        surface.get("component", surface.get("target_component", ""))
+    ).strip().lower()
+    raw_normalized = re.sub(r"[^a-z0-9]+", ".", raw_normalized).strip(".")
+    rule_text = json.dumps(response.missing_semantic_rule, ensure_ascii=True).lower()
+    surface_text = _surface_text(surface).lower()
+    combined = f"{raw_normalized} {normalized} {surface_text} {rule_text}"
+    if raw_normalized in {"tdfol", "tdfol.prover", "t.d.fol", "t.d.fol.prover"}:
+        if any(
+            token in combined
+            for token in (
+                "decompil",
+                "family preservation",
+                "frame-family",
+                "reconstruct",
+                "round trip",
+                "round-trip",
+            )
+        ):
+            return "modal.ir_decompiler"
+        return "TDFOL.prover"
+    if raw_normalized in {
+        "cec",
+        "cec.native",
+        "dcec",
+        "event.calculus",
+        "event.calculus.native",
+    }:
+        return "CEC.native"
+    if raw_normalized in {
+        "zkp",
+        "zkp.circuit",
+        "zkp.circuits",
+        "zero.knowledge",
+        "zero.knowledge.circuit",
+        "zero.knowledge.circuits",
+    }:
+        return "zkp.circuits"
+    if raw_normalized in {"external.prover", "external.prover.router", "prover"}:
+        return "external_provers.router"
+    if raw_normalized in {"flogic", "frame.logic"}:
+        return "modal.frame_logic"
     return component
 
 
@@ -1191,7 +1454,12 @@ def _coerce_audit_record(item: Any) -> _AuditRecord:
         values = list(item)
         if len(values) >= 3:
             request_id = str(getattr(values[0], "request_id", "") or "")
-            return _AuditRecord(_coerce_response(values[1]), values[2], request_id=request_id)
+            return _AuditRecord(
+                _coerce_response(values[1]),
+                values[2],
+                request_id=request_id,
+                request=_coerce_request_payload(values[0]),
+            )
         if len(values) == 2:
             return _AuditRecord(_coerce_response(values[0]), values[1])
     if isinstance(item, Mapping):
@@ -1207,7 +1475,12 @@ def _coerce_audit_record(item: Any) -> _AuditRecord:
             or item.get("result")
         )
         request_id = str(item.get("request_id", "")).strip()
-        return _AuditRecord(response, verification, request_id=request_id)
+        return _AuditRecord(
+            response,
+            verification,
+            request_id=request_id,
+            request=_coerce_request_payload(item.get("request") or {}),
+        )
     response = _coerce_response(getattr(item, "response", None))
     verification = getattr(item, "verification", None) or getattr(item, "verification_result", None)
     request_id = str(getattr(item, "request_id", "") or "").strip()
@@ -1220,6 +1493,15 @@ def _coerce_response(value: Any) -> Optional[LeanstralAuditResponse]:
     if isinstance(value, Mapping):
         return LeanstralAuditResponse.from_mapping(value)
     return None
+
+
+def _coerce_request_payload(value: Any) -> Dict[str, Any]:
+    if hasattr(value, "to_dict"):
+        payload = value.to_dict()
+        return dict(payload) if isinstance(payload, Mapping) else {}
+    if isinstance(value, Mapping):
+        return dict(value)
+    return {}
 
 
 def _verification_accepted(value: Any) -> bool:
@@ -1328,10 +1610,81 @@ def _evidence_from_record(
         confidence=_finite_float(response.confidence),
         proof_obligation_ids=_dedupe_strings(response.proof_obligation_ids),
         affected_ir_families=_families(response),
-        examples=tuple(_examples_from_response(response)[:max_examples]),
+        drafted_logic_candidates=tuple(
+            _drafted_logic_candidates_from_response(
+                response,
+                audit_evidence_id=evidence_id,
+            )
+        ),
+        examples=tuple(_examples_from_record(record)[:max_examples]),
+        metric_attribution=_metric_attribution_from_record(record),
         reasons=_verification_reasons(record.verification),
         verified_by=_verification_verified_by(record.verification),
     )
+
+
+def _drafted_logic_candidates_from_response(
+    response: LeanstralAuditResponse,
+    *,
+    audit_evidence_id: str,
+    max_candidates: int = 6,
+) -> List[Dict[str, Any]]:
+    candidates: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    allowed_obligations = set(_dedupe_strings(response.proof_obligation_ids))
+    for item in response.drafted_logic_candidates or ():
+        if not isinstance(item, Mapping):
+            continue
+        candidate_text = _bounded_string(item.get("candidate"), 240)
+        if not candidate_text:
+            continue
+        proof_obligation_id = str(item.get("proof_obligation_id") or "").strip()
+        if proof_obligation_id and proof_obligation_id not in allowed_obligations:
+            continue
+        if not proof_obligation_id and response.proof_obligation_ids:
+            proof_obligation_id = str(response.proof_obligation_ids[0])
+        payload: Dict[str, Any] = {
+            "audit_evidence_id": audit_evidence_id,
+            "candidate": candidate_text,
+            "guidance_only": True,
+            "intended_use": "guidance_only",
+            "logic_family": _slug(
+                str(item.get("logic_family") or item.get("family") or "legal_ir")
+            )
+            or "legal_ir",
+            "request_id": response.request_id,
+        }
+        if proof_obligation_id:
+            payload["proof_obligation_id"] = proof_obligation_id
+        for key in (
+            "compiler_surface",
+            "evidence_id",
+            "example_id",
+            "source_span_hash",
+            "target_metric",
+        ):
+            text = _bounded_string(item.get(key), 140)
+            if text:
+                payload[key] = text
+        confidence = _finite_float(item.get("confidence"))
+        if confidence:
+            payload["confidence"] = confidence
+        identity = json.dumps(
+            {
+                "candidate": payload.get("candidate"),
+                "logic_family": payload.get("logic_family"),
+                "proof_obligation_id": payload.get("proof_obligation_id"),
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+        )
+        if identity in seen:
+            continue
+        seen.add(identity)
+        candidates.append(payload)
+        if len(candidates) >= max(0, int(max_candidates)):
+            break
+    return candidates
 
 
 def _rejected_audit(
@@ -1377,6 +1730,191 @@ def _examples_from_response(response: LeanstralAuditResponse) -> List[Dict[str, 
     return examples
 
 
+def _examples_from_record(record: _AuditRecord) -> List[Dict[str, Any]]:
+    response = record.response
+    if response is None:
+        return []
+    examples = _examples_from_response(response)
+    response_ids = _response_example_ids(response)
+    for example in _request_referenced_examples(record):
+        ids = {
+            str(example.get("example_id") or "").strip(),
+            str(example.get("sample_id") or "").strip(),
+            str(example.get("evidence_id") or "").strip(),
+        }
+        if response_ids and not (response_ids & {value for value in ids if value}):
+            continue
+        payload = {"example_role": "request_reference", **dict(example)}
+        payload.setdefault("example_hash", canonical_sha256(payload))
+        examples.append(payload)
+    return _dedupe_examples(examples)
+
+
+def _request_referenced_examples(record: _AuditRecord) -> List[Dict[str, Any]]:
+    evidence = dict(record.request or {}).get("evidence")
+    if not isinstance(evidence, Mapping):
+        return []
+    explicit = [
+        dict(item)
+        for item in evidence.get("referenced_examples", []) or []
+        if isinstance(item, Mapping)
+    ]
+    if explicit:
+        return explicit
+    packets: List[Dict[str, Any]] = []
+    for packet in evidence.get("evidence_packets", []) or []:
+        if not isinstance(packet, Mapping):
+            continue
+        sample_hashes = packet.get("sample_hashes")
+        if not isinstance(sample_hashes, Mapping):
+            sample_hashes = {}
+        span_hashes = sample_hashes.get("source_span_hashes")
+        packets.append(
+            {
+                "compiler_decompiler_metrics": dict(
+                    packet.get("compiler_decompiler_metrics") or {}
+                )
+                if isinstance(packet.get("compiler_decompiler_metrics"), Mapping)
+                else {},
+                "evidence_id": str(packet.get("evidence_id") or ""),
+                "expected_modal_ir_hash": str(sample_hashes.get("modal_ir_hash") or ""),
+                "sample_id": str(sample_hashes.get("sample_id") or ""),
+                "source_span_hashes": dict(span_hashes)
+                if isinstance(span_hashes, Mapping)
+                else {},
+            }
+        )
+    return packets
+
+
+def _response_example_ids(response: LeanstralAuditResponse) -> set[str]:
+    values: set[str] = set()
+    for payload in (response.counterexample, response.witness):
+        if not isinstance(payload, Mapping):
+            continue
+        for key in ("evidence_id", "example_id", "sample_id", "id"):
+            value = str(payload.get(key) or "").strip()
+            if value:
+                values.add(value)
+    return values
+
+
+def _metric_attribution_from_record(record: _AuditRecord) -> Dict[str, Any]:
+    pre_patch_metrics: Dict[str, float] = {}
+    evidence_ids: List[str] = []
+    for example in _examples_from_record(record):
+        evidence_id = str(example.get("evidence_id") or "").strip()
+        if evidence_id:
+            evidence_ids.append(evidence_id)
+        pre_patch_metrics.update(
+            _numeric_metric_map(
+                example.get("compiler_decompiler_metrics")
+                or example.get("pre_patch_metrics")
+                or example.get("metric_baseline")
+                or example.get("metrics")
+                or {}
+            )
+        )
+    response = record.response
+    if response is not None:
+        for payload in (response.counterexample, response.witness):
+            if isinstance(payload, Mapping):
+                pre_patch_metrics.update(
+                    _numeric_metric_map(
+                        payload.get("compiler_decompiler_metrics")
+                        or payload.get("pre_patch_metrics")
+                        or payload.get("metric_baseline")
+                        or payload.get("metrics")
+                        or {}
+                    )
+                )
+    return {
+        "evidence_ids": list(_dedupe_strings(evidence_ids)),
+        "metric_deltas": {},
+        "post_patch_metrics": {},
+        "pre_patch_metrics": dict(sorted(pre_patch_metrics.items())),
+        "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+        "source": "leanstral_audit_evidence",
+        "status": "pre_patch_observed"
+        if pre_patch_metrics
+        else "missing_pre_patch_metrics",
+    }
+
+
+def _merge_metric_attributions(values: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
+    pre_patch_metrics: Dict[str, float] = {}
+    post_patch_metrics: Dict[str, float] = {}
+    metric_deltas: Dict[str, float] = {}
+    evidence_ids: List[str] = []
+    statuses: List[str] = []
+    for value in values:
+        if not isinstance(value, Mapping):
+            continue
+        pre_patch_metrics.update(_numeric_metric_map(value.get("pre_patch_metrics") or {}))
+        post_patch_metrics.update(_numeric_metric_map(value.get("post_patch_metrics") or {}))
+        metric_deltas.update(_numeric_metric_map(value.get("metric_deltas") or {}))
+        evidence_ids.extend(_sequence_values(value.get("evidence_ids")))
+        status = str(value.get("status") or "").strip()
+        if status:
+            statuses.append(status)
+    return {
+        "evidence_ids": list(_dedupe_strings(evidence_ids)),
+        "metric_deltas": dict(sorted(metric_deltas.items())),
+        "post_patch_metrics": dict(sorted(post_patch_metrics.items())),
+        "pre_patch_metrics": dict(sorted(pre_patch_metrics.items())),
+        "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+        "source": "leanstral_rule_gap_report",
+        "status": "pre_patch_observed"
+        if pre_patch_metrics
+        else (statuses[0] if statuses else "missing_pre_patch_metrics"),
+    }
+
+
+def _numeric_metric_map(value: Any, prefix: str = "") -> Dict[str, float]:
+    metrics: Dict[str, float] = {}
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            child_key = f"{prefix}.{key}" if prefix else str(key)
+            metrics.update(_numeric_metric_map(item, child_key))
+        return metrics
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        for index, item in enumerate(value):
+            child_key = f"{prefix}.{index}" if prefix else str(index)
+            metrics.update(_numeric_metric_map(item, child_key))
+        return metrics
+    if not prefix:
+        return metrics
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return metrics
+    if math.isnan(number) or math.isinf(number):
+        return metrics
+    key = prefix.replace(" ", "_")
+    if _looks_like_metric_key(key):
+        metrics[key] = number
+    return metrics
+
+
+def _looks_like_metric_key(key: str) -> bool:
+    lowered = key.lower()
+    return any(
+        token in lowered
+        for token in (
+            "ce",
+            "cosine",
+            "cross_entropy",
+            "loss",
+            "metric",
+            "precision",
+            "ratio",
+            "recall",
+            "similarity",
+            "validation",
+        )
+    )
+
+
 def _dedupe_evidence(
     evidence: Sequence[LeanstralRuleGapEvidence],
 ) -> List[LeanstralRuleGapEvidence]:
@@ -1396,10 +1934,12 @@ def _dedupe_examples(examples: Sequence[Mapping[str, Any]]) -> List[Dict[str, An
 
 
 def _families(response: LeanstralAuditResponse) -> Sequence[str]:
+    component_labels = {"compiler", "decoder", "decompiler", "encoder", "parser"}
     families = _dedupe_strings(
         str(family).strip().lower()
         for family in response.affected_ir_families
         if str(family).strip()
+        and str(family).strip().lower() not in component_labels
     )
     return families or ("modal",)
 
@@ -1413,6 +1953,57 @@ def _rule_key(rule: Mapping[str, Any]) -> str:
     if not description:
         return ""
     return _slug(" ".join(description.split()[:12]))
+
+
+def _rule_identity(
+    response: LeanstralAuditResponse,
+    *,
+    surface: LeanstralOwnedSurface,
+    families: Sequence[str],
+) -> tuple[str, Sequence[str]]:
+    """Return a stable semantic identity and optional family disambiguator.
+
+    Model-written descriptions are frequently paraphrases of the same defect.
+    Explicit rule IDs are already stable. For decompiler family-preservation
+    findings, derive an identity from the expected source family so shifts to
+    different wrong families aggregate into one evidence-rich compiler task.
+    Other free-form findings retain their family set as a conservative guard.
+    """
+    rule = response.missing_semantic_rule
+    for key in ("rule_id", "id", "name", "semantic_rule_id"):
+        value = str(rule.get(key, "")).strip()
+        if value:
+            return _slug(value), ()
+
+    description = str(rule.get("description", rule.get("summary", ""))).strip()
+    normalized_description = description.lower()
+    if (
+        surface.component == "modal.ir_decompiler"
+        and "preserv" in normalized_description
+        and (
+            "family" in normalized_description
+            or "classification" in normalized_description
+        )
+    ):
+        counterexample = response.counterexample
+        expected = (
+            str(counterexample.get("expected", ""))
+            if isinstance(counterexample, Mapping)
+            else ""
+        ).lower()
+        search_text = expected or normalized_description
+        ignored = {"compiler", "decompiler", "modal", "unknown"}
+        positioned = [
+            (search_text.find(str(family).lower()), str(family).lower())
+            for family in families
+            if str(family).lower() not in ignored
+            and search_text.find(str(family).lower()) >= 0
+        ]
+        if positioned:
+            _position, source_family = min(positioned)
+            return _slug(f"round_trip_family_preservation:{source_family}"), ()
+
+    return _rule_key(rule), tuple(families)
 
 
 def _gap_signature(rule_key: str, component: str, families: Sequence[str]) -> str:
@@ -1437,6 +2028,13 @@ def _gap_title(response: LeanstralAuditResponse, surface: LeanstralOwnedSurface)
 def _slug(value: str) -> str:
     slug = _TOKEN_PATTERN.sub("_", value.lower()).strip("_")
     return slug[:96]
+
+
+def _bounded_string(value: Any, max_chars: int) -> str:
+    text = str(value or "").strip()
+    if len(text) <= max(0, int(max_chars)):
+        return text
+    return text[: max(0, int(max_chars))].rstrip()
 
 
 def _finite_float(value: Any) -> float:

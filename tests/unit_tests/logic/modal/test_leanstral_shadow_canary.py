@@ -38,10 +38,80 @@ RealShadowCanaryConfig = _canary.RealShadowCanaryConfig
 _build_audit_request = _canary._build_audit_request
 _verifier_reference_from_row = _canary._verifier_reference_from_row
 build_dry_run_fixture_records = _canary.build_dry_run_fixture_records
+discover_latest_disagreement_inputs = _canary.discover_latest_disagreement_inputs
 render_markdown_report = _canary.render_markdown_report
+resolve_disagreement_input_paths = _canary.resolve_disagreement_input_paths
 run_real_shadow_canary = _canary.run_real_shadow_canary
 run_shadow_canary = _canary.run_shadow_canary
 write_markdown_report = _canary.write_markdown_report
+
+
+def test_real_shadow_canary_uses_bounded_cached_lean_defaults() -> None:
+    verifier = RealShadowCanaryConfig(run_lean=True).verifier_config()
+
+    assert verifier.lean_max_formulas == 12
+    assert verifier.lean_parallel_workers == 2
+    assert verifier.lean_slice_size == 6
+    assert verifier.lean_timeout_seconds == 30.0
+    assert verifier.lean_proof_cache_path
+    assert verifier.modal_bridge_require_proof is False
+
+
+def test_real_shadow_canary_passes_provider_fallbacks_and_repair_retries() -> None:
+    worker = RealShadowCanaryConfig(
+        provider="leanstral_local",
+        provider_fallbacks="mistral_vibe",
+        validation_repair_retries=2,
+    ).worker_config()
+
+    assert worker.provider == "leanstral_local"
+    assert worker.provider_fallbacks == "mistral_vibe"
+    assert worker.evidence_refresh_policy == "latest_compiler_snapshot"
+    assert worker.max_evidence_packets_per_item == 1
+    assert worker.validation_repair_retries == 2
+    assert worker.provider_candidates() == ("leanstral_local", "mistral_vibe")
+
+
+def test_latest_disagreement_input_resolves_newest_nonempty_export(tmp_path) -> None:
+    older = tmp_path / "older.canonical-disagreements.jsonl"
+    newer = tmp_path / "newer.canonical-disagreements.jsonl"
+    empty = tmp_path / "empty.canonical-disagreements.jsonl"
+    older.write_text("{}\n", encoding="utf-8")
+    time.sleep(0.01)
+    newer.write_text("{}\n", encoding="utf-8")
+    empty.write_text("", encoding="utf-8")
+
+    assert discover_latest_disagreement_inputs(tmp_path) == [str(newer)]
+
+
+def test_latest_disagreement_input_honors_minimum_record_count(tmp_path) -> None:
+    production = tmp_path / "production.canonical-disagreements.jsonl"
+    smoke = tmp_path / "smoke.canonical-disagreements.jsonl"
+    production.write_text("\n".join("{}" for _ in range(25)) + "\n", encoding="utf-8")
+    time.sleep(0.01)
+    smoke.write_text("\n".join("{}" for _ in range(4)) + "\n", encoding="utf-8")
+
+    assert discover_latest_disagreement_inputs(tmp_path, min_records=25) == [
+        str(production)
+    ]
+    assert discover_latest_disagreement_inputs(tmp_path, min_records=4) == [
+        str(smoke)
+    ]
+
+
+def test_latest_disagreement_input_sentinel_keeps_explicit_paths(tmp_path) -> None:
+    packet_path = tmp_path / "packets.canonical-disagreements.jsonl"
+    explicit_path = tmp_path / "explicit.jsonl"
+    packet_path.write_text("{}\n", encoding="utf-8")
+
+    original_log_dir = _canary.DEFAULT_CANONICAL_PACKET_LOG_DIR
+    try:
+        _canary.DEFAULT_CANONICAL_PACKET_LOG_DIR = tmp_path
+        resolved = resolve_disagreement_input_paths(["latest", explicit_path])
+    finally:
+        _canary.DEFAULT_CANONICAL_PACKET_LOG_DIR = original_log_dir
+
+    assert resolved == [str(packet_path), str(explicit_path)]
 
 
 def _records(count: int = 6):
@@ -421,6 +491,131 @@ def test_real_shadow_canary_limits_audits_without_reducing_packet_validation(tmp
     assert len(result.audits) == 1
 
 
+def test_real_shadow_canary_selects_latest_snapshot_before_record_cap(tmp_path) -> None:
+    older = [
+        _real_packet(
+            index,
+            state_hash="state-old",
+            compiler_commit="commit-old",
+            exported_at=1_700_000_000.0 + index,
+        )
+        for index in range(1, 26)
+    ]
+    newer = [
+        _real_packet(
+            index + 25,
+            state_hash="state-new",
+            compiler_commit="commit-new",
+            exported_at=1_700_001_000.0 + index,
+        )
+        for index in range(1, 31)
+    ]
+
+    result = run_real_shadow_canary(
+        older + newer,
+        config=RealShadowCanaryConfig(
+            cache_dir=str(tmp_path / "cache"),
+            max_records=25,
+            min_real_packets=25,
+            provider_enabled=False,
+        ),
+    )
+
+    assert result.valid_real_packet_count == 25
+    assert result.canonical_state["state_hash"] == "state-new"
+    assert result.canonical_state["compiler_commit"] == "commit-new"
+    assert result.canonical_state["snapshot_selection"]["selected_group_packet_count"] == 30
+    assert result.canonical_state["snapshot_selection"]["selected_packet_count"] == 25
+    assert "canonical_state_not_unique" not in result.blocked_reasons
+    assert "compiler_commit_not_unique" not in result.blocked_reasons
+
+
+def test_real_shadow_canary_reports_insufficient_latest_snapshot_without_mixed_state(
+    tmp_path,
+) -> None:
+    older = [
+        _real_packet(
+            index,
+            state_hash="state-old",
+            compiler_commit="commit-old",
+            exported_at=1_700_000_000.0 + index,
+        )
+        for index in range(1, 17)
+    ]
+    latest = [
+        _real_packet(
+            index + 16,
+            state_hash="state-latest",
+            compiler_commit="commit-latest",
+            exported_at=1_700_001_000.0 + index,
+        )
+        for index in range(1, 9)
+    ]
+
+    result = run_real_shadow_canary(
+        older + latest,
+        config=RealShadowCanaryConfig(
+            cache_dir=str(tmp_path / "cache"),
+            max_records=25,
+            min_real_packets=25,
+            provider_enabled=False,
+        ),
+    )
+
+    assert result.valid_real_packet_count == 8
+    assert result.canonical_state["state_hash"] == "state-latest"
+    assert result.canonical_state["compiler_commit"] == "commit-latest"
+    assert result.canonical_state["snapshot_selection"]["selected_group_packet_count"] == 8
+    assert "insufficient_real_canonical_packets" in result.blocked_reasons
+    assert "canonical_state_not_unique" not in result.blocked_reasons
+    assert "compiler_commit_not_unique" not in result.blocked_reasons
+
+
+def test_real_shadow_canary_prefers_expected_snapshot_in_append_only_export(
+    tmp_path,
+) -> None:
+    expected = [
+        _real_packet(
+            index,
+            state_hash="state-expected",
+            compiler_commit="commit-expected",
+            exported_at=1_700_000_000.0 + index,
+        )
+        for index in range(1, 26)
+    ]
+    latest = [
+        _real_packet(
+            index + 25,
+            state_hash="state-latest",
+            compiler_commit="commit-latest",
+            exported_at=1_700_001_000.0 + index,
+        )
+        for index in range(1, 26)
+    ]
+
+    result = run_real_shadow_canary(
+        expected + latest,
+        config=RealShadowCanaryConfig(
+            cache_dir=str(tmp_path / "cache"),
+            expected_compiler_commit="commit-expected",
+            expected_state_hash="state-expected",
+            max_records=25,
+            min_real_packets=25,
+            provider_enabled=False,
+        ),
+    )
+
+    assert result.valid_real_packet_count == 25
+    assert result.invalid_packet_count == 0
+    assert result.canonical_state["state_hash"] == "state-expected"
+    assert result.canonical_state["compiler_commit"] == "commit-expected"
+    assert result.canonical_state["snapshot_selection"]["selection_reason"].startswith(
+        "expected_"
+    )
+    assert "expected_state_hash_mismatch" not in result.blocked_reasons
+    assert "expected_compiler_commit_mismatch" not in result.blocked_reasons
+
+
 def test_real_shadow_canary_blocks_when_leanstral_labs_unavailable(tmp_path) -> None:
     records = _real_packets(25)
 
@@ -444,6 +639,33 @@ def test_real_shadow_canary_blocks_when_leanstral_labs_unavailable(tmp_path) -> 
     assert result.cache_summary["unavailable"] > 0
     assert result.synthetic_promotion_evidence_generated is False
     assert result.no_mutation["queue_seeded_count"] == 0
+
+
+def test_real_shadow_canary_surfaces_worker_timeouts(tmp_path) -> None:
+    records = _real_packets(25)
+
+    def slow_generate(prompt: str, **kwargs: object) -> str:
+        time.sleep(0.05)
+        return "{}"
+
+    result = run_real_shadow_canary(
+        records,
+        config=RealShadowCanaryConfig(
+            cache_dir=str(tmp_path / "cache"),
+            max_clusters=1,
+            min_real_packets=25,
+            provider_enabled=True,
+            timeout_seconds=0.001,
+        ),
+        llm_generate=slow_generate,
+    )
+
+    assert result.status == "blocked"
+    assert "leanstral_worker_failures" in result.blocked_reasons
+    assert "leanstral_worker_timeouts" in result.blocked_reasons
+    assert result.cache_summary["failed"] == 1
+    assert result.cache_summary["timeouts"] == 1
+    assert result.audits[0].status == "timeout"
 
 
 def test_real_shadow_canary_report_contains_required_acceptance_sections(tmp_path) -> None:

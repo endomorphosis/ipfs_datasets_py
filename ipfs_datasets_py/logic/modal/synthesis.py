@@ -616,11 +616,13 @@ def synthesis_hints_from_leanstral_rule_gaps(
             or validation_set.get("held_out_compiler_ir_metrics")
             or ()
         )
+        metric_attribution = dict(validation_set.get("metric_attribution") or {})
         counterexamples = _rule_gap_counterexamples(
             support,
             conflicts,
             validation_set=validation_set,
         )
+        drafted_logic_candidates = _rule_gap_drafted_logic_candidates(support)
         evidence_ids = _dedupe_string_values(
             evidence.get("evidence_id") for evidence in support
         )
@@ -663,11 +665,16 @@ def synthesis_hints_from_leanstral_rule_gaps(
             "evidence_ids": evidence_ids,
             "gap_id": gap_id,
             "leanstral_dedup_key": dedupe_key,
+            "leanstral_drafted_logic_candidates": drafted_logic_candidates,
+            "leanstral_guidance_mode": "draft_logic_guidance_only",
             "leanstral_report_only": False,
             "leanstral_source": "verified_rule_gap_report",
             "leanstral_verified": leanstral_verified,
+            "metric_attribution": metric_attribution,
             "missing_semantic_rule": dict(gap_data.get("missing_semantic_rule") or {}),
             "normalized_rule_key": normalized_rule_key,
+            "post_patch_metrics": dict(metric_attribution.get("post_patch_metrics") or {}),
+            "pre_patch_metrics": dict(metric_attribution.get("pre_patch_metrics") or {}),
             "proof_ids": proof_ids,
             "proof_obligation_ids": proof_obligation_ids,
             "spec_id": gap_id or normalized_rule_key,
@@ -695,6 +702,124 @@ def synthesis_hints_from_leanstral_rule_gaps(
             target_component=target_component,
             rationale=str(gap_data.get("title") or "Verified Leanstral rule gap."),
             priority=float(gap_data.get("priority") or 0.0),
+            evidence=evidence,
+        )
+        hints[hint.hint_id] = hint
+    return sorted(hints.values(), key=lambda hint: (-hint.priority, hint.hint_id))
+
+
+def synthesis_hints_from_leanstral_guidance(
+    guidance: Any,
+    *,
+    require_trusted: bool = True,
+) -> List[ModalProgramSynthesisHint]:
+    """Convert direct Leanstral draft guidance into program-synthesis hints."""
+
+    hints: Dict[str, ModalProgramSynthesisHint] = {}
+    for item in _leanstral_guidance_items(guidance):
+        trusted = bool(item.get("trusted") or item.get("accepted"))
+        if require_trusted and not trusted:
+            continue
+        action = str(item.get("action") or "").strip()
+        target_component = str(item.get("target_component") or "").strip()
+        if not action or not target_component:
+            continue
+        guidance_id = str(item.get("guidance_id") or item.get("task_id") or "").strip()
+        dedupe_key = guidance_id or (
+            "leanstral-guidance:"
+            + hashlib.sha256(
+                json.dumps(item, ensure_ascii=True, sort_keys=True, default=str).encode(
+                    "utf-8"
+                )
+            ).hexdigest()[:20]
+        )
+        proof_obligation_ids = _dedupe_string_values(
+            item.get("proof_obligation_ids") or ()
+        )
+        theorem_templates = _dedupe_string_values(item.get("theorem_templates") or ())
+        target_metrics = _dedupe_string_values(item.get("target_metrics") or ())
+        drafted_logic_candidates = _rule_gap_drafted_logic_candidates(
+            [{"drafted_logic_candidates": item.get("drafted_logic_candidates") or ()}]
+        )
+        metric_attribution = {
+            "pre_patch_metrics": dict(item.get("legal_ir_view_metrics") or {}),
+            "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+            "source": "leanstral_direct_guidance",
+            "status": "pre_patch_observed"
+            if item.get("legal_ir_view_metrics")
+            else "missing_pre_patch_metrics",
+            "target_metrics": list(target_metrics),
+        }
+        evidence = {
+            "allowed_paths": _dedupe_string_values(item.get("allowed_paths") or ()),
+            "audit_request_ids": [],
+            "audit_response_hashes": [],
+            "dedupe_key": dedupe_key,
+            "evidence_ids": _dedupe_string_values([guidance_id]),
+            "gap_id": guidance_id,
+            "leanstral_dedup_key": dedupe_key,
+            "leanstral_drafted_logic_candidates": drafted_logic_candidates,
+            "leanstral_guidance_mode": str(
+                item.get("guidance_mode") or "draft_logic_guidance_only"
+            ),
+            "leanstral_report_only": not trusted,
+            "leanstral_source": str(item.get("source") or "leanstral_shadow_proof"),
+            "leanstral_verified": trusted,
+            "metric_attribution": metric_attribution,
+            "missing_semantic_rule": {
+                "description": "Leanstral drafted logic guidance for deterministic IR repair.",
+                "source_guidance_id": guidance_id,
+            },
+            "mutation_cases": _dedupe_string_values(item.get("mutation_cases") or ()),
+            "normalized_rule_key": dedupe_key,
+            "post_patch_metrics": {},
+            "pre_patch_metrics": dict(metric_attribution["pre_patch_metrics"]),
+            "proof_ids": _dedupe_string_values(
+                [*proof_obligation_ids, *theorem_templates]
+            ),
+            "proof_obligation_ids": proof_obligation_ids,
+            "sample_id": str(item.get("sample_id") or ""),
+            "spec_id": guidance_id,
+            "spec_ids": _dedupe_string_values([guidance_id, dedupe_key]),
+            "supporting_evidence_count": 1 if trusted else 0,
+            "supporting_examples": [],
+            "supporting_verified_by": ["leanstral_shadow_validation"] if trusted else [],
+            "supporting_verification_outcomes": ["accepted"]
+            if trusted
+            else _dedupe_string_values(item.get("validation_reasons") or ()),
+            "target_component": target_component,
+            "target_file_lane": _target_file_lane(target_component, action),
+            "target_metrics": target_metrics,
+            "theorem_templates": theorem_templates,
+            "validation_set": {
+                "allowed_paths": _dedupe_string_values(item.get("allowed_paths") or ()),
+                "formal_validity_checks": theorem_templates,
+                "held_out_compiler_ir_metrics": target_metrics,
+                "mutation_cases": _dedupe_string_values(item.get("mutation_cases") or ()),
+                "proof_obligation_ids": proof_obligation_ids,
+                "target_file_lane": _target_file_lane(target_component, action),
+            },
+        }
+        priority = max(
+            0.05 if trusted else 0.0,
+            max(
+                (
+                    float(feature.get("score") or 0.0)
+                    for feature in _mapping_items(item.get("ranked_guidance_features") or ())
+                ),
+                default=0.0,
+            ),
+        )
+        rationale = (
+            "Use verified Leanstral-drafted logic as guidance for deterministic "
+            "compiler/decompiler repair."
+        )
+        hint = _hint(
+            str(item.get("sample_id") or guidance_id),
+            action=action,
+            target_component=target_component,
+            rationale=rationale,
+            priority=priority,
             evidence=evidence,
         )
         hints[hint.hint_id] = hint
@@ -740,6 +865,52 @@ def _rule_gap_examples(
             if isinstance(example, Mapping):
                 examples.append(dict(example))
     return examples[:8]
+
+
+def _rule_gap_drafted_logic_candidates(
+    evidence_items: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    candidates: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for evidence in evidence_items:
+        for candidate in evidence.get("drafted_logic_candidates", []) or []:
+            if not isinstance(candidate, Mapping):
+                continue
+            payload = dict(candidate)
+            payload.setdefault("guidance_only", True)
+            payload.setdefault("intended_use", "guidance_only")
+            key = json.dumps(payload, ensure_ascii=True, sort_keys=True, default=str)
+            if key in seen:
+                continue
+            seen.add(key)
+            candidates.append(payload)
+            if len(candidates) >= 12:
+                return candidates
+    return candidates
+
+
+def _leanstral_guidance_items(value: Any) -> List[Dict[str, Any]]:
+    if hasattr(value, "guidance"):
+        value = getattr(value, "guidance")
+    if hasattr(value, "to_dict"):
+        value = value.to_dict()
+    if isinstance(value, Mapping):
+        if isinstance(value.get("guidance"), Mapping):
+            return _leanstral_guidance_items(value.get("guidance"))
+        raw_items = value.get("guidance_items")
+        if raw_items is None:
+            raw_items = value.get("items")
+        if isinstance(raw_items, Sequence) and not isinstance(raw_items, (str, bytes)):
+            return _leanstral_guidance_items(raw_items)
+        if value.get("guidance_id") or value.get("schema_version") == "legal-ir-leanstral-draft-guidance-v1":
+            return [dict(value)]
+        return []
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        items: List[Dict[str, Any]] = []
+        for item in value:
+            items.extend(_leanstral_guidance_items(item))
+        return items
+    return []
 
 
 def _mapping_items(value: Any) -> List[Dict[str, Any]]:
@@ -1173,6 +1344,7 @@ __all__ = [
     "route_autoencoder_residual",
     "synthesis_hints_from_autoencoder_introspection",
     "synthesis_hints_from_autoencoder_introspections",
+    "synthesis_hints_from_leanstral_guidance",
     "synthesis_hints_from_leanstral_rule_gap_report",
     "synthesis_hints_from_leanstral_rule_gaps",
 ]
