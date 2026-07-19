@@ -13051,6 +13051,95 @@ def test_spacy_decompiler_exports_frame_residual_deontic_and_conditional_cues() 
     )
 
 
+def test_spacy_decompiler_reconstructs_packet_000189_frame_authority_semantics() -> None:
+    cases = [
+        (
+            "2 U.S.C. 5328",
+            (
+                "Authority to prescribe regulations. The Committee on House "
+                "Oversight of the House of Representatives shall have authority "
+                "to prescribe regulations for the carrying out of sections 5327 "
+                "to 5329 of this title."
+            ),
+            {
+                "regulation_prescription_authority",
+                "house_regulation_prescription_authority",
+            },
+        ),
+        (
+            "12 U.S.C. 2200",
+            (
+                "Access to documents and information. Qualified lenders shall "
+                "provide their borrowers copies of all documents signed by the "
+                "borrower and copies of each appraisal."
+            ),
+            {"document_access_right", "borrower_document_access"},
+        ),
+        (
+            "36 U.S.C. 110307",
+            (
+                "Records and inspection. A member entitled to vote may inspect "
+                "the records of the corporation for any proper purpose."
+            ),
+            {"records_inspection_right"},
+        ),
+    ]
+
+    for citation, body, expected_atoms in cases:
+        text = f"{citation}. {body}"
+        span_start = text.index(body)
+        modal_ir = ModalIRDocument(
+            document_id=f"packet-000189-{citation}",
+            source="us_code",
+            normalized_text=text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id="f1",
+                    operator=ModalIROperator(
+                        family="frame",
+                        system="FLogic",
+                        symbol="Frame",
+                        label="framed as",
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=body.split(".", 1)[0].lower().replace(" ", "_"),
+                        arguments=[],
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=f"packet-000189-{citation}",
+                        start_char=span_start,
+                        end_char=len(text),
+                        citation=citation,
+                    ),
+                    metadata={"cue": "authority"},
+                )
+            ],
+            metadata={"citation": citation},
+        )
+
+        slot_map = decoded_modal_phrase_slot_text_map(
+            decode_modal_ir_document(modal_ir),
+            include_fixed=False,
+            include_provenance_only=True,
+        )
+
+        atoms = set(slot_map["legal_semantic_atom"])
+        assert expected_atoms <= atoms
+        assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+        assert (
+            "frame->conditional_normative"
+            in slot_map["typed-decompiler-target-reconstruction-pair"]
+        )
+        assert any(
+            "frame->deontic" in value and "CEC.native" in value
+            for value in slot_map["family_semantic_slot_legal_ir_view_prototype"]
+        )
+        assert any(
+            "frame->conditional_normative" in value and "modal.frame_logic" in value
+            for value in slot_map["family_semantic_slot_legal_ir_view_prototype"]
+        )
+
+
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

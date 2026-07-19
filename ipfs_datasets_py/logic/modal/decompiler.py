@@ -203,6 +203,20 @@ _PACKET_000188_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "veterans_compensation_benefit",
     }
 )
+_PACKET_000189_FRAME_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "administrative_direction_authority",
+        "administrative_protection_development",
+        "annuity_receipt_right",
+        "borrower_document_access",
+        "dividend_declaration_authority",
+        "document_access_right",
+        "house_regulation_prescription_authority",
+        "records_inspection_right",
+        "regulation_prescription_authority",
+        "service_of_process_agent",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -419,7 +433,23 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
         "meet or exceed the federal building energy standards",
         "federal_building_energy_standard",
     ),
+    ("access to documents and information", "document_access_right"),
+    ("copies of all documents signed by the borrower", "borrower_document_access"),
+    ("copies of each appraisal", "borrower_document_access"),
+    ("authority to prescribe regulations", "regulation_prescription_authority"),
+    (
+        "committee on house oversight of the house of representatives shall have authority to prescribe regulations",
+        "house_regulation_prescription_authority",
+    ),
     ("prescribe regulations governing", "regulation_prescription_authority"),
+    ("records and inspection", "records_inspection_right"),
+    ("may inspect the records", "records_inspection_right"),
+    ("right to receive and receipt for all annuity money", "annuity_receipt_right"),
+    ("administration, protection, and development", "administrative_protection_development"),
+    ("under the direction of the secretary", "administrative_direction_authority"),
+    ("service of process", "service_of_process_agent"),
+    ("designated agent", "service_of_process_agent"),
+    ("may declare a dividend", "dividend_declaration_authority"),
     (
         "penalty for operating under suspended tariff or service contract",
         "suspended_tariff_service_contract_penalty",
@@ -5687,6 +5717,63 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("rural_development_grant_program")
+    if re.search(
+        r"\baccess\s+to\s+documents?\s+and\s+information\b|"
+        r"\bcopies?\s+of\s+(?:all\s+)?documents?\b.{0,80}\bborrower\b|"
+        r"\bborrowers?\b.{0,100}\bcopies?\s+of\s+(?:all\s+)?documents?\b|"
+        r"\bcopies?\s+of\s+each\s+appraisal\b",
+        normalized,
+    ):
+        add("document_access_right")
+        if "borrower" in tokens or "borrowers" in tokens:
+            add("borrower_document_access")
+    if re.search(
+        r"\bauthority\s+to\s+prescribe\s+regulations\b|"
+        r"\bshall\s+have\s+authority\s+to\s+prescribe\s+regulations\b|"
+        r"\bprescribe\s+regulations\s+for\s+the\s+carrying\s+out\b",
+        normalized,
+    ):
+        add("regulation_prescription_authority")
+        if "house" in tokens and "committee" in tokens:
+            add("house_regulation_prescription_authority")
+    if re.search(
+        r"\brecords?\s+and\s+inspection\b|"
+        r"\bmay\s+inspect\s+the\s+records?\b|"
+        r"\brecords?\b.{0,80}\bproper\s+purpose\b",
+        normalized,
+    ):
+        add("records_inspection_right")
+    if re.search(
+        r"\bright\s+to\s+receive\s+and\s+receipt\s+for\s+all\s+annuity\s+money\b|"
+        r"\bannuity\s+money\b.{0,80}\b(?:due|receive|receipt)\b",
+        normalized,
+    ):
+        add("annuity_receipt_right")
+    if re.search(
+        r"\badministration,\s*protection,\s+and\s+development\b|"
+        r"\badministration\s+protection\s+and\s+development\b",
+        normalized,
+    ):
+        add("administrative_protection_development")
+    if re.search(
+        r"\bunder\s+the\s+direction\s+of\s+the\s+secretary\b|"
+        r"\bshall\s+be\s+exercised\s+under\s+the\s+direction\b",
+        normalized,
+    ):
+        add("administrative_direction_authority")
+    if re.search(
+        r"\bservice\s+of\s+process\b|"
+        r"\bdesignated\s+agent\b.{0,80}\b(?:receive|service|process)\b|"
+        r"\blegal\s+process\s+or\s+demands\b",
+        normalized,
+    ):
+        add("service_of_process_agent")
+    if re.search(
+        r"\bmay\s+declare\s+(?:and\s+pay\s+)?(?:a\s+)?dividends?\b|"
+        r"\bdeclaration\s+and\s+payment\s+of\s+dividends?\b",
+        normalized,
+    ):
+        add("dividend_declaration_authority")
     for phrase, atom in _LEGAL_SEMANTIC_ATOM_PHRASES:
         phrase_tokens = _CUE_TOKEN_RE.findall(phrase)
         if phrase in normalized or (
@@ -13254,6 +13341,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000189_FRAME_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -14574,6 +14667,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("deontic")
             add("conditional_normative")
         if normalized_atom in _PACKET_000188_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in _PACKET_000189_FRAME_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
             add("conditional_normative")
