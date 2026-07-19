@@ -2288,6 +2288,12 @@ _SOURCE_ANCHOR_DIRECTIONAL_FAMILY_PAIR_TARGETS: Mapping[str, tuple[str, ...]] = 
         "frame",
         "temporal",
     ),
+    "dynamic": (
+        "dynamic",
+        "deontic",
+        "frame",
+        "temporal",
+    ),
     "temporal": (
         "conditional_normative",
         "deontic",
@@ -7460,8 +7466,12 @@ def _autoencoder_rule_gap_target_family_values(
     lowered = joined.lower()
     for pattern in (
         r"target\s+family\s*\(\s*([a-z_]+)\s*\)",
+        r"target_family\s*[:=]\s*['\"]?([a-z_]+)['\"]?",
         r"expected\s+([a-z_]+)\s+family\b",
+        r"canonical\s+ir\s+family\s+(?:is|was|=|:)\s+['\"]?([a-z_]+)['\"]?",
+        r"canonical\s+(?:modal\s+)?ir\s+(?:hash\s+)?(?:indicates|corresponds\s+to)\s+(?:a\s+)?['\"]?([a-z_]+)['\"]?\s+family\b",
         r"canonical\s+ir\s+specifies\s+['\"]?([a-z_]+)['\"]?\s+semantics",
+        r"canonical\s+(?:view|distribution)\s+(?:shows|showed|indicates|indicated)\s+.{0,120}?\b([a-z_]+)\s+probability\b",
         r"target\s+probability\s+(?:is\s+)?[0-9.]+\s+for\s+([a-z_]+)\b",
     ):
         for match in re.finditer(pattern, lowered):
@@ -17845,6 +17855,8 @@ def _typed_decompiler_bridge_target_families(
     temporal_cues = _temporal_transition_context_cues_from_text(text)
     if "temporal" in roles or temporal_cues:
         add("temporal")
+    if _dynamic_transition_context_cues_from_text(text):
+        add("dynamic")
     if "subject" in roles or "object" in roles:
         add("deontic")
     text_tokens = set(_CUE_TOKEN_RE.findall(text))
@@ -18145,6 +18157,10 @@ def _typed_decompiler_corrected_source_families(
         ]
     if temporal_reason_values or has_temporal_scope:
         add("temporal", "+".join(temporal_reason_values[:4]) or "temporal_scope")
+
+    dynamic_reason_values = _dynamic_transition_context_cues_from_text(normalized_text)
+    if dynamic_reason_values:
+        add("dynamic", "+".join(dynamic_reason_values[:4]))
 
     return corrections
 
@@ -19979,6 +19995,23 @@ def _temporal_transition_context_cues_from_text(text: str) -> List[str]:
     for cue in _temporal_origin_cues_from_text(normalized_text):
         if cue not in cues:
             cues.append(cue)
+    return cues
+
+
+def _dynamic_transition_context_cues_from_text(text: str) -> List[str]:
+    """Return action-transition cues that distinguish dynamic from frame state."""
+    normalized_text = _clean_text(text).replace("_", " ").lower()
+    if not normalized_text:
+        return []
+    cues: List[str] = []
+    for token in _CUE_TOKEN_RE.findall(normalized_text):
+        normalized_token = token[:-1] if token.endswith("s") else token
+        for family, _symbol in _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS.get(
+            normalized_token,
+            (),
+        ):
+            if family == "dynamic" and normalized_token not in cues:
+                cues.append(normalized_token)
     return cues
 
 

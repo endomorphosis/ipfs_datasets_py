@@ -41821,6 +41821,94 @@ def _single_formula_document(
     )
 
 
+def test_decompiler_corrects_temporal_family_from_rule_gap_and_time_scope() -> None:
+    document = _single_formula_document(
+        family="doxastic",
+        symbol="B",
+        label="belief",
+        text=(
+            "A person appointed under this section may serve until a successor "
+            "is appointed after the end of the term."
+        ),
+        predicate="successor_appointment_term_service",
+        conditions=["until a successor is appointed after the end of the term"],
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "missing_semantic_rule": {
+                "description": (
+                    "The decompiler predicted frame, but the canonical "
+                    "distribution shows 0.157894736842 temporal probability."
+                )
+            },
+            "bundle": {
+                "action": "refine_typed_ir_or_decompiler_slots",
+                "program_synthesis_scope": "ir_decompiler",
+                "target_component": "modal.ir_decompiler",
+            },
+        }
+    ]
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+
+    assert "temporal" in slot_texts["autoencoder_modal_target_family_guidance"]
+    assert "doxastic->temporal:until_after" in slot_texts[
+        "typed-decompiler-source-family-correction"
+    ]
+    assert any(
+        "temporal->temporal" in value
+        for value in slot_texts["typed-decompiler-source-family-corrected-target-pair"]
+    )
+    assert "temporal deadline period" in structural_text
+
+
+def test_decompiler_corrects_dynamic_family_from_action_transition_cues() -> None:
+    document = _single_formula_document(
+        family="frame",
+        symbol="Frame",
+        label="frame",
+        text=(
+            "Transfer authority. Amounts available under this chapter may be "
+            "transferred to another appropriation account and remain available "
+            "until expended."
+        ),
+        predicate="fund_transfer_authority",
+    )
+    document.metadata["hint_evidence"] = [
+        {
+            "missing_semantic_rule": {
+                "description": (
+                    "The canonical IR family is 'dynamic' while the decompiler "
+                    "predicts frame for action-transition source text."
+                )
+            },
+            "bundle": {
+                "action": "refine_typed_ir_or_decompiler_slots",
+                "program_synthesis_scope": "ir_decompiler",
+                "target_component": "modal.ir_decompiler",
+            },
+        }
+    ]
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "dynamic" in slot_texts["autoencoder_modal_target_family_guidance"]
+    assert "frame->dynamic:transfer_transferred" in slot_texts[
+        "typed-decompiler-source-family-correction"
+    ]
+    assert "dynamic->dynamic" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+
+
 def test_decompiler_emits_frame_target_reconstruction_slots_for_conditioned_temporal_scope() -> None:
     document = _single_formula_document(
         family="frame",
