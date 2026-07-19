@@ -2436,76 +2436,193 @@ def _daemon_prompt_cluster(cluster: Mapping[str, Any]) -> Dict[str, Any]:
     sample_ids = cluster.get("sample_ids")
     if isinstance(sample_ids, Sequence) and not isinstance(sample_ids, (str, bytes)):
         payload["sample_ids"] = [str(value) for value in sample_ids[:3]]
-    gaps = [
-        _prompt_bounded_json(gap, max_chars=100)
+    gap_summaries = [
+        _daemon_prompt_gap_summary(gap)
         for gap in cluster.get("gaps", []) or []
         if isinstance(gap, Mapping)
     ][:1]
-    if gaps:
-        payload["gaps"] = gaps
+    if gap_summaries:
+        payload["gaps"] = gap_summaries
     return payload
 
 
 def _daemon_prompt_evidence_packet(packet: Mapping[str, Any]) -> Dict[str, Any]:
-    return {
-        "anti_copy_evidence": _prompt_bounded_json(
-            packet.get("anti_copy_evidence"),
-            max_chars=60,
-        ),
-        "compiler_decompiler_metrics": _prompt_bounded_json(
-            packet.get("compiler_decompiler_metrics"),
-            max_chars=80,
-        ),
-        "evidence_hashes": _selected_prompt_mapping(
-            packet.get("evidence_hashes"),
-            (
-                "canonical_modal_ir_hash",
-                "source_text_hash",
-                "state_hash",
+    evidence_hashes = _json_ready_mapping(packet.get("evidence_hashes"))
+    sample_hashes = _json_ready_mapping(packet.get("sample_hashes"))
+    return _drop_empty_values(
+        {
+            "anti_copy": _daemon_prompt_scalar_summary(
+                packet.get("anti_copy_evidence"),
+                (
+                    "source_span_copy_ratio",
+                    "exact_source_span_count",
+                    "dense_weight_tables_included",
+                ),
             ),
-        ),
-        "evidence_id": str(packet.get("evidence_id") or ""),
-        "legal_ir_views": _prompt_bounded_json(
-            packet.get("legal_ir_views"),
-            max_chars=80,
-        ),
-        "learned_view_gaps": _prompt_bounded_json(
-            packet.get("learned_view_gaps"),
-            max_chars=100,
-        ),
-        "proof_route_status": _prompt_bounded_json(
-            packet.get("proof_route_status"),
-            max_chars=80,
-        ),
-        "sample_hashes": _selected_prompt_mapping(
-            packet.get("sample_hashes"),
-            (
-                "modal_ir_hash",
-                "sample_id",
-                "source_text_hash",
+            "evidence_id": str(packet.get("evidence_id") or ""),
+            "hashes": _drop_empty_values(
+                {
+                    "modal_ir": _short_prompt_hash(
+                        evidence_hashes.get("canonical_modal_ir_hash")
+                        or sample_hashes.get("modal_ir_hash")
+                    ),
+                    "source_text": _short_prompt_hash(
+                        evidence_hashes.get("source_text_hash")
+                        or sample_hashes.get("source_text_hash")
+                    ),
+                    "state": _short_prompt_hash(evidence_hashes.get("state_hash")),
+                }
             ),
-        ),
-    }
+            "learned_gaps": _daemon_prompt_scalar_summary(
+                packet.get("learned_view_gaps"),
+                (
+                    "cross_entropy_excess_loss",
+                    "cross_entropy_loss",
+                    "cosine_similarity_gap",
+                    "source_copy_penalty",
+                    "structural_validity_gap",
+                ),
+                max_fallback_items=3,
+            ),
+            "metrics": _daemon_prompt_scalar_summary(
+                packet.get("compiler_decompiler_metrics"),
+                (
+                    "cross_entropy_loss",
+                    "cosine_similarity",
+                    "compiler_ir_cross_entropy_loss",
+                    "compiler_ir_cosine_similarity",
+                    "source_copy_penalty",
+                    "structural_validity",
+                ),
+            ),
+            "proof": _daemon_prompt_scalar_summary(
+                packet.get("proof_route_status"),
+                (
+                    "attempted_count",
+                    "compiles",
+                    "failure_ratio",
+                    "route_status",
+                    "valid_count",
+                ),
+            ),
+            "sample_id": sample_hashes.get("sample_id"),
+            "views": _daemon_prompt_view_summary(packet.get("legal_ir_views")),
+        }
+    )
 
 
 def _daemon_prompt_reference_example(example: Mapping[str, Any]) -> Dict[str, Any]:
-    payload: Dict[str, Any] = {}
-    for key in (
-        "evidence_id",
-        "example_id",
-        "expected_modal_ir_hash",
-        "sample_id",
-        "source_text_hash",
-    ):
-        value = example.get(key)
-        if value not in (None, "", (), []):
-            payload[key] = _json_ready(value)
-    if "compiler_decompiler_metrics" in example:
-        payload["compiler_decompiler_metrics"] = _prompt_bounded_json(
-            example.get("compiler_decompiler_metrics"),
-            max_chars=60,
-        )
-    return payload
+    return _drop_empty_values(
+        {
+            "evidence_id": str(example.get("evidence_id") or ""),
+            "example_id": str(example.get("example_id") or ""),
+            "expected_modal_ir": _short_prompt_hash(example.get("expected_modal_ir_hash")),
+            "sample_id": str(example.get("sample_id") or ""),
+            "source_text": _short_prompt_hash(example.get("source_text_hash")),
+        }
+    )
+
+
+def _daemon_prompt_gap_summary(gap: Mapping[str, Any]) -> Dict[str, Any]:
+    selected = _daemon_prompt_scalar_summary(
+        gap,
+        (
+            "component",
+            "compiler_surface",
+            "description",
+            "family",
+            "gap",
+            "metric",
+            "observed",
+            "score",
+            "semantic_family",
+            "view_family",
+        ),
+        max_fallback_items=4,
+    )
+    if selected:
+        return selected
+    return {"sha256_16": _short_prompt_hash(canonical_sha256(gap))}
+
+
+def _daemon_prompt_view_summary(value: Any) -> Dict[str, Any]:
+    views = _json_ready_mapping(value)
+    canonical = _json_ready_mapping(views.get("canonical"))
+    predicted = _json_ready_mapping(views.get("predicted"))
+    return _drop_empty_values(
+        {
+            "canonical_family": (
+                canonical.get("target_family")
+                or canonical.get("predicted_family")
+                or _top_family_name(canonical.get("family_distribution"))
+            ),
+            "predicted_family": (
+                predicted.get("predicted_family")
+                or _top_family_name(predicted.get("family_distribution"))
+            ),
+            "target_family": (
+                predicted.get("target_family")
+                or canonical.get("target_family")
+                or _top_family_name(canonical.get("family_distribution"))
+            ),
+        }
+    )
+
+
+def _daemon_prompt_scalar_summary(
+    value: Any,
+    keys: Sequence[str],
+    *,
+    max_fallback_items: int = 0,
+) -> Dict[str, Any]:
+    mapping = _json_ready_mapping(value)
+    selected = {
+        key: _json_ready(mapping.get(key))
+        for key in keys
+        if mapping.get(key) not in (None, "", (), [])
+    }
+    if selected or max_fallback_items <= 0:
+        return _drop_empty_values(selected)
+    fallback: Dict[str, Any] = {}
+    for key in sorted(mapping):
+        raw = mapping.get(key)
+        if raw in (None, "", (), []):
+            continue
+        if isinstance(raw, (bool, int, float, str)):
+            fallback[key] = _json_ready(raw)
+        if len(fallback) >= max_fallback_items:
+            break
+    return _drop_empty_values(fallback)
+
+
+def _top_family_name(value: Any) -> str:
+    mapping = _json_ready_mapping(value)
+    best_key = ""
+    best_score = float("-inf")
+    for key, raw_score in mapping.items():
+        try:
+            score = float(raw_score)
+        except (TypeError, ValueError):
+            continue
+        if score > best_score:
+            best_key = str(key)
+            best_score = score
+    return best_key
+
+
+def _short_prompt_hash(value: Any, length: int = 16) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return text[: max(4, int(length or 16))]
+
+
+def _drop_empty_values(mapping: Mapping[str, Any]) -> Dict[str, Any]:
+    return {
+        key: value
+        for key, value in mapping.items()
+        if value not in (None, "", (), [], {})
+    }
 
 
 def _selected_prompt_mapping(value: Any, keys: Sequence[str]) -> Dict[str, Any]:
