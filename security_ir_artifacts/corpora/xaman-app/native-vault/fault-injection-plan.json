@@ -1,0 +1,304 @@
+{
+  "acceptance_boundary": "This source-bound plan is not a fault-injection result and cannot establish vendor-release or production wallet security.",
+  "artifact_cid": "bafkreidnoaul3gxidib5pchyq4qkwebkv3uiec4l5lbbojypvp3rqmp3ri",
+  "execution_requirements": {
+    "android": "Use a fresh verifier-only debug emulator with adb, emulator, and sdkmanager available; preserve an evidence digest only.",
+    "ios": "Use an isolated macOS/Xcode XCTest host; preserve an evidence digest only.",
+    "review": "A valid PORTAL-CXTP-156 independent decision must authorize verifier-only runtime capture and remain unexpired.",
+    "test_data": "Generate ephemeral non-wallet fixture data in the test harness and do not retain it in reports, logs, screenshots, or artifacts."
+  },
+  "fault_injection_points": [
+    {
+      "fault_boundary": "Inject verifier-only replacement-write and recovery-cleanup failures; do not modify vendor release artifacts.",
+      "platform": "android",
+      "source_order": [
+        {
+          "line": 190,
+          "marker": "createVault(recoveryVaultName, clearText, oldKey);",
+          "path": "android/app/src/main/java/libs/security/vault/VaultManagerModule.java",
+          "sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357"
+        },
+        {
+          "line": 193,
+          "marker": "purgeVault(vaultName);",
+          "path": "android/app/src/main/java/libs/security/vault/VaultManagerModule.java",
+          "sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357"
+        },
+        {
+          "line": 196,
+          "marker": "createVault(vaultName, clearText, newKey);",
+          "path": "android/app/src/main/java/libs/security/vault/VaultManagerModule.java",
+          "sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357"
+        },
+        {
+          "line": 198,
+          "marker": "// finally remove the created recovery vault",
+          "path": "android/app/src/main/java/libs/security/vault/VaultManagerModule.java",
+          "sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357"
+        }
+      ],
+      "test_target": {
+        "path": "android/app/src/androidTest/java/libs/security/vault/VaultMangerTest.java",
+        "sha256": "417f266ab165d7593feee1aadd71cf2a651160e12277176887243b4e6d65714c"
+      }
+    },
+    {
+      "fault_boundary": "Inject verifier-only replacement-write and recovery-cleanup failures; do not modify vendor release artifacts.",
+      "platform": "ios",
+      "source_order": [
+        {
+          "line": 203,
+          "marker": "[VaultManagerModule createVault:recoveryVaultName data:cleartext key:oldKey];",
+          "path": "ios/Xaman/Libs/Security/Vault/VaultManager.m",
+          "sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30"
+        },
+        {
+          "line": 206,
+          "marker": "[VaultManagerModule purgeVault:vaultName];",
+          "path": "ios/Xaman/Libs/Security/Vault/VaultManager.m",
+          "sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30"
+        },
+        {
+          "line": 209,
+          "marker": "[VaultManagerModule createVault:vaultName data:cleartext key:newKey];",
+          "path": "ios/Xaman/Libs/Security/Vault/VaultManager.m",
+          "sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30"
+        },
+        {
+          "line": 211,
+          "marker": "finally remove the created recovery vault",
+          "path": "ios/Xaman/Libs/Security/Vault/VaultManager.m",
+          "sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30"
+        }
+      ],
+      "test_target": {
+        "path": "ios/XamanTests/VaultMangerTest.m",
+        "sha256": "3d2be1245054e9777e5a2b1a3b484b825b685b8aec05c43efbd10b1f87b82e7d"
+      }
+    }
+  ],
+  "plan_status": "PREPARED_NOT_RUNTIME_EVIDENCE",
+  "required_cases": [
+    {
+      "case_id": "android-single-rekey-replacement-write-failure",
+      "fault_phase": "replacement_write",
+      "fault_position": "single",
+      "flow": "single_rekey",
+      "platform": "android",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_absent_after_failure",
+        "primary_vault_new_key_accessible_false",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "android-single-rekey-recovery-cleanup-failure",
+      "fault_phase": "recovery_cleanup",
+      "fault_position": "single",
+      "flow": "single_rekey",
+      "platform": "android",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_present_after_failure",
+        "primary_vault_new_key_accessible",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "android-batch-rekey-replacement-write-failure-first-vault",
+      "fault_phase": "replacement_write",
+      "fault_position": "first",
+      "flow": "batch_rekey",
+      "platform": "android",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_absent_after_failure",
+        "primary_vault_new_key_accessible_false",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "android-batch-rekey-replacement-write-failure-later-vault",
+      "fault_phase": "replacement_write",
+      "fault_position": "later",
+      "flow": "batch_rekey",
+      "platform": "android",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_absent_after_failure",
+        "primary_vault_new_key_accessible_false",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "android-batch-rekey-recovery-cleanup-failure-first-vault",
+      "fault_phase": "recovery_cleanup",
+      "fault_position": "first",
+      "flow": "batch_rekey",
+      "platform": "android",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_present_after_failure",
+        "primary_vault_new_key_accessible",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "android-batch-rekey-recovery-cleanup-failure-later-vault",
+      "fault_phase": "recovery_cleanup",
+      "fault_position": "later",
+      "flow": "batch_rekey",
+      "platform": "android",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_present_after_failure",
+        "primary_vault_new_key_accessible",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "ios-single-rekey-replacement-write-failure",
+      "fault_phase": "replacement_write",
+      "fault_position": "single",
+      "flow": "single_rekey",
+      "platform": "ios",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_absent_after_failure",
+        "primary_vault_new_key_accessible_false",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "ios-single-rekey-recovery-cleanup-failure",
+      "fault_phase": "recovery_cleanup",
+      "fault_position": "single",
+      "flow": "single_rekey",
+      "platform": "ios",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_present_after_failure",
+        "primary_vault_new_key_accessible",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "ios-batch-rekey-replacement-write-failure-first-vault",
+      "fault_phase": "replacement_write",
+      "fault_position": "first",
+      "flow": "batch_rekey",
+      "platform": "ios",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_absent_after_failure",
+        "primary_vault_new_key_accessible_false",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "ios-batch-rekey-replacement-write-failure-later-vault",
+      "fault_phase": "replacement_write",
+      "fault_position": "later",
+      "flow": "batch_rekey",
+      "platform": "ios",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_absent_after_failure",
+        "primary_vault_new_key_accessible_false",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "ios-batch-rekey-recovery-cleanup-failure-first-vault",
+      "fault_phase": "recovery_cleanup",
+      "fault_position": "first",
+      "flow": "batch_rekey",
+      "platform": "ios",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_present_after_failure",
+        "primary_vault_new_key_accessible",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    },
+    {
+      "case_id": "ios-batch-rekey-recovery-cleanup-failure-later-vault",
+      "fault_phase": "recovery_cleanup",
+      "fault_position": "later",
+      "flow": "batch_rekey",
+      "platform": "ios",
+      "required_observations": [
+        "fault_injected",
+        "native_operation_reports_failure",
+        "primary_vault_present_after_failure",
+        "primary_vault_new_key_accessible",
+        "recovery_vault_present_after_failure",
+        "old_key_recovers_vault",
+        "new_key_does_not_open_old_key_recovery",
+        "no_raw_sensitive_material_retained"
+      ]
+    }
+  ],
+  "schema_version": "xaman-native-vault-rekey-fault-injection-plan/v1",
+  "scope": {
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "runtime_capture_recorded": false,
+    "vendor_release_equivalent": false
+  },
+  "source_bindings": {
+    "android_test_source_sha256": "417f266ab165d7593feee1aadd71cf2a651160e12277176887243b4e6d65714c",
+    "android_vault_source_sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357",
+    "ios_test_source_sha256": "3d2be1245054e9777e5a2b1a3b484b825b685b8aec05c43efbd10b1f87b82e7d",
+    "ios_vault_source_sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30",
+    "native_vault_assessment_cid": "bafkreiacnwrbg7o7t5rbff4qjvonwgiwxy3et567wrhrzw6virnjyyr2qe",
+    "source_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+  },
+  "target_task_id": "PORTAL-CXTP-163",
+  "task_id": "PORTAL-CXTP-165"
+}

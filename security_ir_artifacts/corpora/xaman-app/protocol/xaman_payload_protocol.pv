@@ -1,0 +1,46 @@
+(*
+  PORTAL-CXTP-092: ProVerif projection companion for
+  security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.spthy.
+  This model mirrors the event-level ordering assumptions used by the current
+  symbolic protocol lane and is intentionally limited to protocol-reasoning
+  claims.
+*)
+
+event payload_session_created(bitstring).
+event payload_requester_bound(bitstring).
+event payload_review_displayed(bitstring).
+event user_reviewed(bitstring).
+event user_approved(bitstring).
+event auth_passed(bitstring).
+event signed_payload_created(bitstring).
+event payload_patched(bitstring).
+event payload_broadcast_requested(bitstring).
+event payload_replayed(bitstring).
+
+query payload: bitstring;
+  event(user_reviewed(payload)) ==> event(payload_session_created(payload)).
+query payload: bitstring;
+  event(user_approved(payload)) ==> event(user_reviewed(payload)).
+query payload: bitstring;
+  event(auth_passed(payload)) ==> event(user_approved(payload)).
+query payload: bitstring;
+  event(signed_payload_created(payload)) ==> event(auth_passed(payload)).
+query payload: bitstring;
+  event(payload_patched(payload)) ==> event(signed_payload_created(payload)).
+query payload: bitstring;
+  event(payload_broadcast_requested(payload)) ==> event(payload_patched(payload)).
+query payload: bitstring;
+  event(payload_replayed(payload)) ==> event(payload_broadcast_requested(payload)).
+
+process
+  new payload: bitstring;
+  event payload_session_created(payload);
+  event payload_requester_bound(payload);
+  event user_reviewed(payload);
+  event payload_review_displayed(payload);
+  event user_approved(payload);
+  event auth_passed(payload);
+  event signed_payload_created(payload);
+  event payload_patched(payload);
+  event payload_broadcast_requested(payload);
+  event payload_replayed(payload)

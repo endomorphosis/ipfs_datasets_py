@@ -1,0 +1,38 @@
+{
+  "artifact_cid": "bafkreibg3zvjoh5fzuns2dvu2v26ugnb4yoleenix6wlvu5vp36iji36ku",
+  "assurance_boundary": {
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "runtime_trace_recorded": false,
+    "vendor_release_equivalent": false
+  },
+  "bridge_evidence": {
+    "bridge_isolation_cid": "sha256:f4c6b70f93ec8821896a001fc94b6d8448f715968cbd9a94e36277212998a04d",
+    "daemon_health_cid": "sha256:5d7fdd061bfa121e1028b755b49548afa1c320f4e706f2345b05e7aaedc6d36b",
+    "loopback_only_listener": true,
+    "public_egress_denied": true,
+    "standalone_daemon_healthy": true
+  },
+  "candidate": {
+    "candidate_manifest_cid": "sha256:8ecdf83286a89d1b5d4862200ba5dab3c8ba85e6e6310e80ef1e6cbf1d8b9e88",
+    "changed_file_count": 4,
+    "public_source_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "self_hosted_network_id": 777777
+  },
+  "packet_status": "PENDING_INDEPENDENT_REVIEW",
+  "review_requirements": {
+    "pass_decision_requires_all_checks_pass": true,
+    "required_check_ids": [
+      "candidate_source_diff",
+      "bridge_isolation",
+      "external_egress_denied",
+      "vendor_fallback_absent",
+      "non_local_network_rejected",
+      "emulator_loopback_bridge"
+    ],
+    "reviewer_must_be_independent": true,
+    "unexpired_decision_required": true
+  },
+  "schema_version": "xaman-self-hosted-independent-review-packet/v1",
+  "task_id": "PORTAL-CXTP-160"
+}

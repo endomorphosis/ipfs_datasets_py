@@ -1,0 +1,85 @@
+{
+  "artifact_cid": "bafkreido7jhisggfpobod3b6k4ilmcnfsxjiyokrwzcyeyvpu4ab5oh3by",
+  "blockers": [],
+  "coverage": {
+    "not_proved": [
+      "vendor_backend_single_use",
+      "vendor_backend_expiry",
+      "native_vault_or_biometric_security",
+      "XRPL_broadcast_finality",
+      "production_wallet_security"
+    ],
+    "proved_conditionally": [
+      "at_most_one_local_submit",
+      "local_cancellation_blocks_later_submit",
+      "local_expiry_blocks_later_submit",
+      "local_replay_is_blocked_after_submit"
+    ]
+  },
+  "model_assumptions": [
+    "The reviewed self-hosted bridge implements a linear single-use Open payload state.",
+    "Cancellation and expiry consume that same local Open state.",
+    "Replay attempts occur only after a successful local submit and are rejected by the resolver."
+  ],
+  "model_scope": {
+    "local_resolver_only": true,
+    "production_security_result": false,
+    "self_hosted_network_only": true,
+    "vendor_backend_modeled": false,
+    "vendor_release_equivalent": false
+  },
+  "overall_status": "checked_conditional_self_hosted_model",
+  "production_release_blocked": true,
+  "proverif_model": {
+    "artifact_cid": "bafkreibugtvkoc2d52qwj27twlgxdtkoibt33evdxnq2zjquwzy2tm36k4",
+    "executable": "/home/barberb/.local/bin/proverif",
+    "line_count": 23,
+    "path": "security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/xaman_self_hosted_resolution.pv",
+    "run": {
+      "command": [
+        "/home/barberb/.local/bin/proverif",
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/xaman_self_hosted_resolution.pv"
+      ],
+      "exit_code": 0,
+      "output_retained": false,
+      "status": "pass",
+      "stderr": "",
+      "stdout": "Process 0 (that is, the initial process):\n{1}!\n{2}new payload: bitstring;\n{3}event issued(payload);\n{4}event submitted(payload);\n(\n    {5}event replay_blocked(payload)\n) | (\n    {6}event cancelled(payload)\n) | (\n    {7}event expired(payload)\n)\n\n-- Query event(submitted(payload_1)) ==> event(issued(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(submitted(payload_1)) ==> event(issued(payload_1))\ngoal reachable: b-event(issued(payload_1)) -> event(submitted(payload_1))\nAbbreviations:\npayload_1 = payload[!1 = @sid]\nRESULT event(submitted(payload_1)) ==> event(issued(payload_1)) is true.\n-- Query event(cancelled(payload_1)) ==> event(issued(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(cancelled(payload_1)) ==> event(issued(payload_1))\ngoal reachable: b-event(issued(payload_1)) -> event(cancelled(payload_1))\nAbbreviations:\npayload_1 = payload[!1 = @sid]\nRESULT event(cancelled(payload_1)) ==> event(issued(payload_1)) is true.\n-- Query event(expired(payload_1)) ==> event(issued(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(expired(payload_1)) ==> event(issued(payload_1))\ngoal reachable: b-event(issued(payload_1)) -> event(expired(payload_1))\nAbbreviations:\npayload_1 = payload[!1 = @sid]\nRESULT event(expired(payload_1)) ==> event(issued(payload_1)) is true.\n-- Query event(replay_blocked(payload_1)) ==> event(submitted(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(replay_blocked(payload_1)) ==> event(submitted(payload_1))\ngoal reachable: b-event(submitted(payload_1)) -> event(replay_blocked(payload_1))\nAbbreviations:\npayload_1 = payload[!1 = @sid]\nRESULT event(replay_blocked(payload_1)) ==> event(submitted(payload_1)) is true.\n\n--------------------------------------------------------------\nVerification summary:\n\nQuery event(submitted(payload_1)) ==> event(issued(payload_1)) is true.\n\nQuery event(cancelled(payload_1)) ==> event(issued(payload_1)) is true.\n\nQuery event(expired(payload_1)) ==> event(issued(payload_1)) is true.\n\nQuery event(replay_blocked(payload_1)) ==> event(submitted(payload_1)) is true.\n\n--------------------------------------------------------------\n\n"
+    },
+    "sha256": "sha256:91dc780ff64cdb415ad28ccebb861f83b2ea4885a1a3084593e9806d70678f0e",
+    "status": "pass",
+    "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
+  },
+  "schema_version": "xaman-self-hosted-resolution-protocol-report/v1",
+  "security_decision": "SELF_HOSTED_RESOLUTION_MODEL_CHECKED_CONDITIONALLY",
+  "tamarin_model": {
+    "artifact_cid": "bafkreif245lwe5dajj3la6pwpxnqbb5cf3b4bn475n5yfji3rzbe7zrd5i",
+    "executable": "/home/barberb/.local/bin/tamarin-prover",
+    "lemmas": [
+      "submit_is_single_use",
+      "cancellation_blocks_later_submit",
+      "expiry_blocks_later_submit",
+      "replay_block_requires_prior_submit",
+      "terminal_paths_are_reachable"
+    ],
+    "line_count": 61,
+    "path": "security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/xaman_self_hosted_resolution.spthy",
+    "run": {
+      "command": [
+        "/home/barberb/.local/bin/tamarin-prover",
+        "--prove",
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/xaman_self_hosted_resolution.spthy"
+      ],
+      "exit_code": 0,
+      "output_retained": false,
+      "status": "pass",
+      "stderr": "maude tool: 'maude'\n checking version: 3.5.1. OK.\n checking installation: OK.\n[Theory XamanSelfHostedResolution] Theory loaded\n[Theory XamanSelfHostedResolution] Theory translated\n[Theory XamanSelfHostedResolution] Derivation checks started\n[Theory XamanSelfHostedResolution] Derivation checks ended\n[Theory XamanSelfHostedResolution] Theory closed\n[Saturating Sources] Step 1 (Max 5)\n[Saturating Sources] Done\n",
+      "stdout": "theory XamanSelfHostedResolution\n\nbegin\n\n// Function signature and definition of the equational theory E\n\nfunctions: fst/1, pair/2, snd/1\nequations: fst(<x.1, x.2>) = x.1, snd(<x.1, x.2>) = x.2\n\nrule (modulo E) Issue:\n   [ Fr( ~payload ) ] --[ PayloadIssued( ~payload ) ]-> [ Open( ~payload ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Submit:\n   [ Open( payload ) ]\n  --[ SubmitAccepted( payload ) ]->\n   [ Submitted( payload ), ReplayEligible( payload ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Cancel:\n   [ Open( payload ) ]\n  --[ Cancelled( payload ) ]->\n   [ CancelledState( payload ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Expire:\n   [ Open( payload ) ]\n  --[ Expired( payload ) ]->\n   [ ExpiredState( payload ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) ReplayBlocked:\n   [ Submitted( payload ), ReplayEligible( payload ) ]\n  --[ ReplayBlocked( payload ) ]->\n   [ Submitted( payload ), ReplayRejected( payload ) ]\n\n  // loop breaker: [0]\n  /* has exactly the trivial AC variant */\n\nlemma submit_is_single_use:\n  all-traces\n  \"\u2200 payload #i #j.\n    ((SubmitAccepted( payload ) @ #i) \u2227 (SubmitAccepted( payload ) @ #j)) \u21d2\n    (#i = #j)\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i #j.\n  (SubmitAccepted( payload ) @ #i) \u2227 (SubmitAccepted( payload ) @ #j)\n \u2227\n  \u00ac(#i = #j)\"\n*/\nsimplify\nsolve( (#i < #j)  \u2225 (#j < #i) )\n  case case_1\n  solve( Open( payload ) \u25b6\u2080 #i )\n    case Issue\n    solve( Open( ~payload ) \u25b6\u2080 #j )\n      case Issue\n      by contradiction /* cyclic */\n    qed\n  qed\nnext\n  case case_2\n  solve( Open( payload ) \u25b6\u2080 #i )\n    case Issue\n    solve( Open( ~payload ) \u25b6\u2080 #j )\n      case Issue\n      by contradiction /* cyclic */\n    qed\n  qed\nqed\n\nlemma cancellation_blocks_later_submit:\n  all-traces\n  \"\u2200 payload #i #j.\n    ((Cancelled( payload ) @ #i) \u2227 (SubmitAccepted( payload ) @ #j)) \u21d2\n    (#j < #i)\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i #j.\n  (Cancelled( payload ) @ #i) \u2227 (SubmitAccepted( payload ) @ #j)\n \u2227\n  \u00ac(#j < #i)\"\n*/\nsimplify\nsolve( Open( payload ) \u25b6\u2080 #i )\n  case Issue\n  by solve( Open( ~payload ) \u25b6\u2080 #j )\nqed\n\nlemma expiry_blocks_later_submit:\n  all-traces\n  \"\u2200 payload #i #j.\n    ((Expired( payload ) @ #i) \u2227 (SubmitAccepted( payload ) @ #j)) \u21d2\n    (#j < #i)\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i #j.\n  (Expired( payload ) @ #i) \u2227 (SubmitAccepted( payload ) @ #j)\n \u2227\n  \u00ac(#j < #i)\"\n*/\nsimplify\nsolve( Open( payload ) \u25b6\u2080 #i )\n  case Issue\n  by solve( Open( ~payload ) \u25b6\u2080 #j )\nqed\n\nlemma replay_block_requires_prior_submit:\n  all-traces\n  \"\u2200 payload #i.\n    (ReplayBlocked( payload ) @ #i) \u21d2\n    (\u2203 #j. (SubmitAccepted( payload ) @ #j) \u2227 (#j < #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (ReplayBlocked( payload ) @ #i)\n \u2227\n  \u2200 #j. (SubmitAccepted( payload ) @ #j) \u21d2 \u00ac(#j < #i)\"\n*/\nsimplify\nsolve( ReplayEligible( payload ) \u25b6\u2081 #i )\n  case Submit\n  by contradiction /* from formulas */\nqed\n\nlemma terminal_paths_are_reachable:\n  exists-trace\n  \"\u2203 submitted cancelled expired replayed #i #j #k #l.\n    (((SubmitAccepted( submitted ) @ #i) \u2227 (Cancelled( cancelled ) @ #j)) \u2227\n     (Expired( expired ) @ #k)) \u2227\n    (ReplayBlocked( replayed ) @ #l)\"\n/*\nguarded formula characterizing all satisfying traces:\n\"\u2203 submitted cancelled expired replayed #i #j #k #l.\n  (SubmitAccepted( submitted ) @ #i) \u2227\n  (Cancelled( cancelled ) @ #j) \u2227\n  (Expired( expired ) @ #k) \u2227\n  (ReplayBlocked( replayed ) @ #l)\"\n*/\nsimplify\nsolve( Open( submitted ) \u25b6\u2080 #i )\n  case Issue\n  solve( Open( cancelled ) \u25b6\u2080 #j )\n    case Issue\n    solve( Open( expired ) \u25b6\u2080 #k )\n      case Issue\n      solve( ReplayEligible( replayed ) \u25b6\u2081 #l )\n        case Submit\n        solve( Submitted( ~payload.3 ) \u25b6\u2080 #l )\n          case Submit\n          SOLVED // trace found\n        qed\n      qed\n    qed\n  qed\nqed\n\n/* All wellformedness checks were successful. */\n\n/*\nGenerated from:\nTamarin version 1.12.0\nMaude version 3.5.1\nGit revision: 82780bbaf3328a45f624ddb41e51bf75425f851c (with uncommited changes), branch: master\nCompiled at: 2026-03-07 14:22:39.174278293 UTC\n*/\n\nend\n\n==============================================================================\nsummary of summaries:\n\nanalyzed: /home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/xaman_self_hosted_resolution.spthy\n\n  processing time: 0.33s\n  \n  submit_is_single_use (all-traces): verified (8 steps)\n  cancellation_blocks_later_submit (all-traces): verified (3 steps)\n  expiry_blocks_later_submit (all-traces): verified (3 steps)\n  replay_block_requires_prior_submit (all-traces): verified (3 steps)\n  terminal_paths_are_reachable (exists-trace): verified (7 steps)\n\n==============================================================================\n"
+    },
+    "sha256": "sha256:db3df25cc62fe5646c511a5875b02e14194735ff09e2367cab7ee8a32a3c1d77",
+    "status": "pass",
+    "theory": "XamanSelfHostedResolution",
+    "version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
+  },
+  "task_id": "PORTAL-CXTP-159"
+}

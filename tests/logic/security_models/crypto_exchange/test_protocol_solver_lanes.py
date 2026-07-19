@@ -50,7 +50,8 @@ def test_protocol_solver_lane_blocks_when_solvers_are_missing(monkeypatch) -> No
     assert report['security_decision'] == 'BLOCK_PROTOCOL_SOLVER_LANES_UNAVAILABLE'
     assert 'TAMARIN_EXECUTABLE_MISSING' in codes
     assert 'PROVERIF_EXECUTABLE_MISSING' in codes
-    assert 'PROVERIF_MODEL_MISSING' in codes
+    assert 'TAMARIN_MODEL_MISSING' not in codes
+    assert 'PROVERIF_MODEL_MISSING' not in codes
     assert report['summary']['tamarin_model_present'] is True
     assert report['production_release_blocked_by_protocol_solvers'] is True
     assert report['artifact_cid'].startswith('sha256:')
@@ -100,12 +101,18 @@ def test_persisted_protocol_solver_lane_report_is_fail_closed() -> None:
     report = _json(REPORT_PATH)
 
     assert report['task_id'] == 'PORTAL-CXTP-092'
-    assert report['overall_status'] == 'blocked_optional_lane'
-    assert report['security_decision'] == 'BLOCK_PROTOCOL_SOLVER_LANES_UNAVAILABLE'
-    assert report['summary']['blocker_count'] >= 1
-    assert report['checks']['tamarin']['status'] == 'not-run'
-    assert report['checks']['proverif']['status'] == 'not-run'
-    assert report['protocol_report']['overall_status'] == 'blocked_optional_lane'
+    assert report['overall_status'] in {'ready', 'blocked_optional_lane'}
+    if report['overall_status'] == 'ready':
+        assert report['security_decision'] == 'PROTOCOL_SOLVER_LANES_READY'
+        assert report['summary']['blocker_count'] == 0
+        assert report['checks']['tamarin']['status'] == 'passed'
+        assert report['checks']['proverif']['status'] == 'passed'
+    else:
+        assert report['security_decision'] == 'BLOCK_PROTOCOL_SOLVER_LANES_UNAVAILABLE'
+        assert report['summary']['blocker_count'] >= 1
+        assert report['checks']['tamarin']['status'] == 'not-run'
+        assert report['checks']['proverif']['status'] == 'not-run'
+        assert report['protocol_report']['overall_status'] == 'blocked_optional_lane'
 
 
 def test_protocol_solver_lane_documentation_includes_remediation_and_scope() -> None:

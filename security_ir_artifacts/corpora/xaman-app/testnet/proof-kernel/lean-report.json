@@ -109,7 +109,7 @@
     },
     "executable": "/home/barberb/.elan/bin/lean",
     "status": "compiled",
-    "version": ""
+    "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
   },
   "model": {
     "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
@@ -120,7 +120,7 @@
   },
   "overall_status": "checked_with_scope_limits",
   "production_release_blocked": true,
-  "report_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+  "report_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
   "schema_version": "xaman-testnet-lean-kernel-report/v1",
   "security_decision": "LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY",
   "summary": {

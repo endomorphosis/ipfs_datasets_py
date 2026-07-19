@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "bafkreidzafqrwu72t4zora5djvjpuwhhxwk73uqjajso3dwlutco4jzbea",
+  "artifact_cid": "bafkreihxtwrbqmacjil3nfco3wlexd6s7nceq7brigift2ji5vlf4njfve",
   "claim_evidence": [
     {
       "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
@@ -528,7 +528,7 @@
       "task_id": null
     },
     {
-      "artifact_cid": "sha256:9e928c511d683870c8b84c653645e3ef34aea7c3ada501455b1779de0d4beab0",
+      "artifact_cid": "sha256:4880afc359884232b20b6bbb9a5b6bbbeb6039bbaec2275bba17817973f841e1",
       "exists": true,
       "kind": "source_claim_map",
       "path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
@@ -544,7 +544,7 @@
       "task_id": "PORTAL-CXTP-146"
     },
     {
-      "artifact_cid": "bafkreiazj3uvrsdjptdtrdj5h4erzvrpmn6zljboowzyo2p2oxmgbx2iim",
+      "artifact_cid": "bafkreia5mefm5jhqv56tpzpdvztg5qkvehewe5faporjc3ee32vacwvuzm",
       "exists": true,
       "kind": "disproof_vectors",
       "model_cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
@@ -807,7 +807,7 @@
       "timeout_seconds": 120
     },
     {
-      "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+      "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
       "available": true,
       "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -823,7 +823,7 @@
       "lane_id": "tamarin_protocol",
       "required": true,
       "reviewer_status": "human_reviewed",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
       "solvers": [
         {
           "executable": "/home/barberb/.local/bin/tamarin-prover",
@@ -832,12 +832,12 @@
           "version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
         }
       ],
-      "status": "not-run",
+      "status": "passed",
       "theory": "Tamarin remote-payload protocol lemmas",
       "timeout_seconds": 120
     },
     {
-      "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+      "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
       "available": true,
       "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -847,26 +847,26 @@
           "security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv"
         ]
       ],
-      "executable_versions_recorded": false,
+      "executable_versions_recorded": true,
       "fail_closed_result_for_unavailable_or_disagreeing_lane": "REQUIRED_MISSING_ARTIFACT",
       "lane_id": "proverif_protocol",
       "required": true,
       "reviewer_status": "human_reviewed",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
       "solvers": [
         {
           "executable": "/home/barberb/.local/bin/proverif",
           "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
           "name": "proverif",
-          "version": null
+          "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
         }
       ],
-      "status": "not-run",
+      "status": "passed",
       "theory": "ProVerif remote-payload protocol queries",
       "timeout_seconds": 120
     },
     {
-      "artifact_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+      "artifact_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
       "available": true,
       "command_digest": "sha256:b428d084bf966879f015e71a764dbe7120b2521f639733e1a99707b42956c27f",
@@ -885,9 +885,9 @@
       "solvers": [
         {
           "executable": "/home/barberb/.elan/bin/lean",
-          "executable_sha256": "sha256:df25409ddea390271687e3296ffae15d2efbae339b58f78f7aca023917ee354f",
+          "executable_sha256": "sha256:840179e70803ef373c2ec53342d6a45ea7d022533e4145489fc1278b4f716385",
           "name": "lean",
-          "version": ""
+          "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
         }
       ],
       "status": "checked_with_scope_limits",
@@ -895,13 +895,16 @@
       "timeout_seconds": 90
     },
     {
-      "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
+      "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
       "available": true,
-      "command_digest": "sha256:ed6ca69b4c4af4b99575648a84e00ddbaad9f321294d7ccdece7ef0aa10be484",
+      "command_digest": "sha256:79a62ca43991a324159219f58cd5f4735fecd28f0b05cb02d659bdcb09fb650a",
       "commands": [
         [
           "/home/barberb/.local/bin/coqc",
+          "-noglob",
+          "-o",
+          "tmp/cxtp-proof-checks/XamanTestnet.vo",
           "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v"
         ]
       ],
@@ -910,7 +913,7 @@
       "lane_id": "rocq_kernel",
       "required": true,
       "reviewer_status": "not_recorded",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+      "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED",
       "solvers": [
         {
           "executable": "/home/barberb/.local/bin/coqc",
@@ -919,7 +922,7 @@
           "version": "The Rocq Prover, version 9.1.1"
         }
       ],
-      "status": "coverage_gap_required_independent_kernel_missing",
+      "status": "independent_kernel_checked",
       "theory": "Rocq/Coq independent kernel coverage decision",
       "timeout_seconds": 90
     },
@@ -998,7 +1001,7 @@
     "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
     "public_source_only": true,
     "repository": "XRPL-Labs/Xaman-App",
-    "source_claim_map_artifact_cid": "sha256:9e928c511d683870c8b84c653645e3ef34aea7c3ada501455b1779de0d4beab0",
+    "source_claim_map_artifact_cid": "sha256:4880afc359884232b20b6bbb9a5b6bbbeb6039bbaec2275bba17817973f841e1",
     "source_claim_map_path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
     "source_manifest_artifact_cid": "bafkreiei6bzr7ziihvbe4ueyfzkxspj7xijuoufqkn5jbqj2i7pzbdlkj4"
   },

@@ -13,7 +13,7 @@
     "required_verifier": "Lean/Lake compile check",
     "rule": "Leanstral may propose Lean edits or proof strategies, but every suggestion must compile through the Lean lane and still pass the production evidence gates."
   },
-  "artifact_cid": "sha256:c536f0958166f92fd50bafe0488cd84cd8b5c73dbe4061c8080fb0c5c4f8ff39",
+  "artifact_cid": "sha256:05893c3a41580056897b41e9e17679617b967d60365a6a65fb7f6b0366f625a0",
   "blockers": [
     {
       "approved_model_routes": [
@@ -45,7 +45,7 @@
     "unapproved_leanstral_candidates": []
   },
   "default_mode": "probe-only-no-network",
-  "generated_at_utc": "2026-07-10T07:08:23Z",
+  "generated_at_utc": "2026-07-19T06:33:51Z",
   "lean_lane": {
     "exists": true,
     "lake_present": true,
@@ -55,7 +55,7 @@
     "proof_kernel_checked": true,
     "proof_kernel_status": "passed",
     "security_decision": "LEAN_SOLVER_LANE_READY",
-    "sha256": "b170f43483fda3e523a104d17279ba655389c399cccc7e39e021b81b430d43d8"
+    "sha256": "3fde23467cc3449d0df0550b247a1778f231712be5003ddc28af8a71b8b74609"
   },
   "overall_status": "degraded",
   "policy_document": "docs/security_verification/leanstral_proof_assistant_lane.md",

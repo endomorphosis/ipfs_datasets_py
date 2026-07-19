@@ -3,8 +3,8 @@
 Task: `PORTAL-CXTP-143`
 
 The canonical taskboard now contains durable records for the supervisor-state
-extension that was absent from the committed board. The reconciled range is
-`PORTAL-CXTP-119` through `PORTAL-CXTP-153`, with completed evidence retained
+extension that was absent from the committed board. The reconciled range starts
+at `PORTAL-CXTP-119` and is derived from the canonical taskboard, with completed evidence retained
 for `PORTAL-CXTP-119` through `PORTAL-CXTP-142`.
 
 ## Reconciliation Result
@@ -14,26 +14,22 @@ for `PORTAL-CXTP-119` through `PORTAL-CXTP-142`.
 - Reconciliation artifact: `security_ir_artifacts/recovery/cxtp-taskboard-state-reconciliation.json`
 - Result: `TASKBOARD_STATE_RECONCILED`
 
-The canonical board and supervisor state both enumerate 98 tasks:
+The generated reconciliation artifact records the current canonical task count
+and status distribution. These values are intentionally generated rather than
+duplicated in this document.
 
-| Status | Count |
-| --- | ---: |
-| completed | 59 |
-| blocked | 20 |
-| waiting | 18 |
-| ready | 1 |
-
-No supervisor-only task IDs remain, and no taskboard-only task IDs remain.
-`PORTAL-CXTP-143` remains the selectable ready task until the supervisor marks
-this reconciliation complete and advances dependent work.
+No supervisor-only task IDs remain, and no taskboard-only task IDs remain. The
+preflight report determines whether a task is selectable; a task is never made
+ready merely by this reconciliation.
 
 ## Recovered Records
 
 The taskboard preserves the completed records and evidence summaries for
 `PORTAL-CXTP-119` through `PORTAL-CXTP-142`, including each task's outputs,
 validation command, dependencies, and acceptance statement. The later extension
-records `PORTAL-CXTP-144` through `PORTAL-CXTP-153` remain waiting or blocked,
-so downstream public-source/Testnet work cannot bypass this reconciliation.
+records `PORTAL-CXTP-143` through `PORTAL-CXTP-157` preserve the public-source,
+Testnet, vendor-evidence, and self-hosted-testnet boundaries without bypassing
+the reconciliation.
 
 `PORTAL-CXTP-153` remains blocked on authorized vendor evidence. The production
 blocker tasks `PORTAL-CXTP-077` through `PORTAL-CXTP-084` remain incomplete and

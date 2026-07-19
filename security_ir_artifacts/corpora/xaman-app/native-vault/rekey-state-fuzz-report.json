@@ -1,0 +1,415 @@
+{
+  "artifact_cid": "bafkreieaqpjiyuhsejag2vf6zfysh3l4rjws6gpuv5rnmlgbu34wdyifa4",
+  "bounded_fuzz_campaign": {
+    "all_data_recoverable_in_model": true,
+    "case_count": 14,
+    "cases": [
+      {
+        "all_data_recoverable": true,
+        "case_id": "single_rekey-01",
+        "classification": "SUCCESS_CLEANUP_COMPLETE",
+        "fault_index": null,
+        "fault_phase": "none",
+        "flow": "single_rekey",
+        "native_operation_reports_success": true,
+        "old_key_recovery_vault_count": 0,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 1,
+          "old_key": 0
+        },
+        "requires_runtime_fault_injection": false,
+        "vault_count": 1
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "single_rekey-02",
+        "classification": "PRE_DESTRUCTIVE_FAILURE_PRESERVES_PRIMARY",
+        "fault_index": 0,
+        "fault_phase": "recovery_snapshot_write",
+        "flow": "single_rekey",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 0,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 0,
+          "old_key": 1
+        },
+        "requires_runtime_fault_injection": false,
+        "vault_count": 1
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "single_rekey-03",
+        "classification": "PRE_DESTRUCTIVE_FAILURE_PRESERVES_PRIMARY",
+        "fault_index": 0,
+        "fault_phase": "primary_purge",
+        "flow": "single_rekey",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 1,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 0,
+          "old_key": 1
+        },
+        "requires_runtime_fault_injection": false,
+        "vault_count": 1
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "single_rekey-04",
+        "classification": "RECOVERY_ONLY_RUNTIME_OBLIGATION",
+        "fault_index": 0,
+        "fault_phase": "replacement_write",
+        "flow": "single_rekey",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 1,
+        "primary_state_counts": {
+          "absent": 1,
+          "new_key": 0,
+          "old_key": 0
+        },
+        "requires_runtime_fault_injection": true,
+        "vault_count": 1
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "single_rekey-05",
+        "classification": "DUAL_OLD_NEW_ACCESS_RUNTIME_OBLIGATION",
+        "fault_index": 0,
+        "fault_phase": "recovery_cleanup",
+        "flow": "single_rekey",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 1,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 1,
+          "old_key": 0
+        },
+        "requires_runtime_fault_injection": true,
+        "vault_count": 1
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-01",
+        "classification": "SUCCESS_CLEANUP_COMPLETE",
+        "fault_index": null,
+        "fault_phase": "none",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": true,
+        "old_key_recovery_vault_count": 0,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 2,
+          "old_key": 0
+        },
+        "requires_runtime_fault_injection": false,
+        "vault_count": 2
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-02",
+        "classification": "PRE_DESTRUCTIVE_FAILURE_PRESERVES_PRIMARY",
+        "fault_index": 0,
+        "fault_phase": "recovery_snapshot_write",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 0,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 0,
+          "old_key": 2
+        },
+        "requires_runtime_fault_injection": false,
+        "vault_count": 2
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-03",
+        "classification": "PRE_DESTRUCTIVE_FAILURE_PRESERVES_PRIMARY",
+        "fault_index": 1,
+        "fault_phase": "recovery_snapshot_write",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 1,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 0,
+          "old_key": 2
+        },
+        "requires_runtime_fault_injection": false,
+        "vault_count": 2
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-04",
+        "classification": "PRE_DESTRUCTIVE_FAILURE_PRESERVES_PRIMARY",
+        "fault_index": 0,
+        "fault_phase": "primary_purge",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 2,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 0,
+          "old_key": 2
+        },
+        "requires_runtime_fault_injection": false,
+        "vault_count": 2
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-05",
+        "classification": "PRE_DESTRUCTIVE_FAILURE_PRESERVES_PRIMARY",
+        "fault_index": 1,
+        "fault_phase": "primary_purge",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 2,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 1,
+          "old_key": 1
+        },
+        "requires_runtime_fault_injection": false,
+        "vault_count": 2
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-06",
+        "classification": "RECOVERY_ONLY_RUNTIME_OBLIGATION",
+        "fault_index": 0,
+        "fault_phase": "replacement_write",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 2,
+        "primary_state_counts": {
+          "absent": 1,
+          "new_key": 0,
+          "old_key": 1
+        },
+        "requires_runtime_fault_injection": true,
+        "vault_count": 2
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-07",
+        "classification": "RECOVERY_ONLY_RUNTIME_OBLIGATION",
+        "fault_index": 1,
+        "fault_phase": "replacement_write",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 2,
+        "primary_state_counts": {
+          "absent": 1,
+          "new_key": 1,
+          "old_key": 0
+        },
+        "requires_runtime_fault_injection": true,
+        "vault_count": 2
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-08",
+        "classification": "DUAL_OLD_NEW_ACCESS_RUNTIME_OBLIGATION",
+        "fault_index": 0,
+        "fault_phase": "recovery_cleanup",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 2,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 2,
+          "old_key": 0
+        },
+        "requires_runtime_fault_injection": true,
+        "vault_count": 2
+      },
+      {
+        "all_data_recoverable": true,
+        "case_id": "batch_rekey_two_vaults-09",
+        "classification": "DUAL_OLD_NEW_ACCESS_RUNTIME_OBLIGATION",
+        "fault_index": 1,
+        "fault_phase": "recovery_cleanup",
+        "flow": "batch_rekey_two_vaults",
+        "native_operation_reports_success": false,
+        "old_key_recovery_vault_count": 1,
+        "primary_state_counts": {
+          "absent": 0,
+          "new_key": 2,
+          "old_key": 0
+        },
+        "requires_runtime_fault_injection": true,
+        "vault_count": 2
+      }
+    ],
+    "input_space": {
+      "batch_size_bound": 2,
+      "fault_phases": [
+        "none",
+        "recovery_snapshot_write",
+        "primary_purge",
+        "replacement_write",
+        "recovery_cleanup"
+      ],
+      "flows": [
+        "single_rekey",
+        "batch_rekey_two_vaults"
+      ]
+    },
+    "method": "exhaustive-phase-index-state-fuzz/v1",
+    "runtime_obligation_case_count": 6
+  },
+  "formal_state_model": {
+    "checks": [
+      {
+        "expected_result": "unsat",
+        "id": "success_removes_old_key_recovery"
+      },
+      {
+        "expected_result": "unsat",
+        "id": "replacement_failure_retains_old_key_recovery"
+      },
+      {
+        "expected_result": "unsat",
+        "id": "cleanup_failure_is_reported_with_old_key_recovery"
+      },
+      {
+        "expected_result": "sat",
+        "id": "cleanup_failure_has_expected_dual_access_witness"
+      }
+    ],
+    "path": "security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz.smt2",
+    "sha256": "sha256:cb003edc495992b5b2527706734a7ccf69854ec8d13547666bb9988d6d064eee",
+    "solvers": {
+      "cvc5": {
+        "command": [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--incremental"
+        ],
+        "results": [
+          "unsat",
+          "unsat",
+          "unsat",
+          "sat"
+        ],
+        "returncode": 0,
+        "status": "pass",
+        "stderr": "",
+        "stdout": "unsat\nunsat\nunsat\nsat\n",
+        "version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]"
+      },
+      "z3": {
+        "command": [
+          "/home/barberb/miniforge3/bin/z3",
+          "-in"
+        ],
+        "results": [
+          "unsat",
+          "unsat",
+          "unsat",
+          "sat"
+        ],
+        "returncode": 0,
+        "status": "pass",
+        "stderr": "",
+        "stdout": "unsat\nunsat\nunsat\nsat\n",
+        "version": "Z3 version 4.16.0 - 64 bit"
+      }
+    },
+    "status": "checked"
+  },
+  "generated_at_utc": "2026-07-19T00:00:00Z",
+  "inputs": {
+    "native_vault_assessment_cid": "bafkreiacnwrbg7o7t5rbff4qjvonwgiwxy3et567wrhrzw6virnjyyr2qe",
+    "source_inputs": [
+      {
+        "marker_lines": {
+          "// finally remove the created recovery vaults": 246,
+          "// remove old vault and create one": 234,
+          "// try to create the new vault under a temp recovery name with the old key for all vaults": 219,
+          "createVault(recoveryVaultName, clearText, oldKey);": 190,
+          "createVault(vaultName, clearText, newKey);": 196,
+          "promise.resolve(result);": 351,
+          "purgeVault(recoveryVaultName);": 161,
+          "purgeVault(vaultName);": 193,
+          "rejectWithError(promise, e);": 353
+        },
+        "path": "android/app/src/main/java/libs/security/vault/VaultManagerModule.java",
+        "sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357"
+      },
+      {
+        "marker_lines": {
+          "[VaultManagerModule createVault:recoveryVaultName data:cleartext key:oldKey];": 203,
+          "[VaultManagerModule createVault:vaultName data:cleartext key:newKey];": 209,
+          "[VaultManagerModule purgeVault:recoveryVaultName];": 174,
+          "[VaultManagerModule purgeVault:vaultName];": 206,
+          "finally remove the created recovery vaults": 251,
+          "rejectWithError(reject, error);": 403,
+          "remove old vault and create one": 243,
+          "resolve(@(result));": 400,
+          "try to create the new vault under a temp recovery name with the old key for all vaults": 232
+        },
+        "path": "ios/Xaman/Libs/Security/Vault/VaultManager.m",
+        "sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30"
+      },
+      {
+        "marker_lines": {
+          "VaultManagerModule.reKeyBatchVaults(names, oldKey, newKey)": 161,
+          "VaultManagerModule.reKeyVault(name, oldKey, newKey)": 147,
+          "reject(error);": 37
+        },
+        "path": "src/common/libs/vault.ts",
+        "sha256": "770599e39b851c7599be430595ad471aef8fd833120c1400c42ffccfb25c10c8"
+      },
+      {
+        "marker_lines": {
+          "await CoreRepository.setPasscode(passcode);": 168,
+          "await Vault.reKeyBatch(passcodeVaultNames, passcode, newEncPasscode);": 161
+        },
+        "path": "src/screens/Settings/Security/ChangePasscode/ChangePasscodeView.tsx",
+        "sha256": "b9873e7d7b2c722c719e7781fd834f052b0eef102b43dd45182f9cd165d0551d"
+      }
+    ],
+    "source_manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "source_manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json"
+  },
+  "not_proved": [
+    "native storage durability, exception behavior, and recovery behavior on Android or iOS",
+    "whether old-key recovery is accessible after an injected cleanup failure on a released binary",
+    "caller remediation and user-visible behavior after partial batch rekey failure",
+    "vendor release equivalence or production wallet security"
+  ],
+  "overall_status": "checked_source_bounded_with_runtime_obligations",
+  "production_release_blocked": true,
+  "schema_version": "xaman-native-vault-rekey-state-fuzz/v1",
+  "scope": {
+    "production_security_result": false,
+    "public_source_only": true,
+    "source_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "vendor_release_equivalent": false
+  },
+  "security_decision": "SOURCE_BOUNDED_NATIVE_VAULT_STATE_FUZZED_REQUIRES_RUNTIME_INJECTION",
+  "source_supported_conditions": [
+    {
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "confirmed_vulnerability": false,
+      "id": "xaman-native-vault:condition:replacement-write-failure-leaves-old-key-recovery",
+      "summary": "A failure after primary purge and before replacement write has an old-key recovery-only state in the bounded model."
+    },
+    {
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "confirmed_vulnerability": false,
+      "id": "xaman-native-vault:condition:cleanup-failure-retains-old-key-recovery",
+      "summary": "A recovery-cleanup exception after replacement yields a new-key primary together with old-key recovery in the bounded model; the native bridge and TypeScript wrapper source show error propagation, which must be checked under runtime injection."
+    },
+    {
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "confirmed_vulnerability": false,
+      "id": "xaman-native-vault:condition:batch-failure-can-be-mixed-state",
+      "summary": "For a bounded two-vault batch, first- and later-vault failures can leave mixed old primary, absent primary with recovery, or new primary with recovery states. The public passcode flow visibly attempts rollback after rejected batch rekey, but runtime behavior remains unproved."
+    }
+  ],
+  "task_id": "PORTAL-CXTP-167"
+}

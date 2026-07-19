@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "sha256:69c7ca855cf057da873312dab0ec44dc8541b81b8cbb6faf03c1f3fc3ff9a8ad",
+  "artifact_cid": "sha256:281b0cee207a0db8ee29d712c0d72ba4f11d18d6908dff2524f1abc636028bc2",
   "assumptions": {
     "detox_e2e": {
       "detox_config": true,
@@ -17,16 +17,16 @@
       "xctest_plan": true
     },
     "node_runtime": {
-      "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/node",
+      "executable": "/home/barberb/.local/bin/node",
       "required_for": "React Native package and proof-consumer schema tooling",
       "status": "present",
-      "version": "24.18.0"
+      "version": "22.23.1"
     },
     "npm_runtime": {
-      "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/npm",
+      "executable": "/home/barberb/.local/bin/npm",
       "required_for": "package-lock based dependency resolution",
       "status": "present",
-      "version": "11.16.0"
+      "version": "10.9.8"
     },
     "react_native_config": {
       "babel_config": true,
@@ -36,16 +36,16 @@
     },
     "solver_paths": {
       "apalache": {
-        "executable": null,
+        "executable": "/home/barberb/.local/bin/apalache-mc",
         "required": false,
-        "status": "missing",
-        "version": null
+        "status": "present",
+        "version": "0.58.3"
       },
       "coq": {
-        "executable": null,
+        "executable": "/home/barberb/.local/bin/coqc",
         "required": false,
-        "status": "missing",
-        "version": null
+        "status": "present",
+        "version": "9.1.1"
       },
       "cvc5": {
         "executable": "/home/barberb/.local/bin/cvc5",
@@ -60,16 +60,16 @@
         "version": "4.31.0"
       },
       "proverif": {
-        "executable": null,
+        "executable": "/home/barberb/.local/bin/proverif",
         "required": false,
-        "status": "missing",
-        "version": null
+        "status": "error",
+        "version": "2.05"
       },
       "tamarin": {
-        "executable": null,
+        "executable": "/home/barberb/.local/bin/tamarin-prover",
         "required": false,
-        "status": "missing",
-        "version": null
+        "status": "present",
+        "version": "1.12.0"
       },
       "z3": {
         "executable": "/home/barberb/miniforge3/bin/z3",
@@ -111,7 +111,7 @@
       "ios/security.txt"
     ]
   },
-  "generated_at_utc": "2026-07-10T06:30:43Z",
+  "generated_at_utc": "2026-07-19T06:41:48Z",
   "overall_status": "ready",
   "policy_document": "docs/security_verification/xaman_environment_assumptions.md",
   "schema_version": "xaman-environment-probe/v1",
@@ -130,25 +130,13 @@
     "native_android_present": true,
     "native_ios_present": true,
     "typescript_ready": true,
-    "warning_count": 4
+    "warning_count": 1
   },
   "task_id": "PORTAL-CXTP-061",
   "warnings": [
     {
       "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
-      "solver": "apalache"
-    },
-    {
-      "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
-      "solver": "tamarin"
-    },
-    {
-      "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
       "solver": "proverif"
-    },
-    {
-      "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
-      "solver": "coq"
     }
   ]
 }

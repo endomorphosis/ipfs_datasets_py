@@ -17,8 +17,8 @@ This record reproduces the public Android Testnet verifier build evidence in a l
 - Java: `17.0.18+8` at `/home/barberb/.local/jdks/jdk-17.0.18+8`
 - Android SDK: `/home/barberb/lift_coding/.tools/android-sdk`
 - Gradle: wrapper-pinned by `android/gradlew` and `android/gradle/wrapper/gradle-wrapper.properties`
-- Node: `24.18.0`
-- npm: `11.16.0`
+- Node: `22.23.1`
+- npm: `10.9.8`
 
 ## Build Outcome
 

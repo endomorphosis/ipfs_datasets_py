@@ -58,18 +58,18 @@
       "capability_gap": false,
       "category": "runtime",
       "command": [
-        "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/node",
+        "/home/barberb/.local/bin/node",
         "--version"
       ],
       "command_result": {
         "error": null,
         "exit_code": 0,
         "stderr_first_line": null,
-        "stdout_first_line": "v24.18.0",
+        "stdout_first_line": "v22.23.1",
         "timed_out": false
       },
       "display_name": "Node.js",
-      "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/node",
+      "executable": "/home/barberb/.local/bin/node",
       "minimum_version": null,
       "name": "node",
       "required": true,
@@ -78,8 +78,8 @@
         "node"
       ],
       "status": "present",
-      "version": "24.18.0",
-      "version_raw": "v24.18.0"
+      "version": "22.23.1",
+      "version_raw": "v22.23.1"
     },
     {
       "blocking": false,
@@ -87,18 +87,18 @@
       "capability_gap": false,
       "category": "runtime",
       "command": [
-        "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/npm",
+        "/home/barberb/.local/bin/npm",
         "--version"
       ],
       "command_result": {
         "error": null,
         "exit_code": 0,
         "stderr_first_line": null,
-        "stdout_first_line": "11.16.0",
+        "stdout_first_line": "10.9.8",
         "timed_out": false
       },
       "display_name": "npm",
-      "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/npm",
+      "executable": "/home/barberb/.local/bin/npm",
       "minimum_version": null,
       "name": "npm",
       "required": true,
@@ -107,8 +107,8 @@
         "npm"
       ],
       "status": "present",
-      "version": "11.16.0",
-      "version_raw": "11.16.0"
+      "version": "10.9.8",
+      "version_raw": "10.9.8"
     },
     {
       "blocking": false,
@@ -131,7 +131,7 @@
       "minimum_version": null,
       "name": "typescript",
       "required": true,
-      "resolved_by_env_var": "TSC_EXE",
+      "resolved_by_env_var": "repo_relative_path",
       "searched_names": [
         "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc"
       ],
@@ -200,31 +200,50 @@
     {
       "blocking": false,
       "capability": "Optional TLA+ workflow and interleaving model-checking coverage.",
-      "capability_gap": true,
+      "capability_gap": false,
       "category": "model_checker",
-      "command": null,
+      "command": [
+        "/home/barberb/.local/bin/apalache-mc",
+        "version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "0.58.3",
+        "timed_out": false
+      },
       "display_name": "Apalache",
-      "executable": null,
+      "executable": "/home/barberb/.local/bin/apalache-mc",
       "minimum_version": null,
       "name": "apalache",
       "required": false,
       "resolved_by_env_var": null,
       "searched_names": [
-        "apalache-mc",
-        "apalache"
+        "apalache-mc"
       ],
-      "status": "missing",
-      "version": null,
-      "version_raw": null
+      "status": "present",
+      "version": "0.58.3",
+      "version_raw": "0.58.3"
     },
     {
       "blocking": false,
       "capability": "Optional protocol proof coverage for key custody and signing authority.",
-      "capability_gap": true,
+      "capability_gap": false,
       "category": "protocol_prover",
-      "command": null,
+      "command": [
+        "/home/barberb/.local/bin/tamarin-prover",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": "maude tool: 'maude'",
+        "stdout_first_line": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023",
+        "timed_out": false
+      },
       "display_name": "Tamarin Prover",
-      "executable": null,
+      "executable": "/home/barberb/.local/bin/tamarin-prover",
       "minimum_version": null,
       "name": "tamarin",
       "required": false,
@@ -232,18 +251,28 @@
       "searched_names": [
         "tamarin-prover"
       ],
-      "status": "missing",
-      "version": null,
-      "version_raw": null
+      "status": "present",
+      "version": "1.12.0",
+      "version_raw": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
     },
     {
       "blocking": false,
       "capability": "Optional protocol proof coverage for replay and secrecy properties.",
       "capability_gap": true,
       "category": "protocol_prover",
-      "command": null,
+      "command": [
+        "/home/barberb/.local/bin/proverif",
+        "-version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 2,
+        "stderr_first_line": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif: unknown option '-version'.",
+        "stdout_first_line": null,
+        "timed_out": false
+      },
       "display_name": "ProVerif",
-      "executable": null,
+      "executable": "/home/barberb/.local/bin/proverif",
       "minimum_version": null,
       "name": "proverif",
       "required": false,
@@ -251,9 +280,9 @@
       "searched_names": [
         "proverif"
       ],
-      "status": "missing",
-      "version": null,
-      "version_raw": null
+      "status": "error",
+      "version": "2.05",
+      "version_raw": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif: unknown option '-version'."
     },
     {
       "blocking": false,
@@ -287,11 +316,21 @@
     {
       "blocking": false,
       "capability": "Optional proof-consumer invariant checking in Coq.",
-      "capability_gap": true,
+      "capability_gap": false,
       "category": "proof_assistant",
-      "command": null,
+      "command": [
+        "/home/barberb/.local/bin/coqc",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "The Rocq Prover, version 9.1.1",
+        "timed_out": false
+      },
       "display_name": "Coq",
-      "executable": null,
+      "executable": "/home/barberb/.local/bin/coqc",
       "minimum_version": null,
       "name": "coq",
       "required": false,
@@ -299,21 +338,21 @@
       "searched_names": [
         "coqc"
       ],
-      "status": "missing",
-      "version": null,
-      "version_raw": null
+      "status": "present",
+      "version": "9.1.1",
+      "version_raw": "The Rocq Prover, version 9.1.1"
     }
   ],
   "environment_variables": [
     {
-      "entry_count": 28,
-      "length": 930,
+      "entry_count": 22,
+      "length": 631,
       "name": "PATH",
       "present": true,
       "purpose": "Executable discovery path for Python, Node, SMT solvers, and proof assistants.",
       "required": true,
       "status": "present",
-      "value_sha256": "fc306bca6d08c89cf100ce87b3d3d61abcbb0fe48f00265b61aa0d9bda964915"
+      "value_sha256": "6f589229f5bdbb8fa3b22e43c1def8e9c75419cc0f499ce6e7b0f571d035384e"
     },
     {
       "entry_count": 1,
@@ -347,14 +386,11 @@
       "status": "missing"
     },
     {
-      "entry_count": 1,
-      "length": 185,
       "name": "TSC_EXE",
-      "present": true,
+      "present": false,
       "purpose": "Explicit TypeScript compiler executable override for reproducible repo-scoped toolchains provisioned by PORTAL-CXTP-089.",
       "required": false,
-      "status": "present",
-      "value_sha256": "2e890dc2f97dffc757c4fee17e717df8b4ec69b3996669097ed6d5513fe59e7c"
+      "status": "missing"
     },
     {
       "name": "APALACHE_EXE",
@@ -406,43 +442,16 @@
       "status": "missing"
     }
   ],
-  "generated_at_utc": "2026-07-10T06:23:49Z",
+  "generated_at_utc": "2026-07-19T06:41:47Z",
   "optional_capability_gaps": [
-    {
-      "capability": "Optional TLA+ workflow and interleaving model-checking coverage.",
-      "category": "model_checker",
-      "code": "OPTIONAL_DEPENDENCY_MISSING",
-      "component": "apalache",
-      "display_name": "Apalache",
-      "impact": "Capability unavailable; do not claim this prover coverage for release evidence.",
-      "status": "missing"
-    },
-    {
-      "capability": "Optional protocol proof coverage for key custody and signing authority.",
-      "category": "protocol_prover",
-      "code": "OPTIONAL_DEPENDENCY_MISSING",
-      "component": "tamarin",
-      "display_name": "Tamarin Prover",
-      "impact": "Capability unavailable; do not claim this prover coverage for release evidence.",
-      "status": "missing"
-    },
     {
       "capability": "Optional protocol proof coverage for replay and secrecy properties.",
       "category": "protocol_prover",
-      "code": "OPTIONAL_DEPENDENCY_MISSING",
+      "code": "OPTIONAL_DEPENDENCY_UNUSABLE",
       "component": "proverif",
       "display_name": "ProVerif",
       "impact": "Capability unavailable; do not claim this prover coverage for release evidence.",
-      "status": "missing"
-    },
-    {
-      "capability": "Optional proof-consumer invariant checking in Coq.",
-      "category": "proof_assistant",
-      "code": "OPTIONAL_DEPENDENCY_MISSING",
-      "component": "coq",
-      "display_name": "Coq",
-      "impact": "Capability unavailable; do not claim this prover coverage for release evidence.",
-      "status": "missing"
+      "status": "error"
     }
   ],
   "os": {
@@ -468,8 +477,8 @@
   "summary": {
     "blocking_evidence_count": 0,
     "dependency_count": 11,
-    "env_var_count": 12,
-    "optional_capability_gap_count": 4,
+    "env_var_count": 13,
+    "optional_capability_gap_count": 1,
     "present_required_dependency_count": 6,
     "required_dependency_count": 6,
     "required_env_var_count": 2

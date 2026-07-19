@@ -22,6 +22,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_dispro
 CORPUS_DIR = Path('security_ir_artifacts/corpora/xaman-app')
 DISPROOF_VECTORS_PATH = CORPUS_DIR / 'disproof-vectors.json'
 COUNTEREXAMPLE_REPORT_PATH = CORPUS_DIR / 'counterexample-report.json'
+XRPL_TRANSACTION_COVERAGE_PATH = CORPUS_DIR / 'xrpl-transaction-coverage.json'
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
@@ -35,9 +36,13 @@ def _write_json(path: Path, payload: dict[str, object]) -> None:
 def generate(repo_root: Path) -> tuple[dict[str, object], dict[str, object]]:
     model_payload = json.loads((repo_root / MODEL_PATH).read_text(encoding='utf-8'))
     model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+    xrpl_transaction_coverage = json.loads(
+        (repo_root / XRPL_TRANSACTION_COVERAGE_PATH).read_text(encoding='utf-8')
+    )
     vectors, report = build_xaman_disproof_artifacts(
         model_payload,
         model_cid=model_cid,
+        xrpl_transaction_coverage=xrpl_transaction_coverage,
     )
     _write_json(repo_root / DISPROOF_VECTORS_PATH, vectors)
     _write_json(repo_root / COUNTEREXAMPLE_REPORT_PATH, report)
@@ -58,9 +63,9 @@ def main(argv: list[str] | None = None) -> int:
     print(
         'Wrote '
         f'{DISPROOF_VECTORS_PATH} '
-        f'({vectors["summary"]["vector_count"]} vectors, '
-        f'{report["summary"]["counterexample_count"]} counterexamples, '
-        f'{report["summary"]["explicitly_blocked_count"]} blocked)'
+        f'({len(vectors["vectors"])} vectors, '
+        f'{report["summary"]["counterexample_found_count"]} counterexamples, '
+        f'{report["summary"]["blocked_count"]} blocked)'
     )
     return 0
 

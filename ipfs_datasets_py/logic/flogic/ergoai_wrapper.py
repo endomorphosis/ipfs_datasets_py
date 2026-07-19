@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 ERGOAI_SUBMODULE_PATH: Path = Path(__file__).parent.parent / "ErgoAI"
 
 # Default binary name looked up on PATH or inside the submodule
-_ERGO_BINARY_NAMES = ("ergo", "ergoai", "runErgo.sh", "runergo")
+_ERGO_BINARY_NAMES = ("runErgo.sh", "runergo")
 
 
 def _runner_requires_paths_file(path: Path) -> bool:

@@ -211,6 +211,61 @@ def test_fail_closed_oracles_reject_redaction_parser_and_target_claim_breaches()
         validate_attack_mutation(wrong_target, model)
 
 
+def test_partial_attack_selection_runs_selected_mutations_only_in_partial_mode() -> None:
+    model = _load_json(REPO_ROOT / MODEL_PATH)
+    trace_map = _load_json(REPO_ROOT / TRACE_MAP_PATH)
+    model_cid = (REPO_ROOT / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+    selected_ids = [
+        'attack-raw-payload-material',
+        'attack-review-bypass',
+    ]
+
+    report = build_xaman_testnet_fuzz_report(
+        model,
+        model_cid=model_cid,
+        trace_map_payload=trace_map,
+        selected_attack_mutation_ids=selected_ids,
+        strict=False,
+    )
+
+    assert report['summary']['selected_attack_mutation_count'] == len(selected_ids)
+    assert set(mutation['mutation_id'] for mutation in report['attack_mutations']) == set(selected_ids)
+    assert report['coverage_statement']['coverage_mode'] == 'selected_attack_mutation_subset'
+    assert report['coverage_statement']['strict'] is False
+    assert report['adversarial_acceptance_gates']['registered_fuzz_domain_coverage'] == 'pass'
+    assert report['summary']['overall_status'] == 'passed'
+
+
+def test_partial_attack_selection_rejects_unknown_ids() -> None:
+    model = _load_json(REPO_ROOT / MODEL_PATH)
+    trace_map = _load_json(REPO_ROOT / TRACE_MAP_PATH)
+    model_cid = (REPO_ROOT / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+
+    with pytest.raises(ValueError, match='requested attack mutation IDs are not defined'):
+        build_xaman_testnet_fuzz_report(
+            model,
+            model_cid=model_cid,
+            trace_map_payload=trace_map,
+            selected_attack_mutation_ids=['attack-does-not-exist'],
+            strict=False,
+        )
+
+
+def test_partial_counterexample_artifacts_only_includes_selected_attacks() -> None:
+    report = _report()
+    selected = [report['attack_mutations'][0]['mutation_id'], report['attack_mutations'][1]['mutation_id']]
+    artifacts = counterexample_artifacts(report, selected_attack_mutation_ids=selected)
+
+    manifest = artifacts[f'{COUNTEREXAMPLE_DIR}/manifest.json']
+    assert manifest['counterexample_count'] == 2
+    assert set(manifest['counterexamples']) == {
+        f'{COUNTEREXAMPLE_DIR}/{selected[0]}.json',
+        f'{COUNTEREXAMPLE_DIR}/{selected[1]}.json',
+    }
+    for entry in selected:
+        assert f'{COUNTEREXAMPLE_DIR}/{entry}.json' in artifacts
+
+
 def test_documentation_states_bounded_coverage_not_all_wallet_inputs() -> None:
     doc = DOC_PATH.read_text(encoding='utf-8')
 

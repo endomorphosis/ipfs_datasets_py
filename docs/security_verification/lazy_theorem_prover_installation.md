@@ -37,11 +37,11 @@ the current process `PATH`.
 | Apalache | Pinned, checksum-verified Linux x86_64 release; requires Java. |
 | Maude | Pinned, checksum-verified Linux x86_64 release. |
 | Tamarin | Pinned Linux x86_64 release, paired with Maude. |
-| ProVerif | Pinned source archive, checksum verified, built without the optional GTK UI; requires OCaml. |
+| ProVerif | Pinned source archive, checksum verified, built without the optional GTK UI; reuses OCaml or creates an isolated OPAM switch. |
 | CVC5 CLI | Pinned, checksum-verified static release for Linux/macOS x86_64 and arm64. |
 | SymbolicAI (`symai`) | Optional Python package installed from the theorem-provers extra or on requested bridge use. |
 | Lean | Official `elan` bootstrapper in the user's home directory, using the reviewed `v4.31.0` toolchain unless overridden. |
-| Coq/Rocq | An isolated OPAM root and switch under the user-local solver root; installs Rocq `9.1.1` and requires `opam`. |
+| Coq/Rocq | An isolated OPAM root and switch under the user-local solver root; installs and version-verifies Rocq `9.1.1`. |
 | Z3 | The optional `z3-solver` Python binding used by the exchange runner. |
 
 For unsupported platforms or organization-managed packages, provide a
@@ -75,12 +75,28 @@ The default terminal integration prints the same messages with the
 `[ipfs_datasets_py]` prefix. Long-running downloads, extraction, OPAM switch
 creation, and ProVerif builds each emit a distinct stage.
 
+Tamarin installation is complete only after its pinned binary accepts the
+selected Maude `3.5.1` runtime with Tamarin's `checking installation: OK`
+marker. A present executable with an incompatible Maude runtime is reported as
+a failed installation, not as a ready protocol solver.
+
 ## Control and Safety
 
 Set `IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=0` to block all automatic native
 installation. Set `IPFS_DATASETS_PY_LAZY_INSTALL_STRICT=1` to surface an
 installer failure as an exception. No installer uses `sudo` unless
 `IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS=1` is explicitly set.
+
+When OPAM is not present, the standalone installer can bootstrap it only after
+the operator explicitly allows a package-manager operation:
+
+```bash
+ipfs-datasets-install-provers --yes --allow-sudo --coq --proverif
+```
+
+The runtime paths do not request `sudo` implicitly. They instead report a
+blocked stage with the required preparation, so an interface can keep showing
+progress and actionable state.
 
 ## Manual Updates
 

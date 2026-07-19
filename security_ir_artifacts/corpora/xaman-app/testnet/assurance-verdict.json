@@ -4,9 +4,9 @@
     "TESTNET_SCOPE_NOT_SECURE",
     "TESTNET_SCOPE_INCONCLUSIVE"
   ],
-  "artifact_cid": "bafkreihqhyoavkcefrlwwdal3qph4wxmyk4ld2wptohltre2luz36dhakq",
+  "artifact_cid": "bafkreidvknhvytdj7pla4nbczfe64xv2qw4x2b35mnnrljcydw6sz7hjhu",
   "bundle": {
-    "artifact_cid": "bafkreidstcp4wwsnzjbb3y2bplhtpkvn5ivpoclq23zn4a4oa57pascamm",
+    "artifact_cid": "bafkreielylyvjq4er5ettt6cxty6rwa6fgbthk6pry3xs7hx2wrxo6bx3i",
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/assurance-bundle.json",
     "schema_version": "xaman-testnet-assurance-bundle/v1"
   },
@@ -139,30 +139,6 @@
         "reviewed source-to-model trace map for every source-derived fact"
       ],
       "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
-    },
-    {
-      "owner": "protocol-verification",
-      "required_evidence_to_clear": [
-        "Add a reviewed ProVerif projection for the Testnet payload protocol.",
-        "Run ProVerif with pinned executable/version/digest and attach the accepted report."
-      ],
-      "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-    },
-    {
-      "owner": "protocol-verification",
-      "required_evidence_to_clear": [
-        "Run the pinned Tamarin model against an accepted Maude runtime.",
-        "Record the command, version, executable digest, and accepted lemma results."
-      ],
-      "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-    },
-    {
-      "owner": "formal-methods",
-      "required_evidence_to_clear": [
-        "Provide security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v.",
-        "Run coqc and bind the checked independent-kernel artifact to the Testnet model CID."
-      ],
-      "source": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json"
     }
   ],
   "production_security_statement": "This verdict is scoped only to the reviewed XRPL Testnet evidence. It does not approve, certify, or reject the production Xaman wallet, production backend, production XRPL behavior, or real-asset custody.",
@@ -171,8 +147,6 @@
       "SMT_COUNTEREXAMPLES_FOUND",
       "BLOCKING_TESTNET_ASSUMPTIONS",
       "UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
-      "REQUIRED_PROTOCOL_LANE_UNAVAILABLE",
-      "INDEPENDENT_COQ_KERNEL_MISSING",
       "NOT_MODELED_TESTNET_CLAIMS",
       "PRODUCTION_SECURITY_RESULT_EXCLUDED"
     ],

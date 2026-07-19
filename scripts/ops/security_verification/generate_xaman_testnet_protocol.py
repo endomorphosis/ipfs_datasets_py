@@ -23,6 +23,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_testne
     PROVERIF_ARTIFACT_PATH,
     TAMARIN_ARTIFACT_PATH,
     TRACE_MAP_PATH,
+    XAMAN_TESTNET_PAYLOAD_PV,
     XAMAN_TESTNET_PAYLOAD_SPTHY,
     build_xaman_testnet_protocol_report,
     detect_solver,
@@ -60,6 +61,7 @@ def generate(
     report_path = repo_root / PROTOCOL_REPORT_PATH
     tamarin_path.parent.mkdir(parents=True, exist_ok=True)
     tamarin_path.write_text(XAMAN_TESTNET_PAYLOAD_SPTHY, encoding='utf-8')
+    proverif_path.write_text(XAMAN_TESTNET_PAYLOAD_PV, encoding='utf-8')
 
     tamarin = tamarin_executable or detect_solver(
         'tamarin-prover',
@@ -71,7 +73,7 @@ def generate(
         install_if_missing=run_solver,
         reason='Xaman Testnet ProVerif protocol execution',
     )
-    proverif_source = proverif_path.read_text(encoding='utf-8') if proverif_path.is_file() else None
+    proverif_source = proverif_path.read_text(encoding='utf-8')
     tamarin_run = None
     proverif_run = None
     if run_solver and tamarin is not None:

@@ -329,8 +329,10 @@ setup(
             'symbolicai>=1.14.0,<2.0.0',
         ],
         # Python bindings for theorem-prover integrations. Apalache, Tamarin,
-        # Maude, Lean, Coq, and ProVerif are installed lazily and user-locally
-        # only when their execution path is requested.
+        # Maude, Lean, Rocq, and ProVerif are installed lazily and user-locally
+        # only when their execution path is requested. Native installers are
+        # available through `ipfs-datasets-install-provers` and never run as a
+        # side effect of pip installation.
         'theorem-provers': [
             'z3-solver>=4.12.0,<5.0.0',
             'cvc5>=1.0.0,<2.0.0',

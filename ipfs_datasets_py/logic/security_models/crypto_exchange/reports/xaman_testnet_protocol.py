@@ -66,7 +66,10 @@ REQUIRED_LEMMAS = (
     'auth_requires_review',
     'signing_decision_requires_review_and_auth',
     'submit_ui_requires_signing_decision',
-    'audit_redaction_preserved_for_modeled_events',
+    'audit_redaction_preserved_for_payload_intake',
+    'audit_redaction_preserved_for_review',
+    'audit_redaction_preserved_for_signing_decision',
+    'audit_redaction_preserved_for_submit_result',
     'preserved_attack_traces_are_reachable',
 )
 
@@ -113,11 +116,11 @@ rule Remote_Service_Issues_Redacted_Testnet_Payload:
       FreshTestnetAccountBoundary(~account),
       AuditRedactionPreserved(~payload) ]->
   [ Out(<xrpl_testnet, payload_id(~payload), redaction_digest(~payload)>),
-    !ReviewedTestnetPayload(payload_id(~payload), redaction_digest(~payload), ~account) ]
+    !ReviewedTestnetPayload(~payload, payload_id(~payload), redaction_digest(~payload), ~account) ]
 
 rule Device_Intakes_Categorical_Payload:
   [ In(<xrpl_testnet, payload_id(payload), redaction_digest(payload)>),
-    !ReviewedTestnetPayload(payload_id(payload), redaction_digest(payload), account) ]
+    !ReviewedTestnetPayload(payload, payload_id(payload), redaction_digest(payload), account) ]
   --[ PayloadIntakeCategorical(payload),
       TestnetBound(payload),
       FreshTestnetAccountBoundary(account),
@@ -231,27 +234,89 @@ lemma submit_ui_requires_signing_decision:
     ==>
     (Ex #j. SigningDecisionObserved(payload) @ j & j < i)"
 
-lemma audit_redaction_preserved_for_modeled_events:
+lemma audit_redaction_preserved_for_payload_intake:
   "All payload #i.
-    (PayloadIntakeCategorical(payload) @ i | PayloadReviewed(payload) @ i |
-     SigningDecisionObserved(payload) @ i | SubmitResultObserved(payload) @ i)
+    PayloadIntakeCategorical(payload) @ i
     ==>
-    (Ex #j. AuditRedactionPreserved(payload) @ j & j <= i)"
+    (Ex #j. AuditRedactionPreserved(payload) @ j & #j = #i)"
 
-lemma preserved_attack_traces_are_reachable [exists-trace]:
-  "Ex payload account #i #j #k #l #m #n #o #p #q #r.
-    AttackTraceWrongNetwork(payload) @ i &
+lemma audit_redaction_preserved_for_review:
+  "All payload #i.
+    PayloadReviewed(payload) @ i
+    ==>
+    (Ex #j. AuditRedactionPreserved(payload) @ j & #j = #i)"
+
+lemma audit_redaction_preserved_for_signing_decision:
+  "All payload #i.
+    SigningDecisionObserved(payload) @ i
+    ==>
+    (Ex #j. AuditRedactionPreserved(payload) @ j & #j = #i)"
+
+lemma audit_redaction_preserved_for_submit_result:
+  "All payload #i.
+    SubmitResultObserved(payload) @ i
+    ==>
+    (Ex #j. AuditRedactionPreserved(payload) @ j & #j = #i)"
+
+lemma preserved_attack_traces_are_reachable:
+  exists-trace
+  "Ex wrong_network_payload account signing_before_auth_payload replay_payload raw_payload
+      signature_payload finality_payload decline_payload cancel_payload expiry_payload
+      #i #j #k #l #m #n #o #p #q #r.
+    AttackTraceWrongNetwork(wrong_network_payload) @ i &
     AttackTraceImportedProductionAccount(account) @ j &
-    AttackTraceSigningBeforeAuth(payload) @ k &
-    AttackTraceReplayDuplicateResolution(payload) @ l &
-    AttackTraceRawPayloadMaterial(payload) @ m &
-    AttackTraceRawSignatureBlob(payload) @ n &
-    AttackTraceForgedBroadcastFinality(payload) @ o &
-    AttackTraceDeclineGap(payload) @ p &
-    AttackTraceCancelGap(payload) @ q &
-    AttackTraceExpiryGap(payload) @ r"
+    AttackTraceSigningBeforeAuth(signing_before_auth_payload) @ k &
+    AttackTraceReplayDuplicateResolution(replay_payload) @ l &
+    AttackTraceRawPayloadMaterial(raw_payload) @ m &
+    AttackTraceRawSignatureBlob(signature_payload) @ n &
+    AttackTraceForgedBroadcastFinality(finality_payload) @ o &
+    AttackTraceDeclineGap(decline_payload) @ p &
+    AttackTraceCancelGap(cancel_payload) @ q &
+    AttackTraceExpiryGap(expiry_payload) @ r"
 
 end
+'''
+
+
+XAMAN_TESTNET_PAYLOAD_PV = r'''(*
+  PORTAL-CXTP-135: bounded ProVerif projection of the redacted Xaman Testnet
+  payload lifecycle. The model establishes only event ordering. It does not
+  model native signing, raw payload JSON, backend single-use, cancellation,
+  expiry, replay resolution, XRPL broadcast/finality, or production release.
+*)
+
+event testnet_bound(bitstring).
+event fresh_testnet_account(bitstring).
+event payload_reviewed(bitstring).
+event auth_authorized(bitstring).
+event signing_decision_observed(bitstring).
+event submit_attempt_observed(bitstring).
+event submit_result_observed(bitstring).
+event audit_redaction_preserved(bitstring).
+
+query payload: bitstring;
+  event(payload_reviewed(payload)) ==> event(testnet_bound(payload)).
+query payload: bitstring;
+  event(payload_reviewed(payload)) ==> event(fresh_testnet_account(payload)).
+query payload: bitstring;
+  event(auth_authorized(payload)) ==> event(payload_reviewed(payload)).
+query payload: bitstring;
+  event(signing_decision_observed(payload)) ==> event(auth_authorized(payload)).
+query payload: bitstring;
+  event(submit_attempt_observed(payload)) ==> event(signing_decision_observed(payload)).
+query payload: bitstring;
+  event(submit_result_observed(payload)) ==> event(submit_attempt_observed(payload)).
+
+process
+  new payload: bitstring;
+  event testnet_bound(payload);
+  event fresh_testnet_account(payload);
+  event audit_redaction_preserved(payload);
+  event payload_reviewed(payload);
+  event auth_authorized(payload);
+  event signing_decision_observed(payload);
+  event submit_attempt_observed(payload);
+  event submit_result_observed(payload)
 '''
 
 
@@ -462,7 +527,18 @@ def run_tamarin_check(
     timeout_seconds: int = 120,
 ) -> dict[str, Any]:
     command = [tamarin_executable, '--prove', str(tamarin_path)]
-    return _run_solver(command, timeout_seconds=timeout_seconds)
+    result = _run_solver(command, timeout_seconds=timeout_seconds)
+    output = str(result.get('stdout', '')).lower()
+    if result['status'] == 'pass' and (
+        'falsified' in output or 'wellformedness check failed' in output
+    ):
+        result['status'] = 'failed'
+        result['output_retained'] = True
+        result['stderr'] = (
+            str(result.get('stderr', ''))
+            + '\nTamarin returned an unacceptable lemma result or wellformedness warning.'
+        ).strip()
+    return result
 
 
 def run_proverif_check(
@@ -472,7 +548,15 @@ def run_proverif_check(
     timeout_seconds: int = 120,
 ) -> dict[str, Any]:
     command = [proverif_executable, str(proverif_path)]
-    return _run_solver(command, timeout_seconds=timeout_seconds)
+    result = _run_solver(command, timeout_seconds=timeout_seconds)
+    if result['status'] == 'pass' and ' is false.' in str(result.get('stdout', '')).lower():
+        result['status'] = 'failed'
+        result['output_retained'] = True
+        result['stderr'] = (
+            str(result.get('stderr', ''))
+            + '\nProVerif returned a false correspondence query.'
+        ).strip()
+    return result
 
 
 def detect_solver(name: str, *, install_if_missing: bool = False, reason: str | None = None) -> str | None:
@@ -507,6 +591,9 @@ def solver_version(executable: str | None) -> str | None:
         lowered = output.lower()
         if output and 'unknown option' not in lowered and not lowered.startswith('error:'):
             return output.splitlines()[0]
+        for line in output.splitlines():
+            if 'proverif' in line.lower() and 'cryptographic protocol verifier' in line.lower():
+                return line
     return None
 
 

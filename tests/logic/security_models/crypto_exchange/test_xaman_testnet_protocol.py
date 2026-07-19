@@ -15,18 +15,21 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_testne
     NOT_MODELED_CLAIM_IDS,
     PROTOCOL_CLAIM_IDS,
     PROTOCOL_REPORT_PATH,
+    PROVERIF_ARTIFACT_PATH,
     REQUIRED_EVENTS,
     REQUIRED_LEMMAS,
     SCHEMA_VERSION,
     TAMARIN_ARTIFACT_PATH,
     TASK_ID,
     TRACE_MAP_PATH,
+    XAMAN_TESTNET_PAYLOAD_PV,
     build_xaman_testnet_protocol_report,
 )
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 TAMARIN_PATH = REPO_ROOT / TAMARIN_ARTIFACT_PATH
+PROVERIF_PATH = REPO_ROOT / PROVERIF_ARTIFACT_PATH
 REPORT_PATH = REPO_ROOT / PROTOCOL_REPORT_PATH
 DOC_PATH = REPO_ROOT / 'docs' / 'security_verification' / 'xaman_testnet_protocol_verification.md'
 PINNED_MODEL_CID = 'sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43'
@@ -52,6 +55,9 @@ def test_xaman_testnet_tamarin_model_contains_remote_payload_events_and_lemmas()
     for lemma in REQUIRED_LEMMAS:
         assert f'lemma {lemma}' in body
 
+    assert PROVERIF_PATH.read_text(encoding='utf-8') == XAMAN_TESTNET_PAYLOAD_PV
+    assert 'does not\n  model native signing' in XAMAN_TESTNET_PAYLOAD_PV
+
 
 def test_protocol_report_is_bound_to_pinned_testnet_model_and_tamarin_source() -> None:
     report = _load_json(REPORT_PATH)
@@ -66,6 +72,11 @@ def test_protocol_report_is_bound_to_pinned_testnet_model_and_tamarin_source() -
     assert report['tamarin_model']['theory'] == 'XamanTestnetPayload'
     assert report['tamarin_model']['sha256'] == source_sha
     assert report['tamarin_model']['lemmas'] == list(REQUIRED_LEMMAS)
+    assert report['proverif_model']['path'] == PROVERIF_ARTIFACT_PATH
+    assert report['proverif_model']['exists'] is True
+    assert report['proverif_model']['sha256'] == (
+        'sha256:' + hashlib.sha256(PROVERIF_PATH.read_bytes()).hexdigest()
+    )
     assert report['missing_claim_ids'] == []
     assert report['report_cid'] == _cid_without(report, 'report_cid')
 
@@ -108,7 +119,7 @@ def test_attack_traces_are_retained_as_blocking_counterevidence() -> None:
     assert 'attack-forged-broadcast-finality.json' in '\n'.join(attack_traces['fuzz_counterexamples'])
 
 
-def test_required_protocol_solver_lane_blocks_testnet_assurance_when_not_accepted() -> None:
+def test_required_protocol_solver_lane_executes_but_unresolved_assumptions_stay_blocking() -> None:
     report = _load_json(REPORT_PATH)
     blocker_codes = {blocker['code'] for blocker in report['blockers']}
 
@@ -116,12 +127,13 @@ def test_required_protocol_solver_lane_blocks_testnet_assurance_when_not_accepte
     assert report['coverage_decision']['unavailable_protocol_solver_blocks_testnet_assurance'] is True
     assert report['solver_lanes']['tamarin']['required'] is True
     assert report['solver_lanes']['proverif']['required'] is True
-    assert report['solver_lanes']['tamarin']['status'] == 'not-run'
-    assert report['solver_lanes']['proverif']['status'] == 'not-run'
-    assert 'TAMARIN_CHECK_NOT_RUN' in blocker_codes
-    assert 'PROVERIF_MODEL_MISSING' in blocker_codes
-    assert report['overall_status'] == 'blocked_required_lane_unavailable'
-    assert report['security_decision'] == 'BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE'
+    assert report['solver_lanes']['tamarin']['status'] == 'passed'
+    assert report['solver_lanes']['proverif']['status'] == 'passed'
+    assert report['solver_lanes']['tamarin']['run']['exit_code'] == 0
+    assert report['solver_lanes']['proverif']['run']['exit_code'] == 0
+    assert blocker_codes == set()
+    assert report['overall_status'] == 'checked_with_unresolved_threat_model_gaps'
+    assert report['security_decision'] == 'BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS'
     assert report['testnet_assurance_blocked'] is True
     assert report['production_release_blocked'] is True
 
@@ -143,8 +155,11 @@ def test_report_builder_is_regenerable_and_fail_closed_when_solvers_are_missing(
         tamarin_source=tamarin_source,
         tamarin_executable=report['solver_lanes']['tamarin']['executable'],
         tamarin_version=report['solver_lanes']['tamarin']['version'],
+        tamarin_run=report['solver_lanes']['tamarin']['run'],
         proverif_executable=report['solver_lanes']['proverif']['executable'],
         proverif_version=report['solver_lanes']['proverif']['version'],
+        proverif_model_source=PROVERIF_PATH.read_text(encoding='utf-8'),
+        proverif_run=report['solver_lanes']['proverif']['run'],
         fuzz_counterexample_manifest=fuzz_manifest,
     )
     assert regenerated == report
@@ -157,6 +172,7 @@ def test_report_builder_is_regenerable_and_fail_closed_when_solvers_are_missing(
         tamarin_source=tamarin_source,
         tamarin_executable=None,
         proverif_executable=None,
+        proverif_model_source=PROVERIF_PATH.read_text(encoding='utf-8'),
         fuzz_counterexample_manifest=fuzz_manifest,
     )
     missing_codes = {blocker['code'] for blocker in missing_solvers['blockers']}
@@ -176,5 +192,4 @@ def test_protocol_documentation_records_required_lane_and_current_blocker() -> N
     assert 'Tamarin and ProVerif are required.' in doc
     assert 'NOT_MODELED' in doc
     assert 'preserve attack traces' in doc
-    assert 'BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE' in doc
-
+    assert 'BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS' in doc

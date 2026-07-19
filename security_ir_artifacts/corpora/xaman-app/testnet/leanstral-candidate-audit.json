@@ -1,11 +1,11 @@
 {
   "assistant_lock": {
     "assistant_id": "xaman-testnet-leanstral-untrusted-assistant",
-    "lock_cid": "bafkreiexpzripxard7io327v4pqvtrjupv3dba3jag4pkvge4lwfucw5xy",
+    "lock_cid": "bafkreielymldcxjkzw7aivahbwgmknacqia5oroakbqr6irl27kndsr554",
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/leanstral-assistant-lock.json",
     "trust_boundary": "untrusted-proof-assistant"
   },
-  "audit_cid": "bafkreidde5eitfsajzmyu2euwt3c453grczpjsuz74pkd2yzlpaopskwwi",
+  "audit_cid": "bafkreif3k2jku7k36o7e2yrnh7lgfnz5s6meoh3o27oaiir7cy43iija3q",
   "blockers_to_promotion": [
     {
       "code": "NO_LEANSTRAL_CANDIDATE_SUBMITTED",
@@ -86,10 +86,10 @@
   "checker_evidence_review": {
     "accepted_checker_reports_for_leanstral_candidates": [],
     "coq_scope": {
-      "missing_coq_declared_coverage_gap": true,
-      "overall_status": "coverage_gap_required_independent_kernel_missing",
+      "missing_coq_declared_coverage_gap": false,
+      "overall_status": "independent_kernel_checked",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING"
+      "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED"
     },
     "existing_security_decisions": [
       {
@@ -103,8 +103,8 @@
         "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
       },
       {
-        "overall_status": "coverage_gap_required_independent_kernel_missing",
-        "security_decision": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+        "overall_status": "independent_kernel_checked",
+        "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED",
         "source": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json"
       }
     ],

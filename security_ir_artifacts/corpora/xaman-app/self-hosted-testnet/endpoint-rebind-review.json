@@ -1,0 +1,52 @@
+{
+  "artifact_cid": "bafkreid4tuhuiaktgna3xcscbz2t22uh4aorxb7ydsyomgidyoaq7jvfum",
+  "checklist": [
+    {
+      "check_id": "candidate_source_diff",
+      "evidence_sha256": "8ecdf83286a89d1b5d4862200ba5dab3c8ba85e6e6310e80ef1e6cbf1d8b9e88",
+      "status": "pass"
+    },
+    {
+      "check_id": "bridge_isolation",
+      "evidence_sha256": "f4c6b70f93ec8821896a001fc94b6d8448f715968cbd9a94e36277212998a04d",
+      "status": "pass"
+    },
+    {
+      "check_id": "external_egress_denied",
+      "evidence_sha256": "f4c6b70f93ec8821896a001fc94b6d8448f715968cbd9a94e36277212998a04d",
+      "status": "pass"
+    },
+    {
+      "check_id": "vendor_fallback_absent",
+      "evidence_sha256": "8ecdf83286a89d1b5d4862200ba5dab3c8ba85e6e6310e80ef1e6cbf1d8b9e88",
+      "status": "pass"
+    },
+    {
+      "check_id": "non_local_network_rejected",
+      "evidence_sha256": "5d7fdd061bfa121e1028b755b49548afa1c320f4e706f2345b05e7aaedc6d36b",
+      "status": "pass"
+    },
+    {
+      "check_id": "emulator_loopback_bridge",
+      "evidence_sha256": "5d7fdd061bfa121e1028b755b49548afa1c320f4e706f2345b05e7aaedc6d36b",
+      "status": "pass"
+    }
+  ],
+  "decision": "pass",
+  "expires_at_utc": "2027-07-18T22:00:00Z",
+  "review_packet_cid": "bafkreibg3zvjoh5fzuns2dvu2v26ugnb4yoleenix6wlvu5vp36iji36ku",
+  "reviewed_at_utc": "2026-07-18T22:00:00Z",
+  "reviewer": {
+    "conflict_of_interest_declared": false,
+    "independent_of_candidate_author": true,
+    "reviewer_id_sha256": "57b2630ee721b908175c96960f74c1ecd0dbc3b25180c05069440d0e90e9b777"
+  },
+  "reviewer_note_sha256": "0158b506a68bbbb307cd433e67e7129d26ed0ab8b5437a207c52cc3c5ba451ac",
+  "schema_version": "xaman-self-hosted-endpoint-rebind-review/v1",
+  "scope": {
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "vendor_release_equivalent": false
+  },
+  "task_id": "PORTAL-CXTP-156"
+}

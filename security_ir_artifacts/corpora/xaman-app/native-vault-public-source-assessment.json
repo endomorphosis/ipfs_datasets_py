@@ -1,0 +1,394 @@
+{
+  "artifact_cid": "bafkreiacnwrbg7o7t5rbff4qjvonwgiwxy3et567wrhrzw6virnjyyr2qe",
+  "formal_rekey_model": {
+    "abstraction": [
+      "A recovery snapshot is written under the old key before primary deletion.",
+      "The primary replacement write may fail after deletion.",
+      "A successful replacement deletes recovery; a failed replacement leaves old-key recovery state."
+    ],
+    "checks": [
+      {
+        "expected_result": "unsat",
+        "id": "successful_rekey_cleans_recovery_state",
+        "meaning": "The abstraction preserves a primary vault and removes the recovery vault after a successful replacement write."
+      },
+      {
+        "expected_result": "unsat",
+        "id": "replacement_failure_preserves_old_key_recovery_witness",
+        "meaning": "The abstraction preserves an old-key recovery vault after a replacement-write failure."
+      },
+      {
+        "expected_result": "sat",
+        "id": "replacement_failure_has_expected_partial_state_witness",
+        "meaning": "The abstraction exposes the post-delete, old-key-recovery-only state that requires runtime fault-injection testing."
+      }
+    ],
+    "path": "security_ir_artifacts/corpora/xaman-app/native-vault/rekey-recovery.smt2",
+    "sha256": "sha256:e7a4b8d54a5140647b97fc09e47a7fbf97b940325c5ea0a2473a9a20b435664c",
+    "solvers": {
+      "cvc5": {
+        "command": [
+          "/home/barberb/.local/bin/cvc5",
+          "--lang=smt2",
+          "--incremental"
+        ],
+        "results": [
+          "unsat",
+          "unsat",
+          "sat"
+        ],
+        "returncode": 0,
+        "status": "pass",
+        "stderr": "",
+        "stdout": "unsat\nunsat\nsat\n",
+        "version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]"
+      },
+      "z3": {
+        "command": [
+          "/home/barberb/miniforge3/bin/z3",
+          "-in"
+        ],
+        "results": [
+          "unsat",
+          "unsat",
+          "sat"
+        ],
+        "returncode": 0,
+        "status": "pass",
+        "stderr": "",
+        "stdout": "unsat\nunsat\nsat\n",
+        "version": "Z3 version 4.16.0 - 64 bit"
+      }
+    },
+    "status": "checked"
+  },
+  "generated_at_utc": "2026-07-18T00:00:00Z",
+  "not_proved": [
+    "native primitive implementation correctness",
+    "Android hardware-backed KeyStore availability or device policy",
+    "iOS Secure Enclave, backup, migration, and operating-system behavior",
+    "passcode entropy or offline-guessing resistance",
+    "Tangem SDK or firmware security",
+    "vendor release or production wallet security"
+  ],
+  "overall_status": "checked_source_bounded_with_runtime_boundaries",
+  "production_release_blocked": true,
+  "schema_version": "xaman-native-vault-public-source-assessment/v1",
+  "scope": {
+    "production_security_result": false,
+    "public_source_only": true,
+    "source_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "vendor_release_equivalent": false
+  },
+  "security_decision": "SOURCE_BOUNDED_NATIVE_VAULT_REKEY_MODEL_CHECKED",
+  "source_inputs": [
+    {
+      "marker_lines": {
+        "// finally remove the created recovery vault": 198,
+        "VAULT_ALREADY_EXIST": 84,
+        "createVault(recoveryVaultName, clearText, oldKey);": 190,
+        "createVault(vaultName, clearText, newKey);": 196,
+        "purgeVault(vaultName);": 193
+      },
+      "path": "android/app/src/main/java/libs/security/vault/VaultManagerModule.java",
+      "sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357",
+      "size_bytes": 15095
+    },
+    {
+      "marker_lines": {
+        "Crypto.AESAlgo.GCM": 59,
+        "Crypto.PBKDF2(key.toCharArray(), passcodeSalt, 91337)": 27,
+        "Crypto.PBKDF2(preKey, encrKeySalt, 33)": 52
+      },
+      "path": "android/app/src/main/java/libs/security/vault/cipher/CipherV2AesGcm.java",
+      "sha256": "5e66b26a4382414bf3251a744babc3b1b6a71747763940eaf75be7301fd0cf93",
+      "size_bytes": 5389
+    },
+    {
+      "marker_lines": {
+        ".setBlockModes(BLOCK_MODE_GCM)": 145,
+        ".setKeySize(ENCRYPTION_KEY_SIZE)": 148,
+        ".setRandomizedEncryptionRequired(true)": 147
+      },
+      "path": "android/app/src/main/java/libs/security/vault/storage/cipherStorage/CipherStorageKeystoreAesGcm.java",
+      "sha256": "4ef51d17f910384eab30ac76f08ce6e59c9f75fad8e7521476db296c7a2225c1",
+      "size_bytes": 6351
+    },
+    {
+      "marker_lines": {
+        "VaultReKeyTest": 167,
+        "VaultRecoveryTest": 140
+      },
+      "path": "android/app/src/androidTest/java/libs/security/vault/VaultMangerTest.java",
+      "sha256": "417f266ab165d7593feee1aadd71cf2a651160e12277176887243b4e6d65714c",
+      "size_bytes": 9510
+    },
+    {
+      "marker_lines": {
+        "VAULT_ALREADY_EXIST": 77,
+        "[VaultManagerModule createVault:recoveryVaultName data:cleartext key:oldKey];": 203,
+        "[VaultManagerModule createVault:vaultName data:cleartext key:newKey];": 209,
+        "[VaultManagerModule purgeVault:vaultName];": 206,
+        "finally remove the created recovery vault": 211
+      },
+      "path": "ios/Xaman/Libs/Security/Vault/VaultManager.m",
+      "sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30",
+      "size_bytes": 15605
+    },
+    {
+      "marker_lines": {
+        "AESAlgoGCM": 65,
+        "iteration:33": 55,
+        "iteration:91337": 29
+      },
+      "path": "ios/Xaman/Libs/Security/Vault/Cipher/V2+AesGcm.m",
+      "sha256": "b809fa86106c828f762dbf71946c0f56d88acefe98b5a092783adbf8f3b1e22b",
+      "size_bytes": 5067
+    },
+    {
+      "marker_lines": {
+        "kSecAttrAccessibleWhenUnlockedThisDeviceOnly": 46
+      },
+      "path": "ios/Xaman/Libs/Security/Vault/Storage/Keychain.m",
+      "sha256": "89be405426bdd58adff43f05c67383908ae3c667a3b5da96fc2bc03d735fa393",
+      "size_bytes": 4042
+    },
+    {
+      "marker_lines": {
+        "testVaultReKey": 94,
+        "testVaultRecovery": 75
+      },
+      "path": "ios/XamanTests/VaultMangerTest.m",
+      "sha256": "3d2be1245054e9777e5a2b1a3b484b825b685b8aec05c43efbd10b1f87b82e7d",
+      "size_bytes": 7547
+    },
+    {
+      "marker_lines": {
+        "const sha512Passcode = await SHA512(passcode);": 168,
+        "return await HMAC256(sha512Passcode, deviceUniqueId);": 169
+      },
+      "path": "src/store/repositories/core.ts",
+      "sha256": "2e0114ca05dd2a337e599fe49a4cd9952962a2b89254c2e048f7ba48edffa011",
+      "size_bytes": 6314
+    }
+  ],
+  "source_manifest": {
+    "aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json"
+  },
+  "source_supported_facts": [
+    {
+      "evidence": [
+        {
+          "kind": "source_code",
+          "line_end": 27,
+          "line_start": 27,
+          "path": "android/app/src/main/java/libs/security/vault/cipher/CipherV2AesGcm.java",
+          "review_status": "reviewed",
+          "sha256": "5e66b26a4382414bf3251a744babc3b1b6a71747763940eaf75be7301fd0cf93"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 52,
+          "line_start": 52,
+          "path": "android/app/src/main/java/libs/security/vault/cipher/CipherV2AesGcm.java",
+          "review_status": "reviewed",
+          "sha256": "5e66b26a4382414bf3251a744babc3b1b6a71747763940eaf75be7301fd0cf93"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 59,
+          "line_start": 59,
+          "path": "android/app/src/main/java/libs/security/vault/cipher/CipherV2AesGcm.java",
+          "review_status": "reviewed",
+          "sha256": "5e66b26a4382414bf3251a744babc3b1b6a71747763940eaf75be7301fd0cf93"
+        }
+      ],
+      "id": "xaman-native-vault:fact:android-v2-vault-cipher-uses-pbkdf2-and-aes-gcm",
+      "status": "SOURCE_SUPPORTED",
+      "summary": "The public Android V2 vault cipher derives keys with PBKDF2, records versioned salts, and invokes AES-GCM with a device identifier as associated data."
+    },
+    {
+      "evidence": [
+        {
+          "kind": "source_code",
+          "line_end": 145,
+          "line_start": 145,
+          "path": "android/app/src/main/java/libs/security/vault/storage/cipherStorage/CipherStorageKeystoreAesGcm.java",
+          "review_status": "reviewed",
+          "sha256": "4ef51d17f910384eab30ac76f08ce6e59c9f75fad8e7521476db296c7a2225c1"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 147,
+          "line_start": 147,
+          "path": "android/app/src/main/java/libs/security/vault/storage/cipherStorage/CipherStorageKeystoreAesGcm.java",
+          "review_status": "reviewed",
+          "sha256": "4ef51d17f910384eab30ac76f08ce6e59c9f75fad8e7521476db296c7a2225c1"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 148,
+          "line_start": 148,
+          "path": "android/app/src/main/java/libs/security/vault/storage/cipherStorage/CipherStorageKeystoreAesGcm.java",
+          "review_status": "reviewed",
+          "sha256": "4ef51d17f910384eab30ac76f08ce6e59c9f75fad8e7521476db296c7a2225c1"
+        }
+      ],
+      "id": "xaman-native-vault:fact:android-keychain-selects-keystore-aes-gcm",
+      "status": "SOURCE_SUPPORTED",
+      "summary": "The public Android keychain selects an AES-GCM Android KeyStore cipher storage with randomized encryption and a 256-bit key setting."
+    },
+    {
+      "evidence": [
+        {
+          "kind": "source_code",
+          "line_end": 29,
+          "line_start": 29,
+          "path": "ios/Xaman/Libs/Security/Vault/Cipher/V2+AesGcm.m",
+          "review_status": "reviewed",
+          "sha256": "b809fa86106c828f762dbf71946c0f56d88acefe98b5a092783adbf8f3b1e22b"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 55,
+          "line_start": 55,
+          "path": "ios/Xaman/Libs/Security/Vault/Cipher/V2+AesGcm.m",
+          "review_status": "reviewed",
+          "sha256": "b809fa86106c828f762dbf71946c0f56d88acefe98b5a092783adbf8f3b1e22b"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 65,
+          "line_start": 65,
+          "path": "ios/Xaman/Libs/Security/Vault/Cipher/V2+AesGcm.m",
+          "review_status": "reviewed",
+          "sha256": "b809fa86106c828f762dbf71946c0f56d88acefe98b5a092783adbf8f3b1e22b"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 46,
+          "line_start": 46,
+          "path": "ios/Xaman/Libs/Security/Vault/Storage/Keychain.m",
+          "review_status": "reviewed",
+          "sha256": "89be405426bdd58adff43f05c67383908ae3c667a3b5da96fc2bc03d735fa393"
+        }
+      ],
+      "id": "xaman-native-vault:fact:ios-v2-vault-cipher-and-device-only-keychain",
+      "status": "SOURCE_SUPPORTED",
+      "summary": "The public iOS implementation uses V2 AES-GCM/PBKDF2 source paths and stores keychain records with WhenUnlockedThisDeviceOnly accessibility."
+    },
+    {
+      "evidence": [
+        {
+          "kind": "source_code",
+          "line_end": 190,
+          "line_start": 190,
+          "path": "android/app/src/main/java/libs/security/vault/VaultManagerModule.java",
+          "review_status": "reviewed",
+          "sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 196,
+          "line_start": 196,
+          "path": "android/app/src/main/java/libs/security/vault/VaultManagerModule.java",
+          "review_status": "reviewed",
+          "sha256": "ab75e2276933a03e99637bb82998f707fb2a4070aaf540ef3da3a6d26c1e9357"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 203,
+          "line_start": 203,
+          "path": "ios/Xaman/Libs/Security/Vault/VaultManager.m",
+          "review_status": "reviewed",
+          "sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 209,
+          "line_start": 209,
+          "path": "ios/Xaman/Libs/Security/Vault/VaultManager.m",
+          "review_status": "reviewed",
+          "sha256": "76aea601908d3394c863f7dd007263c32bf1462cde69e0b2398ba9aa4db48b30"
+        }
+      ],
+      "id": "xaman-native-vault:fact:rekey-uses-an-old-key-recovery-vault-before-primary-delete",
+      "status": "SOURCE_SUPPORTED",
+      "summary": "Both public platform rekey implementations write an old-key recovery vault, delete the primary vault, write the new-key primary vault, then remove recovery on the success path."
+    },
+    {
+      "evidence": [
+        {
+          "kind": "source_code",
+          "line_end": 140,
+          "line_start": 140,
+          "path": "android/app/src/androidTest/java/libs/security/vault/VaultMangerTest.java",
+          "review_status": "reviewed",
+          "sha256": "417f266ab165d7593feee1aadd71cf2a651160e12277176887243b4e6d65714c"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 167,
+          "line_start": 167,
+          "path": "android/app/src/androidTest/java/libs/security/vault/VaultMangerTest.java",
+          "review_status": "reviewed",
+          "sha256": "417f266ab165d7593feee1aadd71cf2a651160e12277176887243b4e6d65714c"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 75,
+          "line_start": 75,
+          "path": "ios/XamanTests/VaultMangerTest.m",
+          "review_status": "reviewed",
+          "sha256": "3d2be1245054e9777e5a2b1a3b484b825b685b8aec05c43efbd10b1f87b82e7d"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 94,
+          "line_start": 94,
+          "path": "ios/XamanTests/VaultMangerTest.m",
+          "review_status": "reviewed",
+          "sha256": "3d2be1245054e9777e5a2b1a3b484b825b685b8aec05c43efbd10b1f87b82e7d"
+        }
+      ],
+      "id": "xaman-native-vault:fact:public-tests-cover-normal-recovery-and-rekey",
+      "status": "SOURCE_SUPPORTED",
+      "summary": "Public Android instrumentation and iOS XCTest sources contain normal recovery and rekey tests; this is not evidence of post-delete write-failure injection."
+    },
+    {
+      "evidence": [
+        {
+          "kind": "source_code",
+          "line_end": 168,
+          "line_start": 168,
+          "path": "src/store/repositories/core.ts",
+          "review_status": "reviewed",
+          "sha256": "2e0114ca05dd2a337e599fe49a4cd9952962a2b89254c2e048f7ba48edffa011"
+        },
+        {
+          "kind": "source_code",
+          "line_end": 169,
+          "line_start": 169,
+          "path": "src/store/repositories/core.ts",
+          "review_status": "reviewed",
+          "sha256": "2e0114ca05dd2a337e599fe49a4cd9952962a2b89254c2e048f7ba48edffa011"
+        }
+      ],
+      "id": "xaman-native-vault:fact:typescript-passcode-hash-construction-is-source-visible",
+      "status": "SOURCE_SUPPORTED",
+      "summary": "The public TypeScript passcode helper hashes the passcode with SHA-512 and passes that value with a device identifier into HMAC256. This assessment does not quantify resistance to offline guessing or establish implementation correctness of either primitive."
+    }
+  ],
+  "source_supported_rekey_condition": {
+    "is_confirmed_vulnerability": false,
+    "required_evidence_to_resolve": [
+      "Android instrumentation test that injects failure after primary purge and before replacement create, then verifies old-key recovery without retaining secrets.",
+      "iOS XCTest or equivalent fault-injection test for the same path.",
+      "Reviewed emulator/device evidence binding the tested native artifacts to the public-source verifier build."
+    ],
+    "status": "REQUIRES_RUNTIME_FAULT_INJECTION",
+    "summary": "The public rekey sequence has an intentional intermediate state after primary deletion and before replacement creation. If replacement creation fails, recovery depends on the old-key recovery vault; runtime fault injection must verify the app preserves and exposes an appropriate recovery path."
+  },
+  "task_id": "PORTAL-CXTP-162"
+}

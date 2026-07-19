@@ -1,0 +1,25 @@
+{
+  "acceptance_boundary": "This template is not a review decision and cannot authorize runtime capture or a security claim.",
+  "required_check_ids": [
+    "candidate_source_diff",
+    "bridge_isolation",
+    "external_egress_denied",
+    "vendor_fallback_absent",
+    "non_local_network_rejected",
+    "emulator_loopback_bridge"
+  ],
+  "required_reviewer_attestations": {
+    "conflict_of_interest_declared": false,
+    "independent_of_candidate_author": true,
+    "reviewer_identity_digest_only": true
+  },
+  "required_scope": {
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "vendor_release_equivalent": false
+  },
+  "review_packet_cid": "bafkreibg3zvjoh5fzuns2dvu2v26ugnb4yoleenix6wlvu5vp36iji36ku",
+  "schema_version": "xaman-self-hosted-independent-review-template/v1",
+  "task_id": "PORTAL-CXTP-161",
+  "template_status": "PENDING_INDEPENDENT_REVIEW"
+}

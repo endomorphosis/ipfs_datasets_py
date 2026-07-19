@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "bafkreiggmq4ijj5qwtr5h7ysfuexb6gesy63uuab4qau43n7rsdrhevpny",
+  "artifact_cid": "bafkreietbt3to5elzbk6vq2fxsbfzo2x6zohabylbvmsnlvyfgrdjyncoq",
   "build_inputs": {
     "android_build_files": [
       {
@@ -201,16 +201,16 @@
       "source": "security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json"
     },
     "node": {
-      "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/node",
+      "executable": "/home/barberb/.local/bin/node",
       "source": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
       "status": "present",
-      "version": "24.18.0"
+      "version": "22.23.1"
     },
     "npm": {
-      "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/npm",
+      "executable": "/home/barberb/.local/bin/npm",
       "source": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
       "status": "present",
-      "version": "11.16.0"
+      "version": "10.9.8"
     },
     "typescript": {
       "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",

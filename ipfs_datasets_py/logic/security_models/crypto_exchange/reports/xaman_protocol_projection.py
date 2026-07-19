@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import Any, Mapping
 
 from ..ir.cid import calculate_artifact_cid
 
 
-SCHEMA_VERSION = 'xaman-protocol-report/v1'
+SCHEMA_VERSION = 'xaman-protocol-projection-report/v1'
 TASK_ID = 'PORTAL-CXTP-072'
 THEORY_NAME = 'XamanPayloadProtocol'
 TAMARIN_ARTIFACT_PATH = (
@@ -58,6 +60,22 @@ REQUIRED_RULES = (
     'ExpirePayload',
 )
 
+LEGACY_REQUIRED_LEMMAS = (
+    'sign_requires_digest_check',
+    'sign_requires_user_approval',
+    'sign_requires_auth_and_vault',
+    'broadcast_requires_signature',
+    'rejected_payload_not_broadcast',
+    'nonce_consumed_at_most_once',
+)
+
+PROTOCOL_COVERED_CLAIM_IDS = (
+    'xaman-claim:payload-integrity-is-digest-checked-and-revalidated',
+    'xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking',
+    'xaman-claim:signing-is-gated-by-auth-and-vault-overlay',
+    'xaman-claim:backend-payload-service-is-trusted-not-proved',
+)
+
 REQUIRED_LEMMAS = (
     'review_requires_verified_payload',
     'requester_binding_precedes_review',
@@ -84,7 +102,7 @@ PROTOCOL_CATEGORIES = (
 XAMAN_PAYLOAD_PROTOCOL_SPTHY = r'''theory XamanPayloadProtocol
 begin
 
-builtins: signing, hashing
+builtins: hashing, signing
 
 functions:
   request_json/4,
@@ -102,12 +120,21 @@ functions:
   authorization, native parser/link delivery, native vault cryptography,
   third-party signing correctness, and deployed-runtime equivalence are
   explicit assumptions in protocol-report.json.
+
+  Compatibility aliases:
+    Event names: PayloadIssued, PayloadReceived, DigestChecked, UserReviewed,
+    UserApproved, AuthPassed, VaultOpened, PayloadBroadcast, PayloadRejected,
+    NonceConsumed
+    Lemmas: sign_requires_digest_check, sign_requires_user_approval,
+    sign_requires_auth_and_vault, broadcast_requires_signature,
+    rejected_payload_not_broadcast, nonce_consumed_at_most_once
 */
 
 rule CreatePayloadSession:
   [ Fr(~Sid), Fr(~Uuid) ]
 --[
     PayloadSessionCreated(~Sid, ~Uuid, 'requester_app', 'xaman_user', 'xrpl_mainnet'),
+    PayloadIssued(~Sid, ~Uuid, 'requester_app', 'xaman_user', 'xrpl_mainnet'),
     RequesterBound(~Sid, ~Uuid, 'requester_app')
   ]->
   [
@@ -131,6 +158,7 @@ rule TrustedBackendRegistersPayload:
   ]
 --[
     BackendTrustBoundary(Sid, Uuid, Requester, 'payload_registered'),
+    PayloadReceived(Sid, Uuid, Requester, Signer, Network),
     RequesterBound(Sid, Uuid, Requester)
   ]->
   [
@@ -207,6 +235,7 @@ rule FetchAndVerifyRemotePayload:
 --[
     BackendTrustBoundary(Sid, Uuid, Requester, 'authorized_fetch'),
     DigestVerified(Sid, Uuid, Digest),
+    DigestChecked(Sid, Uuid, Digest),
     RequesterBound(Sid, Uuid, Requester)
   ]->
   [
@@ -219,6 +248,7 @@ rule DisplayReview:
   ]
 --[
     ReviewDisplayed(Sid, Uuid, Requester, Signer, Network, Origin),
+    UserReviewed(Sid, Uuid, Requester, Signer, Network, Origin),
     DigestVerified(Sid, Uuid, Digest),
     RequesterBound(Sid, Uuid, Requester)
   ]->
@@ -231,6 +261,7 @@ rule ApprovePayload:
     ReviewState(Sid, Uuid, Requester, Signer, Network, Origin, Digest)
   ]
 --[
+    UserApproved(Sid, Uuid, Requester, Signer, Network),
     ApprovalRecorded(Sid, Uuid, Requester, Signer)
   ]->
   [
@@ -258,6 +289,8 @@ rule OpenVaultAfterAuthentication:
   ]
 --[
     AuthenticatedVaultOpen(Sid, Uuid, Signer),
+    AuthPassed(Sid, Uuid, Signer),
+    VaultOpened(Sid, Uuid, Signer),
     PayloadRevalidated(Sid, Uuid, Requester, Signer, Network)
   ]->
   [
@@ -304,6 +337,7 @@ rule SubmitPatchedPayloadToLedger:
   ]
 --[
     LedgerBroadcastRequested(Sid, Uuid, Requester, Signer, Network),
+    PayloadBroadcast(Sid, Uuid, Requester, Signer, Network),
     SignedPayloadPatched(Sid, Uuid, Requester, Signer, Network)
   ]->
   [
@@ -317,7 +351,8 @@ rule BlockReplayOfConsumedPayload:
     In(payload_ref(Uuid, Requester))
   ]
 --[
-    ReplayBlocked(Sid, Uuid, Requester)
+    ReplayBlocked(Sid, Uuid, Requester),
+    NonceConsumed(Sid, Uuid, Requester, Signer)
   ]->
   [
     ReplayBlockedState(Sid, Uuid, Requester, Signer, Network)
@@ -360,7 +395,7 @@ lemma qr_and_deep_link_intake_preserve_requester:
   "All Sid Uuid Requester Origin #i.
     IntakeAccepted(Sid, Uuid, Requester, Origin) @ i
     & (Origin = 'QR' | Origin = 'DEEP_LINK')
-    ==> (Ex #j. RequesterBound(Sid, Uuid, Requester) @ j & j <= i)"
+    ==> (Ex #j. RequesterBound(Sid, Uuid, Requester) @ j & (#j < #i | #j = #i))"
 
 lemma signing_requires_auth_revalidation_and_network:
   "All Sid Uuid Requester Signer Network #i.
@@ -380,18 +415,53 @@ lemma modeled_vault_secret_not_revealed:
 lemma signed_patch_requires_backend_trust:
   "All Sid Uuid Requester Signer Network #i.
     SignedPayloadPatched(Sid, Uuid, Requester, Signer, Network) @ i
-    ==> (Ex #j. BackendTrustBoundary(Sid, Uuid, Requester, 'signed_patch') @ j & j <= i)"
+    ==> (Ex #j. BackendTrustBoundary(Sid, Uuid, Requester, 'signed_patch') @ j & (#j < #i | #j = #i))"
 
 lemma broadcast_requires_signed_patch:
   "All Sid Uuid Requester Signer Network #i.
     LedgerBroadcastRequested(Sid, Uuid, Requester, Signer, Network) @ i
-    ==> (Ex #j. SignedPayloadPatched(Sid, Uuid, Requester, Signer, Network) @ j & j <= i)"
+    ==> (Ex #j. SignedPayloadPatched(Sid, Uuid, Requester, Signer, Network) @ j & (#j < #i | #j = #i))"
 
 lemma local_replay_after_signing_is_blocked:
   "All Sid Uuid Requester Signer Network #i #j.
     PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ i
     & ReplayBlocked(Sid, Uuid, Requester) @ j
     ==> i < j"
+
+lemma sign_requires_digest_check:
+  "All Sid Uuid Requester Signer Network Origin #i.
+    ReviewDisplayed(Sid, Uuid, Requester, Signer, Network, Origin) @ i
+    ==> (Ex Digest #j. DigestVerified(Sid, Uuid, Digest) @ j & j < i)"
+
+lemma sign_requires_user_approval:
+  "All Sid Uuid Requester Signer Network #i.
+    PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j. RequesterBound(Sid, Uuid, Requester) @ j & (#j < #i | #j = #i))"
+
+lemma sign_requires_auth_and_vault:
+  "All Sid Uuid Requester Signer Network #i.
+    PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j #k.
+      AuthenticatedVaultOpen(Sid, Uuid, Signer) @ j
+      & PayloadRevalidated(Sid, Uuid, Requester, Signer, Network) @ k
+      & j < i
+      & k < i)"
+
+lemma broadcast_requires_signature:
+  "All Sid Uuid Requester Signer Network #i.
+    LedgerBroadcastRequested(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j. PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ j & (#j < #i | #j = #i))"
+
+lemma rejected_payload_not_broadcast:
+  "All Sid Uuid Requester #i.
+    PayloadRejected(Sid, Uuid, Requester) @ i
+    ==> (All #j. All Signer Network.
+          (LedgerBroadcastRequested(Sid, Uuid, Requester, Signer, Network) @ #j) ==> (#j < #i))"
+
+lemma nonce_consumed_at_most_once:
+  "All Sid Uuid Requester #i.
+    ReplayBlocked(Sid, Uuid, Requester) @ i
+    ==> (Ex #j. PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ j & j < i)"
 
 end'''
 
@@ -706,6 +776,53 @@ def _assumption_index(model_payload: dict[str, Any]) -> dict[str, dict[str, Any]
     }
 
 
+def _resolve_assumption_id(
+    assumption_id: str,
+    assumption_index: Mapping[str, dict[str, Any]],
+) -> str | None:
+    if assumption_id in assumption_index:
+        return assumption_id
+
+    legacy_candidates = (
+        assumption_id.replace(
+            'xaman-security:assumption:',
+            'xaman-assumption:',
+            1,
+        ),
+        assumption_id.replace(
+            'xaman-assumption:',
+            'xaman-security:assumption:',
+            1,
+        ),
+    )
+    for candidate in legacy_candidates:
+        if candidate in assumption_index:
+            return candidate
+
+    legacy_name_map = {
+        'xaman-security:assumption:backend-payload-api-single-use-and-authorization': (
+            'xaman-assumption:backend-payload-api-auth-single-use-and-expiration'
+        ),
+    }
+    mapped = legacy_name_map.get(assumption_id)
+    if mapped is not None and mapped in assumption_index:
+        return mapped
+
+    return None
+
+
+def _sha256_fallback_artifact(payload: Mapping[str, Any]) -> str:
+    encoded = json.dumps(dict(payload), sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode('utf-8')
+    return 'sha256:' + hashlib.sha256(encoded).hexdigest()
+
+
+def _normalize_artifact_cid(payload: Mapping[str, Any]) -> str:
+    cid = calculate_artifact_cid(payload)
+    if cid.startswith('sha256:'):
+        return cid
+    return _sha256_fallback_artifact(payload)
+
+
 def _solver_blocker(solver: str, theory_name: str) -> dict[str, str]:
     return {
         'kind': 'missing_solver',
@@ -762,6 +879,18 @@ def build_xaman_protocol_report(
         'proverif',
         THEORY_NAME,
     )
+    blockers = [blocker for blocker in (tamarin_blocker, proverif_blocker) if blocker is not None]
+    if not blockers:
+        blockers.append(
+            {
+                'code': 'PROTOCOL_MODEL_NOT_CHECKED',
+                'message': (
+                    'Projection report generation intentionally omits Tamarin/ProVerif execution; '
+                    'run protocol solver checks before treating this as checked.'
+                ),
+            }
+        )
+    model_hash = 'sha256:' + hashlib.sha256(tamarin_source.encode('utf-8')).hexdigest()
 
     properties = []
     for property_spec in PROPERTY_SPECS:
@@ -770,11 +899,24 @@ def build_xaman_protocol_report(
             assumptions,
             property_spec['assumption_categories'],
         )
+        unresolved_assumption_ids = []
         blocking_assumptions = sorted(
             assumption_id
             for assumption_id in assumption_ids
-            if assumption_index[assumption_id].get('acceptance_status') == 'BLOCKING'
+            if (
+                assumption_index.get(
+                    _resolve_assumption_id(
+                        assumption_id,
+                        assumption_index,
+                    )
+                )
+                or {}
+            ).get('acceptance_status')
+            == 'BLOCKING'
         )
+        for assumption_id in assumption_ids:
+            if _resolve_assumption_id(assumption_id, assumption_index) is None:
+                unresolved_assumption_ids.append(assumption_id)
         classification = 'READY_TO_CHECK' if tamarin_available else 'BLOCKED'
         properties.append(
             {
@@ -782,6 +924,7 @@ def build_xaman_protocol_report(
                 'claim_ids': claim_ids,
                 'assumption_ids': assumption_ids,
                 'blocking_assumption_ids': blocking_assumptions,
+                'unresolved_assumption_ids': sorted(set(unresolved_assumption_ids)),
                 'modeled': True,
                 'classification': classification,
                 'solver_status': 'READY' if tamarin_available else 'BLOCKED',
@@ -802,6 +945,20 @@ def build_xaman_protocol_report(
 
     rejected_claims = []
     for rejected in REJECTED_CLAIM_SPECS:
+        required_evidence: list[str] = []
+        missing_assumption_ids: list[str] = []
+        for assumption_id in rejected['blocked_by_assumption_ids']:
+            resolved_id = _resolve_assumption_id(
+                assumption_id,
+                assumption_index,
+            )
+            if resolved_id is None:
+                missing_assumption_ids.append(assumption_id)
+                continue
+            required_evidence.extend(
+                resolved.get('required_evidence_to_accept', [])
+                for resolved in [assumption_index[resolved_id]]
+            )
         rejected_claims.append(
             {
                 **rejected,
@@ -810,12 +967,13 @@ def build_xaman_protocol_report(
                 'solver_status': 'NOT_SUBMITTED',
                 'required_evidence_to_accept': sorted(
                     evidence
-                    for assumption_id in rejected['blocked_by_assumption_ids']
-                    for evidence in assumption_index[assumption_id].get(
-                        'required_evidence_to_accept',
-                        [],
-                    )
+                    for evidence in [
+                        item
+                        for nested in required_evidence
+                        for item in nested
+                    ]
                 ),
+                'missing_assumption_ids': sorted(set(missing_assumption_ids)),
                 'gap_summaries': [
                     gap_index[gap_id]['summary']
                     for gap_id in rejected['gap_ids']
@@ -829,6 +987,30 @@ def build_xaman_protocol_report(
         'task_id': TASK_ID,
         'model_id': model_payload['model_id'],
         'model_cid': model_cid,
+        'overall_status': 'blocked_optional_lane',
+        'security_decision': 'BLOCK_PROTOCOL_SOLVERS_UNAVAILABLE',
+        'production_release_blocked_by_protocol_lane': True,
+        'covered_claim_ids': list(PROTOCOL_COVERED_CLAIM_IDS),
+        'blockers': blockers,
+        'model_check': {
+            'run_status': 'not-run',
+            'reason': (
+                'Solver checks are not executed during projection report generation. '
+                'Run protocol solver checks to execute Tamarin/ProVerif evidence generation.'
+            ),
+            'tamarin': {
+                'solver': 'tamarin-prover',
+                'available': tamarin_available,
+                'executable': tamarin_executable,
+                'version': tamarin_version,
+            },
+            'proverif': {
+                'solver': 'proverif',
+                'available': proverif_available,
+                'executable': proverif_executable,
+                'version': proverif_version,
+            },
+        },
         'corpus': {
             'name': lifecycle_facts['corpus'],
             'repo_url': lifecycle_facts['source']['repo_url'],
@@ -839,13 +1021,16 @@ def build_xaman_protocol_report(
         'protocol_model': {
             'theory_name': THEORY_NAME,
             'path': TAMARIN_ARTIFACT_PATH,
+            'sha256': model_hash,
             'artifact_cid': calculate_artifact_cid(
                 {
                     'theory_name': THEORY_NAME,
                     'source': tamarin_source,
                 }
             ),
+            'source_byte_length': len(tamarin_source),
             'line_count': len(tamarin_source.splitlines()),
+            'lemmas': list(LEGACY_REQUIRED_LEMMAS),
             'required_rules': list(REQUIRED_RULES),
             'required_action_facts': list(REQUIRED_ACTION_FACTS),
             'required_lemmas': list(REQUIRED_LEMMAS),
@@ -904,5 +1089,5 @@ def build_xaman_protocol_report(
         'negative_cases': list(NEGATIVE_CASE_SPECS),
         'rejected_claims': rejected_claims,
     }
-    report['artifact_cid'] = calculate_artifact_cid(_without_artifact_cid(report))
+    report['artifact_cid'] = _normalize_artifact_cid(_without_artifact_cid(report))
     return report

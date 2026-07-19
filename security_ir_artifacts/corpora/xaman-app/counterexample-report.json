@@ -1,77 +1,75 @@
 {
-  "schema_version": "xaman-counterexample-report/v1",
-  "task_id": "PORTAL-CXTP-070",
   "model": {
-    "path": "security_ir_artifacts/corpora/xaman-app/security-model-ir.json",
-    "cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d"
+    "cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
+    "path": "security_ir_artifacts/corpora/xaman-app/security-model-ir.json"
   },
+  "overall_status": "blocked",
+  "production_release_blocked": true,
   "results": [
     {
-      "vector_id": "xaman-disproof:assumption-mutation-native-vault",
       "claim_id": "xaman-claim:software-custody-requires-vault-authentication",
-      "result": "counterexample_found",
       "counterexample": {
         "cleared_assumption_without_evidence": "xaman-assumption:native-vault-crypto-and-biometric-security",
         "violated_policy": "blocking assumptions cannot be cleared without evidence"
       },
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "counterexample_found",
+      "vector_id": "xaman-disproof:assumption-mutation-native-vault"
     },
     {
-      "vector_id": "xaman-disproof:auth-precondition-removal",
       "claim_id": "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
-      "result": "counterexample_found",
       "counterexample": {
-        "removed_precondition": "auth_or_vault_overlay",
-        "invalid_path": "review_acceptance_to_signed_blob_without_auth"
+        "invalid_path": "review_acceptance_to_signed_blob_without_auth",
+        "removed_precondition": "auth_or_vault_overlay"
       },
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "counterexample_found",
+      "vector_id": "xaman-disproof:auth-precondition-removal"
     },
     {
-      "vector_id": "xaman-disproof:stale-evidence-acceptance",
       "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
-      "result": "counterexample_found",
       "counterexample": {
-        "receipt_result": "proved",
         "evidence_status": "stale_evidence",
-        "expected_consumer_action": "reject"
+        "expected_consumer_action": "reject",
+        "receipt_result": "proved"
       },
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "counterexample_found",
+      "vector_id": "xaman-disproof:stale-evidence-acceptance"
     },
     {
-      "vector_id": "xaman-disproof:wrong-network-signing",
       "claim_id": "xaman-claim:network-binding-prevents-wrong-network-signing",
-      "result": "counterexample_found",
       "counterexample": {
-        "payload_force_network": "mainnet",
         "active_network": "testnet",
-        "mutated_guard": "force_network_check_removed"
+        "mutated_guard": "force_network_check_removed",
+        "payload_force_network": "mainnet"
       },
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "counterexample_found",
+      "vector_id": "xaman-disproof:wrong-network-signing"
     },
     {
-      "vector_id": "xaman-disproof:replay-resolved-payload",
       "claim_id": "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
-      "result": "counterexample_found",
       "counterexample": {
-        "payload_state": "resolved_at_present",
-        "mutated_guard": "resolved_or_expired_check_removed"
+        "mutated_guard": "resolved_or_expired_check_removed",
+        "payload_state": "resolved_at_present"
       },
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "counterexample_found",
+      "vector_id": "xaman-disproof:replay-resolved-payload"
     },
     {
-      "vector_id": "xaman-disproof:downgraded-solver-result",
       "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
-      "result": "counterexample_found",
       "counterexample": {
-        "solver_lane": "blocked_optional_lane",
-        "mutated_consumer_action": "accept_report"
+        "mutated_consumer_action": "accept_report",
+        "solver_lane": "blocked_optional_lane"
       },
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "counterexample_found",
+      "vector_id": "xaman-disproof:downgraded-solver-result"
     },
     {
-      "vector_id": "xaman-disproof:unsupported-xrpl-semantics",
       "claim_id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
-      "result": "counterexample_found",
       "counterexample": {
         "transaction_classes": [
           "TrustSet",
@@ -80,40 +78,42 @@
         ],
         "validation_status": "TODO_RESOLVES_WITHOUT_CHECKS"
       },
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "counterexample_found",
+      "vector_id": "xaman-disproof:unsupported-xrpl-semantics"
     },
     {
-      "vector_id": "xaman-disproof:backend-double-use",
       "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
-      "result": "blocked_by_missing_evidence",
       "counterexample": null,
       "missing_evidence": [
         "backend source snapshot",
         "single-use enforcement trace",
         "PATCH conflict behavior"
       ],
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "blocked_by_missing_evidence",
+      "vector_id": "xaman-disproof:backend-double-use"
     },
     {
-      "vector_id": "xaman-disproof:runtime-equivalence-missing",
       "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
-      "result": "blocked_by_missing_evidence",
       "counterexample": null,
       "missing_evidence": [
         "real-device trace bundle",
         "build provenance",
         "runtime environment snapshot"
       ],
-      "release_policy": "block"
+      "release_policy": "block",
+      "result": "blocked_by_missing_evidence",
+      "vector_id": "xaman-disproof:runtime-equivalence-missing"
     }
   ],
+  "schema_version": "xaman-counterexample-report/v1",
+  "security_decision": "BLOCK_COUNTEREXAMPLES_AND_MISSING_EVIDENCE",
   "summary": {
-    "vector_count": 9,
-    "counterexample_found_count": 7,
     "blocked_count": 2,
-    "release_acceptable_count": 0
+    "counterexample_found_count": 7,
+    "release_acceptable_count": 0,
+    "vector_count": 9
   },
-  "overall_status": "blocked",
-  "production_release_blocked": true,
-  "security_decision": "BLOCK_COUNTEREXAMPLES_AND_MISSING_EVIDENCE"
+  "task_id": "PORTAL-CXTP-070"
 }

@@ -37,18 +37,22 @@ def _fake_executable(directory: Path, name: str, output: str = '') -> Path:
 
 def test_coq_solver_lane_probe_blocks_when_coq_artifacts_are_missing() -> None:
     module = _module()
+    fake_coq_missing_kernel = Path('/tmp/does-not-exist-coq-kernel.v')
+    report = module.build_coq_solver_lane_report(
+        repo_root=ROOT,
+        coq_kernel_path=fake_coq_missing_kernel,
+    )
 
-    report = module.build_coq_solver_lane_report(repo_root=ROOT)
-
-    codes = {blocker['code'] for blocker in report['blockers']}
     assert report['task_id'] == 'PORTAL-CXTP-093'
     assert report['schema_version'] == 'crypto-exchange-coq-solver-lane-report/v1'
     assert report['overall_status'] == 'blocked_optional_lane'
     assert report['security_decision'] == 'BLOCK_COQ_SOLVER_LANE_UNAVAILABLE'
-    assert 'COQ_KERNEL_ARTIFACT_MISSING' in codes
     assert report['summary']['coq_kernel_checked'] is False
     assert report['production_release_blocked_by_coq_lane'] is True
     assert report['artifact_cid'].startswith('sha256:')
+
+    codes = {blocker['code'] for blocker in report['blockers']}
+    assert 'COQ_KERNEL_ARTIFACT_MISSING' in codes
 
 
 def test_coq_solver_lane_probe_can_report_ready_with_fake_toolchain(
@@ -94,11 +98,17 @@ def test_persisted_coq_solver_lane_report_is_fail_closed() -> None:
     report = _json(REPORT_PATH)
 
     assert report['task_id'] == 'PORTAL-CXTP-093'
-    assert report['overall_status'] == 'blocked_optional_lane'
-    assert report['security_decision'] == 'BLOCK_COQ_SOLVER_LANE_UNAVAILABLE'
-    assert report['summary']['blocker_count'] >= 1
-    assert report['coq_kernel']['exists'] is False
-    assert report['coq_kernel_check']['status'] == 'not-run'
+    if report['overall_status'] == 'ready':
+        assert report['security_decision'] == 'COQ_SOLVER_LANE_READY'
+        assert report['summary']['blocker_count'] == 0
+        assert report['summary']['coq_kernel_checked'] is True
+        assert report['coq_kernel_check']['status'] == 'passed'
+    else:
+        assert report['overall_status'] == 'blocked_optional_lane'
+        assert report['security_decision'] == 'BLOCK_COQ_SOLVER_LANE_UNAVAILABLE'
+        assert report['summary']['blocker_count'] >= 1
+        assert report['coq_kernel']['exists'] is False
+        assert report['coq_kernel_check']['status'] == 'not-run'
 
 
 def test_coq_solver_lane_documentation_includes_remediation_and_scope() -> None:

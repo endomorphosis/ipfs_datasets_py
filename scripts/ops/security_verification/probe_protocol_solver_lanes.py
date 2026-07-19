@@ -22,6 +22,7 @@ TASK_ID = 'PORTAL-CXTP-092'
 DEFAULT_OUT = Path('security_ir_artifacts/environment/protocol-solver-lane-report.json')
 TAMARIN_MODEL = Path('security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.spthy')
 PROVERIF_MODEL = Path('security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.pv')
+PROVERIF_MODEL_FALLBACK = Path('security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv')
 PROTOCOL_REPORT = Path('security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json')
 
 
@@ -138,6 +139,9 @@ def build_protocol_solver_lane_report(
     proverif_model = Path(proverif_model_path)
     if not proverif_model.is_absolute():
         proverif_model = root / proverif_model
+    fallback_model = PROVERIF_MODEL_FALLBACK
+    if not fallback_model.is_absolute():
+        fallback_model = root / fallback_model
     protocol_report = Path(protocol_report_path)
     if not protocol_report.is_absolute():
         protocol_report = root / protocol_report
@@ -156,6 +160,17 @@ def build_protocol_solver_lane_report(
         blockers.append({'code': 'TAMARIN_EXECUTABLE_MISSING', 'message': 'tamarin-prover executable is not on PATH'})
     if proverif is None:
         blockers.append({'code': 'PROVERIF_EXECUTABLE_MISSING', 'message': 'proverif executable is not on PATH'})
+    if run_protocol_checks and not proverif_model.is_file() and fallback_model.is_file():
+        warnings.append(
+            {
+                'code': 'PROVERIF_MODEL_FALLBACK',
+                'message': (
+                    f'{_relative(proverif_model, root)} is missing; using '
+                    f'{_relative(fallback_model, root)} as the protocol fallback source.'
+                ),
+            }
+        )
+        proverif_model = fallback_model
     if not tamarin_model.is_file():
         blockers.append({'code': 'TAMARIN_MODEL_MISSING', 'message': f'{_relative(tamarin_model, root)} is missing'})
     if not proverif_model.is_file():
@@ -192,6 +207,20 @@ def build_protocol_solver_lane_report(
         }
 
     ready = not blockers and tamarin_check['status'] == 'passed' and proverif_check['status'] == 'passed'
+    protocol_overall_status = (
+        protocol_payload.get('overall_status') if protocol_payload and isinstance(protocol_payload.get('overall_status'), str)
+        else 'blocked_optional_lane'
+    )
+    protocol_security_decision = (
+        protocol_payload.get('security_decision')
+        if protocol_payload and isinstance(protocol_payload.get('security_decision'), str)
+        else None
+    )
+    protocol_covered_claim_ids = (
+        protocol_payload.get('covered_claim_ids') if protocol_payload and isinstance(protocol_payload.get('covered_claim_ids'), list)
+        else []
+    )
+
     report = {
         'schema_version': SCHEMA_VERSION,
         'task_id': TASK_ID,
@@ -224,9 +253,9 @@ def build_protocol_solver_lane_report(
             'path': _relative(protocol_report, root),
             'exists': protocol_payload is not None,
             'sha256': _sha256(protocol_report),
-            'overall_status': protocol_payload.get('overall_status') if protocol_payload else None,
-            'security_decision': protocol_payload.get('security_decision') if protocol_payload else None,
-            'covered_claim_ids': protocol_payload.get('covered_claim_ids') if protocol_payload else [],
+            'overall_status': protocol_overall_status,
+            'security_decision': protocol_security_decision,
+            'covered_claim_ids': protocol_covered_claim_ids,
         },
         'checks': {
             'tamarin': tamarin_check,

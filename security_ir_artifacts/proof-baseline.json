@@ -1,6 +1,6 @@
 {
   "assumption_registry": {
-    "as_of": "2026-07-08T01:46:04Z",
+    "as_of": "2026-07-19T03:20:42Z",
     "assumptions": [
       {
         "accepted": true,
@@ -465,8 +465,8 @@
       "claim_version": "1.0",
       "compiler_cid": "bafkreicbv5beq7ny7s57lbipzqypiwhoeeehw3hozqodefxxubb4wdvzqa",
       "counterexample": null,
-      "created_at": "2026-07-08T01:46:04+00:00",
-      "deterministic_payload_cid": "bafkreigc3zwclaalftk3fa4eytdid22577ts22bkduh4cq56jcgikkgrwq",
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreia3nm7c6zuqesp2j2ho4quiuag2yo7tvmcuxv47zs3whhfgpp7foa",
       "evidence_refs": [
         {
           "kind": "test_fixture",
@@ -525,10 +525,10 @@
           "review_status": "trusted_fixture"
         }
       ],
-      "generated_at": "2026-07-08T01:46:04+00:00",
-      "model_cid": "bafkreics22k4sezd6maidggz5ohuxu4kkyvazwl62wetygtpe5jeiswbz4",
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
       "model_schema_version": "security-model-ir/v1",
-      "nondeterministic_report_cid": "bafkreibpopqexduxmrvx4hpgf35oy3r6tqlemcyrxay7lfld22z24oagia",
+      "nondeterministic_report_cid": "bafkreidlxirsp5iugjdgzmcigrx7j4w6szkjy6r3bbvqcwefgrhu53cmry",
       "proof_or_trace_cid": "bafkreiftnbzhedublmyedl7qzuvertxo5lp7rwkutfb4v2vu7igf3oq55m",
       "prover": "z3",
       "reason_unknown": null,
@@ -553,8 +553,8 @@
       "claim_version": "1.0",
       "compiler_cid": "bafkreiaje7257cj35pktizyx7sadjklvjgil7tfszgk4kewzgevvbusoiy",
       "counterexample": null,
-      "created_at": "2026-07-08T01:46:04+00:00",
-      "deterministic_payload_cid": "bafkreic7ixntbw4lq66wffq6w7iqpeaqwzfskhu4gs7jnnd35cokn4j4dm",
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreie6p7egalcpunfk2oj2wctrgubofuqsbipyt4jhbt6rxlwmgfdvte",
       "evidence_refs": [
         {
           "kind": "test_fixture",
@@ -573,10 +573,10 @@
           "review_status": "trusted_fixture"
         }
       ],
-      "generated_at": "2026-07-08T01:46:04+00:00",
-      "model_cid": "bafkreics22k4sezd6maidggz5ohuxu4kkyvazwl62wetygtpe5jeiswbz4",
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
       "model_schema_version": "security-model-ir/v1",
-      "nondeterministic_report_cid": "bafkreibnegwzrmusm6j2t2tmfqdxochz4ahisbf5lnjskrc4reqejjgjee",
+      "nondeterministic_report_cid": "bafkreihshqxhkwpdowwczhnahuihxjmes52dtgbyk7a5vjc2vdnzjoar2a",
       "proof_or_trace_cid": "bafkreicoupeymiho2lqx3x7o3rdqysszr3eqywdaiiqnql3rrrbo2inpta",
       "prover": "z3",
       "reason_unknown": null,
@@ -601,8 +601,8 @@
       "claim_version": "1.0",
       "compiler_cid": "bafkreifrkxyregy4ycgj5cthivxgzib2zky2eeqqlht6cvwpd7jil7yxc4",
       "counterexample": null,
-      "created_at": "2026-07-08T01:46:04+00:00",
-      "deterministic_payload_cid": "bafkreigljdz6tzefmg6w2rbymu6vdedr7mnzlfwe6lpimjbparhpp4ubrm",
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreic3prn5jx4h645lwv5sjpthlgt6h4jo6qfnlpkkbbgqxtdg4ptqbe",
       "evidence_refs": [
         {
           "kind": "test_fixture",
@@ -621,10 +621,10 @@
           "review_status": "trusted_fixture"
         }
       ],
-      "generated_at": "2026-07-08T01:46:04+00:00",
-      "model_cid": "bafkreics22k4sezd6maidggz5ohuxu4kkyvazwl62wetygtpe5jeiswbz4",
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
       "model_schema_version": "security-model-ir/v1",
-      "nondeterministic_report_cid": "bafkreia4rx7xdhkatd5yuf7pxer3sirh5fkrsct6mb4o7giehikvj3h2uy",
+      "nondeterministic_report_cid": "bafkreic3dme2friyshuygo3asgcemyceeyypronlavoupr5qjajkbddfoy",
       "proof_or_trace_cid": "bafkreigfqp6zqit2nxihwo2hnmxlnk6n5lw3fl7uydb5ln6g5xwtzbduia",
       "prover": "z3",
       "reason_unknown": null,
@@ -649,8 +649,8 @@
       "claim_version": "1.0",
       "compiler_cid": "bafkreib676kpvtfbnt5675ihws7tecq7oa2ou3wgrr5k2a63pos4rox62a",
       "counterexample": null,
-      "created_at": "2026-07-08T01:46:04+00:00",
-      "deterministic_payload_cid": "bafkreicnwgmg3odqjhikab7fcdgrma5h5kqwneug25qn6okxbuhfknkqia",
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreign7uvdgbtwipzzxv2jcaztqzfxd7hs7nhsytrxdcydt2y3ex7oau",
       "evidence_refs": [
         {
           "kind": "test_fixture",
@@ -685,10 +685,10 @@
           "review_status": "trusted_fixture"
         }
       ],
-      "generated_at": "2026-07-08T01:46:04+00:00",
-      "model_cid": "bafkreics22k4sezd6maidggz5ohuxu4kkyvazwl62wetygtpe5jeiswbz4",
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
       "model_schema_version": "security-model-ir/v1",
-      "nondeterministic_report_cid": "bafkreieb43tvkhyd2if2izutzpxipd3l3h3f7chnjjbfxplxfe732t23ly",
+      "nondeterministic_report_cid": "bafkreie4nnbgowdvpmwc65rwqhrq6d4jjlkdvkcrauqn7g3a3ddkeenzhi",
       "proof_or_trace_cid": "bafkreifmszbijlrw7htc65jotoglqg6mpdwwjizyi35eubnecii2vbve5e",
       "prover": "z3",
       "reason_unknown": null,
@@ -713,8 +713,8 @@
       "claim_version": "1.0",
       "compiler_cid": "bafkreiex724y52kgrmxj64z2qaab2gtdnxlwgjrahfcghnnlvl6igp4wem",
       "counterexample": null,
-      "created_at": "2026-07-08T01:46:04+00:00",
-      "deterministic_payload_cid": "bafkreifjwur3etqhxzbozqhtdeaydy2uwcr4rqrhx4qizjb5gyvpin4hvy",
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreigbkdpivldvdtjigwy55xevjivm6pc22p5nazh6d5jo7sjaynnaaq",
       "evidence_refs": [
         {
           "kind": "test_fixture",
@@ -741,10 +741,10 @@
           "review_status": "trusted_fixture"
         }
       ],
-      "generated_at": "2026-07-08T01:46:04+00:00",
-      "model_cid": "bafkreics22k4sezd6maidggz5ohuxu4kkyvazwl62wetygtpe5jeiswbz4",
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
       "model_schema_version": "security-model-ir/v1",
-      "nondeterministic_report_cid": "bafkreig2ddwfamyfmh2qs5h6fcn5wnwasd5orbqdeimhrxfa66bxqofkli",
+      "nondeterministic_report_cid": "bafkreic7hcu22vpqv6ptckmb2wk4uwz4465ew6ia22zjbx6kqqff3vu4hq",
       "proof_or_trace_cid": "bafkreigr6qghtekiwrx7hcv2c5rfemdgtiapvhdmnvavlp3rqsnswruss4",
       "prover": "z3",
       "reason_unknown": null,
@@ -769,8 +769,8 @@
       "claim_version": "1.0",
       "compiler_cid": "bafkreiazyraphzvs76kvto7tmli22yxorz2fo7lgghkxtptu4n3bb57bsi",
       "counterexample": null,
-      "created_at": "2026-07-08T01:46:04+00:00",
-      "deterministic_payload_cid": "bafkreihq2fhpacukrieiqgdn5tftd6avdv45wlwis2frxi7ntbrs6xojhi",
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreiaf7d5ysu3eoev7xhrykxetsp2r25brmvgduddhy3uyxowsqyu4mi",
       "evidence_refs": [
         {
           "kind": "test_fixture",
@@ -789,10 +789,10 @@
           "review_status": "trusted_fixture"
         }
       ],
-      "generated_at": "2026-07-08T01:46:04+00:00",
-      "model_cid": "bafkreics22k4sezd6maidggz5ohuxu4kkyvazwl62wetygtpe5jeiswbz4",
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
       "model_schema_version": "security-model-ir/v1",
-      "nondeterministic_report_cid": "bafkreidi7xxbbp4yybd3tzkrzt2nhjklp7ob7i2pc3o7bqpdp3xnn5wwc4",
+      "nondeterministic_report_cid": "bafkreia4xj74g7pccvicklv5dazgo3hrcos4r4foq57gcxhoc2snknec34",
       "proof_or_trace_cid": "bafkreie2giccgvhpr62hssgqcwacn6m7xshbpe3f7ji7jglbtu4cltfyo4",
       "prover": "z3",
       "reason_unknown": null,
@@ -816,8 +816,8 @@
       "claim_version": "1.0",
       "compiler_cid": "bafkreiejak3xmoazuivo5ar5szfonxaxxut56owzbwm3cu6loireynlx3i",
       "counterexample": null,
-      "created_at": "2026-07-08T01:46:04+00:00",
-      "deterministic_payload_cid": "bafkreifopvy3mmq4d7bybog35fcmhv6kshtjmtyooz6xrd5ue2blqouxmm",
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreic24jfez3ir5q4nycbnapho4juifuiowrlqdqvrrrvm4tocl5oqu4",
       "evidence_refs": [
         {
           "kind": "test_fixture",
@@ -852,10 +852,10 @@
           "review_status": "trusted_fixture"
         }
       ],
-      "generated_at": "2026-07-08T01:46:04+00:00",
-      "model_cid": "bafkreics22k4sezd6maidggz5ohuxu4kkyvazwl62wetygtpe5jeiswbz4",
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
       "model_schema_version": "security-model-ir/v1",
-      "nondeterministic_report_cid": "bafkreidjdhiiby2yjqnghwqo7oq3rmwy767a5k3c4yi3mncykzgvy23sjq",
+      "nondeterministic_report_cid": "bafkreigy4yol7yjf2luvjc5a7jxfxhlts4tbyftgkmlhhejhl2l42vgnd4",
       "proof_or_trace_cid": "bafkreicvtxs525criye5pm2zgggmrtrm47e3ho4tjqsqtzs4r5ajxb5edu",
       "prover": "z3",
       "reason_unknown": null,
@@ -879,8 +879,8 @@
       "claim_version": "1.0",
       "compiler_cid": "bafkreih57y7raaprhzjxhexcgimfz2j7vutwwmhposig5n265nq7cgysqq",
       "counterexample": null,
-      "created_at": "2026-07-08T01:46:04+00:00",
-      "deterministic_payload_cid": "bafkreidzt7kuq7l4yc7afsrx5von54kgzhm4rdv2qun3l4mwlko4wxqtwm",
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreiefijv44gm3jo6i2a5zdxk4bd2z5623kdl377wgrgublbrsjo7n4q",
       "evidence_refs": [
         {
           "kind": "test_fixture",
@@ -995,10 +995,10 @@
           "review_status": "trusted_fixture"
         }
       ],
-      "generated_at": "2026-07-08T01:46:04+00:00",
-      "model_cid": "bafkreics22k4sezd6maidggz5ohuxu4kkyvazwl62wetygtpe5jeiswbz4",
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
       "model_schema_version": "security-model-ir/v1",
-      "nondeterministic_report_cid": "bafkreigqy2bvuhuvszypbzce2igczbhy43bki4jh35fvl3tm2zlt4i6tly",
+      "nondeterministic_report_cid": "bafkreiczzz4bsokgbz2jt7zafhl7z66qhi273it72opcdgqtswp2y6tcnu",
       "proof_or_trace_cid": "bafkreieyaogdoxkqtpdd7webk7sozjfmxmhv6ehwzqauqexlvpmtwknrki",
       "prover": "z3",
       "reason_unknown": null,
@@ -1012,104 +1012,6 @@
       "status": "PROVED",
       "timeout_ms": 5000,
       "unsat_core": null
-    }
-  ],
-  "soundness_summary": [
-    {
-      "assumptions": [
-        "A3",
-        "A4",
-        "A5",
-        "A8"
-      ],
-      "claim_id": "no_unauthorized_withdrawal",
-      "evidence_review_statuses": [
-        "trusted_fixture"
-      ],
-      "soundness_notes": [],
-      "status": "PROVED"
-    },
-    {
-      "assumptions": [
-        "A4",
-        "A5"
-      ],
-      "claim_id": "no_over_reserved_internal_account",
-      "evidence_review_statuses": [
-        "trusted_fixture"
-      ],
-      "soundness_notes": [],
-      "status": "PROVED"
-    },
-    {
-      "assumptions": [
-        "A4",
-        "A10"
-      ],
-      "claim_id": "global_asset_conservation",
-      "evidence_review_statuses": [
-        "trusted_fixture"
-      ],
-      "soundness_notes": [],
-      "status": "PROVED"
-    },
-    {
-      "assumptions": [
-        "A6",
-        "A9"
-      ],
-      "claim_id": "no_deposit_before_finality",
-      "evidence_review_statuses": [
-        "trusted_fixture"
-      ],
-      "soundness_notes": [],
-      "status": "PROVED"
-    },
-    {
-      "assumptions": [
-        "A3",
-        "A8"
-      ],
-      "claim_id": "no_signing_request_after_wallet_freeze",
-      "evidence_review_statuses": [
-        "trusted_fixture"
-      ],
-      "soundness_notes": [],
-      "status": "PROVED"
-    },
-    {
-      "assumptions": [
-        "A1",
-        "A7"
-      ],
-      "claim_id": "capability_delegation_no_authority_increase",
-      "evidence_review_statuses": [
-        "trusted_fixture"
-      ],
-      "soundness_notes": [],
-      "status": "PROVED"
-    },
-    {
-      "assumptions": [
-        "A10"
-      ],
-      "claim_id": "revoked_capability_no_future_authorization",
-      "evidence_review_statuses": [
-        "trusted_fixture"
-      ],
-      "soundness_notes": [],
-      "status": "PROVED"
-    },
-    {
-      "assumptions": [
-        "A10"
-      ],
-      "claim_id": "audit_event_exists_for_critical_transition",
-      "evidence_review_statuses": [
-        "trusted_fixture"
-      ],
-      "soundness_notes": [],
-      "status": "PROVED"
     }
   ]
 }

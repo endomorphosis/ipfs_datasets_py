@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "sha256:8c4ef32adf6b44bc8510ad677d437d226952f5101cd7ad075db705170886129a",
+  "artifact_cid": "sha256:39ed5469b1042efdaa296906217c47cdae5c1877428e45e8385dcfd3660befd9",
   "blocked_task_ids_preserved": [
     "PORTAL-CXTP-077",
     "PORTAL-CXTP-078",
@@ -16,7 +16,7 @@
       "path": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/production/evidence-bundle.json"
     }
   ],
-  "generated_at_utc": "2026-07-10T07:22:15Z",
+  "generated_at_utc": "2026-07-19T04:59:29Z",
   "inputs": {
     "evidence_bundle": {
       "bundle_id": null,
@@ -32,11 +32,11 @@
       "sha256": "139b736861d07eeae9d30fd13b887aaec0ac96c60aabc91ba00998dc4e7a0558"
     },
     "packets": {
-      "artifact_cid": "sha256:c525988e6def707eebbd86eff2afc0a6b015324a42c76c117da5217927d03e1e",
+      "artifact_cid": "sha256:c43cad75c6adfe4a4056afc9497bed3bd1dcf2cd373968a93a0b35aaf09502bf",
       "exists": true,
       "path": "security_ir_artifacts/production/blocker-evidence-packets.json",
       "schema_version": "crypto-exchange-production-blocker-evidence-packets/v1",
-      "sha256": "d45e268aecac006a0a3a90e32db668e498cb4afff1b0f6a78589b08383358f60"
+      "sha256": "01f781fab4998fc0fc1140bd59c776047899cdfabd26a12ecefd1d776742e069"
     }
   },
   "may_mark_production_secure": false,

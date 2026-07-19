@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "sha256:0f568f32a9eeecf84cee05276a50e1ff03331a6cbeb39c0adfd8b69e7e939514",
+  "artifact_cid": "sha256:a8ae0fc54ab8ad967c89150a35628f00019d2bf47255a0d5f49d5a5b953d302c",
   "boundaries": [
     {
       "boundary_id": "xaman-native-boundary:backend-payload-service",
@@ -419,7 +419,7 @@
       "path": "security_ir_artifacts/corpora/xaman-app/public-source-refresh.json",
       "role": "public_source_refresh",
       "schema_version": "xaman-public-source-refresh/v1",
-      "sha256": "sha256:70e6bd30da887888af7a4fefc400a707f9fd81934ddbf3a59e80acc44f0fdfe5",
+      "sha256": "sha256:dd3220b39ed12e93f08b3fd6c27be91c90e0dee2f65f87aaf1e6a622281d65ad",
       "task_id": "PORTAL-CXTP-144"
     }
   ],

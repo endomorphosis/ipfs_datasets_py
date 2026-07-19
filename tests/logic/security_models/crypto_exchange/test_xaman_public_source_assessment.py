@@ -50,7 +50,7 @@ def test_xaman_public_source_assessment_schema_and_source_binding() -> None:
     assessment = _json(ASSESSMENT_PATH)
 
     assert assessment['schema_version'] == 'xaman-public-source-assessment/v1'
-    assert assessment['task_id'] == 'PORTAL-CXTP-119'
+    assert assessment['task_id'] == 'PORTAL-CXTP-144'
     assert assessment['corpus'] == 'xaman-app'
     assert assessment['source']['commit_sha'] == '942f43876265a7af44f233288ad2b1d00841d5fa'
     assert assessment['source']['public_source_only'] is True
@@ -173,8 +173,9 @@ def test_xaman_public_source_assessment_records_solver_coverage_gaps() -> None:
     assert set(lanes) == EXPECTED_SOLVER_LANES
     assert lanes['smt_z3_cvc5']['blocked_claim_count'] == 10
     assert lanes['smt_z3_cvc5']['overall_status'] == 'blocked'
-    assert lanes['tla_apalache']['overall_status'] == 'blocked_optional_lane'
-    assert set(lanes['tla_apalache']['missing']) == {'apalache-mc', 'apalache'}
+    assert lanes['tla_apalache']['overall_status'] == 'checked_bounded_model_only'
+    assert lanes['tla_apalache']['missing'] == []
+    assert lanes['tla_apalache']['public_source_result'] == 'solver_lane_checked_bounded_only'
     assert lanes['protocol_tamarin_proverif']['overall_status'] == 'blocked_optional_lane'
     assert set(lanes['protocol_tamarin_proverif']['missing']) == {'tamarin-prover', 'proverif'}
     assert lanes['proof_consumer_kernel']['overall_status'] == 'ready_lean_checked_coq_unavailable'

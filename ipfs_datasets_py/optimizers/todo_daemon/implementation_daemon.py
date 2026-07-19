@@ -260,6 +260,13 @@ class PortalTaskState:
     implementation_in_progress: bool = False
     recommended_task_id: str = ""
     recommended_actions: list[str] = field(default_factory=list)
+    eligible_ready_task_ids: list[str] = field(default_factory=list)
+    eligible_ready_count: int = 0
+    selectable_ready_task_ids: list[str] = field(default_factory=list)
+    selectable_ready_count: int = 0
+    strict_deprioritized_ready_task_ids: list[str] = field(default_factory=list)
+    strict_deprioritized_ready_count: int = 0
+    selection_idle_reason: str = ""
     completed_task_ids: list[str] = field(default_factory=list)
     ready_task_ids: list[str] = field(default_factory=list)
     waiting_task_ids: list[str] = field(default_factory=list)
@@ -322,6 +329,15 @@ class PortalTaskState:
             implementation_in_progress=bool(payload.get("implementation_in_progress")),
             recommended_task_id=str(payload.get("recommended_task_id") or ""),
             recommended_actions=[str(item) for item in payload.get("recommended_actions", []) or []],
+            eligible_ready_task_ids=[str(item) for item in payload.get("eligible_ready_task_ids", []) or []],
+            eligible_ready_count=int(payload.get("eligible_ready_count") or 0),
+            selectable_ready_task_ids=[str(item) for item in payload.get("selectable_ready_task_ids", []) or []],
+            selectable_ready_count=int(payload.get("selectable_ready_count") or 0),
+            strict_deprioritized_ready_task_ids=[
+                str(item) for item in payload.get("strict_deprioritized_ready_task_ids", []) or []
+            ],
+            strict_deprioritized_ready_count=int(payload.get("strict_deprioritized_ready_count") or 0),
+            selection_idle_reason=str(payload.get("selection_idle_reason") or ""),
             completed_task_ids=[str(item) for item in payload.get("completed_task_ids", []) or []],
             ready_task_ids=[str(item) for item in payload.get("ready_task_ids", []) or []],
             waiting_task_ids=[str(item) for item in payload.get("waiting_task_ids", []) or []],
@@ -626,6 +642,15 @@ class PortalImplementationDaemon:
         state.ready_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "ready"]
         state.waiting_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "waiting"]
         state.blocked_task_ids = [task.task_id for task in scoped_tasks if resolved_statuses[task.task_id] == "blocked"]
+        state.eligible_ready_task_ids = list(state.ready_task_ids)
+        state.eligible_ready_count = len(state.eligible_ready_task_ids)
+        state.selectable_ready_task_ids = list(state.ready_task_ids)
+        state.selectable_ready_count = len(state.selectable_ready_task_ids)
+        state.strict_deprioritized_ready_task_ids = [
+            task_id for task_id in state.ready_task_ids if task_id in strategy.get("deprioritized_tasks", [])
+        ]
+        state.strict_deprioritized_ready_count = len(state.strict_deprioritized_ready_task_ids)
+        state.selection_idle_reason = "" if state.selectable_ready_task_ids else "no_ready_tasks"
         state.ready_count = len(state.ready_task_ids)
         state.waiting_count = len(state.waiting_task_ids)
         state.blocked_count = len(state.blocked_task_ids)

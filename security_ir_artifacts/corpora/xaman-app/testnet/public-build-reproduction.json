@@ -64,7 +64,7 @@
     ],
     "transaction_trial_digest_matches": true
   },
-  "artifact_cid": "bafkreiewqlkyt4cplsxvpowswgddfxyf6eaqb44nyoloindbmc2yaydffa",
+  "artifact_cid": "bafkreig7px7nlken5o6ws47aczjos5ecgs2ob2jdautzl4h7tblym53lvq",
   "build_outcome": {
     "blocker_codes": [
       "PUBLIC_SOURCE_CHECKOUT_NOT_EMBEDDED_IN_REPOSITORY",
@@ -207,12 +207,12 @@
       "task_id": null
     },
     {
-      "artifact_cid": "sha256:69c7ca855cf057da873312dab0ec44dc8541b81b8cbb6faf03c1f3fc3ff9a8ad",
+      "artifact_cid": "sha256:281b0cee207a0db8ee29d712c0d72ba4f11d18d6908dff2524f1abc636028bc2",
       "kind": "environment_probe",
       "path": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
       "present": true,
       "schema_version": "xaman-environment-probe/v1",
-      "sha256": "sha256:a675a87bb94b279afc7d18a5d68e96c3865b77d5fb2f3c60e5eb02f0fc457dff",
+      "sha256": "sha256:6a15e18213a83d824e97b30a0b8b67a59b5bbb9afe93d500fbbc11a4850dc31f",
       "task_id": "PORTAL-CXTP-061"
     },
     {
@@ -221,7 +221,7 @@
       "path": "security_ir_artifacts/corpora/xaman-app/public-source-refresh.json",
       "present": true,
       "schema_version": "xaman-public-source-refresh/v1",
-      "sha256": "sha256:70e6bd30da887888af7a4fefc400a707f9fd81934ddbf3a59e80acc44f0fdfe5",
+      "sha256": "sha256:dd3220b39ed12e93f08b3fd6c27be91c90e0dee2f65f87aaf1e6a622281d65ad",
       "task_id": "PORTAL-CXTP-144"
     },
     {
@@ -261,17 +261,17 @@
       "task_id": "PORTAL-CXTP-124"
     },
     {
-      "artifact_cid": "bafkreiggmq4ijj5qwtr5h7ysfuexb6gesy63uuab4qau43n7rsdrhevpny",
+      "artifact_cid": "bafkreietbt3to5elzbk6vq2fxsbfzo2x6zohabylbvmsnlvyfgrdjyncoq",
       "kind": "public_build_environment",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/public-build-environment.json",
       "present": true,
       "schema_version": "xaman-testnet-public-build-environment/v1",
-      "sha256": "sha256:aa0421edced3bf8167d29578b97481d94ca218e0d08ade275f1a56529c41f495",
+      "sha256": "sha256:aba0d2779f0d51bcb54ea401f0f335d7924f12f29f7720741f38e46cf647b427",
       "task_id": "PORTAL-CXTP-149"
     }
   ],
   "locked_environment": {
-    "artifact_cid": "bafkreiggmq4ijj5qwtr5h7ysfuexb6gesy63uuab4qau43n7rsdrhevpny",
+    "artifact_cid": "bafkreietbt3to5elzbk6vq2fxsbfzo2x6zohabylbvmsnlvyfgrdjyncoq",
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/public-build-environment.json",
     "schema_version": "xaman-testnet-public-build-environment/v1",
     "toolchain": {
@@ -294,16 +294,16 @@
         "source": "security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json"
       },
       "node": {
-        "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/node",
+        "executable": "/home/barberb/.local/bin/node",
         "source": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
         "status": "present",
-        "version": "24.18.0"
+        "version": "22.23.1"
       },
       "npm": {
-        "executable": "/home/barberb/.local/share/openclaw-node/node-v24.18.0-linux-x64/bin/npm",
+        "executable": "/home/barberb/.local/bin/npm",
         "source": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
         "status": "present",
-        "version": "11.16.0"
+        "version": "10.9.8"
       },
       "typescript": {
         "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",

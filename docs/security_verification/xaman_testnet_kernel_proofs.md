@@ -5,6 +5,7 @@ Task: `PORTAL-CXTP-136`
 The Testnet proof-kernel artifacts are:
 
 - Lean kernel: `security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean`
+- Rocq kernel: `security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v`
 - Lean report: `security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json`
 - Coq coverage decision: `security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json`
 
@@ -39,13 +40,13 @@ The checked Lean claim scope covers only the modeled Testnet-scope claims for ne
 
 The reviewed Testnet assurance plan requires an independent kernel when Lean-only evidence is insufficient for the final assurance lane. This task therefore records Coq as required independent-kernel coverage for Testnet assurance.
 
-The current decision is:
+The current independent-kernel decision is:
 
-- `decision: required_missing_artifact`
-- `overall_status: coverage_gap_required_independent_kernel_missing`
-- `security_decision: BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING`
+- `decision: required_checked`
+- `overall_status: independent_kernel_checked`
+- `security_decision: COQ_INDEPENDENT_KERNEL_CHECKED`
 
-`coqc` may be present on a verifier host, but there is no checked `security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v` artifact. Missing Coq is therefore a declared coverage gap. This does not invalidate the checked Lean formalized invariant; it blocks any claim that the Testnet assurance bundle has independent Coq kernel coverage.
+Rocq 9.1.1 checks `XamanTestnet.v` in an isolated temporary output path, so compiler artifacts are not retained beside the evidence source. This does not invalidate the checked Lean formalized invariant, and it closes only the independent-kernel coverage lane. The overall Testnet verdict remains blocked by assumptions, retained counterevidence, unmodeled semantics, and missing runtime-equivalence evidence.
 
 ## Validation
 
@@ -53,7 +54,9 @@ Run:
 
 ```bash
 PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_kernel_proofs.py -q
+PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_xaman_testnet_kernel_proofs.py --repo-root .
 test -f security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean
+test -f security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v
 test -f security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json
 test -f security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json
 ```
