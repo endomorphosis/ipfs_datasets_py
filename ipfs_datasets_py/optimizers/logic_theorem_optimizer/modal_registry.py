@@ -15423,6 +15423,19 @@ COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
         ),
         0.12,
     ),
+    (
+        ModalLogicFamily.DYNAMIC.value,
+        ModalLogicFamily.DYNAMIC.value,
+    ): max(
+        COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.DYNAMIC.value,
+                ModalLogicFamily.DYNAMIC.value,
+            ),
+            0.0,
+        ),
+        0.215,
+    ),
 }
 
 COMPILER_REFINED_PACKET_002082_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (

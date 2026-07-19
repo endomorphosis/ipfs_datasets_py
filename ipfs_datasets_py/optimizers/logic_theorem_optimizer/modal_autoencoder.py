@@ -517,6 +517,25 @@ class ProverCompilationSignal:
         failures = self.unavailable_count + self.error_count + self.failed_count
         return min(1.0, failures / self.attempted_count)
 
+    @property
+    def proved_count(self) -> int:
+        """Return formulas with explicit proof evidence, not just compilation."""
+        count = 0
+        for detail in self.details:
+            statuses = {
+                str(status).strip().lower()
+                for status in detail.get("statuses", ())
+                if str(status).strip()
+            }
+            if (
+                bool(detail.get("proved"))
+                or bool(detail.get("verified_by"))
+                or "proved" in statuses
+                or "valid" in statuses
+            ):
+                count += 1
+        return count
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "attempted_count": self.attempted_count,
@@ -525,6 +544,7 @@ class ProverCompilationSignal:
             "error_count": self.error_count,
             "failed_count": self.failed_count,
             "failure_ratio": self.failure_ratio,
+            "proved_count": self.proved_count,
             "unavailable_count": self.unavailable_count,
             "valid_count": self.valid_count,
             "verified_by": list(self.verified_by),
@@ -25395,9 +25415,11 @@ def evaluate_modal_prover_compilation(
             failed_count += 1
         details.append(
             {
+                "compiled": bool(result.overall_valid),
                 "formula": statement.formula,
                 "formula_id": formula.formula_id,
                 "overall_valid": bool(result.overall_valid),
+                "proved": bool(result.verified_by),
                 "statuses": statuses,
                 "verified_by": list(result.verified_by),
             }

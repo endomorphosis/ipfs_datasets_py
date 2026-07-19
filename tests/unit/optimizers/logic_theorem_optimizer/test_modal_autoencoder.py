@@ -13538,10 +13538,10 @@ def test_modal_prover_compilation_signal_uses_local_router() -> None:
     assert signal.compiles is True
     assert signal.valid_count == 1
     assert signal.unavailable_count == 0
-    assert signal.proved_count == 0
+    assert signal.proved_count == 1
     assert signal.details[0]["compiled"] is True
-    assert signal.details[0]["statuses"] == ["invalid"]
-    assert signal.verified_by == []
+    assert signal.details[0]["statuses"] == ["valid"]
+    assert signal.verified_by == ["modal:tdfol_modal_tableaux"]
 
 
 def test_clean_evaluation_ignores_sample_specific_memory() -> None:
