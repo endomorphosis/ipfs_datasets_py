@@ -165,6 +165,10 @@ class LeanstralAuditConfig:
             "daemon",
         }
 
+    def normalized_prompt_payload_mode(self) -> str:
+        value = str(self.prompt_payload_mode or "full").strip().lower()
+        return value if value in {"full", "compact", "daemon"} else "full"
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
@@ -1070,7 +1074,7 @@ class LeanstralAuditRunner:
                     repair_attempt=repair_attempt,
                     previous_response_text=raw_response,
                     previous_validation=validation if generation_attempts else None,
-                    compact=self.config.compact_prompt_payload(),
+                    payload_mode=self.config.normalized_prompt_payload_mode(),
                 ),
                 ensure_ascii=True,
                 sort_keys=True,
@@ -1185,7 +1189,7 @@ class LeanstralAuditRunner:
                 _leanstral_audit_prompt_payload(
                     request,
                     repair_attempt=0,
-                    compact=self.config.compact_prompt_payload(),
+                    payload_mode=self.config.normalized_prompt_payload_mode(),
                 ),
                 ensure_ascii=True,
                 sort_keys=True,
@@ -2060,12 +2064,15 @@ def _leanstral_audit_prompt_payload(
     previous_response_text: str = "",
     previous_validation: Optional[LeanstralAuditValidation] = None,
     compact: bool = False,
+    payload_mode: Optional[str] = None,
 ) -> Dict[str, Any]:
-    payload = (
-        _compact_leanstral_audit_prompt_payload(request)
-        if compact
-        else request.to_prompt_payload()
-    )
+    mode = str(payload_mode or ("compact" if compact else "full")).strip().lower()
+    if mode == "daemon":
+        payload = _daemon_leanstral_audit_prompt_payload(request)
+    elif mode == "compact":
+        payload = _compact_leanstral_audit_prompt_payload(request)
+    else:
+        payload = request.to_prompt_payload()
     if repair_attempt <= 0 or previous_validation is None:
         return payload
     payload["repair_instructions"] = {
@@ -2081,6 +2088,95 @@ def _leanstral_audit_prompt_payload(
         "previous_response_excerpt": _bounded_text(previous_response_text, 4000),
     }
     return payload
+
+
+def _daemon_leanstral_audit_prompt_payload(
+    request: LeanstralAuditRequest,
+) -> Dict[str, Any]:
+    """Return the smallest prompt shape suitable for always-on guidance."""
+
+    evidence = _json_ready_mapping(request.evidence)
+    cluster = _json_ready_mapping(evidence.get("cluster"))
+    semantic_family = str(cluster.get("semantic_family") or "legal_ir").strip()
+    compiler_surface = str(cluster.get("compiler_surface") or "legal_ir.compiler").strip()
+    evidence_packets = [
+        _daemon_prompt_evidence_packet(packet)
+        for packet in evidence.get("evidence_packets", []) or []
+        if isinstance(packet, Mapping)
+    ][:1]
+    referenced_examples = [
+        _daemon_prompt_reference_example(example)
+        for example in evidence.get("referenced_examples", []) or []
+        if isinstance(example, Mapping)
+    ][:1]
+    primary_proof_obligation_id = (
+        str(request.proof_obligation_ids[0]) if request.proof_obligation_ids else ""
+    )
+    return {
+        "allowed_classifications": sorted(ALLOWED_AUDIT_CLASSIFICATIONS),
+        "instructions": [
+            "Return one strict JSON object only.",
+            "Copy request_id, request_cache_key, schema_version, and one proof_obligation_id exactly.",
+            "Do not copy legal text spans; cite evidence_id/example_id and use predicates or hashes.",
+            "For non-abstain, include missing_semantic_rule, counterexample or witness, and proposed_compiler_surface.",
+        ],
+        "request": {
+            "cache_key": request.cache_key,
+            "compiler_surface": compiler_surface,
+            "evidence": {
+                "cluster": _daemon_prompt_cluster(cluster),
+                "evidence_packets": evidence_packets,
+                "referenced_examples": referenced_examples,
+                "source_record_hashes": list(evidence.get("source_record_hashes", []) or [])[:2],
+                "state_hashes": list(evidence.get("state_hashes", []) or [])[:2],
+            },
+            "hashes": {
+                "evidence": request.evidence_hash,
+                "model": request.model_hash,
+                "prompt": request.prompt_hash,
+                "request_schema": request.request_schema_hash,
+                "response_schema": request.response_schema_hash,
+                "theorem_registry": request.theorem_registry_hash,
+            },
+            "proof_obligation_ids": list(request.proof_obligation_ids[:2]),
+            "request_id": request.request_id,
+            "schema_version": request.schema_version,
+            "semantic_family": semantic_family,
+        },
+        "response_template": {
+            "abstention_reason": None,
+            "affected_ir_families": [semantic_family],
+            "classification": "missing_semantic_rule",
+            "confidence": 0.0,
+            "counterexample": {
+                "evidence_id": "copy evidence_id or example_id from request.evidence",
+                "observed": "compiler loses or distorts this semantic signal",
+                "expected": "legal semantics should be preserved",
+            },
+            "drafted_logic_candidates": [
+                {
+                    "logic_family": semantic_family,
+                    "candidate": "obligation(actor, action) unless exception_condition",
+                    "compiler_surface": compiler_surface,
+                    "confidence": 0.0,
+                    "intended_use": "guidance_only",
+                    "proof_obligation_id": primary_proof_obligation_id,
+                }
+            ],
+            "missing_semantic_rule": {"description": "missing deterministic semantic rule"},
+            "proof_obligation_ids": [primary_proof_obligation_id] if primary_proof_obligation_id else [],
+            "proposed_compiler_surface": [
+                {
+                    "component": compiler_surface,
+                    "operation": "add deterministic compiler or decompiler rule",
+                }
+            ],
+            "request_cache_key": request.cache_key,
+            "request_id": request.request_id,
+            "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
+            "witness": None,
+        },
+    }
 
 
 def _compact_leanstral_audit_prompt_payload(
@@ -2319,6 +2415,96 @@ def _compact_prompt_reference_example(example: Mapping[str, Any]) -> Dict[str, A
     text = str(example.get("source_text") or "").strip()
     if text:
         payload["source_text_excerpt"] = _bounded_text(text, 80)
+    return payload
+
+
+def _daemon_prompt_cluster(cluster: Mapping[str, Any]) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    for key in (
+        "compiler_surface",
+        "gap_count",
+        "schema_version",
+        "semantic_family",
+        "semantic_signature",
+    ):
+        value = cluster.get(key)
+        if value not in (None, "", (), []):
+            payload[key] = _json_ready(value)
+    evidence_ids = cluster.get("evidence_ids")
+    if isinstance(evidence_ids, Sequence) and not isinstance(evidence_ids, (str, bytes)):
+        payload["evidence_ids"] = [str(value) for value in evidence_ids[:3]]
+    sample_ids = cluster.get("sample_ids")
+    if isinstance(sample_ids, Sequence) and not isinstance(sample_ids, (str, bytes)):
+        payload["sample_ids"] = [str(value) for value in sample_ids[:3]]
+    gaps = [
+        _prompt_bounded_json(gap, max_chars=100)
+        for gap in cluster.get("gaps", []) or []
+        if isinstance(gap, Mapping)
+    ][:1]
+    if gaps:
+        payload["gaps"] = gaps
+    return payload
+
+
+def _daemon_prompt_evidence_packet(packet: Mapping[str, Any]) -> Dict[str, Any]:
+    return {
+        "anti_copy_evidence": _prompt_bounded_json(
+            packet.get("anti_copy_evidence"),
+            max_chars=60,
+        ),
+        "compiler_decompiler_metrics": _prompt_bounded_json(
+            packet.get("compiler_decompiler_metrics"),
+            max_chars=80,
+        ),
+        "evidence_hashes": _selected_prompt_mapping(
+            packet.get("evidence_hashes"),
+            (
+                "canonical_modal_ir_hash",
+                "source_text_hash",
+                "state_hash",
+            ),
+        ),
+        "evidence_id": str(packet.get("evidence_id") or ""),
+        "legal_ir_views": _prompt_bounded_json(
+            packet.get("legal_ir_views"),
+            max_chars=80,
+        ),
+        "learned_view_gaps": _prompt_bounded_json(
+            packet.get("learned_view_gaps"),
+            max_chars=100,
+        ),
+        "proof_route_status": _prompt_bounded_json(
+            packet.get("proof_route_status"),
+            max_chars=80,
+        ),
+        "sample_hashes": _selected_prompt_mapping(
+            packet.get("sample_hashes"),
+            (
+                "modal_ir_hash",
+                "sample_id",
+                "source_text_hash",
+            ),
+        ),
+    }
+
+
+def _daemon_prompt_reference_example(example: Mapping[str, Any]) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    for key in (
+        "evidence_id",
+        "example_id",
+        "expected_modal_ir_hash",
+        "sample_id",
+        "source_text_hash",
+    ):
+        value = example.get(key)
+        if value not in (None, "", (), []):
+            payload[key] = _json_ready(value)
+    if "compiler_decompiler_metrics" in example:
+        payload["compiler_decompiler_metrics"] = _prompt_bounded_json(
+            example.get("compiler_decompiler_metrics"),
+            max_chars=60,
+        )
     return payload
 
 

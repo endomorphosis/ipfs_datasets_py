@@ -28,6 +28,7 @@ from ipfs_datasets_py.logic.modal import (
 )
 from ipfs_datasets_py.logic.modal.leanstral_audit import (
     LEANSTRAL_AUDIT_STOP_TOKENS,
+    _leanstral_audit_prompt_payload,
     canonical_sha256,
     parse_leanstral_audit_response,
 )
@@ -381,6 +382,43 @@ def test_worker_bounds_model_evidence_and_preserves_full_hash_manifest(tmp_path)
         assert cluster["gap_detail_selection"] == (
             "selected_evidence_packets_with_hash_manifest"
         )
+
+
+def test_daemon_prompt_payload_is_bounded_and_preserves_response_identity(tmp_path) -> None:
+    items, stale = build_leanstral_audit_work_items(
+        [_packet(index) for index in range(1, 6)],
+        config=LeanstralAuditWorkerConfig(
+            cache_dir=str(tmp_path / "cache"),
+            max_evidence_packets_per_item=1,
+            max_work_items=1,
+            evidence_refresh_policy="latest_compiler_snapshot",
+        ),
+    )
+
+    assert stale == []
+    request = items[0].request
+    full = json.dumps(
+        _leanstral_audit_prompt_payload(request, payload_mode="full"),
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+    compact = json.dumps(
+        _leanstral_audit_prompt_payload(request, payload_mode="compact"),
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+    daemon_payload = _leanstral_audit_prompt_payload(request, payload_mode="daemon")
+    daemon = json.dumps(daemon_payload, ensure_ascii=True, sort_keys=True)
+
+    assert len(daemon) < len(compact) < len(full)
+    assert daemon_payload["request"]["request_id"] == request.request_id
+    assert daemon_payload["request"]["cache_key"] == request.cache_key
+    assert daemon_payload["response_template"]["request_id"] == request.request_id
+    assert daemon_payload["response_template"]["request_cache_key"] == request.cache_key
+    assert daemon_payload["response_template"]["proof_obligation_ids"] == [
+        request.proof_obligation_ids[0]
+    ]
+    assert "source_text_excerpt" not in daemon
 
 
 def test_latest_compiler_snapshot_stabilizes_requests_until_compiler_changes(
