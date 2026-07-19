@@ -138,10 +138,6 @@ class RoundTripMetrics:
     ) -> float:
         """Return a compact scalar for optimizer prioritization."""
 
-        extra_losses = [
-            max(0.0, _coerce_float(value))
-            for value in self.extra_losses.values()
-        ]
         return (
             max(0.0, 1.0 - self.cosine_similarity)
             + max(0.0, self.cross_entropy_loss)
@@ -151,7 +147,7 @@ class RoundTripMetrics:
             + max(0.0, self.symbolic_validity_penalty)
             + max(0.0, proof_failure_ratio)
             + max(0.0, graph_failure_penalty)
-            + _extra_loss_penalty(extra_losses)
+            + _extra_loss_penalty(self.extra_losses)
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -391,16 +387,45 @@ def _graph_data_has_neo4j_shape(graph_data: Any) -> bool:
     return True
 
 
-def _extra_loss_penalty(values: Sequence[float]) -> float:
+def _extra_loss_penalty(values: Mapping[str, float]) -> float:
     """Compress adapter-specific diagnostics into one bounded auxiliary penalty."""
 
     if not values:
         return 0.0
-    maximum = max(values)
-    if len(values) == 1:
+    losses = [
+        max(0.0, _coerce_float(value))
+        for name, value in values.items()
+        if _is_auxiliary_loss_name(str(name))
+    ]
+    if not losses:
+        return 0.0
+    maximum = max(losses)
+    if len(losses) == 1:
         return maximum
-    residual = max(0.0, sum(values) - maximum)
-    return maximum + (residual / len(values))
+    residual = max(0.0, sum(losses) - maximum)
+    return maximum + (residual / len(losses))
+
+
+def _is_auxiliary_loss_name(name: str) -> bool:
+    """Return whether an extra diagnostic should contribute to total loss."""
+
+    normalized = str(name or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized.endswith("_similarity") or normalized.endswith("_score"):
+        return False
+    return any(
+        token in normalized
+        for token in (
+            "loss",
+            "penalty",
+            "failure",
+            "invalid",
+            "violation",
+            "requires_validation",
+            "incomplete",
+        )
+    )
 
 
 __all__ = [

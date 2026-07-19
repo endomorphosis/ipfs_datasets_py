@@ -60,6 +60,9 @@ _BRIDGE_CONTRACT_SPARSE_EPISTEMIC_KG_FLOOR = 0.22
 _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH = 0.32
 _BRIDGE_CONTRACT_GUIDANCE_PROJECTION_STRENGTH_MAX = 0.68
 _BRIDGE_CONTRACT_GUIDANCE_LANE_FLOOR = 0.08
+_BRIDGE_CONTRACT_GUIDANCE_GAP_FLOOR_BASE = 0.09
+_BRIDGE_CONTRACT_GUIDANCE_GAP_FLOOR_SCALE = 0.45
+_BRIDGE_CONTRACT_GUIDANCE_GAP_FLOOR_MAX = 0.22
 _BRIDGE_CONTRACT_CITATION_FRAME_DEONTIC_FLOOR = 0.20
 _BRIDGE_CONTRACT_CITATION_FRAME_STRUCTURE_MIN_COUNT = 3
 _BRIDGE_CONTRACT_NORMATIVE_DEONTIC_FLOOR = 0.30
@@ -1419,9 +1422,11 @@ def _compiler_guidance_bridge_contract_metadata(
         probability_gaps=diagnostic_probability_gaps,
         component_gap_maxima=diagnostic_component_gap_max,
     )
+    gap_floors = _compiler_guidance_component_gap_floors(component_gaps)
     return {
         "compiler_guidance_bridge_contract_applied": True,
         "compiler_guidance_bridge_contract_evidence_count": contract_evidence_count,
+        "compiler_guidance_bridge_contract_gap_floors": gap_floors,
         "compiler_guidance_bridge_contract_projection_strength": projection_strength,
         "compiler_guidance_bridge_contract_routes": sorted(routes),
         "compiler_guidance_bridge_contract_target_distribution": target_distribution,
@@ -1494,6 +1499,30 @@ def _merge_guidance_component_gap(
     if value > 0.0 and existing > 0.0:
         return max(existing, value)
     return value if abs(value) > abs(existing) else existing
+
+
+def _compiler_guidance_component_gap_floors(
+    component_gaps: Mapping[str, float],
+) -> Dict[str, float]:
+    """Return bounded lane floors from positive underrepresentation gaps."""
+
+    floors: Dict[str, float] = {}
+    for raw_lane, raw_gap in dict(component_gaps or {}).items():
+        lane = _bridge_contract_lane_component(
+            _canonical_bridge_component_name(str(raw_lane))
+        )
+        gap = _float_or_zero(raw_gap)
+        if not lane or gap <= 0.0:
+            continue
+        floors[lane] = max(
+            floors.get(lane, 0.0),
+            min(
+                _BRIDGE_CONTRACT_GUIDANCE_GAP_FLOOR_MAX,
+                _BRIDGE_CONTRACT_GUIDANCE_GAP_FLOOR_BASE
+                + (_BRIDGE_CONTRACT_GUIDANCE_GAP_FLOOR_SCALE * min(0.32, gap)),
+            ),
+        )
+    return dict(sorted(floors.items()))
 
 
 def _compiler_guidance_routes(
@@ -3643,6 +3672,16 @@ def _project_guided_contract_distribution(
         for lane, weight in target_distribution.items()
         if lane in projected
     }
+    raw_gap_floors = (metadata or {}).get(
+        "compiler_guidance_bridge_contract_gap_floors"
+    )
+    if isinstance(raw_gap_floors, Mapping):
+        for raw_lane, raw_floor in raw_gap_floors.items():
+            lane = _bridge_contract_lane_component(
+                _canonical_bridge_component_name(str(raw_lane))
+            )
+            if lane in projected:
+                floors[lane] = max(floors.get(lane, 0.0), _float_or_zero(raw_floor))
     return _enforce_contract_lane_floors(
         projected,
         floors=floors,

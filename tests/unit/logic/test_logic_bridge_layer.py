@@ -93,6 +93,84 @@ def test_bare_usc_citation_contract_distribution_prunes_auxiliary_lanes() -> Non
     assert sum(compacted.values()) == 1.0
 
 
+def test_round_trip_total_loss_ignores_similarity_diagnostics() -> None:
+    from ipfs_datasets_py.logic.bridge.types import RoundTripMetrics
+
+    metrics = RoundTripMetrics(
+        cosine_similarity=1.0,
+        cross_entropy_loss=0.0,
+        extra_losses={
+            "compiler_ir_cosine_similarity": 1.0,
+            "tdfol_parse_failure_ratio": 0.0,
+        },
+    )
+
+    assert metrics.total_loss() == 0.0
+
+
+def test_multiview_guidance_component_gaps_set_contract_lane_floors() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+        _project_guided_contract_distribution,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "action": "repair_multiview_legal_ir_loss",
+            "target_component": "bridge.contracts",
+            "evidence": [
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_component_gaps": {
+                        "CEC.native": 0.257397400961,
+                        "TDFOL.prover": 0.044516563287,
+                        "deontic.ir": -0.035676704499,
+                        "knowledge_graphs.neo4j_compat": 0.138836617484,
+                    },
+                    "legal_ir_underrepresented_components": [
+                        "CEC.native",
+                        "knowledge_graphs.neo4j_compat",
+                        "TDFOL.prover",
+                    ],
+                    "pipeline_stage_diagnostics": {
+                        "legal_ir_component_gap_max": 0.257397400961,
+                        "modal_family_target_probability_gap": 0.287925541083,
+                    },
+                    "pipeline_stage_focus": [
+                        "modal_family_registry",
+                        "legal_ir_multiview",
+                    ],
+                    "predicted_view": "CEC.native",
+                    "target_view": "CEC.native",
+                }
+            ],
+        }
+    )
+
+    floors = metadata["compiler_guidance_bridge_contract_gap_floors"]
+    assert floors["CEC.native"] > floors["TDFOL.prover"]
+    assert floors["knowledge_graphs.neo4j_compat"] >= 0.15
+
+    projected = _project_guided_contract_distribution(
+        {
+            "CEC.native": 0.18,
+            "TDFOL.prover": 0.05,
+            "deontic.ir": 0.42,
+            "knowledge_graphs.neo4j_compat": 0.04,
+            "modal.frame_logic": 0.31,
+        },
+        metadata=metadata,
+    )
+
+    assert projected["CEC.native"] >= floors["CEC.native"]
+    assert projected["TDFOL.prover"] >= floors["TDFOL.prover"]
+    assert (
+        projected["knowledge_graphs.neo4j_compat"]
+        >= floors["knowledge_graphs.neo4j_compat"]
+    )
+    assert abs(sum(projected.values()) - 1.0) < 1e-12
+
+
 def test_deontic_phase8_quality_soft_passes_stale_coverage_validation() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import (
         _merge_phase8_validation_from_coverage_records,
