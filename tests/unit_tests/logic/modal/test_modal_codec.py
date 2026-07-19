@@ -4350,10 +4350,10 @@ def test_modal_ir_graph_projection_preserves_temporal_view_for_deontic_deadline_
             ModalIRFormula(
                 formula_id="shall-within-deadline-doc:f1",
                 operator=ModalIROperator(
-                    family="frame",
-                    system="F-logic",
-                    symbol="Frame",
-                    label="frame",
+                    family="deontic",
+                    system="KD",
+                    symbol="O",
+                    label="obligation",
                 ),
                 predicate=ModalIRPredicate(
                     name="state_provide_services",

@@ -1302,10 +1302,6 @@ def _formula_has_deontic_temporal_scope(
     *,
     document_text: str,
 ) -> bool:
-    operator = getattr(formula, "operator", None)
-    family = str(getattr(operator, "family", "") or "").strip().lower()
-    if family == "deontic":
-        return False
     text_parts = [document_text]
     predicate = getattr(formula, "predicate", None)
     text_parts.append(str(getattr(predicate, "role", "") or ""))
