@@ -3432,6 +3432,41 @@ def test_multiview_contract_compacts_short_repealed_section_ranges() -> None:
     assert compacted["CEC.native"] >= 0.20
 
 
+def test_multiview_contract_projects_en_dash_repealed_public_law_status_to_cec() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compact_official_usc_contract_distribution,
+    )
+
+    compacted = _compact_official_usc_contract_distribution(
+        {
+            "CEC.native": 0.156,
+            "TDFOL.prover": 0.080,
+            "deontic.ir": 0.150,
+            "external_provers.router": 0.121,
+            "knowledge_graphs.neo4j_compat": 0.210,
+            "modal.frame_logic": 0.143,
+            "zkp.circuits": 0.140,
+        },
+        text=(
+            "42 U.S.C. 6244.: §6244. Repealed. Pub. L. 106–469, title I, "
+            "§103(16), Nov. 9, 2000, 114 Stat. 2032 Section, Pub. L. "
+            "94–163, title I, §164, Dec. 22, 1975, 89 Stat. 889; Pub. L. "
+            "94–258, title I, §105(a), Apr. 5, 1976, 90 Stat. 305."
+        ),
+    )
+
+    assert set(compacted) == {
+        "CEC.native",
+        "TDFOL.prover",
+        "deontic.ir",
+        "knowledge_graphs.neo4j_compat",
+    }
+    assert compacted["CEC.native"] > compacted["knowledge_graphs.neo4j_compat"]
+    assert compacted["CEC.native"] > compacted["deontic.ir"]
+    assert compacted["deontic.ir"] <= 0.13
+    assert abs(sum(compacted.values()) - 1.0) < 1e-12
+
+
 def test_multiview_contract_rebalances_sparse_findings_sections() -> None:
     from ipfs_datasets_py.logic.bridge.multiview import (
         _rebalance_sparse_contract_distribution,

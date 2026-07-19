@@ -274,7 +274,8 @@ _BRIDGE_CONTRACT_OFFICIAL_USC_MIN_CHARS = 520
 _BRIDGE_CONTRACT_SHORT_OFFICIAL_USC_MIN_CHARS = 160
 _BRIDGE_CONTRACT_STATUS_OFFICIAL_USC_MIN_CHARS = 80
 _BRIDGE_CONTRACT_USC_SECTION_MARKER_RE = re.compile(
-    r"^\s*(?:§|\u00a7){1,2}\s*\d+[a-z0-9\-\.]*\b",
+    r"^\s*(?:\d+\s+u\.?\s*s\.?\s*c\.?\s+\d+[a-z0-9\-\.]*\.?:\s*)?"
+    r"(?:§|\u00a7){1,2}\s*\d+[a-z0-9\-\.]*\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_STATUTES_AT_LARGE_CUE_RE = re.compile(
@@ -376,8 +377,10 @@ _BRIDGE_CONTRACT_REFERENCES_REPEAL_CROSSREF_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_REPEALED_PUBLIC_LAW_STATUS_RE = re.compile(
-    r"\b(?:sec\.\s*[\w\-\.]+\s*-\s*)?repealed\b.{0,220}\bpub\.\s*l\.\s*\d+[-\u2011]\d+"
-    r"|\bpub\.\s*l\.\s*\d+[-\u2011]\d+\b.{0,220}\brepealed\b",
+    r"\b(?:sec\.\s*[\w\-\.]+\s*-\s*)?repealed\b.{0,220}\b"
+    r"pub\.\s*l\.\s*\d+[-\u2010\u2011\u2012\u2013\u2014\u2015]\d+"
+    r"|\bpub\.\s*l\.\s*\d+[-\u2010\u2011\u2012\u2013\u2014\u2015]\d+"
+    r"\b.{0,220}\brepealed\b",
     flags=re.IGNORECASE,
 )
 _BRIDGE_CONTRACT_RENAMING_DESIGNATION_RE = re.compile(
@@ -4280,20 +4283,20 @@ def _project_official_usc_primary_contract_distribution(
     strength = 0.0
     if has_repealed_history_scaffold:
         target_mix = (
-            ("CEC.native", 0.42),
-            ("knowledge_graphs.neo4j_compat", 0.32),
-            ("TDFOL.prover", 0.16),
-            ("deontic.ir", 0.10),
+            ("CEC.native", 0.54),
+            ("knowledge_graphs.neo4j_compat", 0.28),
+            ("TDFOL.prover", 0.14),
+            ("deontic.ir", 0.04),
         )
-        strength = 0.42
+        strength = 0.60
     elif has_repealed_public_law_status and deontic_cue_count <= 0:
         target_mix = (
-            ("knowledge_graphs.neo4j_compat", 0.38),
-            ("CEC.native", 0.34),
-            ("TDFOL.prover", 0.18),
-            ("deontic.ir", 0.10),
+            ("CEC.native", 0.54),
+            ("knowledge_graphs.neo4j_compat", 0.28),
+            ("TDFOL.prover", 0.14),
+            ("deontic.ir", 0.04),
         )
-        strength = 0.48
+        strength = 0.60
     elif has_agency_technology_goal:
         target_mix = (
             ("CEC.native", 0.34),
