@@ -189,6 +189,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("if", "if"),
     ("when", "when"),
     ("until", "until"),
+    ("during", "during"),
     ("within", "within"),
     ("after", "after"),
     ("before", "before"),
@@ -210,6 +211,7 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
 _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "when": "when",
     "until": "until",
+    "during": "during",
     "after": "after",
     "only_after": "after",
     "before": "before",

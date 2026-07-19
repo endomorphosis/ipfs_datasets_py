@@ -87,6 +87,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("if", "if"),
     ("when", "when"),
     ("until", "until"),
+    ("during", "during"),
     ("within", "within"),
     ("after", "after"),
     ("before", "before"),
@@ -107,6 +108,7 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
 _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
     "when": "when",
     "until": "until",
+    "during": "during",
     "after": "after",
     "only_after": "after",
     "before": "before",
@@ -2284,6 +2286,10 @@ _CROSS_FAMILY_BRIDGE_CUE_OPERATOR_PAIRS: Mapping[str, tuple[tuple[str, str], ...
         ("conditional_normative", "O|"),
         ("temporal", "G"),
     ),
+    "during": (
+        ("conditional_normative", "O|"),
+        ("temporal", "G"),
+    ),
     "after": (
         ("conditional_normative", "O|"),
         ("temporal", "X"),
@@ -2527,6 +2533,8 @@ _TEMPORAL_BRIDGE_CONTEXT_TOKENS: frozenset[str] = frozenset(
         "timely",
         "period",
         "date",
+        "term",
+        "continuance",
     }
 )
 _TEMPORAL_BRIDGE_CONTEXT_PHRASES: tuple[tuple[str, str], ...] = (
@@ -2534,6 +2542,11 @@ _TEMPORAL_BRIDGE_CONTEXT_PHRASES: tuple[tuple[str, str], ...] = (
     ("on or after", "on_or_after"),
     ("no later than", "no_later_than"),
     ("not later than", "not_later_than"),
+    ("during continuance", "during_continuance"),
+    ("during his continuance", "during_continuance"),
+    ("during her continuance", "during_continuance"),
+    ("during their continuance", "during_continuance"),
+    ("continuance in office", "continuance_in_office"),
     ("effective date", "effective_date"),
     ("effective dates", "effective_date"),
     ("fiscal year", "fiscal_year"),
@@ -20482,6 +20495,16 @@ def _dynamic_transition_context_cues_from_text(text: str) -> List[str]:
         ):
             if family == "dynamic" and normalized_token not in cues:
                 cues.append(normalized_token)
+    if re.search(
+        r"\b(?:undertak(?:e|es|ing)|execut(?:e|es|ed|ing)|hold(?:s|ing)?|"
+        r"enjoy(?:s|ed|ing)?)\b.{0,120}\bcontracts?\b|"
+        r"\bcontracts?\b.{0,120}\b(?:undertak(?:e|es|ing)|execut(?:e|es|ed|ing)|"
+        r"hold(?:s|ing)?|enjoy(?:s|ed|ing)?)\b",
+        normalized_text,
+    ):
+        for cue in ("contract_action", "execute_contract"):
+            if cue not in cues:
+                cues.append(cue)
     return cues
 
 
