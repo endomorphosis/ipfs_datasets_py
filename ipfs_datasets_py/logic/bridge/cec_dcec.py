@@ -655,7 +655,17 @@ def _dcec_records(
             event_formula_target_quality_gate = _mapping(
                 event_formula_export.get("event_formula_target_quality_gate")
             )
-            if _event_formula_export_needs_bridge_fallback(event_calculus_formula):
+            invalid_export_fallback = _event_formula_export_needs_bridge_fallback(
+                event_calculus_formula
+            )
+            native_grounding_fallback = (
+                _event_formula_export_needs_native_grounding_fallback(
+                    event_calculus_formula,
+                    source_id=source_id,
+                    target_components=event_formula_target_components,
+                )
+            )
+            if invalid_export_fallback or native_grounding_fallback:
                 event_calculus_formula = _event_calculus_formula_text(
                     source_id=source_id,
                     deontic_formula=proof_input,
@@ -685,7 +695,12 @@ def _dcec_records(
                         is True
                     ),
                     "requires_validation": not bool(event_formula_syntax_valid),
-                    "cec_dcec_bridge_fallback_from_invalid_export": True,
+                    "cec_dcec_bridge_fallback_from_invalid_export": bool(
+                        invalid_export_fallback
+                    ),
+                    "cec_dcec_bridge_fallback_from_quantified_export": bool(
+                        native_grounding_fallback
+                    ),
                 }
         else:
             event_calculus_formula = _event_calculus_formula_text(
@@ -2010,6 +2025,50 @@ def _event_formula_export_needs_bridge_fallback(formula: str) -> bool:
         _DCEC_STATE_PREDICATE_SET
         | {"O", "P", "F", "always", "forall", "exists"}
     )
+
+
+def _event_formula_export_needs_native_grounding_fallback(
+    formula: str,
+    *,
+    source_id: str,
+    target_components: Mapping[str, Any],
+) -> bool:
+    """Prefer native DCEC grounding over quantified modal state exports."""
+
+    if not _statutory_cec_source_id(source_id):
+        return False
+
+    components = _mapping(target_components)
+    if list(components.get("decoded_missing_grounded_ir_slots") or []):
+        return False
+    if list(components.get("formula_missing_decoded_slots") or []):
+        return False
+    ungrounded_slots = {
+        str(slot)
+        for slot in components.get("formula_ungrounded_slots") or []
+        if str(slot)
+    }
+    if ungrounded_slots - {"modality"}:
+        return False
+
+    text = _normalize_event_formula_text(formula)
+    if not text or not _balanced_delimiters(text):
+        return False
+    for token, argument_text in _function_argument_texts(text):
+        if _canonical_event_predicate(token) != "HoldsAt":
+            continue
+        arguments = _split_top_level_arguments(argument_text)
+        if len(arguments) < 2:
+            continue
+        state_formula = arguments[0].strip()
+        if re.match(r"^(?:O|P|F)\s*\(\s*(?:forall|exists)\b", state_formula):
+            return True
+    return False
+
+
+def _statutory_cec_source_id(source_id: str) -> bool:
+    value = str(source_id or "").strip().lower()
+    return bool(value.startswith(("dcec:section:", "us-code-")))
 
 
 def _source_symbol(source_id: str) -> str:
