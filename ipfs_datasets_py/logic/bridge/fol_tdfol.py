@@ -514,14 +514,30 @@ def _looks_like_legal_text_export(text: str) -> bool:
 
 
 def _formula_text_from_proof_obligation_row(row: Mapping[str, Any]) -> str:
+    prose_fallback = ""
     for key in _TDFOL_FORMULA_EXPORT_KEYS:
         value = row.get(key)
         if isinstance(value, str) and value.strip():
-            return value
+            candidate = value.strip()
+            if _preferred_tdfol_formula_export_text(candidate):
+                return candidate
+            if not prose_fallback and _synthesizable_raw_tdfol_export_text(candidate):
+                prose_fallback = candidate
+            continue
         extracted = _tdfol_formula_text_from_json_value(value)
         if extracted:
-            return extracted
-    return _tdfol_formula_text_from_json_value(row)
+            if _preferred_tdfol_formula_export_text(extracted):
+                return extracted
+            if not prose_fallback and _synthesizable_raw_tdfol_export_text(extracted):
+                prose_fallback = extracted
+            continue
+    nested = _tdfol_formula_text_from_json_value(row)
+    if nested:
+        if _preferred_tdfol_formula_export_text(nested):
+            return nested
+        if not prose_fallback and _synthesizable_raw_tdfol_export_text(nested):
+            prose_fallback = nested
+    return prose_fallback
 
 
 def _merge_formula_records(
@@ -1903,23 +1919,126 @@ def _tdfol_formula_text_from_export_payload(value: str) -> str:
 
 def _tdfol_formula_text_from_json_value(value: Any) -> str:
     if isinstance(value, Mapping):
+        prose_fallback = ""
         for key in _TDFOL_FORMULA_EXPORT_KEYS:
             candidate = value.get(key)
             if isinstance(candidate, str) and candidate.strip():
-                return candidate.strip()
+                text = candidate.strip()
+                if _preferred_tdfol_formula_export_text(text):
+                    return text
+                if not prose_fallback and _synthesizable_raw_tdfol_export_text(text):
+                    prose_fallback = text
+                continue
             nested = _tdfol_formula_text_from_json_value(candidate)
             if nested:
-                return nested
-        for candidate in value.values():
+                if _preferred_tdfol_formula_export_text(nested):
+                    return nested
+                if not prose_fallback and _synthesizable_raw_tdfol_export_text(nested):
+                    prose_fallback = nested
+        for key in _TDFOL_CONTAINER_EXPORT_KEYS:
+            nested = _tdfol_formula_text_from_json_value(value.get(key))
+            if nested:
+                if _preferred_tdfol_formula_export_text(nested):
+                    return nested
+                if not prose_fallback and _synthesizable_raw_tdfol_export_text(nested):
+                    prose_fallback = nested
+        consumed_keys = set(_TDFOL_FORMULA_EXPORT_KEYS) | set(_TDFOL_CONTAINER_EXPORT_KEYS)
+        for raw_key in sorted(value.keys(), key=lambda item: str(item)):
+            if str(raw_key) in consumed_keys:
+                continue
+            candidate = value.get(raw_key)
             nested = _tdfol_formula_text_from_json_value(candidate)
             if nested:
-                return nested
+                if _preferred_tdfol_formula_export_text(nested):
+                    return nested
+                if not prose_fallback and _synthesizable_raw_tdfol_export_text(nested):
+                    prose_fallback = nested
+        return prose_fallback
     elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        prose_fallback = ""
         for candidate in value:
             nested = _tdfol_formula_text_from_json_value(candidate)
             if nested:
-                return nested
+                if _preferred_tdfol_formula_export_text(nested):
+                    return nested
+                if not prose_fallback and _synthesizable_raw_tdfol_export_text(nested):
+                    prose_fallback = nested
+        return prose_fallback
     return ""
+
+
+def _preferred_tdfol_formula_export_text(text: str) -> bool:
+    """Return True for exports that carry an explicit TDFOL formula."""
+
+    candidate = str(text or "").strip()
+    if not candidate:
+        return False
+    if _extract_balanced_tdfol_formula(candidate):
+        return True
+    normalized = _normalize_tdfol_export_without_json(candidate)
+    return bool(normalized and _extract_balanced_tdfol_formula(normalized))
+
+
+def _synthesizable_raw_tdfol_export_text(text: str) -> bool:
+    candidate = str(text or "").strip()
+    if not candidate:
+        return False
+    if _preferred_tdfol_formula_export_text(candidate):
+        return False
+    if _looks_like_legal_text_export(candidate):
+        return True
+    return bool(_formula_from_labeled_raw_proof_obligation(candidate))
+
+
+def _normalize_tdfol_export_without_json(text: str) -> str:
+    """Normalize labels/wrappers without recursively parsing JSON payloads."""
+
+    normalized = str(text or "").strip().strip("`\"'").strip()
+    if not normalized:
+        return ""
+    normalized = _strip_tdfol_line_comment(normalized)
+    normalized = _unwrap_tdfol_fenced_export(normalized)
+    normalized = _unwrap_tdfol_targeted_export(normalized)
+    normalized = _normalize_deontic_text_label_export(normalized)
+    normalized = _unwrap_tdfol_assignment_export(normalized)
+    normalized = _unwrap_tdfol_key_value_export(normalized)
+    normalized = _normalize_deontic_operator_aliases(normalized)
+    normalized = _normalize_deontic_label_export(normalized)
+    normalized = _normalize_deontic_agent_annotation_export(normalized)
+    normalized = re.sub(
+        r"^\s*(?:formula|proof_formula|proof\s+formula|tdfol_formula|"
+        r"tdfol\s+formula|proof_input|proof\s+input|proof_obligation|"
+        r"proof\s+obligation|obligation)\s*[:=]\s*",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(
+        r"^\s*(?:TDFOL(?:[\s.]prover)?|target_component\s*[:=]\s*TDFOL(?:[\s.]prover)?)\s*[:=]\s*",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = normalized.strip("`\"'").strip()
+    normalized = _unwrap_tdfol_multiline_export(normalized)
+    normalized = _unwrap_tdfol_export_wrapper(normalized)
+    normalized = re.sub(
+        r"\b([OPF])\s*\[\s*(.*?)\s*\]",
+        lambda match: f"{match.group(1)}({match.group(2)})",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(
+        r"\b([OPF])\s*\{\s*(.*?)\s*\}",
+        lambda match: f"{match.group(1)}({match.group(2)})",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = _normalize_deontic_argument_export(normalized)
+    normalized = _normalize_raw_deontic_text_export(normalized)
+    normalized = re.sub(r",\s*(?=\))", "", normalized)
+    normalized = re.sub(r"(:[0-9A-Za-z_-]+)\.(?=\s*[\),])", r"\1", normalized)
+    return normalized.strip()
 
 
 def _normalize_deontic_argument_export(text: str) -> str:
