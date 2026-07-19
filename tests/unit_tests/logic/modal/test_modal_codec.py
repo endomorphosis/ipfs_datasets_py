@@ -4495,6 +4495,82 @@ def test_flogic_graph_projection_extracts_weighted_packet_evidence_json() -> Non
     assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
 
 
+def test_flogic_graph_projection_promotes_structured_graph_repair_packet() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-42-6244-3e0d2b124eabe490",
+                "predicate": "type",
+                "object": "legal_modal_document",
+            },
+            {
+                "subject": "us-code-42-6244-3e0d2b124eabe490",
+                "predicate": "sample_text",
+                "object": (
+                    "42 U.S.C. 6244.: §6244. Repealed. Pub. L. "
+                    "106-469, title I, §103(16), Nov. 9, 2000."
+                ),
+            },
+            {
+                "subject": "us-code-42-6244-3e0d2b124eabe490",
+                "predicate": "compiler_guidance",
+                "object": {
+                    "bundle": {
+                        "program_synthesis_scope": "knowledge_graphs",
+                        "route": "repair_multiview_legal_ir_graph_projection",
+                        "source": "compiler_guidance_distillation_v1",
+                        "target_component": "knowledge_graphs.neo4j_compat",
+                    },
+                    "evidence": [
+                        {
+                            "bridge_failure_name": (
+                                "legal_ir_multiview_graph_failure_penalty"
+                            ),
+                            "legal_ir_component_gaps": {
+                                "CEC.native": 0.257432158713,
+                                "knowledge_graphs.neo4j_compat": 0.138977525703,
+                                "modal.frame_logic": -0.073896480127,
+                            },
+                            "legal_ir_underrepresented_components": [
+                                "CEC.native",
+                                "knowledge_graphs.neo4j_compat",
+                                "TDFOL.prover",
+                            ],
+                            "predicted_view": "knowledge_graphs.neo4j_compat",
+                            "target_view": "knowledge_graphs.neo4j_compat",
+                        }
+                    ],
+                },
+            },
+        ],
+        graph_id="us-code-42-6244-3e0d2b124eabe490:flogic",
+    )
+    learned_facts = {
+        (
+            relationship.properties["flogic_predicate"],
+            relationship.properties["flogic_object"],
+        )
+        for relationship in graph_data.relationships
+        if relationship.properties["flogic_predicate"].startswith("learned_legal_ir_")
+    }
+
+    assert (
+        "learned_legal_ir_projection_repair_route",
+        "repair_multiview_legal_ir_graph_projection",
+    ) in learned_facts
+    assert (
+        "learned_legal_ir_projection_component_pair",
+        "modal.frame_logic->knowledge_graphs.neo4j_compat",
+    ) in learned_facts
+    assert (
+        "learned_legal_ir_view_gap",
+        "knowledge_graphs.neo4j_compat:0.138978",
+    ) in learned_facts
+    assert "LegalIRViewAlignment" in graph_data.schema.node_labels
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_flogic_graph_projection_canonicalizes_relationship_order_and_reports_duplicates() -> None:
     triples_a = [
         {"subject": "sample-doc", "predicate": "source", "object": "us_code"},

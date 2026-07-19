@@ -335,11 +335,20 @@ def _normalize_triples(triples: Sequence[Mapping[str, Any]]) -> List[Dict[str, s
     for triple in triples:
         subject = str(triple.get("subject", "")).strip()
         predicate = str(triple.get("predicate", "")).strip()
-        obj = str(triple.get("object", "")).strip()
+        obj = _canonical_triple_object_text(triple.get("object", ""))
         if not subject or not predicate or not obj:
             continue
         normalized.append({"subject": subject, "predicate": predicate, "object": obj})
     return normalized
+
+
+def _canonical_triple_object_text(value: Any) -> str:
+    if isinstance(value, (Mapping, list, tuple)):
+        try:
+            return json.dumps(value, sort_keys=True, separators=(",", ":")).strip()
+        except (TypeError, ValueError):
+            pass
+    return str(value or "").strip()
 
 
 def _source_id_components(source_id: str) -> List[Tuple[str, str]]:
@@ -1029,16 +1038,34 @@ def _append_legal_ir_guidance_alignment_triples(
             "legal_ir_multiview_graph_failure_penalty" in feature_text
         )
         has_knowledge_graph_scope = "knowledge_graphs" in feature_text
-        if (
-            guidance["actions"] & _LEGAL_IR_GRAPH_REPAIR_ACTIONS
+        graph_repair_guidance = (
+            bool(guidance["actions"] & _LEGAL_IR_GRAPH_REPAIR_ACTIONS)
             or has_graph_route
             or has_neo4j_target
             or (has_graph_failure_metric and has_knowledge_graph_scope)
-        ):
+        )
+        if graph_repair_guidance:
             target_views.add(_NEO4J_COMPAT_TARGET_COMPONENT)
         if not target_views and not predicted_views:
             continue
         facts: List[Tuple[str, str]] = []
+        if graph_repair_guidance:
+            facts.extend(
+                [
+                    (
+                        "learned_legal_ir_projection_repair_route",
+                        "repair_multiview_legal_ir_graph_projection",
+                    ),
+                    (
+                        "learned_legal_ir_projection_component_pair",
+                        "modal.frame_logic->knowledge_graphs.neo4j_compat",
+                    ),
+                    (
+                        "learned_legal_ir_projection_bridge_failure",
+                        "legal_ir_multiview_graph_failure_penalty",
+                    ),
+                ]
+            )
         ranked_views = sorted(target_views | predicted_views)
         gap_values = guidance.get("gaps", {})
         if not isinstance(gap_values, Mapping):

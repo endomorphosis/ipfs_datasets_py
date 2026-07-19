@@ -475,11 +475,20 @@ def _normalize_triples(triples: Sequence[Mapping[str, Any]]) -> List[Dict[str, s
     for triple in triples:
         subject = str(triple.get("subject", "")).strip()
         predicate = str(triple.get("predicate", "")).strip()
-        obj = str(triple.get("object", "")).strip()
+        obj = _canonical_triple_object_text(triple.get("object", ""))
         if not subject or not predicate or not obj:
             continue
         normalized.append({"subject": subject, "predicate": predicate, "object": obj})
     return normalized
+
+
+def _canonical_triple_object_text(value: Any) -> str:
+    if isinstance(value, (Mapping, list, tuple)):
+        try:
+            return json.dumps(value, sort_keys=True, separators=(",", ":")).strip()
+        except (TypeError, ValueError):
+            pass
+    return str(value or "").strip()
 
 
 def _canonical_projection_triples(
