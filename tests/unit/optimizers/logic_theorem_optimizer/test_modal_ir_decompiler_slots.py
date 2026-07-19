@@ -1664,6 +1664,85 @@ def test_modal_decompiler_projects_source_role_target_family_slots() -> None:
     )
 
 
+def test_modal_decompiler_guided_text_emits_source_clause_topology() -> None:
+    text = (
+        "There is hereby established the National Strategic Uranium Reserve "
+        "under the direction and control of the Secretary. The Reserve shall "
+        "consist of natural uranium and uranium equivalents not later than 2028."
+    )
+    formula = ModalIRFormula(
+        formula_id="f_packet_000636_topology",
+        operator=ModalIROperator(
+            family="frame",
+            system="Frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(
+            name="establish_uranium_reserve",
+            arguments=[
+                "subject=Secretary",
+                "action=establish",
+                "object=National Strategic Uranium Reserve",
+            ],
+            role="clause",
+        ),
+        conditions=["not later than 2028"],
+        provenance=ModalIRProvenance(
+            source_id="us-code-42-2296b-topology",
+            start_char=0,
+            end_char=len(text),
+            citation="42 U.S.C. 2296b",
+        ),
+        metadata={"cue": "__uscode_section_heading_fallback__"},
+    )
+    document = ModalIRDocument(
+        document_id="us-code-42-2296b-topology",
+        source="us_code",
+        normalized_text=text,
+        formulas=[formula],
+        metadata={
+            "hint_evidence": [
+                {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "target_component": "modal.ir_decompiler",
+                    "program_synthesis_scope": "ir_decompiler",
+                    "predicted_family": "frame",
+                    "target_family": "temporal",
+                    "target_view": "CEC.native",
+                    "legal_ir_underrepresented_components": [
+                        "CEC.native",
+                        "modal.frame_logic",
+                    ],
+                    "bundle": {
+                        "family_pairs": [
+                            "frame->temporal",
+                            "frame->deontic",
+                        ]
+                    },
+                }
+            ]
+        },
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    topology_texts = slot_texts["typed_ir_source_clause_topology_reconstruction"]
+    assert any("source clause topology" in text for text in topology_texts)
+    assert any(
+        "condition+subject+action+object+temporal+semantic" in text
+        for text in topology_texts
+    )
+    assert any(
+        "frame source reconstructs temporal deadline period" in text
+        for text in topology_texts
+    )
+    assert any("event calculus native legal events" in text for text in topology_texts)
+    assert "source clause topology" in decoded.text
+    assert "frame source reconstructs temporal deadline period" in decoded.text
+
+
 def test_modal_decompiler_refines_packet_003430_frame_target_pairs() -> None:
     text = (
         "The Secretary may determine whether funding agreements provide "

@@ -3941,6 +3941,40 @@ def _typed_ir_reconstruction_phrases(
             if _clean_text(value)
         )
     )
+    condition_cues = _typed_decompiler_condition_cues(
+        condition_values=condition_values,
+        exception_values=exception_values,
+        text=" ".join(
+            value.replace("_", " ")
+            for value in (
+                predicate_text,
+                source_span_text,
+                heading_text,
+                fallback_text,
+                " ".join(condition_values),
+                " ".join(exception_values),
+            )
+            if _clean_text(value)
+        ),
+    )
+    temporal_cues = _temporal_transition_context_cues_from_text(
+        " ".join(
+            value.replace("_", " ")
+            for value in (
+                predicate_text,
+                source_span_text,
+                heading_text,
+                fallback_text,
+                " ".join(condition_values),
+                " ".join(exception_values),
+            )
+            if _clean_text(value)
+        )
+    )
+    if temporal_cues:
+        roles["temporal"] = "+".join(temporal_cues)
+    elif any(_temporal_clause_prefix_relation(cue) for cue in condition_cues):
+        roles.setdefault("temporal", "temporal_scope")
     status_detail_values = [
         value
         for slot, value in _uscode_editorial_status_detail_slots(
@@ -4150,6 +4184,20 @@ def _typed_ir_reconstruction_phrases(
         legal_ir_view_support=legal_ir_view_support,
         max_tokens=max_tokens,
     )
+    source_clause_topology = _typed_ir_source_clause_topology_reconstruction_text(
+        source_family=family,
+        targets=ordered_targets,
+        force=force,
+        polarity=polarity,
+        roles=roles,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        condition_cues=condition_cues,
+        temporal_cues=temporal_cues,
+        semantic_atoms=semantic_atoms,
+        legal_ir_view_support=legal_ir_view_support,
+        max_tokens=max_tokens,
+    )
     scope_frame_texts = _typed_ir_scope_frame_texts(
         source_family=family,
         targets=ordered_targets,
@@ -4194,6 +4242,15 @@ def _typed_ir_reconstruction_phrases(
             DecodedModalPhrase(
                 text=semantic_reconstruction_clause,
                 slot="typed_ir_semantic_reconstruction_clause",
+                spans=spans,
+                provenance_only=provenance_only,
+            )
+        )
+    if source_clause_topology:
+        phrases.append(
+            DecodedModalPhrase(
+                text=source_clause_topology,
+                slot="typed_ir_source_clause_topology_reconstruction",
                 spans=spans,
                 provenance_only=provenance_only,
             )
@@ -5203,6 +5260,95 @@ def _typed_ir_clause_role_support_text(
         for atom in semantic_atoms[:6]:
             add(atom)
     return _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+
+
+def _typed_ir_source_clause_topology_reconstruction_text(
+    *,
+    source_family: str,
+    targets: Sequence[str],
+    force: str,
+    polarity: str,
+    roles: Mapping[str, str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    condition_cues: Sequence[str],
+    temporal_cues: Sequence[str],
+    semantic_atoms: Sequence[str],
+    legal_ir_view_support: Sequence[str],
+    max_tokens: int = 56,
+) -> str:
+    """Render topology evidence as source-like text for guided decompiler ranking."""
+    source = _clean_text(source_family).lower()
+    if not source:
+        return ""
+    target_values = [
+        _clean_text(target).lower()
+        for target in targets
+        if _clean_text(target).lower()
+    ]
+    if not target_values:
+        return ""
+
+    topology_parts = [
+        part
+        for part, present in (
+            ("condition", bool(condition_values or condition_cues)),
+            ("subject", bool(roles.get("subject"))),
+            ("action", bool(roles.get("action"))),
+            ("object", bool(roles.get("object"))),
+            ("exception", bool(exception_values)),
+            (
+                "temporal",
+                bool(roles.get("temporal"))
+                or bool(temporal_cues)
+                or any(_temporal_clause_prefix_relation(cue) for cue in condition_cues),
+            ),
+            ("semantic", bool(semantic_atoms)),
+        )
+        if present
+    ]
+    if not topology_parts and not semantic_atoms:
+        return ""
+
+    parts: List[str] = []
+
+    def add(value: str) -> None:
+        cleaned = _humanize_typed_ir_value(value)
+        if cleaned and cleaned not in parts:
+            parts.append(cleaned)
+
+    add("source clause topology")
+    add("+".join(topology_parts) if topology_parts else "semantic")
+    for target in target_values[:4]:
+        add(_typed_ir_source_family_pair_surface_label(source, target))
+        add(_typed_ir_family_pair_bridge_label(source, target))
+    for view_support in legal_ir_view_support[:4]:
+        add(view_support)
+    if force in {"obligation", "permission", "prohibition"}:
+        add(force)
+    if polarity and polarity != "positive_scope":
+        add(polarity)
+    for cue in condition_cues[:4]:
+        add(cue)
+    for cue in temporal_cues[:3]:
+        add(cue)
+    for condition in condition_values[:2]:
+        add("condition")
+        add(condition)
+    for exception in exception_values[:2]:
+        add("exception")
+        add(exception)
+    for role in ("subject", "action", "object", "temporal"):
+        value = roles.get(role, "")
+        if value:
+            add(role)
+            add(value)
+    for atom in semantic_atoms[:6]:
+        add(atom)
+
+    if len(parts) <= 2:
+        return ""
+    return _bounded_surface_text(parts, max_tokens=max_tokens)
 
 
 def _typed_ir_role_reconstruction_values(
