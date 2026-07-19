@@ -4329,6 +4329,11 @@ def _typed_ir_reconstruction_phrases(
                 source_family=family,
                 target_family=target,
                 support_values=support_values,
+                legal_ir_view_support=_typed_ir_guided_pair_view_support_values(
+                    document=document,
+                    source_family=family,
+                    target_family=target,
+                ),
                 semantic_atoms=semantic_atoms,
                 max_tokens=32,
             )
@@ -4352,6 +4357,7 @@ def _typed_ir_reconstruction_phrases(
                     )
                 )
             policy_view_text = _typed_ir_policy_view_semantic_reconstruction_text(
+                document=document,
                 source_family=family,
                 target_family=target,
                 force=force,
@@ -4372,6 +4378,7 @@ def _typed_ir_reconstruction_phrases(
                     )
                 )
             target_view_clause = _typed_ir_target_view_semantic_clause_text(
+                document=document,
                 source_family=family,
                 target_family=target,
                 force=force,
@@ -4855,6 +4862,7 @@ def _typed_ir_family_pair_semantic_reconstruction_text(
     source_family: str,
     target_family: str,
     support_values: Sequence[str],
+    legal_ir_view_support: Sequence[str],
     semantic_atoms: Sequence[str],
     max_tokens: int,
 ) -> str:
@@ -4867,6 +4875,7 @@ def _typed_ir_family_pair_semantic_reconstruction_text(
     support_text = [
         value
         for value in (
+            *legal_ir_view_support,
             *(_humanize_typed_ir_value(atom) for atom in semantic_atoms),
             *support_values,
         )
@@ -4914,6 +4923,7 @@ def _typed_ir_family_pair_bridge_label(source_family: str, target_family: str) -
     return labels.get(pair, "")
 def _typed_ir_policy_view_semantic_reconstruction_text(
     *,
+    document: ModalIRDocument,
     source_family: str,
     target_family: str,
     force: str,
@@ -4948,6 +4958,12 @@ def _typed_ir_policy_view_semantic_reconstruction_text(
     if polarity and polarity != "positive_scope":
         add(polarity)
 
+    for view_label in _typed_ir_guided_pair_view_support_values(
+        document=document,
+        source_family=source,
+        target_family=target,
+    ):
+        add(view_label)
     for atom in semantic_atoms[:5]:
         add(atom)
     for role in ("subject", "action", "object", "temporal"):
@@ -4968,6 +4984,7 @@ def _typed_ir_policy_view_semantic_reconstruction_text(
 
 def _typed_ir_target_view_semantic_clause_text(
     *,
+    document: ModalIRDocument,
     source_family: str,
     target_family: str,
     force: str,
@@ -5006,6 +5023,12 @@ def _typed_ir_target_view_semantic_clause_text(
         or _typed_ir_family_pair_reconstruction_label(source, target)
     )
     add(pair_label)
+    for view_label in _typed_ir_guided_pair_view_support_values(
+        document=document,
+        source_family=source,
+        target_family=target,
+    ):
+        add(view_label)
 
     subject = roles.get("subject", "")
     action = roles.get("action", "")
@@ -5548,6 +5571,105 @@ def _typed_ir_legal_view_support_values(document: ModalIRDocument) -> List[str]:
             add_view(view)
         for value in _string_list(entry.get("legal_ir_underrepresented_components")):
             add_view(value)
+        component_gaps = entry.get("legal_ir_component_gaps")
+        if isinstance(component_gaps, Mapping):
+            ranked_gaps: List[Tuple[float, str]] = []
+            for view, gap in component_gaps.items():
+                try:
+                    gap_value = float(gap)
+                except (TypeError, ValueError):
+                    continue
+                if gap_value > 0:
+                    ranked_gaps.append((gap_value, _clean_text(str(view))))
+            for _gap, view in sorted(ranked_gaps, reverse=True):
+                add_view(view)
+
+    labels: List[str] = []
+    for view in views:
+        label = _legal_ir_view_semantic_label(view)
+        if label and label not in labels:
+            labels.append(label)
+    return labels
+
+
+def _typed_ir_guided_pair_view_support_values(
+    *,
+    document: ModalIRDocument,
+    source_family: str,
+    target_family: str,
+) -> List[str]:
+    """Return target-view labels tied to one guided source/target family pair."""
+    source = _slot_safe_family_key(_clean_text(source_family).lower())
+    target = _slot_safe_family_key(_clean_text(target_family).lower())
+    if not source or not target:
+        return []
+    pair = f"{source}->{target}"
+    views: List[str] = []
+
+    def add_view(value: Any) -> None:
+        view = _clean_text(str(value or ""))
+        if view and view not in views:
+            views.append(view)
+
+    def source_mappings(entry: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+        sources: List[Mapping[str, Any]] = [entry]
+        for key in ("bundle", "semantic_bundle", "vector_bundle", "program_bundle"):
+            nested = _autoencoder_guidance_nested_mapping(entry.get(key))
+            if nested is not None:
+                sources.append(nested)
+        return sources
+
+    def mapping_pairs(mapping: Mapping[str, Any]) -> List[str]:
+        pairs: List[str] = []
+
+        def add_pair(value: Any) -> None:
+            text = _clean_text(str(value or "")).lower().replace(" ", "")
+            if "->" not in text:
+                return
+            left, right = text.split("->", 1)
+            left = _slot_safe_family_key(left)
+            right = _slot_safe_family_key(right)
+            if left and right:
+                rendered = f"{left}->{right}"
+                if rendered not in pairs:
+                    pairs.append(rendered)
+
+        for key in (
+            "family_pair",
+            "family_pairs",
+            "target_family_pair",
+            "target_family_pairs",
+        ):
+            value = mapping.get(key)
+            if isinstance(value, str):
+                add_pair(value)
+            else:
+                for item in _string_list(value):
+                    add_pair(item)
+        return pairs
+
+    for entry in _autoencoder_guidance_entries(document):
+        predicted = _slot_safe_family_key(
+            _clean_text(str(entry.get("predicted_family") or "")).lower()
+        )
+        entry_target = _slot_safe_family_key(
+            _clean_text(str(entry.get("target_family") or "")).lower()
+        )
+        explicit_pair_match = any(
+            pair in mapping_pairs(source) for source in source_mappings(entry)
+        )
+        direct_family_match = (
+            entry_target == target
+            and (not predicted or predicted == source)
+        )
+        if not explicit_pair_match and not direct_family_match:
+            continue
+        for field in ("target_view", "selected_view", "predicted_view"):
+            add_view(entry.get(field))
+        for view in _legal_ir_view_guidance_features(entry):
+            add_view(view)
+        for view in _string_list(entry.get("legal_ir_underrepresented_components")):
+            add_view(view)
         component_gaps = entry.get("legal_ir_component_gaps")
         if isinstance(component_gaps, Mapping):
             ranked_gaps: List[Tuple[float, str]] = []

@@ -3722,6 +3722,120 @@ def test_modal_decompiler_guided_semantics_follow_family_pair_target() -> None:
     assert "legal frame source reconstructs temporal deadline period" in decoded.text
 
 
+def test_modal_decompiler_packet_000634_binds_guided_views_to_family_pairs() -> None:
+    source = (
+        "Subject to this section, the Secretary may provide educational "
+        "assistance benefits to eligible veterans until funds are expended."
+    )
+    modal_ir = ModalIRDocument(
+        document_id="packet-000634-guided-family-pair-views",
+        source="us_code",
+        normalized_text=source,
+        metadata={
+            "hint_evidence": [
+                {
+                    "bridge_failure_name": "source_decompiled_text_embedding_cosine_loss",
+                    "predicted_family": "frame",
+                    "target_family": "conditional_normative",
+                    "target_view": "CEC.native",
+                    "legal_ir_underrepresented_components": [
+                        "CEC.native",
+                        "modal.frame_logic",
+                    ],
+                    "bundle": {
+                        "action": "refine_semantic_decompiler_reconstruction",
+                        "program_synthesis_scope": "ir_decompiler",
+                        "target_component": "modal.ir_decompiler",
+                        "family_pairs": [
+                            "deontic->deontic",
+                            "frame->conditional_normative",
+                            "frame->frame",
+                            "frame->temporal",
+                        ],
+                    },
+                },
+                {
+                    "bridge_failure_name": "source_decompiled_text_embedding_cosine_loss",
+                    "predicted_family": "frame",
+                    "target_family": "frame",
+                    "target_view": "knowledge_graphs.neo4j_compat",
+                    "legal_ir_underrepresented_components": [
+                        "knowledge_graphs.neo4j_compat",
+                        "modal.frame_logic",
+                    ],
+                    "bundle": {
+                        "family_pairs": [
+                            "frame->conditional_normative",
+                            "frame->frame",
+                            "frame->temporal",
+                        ],
+                    },
+                },
+            ],
+        },
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-packet-000634",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="secretary_provide_educational_assistance_benefits",
+                    arguments=[
+                        "actor:secretary",
+                        "action:provide",
+                        "object:educational_assistance_benefits",
+                        "temporal:until_funds_expended",
+                    ],
+                    role="frame",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="packet-000634-guided-family-pair-views",
+                    start_char=0,
+                    end_char=len(source),
+                    citation="38 U.S.C. 3697",
+                ),
+                conditions=[
+                    "subject to this section",
+                    "until funds are expended",
+                ],
+                metadata={"cue": "may"},
+            )
+        ],
+    )
+
+    decoded = decode_modal_ir_document(modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    semantic_slot_texts = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+    guided_text = " ".join(
+        semantic_slot_texts["guided_typed_ir_semantic_reconstruction"]
+    )
+
+    assert "frame->conditional_normative" in slot_texts[
+        "typed_ir_cross_family_semantic_support"
+    ]
+    assert "frame->frame" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert "frame->temporal" in slot_texts["typed_ir_cross_family_semantic_support"]
+    assert any(
+        "legal frame source reconstructs conditional obligation" in value
+        and "event calculus native events" in value
+        for value in slot_texts["typed_ir_policy_view_semantic_reconstruction"]
+    )
+    assert any(
+        "legal frame source reconstruction" in value
+        and "knowledge graph relations" in value
+        for value in slot_texts["typed_ir_policy_view_semantic_reconstruction"]
+    )
+    assert "event calculus native events" in guided_text
+    assert "education assistance" in guided_text
+
+
 def test_modal_decompiler_packet_000844_guides_purpose_context_clauses() -> None:
     source = (
         "In order to save and preserve a national seashore, the Secretary is "
