@@ -50947,6 +50947,119 @@ def test_decompiler_reconstructs_packet_000626_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000627_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="temporal",
+                symbol="F",
+                label="future",
+                text=(
+                    "42 U.S.C. 5183. Crisis counseling assistance and training. "
+                    "The President is authorized to provide professional "
+                    "counseling services, including financial assistance to "
+                    "State or local agencies or private mental health "
+                    "organizations."
+                ),
+                predicate="crisis_counseling_assistance_training",
+            ),
+            {
+                "crisis_counseling_assistance",
+                "crisis_counseling_training",
+                "disaster_mental_health_service",
+            },
+            {"temporal->deontic"},
+            "uscode_crisis_counseling_assistance_surface",
+        ),
+        (
+            _single_formula_document(
+                family="temporal",
+                symbol="F",
+                label="future",
+                text=(
+                    "42 U.S.C. 9859b. Programs. The Secretary shall make "
+                    "allotments to eligible States under section 9859c of this "
+                    "title. The Secretary shall make the allotments to enable "
+                    "the States to establish programs to improve the health "
+                    "and safety of children receiving child care services."
+                ),
+                predicate="secretary_child_care_state_allotment_programs",
+            ),
+            {
+                "child_care_health_safety_program",
+                "child_care_service_program",
+                "state_child_care_allotment",
+                "state_child_care_program",
+                "state_program_allotment_authority",
+            },
+            {"temporal->deontic"},
+            "uscode_child_care_state_allotment_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "14 U.S.C. 2923. Coast Guard family support, child care, "
+                    "and housing. Coast Guard child care programs shall support "
+                    "child care services for Coast Guard families."
+                ),
+                predicate="coast_guard_child_care_family_support",
+            ),
+            {
+                "child_care_service_program",
+                "coast_guard_child_care_program",
+                "family_support_child_care_housing",
+            },
+            {"deontic->deontic", "deontic->frame"},
+            "uscode_coast_guard_child_care_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "20 U.S.C. 2931. Education sciences reform. This part "
+                    "concerns education research, statistics, evaluation, "
+                    "information, and dissemination."
+                ),
+                predicate="education_research_statistics_dissemination",
+            ),
+            {
+                "education_research_statistics_dissemination",
+                "education_sciences_reform",
+            },
+            {"frame->deontic", "frame->frame"},
+            "uscode_education_research_statistics_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

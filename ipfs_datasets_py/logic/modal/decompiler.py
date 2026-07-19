@@ -244,6 +244,19 @@ _PACKET_000626_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "uscode_capitol_visitor_center_administration",
     }
 )
+_PACKET_000627_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "child_care_health_safety_program",
+        "child_care_service_program",
+        "coast_guard_child_care_program",
+        "education_research_statistics_dissemination",
+        "education_sciences_reform",
+        "family_support_child_care_housing",
+        "state_child_care_allotment",
+        "state_child_care_program",
+        "state_program_allotment_authority",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -925,6 +938,19 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("education research", "education_research_program"),
     ("education statistics", "education_statistics_dissemination"),
     ("information and dissemination", "information_dissemination_program"),
+    ("shall make allotments", "state_program_allotment_authority"),
+    ("make allotments", "state_program_allotment_authority"),
+    ("state allotments", "state_program_allotment_authority"),
+    ("allotments to eligible states", "state_child_care_allotment"),
+    ("allotments to enable the states", "state_child_care_allotment"),
+    ("states to establish programs", "state_child_care_program"),
+    ("programs to improve the health and safety of children", "child_care_health_safety_program"),
+    ("health and safety of children receiving child care services", "child_care_health_safety_program"),
+    ("children receiving child care services", "child_care_service_program"),
+    ("child care services", "child_care_service_program"),
+    ("coast guard child care", "coast_guard_child_care_program"),
+    ("coast guard family support, child care, and housing", "family_support_child_care_housing"),
+    ("family support, child care, and housing", "family_support_child_care_housing"),
     ("national oceanic and atmospheric administration", "noaa_administration"),
     ("national oceanic atmospheric administration", "noaa_administration"),
     ("use of funds", "fund_use_authority"),
@@ -14691,6 +14717,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "uscode_omitted_codification_record",
         "uscode_repealed_editorial_record",
         *_PACKET_000626_USCODE_RECONSTRUCTION_ATOMS,
+        *_PACKET_000627_USCODE_RECONSTRUCTION_ATOMS,
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -14848,6 +14875,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("deontic")
             add("conditional_normative")
         if normalized_atom in _PACKET_000626_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in _PACKET_000627_USCODE_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
             add("conditional_normative")
@@ -16998,6 +17029,13 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_higher_education_program_surface")
+    if re.search(
+        r"\b(?:education\s+sciences\s+reform|education\s+research|"
+        r"education\s+statistics|research,\s+statistics,\s+evaluation,\s+"
+        r"information,\s+and\s+dissemination|information\s+and\s+dissemination)\b",
+        lowered,
+    ):
+        add("uscode_education_research_statistics_surface")
     if re.search(r"\b(?:amendments?|struck\s+out|inserted|substituted|redesignated|reclassified)\b", lowered):
         add("uscode_amendment_operation_surface")
     if re.search(r"\b(?:receiving\s+loan\s+from\s+court\s+officer|court\s+officer|receiver|receivership)\b", lowered):
@@ -17145,6 +17183,20 @@ def _typed_decompiler_target_surface_profiles(
     ):
         add("uscode_juvenile_justice_program_surface")
     if re.search(
+        r"\b(?:allotments?\s+to\s+(?:eligible\s+)?states?|"
+        r"states?\s+to\s+establish\s+programs?|"
+        r"health\s+and\s+safety\s+of\s+children|child\s+care\s+services?)\b",
+        lowered,
+    ) and re.search(r"\b(?:secretary|states?|children|child\s+care)\b", lowered):
+        add("uscode_child_care_state_allotment_surface")
+    if re.search(
+        r"\b(?:coast\s+guard\s+child\s+care|"
+        r"coast\s+guard\s+family\s+support,\s+child\s+care,\s+and\s+housing|"
+        r"family\s+support,\s+child\s+care,\s+and\s+housing)\b",
+        lowered,
+    ):
+        add("uscode_coast_guard_child_care_surface")
+    if re.search(
         r"\b(?:state\s+water\s+pollution\s+control\s+revolving\s+funds?|"
         r"water\s+pollution\s+control\s+revolving\s+fund|"
         r"construction\s+of\s+treatment\s+works|"
@@ -17219,6 +17271,12 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_special_housing_coordination_surface")
+    if re.search(
+        r"\b(?:crisis\s+counseling\s+assistance|crisis\s+counseling\s+training|"
+        r"professional\s+counseling\s+services|mental\s+health\s+organizations?)\b",
+        lowered,
+    ):
+        add("uscode_crisis_counseling_assistance_surface")
     if re.search(
         r"\b(?:flood\s+insurance\s+rate\s+maps?|flood\s+mapping\s+program|"
         r"technical\s+mapping\s+advisory\s+council)\b",
