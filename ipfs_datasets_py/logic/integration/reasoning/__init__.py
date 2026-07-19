@@ -12,9 +12,29 @@ Components:
 from .proof_execution_engine import ProofExecutionEngine
 from .deontological_reasoning import DeontologicalReasoningEngine
 from .logic_verification import LogicVerifier
+from .hammer import (
+    CallableHammerBackendRunner,
+    HammerBackendResult,
+    HammerBackendStatus,
+    HammerGoal,
+    HammerPipeline,
+    HammerPremise,
+    HammerStatus,
+    HammerVerification,
+    hammer_prove,
+)
 
 __all__ = [
     'ProofExecutionEngine',
     'DeontologicalReasoningEngine',
     'LogicVerifier',
+    'CallableHammerBackendRunner',
+    'HammerBackendResult',
+    'HammerBackendStatus',
+    'HammerGoal',
+    'HammerPipeline',
+    'HammerPremise',
+    'HammerStatus',
+    'HammerVerification',
+    'hammer_prove',
 ]
