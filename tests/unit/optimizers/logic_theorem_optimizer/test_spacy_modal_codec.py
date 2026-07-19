@@ -11532,6 +11532,67 @@ def test_spacy_compiler_adds_packet_000165_program_authority_heading_span_covera
         assert any(expected_heading in span for span in frame_coverage_text_spans)
 
 
+def test_spacy_compiler_adds_packet_000178_full_source_structural_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-42-6244.-3e0d2b124eabe490",
+            "42 U.S.C. 6244.",
+            (
+                "42 U.S.C. 6244.: §6244. Repealed. Pub. L. 106-469, "
+                "title I, §103(16), Nov. 9, 2000, 114 Stat. 2032"
+            ),
+            {"42 U.S.C. 6244.", "§6244.", "Repealed."},
+        ),
+        (
+            "us-code-42-2751.-d7af5ae7f6f1c93a",
+            "42 U.S.C. 2751.",
+            (
+                "42 U.S.C. 2751.: §2751. Transferred Editorial Notes "
+                "Codification Section 2751, originally enacted as section "
+                "121 of Pub. L. 88-452, was renumbered section 441 of "
+                "Pub. L. 89-329 and transferred to section 1087-51 of "
+                "Title 20, Education."
+            ),
+            {"42 U.S.C. 2751.", "transferred to section 1087-51"},
+        ),
+        (
+            "us-code-36-150903-b0591f45ce9a3faf",
+            "36 U.S.C. 150903",
+            (
+                "§150903. Membership (a) Eligibility. Except as provided in "
+                "this chapter, eligibility for membership in the corporation "
+                "and the rights and privileges of members are as provided in "
+                "the bylaws. (b) Voting. Each member, except an honorary or "
+                "associate member, has one vote on each matter submitted to "
+                "a vote at a meeting of the members."
+            ),
+            {"(a) Eligibility.", "(b) Voting."},
+        ),
+    ]
+
+    for document_id, citation, text, expected_spans in cases:
+        modal_ir = compiler.compile(
+            encoder.encode(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+        )
+        frame_spans = {
+            modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip(" :")
+            for formula in modal_ir.formulas
+            if formula.operator.family == "frame"
+        }
+
+        for expected_span in expected_spans:
+            assert any(expected_span in span for span in frame_spans)
+
+
 def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

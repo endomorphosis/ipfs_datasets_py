@@ -110,6 +110,12 @@ _USCODE_SUBSECTION_HEADING_RE = re.compile(
     r"[A-Z][A-Za-z0-9' /,&()\-]{1,96}?\s*\.)\s*(?:-|--|[\u2012-\u2015])",
     re.IGNORECASE,
 )
+_USCODE_INLINE_SUBSECTION_HEADING_RE = re.compile(
+    r"(?P<heading>\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+"
+    r"[A-Z][A-Za-z0-9' /,&()\-]{1,64}?\.)"
+    r"(?=\s+(?:Except|Each|The|Any|No|Nothing|Whoever|In|If|When|Upon)\b)",
+    re.IGNORECASE,
+)
 _USCODE_SUBSECTION_HEADING_PREFIX_MAX_CHARS = 220
 _USCODE_SUBSECTION_HEADING_PREFIX_MAX_TOKENS = 24
 _USCODE_SUBSECTION_HEADING_BODY_MIN_TOKENS = 40
@@ -726,6 +732,16 @@ _USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE = re.compile(
 )
 _USCODE_LEGISLATIVE_HISTORY_CONTINUATION_RE = re.compile(
     r"^\s*\d+[A-Za-z]?\s*,\s*(?:required|authorized|provided|related)\b",
+    re.IGNORECASE,
+)
+_USCODE_LIFECYCLE_TRANSFER_RESIDUAL_RE = re.compile(
+    r"\b(?:renumbered\s+section\s+[0-9A-Za-z.\-]+|"
+    r"transferred\s+to\s+section\s+[0-9A-Za-z.\-]+)\b",
+    re.IGNORECASE,
+)
+_USCODE_CITATION_PREFIX_RE = re.compile(
+    rf"^\s*\d+\s+U\.?\s*S\.?\s*C\.?\s+"
+    rf"{_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}[0-9A-Za-z.\-]+\.?:?\s*$",
     re.IGNORECASE,
 )
 _USCODE_EDITORIAL_NOTE_HEADING_RESIDUAL_MAX_TOKENS = 16
@@ -2124,6 +2140,10 @@ class LegalModalParser:
         token_count = len(tokens)
         if self._is_uscode_legislative_history_residual_candidate(normalized, tokens):
             return True
+        if self._is_uscode_citation_prefix_residual_candidate(normalized, tokens):
+            return True
+        if self._is_uscode_lifecycle_transfer_residual_candidate(normalized, tokens):
+            return True
         if self._is_uscode_editorial_note_heading_residual_candidate(
             normalized,
             tokens,
@@ -2350,41 +2370,45 @@ class LegalModalParser:
         """Return compact subsection heading spans without consuming body text."""
         candidates: List[LegalSegment] = []
         seen_spans: set[tuple[int, int]] = set()
-        for match in _USCODE_SUBSECTION_HEADING_RE.finditer(normalized_text):
-            heading_text = match.group("heading").strip()
-            if not heading_text:
-                continue
-            heading_body = re.sub(
-                r"^\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+",
-                "",
-                heading_text,
-                flags=re.IGNORECASE,
-            ).strip(" .")
-            if not heading_body:
-                continue
-            if self._has_blocking_residual_modal_cues(heading_body):
-                continue
-            body_tokens = _TOKEN_RE.findall(heading_body.lower())
-            if not (
-                self._is_short_residual_heading_coverage_candidate(body_tokens)
-                or self._looks_like_heading_without_section_reference(heading_body)
-                or heading_body.lower() in {"in general", "general"}
-            ):
-                continue
-            start_char = match.start("heading")
-            end_char = match.end("heading")
-            span = (start_char, end_char)
-            if span in seen_spans:
-                continue
-            seen_spans.add(span)
-            candidates.append(
-                LegalSegment(
-                    text=heading_text,
-                    start_char=start_char,
-                    end_char=end_char,
-                    role="heading",
+        for heading_re in (
+            _USCODE_SUBSECTION_HEADING_RE,
+            _USCODE_INLINE_SUBSECTION_HEADING_RE,
+        ):
+            for match in heading_re.finditer(normalized_text):
+                heading_text = match.group("heading").strip()
+                if not heading_text:
+                    continue
+                heading_body = re.sub(
+                    r"^\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+",
+                    "",
+                    heading_text,
+                    flags=re.IGNORECASE,
+                ).strip(" .")
+                if not heading_body:
+                    continue
+                if self._has_blocking_residual_modal_cues(heading_body):
+                    continue
+                body_tokens = _TOKEN_RE.findall(heading_body.lower())
+                if not (
+                    self._is_short_residual_heading_coverage_candidate(body_tokens)
+                    or self._looks_like_heading_without_section_reference(heading_body)
+                    or heading_body.lower() in {"in general", "general"}
+                ):
+                    continue
+                start_char = match.start("heading")
+                end_char = match.end("heading")
+                span = (start_char, end_char)
+                if span in seen_spans:
+                    continue
+                seen_spans.add(span)
+                candidates.append(
+                    LegalSegment(
+                        text=heading_text,
+                        start_char=start_char,
+                        end_char=end_char,
+                        role="heading",
+                    )
                 )
-            )
         return candidates
 
     def _uscode_section_marker_segments(
@@ -2492,7 +2516,8 @@ class LegalModalParser:
             prefix_text = prefix_text[subsection_match.end() :].strip(" .;:\u2014-")
         prefix_text = re.split(
             r"\b(?:not\s+less\s+often\s+than|not\s+later\s+than|"
-            r"within\s+\d+|the\s+(?:secretary|commission|administrator)\b)",
+            r"within\s+\d+|"
+            r"the\s+(?:corporation|secretary|commission|administrator)\b)",
             prefix_text,
             maxsplit=1,
             flags=re.IGNORECASE,
@@ -2616,6 +2641,8 @@ class LegalModalParser:
                     next_segment.text,
                     re.IGNORECASE,
                 ):
+                    break
+                if next_segment.text.lstrip().startswith(("§", "§§")):
                     break
                 next_tokens = len(_TOKEN_RE.findall(next_segment.text.lower()))
                 if next_tokens > _USCODE_RESIDUAL_COALESCE_SEGMENT_MAX_TOKENS:
@@ -2990,6 +3017,29 @@ class LegalModalParser:
         return bool(
             _USCODE_LEGISLATIVE_HISTORY_RESIDUAL_RE.search(lowered)
             or _USCODE_LEGISLATIVE_HISTORY_CONTINUATION_RE.search(lowered)
+        )
+
+    def _is_uscode_citation_prefix_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        if len(tokens) < 3 or len(tokens) > 6:
+            return False
+        return bool(_USCODE_CITATION_PREFIX_RE.fullmatch(normalized_segment_text))
+
+    def _is_uscode_lifecycle_transfer_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        token_count = len(tokens)
+        if token_count < 4 or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS:
+            return False
+        if not any(character.isdigit() for character in normalized_segment_text):
+            return False
+        return bool(
+            _USCODE_LIFECYCLE_TRANSFER_RESIDUAL_RE.search(normalized_segment_text)
         )
 
     def _residual_span_coverage_formula(
