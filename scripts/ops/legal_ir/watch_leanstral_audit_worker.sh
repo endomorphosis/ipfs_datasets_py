@@ -117,6 +117,7 @@ if [[ -z "${AUDIT_RUN_TIMEOUT_SECONDS}" ]]; then
   fi
 fi
 AUDIT_RUN_KILL_AFTER_SECONDS="${LEANSTRAL_AUDIT_RUN_KILL_AFTER_SECONDS:-30}"
+CURRENT_AUDIT_PID=""
 mkdir -p "${WORK_DIR}"
 
 timestamp() {
@@ -126,6 +127,71 @@ timestamp() {
 log_line() {
   echo "$(timestamp) $*"
 }
+
+process_group_for_pid() {
+  local pid
+  pid="${1:-}"
+  [[ "${pid}" =~ ^[0-9]+$ ]] || return 1
+  ps -o pgid= -p "${pid}" 2>/dev/null | tr -d '[:space:]'
+}
+
+terminate_process_group_or_pid() {
+  local pid pgid self_pgid label
+  pid="${1:-}"
+  label="${2:-process}"
+  [[ "${pid}" =~ ^[0-9]+$ ]] || return 0
+  (( pid > 1 )) || return 0
+  if ! kill -0 "${pid}" 2>/dev/null; then
+    return 0
+  fi
+  pgid="$(process_group_for_pid "${pid}" || true)"
+  self_pgid="$(process_group_for_pid "$$" || true)"
+  if [[ -n "${pgid}" && "${pgid}" != "${self_pgid}" ]]; then
+    log_line "terminating_${label}_process_group pgid=${pgid} pid=${pid}"
+    kill -TERM "-${pgid}" 2>/dev/null || kill -TERM "${pid}" 2>/dev/null || true
+    sleep 2
+    if ps -eo pgid= | awk -v target="${pgid}" '$1 == target {found=1} END {exit found ? 0 : 1}'; then
+      log_line "killing_${label}_process_group pgid=${pgid} pid=${pid}"
+      kill -KILL "-${pgid}" 2>/dev/null || kill -KILL "${pid}" 2>/dev/null || true
+    fi
+  else
+    log_line "terminating_${label}_pid pid=${pid}"
+    kill -TERM "${pid}" 2>/dev/null || true
+    sleep 2
+    kill -0 "${pid}" 2>/dev/null && kill -KILL "${pid}" 2>/dev/null || true
+  fi
+}
+
+kill_leanstral_llama_servers() {
+  local reason pid
+  reason="${1:-cleanup}"
+  case "${LEANSTRAL_AUDIT_KILL_LLAMA_ON_TIMEOUT:-1}" in
+    0|false|False|FALSE|no|No|NO|off|Off|OFF)
+      return 0
+      ;;
+  esac
+  while read -r pid; do
+    [[ -n "${pid}" ]] || continue
+    log_line "leanstral_llama_cleanup reason=${reason} pid=${pid}"
+    terminate_process_group_or_pid "${pid}" "leanstral_llama"
+  done < <(ps -eo pid=,args= | awk '/[l]lama-server/ && /[Ll]eanstral/ {print $1}')
+}
+
+stop_current_audit() {
+  if [[ -n "${CURRENT_AUDIT_PID}" ]]; then
+    terminate_process_group_or_pid "${CURRENT_AUDIT_PID}" "audit"
+    CURRENT_AUDIT_PID=""
+  fi
+}
+
+handle_shutdown() {
+  stop_current_audit
+  kill_leanstral_llama_servers "watcher_shutdown"
+  log_line "audit_companion_interrupted parent_pid=${PARENT_PID}"
+  exit 143
+}
+
+trap handle_shutdown INT TERM HUP
 
 resolve_input_path() {
   local candidate
@@ -230,7 +296,7 @@ update_input_signature() {
 }
 
 run_audit_if_due() {
-  local signature now batch_use_mesh_args audit_status audit_timeout_cmd
+  local signature now batch_use_mesh_args audit_status audit_timeout_cmd audit_launch_cmd
   update_input_signature || return 0
   signature="${current_input_signature}"
   now="$(date +%s)"
@@ -265,9 +331,13 @@ run_audit_if_due() {
       "${AUDIT_RUN_TIMEOUT_SECONDS}s"
     )
   fi
+  audit_launch_cmd=()
+  if command -v setsid >/dev/null 2>&1; then
+    audit_launch_cmd=(setsid)
+  fi
   log_line "audit_started signature=${signature}"
   audit_status=0
-  "${audit_timeout_cmd[@]}" "${PYTHON_BIN}" scripts/ops/legal_ir/run_leanstral_audit_worker.py \
+  "${audit_launch_cmd[@]}" "${audit_timeout_cmd[@]}" "${PYTHON_BIN}" scripts/ops/legal_ir/run_leanstral_audit_worker.py \
     --input "${INPUT_PATH}" \
     --cache-dir "${CACHE_DIR}" \
     --checkpoint-path "${CHECKPOINT_PATH}" \
@@ -301,13 +371,17 @@ run_audit_if_due() {
     --lean-slice-size "${LEANSTRAL_LEAN_SLICE_SIZE:-4}" \
     --lean-proof-cache-path "${PROOF_CACHE_PATH}" \
     --prover-timeout-seconds "${LEANSTRAL_PROVER_TIMEOUT_SECONDS:-5}" \
-    || audit_status=$?
+    &
+  CURRENT_AUDIT_PID=$!
+  wait "${CURRENT_AUDIT_PID}" || audit_status=$?
+  CURRENT_AUDIT_PID=""
   if (( audit_status == 0 )); then
     next_retry_epoch=0
     log_line "audit_completed signature=${signature} report=${PUBLISHED_REPORT_OUTPUT}"
   else
     next_retry_epoch=$((now + FAILURE_BACKOFF_SECONDS))
     if (( audit_status == 124 || audit_status == 137 )); then
+      kill_leanstral_llama_servers "audit_timeout"
       log_line "audit_timed_out signature=${signature} timeout_seconds=${AUDIT_RUN_TIMEOUT_SECONDS} status=${audit_status} retry_after_epoch=${next_retry_epoch}"
     else
       log_line "audit_failed signature=${signature} status=${audit_status} retry_after_epoch=${next_retry_epoch}"
