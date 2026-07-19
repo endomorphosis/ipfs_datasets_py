@@ -209,10 +209,20 @@ llama_cpp_preflight_if_enabled() {
 
 last_signature=""
 next_retry_epoch=0
+current_input_signature=""
+
+update_input_signature() {
+  resolve_input_path
+  if [[ ! -s "${INPUT_PATH}" ]]; then
+    return 1
+  fi
+  current_input_signature="$(stat -c '%s:%Y' "${INPUT_PATH}" 2>/dev/null)"
+}
 
 run_audit_if_due() {
   local signature now batch_use_mesh_args
-  signature="$(input_signature)" || return 0
+  update_input_signature || return 0
+  signature="${current_input_signature}"
   now="$(date +%s)"
   if [[ "${signature}" == "${last_signature}" ]] && (( now < next_retry_epoch )); then
     return 0
@@ -227,7 +237,8 @@ run_audit_if_due() {
   # input and reference examples afterwards so startup races do not leave the
   # worker pointed at the parent-run path while the autoencoder writes the
   # child-run export path.
-  signature="$(input_signature)" || return 0
+  update_input_signature || return 0
+  signature="${current_input_signature}"
   last_signature="${signature}"
   configure_reference_example_args
   batch_use_mesh_args=()
