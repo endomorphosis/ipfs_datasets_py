@@ -278,7 +278,7 @@ _INSTRUMENT_EXPIRATION_RE = re.compile(
 )
 _SECTION_STATUS_RE = re.compile(
     r"(?:(?P<section_marker>(?:secs?\.?|sections?|§{1,2})\s*[0-9][0-9A-Za-z.\-]*(?:\s*,\s*[0-9][0-9A-Za-z.\-]*)*)\s*[\.:]?\s*)?"
-    r"\b(?P<status>repealed|omitted|reserved|transferred)\b"
+    r"\b(?P<status>repealed|omitted|reserved|transferred|renumbered|redesignated)\b"
     r"(?P<detail>[^.;:]*)",
     re.IGNORECASE,
 )
@@ -2065,7 +2065,7 @@ def _section_status_should_short_circuit(
         re.search(
             r"^\s*(?:\[?\s*)?(?:(?:secs?\.?|sections?|§{1,2})\s*)?"
             r"[0-9][0-9A-Za-z.\-]*\.?\s*"
-            r"(?:repealed|omitted|reserved|transferred)\b",
+            r"(?:repealed|omitted|reserved|transferred|renumbered|redesignated)\b",
             support_text,
             re.IGNORECASE,
         )

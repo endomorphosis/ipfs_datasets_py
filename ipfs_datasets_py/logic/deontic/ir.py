@@ -460,7 +460,23 @@ _SECTION_MARKER_TEXT_RE = re.compile(
     re.IGNORECASE,
 )
 _LIFECYCLE_STATUS_ACTION_RE = re.compile(
-    r"\b(?P<status>repealed|omitted|reserved|transferred)\b",
+    r"\b(?P<status>repealed|omitted|reserved|transferred|renumbered|redesignated)\b",
+    re.IGNORECASE,
+)
+_LIFECYCLE_TRANSFER_RECIPIENT_RE = re.compile(
+    r"\b(?:transferred|redesignated)\s+to\s+"
+    r"(?P<recipient>.+?)(?=\s+and\s+(?:transferred|redesignated|renumbered)\b|[;.]|$)",
+    re.IGNORECASE,
+)
+_LIFECYCLE_RENUMBERED_RECIPIENT_RE = re.compile(
+    r"\brenumbered\s+"
+    r"(?P<recipient>(?:as\s+)?(?:section|§)\s*.+?)"
+    r"(?=\s+and\s+(?:transferred|redesignated|renumbered)\b|[;,]|$)",
+    re.IGNORECASE,
+)
+_PASSIVE_GRANT_RECIPIENT_RE = re.compile(
+    r"\b(?:be\s+)?(?:given|granted|awarded|provided|issued)\s+to\s+"
+    r"(?P<recipient>[^.;,]+)",
     re.IGNORECASE,
 )
 
@@ -552,6 +568,9 @@ def _instrument_lifecycle_action_text(element: Dict[str, Any]) -> str:
 
     flat_value = _first_text(element.get("action")).strip()
     if flat_value:
+        expanded_flat_value = _expanded_lifecycle_action_text(flat_value, element)
+        if expanded_flat_value:
+            return expanded_flat_value
         return flat_value
 
     kind = str(
@@ -590,6 +609,21 @@ def _instrument_lifecycle_action_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _expanded_lifecycle_action_text(action_text: str, element: Mapping[str, Any]) -> str:
+    """Attach source-grounded lifecycle targets to clipped parser actions."""
+
+    action = _clean_source_label(action_text)
+    recipient = _lifecycle_recipient_text(element)
+    if not action or not recipient:
+        return ""
+    lowered = action.lower()
+    if lowered in {"transferred to", "redesignated to"}:
+        return f"{action} {recipient}"
+    if lowered == "renumbered":
+        return f"{action} as {recipient}"
+    return ""
+
+
 def _instrument_lifecycle_action_from_parts(kind: str, duration: str, anchor: str) -> str:
     normalized_kind = str(kind or "").strip().lower().replace("_", "-")
     if duration and ("valid" in normalized_kind or "duration" in normalized_kind or normalized_kind in {""}):
@@ -605,7 +639,15 @@ def _instrument_lifecycle_status_action_from_source_text(element: Mapping[str, A
     match = _instrument_lifecycle_status_action_match(element)
     if not match:
         return ""
-    return match.group("status").capitalize()
+    action = match.group("status").capitalize()
+    recipient = _lifecycle_recipient_text(element)
+    if recipient and action.lower() in {"transferred", "redesignated"}:
+        return f"{action} to {recipient}"
+    if recipient and action.lower() == "renumbered":
+        if recipient.lower().startswith("as "):
+            return f"{action} {recipient}"
+        return f"{action} as {recipient}"
+    return action
 
 
 def _instrument_lifecycle_status_action_field_span(
@@ -615,12 +657,63 @@ def _instrument_lifecycle_status_action_field_span(
     if not match:
         return {}
     base_offset = _lifecycle_status_action_base_offset(element)
+    action_end = match.end("status")
+    recipient_spans = _lifecycle_recipient_field_spans(element)
+    recipient_span = recipient_spans.get("recipient")
+    if isinstance(recipient_span, list) and len(recipient_span) == 2:
+        action_end = max(action_end, int(recipient_span[1]) - base_offset)
     return {
         "action": [
             base_offset + match.start("status"),
-            base_offset + match.end("status"),
+            base_offset + action_end,
         ],
     }
+
+
+def _lifecycle_recipient_text(element: Mapping[str, Any]) -> str:
+    """Return a source-grounded lifecycle target section when present."""
+
+    for match, _key in _lifecycle_recipient_matches(element):
+        return _clean_source_label(match.group("recipient"))
+    return ""
+
+
+def _lifecycle_recipient_field_spans(
+    element: Mapping[str, Any],
+) -> Dict[str, List[int]]:
+    for match, key in _lifecycle_recipient_matches(element):
+        base_offset = _modal_clause_match_base_offset(element, key)
+        span = [
+            base_offset + match.start("recipient"),
+            base_offset + match.end("recipient"),
+        ]
+        return {"recipient": span, "action_recipient": span}
+    return {}
+
+
+def _lifecycle_recipient_matches(
+    element: Mapping[str, Any],
+) -> List[tuple[re.Match[str], str]]:
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(
+        element.get("deontic_operator") or element.get("modality") or ""
+    ).strip().upper()
+    if norm_type != "instrument_lifecycle" and operator != "LIFE":
+        return []
+
+    matches: List[tuple[re.Match[str], str]] = []
+    support_text = str(element.get("support_text") or "")
+    if support_text and _LIFECYCLE_STATUS_ACTION_RE.search(support_text):
+        candidates = [("support_text", support_text)]
+    else:
+        candidates = _modal_clause_source_text_candidates(element)
+    for key, text in candidates:
+        for pattern in (
+            _LIFECYCLE_TRANSFER_RECIPIENT_RE,
+            _LIFECYCLE_RENUMBERED_RECIPIENT_RE,
+        ):
+            matches.extend((match, key) for match in pattern.finditer(text))
+    return matches
 
 
 def _instrument_lifecycle_status_action_match(
@@ -1452,6 +1545,12 @@ def _field_spans_with_source_fallback(element: Mapping[str, Any]) -> Dict[str, A
     lifecycle_action_spans = _instrument_lifecycle_status_action_field_span(element)
     if lifecycle_action_spans:
         field_spans.update(lifecycle_action_spans)
+    lifecycle_recipient_spans = _lifecycle_recipient_field_spans(element)
+    if lifecycle_recipient_spans:
+        field_spans.update(lifecycle_recipient_spans)
+    passive_grant_recipient_spans = _passive_grant_recipient_field_spans(element)
+    if passive_grant_recipient_spans:
+        field_spans.update(passive_grant_recipient_spans)
     return field_spans
 
 
@@ -1605,7 +1704,45 @@ def _recipient_text(element: Dict[str, Any]) -> str:
                 if value:
                     return value
 
+    passive_grant_recipient = _passive_grant_recipient_text(element)
+    if passive_grant_recipient:
+        return passive_grant_recipient
+
+    lifecycle_recipient = _lifecycle_recipient_text(element)
+    if lifecycle_recipient:
+        return lifecycle_recipient
+
     return ""
+
+
+def _passive_grant_recipient_text(element: Mapping[str, Any]) -> str:
+    for match, _key in _passive_grant_recipient_matches(element):
+        return _clean_source_label(match.group("recipient"))
+    return ""
+
+
+def _passive_grant_recipient_field_spans(
+    element: Mapping[str, Any],
+) -> Dict[str, List[int]]:
+    for match, key in _passive_grant_recipient_matches(element):
+        base_offset = _modal_clause_match_base_offset(element, key)
+        span = [
+            base_offset + match.start("recipient"),
+            base_offset + match.end("recipient"),
+        ]
+        return {"recipient": span, "action_recipient": span}
+    return {}
+
+
+def _passive_grant_recipient_matches(
+    element: Mapping[str, Any],
+) -> List[tuple[re.Match[str], str]]:
+    matches: List[tuple[re.Match[str], str]] = []
+    for key, text in _modal_clause_source_text_candidates(element):
+        matches.extend(
+            (match, key) for match in _PASSIVE_GRANT_RECIPIENT_RE.finditer(text)
+        )
+    return matches
 
 
 def _enumeration_index(value: Any) -> Optional[int]:
