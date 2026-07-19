@@ -56,6 +56,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     compiler_ir_metric_block,
     create_codex_work_packet,
     execute_codex_work_packet,
+    persist_supervisor_queue_for_external_workers,
     program_synthesis_status_block,
     refresh_codex_work_packet_patch,
     resolve_codex_worktree_repo_root,
@@ -503,6 +504,72 @@ def test_queue_merge_preserves_externally_completed_program_synthesis_todos() ->
     assert completed is not None
     assert completed.status == "completed"
     assert completed.claimed_by == "codex-program-worker"
+
+
+def test_persist_supervisor_queue_materializes_external_program_synthesis_queue(
+    tmp_path: Path,
+) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+    )
+    snapshot = LossSnapshot.from_sample(
+        sample,
+        extra_losses={"frame_ranking_loss": 1.0},
+    )
+    [todo] = ModalLossTodoGenerator().generate([snapshot])
+    queue_path = tmp_path / "program-synthesis.jsonl"
+    supervisor = ModalTodoSupervisor(
+        queue=ModalTodoQueue([todo]),
+        policy=ModalOptimizerPolicy(),
+    )
+
+    report = persist_supervisor_queue_for_external_workers(
+        queue_path=queue_path,
+        supervisor=supervisor,
+    )
+
+    reloaded = ModalTodoQueue.load_jsonl(queue_path)
+    assert report["role_after"]["program_synthesis"]["pending"] == 1
+    assert reloaded.pending_count(optimizer_role="program_synthesis") == 1
+    assert reloaded.pending(optimizer_role="program_synthesis")[0].todo_id == todo.todo_id
+
+
+def test_persist_supervisor_queue_preserves_external_program_synthesis_claim(
+    tmp_path: Path,
+) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+    )
+    snapshot = LossSnapshot.from_sample(
+        sample,
+        extra_losses={"frame_ranking_loss": 1.0},
+    )
+    [todo] = ModalLossTodoGenerator().generate([snapshot])
+    queue_path = tmp_path / "program-synthesis.jsonl"
+    latest = ModalTodoQueue([todo.__class__.from_dict(todo.to_dict())])
+    latest.claim_batch(
+        worker_id="codex-program-worker",
+        max_items=1,
+        optimizer_role="program_synthesis",
+    )
+    latest.save_jsonl(queue_path)
+    supervisor = ModalTodoSupervisor(
+        queue=ModalTodoQueue([todo.__class__.from_dict(todo.to_dict())]),
+        policy=ModalOptimizerPolicy(),
+    )
+
+    persist_supervisor_queue_for_external_workers(
+        queue_path=queue_path,
+        supervisor=supervisor,
+    )
+
+    reloaded = ModalTodoQueue.load_jsonl(queue_path)
+    assert reloaded.claimed_count(optimizer_role="program_synthesis") == 1
+    assert reloaded.claimed(optimizer_role="program_synthesis")[0].claimed_by == "codex-program-worker"
 
 
 def test_queue_semantic_dedupe_collapses_program_synthesis_loss_duplicates() -> None:

@@ -4681,6 +4681,39 @@ def seed_failed_validation_rescue_todos_for_queue(
     return report
 
 
+def persist_supervisor_queue_for_external_workers(
+    *,
+    queue_path: Path,
+    supervisor: ModalTodoSupervisor,
+) -> Dict[str, Any]:
+    """Flush in-memory supervisor TODOs to the JSONL queue Codex workers read."""
+
+    with queue_file_lock(queue_path):
+        latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+        before = latest_queue.status_counts()
+        latest_queue.merge_from(
+            supervisor.queue,
+            preserve_claimed_role=supervisor.policy.program_synthesis_role,
+        )
+        semantic_deduped_count = latest_queue.deduplicate_semantic(
+            optimizer_role=supervisor.policy.program_synthesis_role,
+            near_duplicate_jaccard=(
+                supervisor.policy.program_synthesis_near_duplicate_jaccard
+            ),
+        )
+        latest_queue.save_jsonl(queue_path)
+        supervisor.queue = latest_queue
+        after = latest_queue.status_counts()
+        role_after = latest_queue.role_status_counts()
+    return {
+        "after": after,
+        "before": before,
+        "queue_path": str(queue_path),
+        "role_after": role_after,
+        "semantic_deduped_count": int(semantic_deduped_count),
+    }
+
+
 def _codex_main_apply_backpressure_report(
     queue: ModalTodoQueue,
     *,
@@ -14838,6 +14871,27 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     target_cosine_similarity=0.999999,
                     progress_callback=todo_progress_callback,
                 )
+            mark_cycle_phase("todo_supervisor_queue_flush")
+            todo_supervisor_queue_persist = (
+                persist_supervisor_queue_for_external_workers(
+                    queue_path=queue_path,
+                    supervisor=supervisor,
+                )
+            )
+            queue = supervisor.queue
+            summary["active_cycle_todo_supervisor_queue_flush"] = (
+                todo_supervisor_queue_persist
+            )
+            save_summary(summary_path, summary)
+            append_event(
+                log_path,
+                args.run_id,
+                {
+                    "cycle": cycle,
+                    "event": "todo_supervisor_queue_flushed",
+                    "queue_persist": todo_supervisor_queue_persist,
+                },
+            )
             mark_cycle_phase("after_train_eval", sample_count=len(train_samples))
             after_train = evaluate_cycle_samples(
                 train_samples,
@@ -14999,6 +15053,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "distillation": [],
                 "guardrail": [],
             }
+            semantic_deduped_count = int(
+                todo_supervisor_queue_persist.get("semantic_deduped_count", 0)
+                or 0
+            )
             leanstral_projection: Dict[str, Any] = {}
             leanstral_rule_gap_projection: Dict[str, Any] = {}
             leanstral_direct_guidance_projection: Dict[str, Any] = {}
@@ -15010,7 +15068,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     supervisor.queue,
                     preserve_claimed_role=supervisor.policy.program_synthesis_role,
                 )
-                semantic_deduped_count = latest_queue.deduplicate_semantic(
+                semantic_deduped_count += latest_queue.deduplicate_semantic(
                     optimizer_role=supervisor.policy.program_synthesis_role,
                     near_duplicate_jaccard=supervisor.policy.program_synthesis_near_duplicate_jaccard,
                 )
