@@ -57,7 +57,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-004 Implement deterministic premise selection baselines
 
-- Status: waiting
+- Status: completed
 - Priority: P0
 - Track: retrieval
 - Depends on: HAMMER-003
