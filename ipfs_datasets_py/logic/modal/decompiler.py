@@ -281,6 +281,21 @@ _PACKET_000630_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "wildlife_conservation_order",
     }
 )
+_PACKET_000633_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "agreement_military_park_authority",
+        "cumulative_remedy_preservation",
+        "helen_keller_national_center_registry",
+        "indian_loan_guaranty_power",
+        "loan_guarantee_authority",
+        "public_charter_school_program",
+        "public_corporation_agreement_authority",
+        "remedies_as_cumulative",
+        "service_connected_disability_compensation",
+        "uscode_registry_record",
+        "veterans_compensation_benefit",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -1147,6 +1162,19 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("helen keller national center", "helen_keller_national_center_registry"),
     ("deaf-blind", "deaf_blind_services_registry"),
     ("deaf blind", "deaf_blind_services_registry"),
+    ("public charter schools", "public_charter_school_program"),
+    ("public charter school", "public_charter_school_program"),
+    ("charter school program", "public_charter_school_program"),
+    ("agreement with murray county", "agreement_military_park_authority"),
+    ("national military park", "agreement_military_park_authority"),
+    ("public corporation", "public_corporation_agreement_authority"),
+    ("loan guaranty and insurance", "indian_loan_guaranty_power"),
+    ("loan guaranty", "indian_loan_guaranty_power"),
+    ("powers of secretary", "indian_loan_guaranty_power"),
+    ("remedies as cumulative", "remedies_as_cumulative"),
+    ("remedies provided under this part", "cumulative_remedy_preservation"),
+    ("in addition to remedies", "cumulative_remedy_preservation"),
+    ("remedies existing under another law", "cumulative_remedy_preservation"),
     ("shall not be construed", "construction_no_effect"),
     ("nothing in this", "construction_no_effect"),
     ("force and effect", "statutory_force_effect"),
@@ -5780,6 +5808,42 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("public_housing_agency_assistance")
+    if re.search(
+        r"\b(?:public\s+charter\s+schools?|charter\s+school\s+program|"
+        r"programs?\s+of\s+national\s+significance)\b",
+        normalized,
+    ):
+        add("public_charter_school_program")
+    if re.search(
+        r"\b(?:agreement\s+with\s+murray\s+county|national\s+military\s+park)\b",
+        normalized,
+    ) and re.search(r"\bagreements?\b", normalized):
+        add("agreement_military_park_authority")
+    if re.search(
+        r"\bagreements?\b.{0,120}\bpublic\s+corporation\b|"
+        r"\bpublic\s+corporation\b.{0,120}\bagreements?\b",
+        normalized,
+    ):
+        add("public_corporation_agreement_authority")
+    if re.search(
+        r"\b(?:loan\s+guaranty|loan\s+guarantee|loan\s+guaranty\s+and\s+insurance|"
+        r"powers?\s+of\s+secretary)\b",
+        normalized,
+    ) and re.search(
+        r"\b(?:indians?|indian\s+organizations?|secretary|loan)\b",
+        normalized,
+    ):
+        add("indian_loan_guaranty_power")
+        add("loan_guarantee_authority")
+    if re.search(
+        r"\bremed(?:y|ies)\s+as\s+cumulative\b|"
+        r"\bremed(?:y|ies)\s+provided\s+under\s+this\s+part\b|"
+        r"\bin\s+addition\s+to\s+remed(?:y|ies)\b|"
+        r"\bremed(?:y|ies)\s+existing\s+under\s+another\s+law\b",
+        normalized,
+    ):
+        add("remedies_as_cumulative")
+        add("cumulative_remedy_preservation")
     if re.search(
         r"\b(?:export\s+credit|credit\s+authority|federal\s+financing\s+bank)\b",
         normalized,
@@ -13629,6 +13693,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000633_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -14819,6 +14889,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         *_PACKET_000626_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000627_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000630_USCODE_RECONSTRUCTION_ATOMS,
+        *_PACKET_000633_USCODE_RECONSTRUCTION_ATOMS,
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -14991,6 +15062,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000633_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in {
             "congressional_member_compensation_allowance",
             "national_military_park_resource",
@@ -15035,6 +15110,15 @@ def _typed_decompiler_semantic_atom_target_families(
             "military_post_school_use",
             "public_housing_agency_assistance",
             "wildlife_conservation_order",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "agreement_military_park_authority",
+            "cumulative_remedy_preservation",
+            "public_corporation_agreement_authority",
+            "remedies_as_cumulative",
+            "service_connected_disability_compensation",
+            "veterans_compensation_benefit",
         }:
             add("temporal")
         if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
@@ -17448,6 +17532,40 @@ def _typed_decompiler_target_surface_profiles(
     ):
         add("uscode_public_housing_assistance_surface")
     if re.search(
+        r"\b(?:public\s+charter\s+schools?|charter\s+school\s+program|"
+        r"programs?\s+of\s+national\s+significance)\b",
+        lowered,
+    ):
+        add("uscode_public_charter_school_program_surface")
+    if re.search(
+        r"\b(?:agreement\s+with\s+murray\s+county|national\s+military\s+park)\b",
+        lowered,
+    ) and re.search(r"\bagreements?\b", lowered):
+        add("uscode_military_park_agreement_surface")
+    if re.search(
+        r"\bagreements?\b.{0,120}\bpublic\s+corporation\b|"
+        r"\bpublic\s+corporation\b.{0,120}\bagreements?\b",
+        lowered,
+    ):
+        add("uscode_public_corporation_agreement_surface")
+    if re.search(
+        r"\b(?:loan\s+guaranty|loan\s+guarantee|loan\s+guaranty\s+and\s+insurance|"
+        r"powers?\s+of\s+secretary)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:indians?|indian\s+organizations?|secretary|loan)\b",
+        lowered,
+    ):
+        add("uscode_indian_loan_guaranty_power_surface")
+    if re.search(
+        r"\bremed(?:y|ies)\s+as\s+cumulative\b|"
+        r"\bremed(?:y|ies)\s+provided\s+under\s+this\s+part\b|"
+        r"\bin\s+addition\s+to\s+remed(?:y|ies)\b|"
+        r"\bremed(?:y|ies)\s+existing\s+under\s+another\s+law\b",
+        lowered,
+    ):
+        add("uscode_cumulative_remedies_surface")
+    if re.search(
         r"\bcuyahoga\s+valley\s+national\s+park\b",
         lowered,
     ) and re.search(r"\b(?:repealed|editorial\s+notes|codification)\b", lowered):
@@ -18204,6 +18322,29 @@ def _typed_decompiler_predicate_classes(
                 "military_post_school_use",
                 "public_housing_agency_assistance",
                 "wildlife_conservation_order",
+            }
+        ):
+            add("temporal")
+    if normalized_atoms.intersection(_PACKET_000633_USCODE_RECONSTRUCTION_ATOMS):
+        add("authorization")
+        add("duty")
+        add("program")
+        add("statutory")
+        if normalized_atoms.intersection(
+            {
+                "cumulative_remedy_preservation",
+                "remedies_as_cumulative",
+            }
+        ):
+            add("remedy")
+        if normalized_atoms.intersection(
+            {
+                "agreement_military_park_authority",
+                "cumulative_remedy_preservation",
+                "public_corporation_agreement_authority",
+                "remedies_as_cumulative",
+                "service_connected_disability_compensation",
+                "veterans_compensation_benefit",
             }
         ):
             add("temporal")

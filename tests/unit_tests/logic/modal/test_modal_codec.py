@@ -51347,6 +51347,143 @@ def test_decompiler_reconstructs_packet_000630_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000633_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "20 U.S.C. 8071. Programs of National Significance. "
+                    "Part C - Public Charter Schools. The Secretary may make "
+                    "awards for public charter school programs."
+                ),
+                predicate="public_charter_school_program",
+            ),
+            {"public_charter_school_program"},
+            {"frame->frame", "frame->deontic", "frame->conditional_normative"},
+            "uscode_public_charter_school_program_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "16 U.S.C. 426o. Agreement with Murray County. The "
+                    "Secretary may enter into an agreement with a public "
+                    "corporation for the national military park."
+                ),
+                predicate="agreement_military_park_authority",
+            ),
+            {
+                "agreement_military_park_authority",
+                "public_corporation_agreement_authority",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_military_park_agreement_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="P",
+                label="permission",
+                text=(
+                    "25 U.S.C. 1496. Powers of Secretary. Under the loan "
+                    "guaranty and insurance program for Indians and Indian "
+                    "organizations, the Secretary may guarantee loans."
+                ),
+                predicate="indian_loan_guaranty_power",
+            ),
+            {"indian_loan_guaranty_power", "loan_guarantee_authority"},
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_indian_loan_guaranty_power_surface",
+        ),
+        (
+            _single_formula_document(
+                family="conditional_normative",
+                symbol="O|",
+                label="conditional_obligation",
+                text=(
+                    "49 U.S.C. 15103. Remedies as cumulative. Except as "
+                    "otherwise provided in this part, the remedies provided "
+                    "under this part are in addition to remedies existing "
+                    "under another law or common law."
+                ),
+                predicate="remedies_as_cumulative",
+                conditions=["except as otherwise provided in this part"],
+            ),
+            {"remedies_as_cumulative", "cumulative_remedy_preservation"},
+            {
+                "conditional_normative->conditional_normative",
+                "conditional_normative->deontic",
+            },
+            "uscode_cumulative_remedies_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "38 U.S.C. 1165. Compensation for service-connected "
+                    "disability. Veterans' benefits include compensation for "
+                    "service-connected disability or death."
+                ),
+                predicate="service_connected_disability_compensation",
+            ),
+            {
+                "service_connected_disability_compensation",
+                "veterans_compensation_benefit",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_veterans_disability_compensation_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": sorted(expected_pairs),
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "knowledge_graphs.neo4j_compat",
+                    "modal.frame_logic",
+                ],
+            }
+        ]
+
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert slot_texts["guided_typed_ir_semantic_reconstruction"]
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
