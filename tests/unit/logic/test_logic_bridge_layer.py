@@ -2970,6 +2970,44 @@ def test_modal_frame_logic_bridge_requires_editorial_and_alignment_graph_views()
     ] is True
 
 
+def test_modal_frame_logic_bridge_classifies_transfer_codification_as_editorial_status() -> None:
+    from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
+
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "us-code-42-2751-d7af5ae7f6f1c93a",
+                "predicate": "sample_text",
+                "object": (
+                    "42 U.S.C. 2751.: \u00a72751. Transferred Editorial Notes "
+                    "Codification Section 2751, originally enacted as section "
+                    "121 of Pub. L. 88-452, was renumbered section 441 of Pub. "
+                    "L. 89-329 and transferred to section 1087-51 of Title 20, "
+                    "Education."
+                ),
+            },
+        ],
+        graph_id="us-code-42-2751-d7af5ae7f6f1c93a:flogic",
+    )
+
+    view_by_predicate = {
+        rel.properties["flogic_predicate"]: rel.properties["frame_logic_projection_view"]
+        for rel in graph_data.relationships
+    }
+
+    assert view_by_predicate["status_scope"] == "editorial_status"
+    assert (
+        view_by_predicate["status_codification_origin_section"]
+        == "editorial_status"
+    )
+    assert (
+        view_by_predicate["status_codification_renumbered_public_law"]
+        == "editorial_status"
+    )
+    assert graph_data.metadata["frame_logic_projection_legal_view_missing"] == []
+    assert graph_data.metadata["legal_ir_view_cross_entropy_loss"] == 0.0
+
+
 def test_modal_frame_logic_bridge_projects_heading_and_learned_views() -> None:
     from ipfs_datasets_py.logic.modal.kg_bridge import flogic_triples_to_graph_data
 

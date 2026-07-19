@@ -202,6 +202,18 @@ _TRANSFER_DESTINATION_RE = re.compile(
     r"\s+of\s+Title\s+(?P<title>\d+[A-Za-z]*)\b",
     re.IGNORECASE,
 )
+_CODIFICATION_ORIGIN_RE = re.compile(
+    r"\boriginally\s+enacted\s+as\s+section\s+"
+    r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)"
+    r"\s+of\s+Pub\.\s*L\.\s*(?P<public_law>\d+\s*[-\u2010-\u2014]\s*\d+)",
+    re.IGNORECASE,
+)
+_CODIFICATION_RENUMBERED_RE = re.compile(
+    r"\brenumbered\s+(?:as\s+)?section\s+"
+    r"(?P<section>\d+[A-Za-z0-9]*(?:[.-][A-Za-z0-9]+)*)"
+    r"\s+of\s+Pub\.\s*L\.\s*(?P<public_law>\d+\s*[-\u2010-\u2014]\s*\d+)",
+    re.IGNORECASE,
+)
 _PUBLIC_LAW_RE = re.compile(
     r"\bPub\.\s*L\.\s*(?P<number>\d+\s*[-\u2010-\u2014]\s*\d+)\b",
     re.IGNORECASE,
@@ -586,6 +598,7 @@ def _editorial_status_components(text: str) -> List[Tuple[str, str]]:
         components.append(("editorial_reference_status_keyword", keyword))
         components.append((f"editorial_reference_status_keyword_{keyword}", "true"))
     components.extend(_transfer_destination_components(normalized))
+    components.extend(_codification_status_components(normalized))
     components.extend(_public_law_status_components(normalized))
     return components
 
@@ -607,16 +620,59 @@ def _transfer_destination_components(text: str) -> List[Tuple[str, str]]:
     return _clean_components(components[:12])
 
 
+def _codification_status_components(text: str) -> List[Tuple[str, str]]:
+    components: List[Tuple[str, str]] = []
+    for index, match in enumerate(_CODIFICATION_ORIGIN_RE.finditer(text), start=1):
+        section = _normalize_section(match.group("section"))
+        public_law = _normalize_public_law_number(match.group("public_law"))
+        components.extend(
+            [
+                ("status_codification_origin_section", section),
+                ("status_codification_origin_public_law", public_law),
+                (
+                    f"status_codification_origin_{index}_section",
+                    section,
+                ),
+                (
+                    f"status_codification_origin_{index}_public_law",
+                    public_law,
+                ),
+            ]
+        )
+    for index, match in enumerate(_CODIFICATION_RENUMBERED_RE.finditer(text), start=1):
+        section = _normalize_section(match.group("section"))
+        public_law = _normalize_public_law_number(match.group("public_law"))
+        components.extend(
+            [
+                ("status_codification_renumbered_section", section),
+                ("status_codification_renumbered_public_law", public_law),
+                (
+                    f"status_codification_renumbered_{index}_section",
+                    section,
+                ),
+                (
+                    f"status_codification_renumbered_{index}_public_law",
+                    public_law,
+                ),
+            ]
+        )
+    return _clean_components(components[:24])
+
+
 def _public_law_status_components(text: str) -> List[Tuple[str, str]]:
     components: List[Tuple[str, str]] = []
     for index, match in enumerate(_PUBLIC_LAW_RE.finditer(text), start=1):
-        number = _normalize_dashes(match.group("number"))
-        number = re.sub(r"\s*-\s*", "-", number).strip()
+        number = _normalize_public_law_number(match.group("number"))
         if not number:
             continue
         components.append(("status_public_law_number", number))
         components.append((f"status_public_law_{index}_number", number))
     return _clean_components(components[:12])
+
+
+def _normalize_public_law_number(value: str) -> str:
+    number = _normalize_dashes(value)
+    return re.sub(r"\s*-\s*", "-", number).strip()
 
 
 def _primary_editorial_status_keywords(text: str) -> List[str]:
