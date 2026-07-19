@@ -167,7 +167,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-015 Publish benchmarks, documentation, and release gate
 
-- Status: waiting
+- Status: completed
 - Priority: P1
 - Track: release
 - Depends on: HAMMER-005, HAMMER-013, HAMMER-014
