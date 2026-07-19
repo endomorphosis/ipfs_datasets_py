@@ -2484,6 +2484,7 @@ class LegalModalParser:
             cue
             for cue in cues
             if segment.start_char < cue.start_char < segment.end_char
+            and cue.family != ModalLogicFamily.FRAME
         ]
         if not segment_cues:
             return None

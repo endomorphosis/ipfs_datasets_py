@@ -12239,6 +12239,9 @@ def test_spacy_compiler_adds_packet_000165_program_authority_heading_span_covera
         }
 
         assert any(expected_heading in span for span in frame_coverage_text_spans)
+        assert all(
+            not span.endswith(" The c") for span in frame_coverage_text_spans
+        )
 
 
 def test_spacy_compiler_adds_packet_000178_full_source_structural_span_coverage() -> None:
