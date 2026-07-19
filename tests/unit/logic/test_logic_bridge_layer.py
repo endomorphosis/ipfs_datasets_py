@@ -171,6 +171,71 @@ def test_multiview_guidance_component_gaps_set_contract_lane_floors() -> None:
     assert abs(sum(projected.values()) - 1.0) < 1e-12
 
 
+def test_distilled_multiview_gap_guidance_overrides_generic_loss_lanes() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+        _project_guided_contract_distribution,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "compiler_guidance_distillation_count": 23,
+            "compiler_guidance_legal_ir_view_gaps": {
+                "cec_native:underrepresented": 23,
+                "deontic_ir:overrepresented": 23,
+                "knowledge_graphs_neo4j_compat:underrepresented": 22,
+                "modal_frame_logic:underrepresented": 20,
+                "tdfol_prover:overrepresented": 21,
+            },
+            "compiler_guidance_quality_gate": "pass",
+            "compiler_guidance_route": "repair_multiview_legal_ir_loss",
+            "sample_ids": ["compiler-guidance:repair_multiview_legal_ir_loss"],
+            "source": "compiler_guidance_distillation_v1",
+            "support_count": 1,
+            "target_component": "bridge.contracts",
+            "target_metrics": [
+                "legal_ir_view_cross_entropy_loss",
+                "legal_ir_multiview_total_loss",
+            ],
+        }
+    )
+
+    assert metadata["compiler_guidance_bridge_contract_evidence_count"] == 1
+    assert metadata["compiler_guidance_bridge_contract_signed_underrepresented_lanes"] == [
+        "CEC.native",
+        "knowledge_graphs.neo4j_compat",
+        "modal.frame_logic",
+    ]
+    assert metadata["compiler_guidance_bridge_contract_signed_overrepresented_lanes"] == [
+        "TDFOL.prover",
+        "deontic.ir",
+    ]
+    target = metadata["compiler_guidance_bridge_contract_target_distribution"]
+    assert "CEC.native" in target
+    assert "knowledge_graphs.neo4j_compat" in target
+    assert "modal.frame_logic" in target
+    assert target["deontic.ir"] < target["CEC.native"]
+    assert target["TDFOL.prover"] < target["CEC.native"]
+
+    projected = _project_guided_contract_distribution(
+        {
+            "CEC.native": 0.12,
+            "TDFOL.prover": 0.25,
+            "deontic.ir": 0.31,
+            "knowledge_graphs.neo4j_compat": 0.08,
+            "modal.frame_logic": 0.24,
+        },
+        metadata=metadata,
+    )
+
+    assert projected["CEC.native"] >= 0.22
+    assert projected["knowledge_graphs.neo4j_compat"] >= 0.22
+    assert projected["modal.frame_logic"] >= 0.22
+    assert projected["deontic.ir"] < 0.31
+    assert projected["TDFOL.prover"] < 0.25
+    assert abs(sum(projected.values()) - 1.0) < 1e-12
+
+
 def test_deontic_phase8_quality_soft_passes_stale_coverage_validation() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import (
         _merge_phase8_validation_from_coverage_records,

@@ -1292,6 +1292,8 @@ def _compiler_guidance_bridge_contract_metadata(
 
     lane_scores: Dict[str, float] = {}
     component_gaps: Dict[str, float] = {}
+    signed_underrepresented_lanes: set[str] = set()
+    signed_overrepresented_lanes: set[str] = set()
     diagnostic_probability_gaps: list[float] = []
     diagnostic_component_gap_max: list[float] = []
     guidance_records = (
@@ -1350,12 +1352,22 @@ def _compiler_guidance_bridge_contract_metadata(
             "legal_ir_view_family_gaps",
         ):
             for lane, score in _guidance_gap_items(mapping.get(key)):
+                signed_underrepresented_lanes.add(lane)
                 add_lane(lane, score)
             for lane, confidence in _guidance_gap_confidence_items(mapping.get(key)):
                 component_gaps[lane] = max(
                     component_gaps.get(lane, 0.0),
                     confidence,
                 )
+            for lane, direction, score in _guidance_gap_direction_items(
+                mapping.get(key)
+            ):
+                if score <= 0.0:
+                    continue
+                if direction == "underrepresented":
+                    signed_underrepresented_lanes.add(lane)
+                elif direction == "overrepresented":
+                    signed_overrepresented_lanes.add(lane)
         for lane, score in _guidance_distribution_items(
             mapping.get("legal_ir_component_gaps")
         ):
@@ -1408,6 +1420,11 @@ def _compiler_guidance_bridge_contract_metadata(
     for evidence in evidence_rows:
         collect(evidence)
 
+    if signed_underrepresented_lanes:
+        for lane in signed_overrepresented_lanes - signed_underrepresented_lanes:
+            if lane in lane_scores:
+                lane_scores[lane] *= 0.20
+
     target_distribution = _normalize_positive_mapping(lane_scores)
     if not target_distribution and (
         "repair_multiview_legal_ir_loss" in routes
@@ -1429,6 +1446,12 @@ def _compiler_guidance_bridge_contract_metadata(
         "compiler_guidance_bridge_contract_gap_floors": gap_floors,
         "compiler_guidance_bridge_contract_projection_strength": projection_strength,
         "compiler_guidance_bridge_contract_routes": sorted(routes),
+        "compiler_guidance_bridge_contract_signed_overrepresented_lanes": sorted(
+            signed_overrepresented_lanes
+        ),
+        "compiler_guidance_bridge_contract_signed_underrepresented_lanes": sorted(
+            signed_underrepresented_lanes
+        ),
         "compiler_guidance_bridge_contract_target_distribution": target_distribution,
         "compiler_guidance_bridge_contract_target_lanes": sorted(target_distribution),
         "compiler_guidance_bridge_contract_target_probability_gap": max(
@@ -1986,6 +2009,36 @@ def _guidance_gap_confidence_items(value: Any) -> tuple[tuple[str, float], ...]:
             confidence = min(0.32, 0.08 * score) if score > 1.0 else score
         if confidence > 0.0:
             items.append((lane, confidence))
+    return tuple(items)
+
+
+def _guidance_gap_direction_items(
+    value: Any,
+) -> tuple[tuple[str, str, float], ...]:
+    """Return lane, direction, and evidence strength from signed gap maps."""
+
+    decoded = _json_mapping(value)
+    if decoded is not None:
+        value = decoded
+    if not isinstance(value, Mapping):
+        return ()
+
+    items: list[tuple[str, str, float]] = []
+    for raw_gap_key, raw_gap_value in value.items():
+        lane, direction = _bridge_contract_lane_from_guidance_gap_key(raw_gap_key)
+        if not lane or direction not in {"overrepresented", "underrepresented"}:
+            continue
+        if isinstance(raw_gap_value, Mapping):
+            score = max(
+                _float_or_zero(raw_gap_value.get("count")),
+                abs(_float_or_zero(raw_gap_value.get("cosine_delta"))),
+                abs(_float_or_zero(raw_gap_value.get("ce_delta"))),
+                abs(_float_or_zero(raw_gap_value.get("copy_hack_delta"))),
+            )
+        else:
+            score = abs(_float_or_zero(raw_gap_value))
+        if score > 0.0:
+            items.append((lane, direction, score))
     return tuple(items)
 
 
@@ -3728,7 +3781,7 @@ def _enforce_contract_lane_floors(
         for donor in donor_priority:
             if donor == lane or donor not in adjusted:
                 continue
-            available = adjusted[donor]
+            available = adjusted[donor] - present_floors.get(donor, 0.0)
             if available <= 0.0:
                 continue
             shift = min(deficit, available)
