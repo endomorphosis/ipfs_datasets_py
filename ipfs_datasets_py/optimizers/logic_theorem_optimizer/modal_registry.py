@@ -16302,6 +16302,77 @@ COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
     ),
 }
 
+COMPILER_REFINED_PACKET_000350_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+)
+
+COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
+            *COMPILER_REFINED_PACKET_000350_FAMILY_PAIRS,
+        )
+    )
+)
+
+COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_000350_FAMILY_PAIRS,
+        )
+    )
+)
+
+COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_000350_FAMILY_PAIRS,
+        )
+    )
+)
+
+SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_000350_FAMILY_PAIRS,
+        )
+    )
+)
+
 COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
@@ -16956,6 +17027,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_PACKET_000927_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000062_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_000350_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000371_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_007144_FAMILY_PAIRS",
