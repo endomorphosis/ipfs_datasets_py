@@ -2121,6 +2121,37 @@ def test_frame_ontology_feature_keys_from_values_audits_packet_view_family_featu
     ]
 
 
+def test_frame_ontology_feature_keys_from_values_audits_prototype_and_component_gap_features() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "legal_ir_component_gaps": {
+                "CEC.native": 0.142,
+                "TDFOL.prover": -0.052,
+                "modal.frame_logic": 0.061,
+            },
+            "top_family_features": [
+                "legal-ir-view-prototype:deontic.ir",
+                "legal-ir-view-prototype:TDFOL.prover",
+                "signature:operator:frame:frame_bm25:frame",
+            ],
+        }
+    )
+
+    assert keys == [
+        "legal-ir-view-gap:CEC.native",
+        "legal-ir-view-gap:modal.frame_logic",
+        "legal-ir-view-prototype:deontic.ir",
+        "legal-ir-view-prototype:TDFOL.prover",
+        "signature:operator:frame:frame_bm25:frame",
+    ]
+    terms = frame_ontology_terms_from_feature_keys(keys)
+    assert "cec_native" in terms
+    assert "modal_frame_logic" in terms
+    assert "deontic_ir" in terms
+    assert "tdfol_prover" in terms
+    assert "frame_bm25_frame" in terms
+
+
 def test_frame_ontology_feature_keys_audit_condition_consequence_edges() -> None:
     keys = frame_ontology_feature_keys_from_values(
         {

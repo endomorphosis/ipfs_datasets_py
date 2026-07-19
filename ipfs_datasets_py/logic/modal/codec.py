@@ -116,6 +116,15 @@ _COMPILER_GUIDANCE_FRAME_AUDIT_STAGE_KEYS = (
     "pipeline_stage_focus",
     "primary_pipeline_stage",
 )
+_COMPILER_GUIDANCE_FRAME_AUDIT_VIEW_LIST_KEYS = (
+    "legal_ir_underrepresented_components",
+    "underrepresented_components",
+)
+_COMPILER_GUIDANCE_FRAME_AUDIT_COMPONENT_GAP_KEYS = (
+    "compiler_guidance_component_gaps",
+    "compiler_guidance_legal_ir_component_gaps",
+    "legal_ir_component_gaps",
+)
 _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("provided that", "provided_that"),
     ("subject to this subsection", "subject_to_this_subsection"),
@@ -2086,6 +2095,15 @@ def _compiler_guidance_frame_audit_features(
     def collect(mapping: Mapping[str, Any]) -> None:
         for key in _COMPILER_GUIDANCE_FRAME_AUDIT_FEATURE_KEYS:
             add_feature_values(mapping.get(key))
+        for key in _COMPILER_GUIDANCE_FRAME_AUDIT_VIEW_LIST_KEYS:
+            for view in _guidance_feature_list(mapping.get(key), limit=0):
+                candidates.append(f"legal-ir-view:{view}")
+        for key in _COMPILER_GUIDANCE_FRAME_AUDIT_COMPONENT_GAP_KEYS:
+            gap_features = frame_ontology_feature_keys_from_values(
+                {key: mapping.get(key)},
+                max_keys=_COMPILER_GUIDANCE_MAX_FEATURES,
+            )
+            candidates.extend(gap_features)
         for key in _COMPILER_GUIDANCE_FRAME_AUDIT_STAGE_KEYS:
             add_stage_values(mapping.get(key))
 
