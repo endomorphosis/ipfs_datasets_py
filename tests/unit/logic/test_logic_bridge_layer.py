@@ -311,6 +311,48 @@ def test_external_prover_router_bridge_passes_guidance_to_router_backup(
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
+def test_external_prover_router_directly_promotes_packet_guidance() -> None:
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    class _FailingConfiguredProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            raise RuntimeError("configured prover unavailable")
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=False,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    router.provers = {"z3": _FailingConfiguredProver()}
+
+    result = router.route(
+        "O(disclose_notice(actor))",
+        strategy="sequential",
+        compiler_guidance={
+            "bundle": {
+                "program_synthesis_scope": "external_provers",
+                "source": "compiler_guidance_distillation_v1",
+                "target_component": "external_provers.router",
+                "target_metrics": [
+                    "legal_ir_multiview_proof_failure_ratio",
+                    "external_prover_failure_ratio",
+                ],
+                "vector_bundle": "score",
+            },
+            "samples": "compiler-guidance:repair_external_prover_router",
+        },
+    )
+
+    assert "native_syntactic" in router.get_available_provers()
+    assert result.prover_used == "native_syntactic"
+    assert result.is_compiled() is True
+
+
 def test_external_prover_router_promotes_compiler_guidance_sample_route() -> None:
     from ipfs_datasets_py.logic.bridge.external_prover_router import (
         _router_guidance_signal,

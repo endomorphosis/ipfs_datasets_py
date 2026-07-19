@@ -124,6 +124,10 @@ def _guidance_targets_external_prover_router(value: Any) -> bool:
             return True
         if _guidance_positive_support(_guidance_support_value(mapping)):
             return True
+        if _guidance_metric_targets_external_router(mapping.get("target_metrics")):
+            return True
+        if _guidance_loss_targets_external_router(mapping.get("loss")):
+            return True
 
     return False
 
@@ -142,6 +146,7 @@ def _guidance_route_names(mapping: Mapping[str, Any]) -> set[str]:
         "sample_id",
         "sample_ids",
         "samples",
+        "compiler_guidance_samples",
     )
     feature_route_keys = (
         "feature",
@@ -238,9 +243,14 @@ def _guidance_mappings(value: Any) -> tuple[Mapping[str, Any], ...]:
                 "compiler_guidance_bundle",
                 "metadata",
                 "compiler_guidance_attribution",
+                "compiler_guidance_evidence",
                 "attribution",
                 "evidence",
                 "hint_evidence",
+                "loss",
+                "target_metrics",
+                "validation_set",
+                "target_surface",
             ):
                 if key in candidate:
                     visit(candidate.get(key))
@@ -289,9 +299,18 @@ def _guidance_quality_gate_passes(value: Any) -> bool:
 
 
 def _guidance_support_value(value: Mapping[str, Any]) -> Any:
-    for key in ("support", "support_count", "matched_sample_count", "applied_count"):
+    for key in (
+        "support",
+        "support_count",
+        "matched_sample_count",
+        "applied_count",
+        "score",
+        "confidence",
+    ):
         if key in value:
             return value.get(key)
+    if str(value.get("vector_bundle") or "").strip().lower() == "score":
+        return 1
     return 0
 
 
@@ -300,6 +319,42 @@ def _guidance_positive_support(value: Any) -> bool:
         return float(value or 0.0) > 0.0
     except (TypeError, ValueError):
         return bool(value)
+
+
+def _guidance_metric_targets_external_router(value: Any) -> bool:
+    """Return True for metric/loss evidence unique to external prover routing."""
+
+    metrics: list[str] = []
+
+    def collect(candidate: Any) -> None:
+        if isinstance(candidate, Mapping):
+            for nested_value in candidate.values():
+                collect(nested_value)
+            return
+        if isinstance(candidate, (list, tuple, set, frozenset)):
+            for nested_value in candidate:
+                collect(nested_value)
+            return
+        text = str(candidate or "").strip().lower()
+        if not text:
+            return
+        metrics.extend(part.strip() for part in text.split(",") if part.strip())
+
+    collect(value)
+    return any(
+        metric in {
+            "external_prover_unavailable_loss",
+            "external_prover_failure_ratio",
+            "legal_ir_multiview_proof_failure_ratio",
+        }
+        for metric in metrics
+    )
+
+
+def _guidance_loss_targets_external_router(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return _guidance_metric_targets_external_router(value.keys())
+    return _guidance_metric_targets_external_router(value)
 
 
 @dataclass(frozen=True)
