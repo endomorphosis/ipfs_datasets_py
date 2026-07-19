@@ -188,6 +188,21 @@ _PACKET_000184_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "student_transportation_assignment",
     }
 )
+_PACKET_000188_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "crime_control_enforcement_program",
+        "economic_development_trade_benefit",
+        "federal_reclamation_project_advance",
+        "government_project_completion_advance",
+        "laborer_mechanic_wage_standard",
+        "missing_children_advisory_board",
+        "project_safe_neighborhoods_grant",
+        "public_building_work_contract",
+        "service_connected_disability_compensation",
+        "sub_saharan_africa_trade_benefit",
+        "veterans_compensation_benefit",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -214,6 +229,30 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("payment adjustment", "secretary_payment_adjustment"),
     ("rural development", "rural_development_grant_program"),
     ("grant program", "rural_development_grant_program"),
+    ("project safe neighborhoods", "project_safe_neighborhoods_grant"),
+    ("crime control and law enforcement", "crime_control_enforcement_program"),
+    ("law enforcement matters", "crime_control_enforcement_program"),
+    ("service-connected disability", "service_connected_disability_compensation"),
+    ("service connected disability", "service_connected_disability_compensation"),
+    ("compensation for service-connected disability", "veterans_compensation_benefit"),
+    ("compensation for service connected disability", "veterans_compensation_benefit"),
+    ("veterans' benefits", "veterans_compensation_benefit"),
+    ("veterans benefits", "veterans_compensation_benefit"),
+    ("sub-saharan africa", "sub_saharan_africa_trade_benefit"),
+    ("sub saharan africa", "sub_saharan_africa_trade_benefit"),
+    ("trade benefits", "sub_saharan_africa_trade_benefit"),
+    ("economic development related issues", "economic_development_trade_benefit"),
+    ("economic development", "economic_development_trade_benefit"),
+    ("advisory board on missing children", "missing_children_advisory_board"),
+    ("missing children", "missing_children_advisory_board"),
+    ("advances by government", "government_project_completion_advance"),
+    ("complete government reclamation projects", "federal_reclamation_project_advance"),
+    ("government reclamation projects", "federal_reclamation_project_advance"),
+    ("reclamation projects", "federal_reclamation_project_advance"),
+    ("public buildings and works", "public_building_work_contract"),
+    ("public buildings, grounds, and parks", "public_building_work_contract"),
+    ("laborers and mechanics", "laborer_mechanic_wage_standard"),
+    ("rate of wages", "laborer_mechanic_wage_standard"),
     ("lease of reserved lands", "reserved_land_lease_authority"),
     ("reserved lands", "reserved_land"),
     ("reservation of lands", "reserved_land"),
@@ -13209,6 +13248,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000188_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -14528,6 +14573,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000188_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
@@ -14576,6 +14625,27 @@ def _typed_decompiler_semantic_atom_target_families(
             "student_transportation_assignment",
         }:
             add("temporal")
+        if normalized_atom in {
+            "economic_development_trade_benefit",
+            "federal_reclamation_project_advance",
+            "government_project_completion_advance",
+            "laborer_mechanic_wage_standard",
+            "missing_children_advisory_board",
+            "project_safe_neighborhoods_grant",
+            "public_building_work_contract",
+            "service_connected_disability_compensation",
+            "sub_saharan_africa_trade_benefit",
+            "veterans_compensation_benefit",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "crime_control_enforcement_program",
+            "laborer_mechanic_wage_standard",
+            "missing_children_advisory_board",
+            "project_safe_neighborhoods_grant",
+            "public_building_work_contract",
+        }:
+            add("epistemic")
         if normalized_atom in {
             "adverse_action_procedure",
             "employee_notice_period",
@@ -16778,6 +16848,41 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_program_payment_adjustment_surface")
+    if re.search(
+        r"\b(?:project\s+safe\s+neighborhoods?|crime\s+control\s+and\s+law\s+enforcement|"
+        r"law\s+enforcement\s+matters?)\b",
+        lowered,
+    ):
+        add("uscode_project_safe_neighborhoods_surface")
+    if re.search(
+        r"\b(?:service[-\s]+connected\s+disabilit(?:y|ies)|veterans?'?\s+benefits?|"
+        r"compensation\s+for\s+service[-\s]+connected\s+disabilit(?:y|ies))\b",
+        lowered,
+    ):
+        add("uscode_veterans_disability_compensation_surface")
+    if re.search(
+        r"\b(?:sub[-\s]+saharan\s+africa|trade\s+benefits?|"
+        r"economic\s+development\s+related\s+issues?)\b",
+        lowered,
+    ):
+        add("uscode_sub_saharan_trade_benefit_surface")
+    if re.search(
+        r"\b(?:advisory\s+board\s+on\s+missing\s+children|missing\s+children)\b",
+        lowered,
+    ) and re.search(r"\b(?:repealed|pub\.|public\s+law)\b", lowered):
+        add("uscode_missing_children_repealed_advisory_surface")
+    if re.search(
+        r"\b(?:advances?\s+by\s+government|complete\s+government\s+reclamation\s+projects?|"
+        r"reclamation\s+projects?\s+begun|secretary\s+of\s+the\s+treasury)\b",
+        lowered,
+    ):
+        add("uscode_reclamation_project_advance_surface")
+    if re.search(
+        r"\b(?:public\s+buildings?\s+and\s+works?|public\s+buildings?,\s+grounds,\s+and\s+parks|"
+        r"laborers?\s+and\s+mechanics?|rate\s+of\s+wages?)\b",
+        lowered,
+    ):
+        add("uscode_public_building_wage_standard_surface")
     return profiles
 
 
@@ -17458,6 +17563,36 @@ def _typed_decompiler_predicate_classes(
             }
         ):
             add("temporal")
+    if normalized_atoms.intersection(_PACKET_000188_USCODE_RECONSTRUCTION_ATOMS):
+        add("authorization")
+        add("duty")
+        add("program")
+        add("statutory")
+        if normalized_atoms.intersection(
+            {
+                "economic_development_trade_benefit",
+                "federal_reclamation_project_advance",
+                "government_project_completion_advance",
+                "laborer_mechanic_wage_standard",
+                "missing_children_advisory_board",
+                "project_safe_neighborhoods_grant",
+                "public_building_work_contract",
+                "service_connected_disability_compensation",
+                "sub_saharan_africa_trade_benefit",
+                "veterans_compensation_benefit",
+            }
+        ):
+            add("temporal")
+        if normalized_atoms.intersection(
+            {
+                "crime_control_enforcement_program",
+                "laborer_mechanic_wage_standard",
+                "missing_children_advisory_board",
+                "project_safe_neighborhoods_grant",
+                "public_building_work_contract",
+            }
+        ):
+            add("reporting")
     if normalized_atoms.intersection(
         {
             "annual_assessment_report",

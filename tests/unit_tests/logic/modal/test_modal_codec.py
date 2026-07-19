@@ -50480,6 +50480,126 @@ def test_decompiler_reconstructs_packet_000901_adverse_action_equipment_payment_
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000188_public_program_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "34 U.S.C. 60701. Project Safe Neighborhoods. U.S.C. "
+                    "Title 34 - Crime Control and Law Enforcement Subtitle VI "
+                    "- Other Crime Control and Law Enforcement Matters."
+                ),
+                predicate="project_safe_neighborhoods_program",
+            ),
+            {
+                "crime_control_enforcement_program",
+                "project_safe_neighborhoods_grant",
+            },
+            {"frame->conditional_normative", "frame->deontic"},
+            "uscode_project_safe_neighborhoods_surface",
+        ),
+        (
+            _single_formula_document(
+                family="temporal",
+                symbol="F",
+                label="future",
+                text=(
+                    "19 U.S.C. 3738. Economic development related issues. "
+                    "This subchapter concerns extension of certain trade "
+                    "benefits to sub-Saharan Africa."
+                ),
+                predicate="sub_saharan_africa_trade_benefits",
+            ),
+            {
+                "economic_development_trade_benefit",
+                "sub_saharan_africa_trade_benefit",
+            },
+            {"temporal->deontic", "temporal->conditional_normative"},
+            "uscode_sub_saharan_trade_benefit_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "43 U.S.C. 397. Advances by Government for completion of "
+                    "projects initiated prior to June 25, 1910. The Secretary "
+                    "may complete Government reclamation projects."
+                ),
+                predicate="secretary_reclamation_project_advance",
+            ),
+            {
+                "federal_reclamation_project_advance",
+                "government_project_completion_advance",
+            },
+            {"deontic->temporal", "deontic->conditional_normative"},
+            "uscode_reclamation_project_advance_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "40 U.S.C. 8702. Public Buildings and Works. Public "
+                    "buildings, grounds, and parks contracts shall state the "
+                    "minimum rate of wages for laborers and mechanics."
+                ),
+                predicate="public_building_laborer_wage_standard",
+            ),
+            {
+                "laborer_mechanic_wage_standard",
+                "public_building_work_contract",
+            },
+            {"deontic->deontic", "deontic->temporal"},
+            "uscode_public_building_wage_standard_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": sorted(expected_pairs),
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "modal.frame_logic",
+                    "knowledge_graphs.neo4j_compat",
+                ],
+            }
+        ]
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
