@@ -217,6 +217,22 @@ _PACKET_000189_FRAME_RECONSTRUCTION_ATOMS = frozenset(
         "service_of_process_agent",
     }
 )
+_PACKET_000190_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "administrative_coordination_duty",
+        "flood_map_certification",
+        "flood_mapping_program",
+        "labor_dispute_injunction",
+        "national_emergency_labor_dispute",
+        "national_strategic_uranium_reserve",
+        "reserve_establishment_authority",
+        "special_adapted_housing_coordination",
+        "technical_mapping_advisory_review",
+        "uranium_reserve_resource",
+        "uscode_omitted_codification_record",
+        "uscode_repealed_editorial_record",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -483,6 +499,21 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("secretary recommendations", "secretary_recommendation_report"),
     ("comprehensive inventory", "inventory_study_report"),
     ("uranium inventory study", "uranium_inventory_study"),
+    ("national strategic uranium reserve", "national_strategic_uranium_reserve"),
+    ("uranium reserve", "uranium_reserve_resource"),
+    ("natural uranium and uranium equivalents", "uranium_reserve_resource"),
+    ("flood insurance rate map certification", "flood_map_certification"),
+    ("flood mapping program", "flood_mapping_program"),
+    ("flood insurance rate map", "flood_map_certification"),
+    ("technical mapping advisory council", "technical_mapping_advisory_review"),
+    (
+        "only after review by the technical mapping advisory council",
+        "technical_mapping_advisory_review",
+    ),
+    ("injunctions during national emergencies", "national_emergency_labor_dispute"),
+    ("injunctions during national emerg", "national_emergency_labor_dispute"),
+    ("conciliation of labor disputes", "labor_dispute_injunction"),
+    ("labor disputes national emergencies", "national_emergency_labor_dispute"),
     ("inventory study", "inventory_study_report"),
     ("generation-skipping transfer", "generation_skipping_transfer_tax"),
     ("generation skipping transfer", "generation_skipping_transfer_tax"),
@@ -557,6 +588,16 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("commonwealth army veterans", "commonwealth_army_veteran_benefit"),
     ("specially adapted housing assistance", "special_adapted_housing_assistance"),
     ("specially adapted housing", "special_adapted_housing_assistance"),
+    (
+        "coordination of administration of benefits",
+        "administrative_coordination_duty",
+    ),
+    ("coordination of administration", "administrative_coordination_duty"),
+    ("coordination of administrat", "administrative_coordination_duty"),
+    (
+        "coordination of administration of specially adapted housing assistance",
+        "special_adapted_housing_coordination",
+    ),
     ("republic of the philippines", "philippines_veteran_assistance"),
     ("assist the republic of the philippines", "philippines_veteran_assistance"),
     ("common-funded budgets of nato", "nato_common_funded_budget"),
@@ -5551,6 +5592,13 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS:
         if re.search(rf"(?<!\w){re.escape(keyword)}(?:d|ed|s)?(?!\w)", normalized):
             add(keyword)
+    if "omitted" in tokens and re.search(r"\b(?:editorial\s+notes|codification)\b", normalized):
+        add("uscode_omitted_codification_record")
+    if "repealed" in tokens and re.search(
+        r"\b(?:pub\.?|public\s+law|stat\.?|section|secs?\.?)\b",
+        normalized,
+    ):
+        add("uscode_repealed_editorial_record")
     for term in _defined_term_atoms_from_text(text):
         add(term)
     if _has_definition_semantics(normalized):
@@ -5619,6 +5667,23 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("office_establishment")
+    if re.search(
+        r"\b(?:there\s+is\s+hereby\s+)?established\b.{0,120}"
+        r"\b(?:reserve|national\s+strategic\s+uranium\s+reserve)\b",
+        normalized,
+    ):
+        add("reserve_establishment_authority")
+    if re.search(
+        r"\bnational\s+strategic\s+uranium\s+reserve\b|"
+        r"\buranium\s+reserve\b.{0,80}\b(?:secretary|reserve|direction|control)\b",
+        normalized,
+    ):
+        add("national_strategic_uranium_reserve")
+    if re.search(
+        r"\b(?:natural\s+uranium|uranium\s+equivalents?|uranium\s+inventory)\b",
+        normalized,
+    ):
+        add("uranium_reserve_resource")
     if re.search(
         r"\b(?:there\s+is\s+hereby\s+)?established\b.{0,120}\bfund\b",
         normalized,
@@ -5951,6 +6016,24 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("audit_requirement")
     if re.search(
+        r"\bflood\s+insurance\s+rate\s+maps?\b.{0,80}\bcertif(?:y|ication|ied)\b|"
+        r"\bcertif(?:y|ication|ied)\b.{0,80}\bflood\s+insurance\s+rate\s+maps?\b",
+        normalized,
+    ):
+        add("flood_map_certification")
+    if re.search(
+        r"\bflood\s+mapping\s+program\b|"
+        r"\bmapping\s+program\b.{0,80}\bnational\s+flood\s+insurance\s+program\b",
+        normalized,
+    ):
+        add("flood_mapping_program")
+    if re.search(
+        r"\btechnical\s+mapping\s+advisory\s+council\b|"
+        r"\bonly\s+after\s+review\b.{0,100}\btechnical\s+mapping\b",
+        normalized,
+    ):
+        add("technical_mapping_advisory_review")
+    if re.search(
         r"\b(?:shall|must)\s+(?:submit|make|file|provide)\b.{0,80}\breports?\b",
         normalized,
     ):
@@ -5972,6 +6055,18 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("study_report_duty")
+    if re.search(
+        r"\binjunctions?\b.{0,100}\b(?:national\s+emergenc(?:y|ies)|labor\s+disputes?)\b|"
+        r"\b(?:national\s+emergenc(?:y|ies)|labor\s+disputes?)\b.{0,100}\binjunctions?\b",
+        normalized,
+    ):
+        add("labor_dispute_injunction")
+    if re.search(
+        r"\bnational\s+emergenc(?:y|ies)\b.{0,100}\blabor\s+disputes?\b|"
+        r"\blabor\s+disputes?\b.{0,100}\bnational\s+emergenc(?:y|ies)\b",
+        normalized,
+    ):
+        add("national_emergency_labor_dispute")
     if re.search(
         r"\b(?:transfer|transferred|transferring)\b.{0,80}\bfunds?\b",
         normalized,
@@ -6226,6 +6321,15 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("special_adapted_housing_assistance")
+    if re.search(
+        r"\bcoordination\b.{0,80}\b(?:administration|benefits?|"
+        r"special(?:ly)?\s+adapted\s+housing)\b|"
+        r"\b(?:administration|benefits?)\b.{0,80}\bcoordination\b",
+        normalized,
+    ):
+        add("administrative_coordination_duty")
+        if re.search(r"\bspecial(?:ly)?\s+adapted\s+housing\b", normalized):
+            add("special_adapted_housing_coordination")
     if re.search(
         r"\bcertification\b.{0,80}\bsecretar(?:y|ies)\b|"
         r"\bsecretar(?:y|ies)\b.{0,80}\bcertif(?:y|ies|ied|ication)\b",
@@ -14522,6 +14626,18 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         "program_payment_authority",
         "rural_development_grant_program",
         "secretary_payment_adjustment",
+        "administrative_coordination_duty",
+        "flood_map_certification",
+        "flood_mapping_program",
+        "labor_dispute_injunction",
+        "national_emergency_labor_dispute",
+        "national_strategic_uranium_reserve",
+        "reserve_establishment_authority",
+        "special_adapted_housing_coordination",
+        "technical_mapping_advisory_review",
+        "uranium_reserve_resource",
+        "uscode_omitted_codification_record",
+        "uscode_repealed_editorial_record",
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -14674,6 +14790,29 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000190_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in {
+            "administrative_coordination_duty",
+            "flood_map_certification",
+            "flood_mapping_program",
+            "labor_dispute_injunction",
+            "national_emergency_labor_dispute",
+            "technical_mapping_advisory_review",
+            "uranium_reserve_resource",
+            "uscode_omitted_codification_record",
+            "uscode_repealed_editorial_record",
+        }:
+            add("temporal")
+        if normalized_atom in {
+            "flood_map_certification",
+            "technical_mapping_advisory_review",
+            "uscode_omitted_codification_record",
+            "uscode_repealed_editorial_record",
+        }:
+            add("epistemic")
         if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
@@ -16980,6 +17119,34 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_public_building_wage_standard_surface")
+    if re.search(
+        r"\b(?:coordination\s+of\s+administration|special(?:ly)?\s+adapted\s+housing)\b",
+        lowered,
+    ):
+        add("uscode_special_housing_coordination_surface")
+    if re.search(
+        r"\b(?:flood\s+insurance\s+rate\s+maps?|flood\s+mapping\s+program|"
+        r"technical\s+mapping\s+advisory\s+council)\b",
+        lowered,
+    ):
+        add("uscode_flood_map_certification_surface")
+    if re.search(
+        r"\b(?:national\s+strategic\s+uranium\s+reserve|natural\s+uranium|"
+        r"uranium\s+equivalents?|uranium\s+reserve)\b",
+        lowered,
+    ):
+        add("uscode_uranium_reserve_surface")
+    if re.search(
+        r"\b(?:injunctions?\s+during\s+national\s+emergenc(?:y|ies)|"
+        r"conciliation\s+of\s+labor\s+disputes?|labor\s+disputes?)\b",
+        lowered,
+    ):
+        add("uscode_labor_dispute_injunction_surface")
+    if re.search(r"\bomitted\b", lowered) and re.search(
+        r"\b(?:editorial\s+notes|codification)\b",
+        lowered,
+    ):
+        add("uscode_omitted_codification_surface")
     return profiles
 
 

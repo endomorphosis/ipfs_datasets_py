@@ -50600,6 +50600,152 @@ def test_decompiler_reconstructs_packet_000188_public_program_surfaces() -> None
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000190_modal_ir_residual_slots() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "38 U.S.C. 2107. Coordination of administration of "
+                    "specially adapted housing assistance benefits. The "
+                    "Secretary shall coordinate administration of benefits "
+                    "under this chapter."
+                ),
+                predicate="secretary_coordinate_special_housing_benefits",
+            ),
+            {
+                "administrative_coordination_duty",
+                "special_adapted_housing_assistance",
+                "special_adapted_housing_coordination",
+            },
+            {"deontic->deontic", "deontic->temporal"},
+            "uscode_special_housing_coordination_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 4101d. Flood insurance rate map certification. "
+                    "The Administrator shall implement a flood mapping program "
+                    "for the National Flood Insurance Program only after review "
+                    "by the Technical Mapping Advisory Council."
+                ),
+                predicate="administrator_implement_flood_mapping_program",
+                conditions=[
+                    "only after review by the Technical Mapping Advisory Council"
+                ],
+            ),
+            {
+                "flood_insurance_program",
+                "flood_map_certification",
+                "flood_mapping_program",
+                "technical_mapping_advisory_review",
+            },
+            {"frame->conditional_normative", "frame->deontic", "frame->temporal"},
+            "uscode_flood_map_certification_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "42 U.S.C. 2296b-1. National Strategic Uranium Reserve. "
+                    "There is hereby established the National Strategic Uranium "
+                    "Reserve under the direction and control of the Secretary. "
+                    "The Reserve shall consist of natural uranium and uranium "
+                    "equivalents."
+                ),
+                predicate="national_strategic_uranium_reserve",
+            ),
+            {
+                "national_strategic_uranium_reserve",
+                "reserve_establishment_authority",
+                "uranium_reserve_resource",
+            },
+            {"deontic->deontic", "deontic->frame", "deontic->temporal"},
+            "uscode_uranium_reserve_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "29 U.S.C. 179. Injunctions during national emergencies. "
+                    "This subchapter concerns conciliation of labor disputes "
+                    "during national emergencies."
+                ),
+                predicate="labor_dispute_national_emergency_injunction",
+            ),
+            {
+                "labor_dispute_injunction",
+                "national_emergency_labor_dispute",
+            },
+            {"frame->conditional_normative", "frame->deontic", "frame->temporal"},
+            "uscode_labor_dispute_injunction_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 1453. Omitted Editorial Notes Codification. "
+                    "Section 1453 was omitted from the Code."
+                ),
+                predicate="section_omitted_codification_record",
+            ),
+            {"omitted", "uscode_omitted_codification_record"},
+            {"frame->conditional_normative", "frame->deontic", "frame->temporal"},
+            "uscode_omitted_codification_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": sorted(expected_pairs),
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "knowledge_graphs.neo4j_compat",
+                    "modal.frame_logic",
+                ],
+            }
+        ]
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "knowledge_graphs.neo4j_compat"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
