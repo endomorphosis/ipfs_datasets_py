@@ -1002,6 +1002,7 @@ def _synthetic_source_proof_data(
     source_text: str,
     public_inputs: Mapping[str, Any],
 ) -> bytes:
+    """Return verifier-compatible deterministic proof bytes for a source record."""
     payload = {
         "public_inputs": _canonical_public_inputs(public_inputs),
         "source_id": source_id,
@@ -1015,7 +1016,26 @@ def _synthetic_source_proof_data(
     ).encode(
         "utf-8",
     )
-    return b"LEGALIR-ZKP-SOURCE\x00" + hashlib.sha256(encoded).digest()
+    proof_hash = hashlib.sha256(b"LEGALIR-ZKP-SOURCE-PROOF\x00" + encoded).digest()
+    circuit_hash = hashlib.sha256(b"LEGALIR-ZKP-SOURCE-CIRCUIT\x00" + encoded).digest()
+    witness_hash = hashlib.sha256(b"LEGALIR-ZKP-SOURCE-WITNESS\x00" + encoded).digest()
+    padding_basis = hashlib.sha256(b"LEGALIR-ZKP-SOURCE-PADDING\x00" + encoded).digest()
+    padding = bytearray()
+    counter = 0
+    while len(padding) < 56:
+        padding.extend(
+            hashlib.sha256(
+                padding_basis + counter.to_bytes(4, "big", signed=False)
+            ).digest()
+        )
+        counter += 1
+    return (
+        _SIMZKP_MAGIC
+        + proof_hash
+        + circuit_hash
+        + witness_hash
+        + bytes(padding[:56])
+    )
 
 
 def _proofless_source_attestation_record(
@@ -1078,6 +1098,13 @@ def _proofless_source_attestation_record(
         attestation_view["attestation_view_version"]
     )
     proof_hash = hashlib.sha256(proof_data).hexdigest()
+    proof_metadata = {
+        **metadata,
+        "attestation_view": attestation_view,
+        "backend": "source_attestation",
+        "proof_system": "deterministic_source_attestation",
+        "security_level": 128,
+    }
 
     completed = dict(record)
     completed["attestation_ref"] = attestation_view["attestation_ref"]
@@ -1087,6 +1114,13 @@ def _proofless_source_attestation_record(
     )
     completed["axioms_commitment"] = axioms_commitment
     completed["circuit_ref"] = attestation_view["circuit_ref"]
+    completed["proof"] = {
+        "proof_data": proof_data.hex(),
+        "public_inputs": completed_public_inputs,
+        "metadata": proof_metadata,
+        "timestamp": 0.0,
+        "size_bytes": len(proof_data),
+    }
     completed["proof_hash"] = proof_hash
     completed["public_inputs"] = completed_public_inputs
     completed["ruleset_id"] = public_inputs["ruleset_id"]

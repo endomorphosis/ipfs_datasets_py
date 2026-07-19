@@ -375,10 +375,37 @@ def test_proofless_us_code_sample_gets_source_attestation_view():
     assert completed["attestation_ref"] == completed["public_inputs"]["attestation_ref"]
     assert completed["attestation_view"]["attestation_ref"] == completed["attestation_ref"]
     assert completed["circuit_ref"] == "legal_ir_source_attestation@v1"
+    assert completed["proof"]["public_inputs"]["attestation_ref"] == completed["attestation_ref"]
+    assert completed["proof"]["metadata"]["attestation_view"]["attestation_ref"] == (
+        completed["attestation_ref"]
+    )
     assert completed["proof_hash"]
     assert completed["ruleset_id"] == "LegalIR_Source_Attestation_v1"
     assert completed["theorem_hash"] == completed["public_inputs"]["theorem_hash"]
     assert zkp_attestation_legal_ir_view_loss([raw_sample]) == 0.0
+
+
+def test_proofless_us_code_source_attestation_verifies():
+    from ipfs_datasets_py.logic.zkp import ZKPProof, ZKPVerifier
+
+    raw_sample = {
+        "citation": "42 U.S.C. 5183.",
+        "sample_id": "us-code-42-5183.-f1276b109cf80b41",
+        "section": "5183.",
+        "source": "us_code",
+        "text": (
+            "\u00a75183. Crisis counseling assistance and training (a) In general "
+            "The President is authorized to provide professional counseling services."
+        ),
+        "title": "42",
+    }
+
+    completed = complete_zkp_attestation_record(raw_sample)
+    proof = ZKPProof.from_dict(completed["proof"])
+
+    assert completed["proof_hash"] == completed["attestation_view"]["proof_digest"]
+    assert proof.public_inputs["attestation_ref"] == completed["attestation_ref"]
+    assert ZKPVerifier(backend="simulated").verify_proof(proof) is True
 
 
 @pytest.mark.parametrize(
