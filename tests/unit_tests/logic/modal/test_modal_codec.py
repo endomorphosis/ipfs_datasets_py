@@ -623,12 +623,10 @@ def test_modal_registry_packet_005912_exposes_compiler_ambiguity_policy_pairs() 
 
 def test_modal_registry_packet_000165_exposes_compiler_ambiguity_policy_pairs() -> None:
     expected_pairs = {
-        ("deontic", "conditional_normative"),
-        ("deontic", "deontic"),
-        ("frame", "conditional_normative"),
-        ("frame", "deontic"),
+        ("conditional_normative", "conditional_normative"),
+        ("conditional_normative", "deontic"),
+        ("deontic", "frame"),
         ("frame", "temporal"),
-        ("temporal", "epistemic"),
     }
 
     assert expected_pairs.issubset(set(COMPILER_AMBIGUITY_PACKET_000165_FAMILY_PAIRS))
@@ -1450,12 +1448,9 @@ def test_modal_registry_packet_000496_exposes_modal_ambiguity_policy() -> None:
 def test_modal_registry_packet_000165_exposes_modal_ambiguity_policy() -> None:
     expected_pairs = (
         ("conditional_normative", "conditional_normative"),
-        ("deontic", "conditional_normative"),
-        ("deontic", "deontic"),
-        ("frame", "conditional_normative"),
-        ("frame", "deontic"),
+        ("conditional_normative", "deontic"),
+        ("deontic", "frame"),
         ("frame", "temporal"),
-        ("temporal", "epistemic"),
     )
 
     assert COMPILER_AMBIGUITY_PACKET_000165_FAMILY_PAIRS == expected_pairs
@@ -1505,33 +1500,33 @@ def test_modal_compiler_surfaces_packet_000165_adaptive_ambiguities(
     )
     family_specs = {
         "conditional_normative": ("KD", "O|", "conditional_obligation"),
+        "deontic": ("D", "O", "obligation"),
         "frame": ("FRAME_BM25", "Frame", "frame"),
-        "temporal": ("LTL", "F", "eventually"),
     }
     scenarios = (
         (
-            "us-code-30-501-3c448e13ffc98255",
+            "us-code-36-150903-b0591f45ce9a3faf",
             "conditional_normative",
             "conditional_normative",
-            0.058817163597,
+            0.051221530715,
         ),
         (
-            "us-code-20-4511-d284887cf3815886",
-            "frame",
+            "us-code-43-433a.-f13d8a3ff4f56a04",
+            "conditional_normative",
             "deontic",
-            -0.999461273225,
+            -0.247537462115,
         ),
         (
-            "us-code-42-2415 to 2421.-e3358d996b11fe81",
+            "us-code-42-6244.-3e0d2b124eabe490",
+            "deontic",
+            "frame",
+            -0.329037489063,
+        ),
+        (
+            "us-code-42-2751.-d7af5ae7f6f1c93a",
             "frame",
             "temporal",
-            -0.970712551026,
-        ),
-        (
-            "us-code-42-7195.-122e167c4369367c",
-            "temporal",
-            "epistemic",
-            -0.161220066487,
+            -0.068775319494,
         ),
     )
 
