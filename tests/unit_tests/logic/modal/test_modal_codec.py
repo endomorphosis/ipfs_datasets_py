@@ -4541,6 +4541,56 @@ def test_modal_ir_graph_projection_repairs_underweighted_frame_family_distributi
     assert "frame" not in distribution
 
 
+def test_modal_ir_graph_projection_repairs_frame_heavy_temporal_underweight() -> None:
+    document = ModalIRDocument(
+        document_id="frame-temporal-guidance-doc",
+        source="compiler_guidance_distillation_v1",
+        normalized_text=(
+            "No Member shall perform the contract within the period provided "
+            "and before the effective date."
+        ),
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "frame-temporal-guidance-doc",
+                    "predicate": "type",
+                    "object": "legal_modal_document",
+                },
+                {
+                    "subject": "frame-temporal-guidance-doc",
+                    "predicate": "selected_ontology_frame",
+                    "object": "contract_authority",
+                },
+            ],
+            ontology_name="sample_flogic",
+        ),
+        metadata={
+            "compiler_guidance_legal_ir_predicted_view_distribution": {
+                "modal.frame_logic": 0.572,
+                "deontic.ir": 0.208,
+                "temporal": 0.050,
+                "conditional_normative": 0.170,
+            },
+            "compiler_guidance_legal_ir_target_view_distribution": {
+                "modal.frame_logic": 0.474,
+                "deontic.ir": 0.368,
+                "temporal": 0.158,
+            },
+        },
+    )
+
+    graph_data = modal_ir_to_neo4j_graph_data(document)
+    distribution = graph_data.metadata[
+        "canonical_legal_ir_projection_view_distribution"
+    ]
+
+    assert distribution["deontic.ir"] == 0.368
+    assert distribution["temporal"] == 0.158
+    assert distribution["modal.frame_logic"] < 0.572
+    assert distribution["modal.frame_logic"] > distribution["temporal"]
+    assert "frame" not in distribution
+
+
 def test_flogic_graph_projection_extracts_weighted_packet_evidence_json() -> None:
     graph_data = flogic_triples_to_graph_data(
         [

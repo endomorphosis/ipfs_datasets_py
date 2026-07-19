@@ -897,30 +897,43 @@ def _frame_logic_repaired_view_distribution(
     predicted: Mapping[str, float],
     target: Mapping[str, float],
 ) -> Dict[str, float]:
-    """Preserve canonical frame-family mass when learned logits underweight it."""
+    """Preserve canonical view mass when learned frame logits are misbalanced.
 
-    frame_target = max(0.0, float(target.get("modal.frame_logic", 0.0) or 0.0))
-    if frame_target <= 0.0:
-        return {}
-    frame_target = min(1.0, frame_target)
-    frame_predicted = max(
-        0.0,
-        float(predicted.get("modal.frame_logic", 0.0) or 0.0),
-    )
-    if frame_target <= frame_predicted:
+    Frame-logic guidance historically needed an explicit repair when learned
+    logits underweighted ``modal.frame_logic``.  The same ontology constraint is
+    needed in the opposite direction: if a frame-heavy prediction underweights
+    target-positive temporal or deontic evidence, carry the target view weights
+    into the graph projection and rescale the remaining predicted mass.
+    """
+
+    positive_target_repairs: Dict[str, float] = {}
+    for view, raw_target in target.items():
+        target_weight = max(0.0, float(raw_target or 0.0))
+        if target_weight <= 0.0:
+            continue
+        predicted_weight = max(0.0, float(predicted.get(view, 0.0) or 0.0))
+        if target_weight > predicted_weight:
+            positive_target_repairs[view] = min(1.0, target_weight)
+    if not positive_target_repairs:
         return {}
 
-    non_frame_predicted = {
+    repair_total = sum(positive_target_repairs.values())
+    if repair_total <= 0.0:
+        return {}
+    if repair_total >= 1.0:
+        return _normalize_view_distribution(positive_target_repairs)
+
+    remaining_predicted = {
         view: weight
         for view, weight in predicted.items()
-        if view != "modal.frame_logic" and weight > 0.0
+        if view not in positive_target_repairs and weight > 0.0
     }
-    repaired: Dict[str, float] = {"modal.frame_logic": frame_target}
-    remainder = max(0.0, 1.0 - frame_target)
-    non_frame_total = sum(non_frame_predicted.values())
-    if remainder > 0.0 and non_frame_total > 0.0:
-        for view, weight in sorted(non_frame_predicted.items()):
-            repaired[view] = remainder * (weight / non_frame_total)
+    repaired: Dict[str, float] = dict(positive_target_repairs)
+    remainder = max(0.0, 1.0 - repair_total)
+    remaining_total = sum(remaining_predicted.values())
+    if remainder > 0.0 and remaining_total > 0.0:
+        for view, weight in sorted(remaining_predicted.items()):
+            repaired[view] = remainder * (weight / remaining_total)
     return {
         view: weight
         for view, weight in sorted(repaired.items())
