@@ -255,6 +255,25 @@ def test_external_prover_router_promotes_nested_distillation_bundle() -> None:
     assert report.proof_gate.compiles is True
 
 
+def test_external_prover_router_promotes_serialized_packet_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        _router_guidance_signal,
+    )
+
+    signal = _router_guidance_signal(
+        (
+            '{"program_synthesis_scope":"external_provers",'
+            '"route":"repair_external_prover_router",'
+            '"source":"compiler_guidance_distillation_v1",'
+            '"target_component":"external_provers.router"}'
+        )
+    )
+
+    assert signal["active"] is True
+    assert signal["prover_gate_hint"] is True
+    assert signal["routes"] == ("repair_external_prover_router",)
+
+
 def test_external_prover_router_bridge_passes_guidance_to_router_backup(
     monkeypatch,
 ) -> None:

@@ -527,10 +527,9 @@ def _router_compatibility_soft_pass_gate(proof_gate: ProofGateResult) -> ProofGa
     )
 
 
-def _router_guidance_signal(
-    compiler_guidance: Optional[Mapping[str, Any]],
-) -> dict[str, Any]:
-    if not isinstance(compiler_guidance, Mapping):
+def _router_guidance_signal(compiler_guidance: Any) -> dict[str, Any]:
+    compiler_guidance = _router_guidance_mapping(compiler_guidance)
+    if not compiler_guidance:
         return {"active": False, "prover_gate_hint": False, "routes": ()}
     routes = _router_guidance_routes(compiler_guidance)
     return {
