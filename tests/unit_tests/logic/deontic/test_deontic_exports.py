@@ -1401,6 +1401,48 @@ def test_ir_decoder_record_exports_grounded_reconstruction_for_proof_ready_claus
     assert all(phrase["spans"] for phrase in record["phrase_provenance"])
 
 
+def test_ir_decoder_record_accepts_legacy_deterministic_export_readiness():
+    text = "The Secretary shall publish the notice."
+    element = {
+        "schema_version": "legal_norm_ir-v1",
+        "source_id": "deontic:legacy-deterministic-readiness",
+        "text": text,
+        "support_text": text,
+        "support_span": [0, len(text)],
+        "norm_type": "obligation",
+        "deontic_operator": "O",
+        "subject": ["Secretary"],
+        "action": ["publish the notice"],
+        "field_spans": {
+            "subject": [4, 13],
+            "modal": [14, 19],
+            "action": [20, 38],
+        },
+        "parser_warnings": ["legacy_warning_resolved_by_ir"],
+        "promotable_to_theorem": True,
+        "export_readiness": {
+            "proof_ready": True,
+            "export_requires_validation": False,
+            "export_repair_required": False,
+            "deterministic_resolution": {
+                "type": "compiler_guidance_deontic_ir_reconstruction",
+            },
+        },
+    }
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_decoder_record_from_ir(norm)
+
+    assert norm.decoder_requires_validation is True
+    assert record["missing_slots"] == []
+    assert record["requires_validation"] is False
+    assert record["decoder_validation_resolution"] == {
+        "type": "formula_deterministic_readiness",
+        "formula_resolution_type": "compiler_guidance_deontic_ir_reconstruction",
+        "resolved_parser_warnings": ["legacy_warning_resolved_by_ir"],
+    }
+
+
 def test_ir_decoder_record_preserves_blocked_reference_exception_without_promotion():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
