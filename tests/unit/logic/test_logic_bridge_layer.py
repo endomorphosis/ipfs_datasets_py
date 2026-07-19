@@ -9546,6 +9546,66 @@ def test_cec_dcec_bridge_keeps_subsection_dash_first_clause() -> None:
     assert "designation_of_the_agent" not in proof_record["proof_input"]
 
 
+def test_cec_dcec_bridge_extracts_corporation_charter_power_without_heading_pollution() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("corporation charter power should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "36 U.S.C. 20902. Powers. The corporation is a body corporate "
+            "and may adopt bylaws, have perpetual succession, hold property, "
+            "sue and be sued, and act through a board of directors."
+        ),
+        document_id="us-code-36-20902-charter-power",
+        citation="36 U.S.C. 20902",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "corporation"
+    assert event_record["event"].startswith("adopt_bylaws")
+    assert "body_corporate" not in proof_record["proof_input"]
+    assert proof_record["proof_input"].startswith("P(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
+def test_cec_dcec_bridge_extracts_corporation_perpetual_existence_as_lifecycle_state() -> None:
+    from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
+
+    class _NoisyConverter:
+        @staticmethod
+        def convert(_text: str):
+            raise AssertionError("corporation perpetual existence should be deterministic")
+
+    adapter = CecDcecBridgeAdapter(converter=_NoisyConverter())
+    report = adapter.evaluate(
+        (
+            "36 U.S.C. 150903. Powers. The corporation has perpetual "
+            "existence and the powers provided in its bylaws."
+        ),
+        document_id="us-code-36-150903-charter-lifecycle",
+        citation="36 U.S.C. 150903",
+    )
+
+    event_record = report.ir_document.views["cec_events"].payload["events"][0]
+    proof_record = report.ir_document.views["dcec_formula"].payload["records"][0]
+
+    assert event_record["actor"] == "corporation"
+    assert event_record["event"].startswith("have_perpetual_existence")
+    assert proof_record["proof_input"].startswith("LifecycleState(")
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
+
+
 def test_cec_dcec_bridge_emits_parse_profile_for_fallback_event_formulas() -> None:
     from ipfs_datasets_py.logic.bridge.cec_dcec import CecDcecBridgeAdapter
 

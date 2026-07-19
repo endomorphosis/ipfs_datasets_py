@@ -3599,6 +3599,37 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "support_text": corporation_records_match.group(0)[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
+    corporation_charter_power_match = re.search(
+        r"\b(?P<actor>the\s+corporation)\s+"
+        r"(?:is\s+a\s+body\s+corporate\s+and\s+)?"
+        r"(?P<modal>may|has|shall\s+have)\s+"
+        r"(?P<action>(?:adopt\s+bylaws|(?:have\s+)?perpetual\s+"
+        r"(?:succession|existence)|hold\s+property|sue\s+and\s+be\s+sued|"
+        r"act\s+through\s+a\s+board|exercise\s+the\s+powers|"
+        r"have\s+the\s+powers)[^.;]*)",
+        operative_text.lower(),
+    )
+    if corporation_charter_power_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        action = _clean_operational_slot(
+            corporation_charter_power_match.group("action")
+        )
+        if corporation_charter_power_match.group("modal") in {"has", "shall have"}:
+            action = re.sub(r"^(?:the\s+)?", "have ", action, count=1).strip()
+            action = re.sub(r"^have\s+have\s+", "have ", action)
+        return {
+            "actor": _clean_operational_actor_slot(
+                corporation_charter_power_match.group("actor")
+            ),
+            "action": action,
+            "modality": "permitted",
+            "norm_type": "instrument_lifecycle"
+            if re.match(r"^have\s+perpetual\s+(?:succession|existence)\b", action)
+            else "permitted",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": corporation_charter_power_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
     patterns = (
         (
             "obligated",
