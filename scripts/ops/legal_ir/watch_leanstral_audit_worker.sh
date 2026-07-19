@@ -278,6 +278,7 @@ run_audit_if_due() {
     --retry-backoff-seconds "${LEANSTRAL_AUDIT_RETRY_BACKOFF_SECONDS:-2}" \
     --snapshot-selection "${LEANSTRAL_AUDIT_SNAPSHOT_SELECTION:-latest_canonical_snapshot}" \
     --min-snapshot-records "${LEANSTRAL_AUDIT_MIN_SNAPSHOT_RECORDS:-25}" \
+    --max-records "${LEANSTRAL_AUDIT_MAX_RECORDS:-0}" \
     --max-work-items "${LEANSTRAL_AUDIT_MAX_WORK_ITEMS:-2}" \
     --max-evidence-packets-per-item "${LEANSTRAL_AUDIT_MAX_EVIDENCE_PACKETS_PER_ITEM:-1}" \
     --evidence-refresh-policy latest_compiler_snapshot \
