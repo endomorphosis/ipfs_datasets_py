@@ -2,6 +2,7 @@
 
 from ipfs_datasets_py.logic.deontic import LegalNormIR, parser_element_to_ir
 from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+from ipfs_datasets_py.logic.deontic.exports import build_decoder_record_from_ir
 from ipfs_datasets_py.logic.deontic.ir import legal_norm_ir_slot_provenance
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
@@ -222,6 +223,74 @@ def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_war
     assert "cross_reference_requires_resolution" in unresolved_exception_ir.blockers
     assert "exception_requires_scope_review" in unresolved_exception_ir.blockers
     assert unresolved_exception_ir.decoder_requires_validation is True
+
+
+def test_legal_norm_ir_merges_persisted_formula_readiness_from_top_level_row() -> None:
+    source_text = "The Secretary shall publish notice except as provided in section 552."
+    exception_start = source_text.index("except")
+    reference_start = source_text.index("section 552")
+    element = {
+        "schema_version": "legal_norm_ir-v1",
+        "source_id": "legacy:deontic:persisted-top-level-readiness",
+        "text": source_text,
+        "support_text": source_text,
+        "support_span": [0, len(source_text)],
+        "norm_type": "obligation",
+        "deontic_operator": "shall",
+        "subject": ["Secretary"],
+        "action": ["publish notice"],
+        "parser_warnings": [
+            "cross_reference_requires_resolution",
+            "exception_requires_scope_review",
+        ],
+        "quality": {
+            "export_readiness": {
+                "blockers": [
+                    "cross_reference_requires_resolution",
+                    "exception_requires_scope_review",
+                ],
+            },
+        },
+        "export_readiness": {
+            "formula_proof_ready": True,
+            "formula_requires_validation": False,
+            "formula_repair_required": False,
+            "deterministic_resolution": {
+                "type": "resolved_same_document_reference_exception",
+            },
+        },
+        "field_spans": {
+            "subject": [4, 13],
+            "modality": [14, 19],
+            "action": [20, 34],
+        },
+        "exception_details": [
+            {
+                "value": "except as provided in section 552",
+                "span": [exception_start, len(source_text) - 1],
+            },
+        ],
+        "cross_reference_details": [
+            {
+                "value": "section 552",
+                "span": [reference_start, reference_start + len("section 552")],
+            },
+        ],
+    }
+
+    ir = LegalNormIR.from_parser_element(element)
+    decoder_record = build_decoder_record_from_ir(ir)
+
+    assert ir.quality.export_readiness["blockers"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert ir.quality.export_readiness["formula_proof_ready"] is True
+    assert decoder_record["missing_slots"] == []
+    assert decoder_record["requires_validation"] is False
+    assert decoder_record["decoder_validation_resolution"]["type"] == (
+        "formula_deterministic_readiness"
+    )
 
 
 def test_legal_norm_ir_recovers_clipped_negative_action_from_field_span() -> None:
