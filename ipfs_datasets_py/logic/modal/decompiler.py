@@ -4208,6 +4208,18 @@ def _typed_ir_reconstruction_phrases(
         exception_values=exception_values,
         semantic_atoms=semantic_atoms,
     )
+    semantic_profile_texts = _typed_ir_semantic_profile_texts(
+        source_family=family,
+        targets=ordered_targets,
+        force=force,
+        polarity=polarity,
+        predicate_text=predicate_text,
+        roles=roles,
+        condition_values=condition_values,
+        exception_values=exception_values,
+        semantic_atoms=semantic_atoms,
+        legal_ir_view_support=legal_ir_view_support,
+    )
 
     phrases: List[DecodedModalPhrase] = []
     if semantic_surface:
@@ -4268,6 +4280,23 @@ def _typed_ir_reconstruction_phrases(
             DecodedModalPhrase(
                 text=_slot_safe_family_pair_key(scope_frame_text),
                 slot="typed_ir_scope_frame_signature",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    for semantic_profile_text in semantic_profile_texts:
+        phrases.append(
+            DecodedModalPhrase(
+                text=semantic_profile_text,
+                slot="typed_ir_semantic_profile_reconstruction",
+                spans=spans,
+                provenance_only=provenance_only,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=_slot_safe_family_pair_key(semantic_profile_text),
+                slot="typed_ir_semantic_profile_signature",
                 spans=spans,
                 provenance_only=True,
             )
@@ -4459,6 +4488,83 @@ def _typed_ir_reconstruction_phrases(
                     )
                 )
     return phrases
+
+
+def _typed_ir_semantic_profile_texts(
+    *,
+    source_family: str,
+    targets: Sequence[str],
+    force: str,
+    polarity: str,
+    predicate_text: str,
+    roles: Mapping[str, str],
+    condition_values: Sequence[str],
+    exception_values: Sequence[str],
+    semantic_atoms: Sequence[str],
+    legal_ir_view_support: Sequence[str],
+    max_tokens: int = 36,
+) -> List[str]:
+    """Render compact semantic profiles for typed IR decoder feature heads."""
+    source = _clean_text(source_family).lower()
+    if not source:
+        return []
+    normalized_targets = [
+        _clean_text(target).lower()
+        for target in targets
+        if _clean_text(target).lower()
+    ] or [source]
+    predicate_head = _typed_decompiler_predicate_head_text(predicate_text)
+    condition_cues = _typed_decompiler_condition_cues(
+        condition_values=condition_values,
+        exception_values=exception_values,
+        text=" ".join(
+            value.replace("_", " ")
+            for value in (
+                predicate_text,
+                " ".join(condition_values),
+                " ".join(exception_values),
+            )
+            if _clean_text(value)
+        ),
+    )
+    texts: List[str] = []
+
+    def add_text(parts: Sequence[str]) -> None:
+        text = _bounded_reconstruction_text(parts, max_tokens=max_tokens)
+        if text and text not in texts:
+            texts.append(text)
+
+    for target in normalized_targets:
+        pair_label = _typed_ir_family_pair_bridge_label(source, target)
+        if not pair_label:
+            pair_label = _typed_ir_family_pair_reconstruction_label(source, target)
+        parts: List[str] = [
+            pair_label,
+            _typed_ir_target_family_label(target),
+            f"{force} force" if force else "",
+            polarity.replace("_", " ") if polarity != "positive_scope" else "",
+            f"predicate head {predicate_head}" if predicate_head else "",
+        ]
+        for role in ("subject", "action", "object", "temporal"):
+            value = roles.get(role, "")
+            if value:
+                parts.append(f"{role} {_humanize_typed_ir_value(value)}")
+        if condition_values:
+            parts.append(f"conditions {len(condition_values)}")
+            for cue in condition_cues[:3]:
+                parts.append(f"condition cue {cue}")
+            for condition in condition_values[:2]:
+                parts.append(condition)
+        if exception_values:
+            parts.append(f"exceptions {len(exception_values)}")
+            for exception in exception_values[:2]:
+                parts.append(f"except {exception}")
+        for atom in semantic_atoms[:5]:
+            parts.append(atom)
+        for view_support in legal_ir_view_support[:4]:
+            parts.append(view_support)
+        add_text(parts)
+    return texts
 
 
 def _typed_ir_scope_frame_texts(

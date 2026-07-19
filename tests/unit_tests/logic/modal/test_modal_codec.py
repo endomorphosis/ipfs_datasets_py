@@ -47115,6 +47115,85 @@ def test_decompiler_emits_target_view_clause_for_deontic_temporal_residuals() ->
     )
 
 
+def test_decompiler_semantic_profile_surfaces_guided_deontic_slots() -> None:
+    text = (
+        "The Secretary shall submit hearing transcripts and tribal support "
+        "statements to Congress with the distribution plan."
+    )
+    document = ModalIRDocument(
+        document_id="typed-profile-deontic",
+        source="unit",
+        normalized_text=text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-profile",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="unit",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="secretary_submit_hearing_transcripts",
+                    arguments=[
+                        "subject=Secretary",
+                        "action=submit",
+                        "object=hearing transcripts and tribal support statements",
+                    ],
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="unit",
+                    start_char=0,
+                    end_char=len(text),
+                    citation="25 U.S.C. 1404",
+                ),
+                conditions=["with the distribution plan"],
+            )
+        ],
+        metadata={
+            "citation": "25 U.S.C. 1404",
+            "hint_evidence": [
+                {
+                    "action": "refine_typed_ir_or_decompiler_slots",
+                    "target_component": "modal.ir_decompiler",
+                    "program_synthesis_scope": "ir_decompiler",
+                    "predicted_family": "deontic",
+                    "target_family": "deontic",
+                    "target_view": "CEC.native",
+                    "legal_ir_underrepresented_components": [
+                        "CEC.native",
+                        "modal.frame_logic",
+                    ],
+                }
+            ],
+        },
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    structural_text = _structural_decoded_text(
+        decoded,
+        modal_ir=document,
+        selected_frame=None,
+    )
+    profiles = slot_texts["typed_ir_semantic_profile_reconstruction"]
+
+    assert any(
+        "deontic duty preserves legal obligation" in value
+        and "permission prohibition force" in value
+        and "predicate head secretary submit hearing transcripts" in value
+        and "conditions 1" in value
+        and "subject action object tribal support statements congress distribution plan"
+        in value
+        and "event calculus native events" in value
+        and "frame logic" in value
+        for value in profiles
+    )
+    assert "predicate head secretary submit hearing transcripts" in structural_text
+    assert "deontic duty preserves legal obligation" in structural_text
+    assert "frame logic" in structural_text
+
+
 def test_decompiler_reconstructs_timber_cutting_forest_temporal_slots() -> None:
     document = _single_formula_document(
         family="frame",
