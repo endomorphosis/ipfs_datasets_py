@@ -107,7 +107,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-009 Normalize proof traces and counterexample evidence
 
-- Status: waiting
+- Status: completed
 - Priority: P0
 - Track: provenance
 - Depends on: HAMMER-008
