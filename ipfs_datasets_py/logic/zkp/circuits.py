@@ -917,11 +917,13 @@ def _source_id_from_record(
     embedded_citation = _us_code_citation_from_text(
         _first_nonempty(
             record.get("text"),
+            record.get("sample_text"),
             record.get("source_text"),
             record.get("normalized_text"),
             record.get("content"),
             record.get("body"),
             metadata.get("text"),
+            metadata.get("sample_text"),
             metadata.get("source_text"),
             metadata.get("normalized_text"),
         )
@@ -947,11 +949,13 @@ def _source_id_from_record(
 def _source_text_from_record(record: Mapping[str, Any], metadata: Mapping[str, Any]) -> str:
     return _first_nonempty(
         record.get("text"),
+        record.get("sample_text"),
         record.get("source_text"),
         record.get("normalized_text"),
         record.get("content"),
         record.get("body"),
         metadata.get("text"),
+        metadata.get("sample_text"),
         metadata.get("source_text"),
         metadata.get("normalized_text"),
     )

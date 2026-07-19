@@ -413,6 +413,41 @@ def test_proofless_us_code_text_prefix_gets_source_attestation_view(
     assert zkp_attestation_legal_ir_view_loss([raw_sample]) == 0.0
 
 
+@pytest.mark.parametrize(
+    ("sample_text", "expected_source_id"),
+    [
+        (
+            "42 U.S.C. 5183.: §5183. Crisis counseling assistance and training "
+            "(a) In general The President is authorized to provide professional "
+            "counseling services, including financial assistance to State or "
+            "local agencies or private mental health organizations.",
+            "42 U.S.C. 5183.",
+        ),
+        (
+            "42 U.S.C. 9859b.: §9859b. Programs The Secretary shall make "
+            "allotments to eligible States under section 9859c of this title. "
+            "The Secretary shall make the allotments to enable the States to "
+            "establish programs to improve the health and safety of children.",
+            "42 U.S.C. 9859b.",
+        ),
+    ],
+)
+def test_proofless_metric_sample_text_gets_source_attestation_view(
+    sample_text,
+    expected_source_id,
+):
+    raw_sample = {"sample_text": sample_text}
+
+    completed = complete_zkp_attestation_record(raw_sample)
+
+    assert completed["source_id"] == expected_source_id
+    assert completed["attestation_ref"] == completed["public_inputs"]["attestation_ref"]
+    assert completed["attestation_view"]["attestation_ref"] == completed["attestation_ref"]
+    assert completed["circuit_ref"] == "legal_ir_source_attestation@v1"
+    assert completed["ruleset_id"] == "LegalIR_Source_Attestation_v1"
+    assert zkp_attestation_legal_ir_view_loss([raw_sample]) == 0.0
+
+
 def test_backend_fails_if_cli_succeeds_without_proof_file(tmp_path):
     binary = _fake_provekit_cli(tmp_path / "provekit-cli", write_proof=False)
     backend = ProveKitBackend(binary_path=str(binary))
