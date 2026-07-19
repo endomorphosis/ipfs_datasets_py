@@ -43824,6 +43824,34 @@ def test_decompiler_treats_not_later_than_as_temporal_not_negative_scope() -> No
     ]
 
 
+def test_decompiler_balances_deontic_temporal_force_slots_with_cec_and_kg_views() -> None:
+    document = _single_formula_document(
+        family="deontic",
+        symbol="O",
+        label="obligation",
+        text=(
+            "The Secretary is required to file returns not later than "
+            "fiscal year 2026."
+        ),
+        predicate="secretary_file_returns",
+        conditions=["not later than fiscal year 2026"],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(document)
+    )
+
+    assert "deontic->temporal" in slot_texts[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "obligation:CEC.native:deontic->temporal" in slot_texts[
+        "typed-decompiler-force-view-family-pair"
+    ]
+    assert "obligation:knowledge_graphs.neo4j_compat:deontic->temporal" in slot_texts[
+        "typed-decompiler-force-view-family-pair"
+    ]
+
+
 def test_decompiler_emits_cue_derived_source_force_slots_for_frame_shall() -> None:
     document = _single_formula_document(
         family="frame",
