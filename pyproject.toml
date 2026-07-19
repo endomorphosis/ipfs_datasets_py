@@ -65,6 +65,11 @@ vectors = [
 groth16 = [
     "jsonschema>=4.0.0",
 ]
+profile-f-zk = [
+    # Rust prover/key material is intentionally installed or provisioned
+    # separately so normal dataset installs do not acquire a trusted setup.
+    "jsonschema>=4.0.0",
+]
 provekit = [
     "jsonschema>=4.0.0",
 ]

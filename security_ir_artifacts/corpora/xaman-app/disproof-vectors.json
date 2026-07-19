@@ -1,103 +1,122 @@
 {
-  "schema_version": "xaman-disproof-vectors/v1",
-  "task_id": "PORTAL-CXTP-070",
   "model": {
-    "path": "security_ir_artifacts/corpora/xaman-app/security-model-ir.json",
-    "cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d"
+    "cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
+    "path": "security_ir_artifacts/corpora/xaman-app/security-model-ir.json"
   },
+  "schema_version": "xaman-disproof-vectors/v1",
+  "security_decision": "DISPROOF_SUITE_FAIL_CLOSED",
+  "task_id": "PORTAL-CXTP-070",
   "vectors": [
     {
-      "id": "xaman-disproof:assumption-mutation-native-vault",
       "claim_id": "xaman-claim:software-custody-requires-vault-authentication",
-      "tactic": "assumption_mutation",
-      "mutation": "mark native vault cryptography assumption as cleared without evidence",
-      "expected_outcome": "counterexample_found",
       "evidence": [
         "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json"
-      ]
+      ],
+      "expected_outcome": "counterexample_found",
+      "id": "xaman-disproof:assumption-mutation-native-vault",
+      "mutation": "mark native vault cryptography assumption as cleared without evidence",
+      "tactic": "assumption_mutation"
     },
     {
-      "id": "xaman-disproof:auth-precondition-removal",
       "claim_id": "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
-      "tactic": "auth_precondition_removal",
-      "mutation": "remove auth/vault overlay precondition from signing path",
-      "expected_outcome": "counterexample_found",
       "evidence": [
         "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
         "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json"
-      ]
+      ],
+      "expected_outcome": "counterexample_found",
+      "id": "xaman-disproof:auth-precondition-removal",
+      "mutation": "remove auth/vault overlay precondition from signing path",
+      "tactic": "auth_precondition_removal"
     },
     {
-      "id": "xaman-disproof:stale-evidence-acceptance",
       "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
-      "tactic": "stale_evidence",
-      "mutation": "accept proof receipt with expired environment evidence",
-      "expected_outcome": "counterexample_found",
       "evidence": [
         "security_ir_artifacts/corpora/xaman-app/security-claims.json"
-      ]
+      ],
+      "expected_outcome": "counterexample_found",
+      "id": "xaman-disproof:stale-evidence-acceptance",
+      "mutation": "accept proof receipt with expired environment evidence",
+      "tactic": "stale_evidence"
     },
     {
-      "id": "xaman-disproof:wrong-network-signing",
       "claim_id": "xaman-claim:network-binding-prevents-wrong-network-signing",
-      "tactic": "wrong_network",
-      "mutation": "allow signing when payload force_network mismatches active network",
-      "expected_outcome": "counterexample_found",
       "evidence": [
         "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
         "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json"
-      ]
+      ],
+      "expected_outcome": "counterexample_found",
+      "id": "xaman-disproof:wrong-network-signing",
+      "mutation": "allow signing when payload force_network mismatches active network",
+      "tactic": "wrong_network"
     },
     {
-      "id": "xaman-disproof:replay-resolved-payload",
       "claim_id": "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
-      "tactic": "replay_payload",
-      "mutation": "skip resolved_at and expired checks before review or signing",
-      "expected_outcome": "counterexample_found",
       "evidence": [
         "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json"
-      ]
+      ],
+      "expected_outcome": "counterexample_found",
+      "id": "xaman-disproof:replay-resolved-payload",
+      "mutation": "skip resolved_at and expired checks before review or signing",
+      "tactic": "replay_payload"
     },
     {
-      "id": "xaman-disproof:downgraded-solver-result",
       "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
-      "tactic": "downgraded_solver",
-      "mutation": "accept missing optional solver lane report as proof authority",
-      "expected_outcome": "counterexample_found",
       "evidence": [
         "security_ir_artifacts/environment/optional-solver-install-report.json"
-      ]
-    },
-    {
-      "id": "xaman-disproof:unsupported-xrpl-semantics",
-      "claim_id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
-      "tactic": "unsupported_xrpl_semantics",
-      "mutation": "treat TODO validation for TrustSet, OfferCreate, or SignerListSet as proved",
+      ],
       "expected_outcome": "counterexample_found",
-      "evidence": [
-        "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json"
-      ]
+      "id": "xaman-disproof:downgraded-solver-result",
+      "mutation": "accept missing optional solver lane report as proof authority",
+      "tactic": "downgraded_solver"
     },
     {
-      "id": "xaman-disproof:backend-double-use",
+      "claim_id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
+      "evidence": [
+        "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+        "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json"
+      ],
+      "expected_outcome": "counterexample_found",
+      "id": "xaman-disproof:unsupported-xrpl-semantics",
+      "mutation": "treat TODO validation for TrustSet, OfferCreate, or SignerListSet as proved",
+      "tactic": "unsupported_xrpl_semantics",
+      "xrpl_transaction_coverage": {
+        "artifact_cid": "sha256:3afcf320e04094a6b39cca1952c9c8a68351cc0c4b1f5ed26880a017d0914beb",
+        "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json",
+        "transaction_classes": [
+          "TrustSet",
+          "OfferCreate",
+          "SignerListSet"
+        ]
+      }
+    },
+    {
       "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
-      "tactic": "backend_trust_failure",
-      "mutation": "allow same backend payload to be accepted from two devices",
-      "expected_outcome": "blocked_by_missing_evidence",
       "evidence": [
         "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json"
-      ]
+      ],
+      "expected_outcome": "blocked_by_missing_evidence",
+      "id": "xaman-disproof:backend-double-use",
+      "mutation": "allow same backend payload to be accepted from two devices",
+      "tactic": "backend_trust_failure"
     },
     {
-      "id": "xaman-disproof:runtime-equivalence-missing",
       "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
-      "tactic": "stale_evidence",
-      "mutation": "treat source review as deployed runtime equivalence without real-device traces",
-      "expected_outcome": "blocked_by_missing_evidence",
       "evidence": [
         "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json"
-      ]
+      ],
+      "expected_outcome": "blocked_by_missing_evidence",
+      "id": "xaman-disproof:runtime-equivalence-missing",
+      "mutation": "treat source review as deployed runtime equivalence without real-device traces",
+      "tactic": "stale_evidence"
     }
   ],
-  "security_decision": "DISPROOF_SUITE_FAIL_CLOSED"
+  "xrpl_transaction_coverage": {
+    "artifact_cid": "sha256:3afcf320e04094a6b39cca1952c9c8a68351cc0c4b1f5ed26880a017d0914beb",
+    "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json",
+    "transaction_classes": [
+      "TrustSet",
+      "OfferCreate",
+      "SignerListSet"
+    ]
+  }
 }

@@ -18,7 +18,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 try:
     from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import (
@@ -90,6 +90,8 @@ MCP_P2P_PROTOCOL = "/mcp+p2p/1.0.0"
 
 # Maximum P2P message size (16 MiB) — prevents allocation attacks via 4-byte length prefix
 MAX_P2P_MESSAGE_SIZE = 16 * 1024 * 1024
+MAX_PROFILE_E_FRAMES_PER_SESSION = 200
+MCP_PROTOCOL_VERSION = "2024-11-05"
 
 # Default bootstrap peers
 DEFAULT_BOOTSTRAP_PEERS = [
@@ -171,6 +173,137 @@ class P2PMessage:
         )
 
 
+async def dispatch_profile_e_jsonrpc_request(
+    request: Mapping[str, Any], *, initialized: bool = True,
+    profile_g_negotiated: bool = True,
+) -> dict[str, Any] | None:
+    """Dispatch one canonical MCP++ Profile E JSON-RPC request.
+
+    This is deliberately independent of the FastAPI server and optional model
+    integrations. It keeps the native datasets libp2p surface usable for
+    policy gates and ceremony verification even when no HTTP server is
+    running, while the managed SwissKnife bridge can use the same operations
+    against a live backend.
+    """
+
+    request_id = request.get("id")
+    if request.get("jsonrpc") != "2.0" or not isinstance(request.get("method"), str):
+        return _jsonrpc_error(request_id, -32600, "invalid JSON-RPC request")
+
+    method = str(request["method"])
+    params = request.get("params", {})
+    if not isinstance(params, Mapping):
+        return _jsonrpc_error(request_id, -32602, "params must be an object")
+
+    # Notifications do not carry a request id and must not generate a reply.
+    if method == "notifications/initialized":
+        return None
+    if not initialized and method != "initialize":
+        return _jsonrpc_error(request_id, -32000, "init_required")
+    if method == "initialize":
+        return _jsonrpc_result(request_id, {
+            "protocolVersion": MCP_PROTOCOL_VERSION,
+            "serverInfo": {"name": "ipfs-datasets-mcp-profile-e", "version": "1.0.0"},
+            "capabilities": {
+                "tools": {"listChanged": True},
+                "mcpPlusPlusProfiles": [
+                    "mcp++/deontic-policy",
+                    "mcp++/event-dag",
+                    "mcp++/p2p-transport",
+                    "mcp++/risk-scheduling",
+                ],
+                "experimental": {
+                    "mcp++/deontic-policy": True,
+                    "mcp++/event-dag": True,
+                    "mcp++/groth16-mpc-ceremony": True,
+                    "mcp++/p2p-transport": True,
+                    "mcp++/risk-scheduling": {
+                        "version": "1.0",
+                        "artifact_schema_major": 1,
+                    },
+                },
+            },
+        })
+    if method == "tools/list":
+        return _jsonrpc_result(request_id, {"tools": []})
+    if method == "mcp++/policy/evaluate":
+        try:
+            from ipfs_datasets_py.logic.profile_d_policy import (
+                ProfileDPolicyError,
+                evaluate_execution_policy,
+            )
+
+            result = evaluate_execution_policy(
+                actor=params.get("actor", ""),
+                action=params.get("action", ""),
+                resource=params.get("resource"),
+                policy=params.get("policy") if isinstance(params.get("policy"), Mapping) else None,
+                policy_text=params.get("policy_text"),
+                evaluated_at=params.get("evaluated_at"),
+                intent_cid=params.get("intent_cid"),
+                request_zkp_certificate=bool(params.get("request_zkp_certificate", False)),
+            )
+            return _jsonrpc_result(request_id, result)
+        except ProfileDPolicyError as error:
+            return _jsonrpc_error(request_id, -32602, str(error))
+        except Exception as error:  # pragma: no cover - defensive transport boundary
+            return _jsonrpc_error(request_id, -32603, str(error))
+    if method == "mcp++/zk/ceremony/validate":
+        manifest = params.get("manifest")
+        if not isinstance(manifest, Mapping):
+            return _jsonrpc_error(request_id, -32602, "manifest must be an object")
+        try:
+            from ipfs_datasets_py.logic.zkp.ceremony import validate_groth16_mpc_ceremony
+
+            return _jsonrpc_result(request_id, validate_groth16_mpc_ceremony(manifest).to_dict())
+        except Exception as error:  # pragma: no cover - defensive transport boundary
+            return _jsonrpc_error(request_id, -32603, str(error))
+    if method.startswith(("mcp++/goals/", "mcp++/tasks/", "mcp++/risk/", "mcp++/neighborhood/", "mcp++/schedule/")):
+        from ipfs_datasets_py.logic.profile_g import ProfileGError
+        from ipfs_datasets_py.mcp_server.profile_g_service import (
+            get_profile_g_service,
+            profile_g_jsonrpc_error,
+        )
+
+        if not profile_g_negotiated:
+            error = ProfileGError(
+                "G_CAPABILITY_NOT_NEGOTIATED", "Profile G was not negotiated"
+            )
+            return profile_g_jsonrpc_error(request_id, error)
+        try:
+            return _jsonrpc_result(request_id, get_profile_g_service().dispatch(method, params))
+        except ProfileGError as error:
+            return profile_g_jsonrpc_error(request_id, error)
+    return _jsonrpc_error(request_id, -32601, f"unsupported method: {method}")
+
+
+def _jsonrpc_result(request_id: Any, result: Any) -> dict[str, Any]:
+    return {"jsonrpc": "2.0", "id": request_id, "result": result}
+
+
+def _jsonrpc_error(request_id: Any, code: int, message: str) -> dict[str, Any]:
+    return {"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}}
+
+
+async def _read_exact(stream: Any, size: int) -> bytes | None:
+    """Read exactly ``size`` bytes, tolerating fragmented libp2p reads."""
+
+    chunks: list[bytes] = []
+    remaining = size
+    while remaining:
+        chunk = await stream.read(remaining)
+        if not chunk:
+            return None if not chunks else b""
+        chunks.append(bytes(chunk))
+        remaining -= len(chunk)
+    return b"".join(chunks)
+
+
+def _jsonrpc_frame(message: Mapping[str, Any]) -> bytes:
+    payload = json.dumps(message, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return len(payload).to_bytes(4, "big") + payload
+
+
 class MCPp2pNode:
     """A libp2p node for the ipfs_datasets MCP++ server.
 
@@ -200,6 +333,8 @@ class MCPp2pNode:
         self._tool_handler: Optional[Callable] = None
         self._started = False
         self._nursery = None
+        self._network_ready = None
+        self._network_cancel_scope = None
 
     @property
     def peer_id(self) -> str:
@@ -239,6 +374,9 @@ class MCPp2pNode:
             return
 
         try:
+            import trio
+            from libp2p.tools.async_service import background_trio_service
+
             if not callable(create_libp2p_key_pair):
                 raise ImportError("ipfs_accelerate_py MCP++ libp2p runtime is unavailable")
             key_pair = create_libp2p_key_pair()
@@ -249,7 +387,22 @@ class MCPp2pNode:
             # Register protocol handler
             self._host.set_stream_handler(MCP_P2P_PROTOCOL, self._handle_stream)
 
-            # Start listening
+            # py-libp2p only accepts listeners while its network service is
+            # running. Keep that service under the caller-provided nursery so
+            # native Profile E obeys Trio lifecycle rules.
+            self._network_ready = trio.Event()
+
+            async def run_network_service() -> None:
+                with trio.CancelScope() as cancel_scope:
+                    self._network_cancel_scope = cancel_scope
+                    async with background_trio_service(self._host.get_network()):
+                        self._network_ready.set()
+                        await trio.sleep_forever()
+
+            nursery.start_soon(run_network_service)
+            await self._network_ready.wait()
+
+            # Start listening after the network service is accepting events.
             for addr in self._listen_addrs:
                 await self._host.get_network().listen(make_multiaddr(addr))
 
@@ -266,6 +419,9 @@ class MCPp2pNode:
 
     async def stop(self) -> None:
         """Stop the libp2p node."""
+        if self._network_cancel_scope is not None:
+            self._network_cancel_scope.cancel()
+            self._network_cancel_scope = None
         if self._host:
             await self._host.close()
         self._started = False
@@ -289,39 +445,74 @@ class MCPp2pNode:
             logger.debug(f"Failed to connect to {peer_addr}: {e}")
 
     async def _handle_stream(self, stream) -> None:
-        """Handle incoming /mcp+p2p/1.0.0 stream."""
+        """Handle canonical JSON-RPC plus legacy P2P messages on one stream."""
+        initialized = False
+        profile_g_negotiated = False
         try:
-            # Read length-prefixed message
-            length_bytes = await stream.read(4)
-            if len(length_bytes) < 4:
-                return
-            length = int.from_bytes(length_bytes, "big")
-            if length > MAX_P2P_MESSAGE_SIZE:
-                logger.warning("Rejecting oversized P2P message: %d bytes", length)
-                return
-            payload = await stream.read(length)
+            for _frame_number in range(MAX_PROFILE_E_FRAMES_PER_SESSION):
+                length_bytes = await _read_exact(stream, 4)
+                if length_bytes is None:
+                    break
+                if len(length_bytes) != 4:
+                    logger.warning("Closing truncated Profile E frame header")
+                    break
+                length = int.from_bytes(length_bytes, "big")
+                if length > MAX_P2P_MESSAGE_SIZE:
+                    logger.warning("Rejecting oversized P2P message: %d bytes", length)
+                    break
+                payload = await _read_exact(stream, length)
+                if payload is None or len(payload) != length:
+                    logger.warning("Closing truncated Profile E frame payload")
+                    break
 
-            msg = P2PMessage.decode(length_bytes + payload)
-
-            if msg.msg_type == "request" and self._tool_handler:
-                try:
-                    result = await self._tool_handler(msg.method, msg.params)
-                    response = P2PMessage(
-                        msg_type="response", method=msg.method,
-                        msg_id=msg.msg_id, result=result,
-                        sender_peer_id=self.peer_id,
+                decoded = json.loads(payload.decode("utf-8"))
+                if isinstance(decoded, Mapping) and decoded.get("jsonrpc") == "2.0":
+                    response = await dispatch_profile_e_jsonrpc_request(
+                        decoded, initialized=initialized,
+                        profile_g_negotiated=profile_g_negotiated,
                     )
-                except Exception as e:
-                    response = P2PMessage(
-                        msg_type="response", method=msg.method,
-                        msg_id=msg.msg_id, error=str(e),
-                        sender_peer_id=self.peer_id,
-                    )
-                await stream.write(response.encode())
+                    if response is not None:
+                        await stream.write(_jsonrpc_frame(response))
+                    if decoded.get("method") == "initialize":
+                        initialized = True
+                        init_params = decoded.get("params") if isinstance(decoded.get("params"), Mapping) else {}
+                        experimental = (
+                            init_params.get("capabilities", {}).get("experimental", {})
+                            if isinstance(init_params.get("capabilities"), Mapping) else {}
+                        )
+                        profile_g_negotiated = bool(
+                            isinstance(experimental, Mapping)
+                            and experimental.get("mcp++/risk-scheduling")
+                        ) or init_params.get("profile") == "mcp++/risk-scheduling" or (
+                            isinstance(init_params.get("profiles"), list)
+                            and "mcp++/risk-scheduling" in init_params["profiles"]
+                        )
+                    continue
 
-            await stream.close()
+                # Preserve the original message shape for existing tool callers
+                # while canonical JSON-RPC is used for all MCP++ profiles.
+                msg = P2PMessage.decode(length_bytes + payload)
+                if msg.msg_type == "request" and self._tool_handler:
+                    try:
+                        result = await self._tool_handler(msg.method, msg.params)
+                        response = P2PMessage(
+                            msg_type="response", method=msg.method,
+                            msg_id=msg.msg_id, result=result,
+                            sender_peer_id=self.peer_id,
+                        )
+                    except Exception as error:
+                        response = P2PMessage(
+                            msg_type="response", method=msg.method,
+                            msg_id=msg.msg_id, error=str(error),
+                            sender_peer_id=self.peer_id,
+                        )
+                    await stream.write(response.encode())
+            else:
+                logger.warning("Closing Profile E stream after %d frames", MAX_PROFILE_E_FRAMES_PER_SESSION)
         except Exception as e:
             logger.debug(f"Stream handler error: {e}")
+        finally:
+            await stream.close()
 
     async def call_tool(self, peer_id: str, method: str,
                         params: Dict[str, Any], timeout: float = 30.0) -> Any:

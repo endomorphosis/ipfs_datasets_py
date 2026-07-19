@@ -1196,7 +1196,7 @@ Execution sequence:
 
 ## PORTAL-CXTP-152 Prepare an authorized vendor-evidence intake request for native and backend blockers
 
-- Status: waiting
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: governance
@@ -1216,3 +1216,27 @@ Execution sequence:
 - Outputs: security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json, docs/security_verification/xaman_vendor_evidence_review.md
 - Validation: test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json; test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json; test -f docs/security_verification/xaman_vendor_evidence_review.md
 - Acceptance: Permit vendor-release assurance work only after authorized, redacted, current, reviewed evidence binds every native, backend, build, and XRPL/RPC assumption to an accountable owner; otherwise preserve the public-source/Testnet non-secure boundary.
+
+## PORTAL-CXTP-154 Hydrate and parse the pinned public Xaman source checkout
+
+- Status: completed
+- Completion: manual
+- Priority: P0
+- Track: source
+- Depends on: PORTAL-CXTP-144
+- Outputs: scripts/ops/security_verification/hydrate_xaman_public_source.py, security_ir_artifacts/corpora/xaman-app/source-coverage-hydrated.json, tests/logic/security_models/crypto_exchange/test_xaman_public_source_hydration.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_source_extractor.py tests/logic/security_models/crypto_exchange/test_xaman_public_source_hydration.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/hydrate_xaman_public_source.py --corpus-root /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app
+- Acceptance: Verify a clean local checkout exactly matches the frozen Xaman commit and public remote, generate a separate parsed-coverage artifact without changing the manifest-only baseline, and fail closed if the checkout identity or cleanliness differs.
+- Completion evidence: Hydrated source parsing completed against `942f43876265a7af44f233288ad2b1d00841d5fa`; the artifact records 643 parsed security-relevant files, preserves the frozen baseline, and records no absolute checkout path.
+
+## PORTAL-CXTP-155 Record public responsible-disclosure routing without treating it as vendor authorization
+
+- Status: completed
+- Completion: manual
+- Priority: P0
+- Track: governance
+- Depends on: PORTAL-CXTP-152
+- Outputs: docs/security_verification/xaman_public_disclosure_routing.md, security_ir_artifacts/corpora/xaman-app/public-disclosure-routing.json, tests/logic/security_models/crypto_exchange/test_xaman_public_disclosure_routing.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_public_disclosure_routing.py -q
+- Acceptance: Record the pinned source route, detect its expired Android `security.txt` declaration, record the current public policy route, and preserve the rule that sensitive evidence requires written vendor authorization and an approved private channel.
+- Completion evidence: Public policy review identified `support@xaman.app` as a report route while retaining `PORTAL-CXTP-153` as blocked pending owner authorization and evidence exchange approval.

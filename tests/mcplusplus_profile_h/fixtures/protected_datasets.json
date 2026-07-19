@@ -1,0 +1,23 @@
+{
+  "operations": [
+    {
+      "name": "query/execute",
+      "privateInput": {"query": "SELECT diagnosis FROM records WHERE region = ?"},
+      "fields": ["diagnosis"],
+      "rowFilter": {"region": "us-west"}
+    },
+    {
+      "name": "transform/run",
+      "privateInput": {"transform": "normalize-diagnosis-codes"},
+      "fields": ["diagnosis"],
+      "rowFilter": {"region": "us-west"}
+    },
+    {
+      "name": "graphrag/query",
+      "privateInput": {"question": "Which diagnoses co-occur?"},
+      "fields": ["diagnosis"],
+      "rowFilter": {"region": "us-west"}
+    }
+  ]
+}
+

@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "bafkreifmr5m3rcyvksrjuxw4h5folgi4o6juzptq4zzthukbpbhej7peoe",
+  "artifact_cid": "bafkreie5ftk5uvccgwdg76vhoixaji2sb6walzpj7b3xw6xjh23ewcciqe",
   "assurance_blocks": [
     {
       "assumption_ids": [
@@ -197,12 +197,12 @@
       "task_id": "PORTAL-CXTP-149"
     },
     {
-      "artifact_cid": "bafkreiezuwppychfi3l3urqc7pu4u26dl3vu3nta3kwj2vb7mafrfoxwti",
+      "artifact_cid": "bafkreifcb27leoeyrtntja2yf43sj2sdym5ojuhouqa7qrgydsw4aimetm",
       "kind": "solver_portfolio",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-report.json",
       "present": true,
       "schema_version": "xaman-testnet-solver-portfolio-report/v1",
-      "sha256": "sha256:59ddf80c2fca35d36b294e73ed4992c916c2841cb13c6f369db9429f3540cac0",
+      "sha256": "sha256:ed48a0d29fd288aa333cdf6c61ea66b93a24757707acbbc1dcd83cdeaf7c26f5",
       "task_id": "PORTAL-CXTP-147"
     },
     {

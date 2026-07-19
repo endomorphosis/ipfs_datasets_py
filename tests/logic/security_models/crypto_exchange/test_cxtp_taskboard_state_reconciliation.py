@@ -17,7 +17,7 @@ PREFLIGHT_SCRIPT_PATH = (
     REPO_ROOT / 'scripts' / 'ops' / 'security_verification' / 'preflight_crypto_exchange_taskboard.py'
 )
 
-RECONSTRUCTED_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(119, 154)]
+RECONSTRUCTED_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(119, 156)]
 COMPLETED_EVIDENCE_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(119, 143)]
 PRODUCTION_BLOCKER_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(77, 85)]
 
@@ -165,9 +165,9 @@ def test_next_task_and_production_blockers_remain_fail_closed() -> None:
     state = _load_state()
     artifact = _load_reconciliation()
 
-    assert artifact['next_selectable_task_ids']
-    assert artifact['next_selectable_task_ids'] == state['selectable_ready_task_ids'] == ['PORTAL-CXTP-143']
-    assert tasks['PORTAL-CXTP-143'].status == 'ready'
+    selectable = state.get('selectable_ready_task_ids', state.get('ready_task_ids', []))
+    assert artifact['next_selectable_task_ids'] == selectable == []
+    assert tasks['PORTAL-CXTP-143'].status == 'completed'
 
     assert artifact['production_blocker_policy']['downgraded'] is False
     assert artifact['production_blocker_policy']['blocker_task_ids'] == PRODUCTION_BLOCKER_TASK_IDS

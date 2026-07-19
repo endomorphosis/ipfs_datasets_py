@@ -364,7 +364,7 @@ fn main() {
                     // - 0: valid
                     // - 1: invalid
                     if json {
-                        print!(r#"{{"valid":{}}}\n"#, if is_valid { "true" } else { "false" });
+                        print!("{{\"valid\":{}}}\n", if is_valid { "true" } else { "false" });
                     }
                     if !quiet {
                         if is_valid {

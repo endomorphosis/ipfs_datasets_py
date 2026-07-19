@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "sha256:230b50365fb5810c3ceadb96bb96dae191a653f14e188c968c4df0879c093dd9",
+  "artifact_cid": "sha256:9e928c511d683870c8b84c653645e3ef34aea7c3ada501455b1779de0d4beab0",
   "corpus": "xaman-app",
   "coverage_matrix": {
     "deep_link": {
@@ -1008,11 +1008,11 @@
       "task_id": "PORTAL-CXTP-144"
     },
     {
-      "artifact_cid": "sha256:d54aa40be9e4f23eed90a231bb2cb57dbf556a5ca81501cb082150172ef6bcc3",
+      "artifact_cid": "sha256:1a35ea305d476712bdf77a1a4b551ed60c975b58faeea9bcc8ee7bc7c9c51bbe",
       "path": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json",
       "role": "public_source_assessment",
       "schema_version": "xaman-public-source-assessment/v1",
-      "sha256": "sha256:84605bf652846e2292e3d1565f0e016e462c1af876e2c9d5c03c3b345b290ae6",
+      "sha256": "sha256:407db2c530098def8010a075bea8fa85fe0f03092e8a90ec95931010f4da8796",
       "task_id": "PORTAL-CXTP-144"
     },
     {
@@ -4872,7 +4872,7 @@
     ]
   },
   "public_source_assessment": {
-    "artifact_cid": "sha256:d54aa40be9e4f23eed90a231bb2cb57dbf556a5ca81501cb082150172ef6bcc3",
+    "artifact_cid": "sha256:1a35ea305d476712bdf77a1a4b551ed60c975b58faeea9bcc8ee7bc7c9c51bbe",
     "overall_status": "blocked",
     "path": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json",
     "production_release_approval": false,

@@ -9,9 +9,9 @@ Verdict: `DISPROVED`
 ## Bound Artifacts
 
 - Bundle: `security_ir_artifacts/corpora/xaman-app/testnet/public-source-testnet-assurance-bundle.json`
-- Bundle CID: `bafkreigmlreagdix2glnj3wdmmx7comxec7nlleijrubhan5fwir2qtmku`
+- Bundle CID: `bafkreighiad6j5m44u7xn2ozdjvxcgxgotpohgjd4cmyv6thothdccccha`
 - Verdict: `security_ir_artifacts/corpora/xaman-app/testnet/public-source-testnet-assurance-verdict.json`
-- Verdict CID: `bafkreihs4njsk64k67675xynnuvm27eixf545pvuja35j3a2i7hcdz6xyi`
+- Verdict CID: `bafkreiffsaddrkanxzqq2vlmhgorqjw6gcjskjslosbaw2qirgdrkxjkeq`
 - Model CID: `sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43`
 
 ## Basis

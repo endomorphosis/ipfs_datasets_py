@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "bafkreiezuwppychfi3l3urqc7pu4u26dl3vu3nta3kwj2vb7mafrfoxwti",
+  "artifact_cid": "bafkreifcb27leoeyrtntja2yf43sj2sdym5ojuhouqa7qrgydsw4aimetm",
   "claims": [
     {
       "applicable_lane_results": [
@@ -360,7 +360,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -371,13 +371,14 @@
             ]
           ],
           "details": {
-            "case_count": 3,
+            "case_count": 5,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-solver-result-upgrade.json",
               "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-wrong-network.json"
             ]
           },
@@ -872,7 +873,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -885,8 +886,8 @@
           "details": {
             "case_count": 3,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
@@ -1380,7 +1381,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -1391,14 +1392,18 @@
             ]
           ],
           "details": {
-            "case_count": 5,
+            "case_count": 13,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
-              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signing-before-auth.json"
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-downgraded-evidence-review.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-after-auth-race.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-review-bypass.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signing-before-auth.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-stale-evidence-digest.json"
             ]
           },
           "fail_closed": true,
@@ -1813,7 +1818,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -1826,8 +1831,8 @@
           "details": {
             "case_count": 2,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
@@ -2378,7 +2383,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -2389,13 +2394,15 @@
             ]
           ],
           "details": {
-            "case_count": 3,
+            "case_count": 7,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-after-submit-race.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-reconnect-before-submit-result-race.json",
               "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-submit-result-removed.json"
             ]
           },
@@ -2803,7 +2810,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -2814,14 +2821,19 @@
             ]
           ],
           "details": {
-            "case_count": 2,
+            "case_count": 12,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
-              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-payload-material.json"
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-malformed-payload-shape.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-offercreate-transaction-type.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-path-payment-semantics-skipped.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-payload-material.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signerlistset-transaction-type.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-trustset-transaction-type.json"
             ]
           },
           "fail_closed": true,
@@ -3231,7 +3243,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -3244,8 +3256,8 @@
           "details": {
             "case_count": 2,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
@@ -3764,7 +3776,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -3775,14 +3787,15 @@
             ]
           ],
           "details": {
-            "case_count": 2,
+            "case_count": 4,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
-              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-resolution.json"
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-resolution.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-submit-result.json"
             ]
           },
           "fail_closed": true,
@@ -4296,7 +4309,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -4307,13 +4320,14 @@
             ]
           ],
           "details": {
-            "case_count": 2,
+            "case_count": 4,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-after-auth-race.json",
               "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-gap-promoted.json"
             ]
           },
@@ -4842,7 +4856,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -4853,13 +4867,14 @@
             ]
           ],
           "details": {
-            "case_count": 3,
+            "case_count": 5,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-after-submit-race.json",
               "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-gap-promoted.json"
             ]
           },
@@ -5251,7 +5266,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -5262,14 +5277,18 @@
             ]
           ],
           "details": {
-            "case_count": 2,
+            "case_count": 10,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
-              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-forged-broadcast-finality.json"
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-forged-broadcast-finality.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-offercreate-transaction-type.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-proof-obligation-status-forged.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signerlistset-transaction-type.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-trustset-transaction-type.json"
             ]
           },
           "fail_closed": true,
@@ -5766,7 +5785,7 @@
         },
         {
           "accepted": false,
-          "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+          "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
           "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
           "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -5777,15 +5796,17 @@
             ]
           ],
           "details": {
-            "case_count": 7,
+            "case_count": 11,
             "counterexample_manifest": {
-              "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-              "counterexample_count": 11,
+              "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+              "counterexample_count": 25,
               "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
             },
             "counterexample_paths": [
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-downgraded-evidence-review.json",
               "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-payload-material.json",
-              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-signature-blob.json"
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-signature-blob.json",
+              "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-stale-evidence-digest.json"
             ]
           },
           "fail_closed": true,
@@ -6288,7 +6309,7 @@
       "timeout_seconds": 90
     },
     {
-      "artifact_cid": "bafkreicqnfvaz43xeif5l2h65uxyvchqhradvxafkzsekotk4itrwlu5g4",
+      "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
       "available": true,
       "command_digest": "sha256:04cd219a67a297f421e79962da2656cb55774bf0b771e0ebd71828a85b1b7dc3",
@@ -6318,7 +6339,7 @@
     }
   ],
   "manifest": {
-    "artifact_cid": "bafkreidhzfswgtj5igs3dpraq526z7bonrdnv37f6vb7yinrclcp3a6xxe",
+    "artifact_cid": "bafkreidzafqrwu72t4zora5djvjpuwhhxwk73uqjajso3dwlutco4jzbea",
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-manifest.json",
     "schema_version": "xaman-testnet-solver-portfolio-manifest/v1"
   },
@@ -6363,7 +6384,7 @@
     "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
     "public_source_only": true,
     "repository": "XRPL-Labs/Xaman-App",
-    "source_claim_map_artifact_cid": "sha256:230b50365fb5810c3ceadb96bb96dae191a653f14e188c968c4df0879c093dd9",
+    "source_claim_map_artifact_cid": "sha256:9e928c511d683870c8b84c653645e3ef34aea7c3ada501455b1779de0d4beab0",
     "source_claim_map_path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
     "source_manifest_artifact_cid": "bafkreiei6bzr7ziihvbe4ueyfzkxspj7xijuoufqkn5jbqj2i7pzbdlkj4"
   },

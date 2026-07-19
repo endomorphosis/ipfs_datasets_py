@@ -6,9 +6,9 @@
     "NOT_MODELED",
     "BLOCKED"
   ],
-  "artifact_cid": "bafkreihs4njsk64k67675xynnuvm27eixf545pvuja35j3a2i7hcdz6xyi",
+  "artifact_cid": "bafkreiffsaddrkanxzqq2vlmhgorqjw6gcjskjslosbaw2qirgdrkxjkeq",
   "bundle": {
-    "artifact_cid": "bafkreigmlreagdix2glnj3wdmmx7comxec7nlleijrubhan5fwir2qtmku",
+    "artifact_cid": "bafkreighiad6j5m44u7xn2ozdjvxcgxgotpohgjd4cmyv6thothdccccha",
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/public-source-testnet-assurance-bundle.json",
     "schema_version": "xaman-public-source-testnet-assurance-bundle/v1"
   },

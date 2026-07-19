@@ -2,7 +2,9 @@
 // MVP Groth16 Circuit Implementation with Real Constraints
 
 use ark_ff::PrimeField;
+use ark_crypto_primitives::crh::sha256::constraints::Sha256Gadget;
 use ark_r1cs_std::fields::fp::FpVar;
+use ark_r1cs_std::bits::{boolean::Boolean, uint8::UInt8};
 use ark_r1cs_std::prelude::*;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 use sha2::{Digest, Sha256};
@@ -11,6 +13,116 @@ pub(crate) const TDFOL_V1_V2_MAX_AXIOMS: usize = 16;
 pub(crate) const TDFOL_V1_V2_MAX_STEPS: usize = 16;
 pub(crate) const TDFOL_V1_V2_ALPHA: u64 = 7;
 pub(crate) const TDFOL_V1_V2_BETA: u64 = 13;
+pub(crate) const EVENT_DAG_V3_MAX_EVENTS: usize = 4;
+
+/// Profile F Event-DAG compaction circuit.
+///
+/// The public statement contains a SHA-256 Merkle root and the number of
+/// active leaves.  The per-event 32-byte digests remain private.  All inactive
+/// slots are constrained to zero and active slots form a prefix, so the public
+/// count is bound to the committed tree.  The native archive verifier derives
+/// each event digest as SHA-256(UTF-8(event_cid)) before recomputing this root.
+#[derive(Clone)]
+pub struct EventDagCompactionCircuitV3<F: PrimeField> {
+    pub event_digests: Option<Vec<[u8; 32]>>,
+    pub active: Option<Vec<bool>>,
+    pub merkle_root: Option<[u8; 32]>,
+    pub event_count: Option<u32>,
+    pub _field: std::marker::PhantomData<F>,
+}
+
+impl<F: PrimeField> ConstraintSynthesizer<F> for EventDagCompactionCircuitV3<F> {
+    fn generate_constraints(self, cs: ConstraintSystemRef<F>) -> Result<(), SynthesisError> {
+        let digests = self.event_digests.ok_or(SynthesisError::AssignmentMissing)?;
+        let active = self.active.ok_or(SynthesisError::AssignmentMissing)?;
+        let merkle_root = self.merkle_root.ok_or(SynthesisError::AssignmentMissing)?;
+        let event_count = self.event_count.ok_or(SynthesisError::AssignmentMissing)?;
+        if digests.len() != EVENT_DAG_V3_MAX_EVENTS || active.len() != EVENT_DAG_V3_MAX_EVENTS {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if event_count == 0 || event_count as usize > EVENT_DAG_V3_MAX_EVENTS {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+
+        // Groth16 public inputs are field elements. Bind the complete 32-byte
+        // SHA-256 root by reducing its big-endian integer into Fr; archive
+        // verification separately compares the full root bytes to the CID
+        // batch, so a proof cannot be detached from its archive statement.
+        let root_input = FpVar::<F>::new_input(cs.clone(), || Ok(F::from_be_bytes_mod_order(&merkle_root)))?;
+        let count_input = FpVar::<F>::new_input(cs.clone(), || Ok(F::from(event_count as u64)))?;
+        let zero = FpVar::<F>::Constant(F::ZERO);
+        let one = FpVar::<F>::Constant(F::ONE);
+
+        let mut leaves = Vec::with_capacity(EVENT_DAG_V3_MAX_EVENTS);
+        let mut active_vars = Vec::with_capacity(EVENT_DAG_V3_MAX_EVENTS);
+        for index in 0..EVENT_DAG_V3_MAX_EVENTS {
+            let digest = UInt8::new_witness_vec(cs.clone(), &digests[index])?;
+            let active_var = Boolean::new_witness(cs.clone(), || Ok(active[index]))?;
+            let active_as_field = FpVar::<F>::from(active_var.clone());
+            active_vars.push(active_var.clone());
+
+            // An inactive leaf must be all-zero before it is hashed. This
+            // makes the public count part of the commitment rather than a
+            // descriptive field supplied alongside it.
+            let inactive = active_var.not();
+            for byte in &digest {
+                inactive
+                    .and(&byte.is_eq(&UInt8::constant(0))?.not())?
+                    .enforce_equal(&Boolean::FALSE)?;
+            }
+            leaves.push((digest, active_as_field));
+        }
+
+        let count_sum = leaves.iter().fold(zero, |sum, (_, active)| sum + active);
+        count_input.enforce_equal(&count_sum)?;
+        for index in 1..EVENT_DAG_V3_MAX_EVENTS {
+            // active[i] => active[i - 1], which fixes active leaves to a prefix.
+            active_vars[index]
+                .and(&active_vars[index - 1].not())?
+                .enforce_equal(&Boolean::FALSE)?;
+        }
+        // Keep a direct non-zero count constraint in the R1CS, even though the
+        // native witness validation already enforces it.
+        let count_inverse = FpVar::<F>::new_witness(cs.clone(), || {
+            Ok(F::from(event_count as u64).inverse().unwrap_or(F::ZERO))
+        })?;
+        count_input.mul_equals(&count_inverse, &one)?;
+
+        let mut layer: Vec<Vec<UInt8<F>>> = leaves
+            .iter()
+            .map(|(digest, _)| Sha256Gadget::digest(digest).map(|digest| digest.0))
+            .collect::<Result<_, _>>()?;
+        while layer.len() > 1 {
+            let mut next = Vec::with_capacity(layer.len() / 2);
+            for pair in layer.chunks(2) {
+                let mut bytes = pair[0].clone();
+                bytes.extend_from_slice(&pair[1]);
+                next.push(Sha256Gadget::digest(&bytes)?.0);
+            }
+            layer = next;
+        }
+        if layer.len() != 1 {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        let mut computed_root = FpVar::<F>::Constant(F::ZERO);
+        let mut place = F::ONE;
+        // Digest bytes are big-endian, so construct the field-reduced integer
+        // from the least-significant byte upward.
+        for byte in layer[0].iter().rev() {
+            let bits = byte.to_bits_le()?;
+            let mut byte_value = FpVar::<F>::Constant(F::ZERO);
+            let mut bit_place = F::ONE;
+            for bit in bits {
+                byte_value += FpVar::<F>::from(bit) * FpVar::<F>::Constant(bit_place);
+                bit_place *= F::from(2u64);
+            }
+            computed_root += byte_value * FpVar::<F>::Constant(place);
+            place *= F::from(256u64);
+        }
+        computed_root.enforce_equal(&root_input)?;
+        Ok(())
+    }
+}
 
 /// MVP Circuit for zero-knowledge proofs
 ///

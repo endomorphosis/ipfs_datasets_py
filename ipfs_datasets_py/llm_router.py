@@ -65,10 +65,6 @@ Additional optional providers (opt-in by selecting provider):
 - `claude_code`: Claude Code CLI command
     - `IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD` (supports `{prompt}` placeholder)
 - `claude_py`: Python wrapper in `ipfs_datasets_py.utils.claude_cli.ClaudeCLI`
-- `mistral_vibe`: Mistral Vibe CLI (`vibe`), including Leanstral's Lean agent
-    - `IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD` (supports `{prompt}` and `{model}` placeholders)
-    - `IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL` (optional default model)
-    - `MISTRAL_API_KEY` or `IPFS_DATASETS_PY_MISTRAL_API_KEY` for auth
 """
 
 from __future__ import annotations
@@ -3257,7 +3253,6 @@ def _get_claude_py_provider() -> Optional[LLMProvider]:
             return (result.stdout or "").strip()
 
     return _ClaudePyProvider()
-
 
 def _get_mistral_vibe_provider(*, auto_install: bool = False) -> Optional[LLMProvider]:
     """Return the Mistral Vibe CLI provider without requiring an SDK dependency."""

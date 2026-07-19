@@ -2266,25 +2266,32 @@ async def validate_ucan_delegation(request: Request):
 
 # --- Profile D: Policy Evaluation ---
 
+def _evaluate_profile_d_request(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Use the canonical, fail-closed Profile D logic package export."""
+    from ipfs_datasets_py.logic.profile_d_policy import evaluate_execution_policy
+
+    policy = payload.get("policy")
+    return evaluate_execution_policy(
+        actor=payload.get("actor", ""),
+        action=payload.get("action", ""),
+        resource=payload.get("resource"),
+        policy=policy if isinstance(policy, dict) else None,
+        policy_text=payload.get("policy_text"),
+        evaluated_at=payload.get("evaluated_at"),
+        intent_cid=payload.get("intent_cid"),
+        request_zkp_certificate=bool(payload.get("request_zkp_certificate", False)),
+    )
+
 @app.post("/mcp/policy/evaluate")
 async def evaluate_deontic_policy(request: Request):
     """Evaluate temporal deontic policy for an intent (Profile D)."""
     try:
-        from .temporal_policy import TemporalPolicyEvaluator
         body = await request.json()
-        intent_cid = body.get("intent_cid", "")
-        proof_cid = body.get("proof_cid")
-
-        evaluator = TemporalPolicyEvaluator()
-        result = evaluator.evaluate(intent_cid=intent_cid, proof_cid=proof_cid)
-
-        return {
-            "decision": getattr(result, 'decision', 'allow') if result else "allow",
-            "obligations": getattr(result, 'obligations', []) if result else [],
-            "policy_cid": getattr(result, 'policy_cid', '') if result else "",
-        }
-    except ImportError:
-        return {"decision": "allow", "obligations": [], "note": "Policy module not available"}
+        if not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="Profile D request must be an object")
+        return _evaluate_profile_d_request(body)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
     except Exception as e:
         logger.error(f"Policy evaluation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -2482,11 +2489,170 @@ async def mcp_event_stream(request: Request):
     )
 
 
+def _profile_g_rest_result(method: str, params: Dict[str, Any]):
+    """Dispatch Profile G REST with the same result/error semantics as JSON-RPC."""
+    from ipfs_datasets_py.logic.profile_g import ProfileGError
+    from .profile_g_service import get_profile_g_service, profile_g_jsonrpc_error
+
+    try:
+        return get_profile_g_service().dispatch(method, params)
+    except ProfileGError as error:
+        status = {
+            "G_INVALID_ARTIFACT": 400, "G_CID_MISMATCH": 422,
+            "G_AUTHORITY_DENIED": 403, "G_POLICY_DENIED": 403,
+            "G_NOT_READY": 409, "G_IDEMPOTENCY_CONFLICT": 409,
+            "G_CLAIM_CONFLICT": 409, "G_LEASE_EXPIRED": 409,
+            "G_LIMIT_EXCEEDED": 413, "G_EVIDENCE_INVALID": 422,
+            "G_REDACTED": 403,
+        }.get(error.code, 503)
+        return JSONResponse(status_code=status, content=profile_g_jsonrpc_error(None, error)["error"])
+
+
+async def _profile_g_request_params(request: Request) -> Dict[str, Any]:
+    """Decode a REST body without leaking JSON/parser exceptions as HTTP 500."""
+    try:
+        value = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Profile G request body must be JSON")
+    if not isinstance(value, dict):
+        raise HTTPException(status_code=400, detail="Profile G request body must be an object")
+    return value
+
+
+@app.get("/mcp/risk/profile")
+async def profile_g_metadata():
+    return _profile_g_rest_result("mcp++/risk/profile", {})
+
+
+@app.post("/mcp/goals")
+async def profile_g_create_goal(request: Request):
+    return _profile_g_rest_result("mcp++/goals/create", await _profile_g_request_params(request))
+
+
+@app.get("/mcp/goals")
+async def profile_g_list_goals(limit: int = 100, cursor: Optional[str] = None):
+    return _profile_g_rest_result("mcp++/goals/list", {"limit": limit, "cursor": cursor})
+
+
+@app.get("/mcp/goals/{goal_cid}")
+async def profile_g_get_goal(goal_cid: str):
+    return _profile_g_rest_result("mcp++/goals/get", {"goal_cid": goal_cid})
+
+
+@app.post("/mcp/goals/{goal_cid}/decompose")
+async def profile_g_decompose(goal_cid: str, request: Request):
+    params = await _profile_g_request_params(request)
+    params["goal_cid"] = goal_cid
+    return _profile_g_rest_result("mcp++/goals/decompose", params)
+
+
+@app.post("/mcp/goals/{goal_cid}/select")
+async def profile_g_select(goal_cid: str, request: Request):
+    params = await _profile_g_request_params(request)
+    params["goal_cid"] = goal_cid
+    return _profile_g_rest_result("mcp++/goals/select", params)
+
+
+@app.post("/mcp/tasks")
+async def profile_g_create_task(request: Request):
+    return _profile_g_rest_result("mcp++/tasks/create", await _profile_g_request_params(request))
+
+
+@app.get("/mcp/tasks")
+async def profile_g_list_tasks(limit: int = 100, cursor: Optional[str] = None):
+    return _profile_g_rest_result("mcp++/tasks/list", {"limit": limit, "cursor": cursor})
+
+
+@app.get("/mcp/tasks/ready")
+async def profile_g_ready_tasks(limit: int = 100, cursor: Optional[str] = None):
+    return _profile_g_rest_result("mcp++/tasks/ready", {"limit": limit, "cursor": cursor})
+
+
+@app.get("/mcp/tasks/{task_cid}")
+async def profile_g_get_task(task_cid: str):
+    return _profile_g_rest_result("mcp++/tasks/get", {"task_cid": task_cid})
+
+
+@app.post("/mcp/risk/assess")
+async def profile_g_assess_risk(request: Request):
+    return _profile_g_rest_result("mcp++/risk/assess", await _profile_g_request_params(request))
+
+
+@app.get("/mcp/risk/evidence")
+async def profile_g_evidence(subject_cid: str, limit: int = 100):
+    return _profile_g_rest_result("mcp++/risk/evidence", {"subject_cid": subject_cid, "limit": limit})
+
+
+@app.get("/mcp/risk/history")
+async def profile_g_history(subject_cid: str, limit: int = 100):
+    return _profile_g_rest_result("mcp++/risk/history", {"subject_cid": subject_cid, "limit": limit})
+
+
+@app.post("/mcp/neighborhood/query")
+async def profile_g_query_neighborhood(request: Request):
+    return _profile_g_rest_result("mcp++/neighborhood/query", await _profile_g_request_params(request))
+
+
+@app.post("/mcp/neighborhood/attest")
+async def profile_g_attest_neighborhood(request: Request):
+    return _profile_g_rest_result("mcp++/neighborhood/attest", await _profile_g_request_params(request))
+
+
+@app.get("/mcp/schedule/frontier")
+async def profile_g_schedule_frontier(limit: int = 100, cursor: Optional[str] = None):
+    return _profile_g_rest_result("mcp++/schedule/frontier", {"limit": limit, "cursor": cursor})
+
+
+@app.get("/mcp/schedule/status/{task_cid}")
+async def profile_g_schedule_status(task_cid: str):
+    return _profile_g_rest_result("mcp++/schedule/status", {"task_cid": task_cid})
+
+
+@app.post("/mcp/schedule/proposals")
+async def profile_g_schedule_propose(request: Request):
+    return _profile_g_rest_result("mcp++/schedule/propose", await _profile_g_request_params(request))
+
+
+@app.post("/mcp/schedule/claims")
+async def profile_g_schedule_claim(request: Request):
+    return _profile_g_rest_result("mcp++/schedule/claim", await _profile_g_request_params(request))
+
+
+@app.post("/mcp/schedule/claims/{claim_cid}/{operation}")
+async def profile_g_schedule_claim_operation(claim_cid: str, operation: str, request: Request):
+    if operation not in {"renew", "release"}:
+        raise HTTPException(status_code=404, detail="unknown claim operation")
+    params = await _profile_g_request_params(request)
+    params["claim_cid"] = claim_cid
+    return _profile_g_rest_result(f"mcp++/schedule/{operation}", params)
+
+
+@app.post("/mcp/schedule/resolutions")
+async def profile_g_schedule_resolve(request: Request):
+    return _profile_g_rest_result("mcp++/schedule/resolve", await _profile_g_request_params(request))
+
+
+@app.post("/mcp/schedule/reconcile")
+async def profile_g_schedule_reconcile(request: Request):
+    return _profile_g_rest_result("mcp++/schedule/reconcile", await _profile_g_request_params(request))
+
+
 @app.post("/mcp")
 async def mcp_jsonrpc_handler(request: Request):
     """Handle MCP JSON-RPC requests including MCP++ profile negotiation."""
     try:
-        body = await request.json()
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse(status_code=400, content={
+                "jsonrpc": "2.0", "id": None,
+                "error": {"code": -32700, "message": "Parse error"},
+            })
+        if not isinstance(body, dict):
+            return JSONResponse(status_code=400, content={
+                "jsonrpc": "2.0", "id": None,
+                "error": {"code": -32600, "message": "Invalid Request"},
+            })
         method = body.get("method", "")
         params = body.get("params", {})
         req_id = body.get("id", 1)
@@ -2514,6 +2680,9 @@ async def mcp_jsonrpc_handler(request: Request):
                 server_caps["mcp++/event-dag"] = True
             if client_caps.get("mcp++/p2p-transport"):
                 server_caps["mcp++/p2p-transport"] = True
+            if client_caps.get("mcp++/risk-scheduling"):
+                from .profile_g_service import get_profile_g_service
+                server_caps["mcp++/risk-scheduling"] = get_profile_g_service().profile
 
             return {
                 "jsonrpc": "2.0",
@@ -2522,6 +2691,11 @@ async def mcp_jsonrpc_handler(request: Request):
                     "protocolVersion": "2024-11-05",
                     "capabilities": {
                         "tools": {"listChanged": True},
+                        "mcpPlusPlusProfiles": [
+                            "mcp++/mcp-idl", "mcp++/cid-envelope", "mcp++/ucan",
+                            "mcp++/deontic-policy", "mcp++/event-dag",
+                            "mcp++/p2p-transport", "mcp++/risk-scheduling",
+                        ],
                         "experimental": server_caps,
                     },
                     "serverInfo": {"name": "ipfs-datasets-mcppp", "version": "1.0.0"},
@@ -2582,7 +2756,50 @@ async def mcp_jsonrpc_handler(request: Request):
             return {"jsonrpc": "2.0", "id": req_id, "result": {"valid": valid, "chain": []}}
 
         elif method == "mcp++/policy/evaluate":
-            return {"jsonrpc": "2.0", "id": req_id, "result": {"decision": "allow", "obligations": [], "allowed": True}}
+            try:
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "result": _evaluate_profile_d_request(params),
+                }
+            except ValueError as error:
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {"code": -32602, "message": str(error)},
+                }
+
+        elif method.startswith(("mcp++/goals/", "mcp++/tasks/", "mcp++/risk/", "mcp++/neighborhood/", "mcp++/schedule/")):
+            from ipfs_datasets_py.logic.profile_g import ProfileGError
+            from .profile_g_service import get_profile_g_service, profile_g_jsonrpc_error
+            try:
+                result = get_profile_g_service().dispatch(method, params)
+                return {"jsonrpc": "2.0", "id": req_id, "result": result}
+            except ProfileGError as error:
+                return profile_g_jsonrpc_error(req_id, error)
+
+        elif method == "mcp++/dag/zk/status":
+            from .event_dag_zkp import availability
+            return {"jsonrpc": "2.0", "id": req_id, "result": availability()}
+
+        elif method == "mcp++/dag/zk/prove":
+            from .event_dag_zkp import prove_event_dag_compaction
+            event_cids = params.get("event_cids", [])
+            if not isinstance(event_cids, list):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "event_cids must be an array"}}
+            certificate = await anyio.to_thread.run_sync(prove_event_dag_compaction, event_cids)
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"certificate": certificate}}
+
+        elif method == "mcp++/dag/zk/verify":
+            from .event_dag_zkp import verify_event_dag_compaction
+            certificate = params.get("certificate")
+            if not isinstance(certificate, dict):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "certificate must be an object"}}
+            event_cids = params.get("event_cids")
+            if event_cids is not None and not isinstance(event_cids, list):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "event_cids must be an array when supplied"}}
+            result = await anyio.to_thread.run_sync(verify_event_dag_compaction, certificate, event_cids)
+            return {"jsonrpc": "2.0", "id": req_id, "result": result}
 
         elif method == "mcp++/p2p/peers":
             return {"jsonrpc": "2.0", "id": req_id, "result": {"peers": [], "protocol": "/mcp+p2p/1.0.0"}}
@@ -2596,6 +2813,38 @@ async def mcp_jsonrpc_handler(request: Request):
     except Exception as e:
         logger.error(f"MCP JSON-RPC error: {e}", exc_info=True)
         return {"jsonrpc": "2.0", "id": body.get("id", 1) if 'body' in dir() else 1, "error": {"code": -32603, "message": str(e)}}
+
+
+@app.get("/mcp/dag/zk/status")
+async def event_dag_zk_status():
+    """Advertise the local verifier-backed Profile F proving capability."""
+    from .event_dag_zkp import availability
+    return availability()
+
+
+@app.post("/mcp/dag/zk/prove")
+async def event_dag_zk_prove(request: Request):
+    """Issue a bounded Profile F Groth16 certificate, or fail closed."""
+    body = await request.json()
+    event_cids = body.get("event_cids", [])
+    if not isinstance(event_cids, list):
+        raise HTTPException(status_code=422, detail="event_cids must be an array")
+    from .event_dag_zkp import prove_event_dag_compaction
+    return {"certificate": await anyio.to_thread.run_sync(prove_event_dag_compaction, event_cids)}
+
+
+@app.post("/mcp/dag/zk/verify")
+async def event_dag_zk_verify(request: Request):
+    """Verify a Profile F certificate and optionally bind it to archived CIDs."""
+    body = await request.json()
+    certificate = body.get("certificate")
+    if not isinstance(certificate, dict):
+        raise HTTPException(status_code=422, detail="certificate must be an object")
+    event_cids = body.get("event_cids")
+    if event_cids is not None and not isinstance(event_cids, list):
+        raise HTTPException(status_code=422, detail="event_cids must be an array when supplied")
+    from .event_dag_zkp import verify_event_dag_compaction
+    return await anyio.to_thread.run_sync(verify_event_dag_compaction, certificate, event_cids)
 
 
 @app.get("/mcp/tools/list")

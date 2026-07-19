@@ -76,7 +76,23 @@ _REGISTRY_EXPORTS = {
     "logic_submodule_specs",
 }
 
-__all__ = sorted(_SUBMODULE_EXPORTS | _REGISTRY_EXPORTS)
+_PROFILE_D_EXPORTS = {
+    "ProfileDPolicyError",
+    "evaluate_execution_policy",
+}
+
+_PROFILE_G_EXPORTS = {
+    "Ed25519Signer",
+    "GoalPlanValidator",
+    "NeighborhoodAttestationEngine",
+    "ProfileGError",
+    "RiskEvidenceStore",
+    "evaluate_risk_model",
+    "profile_g_cid",
+    "validate_profile_g_artifact",
+}
+
+__all__ = sorted(_SUBMODULE_EXPORTS | _REGISTRY_EXPORTS | _PROFILE_D_EXPORTS | _PROFILE_G_EXPORTS)
 
 
 def __getattr__(name):
@@ -105,6 +121,18 @@ def __getattr__(name):
     if name in _REGISTRY_EXPORTS:
         registry = importlib.import_module(".submodule_registry", __name__)
         value = getattr(registry, name)
+        globals()[name] = value
+        return value
+
+    if name in _PROFILE_D_EXPORTS:
+        module = importlib.import_module(".profile_d_policy", __name__)
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+
+    if name in _PROFILE_G_EXPORTS:
+        module = importlib.import_module(".profile_g", __name__)
+        value = getattr(module, name)
         globals()[name] = value
         return value
 
