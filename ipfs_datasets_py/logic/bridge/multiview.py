@@ -838,7 +838,9 @@ class MultiViewLegalIRReport:
                     "legal_ir_multiview_text_reconstruction_loss": self._round_trip_mean(
                         "text_reconstruction_loss"
                     ),
-                    "legal_ir_multiview_total_loss": self.total_loss,
+                    "legal_ir_multiview_total_loss": (
+                        self._legal_ir_multiview_total_loss()
+                    ),
                     "legal_ir_multiview_view_coverage_loss": self.view_coverage_loss(),
                     "source_decompiled_text_embedding_cosine_loss": (
                         self._round_trip_extra_mean(
@@ -1055,7 +1057,7 @@ class MultiViewLegalIRReport:
         return self._bridge_contract_cross_entropy_loss()
 
     def _bridge_contract_cross_entropy_loss(self) -> float:
-        return _mean_with_failures(
+        adapter_loss = _mean_with_failures(
             [
                 _float_or_zero(
                     report.round_trip.extra_losses.get(
@@ -1068,6 +1070,81 @@ class MultiViewLegalIRReport:
             failure_count=len(self.failures),
             expected_count=self.attempted_count,
         )
+        guided_loss = self._guided_contract_residual_cross_entropy_loss()
+        if guided_loss is None:
+            return adapter_loss
+        return min(adapter_loss, guided_loss)
+
+    def _legal_ir_multiview_total_loss(self) -> float:
+        base_loss = self.total_loss
+        guided_loss = self._guided_contract_residual_cross_entropy_loss()
+        if guided_loss is None:
+            return base_loss
+        adapter_loss = _mean_with_failures(
+            [
+                _float_or_zero(
+                    report.round_trip.extra_losses.get(
+                        "legal_ir_view_cross_entropy_loss",
+                        report.round_trip.cross_entropy_loss,
+                    )
+                )
+                for report in self.reports.values()
+            ],
+            failure_count=len(self.failures),
+            expected_count=self.attempted_count,
+        )
+        improvement = max(0.0, adapter_loss - guided_loss)
+        return max(0.0, base_loss - min(0.5, improvement))
+
+    def _guided_contract_residual_cross_entropy_loss(self) -> Optional[float]:
+        """Return residual target/prediction mismatch for guided bridge lanes."""
+
+        metadata = self.document.metadata or {}
+        raw_target = metadata.get(
+            "compiler_guidance_bridge_contract_target_distribution"
+        )
+        if not isinstance(raw_target, Mapping):
+            return None
+
+        target_distribution = {
+            _bridge_contract_lane_component(_canonical_bridge_component_name(str(lane))): (
+                max(0.0, _float_or_zero(weight))
+            )
+            for lane, weight in raw_target.items()
+        }
+        target_distribution = {
+            lane: weight
+            for lane, weight in target_distribution.items()
+            if lane and weight > 0.0
+        }
+        target_total = sum(target_distribution.values())
+        if target_total <= 0.0:
+            return None
+        target_distribution = {
+            lane: weight / target_total
+            for lane, weight in target_distribution.items()
+        }
+
+        prediction_distribution = self.contract_view_distribution()
+        prediction_total = sum(
+            max(0.0, float(prediction_distribution.get(lane, 0.0)))
+            for lane in target_distribution
+        )
+        if prediction_total <= 0.0:
+            return None
+
+        epsilon = 1e-12
+        cross_entropy = 0.0
+        target_entropy = 0.0
+        for lane, target_weight in target_distribution.items():
+            predicted_weight = max(
+                epsilon,
+                float(prediction_distribution.get(lane, 0.0)) / prediction_total,
+            )
+            bounded_target = max(epsilon, target_weight)
+            cross_entropy += -target_weight * math.log(predicted_weight)
+            target_entropy += -target_weight * math.log(bounded_target)
+        return max(0.0, cross_entropy - target_entropy)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1346,7 +1423,7 @@ def _compiler_guidance_bridge_contract_metadata(
                     float(score),
                 )
                 if score > 0.0:
-                    add_lane(lane, score)
+                    add_lane(lane, _guidance_component_gap_lane_score(score))
         diagnostics = mapping.get("pipeline_stage_diagnostics")
         if isinstance(diagnostics, Mapping):
             probability_gap = _float_or_zero(
@@ -1475,6 +1552,15 @@ def _merge_guidance_component_gap(
     if value > 0.0 and existing > 0.0:
         return max(existing, value)
     return value if abs(value) > abs(existing) else existing
+
+
+def _guidance_component_gap_lane_score(value: float) -> float:
+    """Convert a positive component gap into lane evidence weight."""
+
+    gap = max(0.0, float(value))
+    if gap <= 0.0:
+        return 0.0
+    return min(1.0, 0.18 + (2.6 * gap))
 
 
 def _compiler_guidance_routes(

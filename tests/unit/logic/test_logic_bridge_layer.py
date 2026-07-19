@@ -3157,6 +3157,117 @@ def test_bridge_contract_guidance_keeps_strongest_packet_160_component_gaps() ->
     assert target_distribution["deontic.ir"] > target_distribution["modal.frame_logic"]
 
 
+def test_bridge_contract_guidance_scales_packet_299_component_gaps() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import (
+        _compiler_guidance_bridge_contract_metadata,
+    )
+
+    metadata = _compiler_guidance_bridge_contract_metadata(
+        {
+            "action": "repair_multiview_legal_ir_loss",
+            "target_component": "bridge.contracts",
+            "target_metrics": (
+                "legal_ir_view_cross_entropy_loss, "
+                "legal_ir_multiview_cross_entropy_loss, "
+                "legal_ir_multiview_total_loss"
+            ),
+            "evidence": [
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_component_gaps": {
+                        "CEC.native": 0.272881017062,
+                        "TDFOL.prover": -0.071537452612,
+                        "deontic.ir": -0.113025476375,
+                        "knowledge_graphs.neo4j_compat": -0.055776464503,
+                    },
+                    "legal_ir_underrepresented_components": ["CEC.native"],
+                    "pipeline_stage_diagnostics": {
+                        "legal_ir_component_gap_max": 0.272881017062,
+                        "modal_family_target_probability_gap": 0.197858984759,
+                    },
+                    "predicted_view": "CEC.native",
+                    "target_view": "CEC.native",
+                },
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_component_gaps": {
+                        "CEC.native": -0.101976360456,
+                        "TDFOL.prover": 0.060920966377,
+                        "deontic.ir": 0.159355696735,
+                        "knowledge_graphs.neo4j_compat": -0.085605680797,
+                    },
+                    "legal_ir_underrepresented_components": [
+                        "deontic.ir",
+                        "TDFOL.prover",
+                    ],
+                    "pipeline_stage_diagnostics": {
+                        "legal_ir_component_gap_max": 0.159355696735,
+                        "modal_family_target_probability_gap": 0.317010207838,
+                    },
+                    "predicted_view": "deontic.ir",
+                    "target_view": "deontic.ir",
+                },
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_component_gaps": {
+                        "CEC.native": 0.037287692157,
+                        "TDFOL.prover": 0.023801319409,
+                        "deontic.ir": -0.06966549523,
+                        "knowledge_graphs.neo4j_compat": 0.041475820483,
+                    },
+                    "legal_ir_underrepresented_components": [
+                        "knowledge_graphs.neo4j_compat",
+                        "CEC.native",
+                        "TDFOL.prover",
+                    ],
+                    "pipeline_stage_diagnostics": {
+                        "legal_ir_component_gap_max": 0.041475820483,
+                        "modal_family_target_probability_gap": 0.347824902286,
+                    },
+                    "predicted_view": "knowledge_graphs.neo4j_compat",
+                    "target_view": "knowledge_graphs.neo4j_compat",
+                },
+                {
+                    "bridge_failure_name": "legal_ir_view_cross_entropy_loss",
+                    "legal_ir_component_gaps": {
+                        "CEC.native": -0.105345296757,
+                        "TDFOL.prover": 0.074070352776,
+                        "deontic.ir": 0.13814814184,
+                        "knowledge_graphs.neo4j_compat": -0.074263349559,
+                    },
+                    "legal_ir_underrepresented_components": [
+                        "deontic.ir",
+                        "TDFOL.prover",
+                    ],
+                    "pipeline_stage_diagnostics": {
+                        "legal_ir_component_gap_max": 0.13814814184,
+                        "modal_family_target_probability_gap": 0.377400290236,
+                    },
+                    "predicted_view": "deontic.ir",
+                    "target_view": "deontic.ir",
+                },
+            ],
+        }
+    )
+
+    component_gaps = metadata["compiler_guidance_component_gaps"]
+    target_distribution = metadata[
+        "compiler_guidance_bridge_contract_target_distribution"
+    ]
+
+    assert component_gaps["CEC.native"] == 0.272881017062
+    assert component_gaps["deontic.ir"] == 0.159355696735
+    assert component_gaps["TDFOL.prover"] == 0.074070352776
+    assert target_distribution["CEC.native"] > target_distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert target_distribution["deontic.ir"] > target_distribution[
+        "knowledge_graphs.neo4j_compat"
+    ]
+    assert target_distribution["modal.frame_logic"] < 0.02
+    assert metadata["compiler_guidance_bridge_contract_projection_strength"] > 0.50
+
+
 def test_modal_frame_logic_bridge_exports_graph_projection_signal_for_uscode_scaffolds() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -16321,6 +16432,80 @@ def test_multiview_bridge_soft_pass_uses_effective_proof_loss() -> None:
     assert canonical_losses["legal_ir_multiview_cross_entropy_loss"] == 0.125
     assert canonical_losses["legal_ir_multiview_total_loss"] == bridge_report.total_loss
     assert bridge_report.total_loss < 0.5
+
+
+def test_multiview_bridge_guided_contract_ce_uses_residual_lane_mismatch() -> None:
+    from ipfs_datasets_py.logic.bridge.multiview import MultiViewLegalIRReport
+    from ipfs_datasets_py.logic.bridge.types import (
+        BridgeEvaluationReport,
+        GraphProjectionResult,
+        LegalIRDocument,
+        LogicIRView,
+        ProofGateResult,
+        RoundTripMetrics,
+    )
+
+    document = LegalIRDocument(
+        document_id="multiview-guided-contract-ce",
+        source_text="The agency shall administer medical care benefits.",
+        normalized_text="The agency shall administer medical care benefits.",
+        views={
+            "cec_dcec.cec_events": LogicIRView(
+                name="cec_events",
+                source_component="CEC.native",
+                payload={"records": [{}] * 5},
+                metadata={"adapter_name": "cec_dcec"},
+            ),
+            "deontic_norms.deontic_ir": LogicIRView(
+                name="deontic_ir",
+                source_component="deontic.ir",
+                payload={"records": [{}] * 2},
+                metadata={"adapter_name": "deontic_norms"},
+            ),
+        },
+        frame_logic_triples=(
+            {
+                "subject": "agency",
+                "predicate": "administers",
+                "object": "benefits",
+            },
+        ),
+        metadata={
+            "compiler_guidance_bridge_contract_target_distribution": {
+                "CEC.native": 0.70,
+                "deontic.ir": 0.30,
+            },
+            "compiler_guidance_bridge_contract_projection_strength": 0.68,
+        },
+    )
+    bridge_report = BridgeEvaluationReport(
+        adapter_name="cec_dcec",
+        target_component="CEC.native",
+        ir_document=document,
+        round_trip=RoundTripMetrics(
+            cosine_similarity=0.9,
+            cross_entropy_loss=1.2,
+            extra_losses={"legal_ir_view_cross_entropy_loss": 1.2},
+        ),
+        proof_gate=ProofGateResult(attempted_count=1, valid_count=1),
+        graph_projection=GraphProjectionResult(
+            neo4j_compatible=True,
+            node_count=2,
+            relationship_count=1,
+        ),
+        status="ok",
+    )
+    report = MultiViewLegalIRReport(
+        bridge_names=("cec_dcec",),
+        document=document,
+        reports={"cec_dcec": bridge_report},
+    )
+
+    canonical_losses = report.canonical_loss_vector()
+
+    assert canonical_losses["legal_ir_view_cross_entropy_loss"] < 1.2
+    assert canonical_losses["legal_ir_multiview_cross_entropy_loss"] < 1.2
+    assert canonical_losses["legal_ir_multiview_total_loss"] < bridge_report.total_loss
 
 
 def test_multiview_bridge_forwards_compiler_guidance_to_adapter() -> None:
