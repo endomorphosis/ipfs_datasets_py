@@ -2339,11 +2339,7 @@ class LegalNormQuality:
             if isinstance(nested_quality, Mapping)
             else {}
         )
-        export_readiness = dict(
-            quality.get("export_readiness")
-            or element.get("export_readiness")
-            or {}
-        )
+        export_readiness = _merged_export_readiness(element, quality)
         return cls(
             schema_valid=bool(quality.get("schema_valid", element.get("schema_valid"))),
             slot_coverage=float(
@@ -2370,6 +2366,22 @@ class LegalNormQuality:
             ),
             export_readiness=export_readiness,
         )
+
+
+def _merged_export_readiness(
+    element: Mapping[str, Any],
+    quality: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Merge persisted top-level readiness with nested quality readiness."""
+
+    export_readiness: Dict[str, Any] = {}
+    top_level_readiness = element.get("export_readiness")
+    if isinstance(top_level_readiness, Mapping):
+        export_readiness.update(dict(top_level_readiness))
+    quality_readiness = quality.get("export_readiness")
+    if isinstance(quality_readiness, Mapping):
+        export_readiness.update(dict(quality_readiness))
+    return export_readiness
 
 
 @dataclass(frozen=True)
