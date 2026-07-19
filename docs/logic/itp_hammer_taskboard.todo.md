@@ -147,7 +147,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-013 Expose governed MCP and CLI hammer operations
 
-- Status: waiting
+- Status: completed
 - Priority: P1
 - Track: interfaces
 - Depends on: HAMMER-008, HAMMER-010, HAMMER-012
