@@ -1891,11 +1891,26 @@ def _decoder_validation_status(
     readiness = norm.quality.export_readiness
     if not isinstance(readiness, Mapping):
         return True, {}
-    if readiness.get("formula_proof_ready") is not True:
+    proof_ready = (
+        readiness.get("formula_proof_ready")
+        if "formula_proof_ready" in readiness
+        else readiness.get("proof_ready")
+    )
+    if proof_ready is not True:
         return True, {}
-    if readiness.get("formula_requires_validation") is True:
+    requires_validation = (
+        readiness.get("formula_requires_validation")
+        if "formula_requires_validation" in readiness
+        else readiness.get("export_requires_validation")
+    )
+    if requires_validation is True:
         return True, {}
-    if readiness.get("formula_repair_required") is True:
+    repair_required = (
+        readiness.get("formula_repair_required")
+        if "formula_repair_required" in readiness
+        else readiness.get("export_repair_required")
+    )
+    if repair_required is True:
         return True, {}
 
     resolution = readiness.get("deterministic_resolution")
