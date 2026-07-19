@@ -147,6 +147,7 @@ class LeanstralAuditConfig:
     cache_dir: Optional[str] = None
     validation_repair_retries: int = 1
     cache_writes_enabled: bool = True
+    prompt_payload_mode: str = "full"
 
     def bounded_validation_repair_retries(self) -> int:
         return max(0, min(3, int(self.validation_repair_retries or 0)))
@@ -156,6 +157,12 @@ class LeanstralAuditConfig:
             "model": self.model,
             "provider": self.provider,
             "vibe_agent": self.vibe_agent,
+        }
+
+    def compact_prompt_payload(self) -> bool:
+        return str(self.prompt_payload_mode or "full").strip().lower() in {
+            "compact",
+            "daemon",
         }
 
     def to_dict(self) -> Dict[str, Any]:
@@ -189,6 +196,7 @@ class LeanstralAuditWorkerConfig:
     batch_size: int = 1
     batch_max_workers: int = 0
     batch_use_mesh: bool = True
+    prompt_payload_mode: str = "full"
 
     def bounded_concurrency(self) -> int:
         return max(1, int(self.max_concurrency or 1))
@@ -257,6 +265,10 @@ class LeanstralAuditWorkerConfig:
             "vibe_agent": self.vibe_agent,
         }
 
+    def normalized_prompt_payload_mode(self) -> str:
+        value = str(self.prompt_payload_mode or "full").strip().lower()
+        return value if value in {"full", "compact", "daemon"} else "full"
+
     def runner_config(self) -> LeanstralAuditConfig:
         return LeanstralAuditConfig(
             enabled=bool(self.provider_enabled),
@@ -267,6 +279,7 @@ class LeanstralAuditWorkerConfig:
             max_new_tokens=self.bounded_max_new_tokens(),
             cache_dir=self.cache_dir,
             validation_repair_retries=self.bounded_validation_repair_retries(),
+            prompt_payload_mode=self.normalized_prompt_payload_mode(),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -1057,6 +1070,7 @@ class LeanstralAuditRunner:
                     repair_attempt=repair_attempt,
                     previous_response_text=raw_response,
                     previous_validation=validation if generation_attempts else None,
+                    compact=self.config.compact_prompt_payload(),
                 ),
                 ensure_ascii=True,
                 sort_keys=True,
@@ -1168,7 +1182,11 @@ class LeanstralAuditRunner:
 
         prompt_payloads = [
             json.dumps(
-                _leanstral_audit_prompt_payload(request, repair_attempt=0),
+                _leanstral_audit_prompt_payload(
+                    request,
+                    repair_attempt=0,
+                    compact=self.config.compact_prompt_payload(),
+                ),
                 ensure_ascii=True,
                 sort_keys=True,
             )
@@ -2041,8 +2059,13 @@ def _leanstral_audit_prompt_payload(
     repair_attempt: int = 0,
     previous_response_text: str = "",
     previous_validation: Optional[LeanstralAuditValidation] = None,
+    compact: bool = False,
 ) -> Dict[str, Any]:
-    payload = request.to_prompt_payload()
+    payload = (
+        _compact_leanstral_audit_prompt_payload(request)
+        if compact
+        else request.to_prompt_payload()
+    )
     if repair_attempt <= 0 or previous_validation is None:
         return payload
     payload["repair_instructions"] = {
@@ -2058,6 +2081,278 @@ def _leanstral_audit_prompt_payload(
         "previous_response_excerpt": _bounded_text(previous_response_text, 4000),
     }
     return payload
+
+
+def _compact_leanstral_audit_prompt_payload(
+    request: LeanstralAuditRequest,
+) -> Dict[str, Any]:
+    """Return a daemon-sized prompt that preserves verifiable identifiers."""
+
+    evidence = _json_ready_mapping(request.evidence)
+    cluster = _json_ready_mapping(evidence.get("cluster"))
+    semantic_family = str(cluster.get("semantic_family") or "legal_ir").strip()
+    compiler_surface = str(cluster.get("compiler_surface") or "legal_ir.compiler").strip()
+    evidence_packets = [
+        _compact_prompt_evidence_packet(packet)
+        for packet in evidence.get("evidence_packets", []) or []
+        if isinstance(packet, Mapping)
+    ][:1]
+    referenced_examples = [
+        _compact_prompt_reference_example(example)
+        for example in evidence.get("referenced_examples", []) or []
+        if isinstance(example, Mapping)
+    ][:1]
+    owned_surfaces = [
+        str(surface)
+        for surface in evidence.get(
+            "owned_compiler_surfaces",
+            LEANSTRAL_OWNED_COMPILER_SURFACES,
+        )
+        or ()
+        if str(surface).strip()
+    ]
+    compact_request = {
+        "cache_key": request.cache_key,
+        "evidence": {
+            "cluster": _compact_prompt_cluster(cluster),
+            "compiler_commit": evidence.get("compiler_commit"),
+            "evidence_packet_count": evidence.get("evidence_packet_count"),
+            "evidence_packet_selection": evidence.get("evidence_packet_selection"),
+            "evidence_packets": evidence_packets,
+            "owned_compiler_surfaces": owned_surfaces,
+            "referenced_examples": referenced_examples,
+            "semantic_signature": evidence.get("semantic_signature"),
+            "source_record_hashes": list(evidence.get("source_record_hashes", []) or [])[:4],
+            "state_hashes": list(evidence.get("state_hashes", []) or [])[:4],
+        },
+        "hashes": {
+            "evidence": request.evidence_hash,
+            "model": request.model_hash,
+            "prompt": request.prompt_hash,
+            "request_schema": request.request_schema_hash,
+            "response_schema": request.response_schema_hash,
+            "theorem_registry": request.theorem_registry_hash,
+        },
+        "model": dict(request.model),
+        "prompt": dict(request.prompt),
+        "proof_obligation_ids": list(request.proof_obligation_ids),
+        "request_id": request.request_id,
+        "schema_version": request.schema_version,
+    }
+    response_identity = {
+        "request_cache_key": request.cache_key,
+        "request_id": request.request_id,
+        "primary_proof_obligation_id": (
+            str(request.proof_obligation_ids[0])
+            if request.proof_obligation_ids
+            else ""
+        ),
+        "proof_obligation_ids": list(request.proof_obligation_ids),
+    }
+    return {
+        "allowed_classifications": sorted(ALLOWED_AUDIT_CLASSIFICATIONS),
+        "audit_response_identity": response_identity,
+        "instructions": [
+            "Return strict JSON only.",
+            "Classify the LegalIR semantic audit using one allowed classification.",
+            "Copy request.request_id exactly into response.request_id.",
+            "Use only proof_obligation_ids from the request.",
+            "For non-abstain responses, cite a compact evidence_id or example_id from request.evidence.",
+            "Do not copy legal text spans; use predicates, slots, hashes, and short identifiers.",
+            "For issue findings, include missing_semantic_rule and proposed_compiler_surface.",
+        ],
+        "output_contract": [
+            "Return exactly one compact JSON object.",
+            "No markdown, prose, XML tags, chat-template tokens, or prompt copies.",
+            "Keep every free-text string under 140 characters.",
+        ],
+        "request": compact_request,
+        "response_schema_hash": request.response_schema_hash,
+        "response_template": {
+            "abstention_reason": None,
+            "affected_ir_families": [semantic_family],
+            "classification": "missing_semantic_rule",
+            "confidence": 0.0,
+            "counterexample": {
+                "evidence_id": "copy a relevant request evidence_id",
+                "observed": "compiler loses or distorts this semantic signal",
+                "expected": "legal semantics should be preserved",
+            },
+            "drafted_logic_candidates": [
+                {
+                    "logic_family": semantic_family,
+                    "candidate": "obligation(actor, action) unless exception_condition",
+                    "compiler_surface": compiler_surface,
+                    "confidence": 0.0,
+                    "intended_use": "guidance_only",
+                    "proof_obligation_id": (
+                        str(request.proof_obligation_ids[0])
+                        if request.proof_obligation_ids
+                        else ""
+                    ),
+                }
+            ],
+            "missing_semantic_rule": {
+                "description": "missing deterministic semantic rule"
+            },
+            "proof_obligation_ids": list(request.proof_obligation_ids[:1]),
+            "proposed_compiler_surface": [
+                {
+                    "component": compiler_surface,
+                    "operation": "add deterministic compiler or decompiler rule",
+                }
+            ],
+            "request_cache_key": request.cache_key,
+            "request_id": request.request_id,
+            "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
+            "witness": None,
+        },
+    }
+
+
+def _compact_prompt_cluster(cluster: Mapping[str, Any]) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    for key in (
+        "compiler_surface",
+        "evidence_ids",
+        "gap_count",
+        "gap_detail_selection",
+        "sample_ids",
+        "schema_version",
+        "semantic_family",
+        "semantic_signature",
+    ):
+        if key in cluster:
+            payload[key] = _json_ready(cluster.get(key))
+    gaps = [
+        _prompt_bounded_json(gap, max_chars=140)
+        for gap in cluster.get("gaps", []) or []
+        if isinstance(gap, Mapping)
+    ][:1]
+    if gaps:
+        payload["gaps"] = gaps
+    omitted = cluster.get("omitted_gap_hashes")
+    if isinstance(omitted, Sequence) and not isinstance(omitted, (str, bytes)):
+        payload["omitted_gap_hashes"] = [str(value) for value in omitted[:4]]
+    return payload
+
+
+def _compact_prompt_evidence_packet(packet: Mapping[str, Any]) -> Dict[str, Any]:
+    return {
+        "anti_copy_evidence": _prompt_bounded_json(
+            packet.get("anti_copy_evidence"),
+            max_chars=100,
+        ),
+        "compiler_decompiler_metrics": _prompt_bounded_json(
+            packet.get("compiler_decompiler_metrics"),
+            max_chars=120,
+        ),
+        "evidence_hashes": _selected_prompt_mapping(
+            packet.get("evidence_hashes"),
+            (
+                "canonical_modal_ir_hash",
+                "source_text_hash",
+                "state_hash",
+            ),
+        ),
+        "evidence_id": str(packet.get("evidence_id") or ""),
+        "legal_ir_views": _prompt_bounded_json(
+            packet.get("legal_ir_views"),
+            max_chars=120,
+        ),
+        "learned_view_gaps": _prompt_bounded_json(
+            packet.get("learned_view_gaps"),
+            max_chars=160,
+        ),
+        "proof_route_status": _prompt_bounded_json(
+            packet.get("proof_route_status"),
+            max_chars=120,
+        ),
+        "run_context": _selected_prompt_mapping(
+            packet.get("run_context"),
+            (
+                "compiler_commit",
+                "cycle",
+                "evaluation_role",
+                "state_hash",
+            ),
+        ),
+        "sample_hashes": _selected_prompt_mapping(
+            packet.get("sample_hashes"),
+            (
+                "modal_ir_hash",
+                "sample_id",
+                "source_text_hash",
+            ),
+        ),
+        "schema_version": str(packet.get("schema_version") or ""),
+        "versions": _prompt_bounded_json(packet.get("versions"), max_chars=80),
+    }
+
+
+def _compact_prompt_reference_example(example: Mapping[str, Any]) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    for key in (
+        "citation",
+        "evidence_id",
+        "example_id",
+        "expected_modal_ir_hash",
+        "sample_id",
+        "section",
+        "source_text_hash",
+        "source_span_hash_format",
+        "title",
+    ):
+        value = example.get(key)
+        if value not in (None, "", (), []):
+            payload[key] = _json_ready(value)
+    if "compiler_decompiler_metrics" in example:
+        payload["compiler_decompiler_metrics"] = _prompt_bounded_json(
+            example.get("compiler_decompiler_metrics"),
+            max_chars=100,
+        )
+    if "source_span_hashes" in example:
+        payload["source_span_hashes"] = _prompt_bounded_json(
+            example.get("source_span_hashes"),
+            max_chars=80,
+        )
+    text = str(example.get("source_text") or "").strip()
+    if text:
+        payload["source_text_excerpt"] = _bounded_text(text, 80)
+    return payload
+
+
+def _selected_prompt_mapping(value: Any, keys: Sequence[str]) -> Dict[str, Any]:
+    mapping = _json_ready_mapping(value)
+    selected = {
+        key: mapping.get(key)
+        for key in keys
+        if mapping.get(key) not in (None, "", (), [])
+    }
+    omitted = {
+        key: mapping.get(key)
+        for key in sorted(mapping)
+        if key not in selected and mapping.get(key) not in (None, "", (), [])
+    }
+    if omitted:
+        selected["omitted_sha256"] = canonical_sha256(omitted)
+        selected["omitted_key_count"] = len(omitted)
+    return _json_ready_mapping(selected)
+
+
+def _prompt_bounded_json(value: Any, *, max_chars: int) -> Any:
+    ready = _json_ready(value)
+    try:
+        text = json.dumps(ready, ensure_ascii=True, sort_keys=True)
+    except (TypeError, ValueError):
+        text = str(ready)
+    if len(text) <= max_chars:
+        return ready
+    return {
+        "sha256": canonical_sha256(ready),
+        "summary": _bounded_text(text, max_chars),
+        "truncated": True,
+    }
 
 
 def _leanstral_validation_reasons_repairable(reasons: Sequence[str]) -> bool:

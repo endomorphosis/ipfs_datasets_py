@@ -104,6 +104,15 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--vibe-agent", default="lean")
     parser.add_argument("--max-new-tokens", type=int, default=1800)
     parser.add_argument(
+        "--prompt-payload-mode",
+        choices=("full", "compact", "daemon"),
+        default="full",
+        help=(
+            "Use full prompts for offline audits or compact/daemon prompts for "
+            "low-latency supervised guidance."
+        ),
+    )
+    parser.add_argument(
         "--batch-size",
         type=int,
         default=2,
@@ -257,6 +266,7 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
         vibe_agent=args.vibe_agent,
         require_leanstral_model=not args.allow_non_leanstral_model,
         max_new_tokens=args.max_new_tokens,
+        prompt_payload_mode=args.prompt_payload_mode,
         batch_size=args.batch_size,
         batch_max_workers=args.batch_max_workers,
         batch_use_mesh=args.batch_use_mesh,

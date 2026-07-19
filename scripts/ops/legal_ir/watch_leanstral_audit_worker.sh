@@ -287,6 +287,7 @@ run_audit_if_due() {
     --model "${LEANSTRAL_AUDIT_MODEL:-Leanstral}" \
     --vibe-agent "${LEANSTRAL_AUDIT_VIBE_AGENT:-lean}" \
     --max-new-tokens "${LEANSTRAL_AUDIT_MAX_NEW_TOKENS:-512}" \
+    --prompt-payload-mode "${LEANSTRAL_AUDIT_PROMPT_PAYLOAD_MODE:-compact}" \
     --batch-size "${LEANSTRAL_AUDIT_BATCH_SIZE:-2}" \
     --batch-max-workers "${LEANSTRAL_AUDIT_BATCH_MAX_WORKERS:-${LEANSTRAL_AUDIT_BATCH_SIZE:-2}}" \
     "${batch_use_mesh_args[@]}" \
