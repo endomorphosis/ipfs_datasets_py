@@ -137,7 +137,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-012 Persist replayable hammer receipts through IPFS-aware storage
 
-- Status: waiting
+- Status: completed
 - Priority: P1
 - Track: storage
 - Depends on: HAMMER-003, HAMMER-009, HAMMER-010
