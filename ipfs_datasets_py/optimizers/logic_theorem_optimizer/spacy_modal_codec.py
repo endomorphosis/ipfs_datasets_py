@@ -1352,6 +1352,13 @@ class SpaCyLegalEncoder:
                         ):
                             continue
                         if profile.family == ModalLogicFamily.TEMPORAL:
+                            if self._is_scope_only_temporal_surface_cue(
+                                normalized_text=normalized,
+                                cue=lowered_cue,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            ):
+                                continue
                             if self._fallback_parser._is_non_temporal_editorial_status_heading_cue(
                                 normalized_text=normalized,
                                 start_char=match.start(),
@@ -1457,6 +1464,33 @@ class SpaCyLegalEncoder:
             accepted,
             key=lambda cue: (cue.start_char, cue.end_char, cue.family, cue.symbol, cue.cue),
         )
+
+    def _is_scope_only_temporal_surface_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Keep broad temporal scope signals out of explicit modal cue lists."""
+        lowered_cue = _normalize(cue).lower()
+        if lowered_cue == "repealed":
+            prefix = normalized_text[max(0, start_char - 24) : start_char].lower()
+            suffix = normalized_text[end_char : end_char + 96].lower()
+            if re.search(r"(?:^|\b)(?:sec\.?|section|§)\s*[\w.\-]*\s*[-–—]?\s*$", prefix):
+                return True
+            if re.match(r"\s*(?:\.|;|,)?\s*(?:pub\.|editorial notes|codification|$)", suffix):
+                return True
+        if re.match(
+            r"^on\s+"
+            r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+            r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|"
+            r"nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}\b",
+            lowered_cue,
+        ):
+            return True
+        return False
 
     def _is_calendar_month_may_cue(
         self,
