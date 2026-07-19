@@ -8111,6 +8111,29 @@ def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
         if bool(signals.get("has_temporal_scope")):
             reinforced_frame_bonus += 0.3
         bonus += reinforced_frame_bonus
+    has_typed_scope_competition = bool(
+        explicit_conditional_scope
+        or signals.get("has_deontic_scope_phrase")
+        or signals.get("has_temporal_status_scope")
+        or (
+            bool(signals.get("has_temporal_scope"))
+            and has_strong_temporal_scope
+        )
+    )
+    has_direct_frame_scope = bool(
+        signals.get("has_frame_scope_phrase")
+        or signals.get("has_frame_editorial_scope_phrase")
+        or signals.get("has_frame_procedural_scope_phrase")
+    )
+    if (
+        bonus > 0.0
+        and has_typed_scope_competition
+        and not has_direct_frame_scope
+    ):
+        generic_frame_cap = 1.05
+        if bool(signals.get("has_frame_cue")):
+            generic_frame_cap = 1.35
+        bonus = min(bonus, generic_frame_cap)
     return bonus
 
 
