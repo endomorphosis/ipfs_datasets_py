@@ -34,6 +34,43 @@ def test_legal_norm_ir_preserves_core_parser_slots() -> None:
     assert "exception_requires_scope_review" in ir.blockers
 
 
+def test_ir_decoder_uses_formula_resolution_for_substantive_unless_exception() -> None:
+    source_text = "The agency must notify the applicant unless emergency review applies."
+    ir = LegalNormIR.from_parser_element(
+        {
+            "schema_version": "legal_norm_ir-v1",
+            "source_id": "legacy:deontic:substantive-unless",
+            "text": source_text,
+            "support_text": source_text,
+            "support_span": [0, len(source_text)],
+            "norm_type": "obligation",
+            "deontic_operator": "O",
+            "subject": ["agency"],
+            "action": ["notify the applicant"],
+            "parser_warnings": ["exception_requires_scope_review"],
+            "export_readiness": {
+                "blockers": ["exception_requires_scope_review"],
+            },
+        }
+    )
+
+    formula = build_deontic_formula_from_ir(ir)
+    decoder_record = build_decoder_record_from_ir(ir)
+
+    assert "¬EmergencyReviewApplies(x)" in formula
+    assert ir.proof_ready is False
+    assert decoder_record["decoded_text"] == (
+        "Agency shall notify the applicant unless emergency review applies."
+    )
+    assert decoder_record["missing_slots"] == []
+    assert decoder_record["requires_validation"] is False
+    assert decoder_record["decoder_validation_resolution"] == {
+        "type": "formula_deterministic_readiness",
+        "formula_resolution_type": "standard_substantive_exception",
+        "resolved_parser_warnings": ["exception_requires_scope_review"],
+    }
+
+
 def test_parser_element_to_ir_function_is_deterministic() -> None:
     element = extract_normative_elements("The tenant must pay rent monthly.")[0]
 

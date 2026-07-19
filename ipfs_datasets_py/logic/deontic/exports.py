@@ -1843,9 +1843,11 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         ungrounded_phrase_count / legal_phrase_count if legal_phrase_count else 0.0
     )
 
+    formula_record = build_deontic_formula_record_from_ir(norm)
     requires_validation, decoder_validation_resolution = _decoder_validation_status(
         norm,
         missing_slots=missing_slots,
+        formula_record=formula_record,
     )
 
     return {
@@ -1887,17 +1889,23 @@ def _decoder_validation_status(
     norm: LegalNormIR,
     *,
     missing_slots: Sequence[str],
+    formula_record: Mapping[str, Any] | None = None,
 ) -> tuple[bool, Dict[str, Any]]:
     """Return decoder validation status from slot loss and formula readiness.
 
     Decoder records should stay conservative for unresolved parser blockers.
-    When a hydrated or persisted IR row already carries explicit deterministic
-    formula readiness, however, reconstruction quality can rely on that source-
-    grounded evidence instead of keeping a stale decoder validation flag.
+    When a hydrated, persisted, or freshly rendered formula record carries
+    explicit deterministic readiness, however, reconstruction quality can rely
+    on that source-grounded evidence instead of keeping a stale decoder
+    validation flag.
     """
 
     if missing_slots:
         return True, {}
+
+    formula_resolution = _decoder_formula_record_resolution(formula_record)
+    if formula_resolution:
+        return False, formula_resolution
     if not norm.decoder_requires_validation:
         return False, {}
 
@@ -1941,6 +1949,34 @@ def _decoder_validation_status(
             "resolved_parser_warnings": list(norm.quality.parser_warnings),
         },
     )
+
+
+def _decoder_formula_record_resolution(
+    formula_record: Mapping[str, Any] | None,
+) -> Dict[str, Any]:
+    """Return decoder validation relief from a deterministic formula record."""
+
+    if not isinstance(formula_record, Mapping):
+        return {}
+    if formula_record.get("proof_ready") is not True:
+        return {}
+    if formula_record.get("requires_validation") is True:
+        return {}
+    if formula_record.get("repair_required") is True:
+        return {}
+
+    resolution = formula_record.get("deterministic_resolution")
+    if not isinstance(resolution, Mapping):
+        return {}
+    resolution_type = str(resolution.get("type") or "").strip()
+    if not resolution_type:
+        return {}
+
+    return {
+        "type": "formula_deterministic_readiness",
+        "formula_resolution_type": resolution_type,
+        "resolved_parser_warnings": list(formula_record.get("parser_warnings") or []),
+    }
 
 
 def _decoder_phrase_rows_with_reference_provenance(
