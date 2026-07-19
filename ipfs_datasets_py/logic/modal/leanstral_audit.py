@@ -1068,16 +1068,12 @@ class LeanstralAuditRunner:
         repair_reasons: tuple[str, ...] = ()
         generation_attempts = 0
         for repair_attempt in range(self.config.bounded_validation_repair_retries() + 1):
-            prompt_payload = json.dumps(
-                _leanstral_audit_prompt_payload(
-                    request,
-                    repair_attempt=repair_attempt,
-                    previous_response_text=raw_response,
-                    previous_validation=validation if generation_attempts else None,
-                    payload_mode=self.config.normalized_prompt_payload_mode(),
-                ),
-                ensure_ascii=True,
-                sort_keys=True,
+            prompt_payload = _leanstral_audit_prompt_text(
+                request,
+                repair_attempt=repair_attempt,
+                previous_response_text=raw_response,
+                previous_validation=validation if generation_attempts else None,
+                payload_mode=self.config.normalized_prompt_payload_mode(),
             )
             raw_response = generate(
                 prompt_payload,
@@ -1185,14 +1181,10 @@ class LeanstralAuditRunner:
             ]
 
         prompt_payloads = [
-            json.dumps(
-                _leanstral_audit_prompt_payload(
-                    request,
-                    repair_attempt=0,
-                    payload_mode=self.config.normalized_prompt_payload_mode(),
-                ),
-                ensure_ascii=True,
-                sort_keys=True,
+            _leanstral_audit_prompt_text(
+                request,
+                repair_attempt=0,
+                payload_mode=self.config.normalized_prompt_payload_mode(),
             )
             for request in request_list
         ]
@@ -2008,8 +2000,8 @@ def normalize_leanstral_audit_response_for_request(
     Leanstral commonly confuses adjacent identifiers in the prompt, especially
     request_id, cache_key, and proof obligation IDs.  These fields identify the
     current audit envelope rather than the substantive finding, so we only
-    normalize when the observed value is empty or is another known identifier
-    from the same request.
+    normalize when the observed value is empty, another known identifier from
+    the same request, or a small transcription error in a long request hash.
     """
 
     if response is None:
@@ -2028,6 +2020,7 @@ def normalize_leanstral_audit_response_for_request(
         and (
             not response_request_id
             or response_request_id in known_request_identifiers
+            or _request_id_near_match(response_request_id, request.request_id)
         )
     ):
         data["request_id"] = request.request_id
@@ -2037,24 +2030,149 @@ def normalize_leanstral_audit_response_for_request(
     if not response_cache_key:
         data["request_cache_key"] = request.cache_key
         reasons.append("filled_request_cache_key_from_request_context")
-    elif response_cache_key != request.cache_key and response_cache_key in known_request_identifiers:
+    elif response_cache_key != request.cache_key and (
+        response_cache_key in known_request_identifiers
+        or _identifier_near_match(response_cache_key, request.cache_key)
+    ):
         data["request_cache_key"] = request.cache_key
         reasons.append("normalized_request_cache_key_from_request_context")
+
+    response_schema_version = str(response.schema_version or "").strip()
+    if response_schema_version != LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION and (
+        not response_schema_version or response_schema_version == request.schema_version
+    ):
+        data["schema_version"] = LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION
+        reasons.append("normalized_response_schema_version_from_request_context")
 
     if not response.proof_obligation_ids and len(request.proof_obligation_ids) == 1:
         data["proof_obligation_ids"] = [str(request.proof_obligation_ids[0])]
         reasons.append("filled_single_proof_obligation_from_request_context")
 
+    cluster = _json_ready_mapping(request.evidence.get("cluster"))
+    semantic_family = str(cluster.get("semantic_family") or "").strip()
     if not response.affected_ir_families:
-        cluster = _json_ready_mapping(request.evidence.get("cluster"))
-        semantic_family = str(cluster.get("semantic_family") or "").strip()
         if semantic_family:
             data["affected_ir_families"] = [semantic_family]
             reasons.append("filled_affected_ir_families_from_request_cluster")
 
+    if response.classification != "abstain" and not response.proposed_compiler_surface:
+        compiler_surface = str(cluster.get("compiler_surface") or "").strip()
+        if not compiler_surface:
+            for candidate in response.drafted_logic_candidates:
+                compiler_surface = str(candidate.get("compiler_surface") or "").strip()
+                if compiler_surface:
+                    break
+        if compiler_surface:
+            data["proposed_compiler_surface"] = [
+                {
+                    "component": compiler_surface,
+                    "operation": "add deterministic compiler or decompiler rule",
+                }
+            ]
+            reasons.append("filled_proposed_compiler_surface_from_request_context")
+
+    if (
+        response.classification in ISSUE_AUDIT_CLASSIFICATIONS
+        and not _mapping_has_content(response.missing_semantic_rule)
+    ):
+        semantic_rule = _missing_semantic_rule_from_request_cluster(cluster)
+        if semantic_rule:
+            data["missing_semantic_rule"] = semantic_rule
+            reasons.append("filled_missing_semantic_rule_from_request_cluster")
+
     if not reasons:
         return response, ()
     return LeanstralAuditResponse.from_mapping(data), tuple(dict.fromkeys(reasons))
+
+
+def _identifier_near_match(
+    observed: str,
+    expected: str,
+    *,
+    max_edits: int = 2,
+    min_length: int = 32,
+) -> bool:
+    observed_text = str(observed or "").strip().lower()
+    expected_text = str(expected or "").strip().lower()
+    if observed_text == expected_text:
+        return True
+    hex_chars = set("0123456789abcdef")
+    if (
+        len(expected_text) < min_length
+        or not observed_text
+        or any(char not in hex_chars for char in observed_text)
+        or any(char not in hex_chars for char in expected_text)
+        or abs(len(observed_text) - len(expected_text)) > max_edits
+    ):
+        return False
+    return _bounded_edit_distance(observed_text, expected_text, max_edits) <= max_edits
+
+
+def _request_id_near_match(observed: str, expected: str, *, max_edits: int = 2) -> bool:
+    observed_text = str(observed or "").strip().lower()
+    expected_text = str(expected or "").strip().lower()
+    prefix = "leanstral-audit-"
+    if not observed_text.startswith(prefix) or not expected_text.startswith(prefix):
+        return False
+    return _identifier_near_match(
+        observed_text[len(prefix) :],
+        expected_text[len(prefix) :],
+        max_edits=max_edits,
+        min_length=12,
+    )
+
+
+def _bounded_edit_distance(left: str, right: str, limit: int) -> int:
+    if abs(len(left) - len(right)) > limit:
+        return limit + 1
+    previous = list(range(len(right) + 1))
+    for left_index, left_char in enumerate(left, start=1):
+        current = [left_index]
+        row_min = current[0]
+        for right_index, right_char in enumerate(right, start=1):
+            cost = 0 if left_char == right_char else 1
+            value = min(
+                previous[right_index] + 1,
+                current[right_index - 1] + 1,
+                previous[right_index - 1] + cost,
+            )
+            current.append(value)
+            row_min = min(row_min, value)
+        if row_min > limit:
+            return limit + 1
+        previous = current
+    return previous[-1]
+
+
+def _missing_semantic_rule_from_request_cluster(
+    cluster: Mapping[str, Any],
+) -> Dict[str, Any]:
+    semantic_family = str(cluster.get("semantic_family") or "legal_ir").strip()
+    compiler_surface = str(cluster.get("compiler_surface") or "").strip()
+    gap = next(
+        (
+            _json_ready_mapping(value)
+            for value in cluster.get("gaps", []) or []
+            if isinstance(value, Mapping)
+        ),
+        {},
+    )
+    gap_kind = str(gap.get("gap_kind") or "semantic_gap").strip()
+    semantic_signature = str(
+        gap.get("semantic_signature") or cluster.get("semantic_signature") or ""
+    ).strip()
+    rule: Dict[str, Any] = {
+        "description": f"missing deterministic {semantic_family} rule for {gap_kind}",
+    }
+    if compiler_surface:
+        rule["compiler_surface"] = compiler_surface
+    if semantic_signature:
+        rule["semantic_signature"] = semantic_signature
+    for key in ("evidence_id", "metric_name", "target_family", "predicted_family"):
+        value = str(gap.get(key) or "").strip()
+        if value:
+            rule[key] = value
+    return rule
 
 
 def _leanstral_audit_prompt_payload(
@@ -2090,6 +2208,133 @@ def _leanstral_audit_prompt_payload(
     return payload
 
 
+def _leanstral_audit_prompt_text(
+    request: LeanstralAuditRequest,
+    *,
+    repair_attempt: int = 0,
+    previous_response_text: str = "",
+    previous_validation: Optional[LeanstralAuditValidation] = None,
+    compact: bool = False,
+    payload_mode: Optional[str] = None,
+) -> str:
+    payload = _leanstral_audit_prompt_payload(
+        request,
+        repair_attempt=repair_attempt,
+        previous_response_text=previous_response_text,
+        previous_validation=previous_validation,
+        compact=compact,
+        payload_mode=payload_mode,
+    )
+    return _render_leanstral_audit_prompt_text(payload)
+
+
+def _prompt_section_json(value: Any) -> str:
+    return json.dumps(
+        _json_ready(value),
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _render_leanstral_audit_prompt_text(payload: Mapping[str, Any]) -> str:
+    request_payload = _json_ready_mapping(payload.get("request"))
+    response_template = _json_ready_mapping(payload.get("response_template"))
+    repair_instructions = _json_ready_mapping(payload.get("repair_instructions"))
+    allowed_classifications = [
+        str(value)
+        for value in payload.get("allowed_classifications", sorted(ALLOWED_AUDIT_CLASSIFICATIONS))
+        or ()
+        if str(value).strip()
+    ]
+    response_keys = [
+        "schema_version",
+        "request_id",
+        "request_cache_key",
+        "classification",
+        "confidence",
+        "affected_ir_families",
+        "proof_obligation_ids",
+        "missing_semantic_rule",
+        "proposed_compiler_surface",
+        "counterexample",
+        "witness",
+        "drafted_logic_candidates",
+        "abstention_reason",
+    ]
+    request_id = str(
+        response_template.get("request_id")
+        or request_payload.get("request_id")
+        or ""
+    ).strip()
+    request_cache_key = str(
+        response_template.get("request_cache_key")
+        or request_payload.get("cache_key")
+        or ""
+    ).strip()
+    obligations = [
+        str(value)
+        for value in (
+            response_template.get("proof_obligation_ids")
+            or request_payload.get("proof_obligation_ids")
+            or ()
+        )
+        if str(value).strip()
+    ]
+    primary_obligation = obligations[0] if obligations else ""
+
+    lines = [
+        "Leanstral LegalIR audit task.",
+        "Produce the response object only. Do not copy or continue the request object.",
+        "The first non-whitespace output character must be { and the last must be }.",
+        f"Required response schema_version: {LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION}",
+        "Allowed classifications: " + ", ".join(allowed_classifications),
+        "Required exact response identity:",
+        f"- request_id: {request_id}",
+        f"- request_cache_key: {request_cache_key}",
+        f"- proof_obligation_id: {primary_obligation}",
+        "Required top-level response keys: " + ", ".join(response_keys),
+        "For non-abstain classifications, include missing_semantic_rule, proposed_compiler_surface, and one compact counterexample or witness.",
+        "Do not copy legal text spans. Use compact predicates, IR slots, evidence_id/example_id values, and hashes.",
+        "Do not emit markdown, prose, XML tags, chat-template tokens, REQUEST_JSON, or RESPONSE_TEMPLATE_JSON.",
+        "BEGIN_REQUEST_JSON",
+        _prompt_section_json(request_payload),
+        "END_REQUEST_JSON",
+    ]
+    if repair_instructions:
+        lines.extend(
+            [
+                "BEGIN_VALIDATION_REPAIR_JSON",
+                _prompt_section_json(repair_instructions),
+                "END_VALIDATION_REPAIR_JSON",
+            ]
+        )
+    if payload.get("response_schema") is not None:
+        lines.extend(
+            [
+                "BEGIN_RESPONSE_SCHEMA_JSON",
+                _prompt_section_json(payload.get("response_schema")),
+                "END_RESPONSE_SCHEMA_JSON",
+            ]
+        )
+    elif payload.get("response_schema_hash") is not None:
+        lines.extend(
+            [
+                "Response schema hash: "
+                + str(payload.get("response_schema_hash") or "").strip(),
+            ]
+        )
+    lines.extend(
+        [
+            "BEGIN_RESPONSE_TEMPLATE_JSON",
+            _prompt_section_json(response_template),
+            "END_RESPONSE_TEMPLATE_JSON",
+            "Now emit the final response JSON object only.",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def _daemon_leanstral_audit_prompt_payload(
     request: LeanstralAuditRequest,
 ) -> Dict[str, Any]:
@@ -2116,7 +2361,8 @@ def _daemon_leanstral_audit_prompt_payload(
         "allowed_classifications": sorted(ALLOWED_AUDIT_CLASSIFICATIONS),
         "instructions": [
             "Return one strict JSON object only.",
-            "Copy request_id, request_cache_key, schema_version, and one proof_obligation_id exactly.",
+            f"Set schema_version exactly to {LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION}.",
+            "Copy request_id, request_cache_key, and one proof_obligation_id exactly.",
             "Do not copy legal text spans; cite evidence_id/example_id and use predicates or hashes.",
             "For non-abstain, include missing_semantic_rule, counterexample or witness, and proposed_compiler_surface.",
         ],
@@ -2143,6 +2389,7 @@ def _daemon_leanstral_audit_prompt_payload(
             "schema_version": request.schema_version,
             "semantic_family": semantic_family,
         },
+        "response_schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
         "response_template": {
             "abstention_reason": None,
             "affected_ir_families": [semantic_family],

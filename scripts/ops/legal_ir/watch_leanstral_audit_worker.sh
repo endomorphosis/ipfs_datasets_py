@@ -28,32 +28,55 @@ REFERENCE_EXAMPLE_COUNT=0
 LAST_RESOLVED_INPUT_PATH=""
 LLAMA_CPP_ACCELERATOR_REQUEST="${LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR:-auto}"
 LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT="${LEANSTRAL_AUDIT_BATCH_SIZE:-2}"
-LLAMA_CPP_CONTEXT_PER_SLOT_DEFAULT="${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT:-12288}"
+LLAMA_CPP_CONTEXT_PER_SLOT_DEFAULT="${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT:-4096}"
 if [[ "${LLAMA_CPP_CONTEXT_PER_SLOT_DEFAULT}" =~ ^[0-9]+$ ]] && \
    [[ "${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT}" =~ ^[0-9]+$ ]]; then
   LLAMA_CPP_CONTEXT_DEFAULT="$((LLAMA_CPP_CONTEXT_PER_SLOT_DEFAULT * LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT))"
 else
-  LLAMA_CPP_CONTEXT_DEFAULT="12288"
+  LLAMA_CPP_CONTEXT_DEFAULT="4096"
 fi
 LLAMA_CPP_GPU_LAYERS_DEFAULT="0"
+LLAMA_CPP_AUTO_SIZE_DEFAULT="0"
 LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT} --device none --no-op-offload --no-kv-offload"
 LLAMA_CPP_RESOLVED_ACCELERATOR="cpu"
 
 llama_cpp_cuda_available() {
-  local llama_bin devices
-  llama_bin="${IPFS_ACCELERATE_LLAMA_CPP_BIN:-}"
-  if [[ -z "${llama_bin}" ]]; then
-    llama_bin="$(command -v llama || true)"
+  local candidate devices
+  local candidates=()
+  if [[ -n "${IPFS_ACCELERATE_LLAMA_CPP_CLI:-}" ]]; then
+    candidates+=("${IPFS_ACCELERATE_LLAMA_CPP_CLI}")
   fi
-  [[ -n "${llama_bin}" ]] || return 1
-  devices="$("${llama_bin}" cli --list-devices 2>/dev/null || true)"
-  [[ "${devices}" == *"CUDA"* ]]
+  if [[ -n "${IPFS_ACCELERATE_LLAMA_CPP_BIN:-}" ]]; then
+    candidates+=("${IPFS_ACCELERATE_LLAMA_CPP_BIN}")
+  fi
+  if command -v llama-cli >/dev/null 2>&1; then
+    candidates+=("$(command -v llama-cli)")
+  fi
+  candidates+=("${HOME}/.cache/ipfs_accelerate_py/llama_cpp/build/bin/llama-cli")
+  if command -v llama >/dev/null 2>&1; then
+    candidates+=("$(command -v llama)")
+  fi
+
+  for candidate in "${candidates[@]}"; do
+    [[ -n "${candidate}" && -x "${candidate}" ]] || continue
+    case "$(basename "${candidate}")" in
+      llama-cli)
+        devices="$("${candidate}" --list-devices 2>/dev/null || true)"
+        ;;
+      *)
+        devices="$("${candidate}" cli --list-devices 2>/dev/null || true)"
+        ;;
+    esac
+    [[ "${devices}" == *"CUDA"* ]] && return 0
+  done
+  return 1
 }
 
 configure_llama_cpp_accelerator_defaults() {
-  local request lower_request explicit_gpu_layers explicit_extra_args gpu_layers_value
+  local request lower_request explicit_auto_size explicit_gpu_layers explicit_extra_args gpu_layers_value
   request="${LLAMA_CPP_ACCELERATOR_REQUEST}"
   lower_request="$(printf '%s' "${request}" | tr '[:upper:]' '[:lower:]')"
+  explicit_auto_size="${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING+x}"
   explicit_gpu_layers="${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS+x}"
   explicit_extra_args="${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS+x}"
   gpu_layers_value="${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-}"
@@ -77,14 +100,13 @@ configure_llama_cpp_accelerator_defaults() {
 
   LLAMA_CPP_RESOLVED_ACCELERATOR="cuda"
   if [[ -z "${explicit_gpu_layers}" ]]; then
-    LLAMA_CPP_GPU_LAYERS_DEFAULT="1"
+    LLAMA_CPP_GPU_LAYERS_DEFAULT="auto"
+  fi
+  if [[ -z "${explicit_auto_size}" ]]; then
+    LLAMA_CPP_AUTO_SIZE_DEFAULT="1"
   fi
   if [[ -z "${explicit_extra_args}" ]]; then
-    # Full Leanstral offload, and op/KV offload at 4k+ context, currently load
-    # but can crash on first generation during cuBLAS handle creation on GB10.
-    # One GPU layer keeps CUDA active while CPU op/KV execution preserves the
-    # old 12k audit context without that allocation failure.
-    LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT} -b 128 -ub 32 --no-op-offload --no-kv-offload"
+    LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT}"
   fi
 }
 
@@ -100,6 +122,7 @@ export IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL="${IPFS_ACCELERATE_LLAMA_CPP_PRE
 export IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS="${IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS:-900}"
 export IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE="${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}}"
 export IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS="${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}}"
+export IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING="${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING:-${LLAMA_CPP_AUTO_SIZE_DEFAULT}}"
 export IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS="${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS:-${LLAMA_CPP_EXTRA_ARGS_DEFAULT}}"
 export LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR="${LLAMA_CPP_RESOLVED_ACCELERATOR}"
 export LEANSTRAL_AUDIT_BATCH_SIZE="${LEANSTRAL_AUDIT_BATCH_SIZE:-${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT}}"
@@ -126,6 +149,10 @@ timestamp() {
 
 log_line() {
   echo "$(timestamp) $*"
+}
+
+current_compiler_commit() {
+  git rev-parse HEAD 2>/dev/null || true
 }
 
 process_group_for_pid() {
@@ -255,6 +282,7 @@ configure_reference_example_args() {
 
 llama_cpp_preflight_if_enabled() {
   local provider_chain lower_chain preflight_log
+  local preflight_auto_size_args=()
   case "${LEANSTRAL_AUDIT_LLAMA_CPP_PREFLIGHT:-1}" in
     0|false|False|FALSE|no|No|NO|off|Off|OFF)
       return 0
@@ -269,11 +297,20 @@ llama_cpp_preflight_if_enabled() {
 
   preflight_log="${WORK_DIR}/${RUN_ID}.llama-cpp-preflight.log"
   log_line "llama_cpp_preflight_started log=${preflight_log}"
+  case "$(printf '%s' "${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING:-}" | tr '[:upper:]' '[:lower:]')" in
+    1|true|yes|on)
+      preflight_auto_size_args=(--auto-size)
+      ;;
+  esac
+  if [[ "${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-}" == "auto" ]]; then
+    preflight_auto_size_args=(--auto-size)
+  fi
   if "${PYTHON_BIN}" -m ipfs_accelerate_py.utils.llama_cpp \
     --serve \
     --prefetch-model \
-    --context-size "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-12288}" \
-    --gpu-layers "${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-0}" \
+    "${preflight_auto_size_args[@]}" \
+    --context-size "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}}" \
+    --gpu-layers "${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}}" \
     --extra-args "${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS:-${LLAMA_CPP_EXTRA_ARGS_DEFAULT}}" \
     --startup-timeout-seconds "${IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS:-900}" \
     >> "${preflight_log}" 2>&1; then
@@ -297,6 +334,7 @@ update_input_signature() {
 
 run_audit_if_due() {
   local signature now failure_now batch_use_mesh_args audit_status audit_timeout_cmd audit_launch_cmd
+  local expected_compiler_commit expected_compiler_commit_args
   update_input_signature || return 0
   signature="${current_input_signature}"
   now="$(date +%s)"
@@ -320,6 +358,20 @@ run_audit_if_due() {
   signature="${current_input_signature}"
   last_signature="${signature}"
   configure_reference_example_args
+  expected_compiler_commit="${LEANSTRAL_AUDIT_EXPECTED_COMPILER_COMMIT:-}"
+  case "${LEANSTRAL_AUDIT_EXPECTED_COMPILER_COMMIT_AUTO:-1}" in
+    0|false|False|FALSE|no|No|NO|off|Off|OFF)
+      ;;
+    *)
+      if [[ -z "${expected_compiler_commit}" ]]; then
+        expected_compiler_commit="$(current_compiler_commit)"
+      fi
+      ;;
+  esac
+  expected_compiler_commit_args=()
+  if [[ -n "${expected_compiler_commit}" ]]; then
+    expected_compiler_commit_args=(--expected-compiler-commit "${expected_compiler_commit}")
+  fi
   batch_use_mesh_args=()
   case "${LEANSTRAL_AUDIT_BATCH_USE_MESH}" in
     1|true|True|TRUE|yes|Yes|YES|on|On|ON)
@@ -338,17 +390,18 @@ run_audit_if_due() {
   if command -v setsid >/dev/null 2>&1; then
     audit_launch_cmd=(setsid)
   fi
-  log_line "audit_started signature=${signature}"
+  log_line "audit_started signature=${signature} expected_compiler_commit=${expected_compiler_commit:-none}"
   audit_status=0
   "${audit_launch_cmd[@]}" "${audit_timeout_cmd[@]}" "${PYTHON_BIN}" scripts/ops/legal_ir/run_leanstral_audit_worker.py \
     --input "${INPUT_PATH}" \
     --cache-dir "${CACHE_DIR}" \
     --checkpoint-path "${CHECKPOINT_PATH}" \
     --max-concurrency "${LEANSTRAL_AUDIT_MAX_CONCURRENCY:-1}" \
-    --max-retries "${LEANSTRAL_AUDIT_MAX_RETRIES:-1}" \
-    --validation-repair-retries "${LEANSTRAL_AUDIT_VALIDATION_REPAIR_RETRIES:-1}" \
+    --max-retries "${LEANSTRAL_AUDIT_MAX_RETRIES:-0}" \
+    --validation-repair-retries "${LEANSTRAL_AUDIT_VALIDATION_REPAIR_RETRIES:-0}" \
     --timeout-seconds "${AUDIT_PROVIDER_TIMEOUT_SECONDS}" \
     --retry-backoff-seconds "${LEANSTRAL_AUDIT_RETRY_BACKOFF_SECONDS:-2}" \
+    "${expected_compiler_commit_args[@]}" \
     --snapshot-selection "${LEANSTRAL_AUDIT_SNAPSHOT_SELECTION:-latest_canonical_snapshot}" \
     --min-snapshot-records "${LEANSTRAL_AUDIT_MIN_SNAPSHOT_RECORDS:-25}" \
     --max-records "${LEANSTRAL_AUDIT_MAX_RECORDS:-0}" \
@@ -396,7 +449,7 @@ run_audit_if_due() {
 configure_reference_example_args
 resolve_input_path
 log_line "audit_companion_started parent_pid=${PARENT_PID} input=${INPUT_PATH} reference_example_paths=${REFERENCE_EXAMPLE_COUNT}"
-log_line "llama_cpp_accelerator_resolved requested=${LLAMA_CPP_ACCELERATOR_REQUEST} resolved=${LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR} context=${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE} gpu_layers=${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS} extra_args=${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS}"
+log_line "llama_cpp_accelerator_resolved requested=${LLAMA_CPP_ACCELERATOR_REQUEST} resolved=${LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR} context=${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE} gpu_layers=${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS} auto_sizing=${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING} extra_args=${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS}"
 log_line "audit_timeouts provider_seconds=${AUDIT_PROVIDER_TIMEOUT_SECONDS} run_seconds=${AUDIT_RUN_TIMEOUT_SECONDS} kill_after_seconds=${AUDIT_RUN_KILL_AFTER_SECONDS}"
 while parent_alive; do
   run_audit_if_due

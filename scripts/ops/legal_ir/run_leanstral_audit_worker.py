@@ -385,6 +385,27 @@ def select_canonical_snapshot_records(
         }
         if expected_pool:
             pool = expected_pool
+        else:
+            return [], {
+                "candidate_snapshot_count": len(groups),
+                "expected_filters": expected_filters,
+                "max_records_applied": 0,
+                "meets_min_snapshot_records": False,
+                "min_snapshot_records": max(1, int(min_records or 1)),
+                "selected_group_packet_count": 0,
+                "selected_packet_count": 0,
+                "selection_policy": selection_policy,
+                "selection_reason": "no_matching_snapshot",
+                "snapshot_candidates": [
+                    _snapshot_candidate_summary(key, group)
+                    for key, group in sorted(
+                        groups.items(),
+                        key=lambda item: _snapshot_rank(item[1]),
+                        reverse=True,
+                    )[:10]
+                ],
+                "source_valid_packet_count": len(records),
+            }
     if not pool:
         return [], {
             "candidate_snapshot_count": len(groups),

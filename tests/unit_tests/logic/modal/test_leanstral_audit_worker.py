@@ -29,8 +29,11 @@ from ipfs_datasets_py.logic.modal import (
 from ipfs_datasets_py.logic.modal.leanstral_audit import (
     LEANSTRAL_AUDIT_STOP_TOKENS,
     _leanstral_audit_prompt_payload,
+    _leanstral_audit_prompt_text,
     canonical_sha256,
+    normalize_leanstral_audit_response_for_request,
     parse_leanstral_audit_response,
+    validate_leanstral_audit_response,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     build_us_code_sample,
@@ -148,6 +151,23 @@ def _response_json(request_payload: dict) -> str:
     )
 
 
+def _prompt_json_section(prompt: str, section: str) -> dict:
+    assert not prompt.lstrip().startswith("{")
+    begin = f"BEGIN_{section}_JSON"
+    end = f"END_{section}_JSON"
+    begin_index = prompt.index(begin) + len(begin)
+    end_index = prompt.index(end, begin_index)
+    return json.loads(prompt[begin_index:end_index].strip())
+
+
+def _request_payload_from_prompt(prompt: str) -> dict:
+    return _prompt_json_section(prompt, "REQUEST")
+
+
+def _repair_payload_from_prompt(prompt: str) -> dict:
+    return _prompt_json_section(prompt, "VALIDATION_REPAIR")
+
+
 def test_worker_loads_jsonl_clusters_and_deduplicates_required_axes(tmp_path) -> None:
     path = tmp_path / "packets.jsonl"
     packet = _packet(1)
@@ -194,18 +214,24 @@ def test_live_audit_worker_lean_timeout_default_matches_canary_budget() -> None:
     assert "IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART:-1" in watcher
     assert "IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL:-1" in watcher
     assert "IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS:-900" in watcher
-    assert "IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-12288" in watcher
-    assert "IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-0" in watcher
+    assert "IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}" in watcher
+    assert "IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}" in watcher
+    assert "IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING:-${LLAMA_CPP_AUTO_SIZE_DEFAULT}" in watcher
+    assert 'LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT}"' in watcher
     assert 'LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT} --device none --no-op-offload --no-kv-offload"' in watcher
-    assert '--context-size "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-12288}"' in watcher
-    assert '--gpu-layers "${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-0}"' in watcher
+    assert '--context-size "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}}"' in watcher
+    assert '--gpu-layers "${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}}"' in watcher
     assert '--extra-args "${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS:-${LLAMA_CPP_EXTRA_ARGS_DEFAULT}}"' in watcher
+    assert "--auto-size" in watcher
     assert "llama_cpp_preflight_if_enabled" in watcher
     assert "ipfs_accelerate_py.utils.llama_cpp" in watcher
     assert "LEANSTRAL_AUDIT_SNAPSHOT_SELECTION:-latest_canonical_snapshot" in watcher
+    assert "LEANSTRAL_AUDIT_EXPECTED_COMPILER_COMMIT_AUTO:-1" in watcher
+    assert '--expected-compiler-commit "${expected_compiler_commit}"' in watcher
     assert "LEANSTRAL_AUDIT_MIN_SNAPSHOT_RECORDS:-25" in watcher
-    assert "LEANSTRAL_AUDIT_VALIDATION_REPAIR_RETRIES:-1" in watcher
+    assert "LEANSTRAL_AUDIT_VALIDATION_REPAIR_RETRIES:-0" in watcher
     assert "LEANSTRAL_AUDIT_MAX_CONCURRENCY:-1" in watcher
+    assert "LEANSTRAL_AUDIT_MAX_RETRIES:-0" in watcher
     assert "LEANSTRAL_AUDIT_TIMEOUT_SECONDS:-600" in watcher
     assert "LEANSTRAL_AUDIT_MAX_WORK_ITEMS:-2" in watcher
     assert "LEANSTRAL_AUDIT_MAX_NEW_TOKENS:-512" in watcher
@@ -272,6 +298,107 @@ def test_parse_leanstral_audit_response_recovers_fenced_json_with_chat_residue()
     assert parsed.request_id == request.request_id
 
 
+def test_normalize_leanstral_response_repairs_request_schema_echo() -> None:
+    request = LeanstralAuditRequest.build(
+        evidence={"evidence_id": "evidence-a"},
+        prompt={"prompt": "audit"},
+        model={"model": "Leanstral"},
+        proof_obligation_ids=["proof-a"],
+    )
+    response = LeanstralAuditResponse.from_mapping(
+        {
+            "abstention_reason": "",
+            "affected_ir_families": ["deontic"],
+            "classification": "missing_semantic_rule",
+            "confidence": 0.82,
+            "counterexample": {"evidence_id": "evidence-a"},
+            "missing_semantic_rule": {"rule_id": "obligation_scope"},
+            "proof_obligation_ids": ["proof-a"],
+            "proposed_compiler_surface": [{"component": "deontic.ir"}],
+            "request_id": request.request_id,
+            "schema_version": request.schema_version,
+            "witness": None,
+        }
+    )
+
+    normalized, reasons = normalize_leanstral_audit_response_for_request(request, response)
+
+    assert normalized is not None
+    assert normalized.schema_version == LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION
+    assert "normalized_response_schema_version_from_request_context" in reasons
+    validation = validate_leanstral_audit_response(
+        request,
+        normalized,
+        verifier_id="unit-test",
+    )
+    assert validation.accepted
+
+
+def test_normalize_leanstral_response_fills_request_derived_gap_fields() -> None:
+    request = LeanstralAuditRequest.build(
+        evidence={
+            "cluster": {
+                "compiler_surface": "modal.frame_logic",
+                "gaps": [
+                    {
+                        "evidence_id": "evidence-a",
+                        "gap_kind": "semantic_family_gap",
+                        "metric_name": "frame_logic_family_probability_gap",
+                        "predicted_family": "temporal",
+                        "semantic_signature": "frame_logic:gap",
+                        "target_family": "frame",
+                    }
+                ],
+                "semantic_family": "frame_logic",
+                "semantic_signature": "frame_logic:gap",
+            }
+        },
+        prompt={"prompt": "audit"},
+        model={"model": "Leanstral"},
+        proof_obligation_ids=["proof-a"],
+    )
+    typo_cache_key = request.cache_key[:32] + "0" + request.cache_key[32:]
+    typo_request_id = request.request_id[:-4] + request.request_id[-3:]
+    response = LeanstralAuditResponse.from_mapping(
+        {
+            "abstention_reason": "",
+            "affected_ir_families": [],
+            "classification": "missing_semantic_rule",
+            "confidence": 0.82,
+            "counterexample": {"evidence_id": "evidence-a"},
+            "missing_semantic_rule": {"description": ""},
+            "proof_obligation_ids": ["proof-a"],
+            "proposed_compiler_surface": [],
+            "request_cache_key": typo_cache_key,
+            "request_id": typo_request_id,
+            "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
+            "witness": None,
+        }
+    )
+
+    normalized, reasons = normalize_leanstral_audit_response_for_request(
+        request,
+        response,
+    )
+
+    assert normalized is not None
+    assert normalized.request_id == request.request_id
+    assert normalized.request_cache_key == request.cache_key
+    assert normalized.affected_ir_families == ("frame_logic",)
+    assert normalized.proposed_compiler_surface[0]["component"] == "modal.frame_logic"
+    assert normalized.missing_semantic_rule["semantic_signature"] == "frame_logic:gap"
+    assert "normalized_request_id_from_request_context" in reasons
+    assert "normalized_request_cache_key_from_request_context" in reasons
+    assert "filled_proposed_compiler_surface_from_request_context" in reasons
+    assert "filled_missing_semantic_rule_from_request_cluster" in reasons
+    validation = validate_leanstral_audit_response(
+        request,
+        normalized,
+        verifier_id="unit-test",
+    )
+    assert validation.accepted
+
+
 def test_worker_snapshot_selection_uses_latest_coherent_state() -> None:
     older = []
     for index in range(1, 26):
@@ -328,6 +455,26 @@ def test_worker_snapshot_selection_honors_expected_state_filter() -> None:
         "state-expected"
     }
     assert metadata["selection_reason"] == "expected_newest_min_satisfying_snapshot"
+
+
+def test_worker_snapshot_selection_rejects_missing_expected_commit() -> None:
+    packets = []
+    for index in range(1, 4):
+        packet = _packet(index, state_hash="state-latest")
+        packet["run_context"]["compiler_commit"] = "commit-latest"
+        packet["run_context"]["exported_at"] = 1_700_001_000.0 + index
+        packets.append(packet)
+
+    selected, metadata = select_canonical_snapshot_records(
+        packets,
+        expected_compiler_commit="commit-current",
+        min_records=1,
+    )
+
+    assert selected == []
+    assert metadata["expected_filters"] == {"compiler_commit": "commit-current"}
+    assert metadata["selected_packet_count"] == 0
+    assert metadata["selection_reason"] == "no_matching_snapshot"
 
 
 def test_worker_bounds_model_evidence_and_preserves_full_hash_manifest(tmp_path) -> None:
@@ -419,6 +566,38 @@ def test_daemon_prompt_payload_is_bounded_and_preserves_response_identity(tmp_pa
         request.proof_obligation_ids[0]
     ]
     assert "source_text_excerpt" not in daemon
+    daemon_text = _leanstral_audit_prompt_text(request, payload_mode="daemon")
+    assert daemon_text.startswith("Leanstral LegalIR audit task.")
+    assert not daemon_text.lstrip().startswith("{")
+    assert "BEGIN_REQUEST_JSON" in daemon_text
+    assert "BEGIN_RESPONSE_TEMPLATE_JSON" in daemon_text
+    assert daemon_text.rfind("BEGIN_RESPONSE_TEMPLATE_JSON") > daemon_text.rfind(
+        "END_REQUEST_JSON"
+    )
+    daemon_text_request = _request_payload_from_prompt(daemon_text)
+    daemon_text_template = _prompt_json_section(daemon_text, "RESPONSE_TEMPLATE")
+    assert daemon_text_request["request_id"] == request.request_id
+    assert daemon_text_template["request_id"] == request.request_id
+    assert daemon_text_template["request_cache_key"] == request.cache_key
+    assert (
+        daemon_text_template["schema_version"]
+        == LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION
+    )
+    repair_text = _leanstral_audit_prompt_text(
+        request,
+        payload_mode="daemon",
+        repair_attempt=1,
+        previous_response_text='{"schema_version":"bad"}',
+        previous_validation=LeanstralAuditValidation(
+            accepted=False,
+            verified=False,
+            reasons=("invalid_json_audit_response",),
+            cache_key=request.cache_key,
+        ),
+    )
+    repair = _repair_payload_from_prompt(repair_text)
+    assert repair["mode"] == "validation_repair"
+    assert repair["validation_reasons"] == ["invalid_json_audit_response"]
 
 
 def test_latest_compiler_snapshot_stabilizes_requests_until_compiler_changes(
@@ -481,7 +660,7 @@ def test_worker_runs_bounded_async_audits_and_reuses_checkpoint_and_cache(tmp_pa
         assert kwargs["model_name"] == "Leanstral"
         assert kwargs["response_format"] == {"type": "json_object"}
         assert kwargs["stop"] == list(LEANSTRAL_AUDIT_STOP_TOKENS)
-        return _response_json(json.loads(prompt)["request"])
+        return _response_json(_request_payload_from_prompt(prompt))
 
     packets = [_packet(1, component="deontic"), _packet(2, component="temporal")]
     config = LeanstralAuditWorkerConfig(
@@ -516,7 +695,7 @@ def test_worker_batches_first_attempt_leanstral_audits(tmp_path) -> None:
         assert kwargs["response_format"] == {"type": "json_object"}
         assert kwargs["stop"] == list(LEANSTRAL_AUDIT_STOP_TOKENS)
         return [
-            _response_json(json.loads(prompt)["request"])
+            _response_json(_request_payload_from_prompt(prompt))
             for prompt in prompts
         ]
 
@@ -600,7 +779,7 @@ def test_worker_retries_timeouts_and_reports_labs_unavailable(tmp_path) -> None:
         calls += 1
         if calls == 1:
             raise RuntimeError("transient transport failure")
-        return _response_json(json.loads(prompt)["request"])
+        return _response_json(_request_payload_from_prompt(prompt))
 
     retry_worker = LeanstralAuditWorker(
         LeanstralAuditWorkerConfig(
@@ -658,7 +837,7 @@ def test_worker_timeout_does_not_late_write_shared_cache(tmp_path) -> None:
 
     def slow_generate(prompt: str, **kwargs: object) -> str:
         time.sleep(0.05)
-        return _response_json(json.loads(prompt)["request"])
+        return _response_json(_request_payload_from_prompt(prompt))
 
     worker = LeanstralAuditWorker(
         LeanstralAuditWorkerConfig(
@@ -686,7 +865,7 @@ def test_worker_fails_over_to_explicit_leanstral_provider(tmp_path) -> None:
         providers.append(str(kwargs["provider"]))
         if kwargs["provider"] == "mistral_vibe":
             raise RuntimeError("transient provider failure")
-        return _response_json(json.loads(prompt)["request"])
+        return _response_json(_request_payload_from_prompt(prompt))
 
     worker = LeanstralAuditWorker(
         LeanstralAuditWorkerConfig(
@@ -711,18 +890,18 @@ def test_worker_repairs_validation_rejected_audit_response(tmp_path) -> None:
     payloads = []
 
     def repair_generate(prompt: str, **kwargs: object) -> str:
-        payload = json.loads(prompt)
-        payloads.append(payload)
-        response = json.loads(_response_json(payload["request"]))
+        request_payload = _request_payload_from_prompt(prompt)
+        payloads.append(prompt)
+        response = json.loads(_response_json(request_payload))
         if len(payloads) == 1:
             response["counterexample"] = None
             response["proposed_compiler_surface"] = []
             return json.dumps(response)
-        repair = payload["repair_instructions"]
+        repair = _repair_payload_from_prompt(prompt)
         assert repair["mode"] == "validation_repair"
         assert "missing_counterexample_or_witness" in repair["validation_reasons"]
-        assert "missing_proposed_compiler_surface" in repair["validation_reasons"]
-        return _response_json(payload["request"])
+        assert "missing_proposed_compiler_surface" not in repair["validation_reasons"]
+        return _response_json(request_payload)
 
     worker = LeanstralAuditWorker(
         LeanstralAuditWorkerConfig(
@@ -741,13 +920,13 @@ def test_worker_repairs_validation_rejected_audit_response(tmp_path) -> None:
     assert summary.results[0].attempts == 1
     assert summary.results[0].generation_attempts == 2
     assert "missing_counterexample_or_witness" in summary.results[0].repair_reasons
-    assert "missing_proposed_compiler_surface" in summary.results[0].repair_reasons
+    assert "filled_proposed_compiler_surface_from_request_context" in summary.results[0].repair_reasons
     assert len(payloads) == 2
 
 
 def test_worker_normalizes_request_derived_leanstral_envelope_fields(tmp_path) -> None:
     def confused_generate(prompt: str, **kwargs: object) -> str:
-        request_payload = json.loads(prompt)["request"]
+        request_payload = _request_payload_from_prompt(prompt)
         response = json.loads(_response_json(request_payload))
         response["request_id"] = request_payload["proof_obligation_ids"][0]
         response["request_cache_key"] = ""
@@ -783,7 +962,7 @@ def test_worker_rejects_stale_state_and_non_leanstral_model(tmp_path) -> None:
             cache_dir=str(tmp_path / "cache"),
             expected_state_hash="current-state",
         ),
-        llm_generate=lambda prompt, **kwargs: _response_json(json.loads(prompt)["request"]),
+        llm_generate=lambda prompt, **kwargs: _response_json(_request_payload_from_prompt(prompt)),
     )
     stale = anyio_compat.run_with_backend(stale_worker.run_records([_packet(1, state_hash="old-state")], source_digest="stale"))
     assert stale.work_item_count == 0
@@ -794,7 +973,7 @@ def test_worker_rejects_stale_state_and_non_leanstral_model(tmp_path) -> None:
             cache_dir=str(tmp_path / "generic-cache"),
             model="Mistral-Large",
         ),
-        llm_generate=lambda prompt, **kwargs: _response_json(json.loads(prompt)["request"]),
+        llm_generate=lambda prompt, **kwargs: _response_json(_request_payload_from_prompt(prompt)),
     )
     generic = anyio_compat.run_with_backend(generic_worker.run_records([_packet(2)], source_digest="generic"))
     assert generic.rejected_count == 1
