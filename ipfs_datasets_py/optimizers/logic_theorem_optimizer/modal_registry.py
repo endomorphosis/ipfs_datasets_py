@@ -15521,6 +15521,21 @@ COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+)
+
 COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
     _ordered_unique_adaptive_ambiguity_family_pairs(
         (
@@ -15530,6 +15545,7 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
             *COMPILER_REFINED_PACKET_002892_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
         )
     )
 )
@@ -15543,6 +15559,7 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_002892_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_002508_FAMILY_PAIRS,
         )
     )
@@ -15557,6 +15574,7 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_002892_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_002508_FAMILY_PAIRS,
         )
     )
@@ -15571,6 +15589,7 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_002892_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_002508_FAMILY_PAIRS,
         )
     )
@@ -15585,6 +15604,7 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
             *COMPILER_REFINED_PACKET_002892_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS,
             *COMPILER_REFINED_PACKET_003471_FAMILY_PAIRS,
+            *COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS,
         )
     )
 )
@@ -15681,6 +15701,45 @@ COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
             0.0,
         ),
         0.34,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.DEONTIC.value,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+            ),
+            0.0,
+        ),
+        0.55,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.FRAME.value,
+                ModalLogicFamily.TEMPORAL.value,
+            ),
+            0.0,
+        ),
+        1.12,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.TEMPORAL.value,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+            ),
+            0.0,
+        ),
+        0.36,
     ),
 }
 
@@ -16237,6 +16296,7 @@ __all__ = [
     "COMPILER_REFINED_PACKET_002283_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_002892_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000178_FAMILY_PAIRS",
+    "COMPILER_REFINED_PACKET_001001_FAMILY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS",
     "COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",
     "COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR",
