@@ -122,7 +122,11 @@ class FolTdfolBridgeAdapter:
     ) -> tuple[LegalIRDocument, Mapping[str, Any]]:
         """Encode legal text into a TDFOL bridge document."""
 
-        bridge_inputs = _bridge_inputs_from_text(text, converter=self._converter())
+        guidance = _tdfol_compiler_guidance_signal(compiler_guidance)
+        if guidance["active"] and self.converter is None:
+            bridge_inputs = _deterministic_bridge_inputs_from_text(text)
+        else:
+            bridge_inputs = _bridge_inputs_from_text(text, converter=self._converter())
         norms = bridge_inputs["norms"]
         resolved_document_id = document_id or _document_id("tdfol", text)
         compiler_guidance_records = _formula_records_from_compiler_guidance(
@@ -341,6 +345,16 @@ def _bridge_inputs_from_text(text: str, *, converter: Any) -> dict[str, list[dic
     return {
         "norms": norms,
         "proof_obligation_rows": proof_obligation_rows,
+    }
+
+
+def _deterministic_bridge_inputs_from_text(text: str) -> dict[str, list[dict[str, Any]]]:
+    """Build TDFOL bridge inputs without the generic deontic converter."""
+
+    norm = _synthesized_norm_from_text(text)
+    return {
+        "norms": [norm] if norm is not None else [],
+        "proof_obligation_rows": [],
     }
 
 
