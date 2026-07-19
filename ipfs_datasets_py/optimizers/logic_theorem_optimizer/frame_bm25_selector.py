@@ -284,6 +284,8 @@ _FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
 _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES: tuple[str, ...] = (
     "legal-ir-view:",
     "legal_ir_view:",
+    "legal-ir-view-prototype:",
+    "legal_ir_view_prototype:",
 )
 _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES: tuple[str, ...] = (
     "legal-ir-view-gap:",
@@ -942,6 +944,12 @@ def _synthetic_frame_feature_candidates_from_key_value(
         normalized_key
     )
     is_hint_id_key = normalized_key in _FRAME_ONTOLOGY_HINT_ID_KEYS
+    gap_candidates = _synthetic_legal_ir_component_gap_feature_candidates(
+        normalized_key,
+        value,
+    )
+    if gap_candidates:
+        return gap_candidates
     if not prefix and not sequence_prefix and not is_hint_id_key:
         return []
     candidates: List[str] = []
@@ -967,6 +975,33 @@ def _synthetic_frame_feature_candidates_from_key_value(
                 candidates.append(f"flogic:statement_hint:{hint_term}")
             continue
         candidates.append(f"{prefix or sequence_prefix}{text}")
+    return candidates
+
+
+def _synthetic_legal_ir_component_gap_feature_candidates(
+    normalized_key: str,
+    value: Any,
+) -> List[str]:
+    """Project positive LegalIR component gaps into frame ontology view keys."""
+    if normalized_key not in {
+        "compiler_guidance_component_gaps",
+        "compiler_guidance_legal_ir_component_gaps",
+        "legal_ir_component_gaps",
+    }:
+        return []
+    if not isinstance(value, Mapping):
+        return []
+    candidates: List[str] = []
+    for component, raw_gap in sorted(value.items()):
+        try:
+            gap = float(raw_gap)
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(gap) or gap <= 0.0:
+            continue
+        component_name = str(component or "").strip()
+        if component_name:
+            candidates.append(f"legal-ir-view-gap:{component_name}")
     return candidates
 
 

@@ -900,6 +900,24 @@ def test_modal_frame_logic_bridge_audits_packet_frame_feature_evidence() -> None
         compiler_guidance={
             "action": "audit_frame_logic_terms",
             "target_component": "modal.frame_logic",
+            "evidence": {
+                "legal_ir_component_gaps": {
+                    "CEC.native": 0.142299321659,
+                    "TDFOL.prover": -0.05238208709,
+                    "modal.frame_logic": 0.061126727053,
+                    "knowledge_graphs.neo4j_compat": 0.017866203053,
+                },
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "modal.frame_logic",
+                    "knowledge_graphs.neo4j_compat",
+                ],
+                "top_family_features": [
+                    "legal-ir-view-prototype:deontic.ir",
+                    "legal-ir-view-prototype:TDFOL.prover",
+                    "signature:operator:frame:frame_bm25:frame",
+                ],
+            },
             "frame_features": [
                 "legal-ir-view:deontic.ir",
                 "legal-ir-view:modal.frame_logic",
@@ -946,6 +964,9 @@ def test_modal_frame_logic_bridge_audits_packet_frame_feature_evidence() -> None
     assert "deontic_ir" in selected_terms
     assert "modal_autoencoder" in selected_terms
     assert "tdfol_prover" in selected_terms
+    assert "cec_native" in audit_terms
+    assert "frame_bm25_frame" in audit_terms
+    assert "knowledge_graphs_neo4j_compat" in audit_terms
     assert "rank_top" in audit_terms
     assert "symbolic_has_formula" in audit_terms
     assert "modal_family_registry" in high_signal_terms
