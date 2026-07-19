@@ -1824,12 +1824,17 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         slot for slot in decoded.missing_slots if slot not in grounded_phrase_slots
     ]
     fixed_phrase_count = sum(1 for phrase in phrase_rows if phrase.get("fixed") is True)
+    decoded_legal_phrase_rows = [
+        phrase
+        for phrase in phrase_rows
+        if phrase.get("fixed") is not True and phrase.get("provenance_only") is not True
+    ]
     ungrounded_phrase_count = sum(
         1
-        for phrase in phrase_rows
-        if phrase.get("fixed") is not True and not phrase.get("spans")
+        for phrase in decoded_legal_phrase_rows
+        if not phrase.get("spans")
     )
-    legal_phrase_count = len(phrase_rows) - fixed_phrase_count
+    legal_phrase_count = len(decoded_legal_phrase_rows)
     grounded_phrase_count = legal_phrase_count - ungrounded_phrase_count
     grounded_phrase_rate = (
         grounded_phrase_count / legal_phrase_count if legal_phrase_count else 1.0
@@ -1854,7 +1859,7 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "semantic_family_evidence": norm.semantic_family_evidence,
         "decoded_text": decoded.text,
         "support_span": decoded.support_span,
-        "phrase_count": len(phrase_rows),
+        "phrase_count": legal_phrase_count,
         "fixed_phrase_count": fixed_phrase_count,
         "legal_phrase_count": legal_phrase_count,
         "grounded_phrase_count": grounded_phrase_count,
@@ -1985,6 +1990,11 @@ def _decoder_phrase_rows_with_reference_provenance(
         spans = _decoder_extra_provenance_spans(record)
         if not text or not spans:
             continue
+        if slot == "temporal_constraints" and _decoder_provenance_text_is_rendered(
+            text,
+            rows,
+        ):
+            continue
         key = (slot, text, tuple(tuple(span) for span in spans))
         if key in seen:
             continue
@@ -2000,6 +2010,30 @@ def _decoder_phrase_rows_with_reference_provenance(
         )
 
     return rows
+
+
+def _decoder_provenance_text_is_rendered(
+    text: str,
+    rows: Sequence[Mapping[str, Any]],
+) -> bool:
+    """Return whether provenance-only text is already part of a decoded phrase."""
+
+    text_key = _decoder_phrase_text_key(text)
+    if not text_key:
+        return False
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        if row.get("fixed") is True or row.get("provenance_only") is True:
+            continue
+        row_key = _decoder_phrase_text_key(str(row.get("text") or ""))
+        if text_key and text_key in row_key:
+            return True
+    return False
+
+
+def _decoder_phrase_text_key(text: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9]+", str(text or "").lower()))
 
 
 def _decoder_semantic_modality_row(
@@ -4990,8 +5024,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
 
     formula = build_deontic_formula_record_from_ir(norm)["formula"]
     action_predicate = _deterministic_formula_action_predicate(formula)
-    if _has_temporal_semantic_anchor(norm):
-        return "temporal_deontic_duty"
+    if _has_deadline_semantic_anchor(norm):
+        return "temporal_deadline_duty"
 
     semantic_family = _deterministic_action_predicate_family(norm, action_predicate)
     if semantic_family:
@@ -5135,6 +5169,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "sanction_clause"
     if norm.procedure:
         return "procedural_event_duty"
+    if _has_temporal_semantic_anchor(norm):
+        return "temporal_deontic_duty"
     if norm.modality == "O" and norm.norm_type == "obligation":
         return "ordinary_duty"
     if norm.modality == "F" or norm.norm_type == "prohibition":
@@ -5153,9 +5189,38 @@ def _deterministic_action_predicate_family(
 
 
 def _has_temporal_semantic_anchor(norm: LegalNormIR) -> bool:
-    if norm.temporal_constraints:
+    if any(
+        isinstance(record, Mapping)
+        and str(record.get("type") or "").strip().lower() != "period"
+        for record in norm.temporal_constraints or []
+    ):
         return True
     return _has_temporal_condition_anchor(norm)
+
+
+def _has_deadline_semantic_anchor(norm: LegalNormIR) -> bool:
+    for record in norm.temporal_constraints or []:
+        if not isinstance(record, Mapping):
+            continue
+        constraint_type = str(record.get("type") or "").strip().lower()
+        temporal_kind = str(record.get("temporal_kind") or "").strip().lower()
+        value = str(
+            record.get("value")
+            or record.get("normalized_text")
+            or record.get("raw_text")
+            or ""
+        ).strip().lower()
+        if constraint_type == "deadline":
+            return True
+        if "deadline" in temporal_kind:
+            return True
+        if value.startswith(
+            ("within ", "by ", "before ", "not later than ", "no later than ")
+        ):
+            return True
+        if record.get("quantity") is not None and record.get("anchor_event"):
+            return True
+    return False
 
 
 def _has_temporal_condition_anchor(norm: LegalNormIR) -> bool:

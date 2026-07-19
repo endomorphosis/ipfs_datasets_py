@@ -135,7 +135,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         lowered = action_text.lower()
         if lowered.startswith("valid for "):
             duration = action_text[len("valid for ") :]
-            return f"ValidFor({subject}, {normalize_predicate_name(duration)})"
+            return f"ValidFor({subject}, {_normalize_duration_term(duration)})"
         if lowered.startswith("expires "):
             anchor = action_text[len("expires ") :]
             return f"ExpiresAfter({subject}, {normalize_predicate_name(anchor)})"
@@ -2602,6 +2602,15 @@ def normalize_predicate_name(name: str) -> str:
     return predicate
 
 
+def _normalize_duration_term(value: str) -> str:
+    """Normalize duration arguments without forcing identifier-leading letters."""
+
+    term = normalize_predicate_name(value)
+    if term.startswith("N") and len(term) > 1 and term[1].isdigit():
+        return term[1:]
+    return term
+
+
 def _slot_texts(items: Iterable[Dict[str, Any]]) -> List[str]:
     texts: List[str] = []
     for item in items:
@@ -3514,12 +3523,26 @@ def _deterministic_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     if reference_condition_resolution:
         return reference_condition_resolution
 
+    if _norm_modality(norm) == "APP" and norm.norm_type == "applicability":
+        applicability_resolution = _local_scope_applicability_formula_resolution(norm, blockers)
+        if applicability_resolution:
+            return applicability_resolution
+
     reconstruction_warning_resolution = _source_grounded_reconstruction_warning_formula_resolution(
         norm,
         blockers,
     )
     if reconstruction_warning_resolution:
         return reconstruction_warning_resolution
+
+    return {}
+
+
+def _local_scope_applicability_formula_resolution(
+    norm: LegalNormIR,
+    blockers: List[str],
+) -> Dict[str, Any]:
+    """Resolve local self-scope applicability before generic warning bundles."""
 
     if _norm_modality(norm) != "APP" or norm.norm_type != "applicability":
         return {}
@@ -3570,6 +3593,8 @@ def _source_grounded_reconstruction_warning_formula_resolution(
     if not blocker_set.issubset(allowed_blockers):
         return {}
     if _has_unresolved_reference_exception_blocker(norm, blocker_set):
+        return {}
+    if _has_unresolved_reference_condition_blocker(norm, blocker_set):
         return {}
 
     required_slots = _reconstruction_warning_core_slots(norm)
@@ -3629,6 +3654,39 @@ def _has_unresolved_reference_exception_blocker(
     if not exception_texts:
         return False
     if not any(_exception_text_needs_external_resolution(text) for text in exception_texts):
+        return False
+
+    return not _same_document_reference_records(norm)
+
+
+def _has_unresolved_reference_condition_blocker(
+    norm: LegalNormIR,
+    blocker_set: set[str],
+) -> bool:
+    """Return whether reference-only conditions still need source resolution."""
+
+    if "cross_reference_requires_resolution" not in blocker_set:
+        return False
+    if not norm.conditions or not norm.cross_references:
+        return False
+    if norm.exceptions or norm.overrides:
+        return False
+
+    reference_values = {
+        str(value).strip().lower()
+        for value in _slot_texts(norm.cross_references)
+        + _slot_texts(norm.resolved_cross_references)
+        if str(value).strip()
+    }
+    reference_conditions = [
+        item
+        for item in norm.conditions
+        if isinstance(item, dict)
+        and _is_reference_condition(item, _slot_primary_text(item), reference_values)
+    ]
+    if not reference_conditions:
+        return False
+    if len(reference_conditions) != len(norm.conditions):
         return False
 
     return not _same_document_reference_records(norm)
