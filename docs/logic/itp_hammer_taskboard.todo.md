@@ -87,7 +87,7 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon 
 
 ## HAMMER-007 Implement typed translation to TPTP and SMT-LIB
 
-- Status: waiting
+- Status: completed
 - Priority: P0
 - Track: translation
 - Depends on: HAMMER-001, HAMMER-004, HAMMER-006
