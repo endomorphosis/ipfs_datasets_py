@@ -16259,6 +16259,143 @@ COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
     ),
 }
 
+COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+)
+
+COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_REFINED_MODAL_FAMILY_CUE_POLICY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS,
+        )
+    )
+)
+
+COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS,
+        )
+    )
+)
+
+COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS,
+        )
+    )
+)
+
+SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS,
+        )
+    )
+)
+
+PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS,
+        )
+    )
+)
+
+COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
+    **COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.DEONTIC.value,
+                ModalLogicFamily.DEONTIC.value,
+            ),
+            0.0,
+        ),
+        0.25,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.FRAME.value,
+                ModalLogicFamily.DEONTIC.value,
+            ),
+            0.0,
+        ),
+        1.18,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.TEMPORAL.value,
+                ModalLogicFamily.DEONTIC.value,
+            ),
+            0.0,
+        ),
+        0.49,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
+    ): max(
+        COMPILER_REFINED_MODAL_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.TEMPORAL.value,
+                ModalLogicFamily.FRAME.value,
+            ),
+            0.0,
+        ),
+        0.64,
+    ),
+}
+
+COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR = {
+    **COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR,
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ): max(
+        COMPILER_WEAK_TYPED_SELF_FAMILY_CUE_MARGIN_BUFFER_BY_PAIR.get(
+            (
+                ModalLogicFamily.DEONTIC.value,
+                ModalLogicFamily.DEONTIC.value,
+            ),
+            0.0,
+        ),
+        0.25,
+    ),
+}
+
 
 DEFAULT_MODAL_REGISTRY = ModalRegistry()
 
@@ -16773,6 +16910,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_PACKET_002508_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000349_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000927_FAMILY_PAIRS",
+    "COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000062_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_007816_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_000371_FAMILY_PAIRS",
