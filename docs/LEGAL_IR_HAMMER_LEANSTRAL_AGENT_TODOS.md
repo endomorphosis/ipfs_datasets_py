@@ -20,7 +20,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: legal-ir-hammer
 - Depends on:
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/hammer_guidance.py, tests/unit/logic/integration/test_hammer_guidance_artifact.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_hammer_guidance_artifact.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_hammer_guidance_artifact.py -q
 - Acceptance: Adds a stable HammerGuidanceArtifact schema that serializes HammerResult, Leanstral candidate metadata, proof obligation IDs, trust status, selected premises, backend statuses, reconstruction status, metric deltas, and Codex projection hints without storing copied legal text as a training target.
 
 ```json
@@ -43,7 +43,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: legal-ir-hammer
 - Depends on: PORTAL-LIR-HAMMER-001
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_obligations.py, tests/unit/logic/integration/test_legal_ir_obligations.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_obligations.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_obligations.py -q
 - Acceptance: Adds deterministic obligation generation for modal well-formedness, deontic polarity, exception scope, temporal/event consistency, frame roles, KG edge typing, provenance preservation, and decompiler round-trip claims with stable obligation IDs.
 
 ```json
@@ -70,7 +70,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: legal-ir-hammer
 - Depends on: PORTAL-LIR-HAMMER-001
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_premises.py, tests/unit/logic/integration/test_legal_ir_premises.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_premises.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_premises.py -q
 - Acceptance: Builds a premise registry adapter that exports reusable compiler facts, legal IR theorem templates, Leanstral theorem registry entries, bridge facts, and sample-local assumptions as HammerPremise records with deterministic names and metadata for premise selection.
 
 ```json
@@ -95,7 +95,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: legal-ir-hammer
 - Depends on: PORTAL-LIR-HAMMER-002, PORTAL-LIR-HAMMER-003
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer.py, tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py tests/unit/logic/integration/test_hammer.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py tests/unit/logic/integration/test_hammer.py -q
 - Acceptance: Provides a LegalIRHammerRunner that converts generated obligations and premise registries into HammerGoal calls, runs parallel SMT/TPTP backends, reconstructs native proof scripts when available, and returns HammerGuidanceArtifact-compatible records.
 
 ```json
@@ -119,7 +119,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: external-provers
 - Depends on: PORTAL-LIR-HAMMER-004
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/hammer_backends.py, tests/unit/logic/integration/test_hammer_backend_availability.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_hammer_backend_availability.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_hammer_backend_availability.py -q
 - Acceptance: Adds deterministic availability checks and lazy-install hooks for Z3, CVC5, Vampire, E, Lean, Coq, and Isabelle routes, while allowing tests and daemon runs to degrade to unavailable backend records instead of crashing.
 
 ```json
@@ -142,7 +142,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: leanstral
 - Depends on: PORTAL-LIR-HAMMER-001, PORTAL-LIR-HAMMER-002
 - Outputs: ipfs_datasets_py/logic/modal/leanstral.py, tests/unit/logic/modal/test_leanstral_hammer_candidate_schema.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_hammer_candidate_schema.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_hammer_candidate_schema.py -q
 - Acceptance: Updates Leanstral prompts and validators so drafted_logic_candidates include obligation IDs, premise hints, target view, logic family, compiler surface, expected failure mode, confidence, and source-copy rejection metadata in strict JSON.
 
 ```json
@@ -161,7 +161,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: leanstral
 - Depends on: PORTAL-LIR-HAMMER-004, PORTAL-LIR-HAMMER-006
 - Outputs: ipfs_datasets_py/logic/modal/leanstral_verifier.py, tests/unit/logic/modal/test_leanstral_hammer_verifier.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_hammer_verifier.py tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_hammer_verifier.py tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py -q
 - Acceptance: Routes Leanstral candidates through syntax, provenance, KG, and hammer proof checks; marks candidates trusted only when deterministic checks pass; emits rejected reasons for copied source spans, invalid IR, failed proof, or failed reconstruction.
 
 ```json
@@ -185,7 +185,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: leanstral
 - Depends on: PORTAL-LIR-HAMMER-007
 - Outputs: ipfs_datasets_py/logic/modal/leanstral_audit.py, scripts/ops/legal_ir/run_leanstral_audit_worker.py, tests/unit/logic/modal/test_leanstral_hammer_rule_gap_report.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_hammer_rule_gap_report.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_hammer_rule_gap_report.py -q
 - Acceptance: Extends Leanstral audit outputs and rule-gap reports with verified hammer guidance artifacts, stable content hashes, stale-report protection, backend health, proof status, reconstruction status, and Codex projection fields.
 
 ```json
@@ -208,7 +208,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: autoencoder
 - Depends on: PORTAL-LIR-HAMMER-008
 - Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_hammer_guidance.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_hammer_guidance.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_hammer_guidance.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py -q
 - Acceptance: Adds hammer-aware guidance ingestion that updates LegalIR view logits and feature heads from trusted proof obligation families, selected premise families, backend statuses, reconstruction failures, and verified target views while excluding raw generated proof text and full source spans from reconstruction targets.
 
 ```json
@@ -233,7 +233,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: metrics
 - Depends on: PORTAL-LIR-HAMMER-004, PORTAL-LIR-HAMMER-008, PORTAL-LIR-HAMMER-009
 - Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, tests/unit/optimizers/logic_theorem_optimizer/test_hammer_metrics_objective.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_hammer_metrics_objective.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_hammer_metrics_objective.py -q
 - Acceptance: Adds explicit metrics for hammer proof success rate, reconstruction success rate, premise selection hit rate, per-view symbolic validity, source copy penalty, and proof failure ratio; projection/hparam scoring rejects candidates that improve cosine by degrading validity or source-copy guardrails.
 
 ```json
@@ -259,7 +259,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: codex-supervisor
 - Depends on: PORTAL-LIR-HAMMER-008, PORTAL-LIR-HAMMER-010
 - Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, tests/unit/optimizers/logic_theorem_optimizer/test_hammer_codex_projection.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_hammer_codex_projection.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_hammer_codex_projection.py -q
 - Acceptance: Converts repeated verified hammer failures into narrow Codex TODOs with scope, allowed paths, target metric, proof obligation IDs, expected validation command, and dedupe keys; one-off loss noise does not create unbounded tasks.
 
 ```json
@@ -283,7 +283,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: compiler
 - Depends on: PORTAL-LIR-HAMMER-002, PORTAL-LIR-HAMMER-010, PORTAL-LIR-HAMMER-011
 - Outputs: ipfs_datasets_py/logic/modal, ipfs_datasets_py/logic/deontic, ipfs_datasets_py/logic/TDFOL, ipfs_datasets_py/logic/knowledge_graphs, tests/unit/logic/integration/test_legal_ir_verified_gap_repairs.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_verified_gap_repairs.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_verified_gap_repairs.py -q
 - Acceptance: Implements deterministic compiler improvements for verified gaps in exception/prohibition guidance, temporal deadlines, frame role binding, KG actor/action/object/remedy edges, CEC lifecycle events, and external prover routing.
 
 ```json
@@ -309,7 +309,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: decompiler
 - Depends on: PORTAL-LIR-HAMMER-002, PORTAL-LIR-HAMMER-010, PORTAL-LIR-HAMMER-012
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_obligations.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, tests/unit/logic/integration/test_decompiler_hammer_round_trip.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_decompiler_hammer_round_trip.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_decompiler_hammer_round_trip.py -q
 - Acceptance: Adds obligations that check IR-to-text decompiler consistency without rewarding source copying, including provenance-preserving summaries, structural text reconstruction, modality retention, exception scope retention, and round-trip proof/failure artifacts.
 
 ```json
@@ -332,7 +332,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: daemon
 - Depends on: PORTAL-LIR-HAMMER-007, PORTAL-LIR-HAMMER-008, PORTAL-LIR-HAMMER-009, PORTAL-LIR-HAMMER-010, PORTAL-LIR-HAMMER-011
 - Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, tests/unit/optimizers/logic_theorem_optimizer/test_daemon_hammer_cycle.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_daemon_hammer_cycle.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_daemon_hammer_cycle.py -q
 - Acceptance: Adds daemon cycle phases for obligation generation, Leanstral drafting, hammer verification, autoencoder guidance application, verified failure projection, summary metrics, cache reuse, and bounded skip behavior when Leanstral or solver backends are unavailable.
 
 ```json
@@ -357,7 +357,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: leanstral-runtime
 - Depends on: PORTAL-LIR-HAMMER-006
 - Outputs: scripts/ops/legal_ir/run_leanstral_audit_worker.py, ipfs_datasets_py/logic/modal/leanstral_audit.py, tests/unit/logic/modal/test_leanstral_batch_mesh_inference.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_batch_mesh_inference.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_batch_mesh_inference.py -q
 - Acceptance: Ensures Leanstral audit and drafting calls default to ipfs_accelerate_py llm_router, support batch inference and p2p mesh routing, preserve local fallback behavior, expose provider health, and avoid substituting non-Leanstral models unless explicitly allowed.
 
 ```json
@@ -381,7 +381,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: validation
 - Depends on: PORTAL-LIR-HAMMER-007, PORTAL-LIR-HAMMER-010, PORTAL-LIR-HAMMER-011, PORTAL-LIR-HAMMER-012, PORTAL-LIR-HAMMER-013
 - Outputs: tests/fixtures/legal_ir/hammer_failure_replay.jsonl, tests/unit/logic/integration/test_hammer_failure_replay.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_hammer_failure_replay.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_hammer_failure_replay.py -q
 - Acceptance: Adds a replayable fixture corpus of accepted and rejected Leanstral/hammer cases covering each Legal IR view family, each major failure reason, source-copy rejection, successful reconstruction, backend unavailable behavior, and Codex repair feedback.
 
 ```json
@@ -409,7 +409,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: rollout
 - Depends on: PORTAL-LIR-HAMMER-005, PORTAL-LIR-HAMMER-014, PORTAL-LIR-HAMMER-015, PORTAL-LIR-HAMMER-016
 - Outputs: scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py, scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh, scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh, scripts/ops/logic/run_hparam_then_8h.sh, scripts/ops/logic/watch_hparam8h_pipeline.sh, tests/unit/optimizers/logic_theorem_optimizer/test_hammer_rollout_gates.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_hammer_rollout_gates.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_hammer_rollout_gates.py -q
 - Acceptance: Adds guarded rollout commands for short hammer-enabled smoke, 1-hour hparam scan, and 24-hour optimizer loop; each gate verifies no metric regression beyond configured guardrails, no unbounded source-copy reward hacking, no stalled TODO generation, and no fatal backend availability failure.
 
 ```json
@@ -432,26 +432,26 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: docs
 - Depends on: PORTAL-LIR-HAMMER-017
 - Outputs: docs/LEGAL_IR_HAMMER_LEANSTRAL_OPERATOR_RUNBOOK.md, docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md
-- Validation: PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. .venv-cuda/bin/python -c "from pathlib import Path; from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import parse_task_file; tasks=parse_task_file(Path('docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md')); ids={task.task_id for task in tasks}; assert len(tasks)>=34, len(tasks); assert all(task.acceptance and task.validation and task.outputs for task in tasks); assert all(dep in ids for task in tasks for dep in task.depends_on); print('parsed', len(tasks), 'tasks')"
+- Validation: PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -c "from pathlib import Path; from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import parse_task_file; tasks=parse_task_file(Path('docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md')); ids={task.task_id for task in tasks}; assert len(tasks)>=34, len(tasks); assert all(task.acceptance and task.validation and task.outputs for task in tasks); assert all(dep in ids for task in tasks for dep in task.depends_on); print('parsed', len(tasks), 'tasks')"
 - Acceptance: Adds an operator runbook explaining how to run the supervisor against this TODO board, how to read hammer/Leanstral metrics, how to distinguish trusted proof signal from Leanstral drafts, and how to start smoke, hparam, and 24-hour runs.
 
 ```json
 {
   "phase": "handoff",
   "scope": "operator_docs",
-  "example_supervisor_command": "PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. .venv-cuda/bin/python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon --todo docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md --task-prefix '## PORTAL-'"
+  "example_supervisor_command": "PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon --todo docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md --task-prefix '## PORTAL-'"
 }
 ```
 
 ## PORTAL-LIR-HAMMER-019 Define canonical multi-view LegalIR contracts
 
-- Status: todo
-- Completion: 0
+- Status: completed
+- Completion: 100
 - Priority: P0
 - Track: legal-ir-contracts
 - Depends on: PORTAL-LIR-HAMMER-001, PORTAL-LIR-HAMMER-018
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_view_contracts.py, tests/unit/logic/integration/test_legal_ir_view_contracts.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_view_contracts.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_view_contracts.py -q
 - Acceptance: Adds a typed contract registry for deontic, frame_logic, TDFOL, CEC, knowledge_graphs, external_provers, and decompiler views with required fields, modality semantics, provenance requirements, allowed repair lanes, validation hooks, and stable contract IDs consumed by obligations, metrics, autoencoder features, and Codex TODO projection.
 
 ```json
@@ -483,7 +483,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: proof-obligations
 - Depends on: PORTAL-LIR-HAMMER-002, PORTAL-LIR-HAMMER-019
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_obligations.py, tests/unit/logic/integration/test_legal_ir_obligation_contract_coverage.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_obligation_contract_coverage.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_obligation_contract_coverage.py -q
 - Acceptance: Extends obligation generation so every canonical LegalIR view contract emits coverage obligations for required fields, cross-view consistency, exception precedence, prohibition polarity, temporal anchors, KG endpoint typing, CEC lifecycle transitions, external prover route preservation, and decompiler round-trip structure.
 
 ```json
@@ -506,7 +506,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: compiler-telemetry
 - Depends on: PORTAL-LIR-HAMMER-019, PORTAL-LIR-HAMMER-020
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_contract_telemetry.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, tests/unit/logic/integration/test_legal_ir_contract_telemetry.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_contract_telemetry.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_contract_telemetry.py -q
 - Acceptance: Adds deterministic telemetry that records per-sample contract coverage, missing required fields, cross-view mismatches, decompiler preservation failures, and provenance-only source references in daemon summaries and hammer guidance artifacts.
 
 ```json
@@ -529,7 +529,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: premise-selection
 - Depends on: PORTAL-LIR-HAMMER-003, PORTAL-LIR-HAMMER-019, PORTAL-LIR-HAMMER-021
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_premise_selection.py, tests/unit/logic/integration/test_legal_ir_premise_selection.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_premise_selection.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_premise_selection.py -q
 - Acceptance: Adds deterministic premise ranking that scores compiler facts, theorem templates, sample-local assumptions, and verified Leanstral theorem registry entries by obligation family, target view, failure reason, citation/provenance hash, and contract fields while excluding copied source spans from the premise score.
 
 ```json
@@ -554,7 +554,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: hammer-translation
 - Depends on: PORTAL-LIR-HAMMER-004, PORTAL-LIR-HAMMER-019, PORTAL-LIR-HAMMER-022
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer_translation.py, ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer.py, tests/unit/logic/integration/test_legal_ir_hammer_translation.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_hammer_translation.py tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_hammer_translation.py tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py -q
 - Acceptance: Adds typed translation records for SMT-LIB, TPTP, and Lean reconstruction surfaces, records monomorphization/type-encoding/lambda-elimination decisions where applicable, and persists reconstruction receipts that distinguish backend proof, native reconstruction, translation failure, and trust status.
 
 ```json
@@ -573,7 +573,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: leanstral
 - Depends on: PORTAL-LIR-HAMMER-006, PORTAL-LIR-HAMMER-020, PORTAL-LIR-HAMMER-023
 - Outputs: ipfs_datasets_py/logic/modal/leanstral.py, ipfs_datasets_py/logic/modal/leanstral_verifier.py, tests/unit/logic/modal/test_leanstral_failure_branch_candidates.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_failure_branch_candidates.py tests/unit/logic/modal/test_leanstral_hammer_candidate_schema.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/modal/test_leanstral_failure_branch_candidates.py tests/unit/logic/modal/test_leanstral_hammer_candidate_schema.py -q
 - Acceptance: Adds prompt builders and validators that ask Leanstral to repair only failed obligation subtrees, emit strict JSON candidates with obligation IDs and premise hints, reject full-source copying, reject untyped freeform proof text, and preserve deterministic contract IDs.
 
 ```json
@@ -598,7 +598,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: leanstral
 - Depends on: PORTAL-LIR-HAMMER-024
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_subgoals.py, ipfs_datasets_py/logic/modal/leanstral_audit.py, tests/unit/logic/integration/test_legal_ir_subgoal_decomposition.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_subgoal_decomposition.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_subgoal_decomposition.py -q
 - Acceptance: Adds deterministic subgoal decomposition for failed hammer obligations so overly broad exception, temporal, KG, CEC, or decompiler failures are split into bounded subproblems before Leanstral drafting and Codex TODO projection.
 
 ```json
@@ -621,7 +621,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: autoencoder
 - Depends on: PORTAL-LIR-HAMMER-009, PORTAL-LIR-HAMMER-010, PORTAL-LIR-HAMMER-021, PORTAL-LIR-HAMMER-024
 - Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_trusted_feature_bus.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_trusted_feature_bus.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_hammer_guidance.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_trusted_feature_bus.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_hammer_guidance.py -q
 - Acceptance: Adds a feature bus that converts trusted hammer/Leanstral guidance into bounded autoencoder features for contract IDs, obligation families, premise families, backend statuses, reconstruction outcomes, and per-view repair labels while excluding raw Leanstral text and full source spans from learned targets.
 
 ```json
@@ -647,7 +647,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: metrics
 - Depends on: PORTAL-LIR-HAMMER-010, PORTAL-LIR-HAMMER-016, PORTAL-LIR-HAMMER-019, PORTAL-LIR-HAMMER-026
 - Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_family_metrics.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_family_metrics.py tests/unit/optimizers/logic_theorem_optimizer/test_hammer_metrics_objective.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_family_metrics.py tests/unit/optimizers/logic_theorem_optimizer/test_hammer_metrics_objective.py -q
 - Acceptance: Reports and scores IR cross entropy, IR cosine, autoencoder cross entropy, autoencoder cosine, symbolic validity, hammer proof success, reconstruction success, and source-copy penalty separately for deontic, frame_logic, TDFOL, KG, CEC, external_provers, and decompiler view families.
 
 ```json
@@ -673,7 +673,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: validation
 - Depends on: PORTAL-LIR-HAMMER-013, PORTAL-LIR-HAMMER-016, PORTAL-LIR-HAMMER-027
 - Outputs: tests/fixtures/legal_ir/source_copy_reward_hack_replay.jsonl, tests/unit/logic/integration/test_source_copy_reward_hack_guardrails.py, tests/unit/optimizers/logic_theorem_optimizer/test_source_copy_reward_hack_metrics.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_source_copy_reward_hack_guardrails.py tests/unit/optimizers/logic_theorem_optimizer/test_source_copy_reward_hack_metrics.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_source_copy_reward_hack_guardrails.py tests/unit/optimizers/logic_theorem_optimizer/test_source_copy_reward_hack_metrics.py -q
 - Acceptance: Adds replay fixtures where copied legal text artificially improves text similarity but fails symbolic/decompiler obligations, and verifies that hparam scoring, rollout gates, and autoencoder objective reject those candidates even when cosine improves.
 
 ```json
@@ -696,7 +696,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: codex-supervisor
 - Depends on: PORTAL-LIR-HAMMER-011, PORTAL-LIR-HAMMER-025, PORTAL-LIR-HAMMER-027, PORTAL-LIR-HAMMER-028
 - Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, tests/unit/optimizers/logic_theorem_optimizer/test_hammer_failure_clustering_todos.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_hammer_failure_clustering_todos.py tests/unit/optimizers/logic_theorem_optimizer/test_hammer_codex_projection.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_hammer_failure_clustering_todos.py tests/unit/optimizers/logic_theorem_optimizer/test_hammer_codex_projection.py -q
 - Acceptance: Adds recurrence-aware clustering so Codex TODOs are created only for repeated verified failures or high-impact replay failures, grouped by contract ID, obligation family, target view, failure reason, and allowed path, with caps per scope and validation commands on every TODO.
 
 ```json
@@ -721,7 +721,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: compiler
 - Depends on: PORTAL-LIR-HAMMER-012, PORTAL-LIR-HAMMER-020, PORTAL-LIR-HAMMER-029
 - Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_verified_gap_repairs.py, ipfs_datasets_py/logic/modal, ipfs_datasets_py/logic/deontic, ipfs_datasets_py/logic/TDFOL, ipfs_datasets_py/logic/knowledge_graphs, tests/unit/logic/integration/test_clustered_legal_ir_compiler_repairs.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_clustered_legal_ir_compiler_repairs.py tests/unit/logic/integration/test_legal_ir_verified_gap_repairs.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_clustered_legal_ir_compiler_repairs.py tests/unit/logic/integration/test_legal_ir_verified_gap_repairs.py -q
 - Acceptance: Implements deterministic compiler repairs generated from clustered verified gaps, prioritizing exception precedence, prohibition polarity, temporal deadline anchors, frame role binding, KG actor/action/object/remedy edges, CEC lifecycle events, and external prover route selection.
 
 ```json
@@ -740,7 +740,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: decompiler
 - Depends on: PORTAL-LIR-HAMMER-013, PORTAL-LIR-HAMMER-027, PORTAL-LIR-HAMMER-030
 - Outputs: ipfs_datasets_py/logic/modal, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, tests/unit/logic/integration/test_clustered_legal_ir_decompiler_repairs.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_clustered_legal_ir_decompiler_repairs.py tests/unit/logic/integration/test_decompiler_hammer_round_trip.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_clustered_legal_ir_decompiler_repairs.py tests/unit/logic/integration/test_decompiler_hammer_round_trip.py -q
 - Acceptance: Implements decompiler repairs that preserve modality, actor/action/object roles, exception scope, temporal anchors, citation provenance, and structural summaries while keeping copied source-span text out of IR and learned targets.
 
 ```json
@@ -765,7 +765,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: representation-transfer
 - Depends on: PORTAL-LIR-HAMMER-026, PORTAL-LIR-HAMMER-027, PORTAL-LIR-HAMMER-030, PORTAL-LIR-HAMMER-031
 - Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, ipfs_datasets_py/logic/integration/reasoning/legal_ir_learned_guidance.py, tests/unit/logic/integration/test_legal_ir_learned_guidance_promotion.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_learned_guidance_promotion.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_family_metrics.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_learned_guidance_promotion.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_family_metrics.py -q
 - Acceptance: Adds a deterministic export path that converts stable learned autoencoder features into compiler/decompiler guidance records with contract IDs, view-family weights, repair-lane suggestions, confidence, canary metric evidence, and rollback metadata; promotion is blocked if source-copy or symbolic-validity guardrails regress.
 
 ```json
@@ -788,7 +788,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: rollout
 - Depends on: PORTAL-LIR-HAMMER-017, PORTAL-LIR-HAMMER-027, PORTAL-LIR-HAMMER-032
 - Outputs: scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py, scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh, scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_representation_rollout_gate.py
-- Validation: .venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_representation_rollout_gate.py tests/unit/optimizers/logic_theorem_optimizer/test_hammer_rollout_gates.py -q
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_representation_rollout_gate.py tests/unit/optimizers/logic_theorem_optimizer/test_hammer_rollout_gates.py -q
 - Acceptance: Extends rollout gates so smoke, hparam, and 24-hour runs fail if learned representation promotion regresses fixed-canary per-view IR metrics, symbolic validity, hammer proof rate, reconstruction rate, source-copy penalty, or TODO generation productivity.
 
 ```json
@@ -812,7 +812,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 - Track: docs
 - Depends on: PORTAL-LIR-HAMMER-033
 - Outputs: docs/LEGAL_IR_HAMMER_LEANSTRAL_OPERATOR_RUNBOOK.md, docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md
-- Validation: PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. .venv-cuda/bin/python -c "from pathlib import Path; from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import parse_task_file; tasks=parse_task_file(Path('docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md')); ids={task.task_id for task in tasks}; assert len(tasks)>=34, len(tasks); assert all(task.acceptance and task.validation and task.outputs for task in tasks); assert all(dep in ids for task in tasks for dep in task.depends_on); assert not [task for task in tasks if task.status not in {'todo','completed','in_progress','blocked'}]; print('parsed', len(tasks), 'tasks')"
+- Validation: PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -c "from pathlib import Path; from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import parse_task_file; tasks=parse_task_file(Path('docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md')); ids={task.task_id for task in tasks}; assert len(tasks)>=34, len(tasks); assert all(task.acceptance and task.validation and task.outputs for task in tasks); assert all(dep in ids for task in tasks for dep in task.depends_on); assert not [task for task in tasks if task.status not in {'todo','completed','in_progress','blocked'}]; print('parsed', len(tasks), 'tasks')"
 - Acceptance: Updates the runbook and taskboard so the supervisor has no dependency gaps, every new optimization target has concrete outputs and validation commands, and operators can distinguish deterministic compiler repairs, trusted hammer/Leanstral guidance, autoencoder-learned representation exports, and untrusted Leanstral drafts.
 
 ```json
