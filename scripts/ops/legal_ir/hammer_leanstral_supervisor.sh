@@ -24,6 +24,11 @@ supervisor_pid() {
   [[ -f "${PID_FILE}" ]] && sed -n '1p' "${PID_FILE}" || true
 }
 
+managed_daemon_pid() {
+  local daemon_pid_file="${STATE_DIR}/${STATE_PREFIX}_managed_daemon.pid"
+  [[ -f "${daemon_pid_file}" ]] && sed -n '1p' "${daemon_pid_file}" || true
+}
+
 supervisor_alive() {
   local pid
   pid="$(supervisor_pid)"
@@ -77,8 +82,12 @@ case "${ACTION}" in
       exit 0
     fi
     pid="$(supervisor_pid)"
+    daemon_pid="$(managed_daemon_pid)"
+    if [[ -n "${daemon_pid}" ]] && ps -p "${daemon_pid}" >/dev/null 2>&1; then
+      kill -TERM -- "-${daemon_pid}" 2>/dev/null || kill -TERM "${daemon_pid}" 2>/dev/null || true
+    fi
     kill -TERM "${pid}"
-    echo "hammer_leanstral_supervisor=stopping pid=${pid}"
+    echo "hammer_leanstral_supervisor=stopping pid=${pid} daemon_pid=${daemon_pid:-none}"
     ;;
   status)
     if supervisor_alive; then
