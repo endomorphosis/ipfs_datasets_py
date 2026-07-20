@@ -567,7 +567,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-024 Add Leanstral failure-branch prompts and strict candidate sanitizer
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: leanstral
