@@ -283,7 +283,7 @@ class LeanstralAuditConfig:
 
     def normalized_prompt_payload_mode(self) -> str:
         value = str(self.prompt_payload_mode or "full").strip().lower()
-        return value if value in {"full", "compact", "daemon"} else "full"
+        return value if value in {"full", "rendered_full", "compact", "daemon"} else "full"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -316,7 +316,7 @@ class LeanstralAuditWorkerConfig:
     batch_size: int = 1
     batch_max_workers: int = 0
     batch_use_mesh: bool = True
-    prompt_payload_mode: str = "full"
+    prompt_payload_mode: str = "rendered_full"
 
     def bounded_concurrency(self) -> int:
         return max(1, int(self.max_concurrency or 1))
@@ -387,7 +387,7 @@ class LeanstralAuditWorkerConfig:
 
     def normalized_prompt_payload_mode(self) -> str:
         value = str(self.prompt_payload_mode or "full").strip().lower()
-        return value if value in {"full", "compact", "daemon"} else "full"
+        return value if value in {"full", "rendered_full", "compact", "daemon"} else "full"
 
     def runner_config(self) -> LeanstralAuditConfig:
         return LeanstralAuditConfig(
@@ -2501,6 +2501,7 @@ def _leanstral_audit_prompt_text(
     compact: bool = False,
     payload_mode: Optional[str] = None,
 ) -> str:
+    mode = str(payload_mode or ("compact" if compact else "full")).strip().lower()
     payload = _leanstral_audit_prompt_payload(
         request,
         repair_attempt=repair_attempt,
@@ -2509,6 +2510,8 @@ def _leanstral_audit_prompt_text(
         compact=compact,
         payload_mode=payload_mode,
     )
+    if mode == "full":
+        return json.dumps(payload, ensure_ascii=True, sort_keys=True)
     return _render_leanstral_audit_prompt_text(payload)
 
 
