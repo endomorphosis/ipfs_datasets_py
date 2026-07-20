@@ -987,7 +987,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-042 Add staged cheap-first proof routing and budgets
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: proof-runtime
