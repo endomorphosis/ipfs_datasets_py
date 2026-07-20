@@ -1152,7 +1152,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-053 Add staged smoke, hparam, canary, and production rollout
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: rollout
