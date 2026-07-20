@@ -22,6 +22,11 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from ipfs_datasets_py.logic.hammers.process_lifecycle import (
+    ProcessKind,
+    ProcessLimits,
+    get_process_supervisor,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     LegalSample,
     build_us_code_sample,
@@ -1179,35 +1184,34 @@ def _higher_metric(
 def _run_command(worktree: Path, command: Command, *, timeout_seconds: float) -> Dict[str, Any]:
     env = dict(os.environ)
     env["PYTHONPATH"] = str(worktree) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
-    try:
-        process = subprocess.run(
-            command,
-            cwd=str(worktree),
-            env=env,
-            capture_output=True,
-            check=False,
-            shell=isinstance(command, str),
-            text=True,
-            timeout=max(1.0, float(timeout_seconds)),
-        )
-        output = ((process.stdout or "") + (process.stderr or "")).strip()
+    argv = ["bash", "-lc", command] if isinstance(command, str) else list(command)
+    process = get_process_supervisor().run(
+        argv,
+        cwd=str(worktree),
+        env=env,
+        kind=ProcessKind.TRANSLATOR,
+        limits=ProcessLimits(
+            wall_time_seconds=max(1.0, float(timeout_seconds))
+        ),
+    )
+    output = ((process.stdout or "") + (process.stderr or "")).strip()
+    if process.timed_out:
         return {
             "command": command if isinstance(command, str) else list(command),
             "output": output,
-            "returncode": int(process.returncode),
-        }
-    except subprocess.TimeoutExpired as exc:
-        return {
-            "command": command if isinstance(command, str) else list(command),
-            "output": ((exc.stdout or "") + (exc.stderr or "") if isinstance(exc.stdout, str) else "").strip(),
             "returncode": 124,
         }
-    except OSError as exc:
+    if process.error:
         return {
             "command": command if isinstance(command, str) else list(command),
-            "output": f"{exc.__class__.__name__}: {exc}",
+            "output": process.error,
             "returncode": 127,
         }
+    return {
+        "command": command if isinstance(command, str) else list(command),
+        "output": output,
+        "returncode": int(process.returncode or 0),
+    }
 
 
 def _run_mutation_case(

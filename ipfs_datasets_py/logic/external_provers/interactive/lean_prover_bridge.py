@@ -26,6 +26,7 @@ import tempfile
 import os
 
 from ..lazy_installer import find_executable, lazy_install_prover
+from ...modal.lean_runtime import run_lean_process
 
 # Check Lean availability
 LEAN_AVAILABLE = find_executable("lean") is not None or find_executable("lake") is not None
@@ -376,24 +377,24 @@ class LeanProverBridge:
             lean_cmd = find_executable("lean")
             lake_cmd = find_executable("lake")
             if lean_cmd:
-                result = subprocess.run(
+                result = run_lean_process(
                     [lean_cmd, script_file],
-                    capture_output=True,
-                    text=True,
                     timeout=timeout
                 )
             elif lake_cmd:
                 # If only lake is available, try using it
-                result = subprocess.run(
+                result = run_lean_process(
                     [lake_cmd, "env", "lean", script_file],
-                    capture_output=True,
-                    text=True,
                     timeout=timeout
                 )
             else:
                 raise FileNotFoundError("Neither lean nor lake found in PATH")
             
             # Check if proof succeeded
+            if result.timed_out:
+                raise subprocess.TimeoutExpired(cmd=[lean_cmd or lake_cmd], timeout=timeout)
+            if result.error:
+                raise OSError(result.error)
             output = result.stdout + result.stderr
             success = (result.returncode == 0 and 
                       "error:" not in output.lower() and

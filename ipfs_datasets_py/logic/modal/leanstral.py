@@ -32,7 +32,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     AdaptiveModalAutoencoder,
     ProverCompilationSignal,
 )
-from .lean_runtime import resolve_lean_executable
+from .lean_runtime import (
+    resolve_lean_executable,
+    run_lean_process,
+    supervised_temporary_directory,
+)
 from .leanstral_theorems import (
     LEGAL_IR_THEOREM_LEAN_KERNEL,
     LeanstralTheoremRegistry,
@@ -933,33 +937,31 @@ def validate_leanstral_proposal(
             reasons=("lean_executable_unavailable",),
             proof_sha256=proof_sha256,
         )
-    try:
-        with tempfile.TemporaryDirectory(prefix="legal-ir-leanstral-") as directory:
-            source_path = Path(directory) / "Task.lean"
-            source_path.write_text(
-                task.render_lean_source(
-                    proposal.proof,
-                    theorem_proofs=proposal.theorem_proofs,
-                ),
-                encoding="utf-8",
-            )
-            process = subprocess.run(
-                [executable, str(source_path)],
-                capture_output=True,
-                check=False,
-                text=True,
-                timeout=max(1.0, float(timeout_seconds)),
-            )
-    except subprocess.TimeoutExpired:
+    with supervised_temporary_directory(prefix="legal-ir-leanstral-") as directory:
+        source_path = Path(directory) / "Task.lean"
+        source_path.write_text(
+            task.render_lean_source(
+                proposal.proof,
+                theorem_proofs=proposal.theorem_proofs,
+            ),
+            encoding="utf-8",
+        )
+        process = run_lean_process(
+            [executable, str(source_path)],
+            timeout=max(1.0, float(timeout_seconds)),
+            cwd=directory,
+        )
+    if process.timed_out:
         return LeanstralProofValidation(
             accepted=False,
             reasons=("lean_timeout",),
             proof_sha256=proof_sha256,
         )
-    except OSError as exc:
+    if process.error:
+        error_type = process.error.split(":", 1)[0] or "OSError"
         return LeanstralProofValidation(
             accepted=False,
-            reasons=(f"lean_execution_error:{exc.__class__.__name__}",),
+            reasons=(f"lean_execution_error:{error_type}",),
             proof_sha256=proof_sha256,
         )
     output = ((process.stdout or "") + (process.stderr or "")).strip()

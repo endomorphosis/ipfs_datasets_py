@@ -11,8 +11,6 @@ from __future__ import annotations
 import hashlib
 import inspect
 import json
-import subprocess
-import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field, is_dataclass, replace
@@ -72,7 +70,11 @@ from .leanstral import (
     validate_leanstral_failure_branch_candidate,
 )
 from .leanstral_theorems import generate_legal_semantics_theorem_registry
-from .lean_runtime import resolve_lean_executable
+from .lean_runtime import (
+    resolve_lean_executable,
+    run_lean_process,
+    supervised_temporary_directory,
+)
 from .kg_bridge import modal_ir_to_neo4j_graph_data
 
 
@@ -985,20 +987,15 @@ class LeanstralAuditVerifier:
         executable_hash = _file_sha256(Path(resolved)) if resolved else ""
         version = ""
         if executable:
-            try:
-                process = subprocess.run(
-                    [executable, "--version"],
-                    capture_output=True,
-                    check=False,
-                    text=True,
-                    timeout=min(
-                        2.0,
-                        max(0.1, float(self.config.lean_timeout_seconds)),
-                    ),
-                )
-                version = ((process.stdout or "") + (process.stderr or "")).strip()
-            except (OSError, subprocess.TimeoutExpired):
-                version = "unavailable"
+            process = run_lean_process(
+                [executable, "--version"],
+                timeout=min(2.0, max(0.1, float(self.config.lean_timeout_seconds))),
+            )
+            version = (
+                ((process.stdout or "") + (process.stderr or "")).strip()
+                if not process.error and not process.timed_out
+                else "unavailable"
+            )
         payload = {
             "executable_hash": executable_hash,
             "executable_path": resolved,
@@ -1231,18 +1228,13 @@ class LeanstralAuditVerifier:
         """Run one Lean slice. Callers own caching and trust classification."""
 
         proofs = {theorem.theorem_id: "by decide" for theorem in registry.theorems}
-        try:
-            with tempfile.TemporaryDirectory(prefix="legal-ir-audit-lean-") as directory:
-                source_path = Path(directory) / "Audit.lean"
-                source_path.write_text(registry.render_lean_source(proofs), encoding="utf-8")
-                process = subprocess.run(
-                    [executable, str(source_path)],
-                    capture_output=True,
-                    check=False,
-                    text=True,
-                    timeout=timeout,
-                )
-        except subprocess.TimeoutExpired:
+        with supervised_temporary_directory(prefix="legal-ir-audit-lean-") as directory:
+            source_path = Path(directory) / "Audit.lean"
+            source_path.write_text(registry.render_lean_source(proofs), encoding="utf-8")
+            process = run_lean_process(
+                [executable, str(source_path)], timeout=timeout, cwd=directory
+            )
+        if process.timed_out:
             return LeanstralLocalCheck(
                 checker_name="lean",
                 status=LeanstralVerificationOutcome.TIMED_OUT,
@@ -1253,7 +1245,8 @@ class LeanstralAuditVerifier:
                 details={"registry_hash": registry.registry_hash},
                 error_message="lean_timeout",
             )
-        except OSError as exc:
+        if process.error:
+            error_type = process.error.split(":", 1)[0] or "OSError"
             return LeanstralLocalCheck(
                 checker_name="lean",
                 status=LeanstralVerificationOutcome.UNSUPPORTED,
@@ -1262,7 +1255,7 @@ class LeanstralAuditVerifier:
                 timeout_seconds=timeout,
                 elapsed_seconds=time.time() - start,
                 details={"registry_hash": registry.registry_hash},
-                error_message=f"lean_execution_error:{exc.__class__.__name__}",
+                error_message=f"lean_execution_error:{error_type}",
             )
         output = ((process.stdout or "") + (process.stderr or "")).strip()
         accepted = process.returncode == 0 and "sorry" not in output.lower()
