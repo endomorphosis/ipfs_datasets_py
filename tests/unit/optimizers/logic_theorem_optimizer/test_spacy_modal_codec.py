@@ -91,6 +91,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000062_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000352_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000358_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     ModalLogicFamily,
     compiler_refined_modal_family_cue_margin_buffer,
@@ -5439,6 +5440,72 @@ def test_packet_000352_registry_refines_weak_normative_family_cues() -> None:
     assert (
         compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
         >= 0.29
+    )
+
+
+def test_packet_000358_registry_refines_modal_family_cue_rules() -> None:
+    expected_pairs = (
+        ("deontic", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "deontic"),
+        ("temporal", "temporal"),
+    )
+
+    assert tuple(COMPILER_REFINED_PACKET_000358_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer(
+            "deontic",
+            "conditional_normative",
+        )
+        >= 0.65
+    )
+    assert compiler_refined_modal_family_cue_margin_buffer("deontic", "deontic") >= 0.39
+    assert compiler_refined_modal_family_cue_margin_buffer("deontic", "frame") >= 0.98
+    assert compiler_refined_modal_family_cue_margin_buffer("frame", "deontic") >= 1.24
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer(
+            "temporal",
+            "temporal",
+        )
+        >= 0.24
+    )
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
+        >= 0.39
+    )
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("temporal", "temporal")
+        >= 0.24
     )
 
 
