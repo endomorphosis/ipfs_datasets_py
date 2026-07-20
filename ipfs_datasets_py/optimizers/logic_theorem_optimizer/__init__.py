@@ -321,6 +321,18 @@ __all__ = [
     'predict_codex_write_set',
     'bundle_codex_scope_evidence',
     'schedule_codex_scopes',
+    # Complete parallel-pipeline benchmarking and autotuning
+    'ParallelismProfile',
+    'GlobalResourceBounds',
+    'TrustBounds',
+    'PhaseLatency',
+    'PipelineBenchmarkMetrics',
+    'BenchmarkTrial',
+    'CandidateEvaluation',
+    'AutotuneResult',
+    'ParallelismAutotuner',
+    'autotune_parallelism',
+    'write_reproducible_profile',
     # Program-synthesis failure classification and recovery
     'FailureCategory',
     'FailureClassification',
@@ -400,6 +412,24 @@ def _enforce_export_version_gate(name: str, current_version: str | None = None) 
 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
+    if name in (
+        'ParallelismProfile',
+        'GlobalResourceBounds',
+        'TrustBounds',
+        'PhaseLatency',
+        'PipelineBenchmarkMetrics',
+        'BenchmarkTrial',
+        'CandidateEvaluation',
+        'AutotuneResult',
+        'ParallelismAutotuner',
+        'autotune_parallelism',
+        'write_reproducible_profile',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            parallelism_autotuner,
+        )
+
+        return getattr(parallelism_autotuner, name)
     if name in (
         'CodexOwnershipScope',
         'CodexScopeTask',
