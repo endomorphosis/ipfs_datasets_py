@@ -1122,7 +1122,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-051 Distill stable learned representations into deterministic rule candidates
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: representation-transfer
