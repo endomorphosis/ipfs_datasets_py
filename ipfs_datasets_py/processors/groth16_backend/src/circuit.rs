@@ -4,9 +4,9 @@
 use ark_ff::PrimeField;
 use ark_crypto_primitives::crh::sha256::constraints::Sha256Gadget;
 use ark_r1cs_std::fields::fp::FpVar;
-use ark_r1cs_std::bits::{boolean::Boolean, uint8::UInt8};
+use ark_r1cs_std::{boolean::Boolean, uint8::UInt8};
 use ark_r1cs_std::prelude::*;
-use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
+use ark_relations::gr1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 use sha2::{Digest, Sha256};
 
 pub(crate) const TDFOL_V1_V2_MAX_AXIOMS: usize = 16;
@@ -64,10 +64,12 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for EventDagCompactionCircuitV3<F> 
             // An inactive leaf must be all-zero before it is hashed. This
             // makes the public count part of the commitment rather than a
             // descriptive field supplied alongside it.
-            let inactive = active_var.not();
+            let inactive = !active_var;
             for byte in &digest {
-                inactive
-                    .and(&byte.is_eq(&UInt8::constant(0))?.not())?
+                Boolean::kary_and(&[
+                    inactive.clone(),
+                    !byte.is_eq(&UInt8::constant(0))?,
+                ])?
                     .enforce_equal(&Boolean::FALSE)?;
             }
             leaves.push((digest, active_as_field));
@@ -77,8 +79,10 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for EventDagCompactionCircuitV3<F> 
         count_input.enforce_equal(&count_sum)?;
         for index in 1..EVENT_DAG_V3_MAX_EVENTS {
             // active[i] => active[i - 1], which fixes active leaves to a prefix.
-            active_vars[index]
-                .and(&active_vars[index - 1].not())?
+            Boolean::kary_and(&[
+                active_vars[index].clone(),
+                !active_vars[index - 1].clone(),
+            ])?
                 .enforce_equal(&Boolean::FALSE)?;
         }
         // Keep a direct non-zero count constraint in the R1CS, even though the
@@ -295,8 +299,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
             let cons_is_zero = cons.is_eq(&zero)?;
             let ant_is_zero = ant.is_eq(&zero)?;
             // cons == 0 => ant == 0
-            cons_is_zero
-                .and(&ant_is_zero.not())?
+            Boolean::kary_and(&[cons_is_zero, !ant_is_zero])?
                 .enforce_equal(&Boolean::FALSE)?;
 
             let term = cons + (ant * &alpha);
@@ -313,15 +316,17 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
         for i in 0..TDFOL_V1_V2_MAX_STEPS {
             let is_zero = trace_var[i].is_eq(&zero)?;
             step_zero_bits.push(is_zero.clone());
-            step_nonzero_bits.push(is_zero.not());
+            step_nonzero_bits.push(!is_zero);
         }
 
         Boolean::kary_or(&step_nonzero_bits)?.enforce_equal(&Boolean::TRUE)?;
 
         for i in 0..(TDFOL_V1_V2_MAX_STEPS - 1) {
             // trace[i] == 0 => trace[i+1] == 0
-            step_zero_bits[i]
-                .and(&step_zero_bits[i + 1].not())?
+            Boolean::kary_and(&[
+                step_zero_bits[i].clone(),
+                !step_zero_bits[i + 1].clone(),
+            ])?
                 .enforce_equal(&Boolean::FALSE)?;
         }
 
@@ -329,8 +334,11 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
         for i in 0..TDFOL_V1_V2_MAX_STEPS {
             for j in (i + 1)..TDFOL_V1_V2_MAX_STEPS {
                 let eq = trace_var[i].is_eq(&trace_var[j])?;
-                let both_nz = step_nonzero_bits[i].and(&step_nonzero_bits[j])?;
-                both_nz.and(&eq)?.enforce_equal(&Boolean::FALSE)?;
+                let both_nz = Boolean::kary_and(&[
+                    step_nonzero_bits[i].clone(),
+                    step_nonzero_bits[j].clone(),
+                ])?;
+                Boolean::kary_and(&[both_nz, eq])?.enforce_equal(&Boolean::FALSE)?;
             }
         }
 
@@ -339,10 +347,10 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
             let mut matches: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_AXIOMS);
             for i in 0..TDFOL_V1_V2_MAX_AXIOMS {
                 let ant_is_zero = axiom_ants_var[i].is_eq(&zero)?;
-                let cons_is_nonzero = axiom_cons_var[i].is_eq(&zero)?.not();
-                let is_fact = ant_is_zero.and(&cons_is_nonzero)?;
+                let cons_is_nonzero = !axiom_cons_var[i].is_eq(&zero)?;
+                let is_fact = Boolean::kary_and(&[ant_is_zero, cons_is_nonzero])?;
                 let eq = axiom_cons_var[i].is_eq(x)?;
-                matches.push(is_fact.and(&eq)?);
+                matches.push(Boolean::kary_and(&[is_fact, eq])?);
             }
             Boolean::kary_or(&matches)
         };
@@ -354,7 +362,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
             let mut matches: Vec<Boolean<F>> = Vec::with_capacity(k);
             for j in 0..k {
                 let eq = trace_var[j].is_eq(x)?;
-                matches.push(step_nonzero_bits[j].and(&eq)?);
+                matches.push(Boolean::kary_and(&[step_nonzero_bits[j].clone(), eq])?);
             }
             Boolean::kary_or(&matches)
         };
@@ -362,7 +370,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
         let known_membership = |x: &FpVar<F>, k: usize| -> Result<Boolean<F>, SynthesisError> {
             let in_facts = fact_membership(x)?;
             let in_prev = prev_membership(x, k)?;
-            in_facts.or(&in_prev)
+            Boolean::kary_or(&[in_facts, in_prev])
         };
 
         // Validate each trace step.
@@ -371,22 +379,21 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
             let step_nonzero = step_nonzero_bits[k].clone();
 
             let step_known = known_membership(step, k)?;
-            let need_just = step_nonzero.and(&step_known.not())?;
+            let need_just = Boolean::kary_and(&[step_nonzero, !step_known])?;
 
             // exists implication (P -> step) with P known
             let mut just_bits: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_AXIOMS);
             for i in 0..TDFOL_V1_V2_MAX_AXIOMS {
-                let ant_is_nonzero = axiom_ants_var[i].is_eq(&zero)?.not();
-                let cons_is_nonzero = axiom_cons_var[i].is_eq(&zero)?.not();
-                let is_impl = ant_is_nonzero.and(&cons_is_nonzero)?;
+                let ant_is_nonzero = !axiom_ants_var[i].is_eq(&zero)?;
+                let cons_is_nonzero = !axiom_cons_var[i].is_eq(&zero)?;
+                let is_impl = Boolean::kary_and(&[ant_is_nonzero, cons_is_nonzero])?;
                 let cons_match = axiom_cons_var[i].is_eq(step)?;
                 let ant_known = known_membership(&axiom_ants_var[i], k)?;
-                just_bits.push(is_impl.and(&cons_match)?.and(&ant_known)?);
+                just_bits.push(Boolean::kary_and(&[is_impl, cons_match, ant_known])?);
             }
             let exists_just = Boolean::kary_or(&just_bits)?;
 
-            need_just
-                .and(&exists_just.not())?
+            Boolean::kary_and(&[need_just, !exists_just])?
                 .enforce_equal(&Boolean::FALSE)?;
         }
 
@@ -395,11 +402,10 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
         let mut theorem_step_bits: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_STEPS);
         for k in 0..TDFOL_V1_V2_MAX_STEPS {
             let eq = trace_var[k].is_eq(&theorem_hash_input)?;
-            theorem_step_bits.push(step_nonzero_bits[k].and(&eq)?);
+            theorem_step_bits.push(Boolean::kary_and(&[step_nonzero_bits[k].clone(), eq])?);
         }
         let theorem_in_trace = Boolean::kary_or(&theorem_step_bits)?;
-        theorem_in_facts
-            .or(&theorem_in_trace)?
+        Boolean::kary_or(&[theorem_in_facts, theorem_in_trace])?
             .enforce_equal(&Boolean::TRUE)?;
 
         Ok(())
@@ -508,7 +514,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for MVPCircuit {
 mod tests {
     use super::*;
     use ark_bn254::Fr;
-    use ark_relations::r1cs::ConstraintSystem;
+    use ark_relations::gr1cs::ConstraintSystem;
 
     #[test]
     fn test_circuit_creation() {

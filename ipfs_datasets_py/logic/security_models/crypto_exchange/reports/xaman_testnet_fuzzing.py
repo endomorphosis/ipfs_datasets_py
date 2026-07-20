@@ -532,8 +532,8 @@ def _malformed_ir_cases(model_payload: Mapping[str, Any]) -> list[CampaignCase]:
     return cases
 
 
-def _attack_cases() -> list[CampaignCase]:
-    specs = [
+def _attack_specs() -> list[tuple[str, str, str, str, dict[str, Any]]]:
+    return [
         (
             'attack-raw-payload-material',
             'Raw payload material is introduced into the payload boundary',
@@ -710,6 +710,18 @@ def _attack_cases() -> list[CampaignCase]:
             {'submit_result_removed': True},
         ),
     ]
+
+
+def _attack_cases(selected_attack_mutation_ids: list[str] | None = None) -> list[CampaignCase]:
+    specs = _attack_specs()
+    if selected_attack_mutation_ids is not None:
+        selected = {str(item) for item in selected_attack_mutation_ids}
+        available = {case_id for case_id, *_ in specs}
+        missing = sorted(selected - available)
+        if missing:
+            raise ValueError('requested attack mutation IDs are not defined: ' + ', '.join(missing))
+        specs = [case for case in specs if case[0] in selected]
+
     return [
         CampaignCase(
             case_id=case_id,
@@ -805,21 +817,37 @@ def _campaign_summary(campaign_id: str, cases: list[CampaignCase], model_payload
     }
 
 
-def _case_payloads_by_id() -> dict[str, dict[str, Any]]:
-    return {case.case_id: deepcopy(case.payload) for case in _attack_cases()}
+def _case_payloads_by_id(
+    selected_attack_mutation_ids: list[str] | None = None,
+) -> dict[str, dict[str, Any]]:
+    return {
+        case.case_id: deepcopy(case.payload)
+        for case in _attack_cases(selected_attack_mutation_ids)
+    }
 
 
-def _minimal_mutation_keys(mutation_id: str) -> list[str]:
-    payload = _case_payloads_by_id()[mutation_id]
+def _minimal_mutation_keys(
+    mutation_id: str,
+    selected_attack_mutation_ids: list[str] | None = None,
+) -> list[str]:
+    payload = _case_payloads_by_id(selected_attack_mutation_ids).get(mutation_id)
+    if payload is None:
+        return []
     mutation = payload.get('mutation')
     if not isinstance(mutation, Mapping):
         return []
     return sorted(str(key) for key in mutation)
 
 
-def _minimization_record(mutation: Mapping[str, Any]) -> dict[str, Any]:
+def _minimization_record(
+    mutation: Mapping[str, Any],
+    selected_attack_mutation_ids: list[str] | None = None,
+) -> dict[str, Any]:
     mutation_id = str(mutation['mutation_id'])
-    retained_keys = _minimal_mutation_keys(mutation_id)
+    retained_keys = _minimal_mutation_keys(
+        mutation_id,
+        selected_attack_mutation_ids=selected_attack_mutation_ids,
+    )
     return {
         'algorithm': 'deterministic-one-domain-delta-minimizer/v1',
         'status': 'minimal',
@@ -832,7 +860,11 @@ def _minimization_record(mutation: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_campaign_manifest(report: Mapping[str, Any]) -> dict[str, Any]:
+def build_campaign_manifest(
+    report: Mapping[str, Any],
+    *,
+    selected_attack_mutation_ids: list[str] | None = None,
+) -> dict[str, Any]:
     domain_case_ids: dict[str, list[str]] = {domain: [] for domain in sorted(REGISTERED_FUZZ_DOMAINS)}
     for mutation in report.get('attack_mutations', []):
         if not isinstance(mutation, Mapping):
@@ -888,18 +920,36 @@ def build_campaign_manifest(report: Mapping[str, Any]) -> dict[str, Any]:
             'unregistered_domain_rejection': 'pass',
         },
     }
+    if selected_attack_mutation_ids is not None:
+        manifest['selection'] = {
+            'mode': 'partial_subset',
+            'selected_attack_mutation_ids': sorted(str(item) for item in selected_attack_mutation_ids),
+            'selected_attack_mutation_count': len(selected_attack_mutation_ids),
+        }
     manifest['artifact_cid'] = _artifact_cid_without_self(manifest)
     return manifest
 
 
-def counterexample_artifacts(report: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+def counterexample_artifacts(
+    report: Mapping[str, Any],
+    *,
+    selected_attack_mutation_ids: list[str] | None = None,
+) -> dict[str, dict[str, Any]]:
+    requested_ids = None
+    if selected_attack_mutation_ids is not None:
+        requested_ids = {str(item) for item in selected_attack_mutation_ids}
     artifacts: dict[str, dict[str, Any]] = {}
     for mutation in report.get('attack_mutations', []):
         if not isinstance(mutation, Mapping):
             continue
         mutation_id = str(mutation['mutation_id'])
+        if requested_ids is not None and mutation_id not in requested_ids:
+            continue
         path = f'{COUNTEREXAMPLE_DIR}/{mutation_id}.json'
-        minimization = _minimization_record(mutation)
+        minimization = _minimization_record(
+            mutation,
+            selected_attack_mutation_ids=selected_attack_mutation_ids,
+        )
         artifact = {
             'schema_version': 'xaman-testnet-fuzz-counterexample/v1',
             'task_id': ADVERSARIAL_TASK_ID,
@@ -953,6 +1003,8 @@ def build_xaman_testnet_fuzz_report(
     *,
     model_cid: str,
     trace_map_payload: Mapping[str, Any],
+    selected_attack_mutation_ids: list[str] | None = None,
+    strict: bool = True,
 ) -> dict[str, Any]:
     validate_ir(model_payload)
     expected_claim_ids = set(CLAIMS.values())
@@ -963,21 +1015,22 @@ def build_xaman_testnet_fuzz_report(
         raise ValueError('trace map model_cid does not match fuzz model_cid')
 
     seed = _seed_trace(model_payload)
+    selected_attack_mutations = (
+        None if selected_attack_mutation_ids is None else sorted({str(item) for item in selected_attack_mutation_ids})
+    )
+    attack_cases = _attack_cases(selected_attack_mutations)
+    attack_case_index = {case.case_id: case for case in attack_cases}
     campaigns = [
         _campaign_summary('trace-mutation-campaign', _trace_cases(seed), model_payload),
         _campaign_summary('malformed-security-ir-parser-campaign', _malformed_ir_cases(model_payload), model_payload),
-        _campaign_summary('expected-attack-mutation-campaign', _attack_cases(), model_payload),
+        _campaign_summary('expected-attack-mutation-campaign', attack_cases, model_payload),
     ]
     attack_case_results = campaigns[-1]['cases']
     attack_mutations = [
         {
             'mutation_id': result['case_id'],
             'title': result['title'],
-            'fuzz_domain': next(
-                case.payload['fuzz_domain']
-                for case in _attack_cases()
-                if case.case_id == result['case_id']
-            ),
+            'fuzz_domain': attack_case_index[result['case_id']].payload['fuzz_domain'],
             'target_claim_id': result['target_claim_id'],
             'triggered_claim_ids': result['triggered_claim_ids'],
             'result': result['result'],
@@ -1004,7 +1057,11 @@ def build_xaman_testnet_fuzz_report(
         if mutation['target_claim_id'] not in mutation['triggered_claim_ids']
     )
     covered_domains = {mutation['fuzz_domain'] for mutation in attack_mutations}
-    missing_registered_domain_count = len(REGISTERED_FUZZ_DOMAIN_IDS - covered_domains)
+    missing_registered_domain_count = (
+        len(REGISTERED_FUZZ_DOMAIN_IDS - covered_domains)
+        if strict
+        else 0
+    )
     crash_count = sum(campaign['crash_count'] for campaign in campaigns)
     total_cases = sum(campaign['generated_case_count'] for campaign in campaigns)
     failed_case_count = sum(
@@ -1013,6 +1070,24 @@ def build_xaman_testnet_fuzz_report(
         for result in campaign['cases']
         if result['status'] != 'passed'
     )
+    coverage_mode = (
+        'selected_attack_mutation_subset'
+        if selected_attack_mutations is not None
+        else 'full_registered_attack_domain_coverage'
+    )
+    campaign_material_hash_input = {
+        'model_cid': model_cid,
+        'task_id': TASK_ID,
+    }
+    if selected_attack_mutations is not None or not strict:
+        campaign_material_hash_input.update(
+            {
+                'coverage_mode': coverage_mode,
+                'strict': strict,
+            },
+        )
+    if selected_attack_mutations is not None:
+        campaign_material_hash_input['selected_attack_mutation_ids'] = selected_attack_mutations
     overall_passed = (
         crash_count == 0
         and malformed_ir_acceptance_count == 0
@@ -1047,7 +1122,7 @@ def build_xaman_testnet_fuzz_report(
         'fuzzer': {
             'engine': 'deterministic-structural-mutator',
             'randomness': 'none',
-            'campaign_material_sha256': _sha256_json({'model_cid': model_cid, 'task_id': TASK_ID}),
+            'campaign_material_sha256': _sha256_json(campaign_material_hash_input),
             'total_case_count': total_cases,
         },
         'campaigns': campaigns,
@@ -1059,7 +1134,9 @@ def build_xaman_testnet_fuzz_report(
             'expected_attack_mutation_targets': 'pass' if missing_target_claim_trigger_count == 0 else 'fail',
         },
         'adversarial_acceptance_gates': {
-            'registered_fuzz_domain_coverage': 'pass' if missing_registered_domain_count == 0 else 'fail',
+            'registered_fuzz_domain_coverage': 'pass'
+            if not strict
+            else ('pass' if missing_registered_domain_count == 0 else 'fail'),
             'unregistered_fuzz_domain_rejection': 'pass',
             'counterexample_minimization': 'pass',
         },
@@ -1081,6 +1158,12 @@ def build_xaman_testnet_fuzz_report(
             'counterexample_count': len(attack_mutations),
         },
     }
+    if selected_attack_mutations is not None:
+        report['summary']['selected_attack_mutation_count'] = len(selected_attack_mutations)
+        report['summary']['selected_attack_mutation_ids'] = selected_attack_mutations
+    if not strict:
+        report['coverage_statement']['coverage_mode'] = coverage_mode
+        report['coverage_statement']['strict'] = strict
     report['artifact_cid'] = _artifact_cid_without_self(report)
     if not overall_passed:
         raise ValueError('Xaman Testnet fuzz campaign failed acceptance gates')

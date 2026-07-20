@@ -107,7 +107,7 @@ def test_retention_baseline_covers_acceptance_artifact_classes() -> None:
         in paths_by_group['solver_artifacts']
     )
     assert (
-        'data/crypto_exchange_theorem_prover/state/implementation_logs/portal-cxtp-056-attempt-1.log'
+        'data/crypto_exchange_theorem_prover/state/implementation_logs/portal-cxtp-122-attempt-1.log'
         in paths_by_group['implementation_logs']
     )
     assert 'security_ir_artifacts/assurance-baseline.md' in paths_by_group['assurance_packets']

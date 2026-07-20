@@ -1,0 +1,131 @@
+{
+  "created_at": "2026-07-19T13:11:46.768469+00:00",
+  "decomposition_plan": null,
+  "metadata": {},
+  "normalized_evidence": [],
+  "notes": [
+    "HAMMER-015 release-evidence golden case: verified_native_automation_fallback"
+  ],
+  "publishable_digest": "bafkreifg7yexd3o6nyht6kieqdomifglfpgpofeahjqwvbbp22uzwcfp3a",
+  "receipt_id": "bafkreib3lzvln2l5yypfxca7fgrnbkk6pwx2va65mrwm5dt5z7whjw533m",
+  "reconstruction_evidence": {
+    "candidate_id": "bafkreigvb26xt655emqh64seacrh7sjz5jnxxmzggo6z7clutpqqn6ikqq",
+    "checked_source": "<redacted:private-theorem-checked-source length=224 digest=bafkreiht47jbrs2mouxph44zc7rgzcysmvqln2hdwmyd7gfc3dhgx6e73a>",
+    "checked_source_digest": "bafkreiaruftf5decfvxcnfye6vr443uh75jtpehxhr5cbvjtp7oscncdc4",
+    "command": [
+      "/home/barberb/.elan/bin/lean",
+      "--json",
+      "/tmp/hammer-lean-recon-pdc88s0_/Reconstruction.lean"
+    ],
+    "itp": "lean",
+    "raw_output_digest": "bafkreidhkiyv3zeqfhg34bscriw6jva4rczebb57xnckcboo56gmfyw53a",
+    "reconstructed_proof_text": "<redacted:private-theorem-proof-text length=110 digest=bafkreiadicn5p6hrbjp5lldceshtltzux7ibezt3a4xqff2zjt6nxghegq>",
+    "reconstruction_id": "bafkreig2og45bov77m5dgdntov42kwvqjnukte2erpf6lvzopvvyxacqwu",
+    "request_id": "golden-native-automation-1",
+    "returncode": 0,
+    "schema_version": "1.0.0",
+    "stderr": "",
+    "stdout": "<redacted:kernel-stdout length=297 digest=bafkreieyymmyju4emj4d7qg3l2z5nxewivuqiu5pulrbf2nb5yhgiaymk4>",
+    "timed_out": false,
+    "wall_time_seconds": 0.36197795798943844
+  },
+  "redaction_notes": [
+    "kernel-stdout",
+    "private-theorem-checked-source",
+    "private-theorem-goal",
+    "private-theorem-proof-text"
+  ],
+  "result": {
+    "completed_at": null,
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "created_at": "2026-07-19T13:11:46.768334+00:00",
+    "environment_lock": {
+      "container_digest": null,
+      "executable_paths": {
+        "lake": "/home/barberb/.elan/bin/lake",
+        "lean": "/home/barberb/.elan/bin/lean"
+      },
+      "itp": "lean",
+      "itp_version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+      "kernel_command_template": "{lean} --json {source_file}",
+      "lock_id": "bafkreifdqdl2fvcrlzgszbqmjehqb3l7me4ap56updjtdbse6sfcel5heq",
+      "os_info": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+      "pinned_at": "2026-07-19T13:11:46.399914+00:00",
+      "policy_digest": "bafkreicpzcuwosrscbx4d6t45j3gppovkggtx3bu5zeykdbj6yhennxxz4",
+      "schema_version": "1.0.0",
+      "solver_versions": {}
+    },
+    "errors": [],
+    "notes": [
+      "recovered via HAMMER-011 native automation fallback (Lean rfl/decide/simp_all/assumption), never via an untrusted solver"
+    ],
+    "premises": [
+      {
+        "content_digest": "bafkreiex3n5ic2zx3tvo2qh6sdhr4krx7uuv44ak7cbslbxalgm3s7nia4",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_assoc",
+        "rank": 0,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)"
+      }
+    ],
+    "proof_candidate": {
+      "candidate_id": "bafkreigvb26xt655emqh64seacrh7sjz5jnxxmzggo6z7clutpqqn6ikqq",
+      "certificate": null,
+      "certificate_format": null,
+      "premise_ids": [],
+      "request_id": "golden-native-automation-1",
+      "schema_version": "1.0.0",
+      "solver_attempt_id": "native-automation-fallback"
+    },
+    "reconstruction": {
+      "candidate_id": "bafkreigvb26xt655emqh64seacrh7sjz5jnxxmzggo6z7clutpqqn6ikqq",
+      "environment_lock_id": "bafkreifdqdl2fvcrlzgszbqmjehqb3l7me4ap56updjtdbse6sfcel5heq",
+      "failure_reason": null,
+      "finished_at": "2026-07-19T13:11:46.765446+00:00",
+      "kernel_accepted": true,
+      "kernel_command": "/home/barberb/.elan/bin/lean --json /tmp/hammer-lean-recon-pdc88s0_/Reconstruction.lean",
+      "kernel_output_digest": "bafkreidhkiyv3zeqfhg34bscriw6jva4rczebb57xnckcboo56gmfyw53a",
+      "reconstruction_id": "bafkreig2og45bov77m5dgdntov42kwvqjnukte2erpf6lvzopvvyxacqwu",
+      "request_id": "golden-native-automation-1",
+      "schema_version": "1.0.0",
+      "started_at": "2026-07-19T13:11:46.401915+00:00",
+      "target_itp": "lean"
+    },
+    "request": {
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T13:11:46.042596+00:00",
+      "goal_statement": "<redacted:private-theorem-goal length=5 digest=bafkreiecskqsnfl34kyirmf2qt4hvejp7nvtk7ufrnojcyqjzg6y2q3eiy>",
+      "itp": "lean",
+      "metadata": {},
+      "policy": {
+        "allow_learned_premise_selector": false,
+        "allow_llm_decomposition_hints": false,
+        "allow_llm_premise_ranking": false,
+        "allow_native_automation_fallback": true,
+        "allowed_solvers": [],
+        "cpu_seconds": null,
+        "max_decomposition_subgoals": 4,
+        "max_premises": 64,
+        "memory_mb": null,
+        "network_allowed": false,
+        "schema_version": "1.0.0",
+        "timeout_seconds": 20.0
+      },
+      "request_id": "golden-native-automation-1",
+      "schema_version": "1.0.0",
+      "theorem_id": "hammer_golden_native_automation"
+    },
+    "result_id": "golden-native-automation-1:result",
+    "schema_version": "1.0.0",
+    "solver_attempts": [],
+    "status": "verified",
+    "translations": []
+  },
+  "schema_version": "1.0.0",
+  "solver_evidence": [],
+  "visibility": "publishable"
+}

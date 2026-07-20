@@ -23,6 +23,7 @@ LEAN_KERNEL_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel
 LEAN_REPORT_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json'
 COQ_KERNEL_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v'
 COQ_DECISION_PATH = 'security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json'
+COQ_CHECK_OUTPUT_PATH = 'tmp/cxtp-proof-checks/XamanTestnet.vo'
 TESTNET_PLAN_PATH = 'docs/security_verification/xaman_xrpl_testnet_theorem_prover_assurance_plan.md'
 
 FORMALIZED_INVARIANTS = (
@@ -323,7 +324,7 @@ def run_lean_kernel_check(*, repo_root: Path, lean_executable: str | None = None
 
 
 def run_coq_kernel_check(*, repo_root: Path, coqc_executable: str | None = None) -> tuple[str | None, str, str | None, dict[str, Any]]:
-    """Run Coq only when the Testnet Coq artifact exists."""
+    """Run Rocq without leaving compiler artifacts in the evidence source tree."""
 
     kernel_path = repo_root / COQ_KERNEL_PATH
     if not kernel_path.is_file():
@@ -342,9 +343,12 @@ def run_coq_kernel_check(*, repo_root: Path, coqc_executable: str | None = None)
     version = _version(executable, ['--version'])
     if executable is None:
         return None, '', source, _not_run_coq_check(None, True)
+    output_path = repo_root / COQ_CHECK_OUTPUT_PATH
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    command = [executable, '-noglob', '-o', str(output_path), str(kernel_path)]
     try:
         completed = subprocess.run(
-            [executable, str(kernel_path)],
+            command,
             check=False,
             capture_output=True,
             text=True,
@@ -352,14 +356,22 @@ def run_coq_kernel_check(*, repo_root: Path, coqc_executable: str | None = None)
         )
     except subprocess.TimeoutExpired as exc:
         return executable, version, source, {
-            'command': [executable, COQ_KERNEL_PATH],
+            'command': [executable, '-noglob', '-o', COQ_CHECK_OUTPUT_PATH, COQ_KERNEL_PATH],
             'returncode': None,
             'status': 'timeout',
             'stdout': exc.stdout or '',
             'stderr': exc.stderr or '',
         }
+    finally:
+        for generated_path in (
+            output_path,
+            output_path.with_suffix('.vok'),
+            output_path.with_suffix('.vos'),
+            output_path.parent / f'.{output_path.stem}.aux',
+        ):
+            generated_path.unlink(missing_ok=True)
     return executable, version, source, {
-        'command': [executable, COQ_KERNEL_PATH],
+        'command': [executable, '-noglob', '-o', COQ_CHECK_OUTPUT_PATH, COQ_KERNEL_PATH],
         'returncode': completed.returncode,
         'status': 'passed' if completed.returncode == 0 else 'failed',
         'stdout': completed.stdout,

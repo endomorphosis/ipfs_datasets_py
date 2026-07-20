@@ -1,0 +1,39 @@
+(*
+  PORTAL-CXTP-135: bounded ProVerif projection of the redacted Xaman Testnet
+  payload lifecycle. The model establishes only event ordering. It does not
+  model native signing, raw payload JSON, backend single-use, cancellation,
+  expiry, replay resolution, XRPL broadcast/finality, or production release.
+*)
+
+event testnet_bound(bitstring).
+event fresh_testnet_account(bitstring).
+event payload_reviewed(bitstring).
+event auth_authorized(bitstring).
+event signing_decision_observed(bitstring).
+event submit_attempt_observed(bitstring).
+event submit_result_observed(bitstring).
+event audit_redaction_preserved(bitstring).
+
+query payload: bitstring;
+  event(payload_reviewed(payload)) ==> event(testnet_bound(payload)).
+query payload: bitstring;
+  event(payload_reviewed(payload)) ==> event(fresh_testnet_account(payload)).
+query payload: bitstring;
+  event(auth_authorized(payload)) ==> event(payload_reviewed(payload)).
+query payload: bitstring;
+  event(signing_decision_observed(payload)) ==> event(auth_authorized(payload)).
+query payload: bitstring;
+  event(submit_attempt_observed(payload)) ==> event(signing_decision_observed(payload)).
+query payload: bitstring;
+  event(submit_result_observed(payload)) ==> event(submit_attempt_observed(payload)).
+
+process
+  new payload: bitstring;
+  event testnet_bound(payload);
+  event fresh_testnet_account(payload);
+  event audit_redaction_preserved(payload);
+  event payload_reviewed(payload);
+  event auth_authorized(payload);
+  event signing_decision_observed(payload);
+  event submit_attempt_observed(payload);
+  event submit_result_observed(payload)

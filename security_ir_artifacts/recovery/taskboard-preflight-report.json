@@ -1,7 +1,7 @@
 {
   "blocker_count": 0,
   "blockers": [],
-  "generated_at_utc": "2026-07-12T05:46:05Z",
+  "generated_at_utc": "2026-07-19T06:55:01Z",
   "overall_status": "ready",
   "production_blocker_policy": {
     "incomplete_production_blockers": [
@@ -47,7 +47,7 @@
     "active_task_id": "",
     "exists": true,
     "path": "data/crypto_exchange_theorem_prover/state/cxtp_task_state.json",
-    "task_count": 100
+    "task_count": 120
   },
   "task_id": "PORTAL-CXTP-087",
   "taskboard": {
@@ -55,12 +55,12 @@
     "path": "docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md",
     "status_counts": {
       "blocked": 20,
-      "completed": 71,
+      "completed": 91,
       "waiting": 9
     },
-    "task_count": 100
+    "task_count": 120
   },
-  "warning_count": 19,
+  "warning_count": 20,
   "warnings": [
     {
       "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
@@ -137,6 +137,10 @@
     {
       "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
       "task_id": "PORTAL-CXTP-152"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-175"
     }
   ]
 }

@@ -9,7 +9,6 @@
     "responsible_disclosure_path_present": true,
     "testnet_only_scope_preserved": true
   },
-  "artifact_cid": "sha256:5e6b544850f56b69bd0fb91f2a93febb9a0d76baccc8957a20e777e9ac22e5be",
   "assessment_baseline": {
     "assessment_path": "security_ir_artifacts/corpora/xaman-app/public-source-assessment.json",
     "assessment_result": "blocked_public_source_assessment",
@@ -611,5 +610,6 @@
     "master_matches_pin": true,
     "method": "git ls-remote https://github.com/XRPL-Labs/Xaman-App HEAD refs/heads/master refs/heads/main refs/tags/*",
     "pinned_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
-  }
+  },
+  "artifact_cid": "sha256:5e6b544850f56b69bd0fb91f2a93febb9a0d76baccc8957a20e777e9ac22e5be"
 }

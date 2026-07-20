@@ -1,0 +1,1783 @@
+{
+  "assumption_registry": {
+    "as_of": "2026-07-19T05:55:19Z",
+    "assumptions": [
+      {
+        "accepted": true,
+        "assumption_id": "A1",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A3",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A4",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A5",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A6",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A7",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A8",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A9",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A10",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      }
+    ],
+    "attention": [],
+    "failures": [
+      {
+        "accepted": true,
+        "assumption_id": "A1",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A3",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A4",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A5",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A6",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A7",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A8",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A9",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A10",
+        "current": false,
+        "evidenced": false,
+        "owned": false,
+        "present": false,
+        "reasons": [
+          "missing assumption entry"
+        ]
+      }
+    ],
+    "release_ready": false,
+    "require_current": true,
+    "require_evidence": true,
+    "require_owner": true,
+    "summary": {
+      "accepted": 9,
+      "current": 0,
+      "evidenced": 0,
+      "owned": 0,
+      "present": 0,
+      "stale": 0,
+      "total": 9
+    }
+  },
+  "coverage": {
+    "blocking_claims": 3,
+    "blocking_modeled": 1,
+    "blocking_not_modeled": 2,
+    "blocking_proved": 0,
+    "blocking_unknown": 0,
+    "disproved": 2,
+    "domain_summary": {
+      "audit": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "audit_event_exists_for_critical_transition": "NOT_MODELED"
+        },
+        "modeled": false,
+        "total_claims": 1
+      },
+      "capabilities": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "capability_delegation_no_authority_increase": "PROVED",
+          "revoked_capability_no_future_authorization": "DISPROVED"
+        },
+        "modeled": true,
+        "total_claims": 2
+      },
+      "deposits": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_deposit_before_finality": "NOT_MODELED"
+        },
+        "modeled": false,
+        "total_claims": 1
+      },
+      "hsm": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_signing_request_after_wallet_freeze": "NOT_MODELED"
+        },
+        "modeled": false,
+        "total_claims": 1
+      },
+      "ledger": {
+        "blocking_claims": 2,
+        "blocking_not_modeled": 1,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "global_asset_conservation": "NOT_MODELED",
+          "no_over_reserved_internal_account": "DISPROVED"
+        },
+        "modeled": true,
+        "total_claims": 2
+      },
+      "withdrawals": {
+        "blocking_claims": 1,
+        "blocking_not_modeled": 1,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_unauthorized_withdrawal": "NOT_MODELED"
+        },
+        "modeled": false,
+        "total_claims": 1
+      }
+    },
+    "domains_modeled": {
+      "audit": false,
+      "capabilities": true,
+      "deposits": false,
+      "hsm": false,
+      "ledger": true,
+      "withdrawals": false
+    },
+    "not_modeled": 5,
+    "proved": 1,
+    "total_claims": 8,
+    "unknown": 0
+  },
+  "model_id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+  "prover_agreement": {
+    "claims": [
+      {
+        "claim_id": "no_unauthorized_withdrawal",
+        "critical": true,
+        "critical_failure": true,
+        "disagreement": false,
+        "fail_closed": true,
+        "reasons": [
+          "z3:NOT_MODELED:not-modeled",
+          "cvc5:NOT_MODELED:withdrawal broadcast events are not modeled"
+        ],
+        "reports": [
+          {
+            "assertion_count": null,
+            "assumptions": [
+              "A3",
+              "A4",
+              "A5",
+              "A8"
+            ],
+            "claim_id": "no_unauthorized_withdrawal",
+            "claim_version": "1.0",
+            "compiler_cid": "",
+            "counterexample": {
+              "reason": "withdrawal broadcast events are not modeled"
+            },
+            "created_at": "2026-07-19T05:55:18+00:00",
+            "deterministic_payload_cid": "bafkreihwnr4e737hhpygd7ycwkyp3gwk2mvhmg2mqkn5wtzdpeuz6mty5a",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:18+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreiftts2aip6sxogj5yimpqyc2wdifoxcjgjb25xtjujpq5u6ydx3yi",
+            "proof_or_trace_cid": "",
+            "prover": "z3",
+            "reason_unknown": null,
+            "risk": "blocking",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "z3",
+            "solver_result": "not-modeled",
+            "solver_version": "",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": null,
+            "unsat_core": null
+          },
+          {
+            "assertion_count": 0,
+            "assumptions": [
+              "A3",
+              "A4",
+              "A5",
+              "A8"
+            ],
+            "claim_id": "no_unauthorized_withdrawal",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreihe5diud2rdhzjzlnawpll4sf7p5y4xhzpjwbxzsjyqeerbytoyry",
+            "counterexample": {
+              "compiler_artifact_cid": "bafkreicecnx2gvntm6fbcrvnc336qze6st5u7qq7457igegamd3bzkx7ri",
+              "cvc5_returncode": null,
+              "cvc5_stderr": "",
+              "cvc5_stdout": "",
+              "reason": "withdrawal broadcast events are not modeled",
+              "smtlib_artifact_cid": "bafkreihe5diud2rdhzjzlnawpll4sf7p5y4xhzpjwbxzsjyqeerbytoyry"
+            },
+            "created_at": "2026-07-19T05:55:18+00:00",
+            "deterministic_payload_cid": "bafkreibvrdm5pids7k2svwzmnvzzijybv5kmhddgyi4hdi3j4dfo4e5mbu",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:18+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreicdcpvogke72arnfng2r3g3ebtehw57637lljfyiym2axxkmofa7y",
+            "proof_or_trace_cid": "",
+            "prover": "cvc5",
+            "reason_unknown": "withdrawal broadcast events are not modeled",
+            "risk": "blocking",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "cvc5",
+            "solver_result": "not-modeled",
+            "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          }
+        ],
+        "risk": "blocking",
+        "statuses": {
+          "cvc5": "NOT_MODELED",
+          "z3": "NOT_MODELED"
+        }
+      },
+      {
+        "claim_id": "no_over_reserved_internal_account",
+        "critical": true,
+        "critical_failure": false,
+        "disagreement": false,
+        "fail_closed": false,
+        "reasons": [],
+        "reports": [
+          {
+            "assertion_count": 1,
+            "assumptions": [
+              "A4",
+              "A5"
+            ],
+            "claim_id": "no_over_reserved_internal_account",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreicgesnfd6zsln5fdnned4hurdy7xjuswdn5vxuttmmyfu3k3eo33i",
+            "counterexample": {
+              "account_ids": [
+                "xaman-testnet-fresh-account"
+              ],
+              "asset_ids": [],
+              "capability_ids": [
+                "{'account_id': '<policy>', 'reason': 'atomic reservation policy disabled'}"
+              ],
+              "claim_id": "no_over_reserved_internal_account",
+              "compiler_artifact": {
+                "account_ids": [
+                  "xaman-testnet-fresh-account"
+                ],
+                "kind": "internal_account_reservations",
+                "overdrawn_accounts": [
+                  "<policy>"
+                ],
+                "violations": [
+                  {
+                    "account_id": "<policy>",
+                    "reason": "atomic reservation policy disabled"
+                  }
+                ]
+              },
+              "deposit_ids": [],
+              "evidence_refs": [],
+              "message": "Z3 found a satisfying violation trace.",
+              "soundness_notes": [
+                "No explicit evidence references were attached to the modeled facts."
+              ],
+              "source_facts": [
+                {
+                  "account_material_recorded": false,
+                  "asset_id": "xrp-testnet",
+                  "balance": 0,
+                  "fresh_account_created": true,
+                  "id": "xaman-testnet-fresh-account",
+                  "owner": "xaman-testnet-operator",
+                  "production_account": false,
+                  "wallet_id": "xaman-testnet-fresh-wallet"
+                },
+                {
+                  "account_id": "<policy>",
+                  "reason": "atomic reservation policy disabled"
+                }
+              ],
+              "trace": [],
+              "txids": [],
+              "violating_event_ids": [],
+              "wallet_ids": [],
+              "withdrawal_ids": [],
+              "witness": {
+                "account_balance_0": "0"
+              }
+            },
+            "created_at": "2026-07-19T05:55:18+00:00",
+            "deterministic_payload_cid": "bafkreiamo2aayr3yfhvnx6dplw7b62i65qianjvp6vog3ehuaav364p4bu",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:18+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreiahk46kvokdy3ugurdr2rrwk3l5fjnuq3robgyprqkyxwnfnxnp6q",
+            "proof_or_trace_cid": "bafkreieevgvghsqokkaseylu7d2ohdczeoerjck74wmknqiyqttbcuuk7q",
+            "prover": "z3",
+            "reason_unknown": null,
+            "risk": "blocking",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "z3",
+            "solver_result": "sat",
+            "solver_version": "4.16.0.0",
+            "soundness_notes": [
+              "No explicit evidence references were attached to the modeled facts."
+            ],
+            "status": "DISPROVED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          },
+          {
+            "assertion_count": 1,
+            "assumptions": [
+              "A4",
+              "A5"
+            ],
+            "claim_id": "no_over_reserved_internal_account",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreif6pz2onwdxvpoyemsilmb74pbntceccufzr7eluvbwuxwxohoc54",
+            "counterexample": {
+              "compiler_artifact": {
+                "account_ids": [
+                  "xaman-testnet-fresh-account"
+                ],
+                "kind": "internal_account_reservations",
+                "overdrawn_accounts": [
+                  "<policy>"
+                ],
+                "violations": [
+                  {
+                    "account_id": "<policy>",
+                    "reason": "atomic reservation policy disabled"
+                  }
+                ]
+              },
+              "compiler_artifact_cid": "bafkreicgesnfd6zsln5fdnned4hurdy7xjuswdn5vxuttmmyfu3k3eo33i",
+              "cvc5_returncode": 0,
+              "cvc5_stderr": "",
+              "cvc5_stdout": "sat\n",
+              "evidence_refs": [],
+              "reason": "CVC5 found a satisfying violation trace.",
+              "smtlib_artifact_cid": "bafkreif6pz2onwdxvpoyemsilmb74pbntceccufzr7eluvbwuxwxohoc54",
+              "soundness_notes": [
+                "No explicit evidence references were attached to the modeled facts."
+              ]
+            },
+            "created_at": "2026-07-19T05:55:18+00:00",
+            "deterministic_payload_cid": "bafkreiax6wwj6xkaugtv3mijq64lbcjhhhb47z4i4ta5ije5rgsfjs7mue",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:18+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreifytkba6ppbsftntafei3rj42ks6fnunwca3wy26opgotqaqiyjny",
+            "proof_or_trace_cid": "bafkreibglgihzf6l2p6nlsdy4ajdzfk2kqxqffafm4dpg25xwl74tpqevq",
+            "prover": "cvc5",
+            "reason_unknown": null,
+            "risk": "blocking",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "cvc5",
+            "solver_result": "sat",
+            "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+            "soundness_notes": [
+              "No explicit evidence references were attached to the modeled facts."
+            ],
+            "status": "DISPROVED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          }
+        ],
+        "risk": "blocking",
+        "statuses": {
+          "cvc5": "DISPROVED",
+          "z3": "DISPROVED"
+        }
+      },
+      {
+        "claim_id": "global_asset_conservation",
+        "critical": true,
+        "critical_failure": true,
+        "disagreement": false,
+        "fail_closed": true,
+        "reasons": [
+          "z3:NOT_MODELED:not-modeled",
+          "cvc5:NOT_MODELED:metadata.ledger_totals is not modeled"
+        ],
+        "reports": [
+          {
+            "assertion_count": null,
+            "assumptions": [
+              "A4",
+              "A10"
+            ],
+            "claim_id": "global_asset_conservation",
+            "claim_version": "1.0",
+            "compiler_cid": "",
+            "counterexample": {
+              "reason": "metadata.ledger_totals is not modeled"
+            },
+            "created_at": "2026-07-19T05:55:18+00:00",
+            "deterministic_payload_cid": "bafkreihlrzegimckswffl2ftkywkls4hvgzuahonjid34hc7os2bnm52le",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:18+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreidmpdzce5dxloqi663lpv3qrp3t3nnrwhyk2lhnit2oh6zt4ycq4y",
+            "proof_or_trace_cid": "",
+            "prover": "z3",
+            "reason_unknown": null,
+            "risk": "blocking",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "z3",
+            "solver_result": "not-modeled",
+            "solver_version": "",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": null,
+            "unsat_core": null
+          },
+          {
+            "assertion_count": 0,
+            "assumptions": [
+              "A4",
+              "A10"
+            ],
+            "claim_id": "global_asset_conservation",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreieq4c35br2wyukaby7wkhm7obapx75ajruzmxdlvp2avcszcvl62m",
+            "counterexample": {
+              "compiler_artifact_cid": "bafkreicecnx2gvntm6fbcrvnc336qze6st5u7qq7457igegamd3bzkx7ri",
+              "cvc5_returncode": null,
+              "cvc5_stderr": "",
+              "cvc5_stdout": "",
+              "reason": "metadata.ledger_totals is not modeled",
+              "smtlib_artifact_cid": "bafkreieq4c35br2wyukaby7wkhm7obapx75ajruzmxdlvp2avcszcvl62m"
+            },
+            "created_at": "2026-07-19T05:55:18+00:00",
+            "deterministic_payload_cid": "bafkreigdvu323easzpzlxu5hzwit2a6robwqezb2i6sl7gv55x3klamama",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:18+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreigqhd5jhdo2kfrbunrmv4em2dnzoex4l2gffvf35lu77heilw3leq",
+            "proof_or_trace_cid": "",
+            "prover": "cvc5",
+            "reason_unknown": "metadata.ledger_totals is not modeled",
+            "risk": "blocking",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "cvc5",
+            "solver_result": "not-modeled",
+            "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          }
+        ],
+        "risk": "blocking",
+        "statuses": {
+          "cvc5": "NOT_MODELED",
+          "z3": "NOT_MODELED"
+        }
+      },
+      {
+        "claim_id": "no_deposit_before_finality",
+        "critical": true,
+        "critical_failure": true,
+        "disagreement": false,
+        "fail_closed": true,
+        "reasons": [
+          "z3:NOT_MODELED:not-modeled",
+          "cvc5:NOT_MODELED:credited deposit events are not modeled"
+        ],
+        "reports": [
+          {
+            "assertion_count": null,
+            "assumptions": [
+              "A6",
+              "A9"
+            ],
+            "claim_id": "no_deposit_before_finality",
+            "claim_version": "1.0",
+            "compiler_cid": "",
+            "counterexample": {
+              "reason": "credited deposit events are not modeled"
+            },
+            "created_at": "2026-07-19T05:55:18+00:00",
+            "deterministic_payload_cid": "bafkreiha6lw73jt7fjbps7tbfm7v4fxslvkhkmwh3be6cikcmpkujqfda4",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:18+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreiebsvbj35skhh4wx4k7jbzzfojrg4tjdqarn4xnscedhf5pipdw5m",
+            "proof_or_trace_cid": "",
+            "prover": "z3",
+            "reason_unknown": null,
+            "risk": "high",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "z3",
+            "solver_result": "not-modeled",
+            "solver_version": "",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": null,
+            "unsat_core": null
+          },
+          {
+            "assertion_count": 0,
+            "assumptions": [
+              "A6",
+              "A9"
+            ],
+            "claim_id": "no_deposit_before_finality",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreid6vm5jrwcy4uxipeitnagkpuw5kg2jgjy34ja2uzz4x4gjn23qbq",
+            "counterexample": {
+              "compiler_artifact_cid": "bafkreicecnx2gvntm6fbcrvnc336qze6st5u7qq7457igegamd3bzkx7ri",
+              "cvc5_returncode": null,
+              "cvc5_stderr": "",
+              "cvc5_stdout": "",
+              "reason": "credited deposit events are not modeled",
+              "smtlib_artifact_cid": "bafkreid6vm5jrwcy4uxipeitnagkpuw5kg2jgjy34ja2uzz4x4gjn23qbq"
+            },
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreibjmkvwbhlpjkfidfqqxmdzk6rkppcakx7wvg3o3ckkmhndcxljua",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreifdec3fgo7tlex57sxhimp43omictu6i7e6r5kuri4nuzsjbgmi5m",
+            "proof_or_trace_cid": "",
+            "prover": "cvc5",
+            "reason_unknown": "credited deposit events are not modeled",
+            "risk": "high",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "cvc5",
+            "solver_result": "not-modeled",
+            "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          }
+        ],
+        "risk": "high",
+        "statuses": {
+          "cvc5": "NOT_MODELED",
+          "z3": "NOT_MODELED"
+        }
+      },
+      {
+        "claim_id": "no_signing_request_after_wallet_freeze",
+        "critical": true,
+        "critical_failure": true,
+        "disagreement": false,
+        "fail_closed": true,
+        "reasons": [
+          "z3:NOT_MODELED:not-modeled",
+          "cvc5:NOT_MODELED:wallet freeze/signing events are not modeled"
+        ],
+        "reports": [
+          {
+            "assertion_count": null,
+            "assumptions": [
+              "A3",
+              "A8"
+            ],
+            "claim_id": "no_signing_request_after_wallet_freeze",
+            "claim_version": "1.0",
+            "compiler_cid": "",
+            "counterexample": {
+              "reason": "wallet freeze/signing events are not modeled"
+            },
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreiffiycgz2saeeaidu53qswzvhlygrh54pcs64m7h3qw7yniteb5ta",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreifdveeferaqk7lz6sre3mgkt5ojfzo3itxvy2liqc6rvdeowfpere",
+            "proof_or_trace_cid": "",
+            "prover": "z3",
+            "reason_unknown": null,
+            "risk": "high",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "z3",
+            "solver_result": "not-modeled",
+            "solver_version": "",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": null,
+            "unsat_core": null
+          },
+          {
+            "assertion_count": 0,
+            "assumptions": [
+              "A3",
+              "A8"
+            ],
+            "claim_id": "no_signing_request_after_wallet_freeze",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreidern4rdbldfnnrnxxq2ry5qa2bejp5ya33yblshnrytbk73ofbrq",
+            "counterexample": {
+              "compiler_artifact_cid": "bafkreicecnx2gvntm6fbcrvnc336qze6st5u7qq7457igegamd3bzkx7ri",
+              "cvc5_returncode": null,
+              "cvc5_stderr": "",
+              "cvc5_stdout": "",
+              "reason": "wallet freeze/signing events are not modeled",
+              "smtlib_artifact_cid": "bafkreidern4rdbldfnnrnxxq2ry5qa2bejp5ya33yblshnrytbk73ofbrq"
+            },
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreic6j4iou4tmxzkmvp4tdutm2zdyjhjclze346g36u2o4ya3xj2tpm",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreidinf554zwe4kcftajfrs2h7s22ycbyku6r3midpps7v5ly2zaai4",
+            "proof_or_trace_cid": "",
+            "prover": "cvc5",
+            "reason_unknown": "wallet freeze/signing events are not modeled",
+            "risk": "high",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "cvc5",
+            "solver_result": "not-modeled",
+            "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          }
+        ],
+        "risk": "high",
+        "statuses": {
+          "cvc5": "NOT_MODELED",
+          "z3": "NOT_MODELED"
+        }
+      },
+      {
+        "claim_id": "capability_delegation_no_authority_increase",
+        "critical": true,
+        "critical_failure": false,
+        "disagreement": false,
+        "fail_closed": false,
+        "reasons": [],
+        "reports": [
+          {
+            "assertion_count": 14,
+            "assumptions": [
+              "A1",
+              "A7"
+            ],
+            "claim_id": "capability_delegation_no_authority_increase",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreiazyraphzvs76kvto7tmli22yxorz2fo7lgghkxtptu4n3bb57bsi",
+            "counterexample": null,
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreih5edvazhniut6a5oglyxmoj4yjujur3cixbbvsn2ggd77dzy4u4u",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreictjubjeivomhbsrx6hjv3rh5eyyemjl5qu5ieor4w3476wdtjzga",
+            "proof_or_trace_cid": "bafkreie2giccgvhpr62hssgqcwacn6m7xshbpe3f7ji7jglbtu4cltfyo4",
+            "prover": "z3",
+            "reason_unknown": null,
+            "risk": "high",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "z3",
+            "solver_result": "unsat",
+            "solver_version": "4.16.0.0",
+            "soundness_notes": [
+              "No explicit evidence references were attached to the modeled facts."
+            ],
+            "status": "PROVED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          },
+          {
+            "assertion_count": 14,
+            "assumptions": [
+              "A1",
+              "A7"
+            ],
+            "claim_id": "capability_delegation_no_authority_increase",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreigci2tirnqtxuaxmlyy4nhvfagbmxfyql7nxmm7d6p64mqaapwgla",
+            "counterexample": null,
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreiawea2326a7764vwu3jtcdbii2oylzjhuhujbtidmwqi65xvctmam",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreignpkmpvi4vj7icurfqojzh7n4lvmu7bxk6ditim5yscyb4jetfqi",
+            "proof_or_trace_cid": "bafkreigfoiyphds5g55vi6u7bsv4anygoz2hrcwbknv6lkgbxf4a3djs6q",
+            "prover": "cvc5",
+            "reason_unknown": null,
+            "risk": "high",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "cvc5",
+            "solver_result": "unsat",
+            "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+            "soundness_notes": [
+              "No explicit evidence references were attached to the modeled facts."
+            ],
+            "status": "PROVED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          }
+        ],
+        "risk": "high",
+        "statuses": {
+          "cvc5": "PROVED",
+          "z3": "PROVED"
+        }
+      },
+      {
+        "claim_id": "revoked_capability_no_future_authorization",
+        "critical": true,
+        "critical_failure": false,
+        "disagreement": false,
+        "fail_closed": false,
+        "reasons": [],
+        "reports": [
+          {
+            "assertion_count": 0,
+            "assumptions": [
+              "A10"
+            ],
+            "claim_id": "revoked_capability_no_future_authorization",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreidizrpgs3typ6dfcd32j6qsepa3jrgnthnqerfb3hex5mbqiqkqfm",
+            "counterexample": {
+              "account_ids": [],
+              "asset_ids": [],
+              "capability_ids": [
+                "<policy>"
+              ],
+              "claim_id": "revoked_capability_no_future_authorization",
+              "compiler_artifact": {
+                "capability_ids": [
+                  "<policy>"
+                ],
+                "kind": "capability_revocation",
+                "violating_event_ids": [
+                  "policy:revocation_enforced"
+                ],
+                "violations": [
+                  {
+                    "capability_id": "<policy>",
+                    "event_id": "policy:revocation_enforced"
+                  }
+                ]
+              },
+              "deposit_ids": [],
+              "evidence_refs": [],
+              "message": "Z3 found a satisfying violation trace.",
+              "soundness_notes": [
+                "No explicit evidence references were attached to the modeled facts."
+              ],
+              "source_facts": [
+                {
+                  "capability_id": "<policy>",
+                  "event_id": "policy:revocation_enforced"
+                }
+              ],
+              "trace": [],
+              "txids": [],
+              "violating_event_ids": [
+                "policy:revocation_enforced"
+              ],
+              "wallet_ids": [],
+              "withdrawal_ids": [],
+              "witness": {}
+            },
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreih7eib6recnm2fvba4rwze4s5yy6yo3vclob2l4kiox42stbklrh4",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreifstdyjm7256jbi7hvtxqe56tmknhvi7xw6uxrxchuqcnmp667iia",
+            "proof_or_trace_cid": "bafkreifzrrnitjvcvqhssj67szpykupt2jxw5ygb5z6eymtpwuge7fwp7m",
+            "prover": "z3",
+            "reason_unknown": null,
+            "risk": "high",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "z3",
+            "solver_result": "sat",
+            "solver_version": "4.16.0.0",
+            "soundness_notes": [
+              "No explicit evidence references were attached to the modeled facts."
+            ],
+            "status": "DISPROVED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          },
+          {
+            "assertion_count": 0,
+            "assumptions": [
+              "A10"
+            ],
+            "claim_id": "revoked_capability_no_future_authorization",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreifjmad4lqevzdzdb4r7qom4dvxs4drrgipvbgbxbbwufid3nzlk4m",
+            "counterexample": {
+              "compiler_artifact": {
+                "capability_ids": [
+                  "<policy>"
+                ],
+                "kind": "capability_revocation",
+                "violating_event_ids": [
+                  "policy:revocation_enforced"
+                ],
+                "violations": [
+                  {
+                    "capability_id": "<policy>",
+                    "event_id": "policy:revocation_enforced"
+                  }
+                ]
+              },
+              "compiler_artifact_cid": "bafkreidizrpgs3typ6dfcd32j6qsepa3jrgnthnqerfb3hex5mbqiqkqfm",
+              "cvc5_returncode": 0,
+              "cvc5_stderr": "",
+              "cvc5_stdout": "sat\n",
+              "evidence_refs": [],
+              "reason": "CVC5 found a satisfying violation trace.",
+              "smtlib_artifact_cid": "bafkreifjmad4lqevzdzdb4r7qom4dvxs4drrgipvbgbxbbwufid3nzlk4m",
+              "soundness_notes": [
+                "No explicit evidence references were attached to the modeled facts."
+              ]
+            },
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreiexdzgglfvr2wau5z7gcqwxpy5srmf44ks4dul36g3rseuqyw5ivm",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreifwk2hvlbibfca7aqpldibacrvwngqmfv65kwhv2uqcvo2u6zppou",
+            "proof_or_trace_cid": "bafkreiedmiwn5p3buv5xugzrh3vg26pylfhvg3vxaws5mqi7cehpnkhwuu",
+            "prover": "cvc5",
+            "reason_unknown": null,
+            "risk": "high",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "cvc5",
+            "solver_result": "sat",
+            "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+            "soundness_notes": [
+              "No explicit evidence references were attached to the modeled facts."
+            ],
+            "status": "DISPROVED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          }
+        ],
+        "risk": "high",
+        "statuses": {
+          "cvc5": "DISPROVED",
+          "z3": "DISPROVED"
+        }
+      },
+      {
+        "claim_id": "audit_event_exists_for_critical_transition",
+        "critical": false,
+        "critical_failure": false,
+        "disagreement": false,
+        "fail_closed": true,
+        "reasons": [
+          "z3:NOT_MODELED:not-modeled",
+          "cvc5:NOT_MODELED:critical transitions are not modeled"
+        ],
+        "reports": [
+          {
+            "assertion_count": null,
+            "assumptions": [
+              "A10"
+            ],
+            "claim_id": "audit_event_exists_for_critical_transition",
+            "claim_version": "1.0",
+            "compiler_cid": "",
+            "counterexample": {
+              "reason": "critical transitions are not modeled"
+            },
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreicuzsq5say6pzt4u2wy2a7fxo652luig3knoyp2n76eghvi3pbdla",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreif3d4jdveqoc62n4twdpqkf5pipwj7fo7jtgpmdk6sxvbwrydmqha",
+            "proof_or_trace_cid": "",
+            "prover": "z3",
+            "reason_unknown": null,
+            "risk": "medium",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "z3",
+            "solver_result": "not-modeled",
+            "solver_version": "",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": null,
+            "unsat_core": null
+          },
+          {
+            "assertion_count": 0,
+            "assumptions": [
+              "A10"
+            ],
+            "claim_id": "audit_event_exists_for_critical_transition",
+            "claim_version": "1.0",
+            "compiler_cid": "bafkreiga2n3mznedkyzjl4yi6th4woaxojpvvz4q3i26tbooi3yuqynuf4",
+            "counterexample": {
+              "compiler_artifact_cid": "bafkreicecnx2gvntm6fbcrvnc336qze6st5u7qq7457igegamd3bzkx7ri",
+              "cvc5_returncode": null,
+              "cvc5_stderr": "",
+              "cvc5_stdout": "",
+              "reason": "critical transitions are not modeled",
+              "smtlib_artifact_cid": "bafkreiga2n3mznedkyzjl4yi6th4woaxojpvvz4q3i26tbooi3yuqynuf4"
+            },
+            "created_at": "2026-07-19T05:55:19+00:00",
+            "deterministic_payload_cid": "bafkreidselpqau7sj7drwegqfk3cpsawflwitflfmniv2jxqbeqg3hp64y",
+            "evidence_refs": [],
+            "generated_at": "2026-07-19T05:55:19+00:00",
+            "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+            "model_schema_version": "security-model-ir/xaman/v1",
+            "nondeterministic_report_cid": "bafkreiavdkfvraxayiqzkjjakhv3kp6yaes4kfu2sljlowgjyajv42kele",
+            "proof_or_trace_cid": "",
+            "prover": "cvc5",
+            "reason_unknown": "critical transitions are not modeled",
+            "risk": "medium",
+            "schema_version": "proof-report/v1",
+            "signatures": [],
+            "solver_name": "cvc5",
+            "solver_result": "not-modeled",
+            "solver_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+            "soundness_notes": [],
+            "status": "NOT_MODELED",
+            "timeout_ms": 5000,
+            "unsat_core": null
+          }
+        ],
+        "risk": "medium",
+        "statuses": {
+          "cvc5": "NOT_MODELED",
+          "z3": "NOT_MODELED"
+        }
+      }
+    ],
+    "critical_failures": 4,
+    "release_ready": false,
+    "selected_provers": [
+      "z3",
+      "cvc5"
+    ]
+  },
+  "release_gate": {
+    "attention": [
+      {
+        "claim_id": "audit_event_exists_for_critical_transition",
+        "domain": "audit",
+        "reasons": [
+          "status NOT_MODELED requires manual release triage"
+        ],
+        "release_gate": "medium",
+        "status": "NOT_MODELED"
+      }
+    ],
+    "failures": [
+      {
+        "claim_id": "no_unauthorized_withdrawal",
+        "domain": "withdrawals",
+        "reasons": [
+          "status NOT_MODELED is fail-closed for blocking release gate"
+        ],
+        "release_gate": "blocking",
+        "status": "NOT_MODELED"
+      },
+      {
+        "claim_id": "no_over_reserved_internal_account",
+        "domain": "ledger",
+        "reasons": [
+          "status DISPROVED is fail-closed for blocking release gate"
+        ],
+        "release_gate": "blocking",
+        "status": "DISPROVED"
+      },
+      {
+        "claim_id": "global_asset_conservation",
+        "domain": "ledger",
+        "reasons": [
+          "status NOT_MODELED is fail-closed for blocking release gate"
+        ],
+        "release_gate": "blocking",
+        "status": "NOT_MODELED"
+      },
+      {
+        "claim_id": "no_deposit_before_finality",
+        "domain": "deposits",
+        "reasons": [
+          "status NOT_MODELED is fail-closed for high release gate"
+        ],
+        "release_gate": "high",
+        "status": "NOT_MODELED"
+      },
+      {
+        "claim_id": "no_signing_request_after_wallet_freeze",
+        "domain": "hsm",
+        "reasons": [
+          "status NOT_MODELED is fail-closed for high release gate"
+        ],
+        "release_gate": "high",
+        "status": "NOT_MODELED"
+      },
+      {
+        "claim_id": "capability_delegation_no_authority_increase",
+        "domain": "capabilities",
+        "reasons": [
+          "proved claim lacks human_reviewed or trusted_fixture evidence"
+        ],
+        "release_gate": "high",
+        "status": "PROVED"
+      },
+      {
+        "claim_id": "revoked_capability_no_future_authorization",
+        "domain": "capabilities",
+        "reasons": [
+          "status DISPROVED is fail-closed for high release gate"
+        ],
+        "release_gate": "high",
+        "status": "DISPROVED"
+      }
+    ],
+    "gates": {
+      "blocking": {
+        "accepted": 0,
+        "attention": 0,
+        "failed": 3,
+        "total": 3
+      },
+      "high": {
+        "accepted": 0,
+        "attention": 0,
+        "failed": 4,
+        "total": 4
+      },
+      "informational": {
+        "accepted": 0,
+        "attention": 0,
+        "failed": 0,
+        "total": 0
+      },
+      "medium": {
+        "accepted": 0,
+        "attention": 1,
+        "failed": 0,
+        "total": 1
+      }
+    },
+    "policy": [
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_unauthorized_withdrawal",
+        "domain": "withdrawals",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "A broadcast withdrawal without request, approval, nonce, reservation, and live wallet checks is a direct funds-loss condition.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A3",
+          "A4",
+          "A5",
+          "A8"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_over_reserved_internal_account",
+        "domain": "ledger",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Over-reservation means internal available balance can be spent more than once.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A4",
+          "A5"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "global_asset_conservation",
+        "domain": "ledger",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Customer liabilities exceeding custody plus pending settlement is a solvency failure.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A4",
+          "A10"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_deposit_before_finality",
+        "domain": "deposits",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Crediting deposits before finality exposes the exchange to reorg and false-credit losses.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A6",
+          "A9"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_signing_request_after_wallet_freeze",
+        "domain": "hsm",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "A frozen wallet that can still request signatures defeats incident response controls.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A3",
+          "A8"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "capability_delegation_no_authority_increase",
+        "domain": "capabilities",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Delegation that amplifies authority can bypass administrative and custody controls.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A1",
+          "A7"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "revoked_capability_no_future_authorization",
+        "domain": "capabilities",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Revoked capabilities authorizing later privileged actions breaks emergency revocation.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A10"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "audit_event_exists_for_critical_transition",
+        "domain": "audit",
+        "fail_closed_statuses": [
+          "DISPROVED"
+        ],
+        "rationale": "Missing audit linkage is a release risk; a concrete disproof blocks release, while UNKNOWN or NOT_MODELED requires manual triage.",
+        "release_gate": "medium",
+        "required_assumptions": [
+          "A10"
+        ],
+        "requires_reviewed_evidence": false
+      }
+    ],
+    "release_ready": false,
+    "require_reviewed_evidence": true,
+    "reviewed_evidence_statuses": [
+      "human_reviewed",
+      "trusted_fixture"
+    ],
+    "unknown_policy_reports": []
+  },
+  "reports": [
+    {
+      "assertion_count": null,
+      "assumptions": [
+        "A3",
+        "A4",
+        "A5",
+        "A8"
+      ],
+      "claim_id": "no_unauthorized_withdrawal",
+      "claim_version": "1.0",
+      "compiler_cid": "",
+      "counterexample": {
+        "reason": "withdrawal broadcast events are not modeled"
+      },
+      "created_at": "2026-07-19T05:55:18+00:00",
+      "deterministic_payload_cid": "bafkreihwnr4e737hhpygd7ycwkyp3gwk2mvhmg2mqkn5wtzdpeuz6mty5a",
+      "evidence_refs": [],
+      "generated_at": "2026-07-19T05:55:18+00:00",
+      "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "model_schema_version": "security-model-ir/xaman/v1",
+      "nondeterministic_report_cid": "bafkreiftts2aip6sxogj5yimpqyc2wdifoxcjgjb25xtjujpq5u6ydx3yi",
+      "proof_or_trace_cid": "",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "not-modeled",
+      "solver_version": "",
+      "soundness_notes": [],
+      "status": "NOT_MODELED",
+      "timeout_ms": null,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 1,
+      "assumptions": [
+        "A4",
+        "A5"
+      ],
+      "claim_id": "no_over_reserved_internal_account",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreicgesnfd6zsln5fdnned4hurdy7xjuswdn5vxuttmmyfu3k3eo33i",
+      "counterexample": {
+        "account_ids": [
+          "xaman-testnet-fresh-account"
+        ],
+        "asset_ids": [],
+        "capability_ids": [
+          "{'account_id': '<policy>', 'reason': 'atomic reservation policy disabled'}"
+        ],
+        "claim_id": "no_over_reserved_internal_account",
+        "compiler_artifact": {
+          "account_ids": [
+            "xaman-testnet-fresh-account"
+          ],
+          "kind": "internal_account_reservations",
+          "overdrawn_accounts": [
+            "<policy>"
+          ],
+          "violations": [
+            {
+              "account_id": "<policy>",
+              "reason": "atomic reservation policy disabled"
+            }
+          ]
+        },
+        "deposit_ids": [],
+        "evidence_refs": [],
+        "message": "Z3 found a satisfying violation trace.",
+        "soundness_notes": [
+          "No explicit evidence references were attached to the modeled facts."
+        ],
+        "source_facts": [
+          {
+            "account_material_recorded": false,
+            "asset_id": "xrp-testnet",
+            "balance": 0,
+            "fresh_account_created": true,
+            "id": "xaman-testnet-fresh-account",
+            "owner": "xaman-testnet-operator",
+            "production_account": false,
+            "wallet_id": "xaman-testnet-fresh-wallet"
+          },
+          {
+            "account_id": "<policy>",
+            "reason": "atomic reservation policy disabled"
+          }
+        ],
+        "trace": [],
+        "txids": [],
+        "violating_event_ids": [],
+        "wallet_ids": [],
+        "withdrawal_ids": [],
+        "witness": {
+          "account_balance_0": "0"
+        }
+      },
+      "created_at": "2026-07-19T05:55:18+00:00",
+      "deterministic_payload_cid": "bafkreiamo2aayr3yfhvnx6dplw7b62i65qianjvp6vog3ehuaav364p4bu",
+      "evidence_refs": [],
+      "generated_at": "2026-07-19T05:55:18+00:00",
+      "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "model_schema_version": "security-model-ir/xaman/v1",
+      "nondeterministic_report_cid": "bafkreiahk46kvokdy3ugurdr2rrwk3l5fjnuq3robgyprqkyxwnfnxnp6q",
+      "proof_or_trace_cid": "bafkreieevgvghsqokkaseylu7d2ohdczeoerjck74wmknqiyqttbcuuk7q",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "sat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [
+        "No explicit evidence references were attached to the modeled facts."
+      ],
+      "status": "DISPROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": null,
+      "assumptions": [
+        "A4",
+        "A10"
+      ],
+      "claim_id": "global_asset_conservation",
+      "claim_version": "1.0",
+      "compiler_cid": "",
+      "counterexample": {
+        "reason": "metadata.ledger_totals is not modeled"
+      },
+      "created_at": "2026-07-19T05:55:18+00:00",
+      "deterministic_payload_cid": "bafkreihlrzegimckswffl2ftkywkls4hvgzuahonjid34hc7os2bnm52le",
+      "evidence_refs": [],
+      "generated_at": "2026-07-19T05:55:18+00:00",
+      "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "model_schema_version": "security-model-ir/xaman/v1",
+      "nondeterministic_report_cid": "bafkreidmpdzce5dxloqi663lpv3qrp3t3nnrwhyk2lhnit2oh6zt4ycq4y",
+      "proof_or_trace_cid": "",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "not-modeled",
+      "solver_version": "",
+      "soundness_notes": [],
+      "status": "NOT_MODELED",
+      "timeout_ms": null,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": null,
+      "assumptions": [
+        "A6",
+        "A9"
+      ],
+      "claim_id": "no_deposit_before_finality",
+      "claim_version": "1.0",
+      "compiler_cid": "",
+      "counterexample": {
+        "reason": "credited deposit events are not modeled"
+      },
+      "created_at": "2026-07-19T05:55:18+00:00",
+      "deterministic_payload_cid": "bafkreiha6lw73jt7fjbps7tbfm7v4fxslvkhkmwh3be6cikcmpkujqfda4",
+      "evidence_refs": [],
+      "generated_at": "2026-07-19T05:55:18+00:00",
+      "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "model_schema_version": "security-model-ir/xaman/v1",
+      "nondeterministic_report_cid": "bafkreiebsvbj35skhh4wx4k7jbzzfojrg4tjdqarn4xnscedhf5pipdw5m",
+      "proof_or_trace_cid": "",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "not-modeled",
+      "solver_version": "",
+      "soundness_notes": [],
+      "status": "NOT_MODELED",
+      "timeout_ms": null,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": null,
+      "assumptions": [
+        "A3",
+        "A8"
+      ],
+      "claim_id": "no_signing_request_after_wallet_freeze",
+      "claim_version": "1.0",
+      "compiler_cid": "",
+      "counterexample": {
+        "reason": "wallet freeze/signing events are not modeled"
+      },
+      "created_at": "2026-07-19T05:55:18+00:00",
+      "deterministic_payload_cid": "bafkreiffiycgz2saeeaidu53qswzvhlygrh54pcs64m7h3qw7yniteb5ta",
+      "evidence_refs": [],
+      "generated_at": "2026-07-19T05:55:18+00:00",
+      "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "model_schema_version": "security-model-ir/xaman/v1",
+      "nondeterministic_report_cid": "bafkreicl2yfplp2g4wtknwk2lgxq4gbqslxjtsfvbnhq4uxnpawj4romnm",
+      "proof_or_trace_cid": "",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "not-modeled",
+      "solver_version": "",
+      "soundness_notes": [],
+      "status": "NOT_MODELED",
+      "timeout_ms": null,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 14,
+      "assumptions": [
+        "A1",
+        "A7"
+      ],
+      "claim_id": "capability_delegation_no_authority_increase",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiazyraphzvs76kvto7tmli22yxorz2fo7lgghkxtptu4n3bb57bsi",
+      "counterexample": null,
+      "created_at": "2026-07-19T05:55:18+00:00",
+      "deterministic_payload_cid": "bafkreih5edvazhniut6a5oglyxmoj4yjujur3cixbbvsn2ggd77dzy4u4u",
+      "evidence_refs": [],
+      "generated_at": "2026-07-19T05:55:18+00:00",
+      "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "model_schema_version": "security-model-ir/xaman/v1",
+      "nondeterministic_report_cid": "bafkreibxzgq75vhfa3ctjvloovrixnesejipyjzhry4vim3v6zkt4hxafe",
+      "proof_or_trace_cid": "bafkreie2giccgvhpr62hssgqcwacn6m7xshbpe3f7ji7jglbtu4cltfyo4",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [
+        "No explicit evidence references were attached to the modeled facts."
+      ],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 0,
+      "assumptions": [
+        "A10"
+      ],
+      "claim_id": "revoked_capability_no_future_authorization",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreidizrpgs3typ6dfcd32j6qsepa3jrgnthnqerfb3hex5mbqiqkqfm",
+      "counterexample": {
+        "account_ids": [],
+        "asset_ids": [],
+        "capability_ids": [
+          "<policy>"
+        ],
+        "claim_id": "revoked_capability_no_future_authorization",
+        "compiler_artifact": {
+          "capability_ids": [
+            "<policy>"
+          ],
+          "kind": "capability_revocation",
+          "violating_event_ids": [
+            "policy:revocation_enforced"
+          ],
+          "violations": [
+            {
+              "capability_id": "<policy>",
+              "event_id": "policy:revocation_enforced"
+            }
+          ]
+        },
+        "deposit_ids": [],
+        "evidence_refs": [],
+        "message": "Z3 found a satisfying violation trace.",
+        "soundness_notes": [
+          "No explicit evidence references were attached to the modeled facts."
+        ],
+        "source_facts": [
+          {
+            "capability_id": "<policy>",
+            "event_id": "policy:revocation_enforced"
+          }
+        ],
+        "trace": [],
+        "txids": [],
+        "violating_event_ids": [
+          "policy:revocation_enforced"
+        ],
+        "wallet_ids": [],
+        "withdrawal_ids": [],
+        "witness": {}
+      },
+      "created_at": "2026-07-19T05:55:18+00:00",
+      "deterministic_payload_cid": "bafkreih7eib6recnm2fvba4rwze4s5yy6yo3vclob2l4kiox42stbklrh4",
+      "evidence_refs": [],
+      "generated_at": "2026-07-19T05:55:18+00:00",
+      "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "model_schema_version": "security-model-ir/xaman/v1",
+      "nondeterministic_report_cid": "bafkreidpyv4efuvmbiiw6gy7gtwufzi3u377x3uaogndzzzoodn7frijli",
+      "proof_or_trace_cid": "bafkreifzrrnitjvcvqhssj67szpykupt2jxw5ygb5z6eymtpwuge7fwp7m",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "sat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [
+        "No explicit evidence references were attached to the modeled facts."
+      ],
+      "status": "DISPROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": null,
+      "assumptions": [
+        "A10"
+      ],
+      "claim_id": "audit_event_exists_for_critical_transition",
+      "claim_version": "1.0",
+      "compiler_cid": "",
+      "counterexample": {
+        "reason": "critical transitions are not modeled"
+      },
+      "created_at": "2026-07-19T05:55:18+00:00",
+      "deterministic_payload_cid": "bafkreicuzsq5say6pzt4u2wy2a7fxo652luig3knoyp2n76eghvi3pbdla",
+      "evidence_refs": [],
+      "generated_at": "2026-07-19T05:55:18+00:00",
+      "model_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "model_schema_version": "security-model-ir/xaman/v1",
+      "nondeterministic_report_cid": "bafkreifmeskgqdoest3acarvej6ndrx6psvypqcaxmhmhhs6qvhh3f2rjm",
+      "proof_or_trace_cid": "",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "medium",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "not-modeled",
+      "solver_version": "",
+      "soundness_notes": [],
+      "status": "NOT_MODELED",
+      "timeout_ms": null,
+      "unsat_core": null
+    }
+  ]
+}

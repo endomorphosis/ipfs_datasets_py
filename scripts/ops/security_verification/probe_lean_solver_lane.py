@@ -122,6 +122,7 @@ def build_lean_solver_lane_report(
     repo_root: Path | str | None = None,
     kernel_path: Path | str = DEFAULT_KERNEL,
     proof_consumer_report_path: Path | str = DEFAULT_PROOF_CONSUMER_REPORT,
+    install_if_missing: bool = False,
 ) -> dict[str, Any]:
     root = Path(repo_root) if repo_root is not None else _repo_root()
     kernel = Path(kernel_path)
@@ -132,7 +133,7 @@ def build_lean_solver_lane_report(
         proof_report = root / proof_report
 
     lean = shutil.which('lean')
-    if lean is None and kernel.is_file():
+    if lean is None and install_if_missing and kernel.is_file():
         from ipfs_datasets_py.logic.external_provers.lazy_installer import ensure_prover_executable
 
         lean = ensure_prover_executable(
@@ -236,11 +237,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument('--out', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--kernel', type=Path, default=DEFAULT_KERNEL)
     parser.add_argument('--proof-consumer-report', type=Path, default=DEFAULT_PROOF_CONSUMER_REPORT)
+    parser.add_argument(
+        '--install-if-missing',
+        action='store_true',
+        help='Invoke the Lean lazy installer when an execution probe needs the toolchain.',
+    )
     args = parser.parse_args(argv)
 
     report = build_lean_solver_lane_report(
         kernel_path=args.kernel,
         proof_consumer_report_path=args.proof_consumer_report,
+        install_if_missing=args.install_if_missing,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n', encoding='utf-8')

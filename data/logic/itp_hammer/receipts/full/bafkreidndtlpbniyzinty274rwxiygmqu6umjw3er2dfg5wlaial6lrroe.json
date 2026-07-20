@@ -1,0 +1,84 @@
+{
+  "created_at": "2026-07-19T14:51:32.708780+00:00",
+  "decomposition_plan": null,
+  "metadata": {},
+  "normalized_evidence": [],
+  "notes": [
+    "HAMMER-015 release-evidence golden case: unavailable_solver"
+  ],
+  "receipt_id": "bafkreidndtlpbniyzinty274rwxiygmqu6umjw3er2dfg5wlaial6lrroe",
+  "reconstruction_evidence": null,
+  "result": {
+    "completed_at": "2026-01-01T00:00:05+00:00",
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "environment_lock": null,
+    "errors": [
+      "no allowlisted executable found for solver 'vampire': none of ('vampire',) were found on PATH and no executable_overrides entry was configured"
+    ],
+    "notes": [
+      "required solver capability not present in this environment; nothing executed"
+    ],
+    "premises": [
+      {
+        "content_digest": "bafkreiex3n5ic2zx3tvo2qh6sdhr4krx7uuv44ak7cbslbxalgm3s7nia4",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_assoc",
+        "rank": 0,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)"
+      }
+    ],
+    "proof_candidate": null,
+    "reconstruction": null,
+    "request": {
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-01-01T00:00:00+00:00",
+      "goal_statement": "forall x, p(x) -> p(x)",
+      "itp": "lean",
+      "metadata": {},
+      "policy": {
+        "allow_learned_premise_selector": false,
+        "allow_llm_decomposition_hints": false,
+        "allow_llm_premise_ranking": false,
+        "allow_native_automation_fallback": false,
+        "allowed_solvers": [
+          "vampire"
+        ],
+        "cpu_seconds": null,
+        "max_decomposition_subgoals": 4,
+        "max_premises": 64,
+        "memory_mb": null,
+        "network_allowed": false,
+        "schema_version": "1.0.0",
+        "timeout_seconds": 20.0
+      },
+      "request_id": "golden-unavailable-1",
+      "schema_version": "1.0.0",
+      "theorem_id": "hammer_golden_unavailable"
+    },
+    "result_id": "golden-unavailable-1:result",
+    "schema_version": "1.0.0",
+    "solver_attempts": [],
+    "status": "unavailable",
+    "translations": [
+      {
+        "content_digest": "bafkreigvjflweenctgeleijmujsqhauf7i5ntprfnk4tn3ahsd4tci2jfu",
+        "obligations": [],
+        "request_id": "golden-unavailable-1",
+        "schema_version": "1.0.0",
+        "source_construct": "goal",
+        "status": "supported",
+        "target": "tptp",
+        "translated_text": "tff(sort_0, type, nat: $tType).\ntff(sym_0, type, p: nat > $o).\ntff(goal, conjecture, (! [X: nat] : (p(X) => p(X)))).",
+        "translation_id": "golden-unavailable-1:goal:tptp:0",
+        "unsupported_reason": null
+      }
+    ]
+  },
+  "schema_version": "1.0.0",
+  "solver_evidence": []
+}

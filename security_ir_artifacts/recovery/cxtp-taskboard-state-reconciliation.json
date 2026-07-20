@@ -1,13 +1,13 @@
 {
   "canonical_taskboard": {
     "first_task_id": "PORTAL-CXTP-056",
-    "last_task_id": "PORTAL-CXTP-155",
+    "last_task_id": "PORTAL-CXTP-175",
     "status_counts": {
       "blocked": 20,
-      "completed": 71,
+      "completed": 91,
       "waiting": 9
     },
-    "task_count": 100
+    "task_count": 120
   },
   "completed_evidence_preserved_task_ids": [
     "PORTAL-CXTP-119",
@@ -150,14 +150,14 @@
     },
     {
       "completion_evidence_retained": true,
-      "output_count": 4,
+      "output_count": 5,
       "supervisor_status": "completed",
       "task_id": "PORTAL-CXTP-135",
       "taskboard_status": "completed"
     },
     {
       "completion_evidence_retained": true,
-      "output_count": 4,
+      "output_count": 5,
       "supervisor_status": "completed",
       "task_id": "PORTAL-CXTP-136",
       "taskboard_status": "completed"
@@ -283,20 +283,160 @@
     },
     {
       "completion_evidence_retained": true,
-      "output_count": 3,
+      "output_count": 4,
       "supervisor_status": "completed",
       "task_id": "PORTAL-CXTP-154",
       "taskboard_status": "completed"
     },
     {
       "completion_evidence_retained": true,
-      "output_count": 3,
+      "output_count": 4,
       "supervisor_status": "completed",
       "task_id": "PORTAL-CXTP-155",
       "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 1,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-156",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 2,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-157",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 5,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-158",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 7,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-159",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 6,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-160",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 4,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-161",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 6,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-162",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 2,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-163",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 5,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-164",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 6,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-165",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 5,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-166",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 6,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-167",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 5,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-168",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 4,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-169",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 4,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-170",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 4,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-171",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 3,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-172",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 4,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-173",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": true,
+      "output_count": 4,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-174",
+      "taskboard_status": "completed"
+    },
+    {
+      "completion_evidence_retained": false,
+      "output_count": 3,
+      "supervisor_status": "completed",
+      "task_id": "PORTAL-CXTP-175",
+      "taskboard_status": "completed"
     }
   ],
-  "generated_at_utc": "2026-07-12T05:46:00Z",
+  "generated_at_utc": "2026-07-19T06:30:30Z",
   "id_reconciliation": {
     "supervisor_only_task_ids": [],
     "taskboard_only_task_ids": [],
@@ -369,7 +509,27 @@
     "PORTAL-CXTP-152",
     "PORTAL-CXTP-153",
     "PORTAL-CXTP-154",
-    "PORTAL-CXTP-155"
+    "PORTAL-CXTP-155",
+    "PORTAL-CXTP-156",
+    "PORTAL-CXTP-157",
+    "PORTAL-CXTP-158",
+    "PORTAL-CXTP-159",
+    "PORTAL-CXTP-160",
+    "PORTAL-CXTP-161",
+    "PORTAL-CXTP-162",
+    "PORTAL-CXTP-163",
+    "PORTAL-CXTP-164",
+    "PORTAL-CXTP-165",
+    "PORTAL-CXTP-166",
+    "PORTAL-CXTP-167",
+    "PORTAL-CXTP-168",
+    "PORTAL-CXTP-169",
+    "PORTAL-CXTP-170",
+    "PORTAL-CXTP-171",
+    "PORTAL-CXTP-172",
+    "PORTAL-CXTP-173",
+    "PORTAL-CXTP-174",
+    "PORTAL-CXTP-175"
   ],
   "schema_version": "cxtp-taskboard-state-reconciliation/v1",
   "security_decision": "TASKBOARD_STATE_RECONCILED",
@@ -379,11 +539,11 @@
     "selectable_ready_task_ids": [],
     "status_counts": {
       "blocked": 20,
-      "completed": 71,
+      "completed": 91,
       "ready": 0,
       "waiting": 9
     },
-    "task_count": 100
+    "task_count": 120
   },
   "task_id": "PORTAL-CXTP-143"
 }

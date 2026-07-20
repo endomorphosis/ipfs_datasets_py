@@ -17,6 +17,15 @@ pytest.importorskip('z3')
 ESCALATED_DELEGATED_AUTHORITY = 4
 
 
+def _drop_runtime_traces_with_missing_events(model) -> None:
+    event_ids = {event['id'] for event in model.events}
+    model.runtime_traces = [
+        trace
+        for trace in model.runtime_traces
+        if set(trace.get('events', [])) <= event_ids
+    ]
+
+
 
 def test_good_model_proves_remaining_claims() -> None:
     model = deepcopy(example_minimal_exchange_model())
@@ -39,6 +48,7 @@ def test_bad_model_finds_deposit_before_finality_counterexample() -> None:
         for event in model.events
         if not (event.get('event') == 'deposit_finalized' and event.get('txid') == 'tx:1')
     ]
+    _drop_runtime_traces_with_missing_events(model)
     report = Z3Runner().run_claim(NoDepositCreditedBeforeFinalityClaim(), model)
     assert report.status == 'DISPROVED'
 
@@ -72,6 +82,7 @@ def test_bad_model_finds_capability_authority_escalation() -> None:
 def test_bad_model_finds_missing_audit_for_critical_transition() -> None:
     model = deepcopy(example_minimal_exchange_model())
     model.events = [event for event in model.events if event.get('event') != 'audit_logged']
+    _drop_runtime_traces_with_missing_events(model)
     report = Z3Runner().run_claim(AuditEventExistsForCriticalTransitionClaim(), model)
     assert report.status == 'DISPROVED'
 
@@ -80,6 +91,7 @@ def test_bad_model_finds_missing_audit_for_critical_transition() -> None:
 def test_bad_withdrawal_counterexample_names_violating_withdrawal_id() -> None:
     model = deepcopy(example_minimal_exchange_model())
     model.events = [event for event in model.events if event.get('event') != 'withdrawal_approved']
+    _drop_runtime_traces_with_missing_events(model)
     report = Z3Runner().run_claim(NoUnauthorizedWithdrawalClaim(), model)
     assert report.status == 'DISPROVED'
     assert report.counterexample is not None
@@ -135,6 +147,7 @@ def test_prove_claims_preserves_unknown_when_z3_returns_unknown(monkeypatch: pyt
 def test_default_claims_return_not_modeled_when_required_domains_are_missing() -> None:
     model = deepcopy(example_minimal_exchange_model())
     model.events = []
+    model.runtime_traces = []
     model.capabilities = []
     model.accounts = []
     model.metadata.pop('ledger_totals', None)

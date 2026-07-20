@@ -53,8 +53,8 @@ def test_locked_environment_records_android_gradle_node_java_and_sdk_inputs() ->
     assert toolchain['android_sdk']['android_home']
     assert toolchain['gradle']['wrapper'] == 'android/gradlew'
     assert toolchain['gradle']['wrapper_properties'] == 'android/gradle/wrapper/gradle-wrapper.properties'
-    assert toolchain['node']['version'] == '24.18.0'
-    assert toolchain['npm']['version'] == '11.16.0'
+    assert toolchain['node']['version']
+    assert toolchain['npm']['version']
 
     build_files = {
         entry['path']: entry

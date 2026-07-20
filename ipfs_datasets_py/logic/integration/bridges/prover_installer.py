@@ -51,6 +51,7 @@ import json
 import logging
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -227,6 +228,10 @@ def _read_version(executable: str | None) -> str:
 
     if executable is None:
         return ""
+    version_pattern = re.compile(
+        r"(?:^|\b(?:version|proverif|tamarin-prover|lean|rocq|coq|maude|cvc5|apalache(?:-mc)?)\s*(?:is|,)?\s*)v?\d+\.\d+",
+        flags=re.IGNORECASE,
+    )
     for arguments in (["--version"], ["-version"], ["version"]):
         try:
             completed = subprocess.run(
@@ -238,14 +243,35 @@ def _read_version(executable: str | None) -> str:
             )
         except (OSError, subprocess.SubprocessError):
             continue
-        output = (completed.stdout or completed.stderr or "").strip()
-        lowered = output.lower()
-        if output and not any(
-            marker in lowered
-            for marker in ("usage", "unknown option", "unrecognized option", "error:")
-        ):
-            return output.splitlines()[0]
+        # Several otherwise usable solvers disagree on their version flag.
+        # ProVerif, for example, reports an unsupported ``--version`` option
+        # before printing its version, while cvc5 can print a usage line before
+        # succeeding with ``-version``.  Keep searching for an informative
+        # line instead of rejecting the whole probe output.
+        output = "\n".join(
+            value.strip() for value in (completed.stdout, completed.stderr) if value.strip()
+        )
+        for line in output.splitlines():
+            compact = line.strip()
+            lowered = compact.lower()
+            if not compact or any(
+                marker in lowered
+                for marker in ("usage", "unknown option", "unrecognized option", "error:")
+            ):
+                continue
+            # A few tools (notably ProVerif) return a non-zero status for an
+            # unsupported flag but still print an authoritative version line.
+            # Do not accept arbitrary output from those failed invocations.
+            if version_pattern.search(compact):
+                return compact
     return ""
+
+
+def _version_matches(executable: str | None, expected: str) -> bool:
+    """Return whether an executable reports the pinned release identifier."""
+
+    observed = _read_version(executable).lstrip("v")
+    return bool(observed and str(expected).lstrip("v") in observed)
 
 
 def _distribution_version(distribution: str) -> str:
@@ -394,6 +420,19 @@ def _write_launcher(name: str, executable: Path, *, environment: dict[str, str] 
     return launcher
 
 
+def _write_ergoai_launchers(binary: Path) -> None:
+    """Expose ErgoAI under common command names in the managed prover bin dir."""
+
+    executable = binary.resolve()
+    launcher_names = ("runergo", "runErgo.sh")
+    for launcher_name in launcher_names:
+        _write_launcher(
+            launcher_name,
+            executable,
+            environment={"ERGOAI_BINARY": str(executable)},
+        )
+
+
 def _run_custom_solver_installer(
     solver: str,
     *,
@@ -494,6 +533,17 @@ def detect_platform_install_profile() -> PlatformInstallProfile:
 
 
 _SYSTEM_PACKAGE_NAMES: dict[str, dict[str, list[str]]] = {
+    "opam": {
+        "apt": ["opam"],
+        "dnf": ["opam"],
+        "yum": ["opam"],
+        "pacman": ["opam"],
+        "zypper": ["opam"],
+        "apk": ["opam"],
+        "brew": ["opam"],
+        "conda": ["opam"],
+        "mamba": ["opam"],
+    },
     "coq": {
         "apt": ["coq"],
         "dnf": ["coq"],
@@ -612,6 +662,57 @@ def _install_system_packages(
         return False
 
 
+def _ensure_opam_binary(
+    *,
+    allow_sudo: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None,
+) -> str | None:
+    """Resolve OPAM, installing only when the caller explicitly permits it.
+
+    OPAM is a bootstrap dependency for the user-local Rocq and ProVerif
+    toolchains.  It is intentionally not installed during package import or a
+    normal proof run.  A caller using ``--allow-sudo`` receives stage messages
+    for the package-manager work rather than an apparent hang.
+    """
+
+    existing = _which("opam")
+    if existing is not None:
+        return existing
+
+    profile = detect_platform_install_profile()
+    packages = _package_names_for("opam", profile.package_manager)
+    if not packages:
+        _announce(
+            "OPAM is required for the user-local Rocq/ProVerif bootstrap and no "
+            "supported package-manager recipe is available. Install OPAM or set a "
+            "solver-specific custom installer command.",
+            on_progress,
+            phase="blocked",
+        )
+        return None
+    if not allow_sudo and not profile.is_root and profile.package_manager not in {"brew", "conda", "mamba"}:
+        _announce(
+            "OPAM is missing. Re-run with --allow-sudo to permit a platform OPAM "
+            "install, or install OPAM manually before retrying.",
+            on_progress,
+            phase="blocked",
+        )
+        return None
+    if _install_system_packages(
+        packages,
+        reason="OPAM bootstrap",
+        allow_sudo=allow_sudo,
+        strict=strict,
+    ):
+        installed = _which("opam")
+        if installed is not None:
+            _announce(f"Installed OPAM bootstrap dependency at {installed}.", on_progress, phase="installed")
+            return installed
+    _announce("OPAM installation did not produce an executable.", on_progress, phase="failed")
+    return None
+
+
 def _logic_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -656,7 +757,7 @@ def _ergoai_binary_candidates() -> list[Path]:
             submodule / "ergoai",
         ]
     )
-    for name in ("ergo", "ergoai", "runErgo.sh", "runergo"):
+    for name in ("runErgo.sh", "runergo"):
         found = _which(name)
         if found:
             candidates.append(Path(found))
@@ -1009,6 +1110,7 @@ def ensure_ergoai(
     if binary is not None and not force:
         _make_executable(binary)
         os.environ["ERGOAI_BINARY"] = str(binary)
+        _write_ergoai_launchers(Path(binary))
         _announce(f"ErgoAI is already available at {binary}", on_progress, phase="available")
         return True
 
@@ -1027,6 +1129,7 @@ def ensure_ergoai(
         if binary is not None:
             _make_executable(binary)
             os.environ["ERGOAI_BINARY"] = str(binary)
+            _write_ergoai_launchers(Path(binary))
             _announce(f"Installed ErgoAI at {binary}", on_progress, phase="installed")
             return True
 
@@ -1051,10 +1154,18 @@ def ensure_ergoai(
         )
 
     if _install_ergoai_release(strict=strict):
+        binary = _find_ergoai_binary()
+        if binary is not None:
+            os.environ["ERGOAI_BINARY"] = str(binary)
+            _write_ergoai_launchers(Path(binary))
         _announce("Installed the configured ErgoAI release.", on_progress, phase="installed")
         return True
 
     if _clone_or_update_ergoai(strict=strict):
+        binary = _find_ergoai_binary()
+        if binary is not None:
+            os.environ["ERGOAI_BINARY"] = str(binary)
+            _write_ergoai_launchers(Path(binary))
         _announce("Installed ErgoAI from the configured source checkout.", on_progress, phase="installed")
         return True
 
@@ -1145,22 +1256,28 @@ def _coq_opam_root() -> Path:
     return _external_prover_root() / "opam"
 
 
+def _proverif_opam_root() -> Path:
+    configured = os.environ.get("IPFS_DATASETS_PY_PROVERIF_OPAM_ROOT")
+    if configured:
+        return Path(configured).expanduser()
+    return _external_prover_root() / "opam"
+
+
 def _install_coq_via_opam(
     *,
     strict: bool,
     on_progress: ProgressCallback | None = None,
     force: bool = False,
+    allow_sudo: bool = False,
 ) -> bool:
     """Install Coq into an isolated OPAM root without modifying global switches."""
 
-    opam = _which("opam")
+    opam = _ensure_opam_binary(
+        allow_sudo=allow_sudo,
+        strict=strict,
+        on_progress=on_progress,
+    )
     if opam is None:
-        _announce(
-            "Coq needs OPAM for its user-local fallback, but opam was not found. "
-            "Install OPAM or set IPFS_DATASETS_PY_COQ_INSTALL_COMMAND.",
-            on_progress,
-            phase="blocked",
-        )
         return False
 
     root = _coq_opam_root()
@@ -1184,7 +1301,7 @@ def _install_coq_via_opam(
                 environment={"OPAMROOT": str(root), "OPAMSWITCH": switch},
             )
         _announce(f"Coq is already available in user-local OPAM switch {switch}.", on_progress, phase="available")
-        return _which("coqc") is not None
+        return _version_matches(_which("coqc"), ROCQ_VERSION)
 
     root.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
@@ -1241,7 +1358,9 @@ def _install_coq_via_opam(
                 environment={"OPAMROOT": str(root), "OPAMSWITCH": switch},
             )
         _announce(f"Installed Rocq {ROCQ_VERSION} in user-local OPAM switch {switch}.", on_progress, phase="installed")
-        return _which("coqc") is not None
+        if not _version_matches(_which("coqc"), ROCQ_VERSION):
+            raise RuntimeError(f"OPAM installed Rocq but coqc does not report {ROCQ_VERSION}")
+        return True
     except Exception as exc:
         _announce(f"User-local OPAM Coq installation failed: {exc}", on_progress, phase="failed")
         if strict:
@@ -1278,25 +1397,117 @@ def ensure_coq(
     try:
         if _run_custom_solver_installer("coq", strict=strict, on_progress=on_progress):
             return _which("coqc") is not None
+        # The package-manager Coq release is often older than the reviewed
+        # Rocq target. Prefer the isolated OPAM switch so a clean machine gets
+        # the same 9.1.1 kernel used by the verification lanes.
+        if _install_coq_via_opam(
+            strict=strict,
+            on_progress=on_progress,
+            force=force,
+            allow_sudo=allow_sudo,
+        ):
+            return True
+
         profile = detect_platform_install_profile()
         coq_packages = _package_names_for("coq", profile.package_manager)
         if coq_packages and not force:
             if _install_system_packages(
                 coq_packages,
-                reason="Coq",
+                reason="Coq fallback (version must be checked before accepting proof evidence)",
                 allow_sudo=allow_sudo,
                 strict=strict,
             ) and _which("coqc"):
-                _announce(f"Installed Coq via {profile.package_manager}.", on_progress, phase="installed")
+                _announce(
+                    f"Installed fallback Coq via {profile.package_manager}; run --check-updates "
+                    "before accepting it as the managed Rocq kernel.",
+                    on_progress,
+                    phase="installed",
+                )
                 return True
-
-        return _install_coq_via_opam(strict=strict, on_progress=on_progress, force=force)
+        return False
 
     except Exception as exc:
         print(f"Failed to install Coq: {exc}")
         if strict:
             raise
         return False
+
+
+def _proverif_build_environment(
+    *,
+    allow_sudo: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None,
+    force: bool,
+) -> dict[str, str] | None:
+    """Return an OCaml build environment for the pinned headless ProVerif.
+
+    A global OCaml toolchain is reused when complete.  Otherwise the installer
+    creates an isolated OPAM switch under the solver root.  This gives the
+    source build a deterministic compiler without changing the user's default
+    OPAM switch or requiring the GTK interface.
+    """
+
+    required_tools = ("ocamlopt", "ocamlyacc", "ocamllex")
+    if all(_which(tool) is not None for tool in required_tools) and not force:
+        return os.environ.copy()
+
+    opam = _ensure_opam_binary(
+        allow_sudo=allow_sudo,
+        strict=strict,
+        on_progress=on_progress,
+    )
+    if opam is None:
+        _announce(
+            "ProVerif requires OCaml. Install OPAM, re-run with --allow-sudo, or "
+            "set IPFS_DATASETS_PY_PROVERIF_INSTALL_COMMAND.",
+            on_progress,
+            phase="blocked",
+        )
+        return None
+
+    root = _proverif_opam_root()
+    switch = os.environ.get("IPFS_DATASETS_PY_PROVERIF_OPAM_SWITCH", "ipfs-datasets-proverif")
+    compiler = os.environ.get(
+        "IPFS_DATASETS_PY_PROVERIF_OPAM_COMPILER", "ocaml-base-compiler.4.14.2"
+    )
+    switch_bin = root / switch / "bin"
+    env = os.environ.copy()
+    env.update({"OPAMROOT": str(root), "OPAMSWITCH": switch, "OPAMYES": "true"})
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        _announce(f"Initializing isolated OPAM root for ProVerif at {root}.", on_progress)
+        if _run(
+            [opam, "init", "--bare", "--disable-sandboxing", "--no-setup", "--yes"],
+            check=False,
+            env=env,
+        ) != 0:
+            raise RuntimeError("OPAM initialization failed")
+        if force or not switch_bin.is_dir():
+            _announce(
+                f"Creating or refreshing OPAM switch {switch} with {compiler}; this can take several minutes.",
+                on_progress,
+            )
+            if not switch_bin.is_dir() and _run(
+                [opam, "switch", "create", switch, compiler, "--yes"],
+                check=False,
+                env=env,
+            ) != 0:
+                raise RuntimeError("OPAM switch creation failed")
+        _announce("Refreshing the OPAM package index for the ProVerif toolchain.", on_progress)
+        if _run([opam, "update", "--switch", switch], check=False, env=env) != 0:
+            raise RuntimeError("OPAM package index update failed")
+        build_env = env.copy()
+        build_env["PATH"] = str(switch_bin) + os.pathsep + env.get("PATH", "")
+        missing = [tool for tool in required_tools if not (switch_bin / tool).is_file()]
+        if missing:
+            raise RuntimeError("OPAM switch is missing OCaml tools: " + ", ".join(missing))
+        return build_env
+    except Exception as exc:
+        _announce(f"Unable to prepare the isolated ProVerif OCaml toolchain: {exc}", on_progress, phase="failed")
+        if strict:
+            raise
+        return None
 
 
 def ensure_apalache(
@@ -1406,6 +1617,35 @@ def ensure_maude(
         return False
 
 
+def _tamarin_accepts_maude(tamarin: str | None, maude: str | None) -> bool:
+    """Check the Tamarin binary against the selected Maude runtime.
+
+    Tamarin can be present while pointing at an incompatible Maude binary.
+    A filename check is not enough for protocol evidence, so installation
+    finishes with Tamarin's own runtime validation marker.
+    """
+
+    if tamarin is None or maude is None:
+        return False
+    try:
+        completed = subprocess.run(
+            [tamarin, f"--with-maude={maude}", "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    output = "\n".join(value for value in (completed.stdout, completed.stderr) if value)
+    return bool(
+        completed.returncode == 0
+        and TAMARIN_VERSION in output
+        and MAUDE_VERSION in output
+        and "checking installation: OK" in output
+    )
+
+
 def ensure_tamarin(
     *, yes: bool, strict: bool, on_progress: ProgressCallback | None = None, force: bool = False
 ) -> bool:
@@ -1413,7 +1653,23 @@ def ensure_tamarin(
 
     existing = _which("tamarin-prover")
     if existing and not force:
-        return ensure_maude(yes=yes, strict=strict, on_progress=on_progress)
+        if not ensure_maude(yes=yes, strict=strict, on_progress=on_progress):
+            return False
+        maude = _which("maude")
+        if _tamarin_accepts_maude(existing, maude):
+            _announce(
+                f"Tamarin {TAMARIN_VERSION} accepts Maude {MAUDE_VERSION} at {maude}.",
+                on_progress,
+                phase="available",
+            )
+            return True
+        _announce(
+            "Tamarin or Maude is present but the pinned pair did not pass Tamarin's "
+            "own runtime validation. Re-run with --update --yes --tamarin to repair it.",
+            on_progress,
+            phase="failed",
+        )
+        return False
     if not yes:
         _announce("Tamarin is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
         return False
@@ -1448,8 +1704,12 @@ def ensure_tamarin(
         if len(candidates) != 1:
             raise RuntimeError("Tamarin archive did not contain exactly one tamarin-prover executable")
         _write_launcher("tamarin-prover", candidates[0])
+        tamarin = _which("tamarin-prover")
+        maude = _which("maude")
+        if not _tamarin_accepts_maude(tamarin, maude):
+            raise RuntimeError("Tamarin/Maude installation did not pass Tamarin runtime validation")
         _announce(f"Installed Tamarin {TAMARIN_VERSION} with Maude {MAUDE_VERSION}.", on_progress, phase="installed")
-        return _which("tamarin-prover") is not None
+        return True
     except Exception as exc:
         _announce(f"Tamarin installation failed: {exc}", on_progress, phase="failed")
         if strict:
@@ -1458,7 +1718,12 @@ def ensure_tamarin(
 
 
 def ensure_proverif(
-    *, yes: bool, strict: bool, on_progress: ProgressCallback | None = None, force: bool = False
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+    allow_sudo: bool = False,
 ) -> bool:
     """Build the official ProVerif source in headless mode under the user-local root."""
 
@@ -1472,15 +1737,13 @@ def ensure_proverif(
     if _run_custom_solver_installer("proverif", strict=strict, on_progress=on_progress):
         return _which("proverif") is not None
 
-    required_tools = ("ocamlopt", "ocamlyacc", "ocamllex")
-    missing_tools = [tool for tool in required_tools if _which(tool) is None]
-    if missing_tools:
-        _announce(
-            "ProVerif requires an OCaml toolchain; missing " + ", ".join(missing_tools) + ". "
-            "Install OCaml/OPAM or set IPFS_DATASETS_PY_PROVERIF_INSTALL_COMMAND.",
-            on_progress,
-            phase="blocked",
-        )
+    build_env = _proverif_build_environment(
+        allow_sudo=allow_sudo,
+        strict=strict,
+        on_progress=on_progress,
+        force=force,
+    )
+    if build_env is None:
         return False
 
     root = _external_prover_root()
@@ -1500,14 +1763,28 @@ def ensure_proverif(
         candidates = [path for path in source_root.iterdir() if path.is_dir() and path.name.startswith("proverif")]
         source_dir = candidates[0] if len(candidates) == 1 else source_root
         _announce("Building ProVerif without its optional GTK interface; this can take several minutes.", on_progress)
-        if _run(["sh", "build", "-nointeract"], check=False, cwd=source_dir) != 0:
+        if _run(
+            ["sh", "build", "-nointeract"],
+            check=False,
+            cwd=source_dir,
+            env=build_env,
+        ) != 0:
             raise RuntimeError("ProVerif headless build failed")
         executable = source_dir / "proverif"
         if not executable.is_file():
             raise RuntimeError("ProVerif build completed without a proverif executable")
-        _write_launcher("proverif", executable)
+        _write_launcher(
+            "proverif",
+            executable,
+            environment={
+                "OPAMROOT": build_env["OPAMROOT"],
+                "OPAMSWITCH": build_env["OPAMSWITCH"],
+            } if "OPAMROOT" in build_env and "OPAMSWITCH" in build_env else None,
+        )
         _announce(f"Installed headless ProVerif {PROVERIF_VERSION} user-locally.", on_progress, phase="installed")
-        return _which("proverif") is not None
+        if not _version_matches(_which("proverif"), PROVERIF_VERSION):
+            raise RuntimeError(f"ProVerif launcher does not report {PROVERIF_VERSION}")
+        return True
     except Exception as exc:
         _announce(f"ProVerif installation failed: {exc}", on_progress, phase="failed")
         if strict:

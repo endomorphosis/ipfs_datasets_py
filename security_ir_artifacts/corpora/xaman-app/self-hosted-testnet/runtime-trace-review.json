@@ -1,0 +1,126 @@
+{
+  "artifact_cid": "bafkreigyua5yjzvcuq5ajzzuw4agxzvauey666tqx6nvs5i3n2tex5cpwa",
+  "captured_at_utc": "2026-07-18T20:00:00Z",
+  "dependency_cids": {
+    "bridge_isolation_report": "sha256:f4c6b70f93ec8821896a001fc94b6d8448f715968cbd9a94e36277212998a04d",
+    "daemon_health": "sha256:5d7fdd061bfa121e1028b755b49548afa1c320f4e706f2345b05e7aaedc6d36b",
+    "endpoint_rebound_candidate": "sha256:8ecdf83286a89d1b5d4862200ba5dab3c8ba85e6e6310e80ef1e6cbf1d8b9e88",
+    "security_model": "sha256:5cdb033c299f247ed458cb4550941108537f418fa5baa41486cc50532a8cae18"
+  },
+  "lifecycle_events": [
+    {
+      "action": "onboarding",
+      "ordinal": 1,
+      "outcome": "completed",
+      "raw_material_recorded": false,
+      "redaction_sha256": "88d8fae7e16c32849048bb2ef11740c20b2ffad484eba714349fb45356618cd9",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "5a30bfde2b251da9ed1a860a951dc003e5e173183cfdb273dd3401f36db67aab"
+    },
+    {
+      "action": "local_network_selection",
+      "ordinal": 2,
+      "outcome": "local_network_selected",
+      "raw_material_recorded": false,
+      "redaction_sha256": "89d195d13d26fc61404ee84e12de4cde2a3aab5736b2d13382442166bc05b67f",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "d1dfedfef2817feda78068a794b51d85132f6000670bd97c1e2094a8c1a3b6d0"
+    },
+    {
+      "action": "review",
+      "ordinal": 3,
+      "outcome": "reviewed",
+      "raw_material_recorded": false,
+      "redaction_sha256": "e7e80b160f2292b4c20543e2e962ff09450c5f6d0258da90eb6b01196196e346",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "745e8375f28e075cb9ed668598c6f9e4857b48de85fe35931fd9d7355af0a582"
+    },
+    {
+      "action": "signature_decision",
+      "ordinal": 4,
+      "outcome": "approved",
+      "raw_material_recorded": false,
+      "redaction_sha256": "38b4703b19e96ac702854113a5ff0af842b0146facb3a4672f00484ea3d43468",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "4426cb1065e2a0e0e9ee842734ff328d2264935fa47f4148d51c0ef346c6306c"
+    },
+    {
+      "action": "submit_result",
+      "ordinal": 5,
+      "outcome": "submitted",
+      "raw_material_recorded": false,
+      "redaction_sha256": "f391abc9a0f603ada230d41d28ce1ac852805d7a088e887ac650e423d83438e7",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "087e369980da52591cf190c818181bcefb32053ace8d151ba67d76404a6e0561"
+    },
+    {
+      "action": "cancellation",
+      "ordinal": 6,
+      "outcome": "cancelled",
+      "raw_material_recorded": false,
+      "redaction_sha256": "31647075f98d21db0e8ace9b2492c1930fc5fd68bac1da8f1b75f56572550ad6",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "13822c9f286682c7a0ee3d94bcb6cce829efe7de1d3d4ad15510c4f81e7366da"
+    },
+    {
+      "action": "expiry",
+      "ordinal": 7,
+      "outcome": "expired",
+      "raw_material_recorded": false,
+      "redaction_sha256": "bd64016705a1b96a8f343b999ab56acd5f1aa54997ebd4b267ad3c441f2cdec8",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "01639a1dcd70ae29c6e270cc1190b7b53ea977d418eddbdb70190084baf7734f"
+    },
+    {
+      "action": "replay",
+      "ordinal": 8,
+      "outcome": "blocked",
+      "raw_material_recorded": false,
+      "redaction_sha256": "75aa2fe215302f5aed828809e279d59de876c5c0ffed1056807cd2d7b3082032",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "1426ecba77fceb2c70fbe80513ca5372a3eb4e3c85506d98212f86ac0ba3dd2c"
+    },
+    {
+      "action": "reconnect",
+      "ordinal": 9,
+      "outcome": "reconnected",
+      "raw_material_recorded": false,
+      "redaction_sha256": "6663297a6b1fed9762c284cfafc385692e21d25e911734b2ed5461fd16ae42a1",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "587b02dcc591ed954ce12be2f8521f8a6baa2c5fd6c529c2b60879a0c362dec5"
+    },
+    {
+      "action": "network_change",
+      "ordinal": 10,
+      "outcome": "local_network_retained",
+      "raw_material_recorded": false,
+      "redaction_sha256": "03313d7078a3f6be5cd3f7a0be1acb098ac852d2d839dffe03208e45c8e2be97",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "9fd50cc80a97e24e950a413964c41b8aa37d9641e8a9afc3073a5175139bd9b2"
+    }
+  ],
+  "redaction": {
+    "raw_sensitive_material_retained": false,
+    "redaction_review_sha256": "965289e06dcb4a47d4a894a722b3f2afc3d0d82696563105af0f956f491ddb05"
+  },
+  "review_gate": {
+    "endpoint_rebind_review": "sha256:2d5c2ecc26ad57dffc6637c2212f0bbeca8506321665089d46b4bbae9ed2b01c",
+    "expires_at_utc": "2027-07-18T20:05:00Z",
+    "reviewer_id_sha256": "1532b0139fc8fa24000f3ce059ca89593940f78341cf915b984789875bd4c6dc",
+    "status": "passed"
+  },
+  "reviewed_at_utc": "2026-07-18T20:05:00Z",
+  "schema_version": "xaman-self-hosted-runtime-trace-review/v1",
+  "scope": {
+    "external_egress_observed": false,
+    "fresh_debug_emulator": true,
+    "network_id": 777777,
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "source_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "vendor_fallback_observed": false,
+    "vendor_release_equivalent": false
+  },
+  "task_id": "PORTAL-CXTP-158",
+  "trace_id": "self-hosted-local-lifecycle-block-review-001"
+}

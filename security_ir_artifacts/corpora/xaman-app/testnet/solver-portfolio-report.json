@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "bafkreifcb27leoeyrtntja2yf43sj2sdym5ojuhouqa7qrgydsw4aimetm",
+  "artifact_cid": "bafkreihg2uxqmq3gg7fs3rff25efn3rfzjznyda6j4upybtdjzkdzd4d74",
   "claims": [
     {
       "applicable_lane_results": [
@@ -181,8 +181,8 @@
           "timeout_seconds": 5.0
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -194,31 +194,25 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_TESTNET_SCOPE"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -232,8 +226,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -244,38 +238,32 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_TESTNET_SCOPE"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -283,7 +271,7 @@
         },
         {
           "accepted": true,
-          "artifact_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+          "artifact_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
           "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
           "command_digest": "sha256:b428d084bf966879f015e71a764dbe7120b2521f639733e1a99707b42956c27f",
@@ -315,37 +303,40 @@
           "solvers": [
             {
               "executable": "/home/barberb/.elan/bin/lean",
-              "executable_sha256": "sha256:df25409ddea390271687e3296ffae15d2efbae339b58f78f7aca023917ee354f",
+              "executable_sha256": "sha256:840179e70803ef373c2ec53342d6a45ea7d022533e4145489fc1278b4f716385",
               "name": "lean",
-              "version": ""
+              "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
             }
           ],
           "theory": "Lean 4 kernel checks for formalized Boolean invariants",
           "timeout_seconds": 90
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
+          "accepted": true,
+          "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
           "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
-          "command_digest": "sha256:ed6ca69b4c4af4b99575648a84e00ddbaad9f321294d7ccdece7ef0aa10be484",
+          "command_digest": "sha256:79a62ca43991a324159219f58cd5f4735fecd28f0b05cb02d659bdcb09fb650a",
           "commands": [
             [
               "/home/barberb/.local/bin/coqc",
+              "-noglob",
+              "-o",
+              "tmp/cxtp-proof-checks/XamanTestnet.vo",
               "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v"
             ]
           ],
           "details": {
             "coq_required_by_reviewed_threat_model": true,
             "coqc_present": true,
-            "decision": "required_missing_artifact",
-            "kernel_present": false
+            "decision": "required_checked",
+            "kernel_present": true
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "rocq_kernel",
-          "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+          "reason": "COQ_INDEPENDENT_KERNEL_CHECKED",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "not_recorded",
           "solvers": [
             {
@@ -409,21 +400,6 @@
           "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
           "reason": "both solvers found unresolved blocking assumptions",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "ROCQ_KERNEL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -694,8 +670,8 @@
           "timeout_seconds": 5.0
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -707,31 +683,25 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_TESTNET_SCOPE"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -745,8 +715,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -757,38 +727,32 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_TESTNET_SCOPE"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -796,7 +760,7 @@
         },
         {
           "accepted": true,
-          "artifact_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+          "artifact_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
           "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
           "command_digest": "sha256:b428d084bf966879f015e71a764dbe7120b2521f639733e1a99707b42956c27f",
@@ -828,37 +792,40 @@
           "solvers": [
             {
               "executable": "/home/barberb/.elan/bin/lean",
-              "executable_sha256": "sha256:df25409ddea390271687e3296ffae15d2efbae339b58f78f7aca023917ee354f",
+              "executable_sha256": "sha256:840179e70803ef373c2ec53342d6a45ea7d022533e4145489fc1278b4f716385",
               "name": "lean",
-              "version": ""
+              "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
             }
           ],
           "theory": "Lean 4 kernel checks for formalized Boolean invariants",
           "timeout_seconds": 90
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
+          "accepted": true,
+          "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
           "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
-          "command_digest": "sha256:ed6ca69b4c4af4b99575648a84e00ddbaad9f321294d7ccdece7ef0aa10be484",
+          "command_digest": "sha256:79a62ca43991a324159219f58cd5f4735fecd28f0b05cb02d659bdcb09fb650a",
           "commands": [
             [
               "/home/barberb/.local/bin/coqc",
+              "-noglob",
+              "-o",
+              "tmp/cxtp-proof-checks/XamanTestnet.vo",
               "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v"
             ]
           ],
           "details": {
             "coq_required_by_reviewed_threat_model": true,
             "coqc_present": true,
-            "decision": "required_missing_artifact",
-            "kernel_present": false
+            "decision": "required_checked",
+            "kernel_present": true
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "rocq_kernel",
-          "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+          "reason": "COQ_INDEPENDENT_KERNEL_CHECKED",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "not_recorded",
           "solvers": [
             {
@@ -921,21 +888,6 @@
           "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
           "reason": "both solvers found unresolved blocking assumptions",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "ROCQ_KERNEL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -1202,8 +1154,8 @@
           "timeout_seconds": 5.0
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -1215,31 +1167,25 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_TESTNET_SCOPE"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -1253,8 +1199,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -1265,38 +1211,32 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_TESTNET_SCOPE"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -1304,7 +1244,7 @@
         },
         {
           "accepted": true,
-          "artifact_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+          "artifact_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
           "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
           "command_digest": "sha256:b428d084bf966879f015e71a764dbe7120b2521f639733e1a99707b42956c27f",
@@ -1336,37 +1276,40 @@
           "solvers": [
             {
               "executable": "/home/barberb/.elan/bin/lean",
-              "executable_sha256": "sha256:df25409ddea390271687e3296ffae15d2efbae339b58f78f7aca023917ee354f",
+              "executable_sha256": "sha256:840179e70803ef373c2ec53342d6a45ea7d022533e4145489fc1278b4f716385",
               "name": "lean",
-              "version": ""
+              "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
             }
           ],
           "theory": "Lean 4 kernel checks for formalized Boolean invariants",
           "timeout_seconds": 90
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
+          "accepted": true,
+          "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
           "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
-          "command_digest": "sha256:ed6ca69b4c4af4b99575648a84e00ddbaad9f321294d7ccdece7ef0aa10be484",
+          "command_digest": "sha256:79a62ca43991a324159219f58cd5f4735fecd28f0b05cb02d659bdcb09fb650a",
           "commands": [
             [
               "/home/barberb/.local/bin/coqc",
+              "-noglob",
+              "-o",
+              "tmp/cxtp-proof-checks/XamanTestnet.vo",
               "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v"
             ]
           ],
           "details": {
             "coq_required_by_reviewed_threat_model": true,
             "coqc_present": true,
-            "decision": "required_missing_artifact",
-            "kernel_present": false
+            "decision": "required_checked",
+            "kernel_present": true
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "rocq_kernel",
-          "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+          "reason": "COQ_INDEPENDENT_KERNEL_CHECKED",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "not_recorded",
           "solvers": [
             {
@@ -1433,21 +1376,6 @@
           "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
           "reason": "both solvers found unresolved blocking assumptions",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "ROCQ_KERNEL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -1716,8 +1644,8 @@
           "timeout_seconds": 5.0
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -1729,31 +1657,25 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -1767,8 +1689,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -1779,38 +1701,32 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -1866,16 +1782,6 @@
           "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
           "reason": "both solvers found unresolved blocking assumptions",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -2281,8 +2187,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -2294,31 +2200,25 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -2332,8 +2232,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -2344,38 +2244,32 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -2438,16 +2332,6 @@
           "code": "APALACHE_STATE_INCOMPLETE",
           "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -2722,8 +2606,8 @@
           "timeout_seconds": 5.0
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -2735,24 +2619,15 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -2766,8 +2641,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -2778,31 +2653,22 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -2867,16 +2733,6 @@
           "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
           "reason": "both solvers found unresolved blocking assumptions",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -3155,8 +3011,8 @@
           "timeout_seconds": 5.0
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -3168,24 +3024,15 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -3199,8 +3046,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -3211,31 +3058,22 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -3294,16 +3132,6 @@
           "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
           "reason": "both solvers found unresolved blocking assumptions",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -3688,8 +3516,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -3701,24 +3529,15 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -3732,8 +3551,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -3744,31 +3563,22 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -3833,16 +3643,6 @@
           "code": "APALACHE_STATE_INCOMPLETE",
           "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -4221,8 +4021,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -4234,24 +4034,15 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -4265,8 +4056,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -4277,31 +4068,22 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -4367,16 +4149,6 @@
           "code": "APALACHE_STATE_INCOMPLETE",
           "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -4768,8 +4540,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -4781,24 +4553,15 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -4812,8 +4575,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -4824,31 +4587,22 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -4913,16 +4667,6 @@
           "code": "APALACHE_STATE_INCOMPLETE",
           "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -5178,8 +4922,8 @@
           "timeout_seconds": 5.0
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -5191,24 +4935,15 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -5222,8 +4957,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -5234,31 +4969,22 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [],
             "protocol_status": "NOT_MODELED"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -5322,16 +5048,6 @@
           "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
           "reason": "both solvers found unresolved blocking assumptions",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -5606,8 +5322,8 @@
           "timeout_seconds": 5.0
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
           "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -5619,31 +5335,25 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_TESTNET_SCOPE"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "tamarin_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "NOT_RUN",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
@@ -5657,8 +5367,8 @@
           "timeout_seconds": 120
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+          "accepted": true,
+          "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
           "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
           "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -5669,38 +5379,32 @@
             ]
           ],
           "details": {
-            "blockers": [
-              {
-                "code": "PROVERIF_MODEL_MISSING",
-                "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-              },
-              {
-                "code": "TAMARIN_CHECK_NOT_RUN",
-                "message": "Required Tamarin protocol check has not been executed."
-              }
-            ],
+            "blockers": [],
             "modeled_by_lemmas": [
               "review_requires_testnet_binding",
               "review_requires_fresh_testnet_account",
               "auth_requires_review",
               "signing_decision_requires_review_and_auth",
               "submit_ui_requires_signing_decision",
-              "audit_redaction_preserved_for_modeled_events"
+              "audit_redaction_preserved_for_payload_intake",
+              "audit_redaction_preserved_for_review",
+              "audit_redaction_preserved_for_signing_decision",
+              "audit_redaction_preserved_for_submit_result"
             ],
             "protocol_status": "MODELED_WITH_TESTNET_SCOPE"
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "proverif_protocol",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+          "reason": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "human_reviewed",
           "solvers": [
             {
               "executable": "/home/barberb/.local/bin/proverif",
               "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
               "name": "proverif",
-              "version": null
+              "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
             }
           ],
           "theory": "ProVerif remote-payload protocol queries",
@@ -5708,7 +5412,7 @@
         },
         {
           "accepted": true,
-          "artifact_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+          "artifact_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
           "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
           "command_digest": "sha256:b428d084bf966879f015e71a764dbe7120b2521f639733e1a99707b42956c27f",
@@ -5740,37 +5444,40 @@
           "solvers": [
             {
               "executable": "/home/barberb/.elan/bin/lean",
-              "executable_sha256": "sha256:df25409ddea390271687e3296ffae15d2efbae339b58f78f7aca023917ee354f",
+              "executable_sha256": "sha256:840179e70803ef373c2ec53342d6a45ea7d022533e4145489fc1278b4f716385",
               "name": "lean",
-              "version": ""
+              "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
             }
           ],
           "theory": "Lean 4 kernel checks for formalized Boolean invariants",
           "timeout_seconds": 90
         },
         {
-          "accepted": false,
-          "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
+          "accepted": true,
+          "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
           "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
           "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
-          "command_digest": "sha256:ed6ca69b4c4af4b99575648a84e00ddbaad9f321294d7ccdece7ef0aa10be484",
+          "command_digest": "sha256:79a62ca43991a324159219f58cd5f4735fecd28f0b05cb02d659bdcb09fb650a",
           "commands": [
             [
               "/home/barberb/.local/bin/coqc",
+              "-noglob",
+              "-o",
+              "tmp/cxtp-proof-checks/XamanTestnet.vo",
               "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v"
             ]
           ],
           "details": {
             "coq_required_by_reviewed_threat_model": true,
             "coqc_present": true,
-            "decision": "required_missing_artifact",
-            "kernel_present": false
+            "decision": "required_checked",
+            "kernel_present": true
           },
-          "fail_closed": true,
+          "fail_closed": false,
           "lane_id": "rocq_kernel",
-          "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+          "reason": "COQ_INDEPENDENT_KERNEL_CHECKED",
           "required": true,
-          "result": "REQUIRED_MISSING_ARTIFACT",
+          "result": "ACCEPTED",
           "reviewer_status": "not_recorded",
           "solvers": [
             {
@@ -5836,21 +5543,6 @@
           "code": "Z3_CVC5_DIFFERENTIAL_COUNTEREXAMPLE",
           "reason": "both solvers found unresolved blocking assumptions",
           "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
-        },
-        {
-          "code": "TAMARIN_PROTOCOL_NOT_RUN",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "PROVERIF_PROTOCOL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json"
-        },
-        {
-          "code": "ROCQ_KERNEL_REQUIRED_MISSING_ARTIFACT",
-          "reason": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
-          "source": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json"
         },
         {
           "code": "FUZZ_CONSUMPTION_COUNTEREXAMPLE",
@@ -6192,7 +5884,7 @@
       "timeout_seconds": 120
     },
     {
-      "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+      "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
       "available": true,
       "command_digest": "sha256:e8bd558d02b8061c2306112f0731bcb0c7bf7d8313b6ed38a535d023e0746916",
@@ -6208,7 +5900,7 @@
       "lane_id": "tamarin_protocol",
       "required": true,
       "reviewer_status": "human_reviewed",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
       "solvers": [
         {
           "executable": "/home/barberb/.local/bin/tamarin-prover",
@@ -6217,12 +5909,12 @@
           "version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
         }
       ],
-      "status": "not-run",
+      "status": "passed",
       "theory": "Tamarin remote-payload protocol lemmas",
       "timeout_seconds": 120
     },
     {
-      "artifact_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+      "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
       "available": true,
       "command_digest": "sha256:4330c0111b742171af8e63b847197de56cbd41c3af712c657114966019f144db",
@@ -6232,26 +5924,26 @@
           "security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv"
         ]
       ],
-      "executable_versions_recorded": false,
+      "executable_versions_recorded": true,
       "fail_closed_result_for_unavailable_or_disagreeing_lane": "REQUIRED_MISSING_ARTIFACT",
       "lane_id": "proverif_protocol",
       "required": true,
       "reviewer_status": "human_reviewed",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
       "solvers": [
         {
           "executable": "/home/barberb/.local/bin/proverif",
           "executable_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622",
           "name": "proverif",
-          "version": null
+          "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
         }
       ],
-      "status": "not-run",
+      "status": "passed",
       "theory": "ProVerif remote-payload protocol queries",
       "timeout_seconds": 120
     },
     {
-      "artifact_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+      "artifact_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
       "available": true,
       "command_digest": "sha256:b428d084bf966879f015e71a764dbe7120b2521f639733e1a99707b42956c27f",
@@ -6270,9 +5962,9 @@
       "solvers": [
         {
           "executable": "/home/barberb/.elan/bin/lean",
-          "executable_sha256": "sha256:df25409ddea390271687e3296ffae15d2efbae339b58f78f7aca023917ee354f",
+          "executable_sha256": "sha256:840179e70803ef373c2ec53342d6a45ea7d022533e4145489fc1278b4f716385",
           "name": "lean",
-          "version": ""
+          "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
         }
       ],
       "status": "checked_with_scope_limits",
@@ -6280,13 +5972,16 @@
       "timeout_seconds": 90
     },
     {
-      "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
+      "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
       "available": true,
-      "command_digest": "sha256:ed6ca69b4c4af4b99575648a84e00ddbaad9f321294d7ccdece7ef0aa10be484",
+      "command_digest": "sha256:79a62ca43991a324159219f58cd5f4735fecd28f0b05cb02d659bdcb09fb650a",
       "commands": [
         [
           "/home/barberb/.local/bin/coqc",
+          "-noglob",
+          "-o",
+          "tmp/cxtp-proof-checks/XamanTestnet.vo",
           "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v"
         ]
       ],
@@ -6295,7 +5990,7 @@
       "lane_id": "rocq_kernel",
       "required": true,
       "reviewer_status": "not_recorded",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+      "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED",
       "solvers": [
         {
           "executable": "/home/barberb/.local/bin/coqc",
@@ -6304,7 +5999,7 @@
           "version": "The Rocq Prover, version 9.1.1"
         }
       ],
-      "status": "coverage_gap_required_independent_kernel_missing",
+      "status": "independent_kernel_checked",
       "theory": "Rocq/Coq independent kernel coverage decision",
       "timeout_seconds": 90
     },
@@ -6339,7 +6034,7 @@
     }
   ],
   "manifest": {
-    "artifact_cid": "bafkreidzafqrwu72t4zora5djvjpuwhhxwk73uqjajso3dwlutco4jzbea",
+    "artifact_cid": "bafkreihxtwrbqmacjil3nfco3wlexd6s7nceq7brigift2ji5vlf4njfve",
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/solver-portfolio-manifest.json",
     "schema_version": "xaman-testnet-solver-portfolio-manifest/v1"
   },
@@ -6384,7 +6079,7 @@
     "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
     "public_source_only": true,
     "repository": "XRPL-Labs/Xaman-App",
-    "source_claim_map_artifact_cid": "sha256:9e928c511d683870c8b84c653645e3ef34aea7c3ada501455b1779de0d4beab0",
+    "source_claim_map_artifact_cid": "sha256:4880afc359884232b20b6bbb9a5b6bbbeb6039bbaec2275bba17817973f841e1",
     "source_claim_map_path": "security_ir_artifacts/corpora/xaman-app/source-claim-map.json",
     "source_manifest_artifact_cid": "bafkreiei6bzr7ziihvbe4ueyfzkxspj7xijuoufqkn5jbqj2i7pzbdlkj4"
   },
@@ -6396,11 +6091,9 @@
     },
     "fail_closed_claim_count": 12,
     "lane_result_counts": {
-      "ACCEPTED": 4,
+      "ACCEPTED": 32,
       "COUNTEREXAMPLE": 24,
-      "INCOMPLETE": 4,
-      "NOT_RUN": 12,
-      "REQUIRED_MISSING_ARTIFACT": 16
+      "INCOMPLETE": 4
     },
     "overall_status": "non_secure_with_counterevidence",
     "proved_claim_count": 0,

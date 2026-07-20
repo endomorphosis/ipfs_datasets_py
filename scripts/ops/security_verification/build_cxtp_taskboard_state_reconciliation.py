@@ -17,7 +17,7 @@ ROOT_DIR = Path(__file__).resolve().parents[3]
 TASKBOARD_PATH = Path('docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md')
 STATE_PATH = Path('data/crypto_exchange_theorem_prover/state/cxtp_task_state.json')
 OUTPUT_PATH = Path('security_ir_artifacts/recovery/cxtp-taskboard-state-reconciliation.json')
-RECONSTRUCTED_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(119, 156)]
+RECONSTRUCTED_TASK_START = 119
 COMPLETED_EVIDENCE_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(119, 143)]
 PRODUCTION_BLOCKER_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(77, 85)]
 
@@ -35,6 +35,24 @@ def _source_line(taskboard_text: str, task_id: str) -> int:
     return 0
 
 
+def _task_number(task_id: str) -> int | None:
+    prefix = 'PORTAL-CXTP-'
+    if not task_id.startswith(prefix):
+        return None
+    try:
+        return int(task_id[len(prefix):])
+    except ValueError:
+        return None
+
+
+def _reconstructed_task_ids(task_ids: list[str]) -> list[str]:
+    return [
+        task_id
+        for task_id in task_ids
+        if (number := _task_number(task_id)) is not None and number >= RECONSTRUCTED_TASK_START
+    ]
+
+
 def build(repo_root: Path) -> dict[str, Any]:
     taskboard_text = (repo_root / TASKBOARD_PATH).read_text(encoding='utf-8')
     task_list = parse_taskboard(taskboard_text)
@@ -43,23 +61,26 @@ def build(repo_root: Path) -> dict[str, Any]:
     task_statuses = dict(state.get('task_statuses') or {})
     board_ids = set(tasks)
     state_ids = set(task_statuses)
-    records = []
-    for task_id in RECONSTRUCTED_TASK_IDS:
-        task = tasks[task_id]
-        records.append(
-            {
-                'task_id': task_id,
-                'taskboard_status': task.status,
-                'supervisor_status': task_statuses.get(task_id),
-                'output_count': len(task.outputs),
-                'completion_evidence_retained': bool(task.fields.get('Completion evidence', '').strip()),
-            }
-        )
+    reconstructed_task_ids = _reconstructed_task_ids([task.task_id for task in task_list])
+    records = [
+        {
+            'task_id': task_id,
+            'taskboard_status': tasks[task_id].status,
+            'supervisor_status': task_statuses.get(task_id),
+            'output_count': len(tasks[task_id].outputs),
+            'completion_evidence_retained': bool(
+                tasks[task_id].fields.get('Completion evidence', '').strip()
+            ),
+        }
+        for task_id in reconstructed_task_ids
+    ]
     status_counts = dict(sorted(Counter(task.status for task in task_list).items()))
     incomplete_production = [
         task_id for task_id in PRODUCTION_BLOCKER_TASK_IDS if tasks[task_id].status != 'completed'
     ]
-    selectable = list(state.get('selectable_ready_task_ids') or state.get('ready_task_ids') or [])
+    selectable = list(
+        state.get('selectable_ready_task_ids') or state.get('ready_task_ids') or []
+    )
     return {
         'schema_version': 'cxtp-taskboard-state-reconciliation/v1',
         'task_id': 'PORTAL-CXTP-143',
@@ -92,7 +113,7 @@ def build(repo_root: Path) -> dict[str, Any]:
             'taskboard_only_task_ids': sorted(board_ids - state_ids),
             'unknown_supervisor_state_ids_rejected_by': 'SUPERVISOR_STATE_UNKNOWN_TASK_ID',
         },
-        'reconstructed_task_ids': RECONSTRUCTED_TASK_IDS,
+        'reconstructed_task_ids': reconstructed_task_ids,
         'completed_evidence_preserved_task_ids': COMPLETED_EVIDENCE_TASK_IDS,
         'durable_task_records': records,
         'next_selectable_task_ids': selectable,

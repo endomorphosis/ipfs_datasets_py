@@ -6,8 +6,13 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_protocol_projection import (
     PROTOCOL_REPORT_PATH,
@@ -17,7 +22,6 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_protoc
 )
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
 CORPUS_DIR = REPO_ROOT / 'security_ir_artifacts' / 'corpora' / 'xaman-app'
 MODEL_PATH = CORPUS_DIR / 'security-model-ir.json'
 MODEL_CID_PATH = CORPUS_DIR / 'security-model-ir.cid'
@@ -59,7 +63,7 @@ def main() -> int:
         model_cid=MODEL_CID_PATH.read_text(encoding='utf-8').strip(),
         lifecycle_facts=_load_json(LIFECYCLE_FACTS_PATH),
         wallet_auth_facts=_load_json(WALLET_AUTH_FACTS_PATH),
-        tamarin_source=tamarin_path.read_text(encoding='utf-8').rstrip('\n'),
+        tamarin_source=tamarin_path.read_text(encoding='utf-8'),
         tamarin_executable=tamarin_executable,
         tamarin_version=_solver_version(tamarin_executable, ['--version']),
         proverif_executable=proverif_executable,

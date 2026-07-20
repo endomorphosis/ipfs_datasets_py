@@ -73,13 +73,7 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
 
 
 def build_public_source_refresh(repo_root: Path) -> dict[str, Any]:
-    """Validate and return the frozen public-source refresh evidence package.
-
-    The package intentionally retains a fixed, reviewed snapshot of upstream
-    state rather than silently repinning the proof corpus during an assessment
-    run.  Validate its content address and the immutable source/coverage
-    anchors before allowing the assessment to consume it.
-    """
+    """Validate and return the frozen public-source refresh evidence package."""
 
     refresh = _load_json(repo_root, PUBLIC_SOURCE_REFRESH_PATH)
     artifact_cid = str(refresh.pop('artifact_cid', ''))
@@ -279,10 +273,14 @@ def _solver_coverage_gaps(
 ) -> list[dict[str, Any]]:
     protocol_blockers = protocol_payload.get('blockers', [])
     protocol_missing = protocol_blockers[0].get('missing', []) if protocol_blockers else []
+    protocol_missing = list(protocol_missing)
+    if not protocol_missing and protocol_payload.get('overall_status') == 'blocked_optional_lane':
+        protocol_missing.extend(['tamarin-prover', 'proverif'])
     coq_payload = proof_consumer_payload.get('coq', {})
     coq_missing = coq_payload.get('missing_executables', [])
     if not coq_missing and coq_payload.get('status') == 'unavailable':
         coq_missing = ['coqc']
+    tla_checked = tla_payload.get('overall_status') == 'checked_bounded_model_only'
     return [
         {
             'lane': 'smt_z3_cvc5',
@@ -301,8 +299,15 @@ def _solver_coverage_gaps(
             'security_decision': tla_payload.get('security_decision'),
             'covered_claim_ids': tla_payload.get('covered_claim_ids', []),
             'missing': tla_payload.get('apalache', {}).get('missing_executables', []),
-            'coverage_gap': 'Apalache executable is unavailable, so TLA invariants have not been model checked.',
-            'public_source_result': 'solver_lane_missing',
+            'coverage_gap': (
+                'Apalache checked the bounded TLA invariants; this remains bounded model evidence, '
+                'not a proof of deployed runtime or production safety.'
+                if tla_checked
+                else 'Apalache executable is unavailable, so TLA invariants have not been model checked.'
+            ),
+            'public_source_result': (
+                'solver_lane_checked_bounded_only' if tla_checked else 'solver_lane_missing'
+            ),
         },
         {
             'lane': 'protocol_tamarin_proverif',

@@ -178,7 +178,10 @@ def test_coq_opam_fallback_uses_isolated_user_local_root(monkeypatch, tmp_path: 
             bin_dir.mkdir(parents=True, exist_ok=True)
             for name in ("coqc", "coqtop"):
                 executable = bin_dir / name
-                executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+                executable.write_text(
+                    "#!/bin/sh\necho 'The Rocq Prover, version 9.1.1'\n",
+                    encoding="utf-8",
+                )
                 executable.chmod(0o755)
         return 0
 
@@ -191,6 +194,68 @@ def test_coq_opam_fallback_uses_isolated_user_local_root(monkeypatch, tmp_path: 
     assert (root / "bin" / "coqc").is_file()
     assert any(command[1:3] == ["init", "--bare"] for command in commands)
     assert any(command[1:3] == ["install", "rocq-prover"] for command in commands)
+
+
+def test_existing_tamarin_requires_its_maude_runtime_validation(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    events: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        prover_installer,
+        "_which",
+        lambda name: "/fixture/tamarin-prover" if name == "tamarin-prover" else "/fixture/maude" if name == "maude" else None,
+    )
+    monkeypatch.setattr(prover_installer, "ensure_maude", lambda **_kwargs: True)
+    monkeypatch.setattr(prover_installer, "_tamarin_accepts_maude", lambda *_args: False)
+
+    assert not prover_installer.ensure_tamarin(
+        yes=False,
+        strict=True,
+        on_progress=lambda phase, message: events.append((phase, message)),
+    )
+    assert events[-1][0] == "failed"
+    assert "runtime validation" in events[-1][1]
+
+
+def test_proverif_bootstraps_an_isolated_opam_ocaml_toolchain(monkeypatch, tmp_path: Path) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    switch = "test-proverif"
+    commands: list[list[str]] = []
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    monkeypatch.setenv("IPFS_DATASETS_PY_PROVERIF_OPAM_SWITCH", switch)
+
+    def fake_which(name: str) -> str | None:
+        if name == "opam":
+            return "/fixture/opam"
+        return None
+
+    def fake_run(command, *, check, env=None, cwd=None) -> int:
+        commands.append(list(command))
+        if command[1:3] == ["switch", "create"]:
+            bin_dir = root / "opam" / switch / "bin"
+            bin_dir.mkdir(parents=True, exist_ok=True)
+            for name in ("ocamlopt", "ocamlyacc", "ocamllex"):
+                executable = bin_dir / name
+                executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+                executable.chmod(0o755)
+        return 0
+
+    monkeypatch.setattr(prover_installer, "_which", fake_which)
+    monkeypatch.setattr(prover_installer, "_run", fake_run)
+
+    environment = prover_installer._proverif_build_environment(
+        allow_sudo=False,
+        strict=True,
+        on_progress=None,
+        force=False,
+    )
+
+    assert environment is not None
+    assert environment["OPAMSWITCH"] == switch
+    assert environment["PATH"].split(":")[0] == str(root / "opam" / switch / "bin")
+    assert any(command[1:3] == ["switch", "create"] for command in commands)
 
 
 def test_manual_update_forces_only_the_selected_solver(monkeypatch) -> None:

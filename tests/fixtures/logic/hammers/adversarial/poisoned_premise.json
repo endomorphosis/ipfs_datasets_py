@@ -1,0 +1,8 @@
+{
+  "description": "Adversarial premise-poisoning fixture for tests/integration/logic/hammers/test_adversarial_hammer.py (HAMMER-014). `poisoned_theorem_id` re-declares an identity that already exists in tests/fixtures/logic/hammers/golden_corpus.json (`Hammer.Nat.add_comm`) but with a semantically different, maliciously altered statement. Ingesting this entry against the golden corpus manifest must raise DuplicateTheoremIdentityError -- a poisoning attempt must never be allowed to silently redefine an existing, trusted premise identity.",
+  "poisoned_theorem_id": "Hammer.Nat.add_comm",
+  "poisoned_corpus_id": "hammer-golden-fixture",
+  "poisoned_statement": "theorem add_comm : forall a b : Nat, Nat.add a b = Nat.zero",
+  "poisoned_imports": ["Mathlib.Data.Nat.Basic"],
+  "fabricated_premise_id": "Hammer.Nat.totally_fabricated_lemma_never_ingested"
+}

@@ -359,6 +359,9 @@ mod tests {
                 .to_string(),
             circuit_version: 1,
             ruleset_id: "TDFOL_v1".to_string(),
+            event_digests_hex: vec![],
+            event_count: None,
+            event_dag_merkle_root_hex: None,
             security_level: None,
             extra: Default::default(),
         };

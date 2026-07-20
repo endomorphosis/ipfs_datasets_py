@@ -30,6 +30,19 @@ production release safety.
 - `network`: `MODELED_WITH_BLOCKING_RUNTIME_ASSUMPTIONS` - Signing rejects unsupported transaction types for current network definitions and writes NetworkID only for non-legacy network IDs greater than 1024.
 - `canonicalization`: `EXPLICITLY_REJECTED_FOR_FULL_XRPL_BINARY_PROOF` - Amount and memo normalization are modeled, but XRPL binary canonicalization and the vault-produced signed blob are not proved by the public TypeScript evidence.
 
+## Proof Coverage Gate
+
+`PORTAL-CXTP-146` records the deterministic coverage decision in
+`security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json`.
+It covers the reviewed `payment`, `issued_currency`, `destination_tag`, `fee`,
+`sequence`, `memo`, `network`, and field-preservation paths, while
+`TrustSet`, `OfferCreate`, `SignerListSet`, and `multisign` validation remain
+explicitly rejected for proof. `canonicalization` is likewise rejected for a
+full XRPL binary proof. The required policy is
+`RECORD_GAP_OR_COUNTEREXAMPLE_NEVER_PROOF`: an unsupported transaction type
+can produce a coverage gap or counterexample, but can never promote a security
+claim.
+
 ## Validation
 
 ```bash

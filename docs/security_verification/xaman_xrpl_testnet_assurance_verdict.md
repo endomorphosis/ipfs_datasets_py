@@ -9,18 +9,18 @@ This is not a production-security result. It covers only the reviewed XRPL Testn
 ## Bound Artifacts
 
 - Bundle: `security_ir_artifacts/corpora/xaman-app/testnet/assurance-bundle.json`
-- Bundle CID: `bafkreidstcp4wwsnzjbb3y2bplhtpkvn5ivpoclq23zn4a4oa57pascamm`
+- Bundle CID: `bafkreielylyvjq4er5ettt6cxty6rwa6fgbthk6pry3xs7hx2wrxo6bx3i`
 - Verdict: `security_ir_artifacts/corpora/xaman-app/testnet/assurance-verdict.json`
-- Verdict CID: `bafkreihqhyoavkcefrlwwdal3qph4wxmyk4ld2wptohltre2luz36dhakq`
+- Verdict CID: `bafkreidvknhvytdj7pla4nbczfe64xv2qw4x2b35mnnrljcydw6sz7hjhu`
 - Model CID: `sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43`
 
 ## Basis
 
 - SMT Z3/CVC5: `BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES` with `12` counterexample classifications.
 - Apalache: `BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS` with `2` unresolved required assumptions.
-- Protocol lane: `BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE`; blockers are `PROVERIF_MODEL_MISSING, TAMARIN_CHECK_NOT_RUN`.
+- Protocol lane: `BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS`; blockers are ``.
 - Lean: `LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY` for formalized invariants only.
-- Coq: `BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING`.
+- Coq: `COQ_INDEPENDENT_KERNEL_CHECKED`.
 - Fuzzing: `TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE` with bounded generated coverage.
 
 ## Required Evidence Or Owner Action
@@ -39,9 +39,6 @@ This is not a production-security result. It covers only the reviewed XRPL Testn
 - `release-security` for `xaman-testnet-assumption:deployed-runtime-equivalence-not-proved`: production build provenance; real-device trace bundle; runtime equivalence review Source: `security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json`.
 - `mobile-build-security` for `xaman-testnet-assumption:native-firebase-packaging-boundary`: native Firebase-free APK proof or corrected label Source: `security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json`.
 - `formalization-review` for `xaman-testnet-assumption:source-derived-facts-must-be-reviewed`: reviewed source-to-model trace map for every source-derived fact Source: `security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json`.
-- `protocol-verification`: Add a reviewed ProVerif projection for the Testnet payload protocol.; Run ProVerif with pinned executable/version/digest and attach the accepted report. Source: `security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json`.
-- `protocol-verification`: Run the pinned Tamarin model against an accepted Maude runtime.; Record the command, version, executable digest, and accepted lemma results. Source: `security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json`.
-- `formal-methods`: Provide security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v.; Run coqc and bind the checked independent-kernel artifact to the Testnet model CID. Source: `security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json`.
 
 ## Decision Rule
 

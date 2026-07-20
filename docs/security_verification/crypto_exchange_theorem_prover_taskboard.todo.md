@@ -412,13 +412,13 @@ The following tasks are formatted for the `ipfs_accelerate_py` agent supervisor.
 
 - Status: completed
 - Completion: manual
-- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_optional_solver_installer.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --out security_ir_artifacts/environment/optional-solver-install-report.json
+- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_optional_solver_installer.py tests/unit_tests/logic/external_provers/test_lazy_native_solver_installation.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --out security_ir_artifacts/environment/optional-solver-install-report.json
 - Priority: P1
 - Track: ops
 - Depends on: PORTAL-CXTP-058, PORTAL-CXTP-088
 - Outputs: docs/security_verification/optional_solver_installation.md, scripts/ops/security_verification/install_optional_theorem_solvers.py, security_ir_artifacts/environment/optional-solver-install-report.json, tests/logic/security_models/crypto_exchange/test_optional_solver_installer.py
 - Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_optional_solver_installer.py -q
-- Acceptance: Provide safe install/probe commands for Apalache, Tamarin, ProVerif, Lean, and Coq, record unsupported platforms, and convert missing optional solvers into explicit blocked or degraded proof lanes rather than silent success.
+- Acceptance: Provide a read-only plan plus explicit user-local install/update paths for Z3, CVC5, Apalache, Maude, Tamarin, headless ProVerif, Lean, Rocq, SymbolicAI, and ErgoAI. Pin and checksum native artifacts where supported, bootstrap isolated OPAM toolchains only with explicit permission, validate the Tamarin/Maude runtime pair, stream install stages, record version drift, and convert unavailable or incomplete lanes into explicit blocked or degraded proof gaps.
 
 ## PORTAL-CXTP-087 Wire taskboard integrity into CI and supervisor preflight
 
@@ -974,24 +974,24 @@ and release gates use one canonical board.
 
 - Status: completed
 - Completion: manual
-- Completion evidence: Completed supervisor state retains the protocol artifact, report, documentation, and test.
+- Completion evidence: Tamarin 1.12.0 and ProVerif 2.05 successfully execute the bounded Testnet protocol artifacts; unresolved assumptions and unmodeled semantics remain fail-closed.
 - Priority: P1
 - Track: solver
 - Depends on: PORTAL-CXTP-131
-- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy, security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json, docs/security_verification/xaman_testnet_protocol_verification.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_protocol.py
-- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_protocol.py -q
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy, security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv, security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json, docs/security_verification/xaman_testnet_protocol_verification.md, tests/logic/security_models/crypto_exchange/test_xaman_testnet_protocol.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_xaman_testnet_protocol.py --run-solver; PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_protocol.py -q
 - Acceptance: Restrict protocol conclusions to the symbolic model and report replay, secret, authentication, or backend gaps explicitly.
 
 ## PORTAL-CXTP-136 Check Lean kernel and decide independent Rocq coverage
 
 - Status: completed
 - Completion: manual
-- Completion evidence: Completed supervisor state retains the Lean kernel, report, Rocq coverage decision, and documentation.
+- Completion evidence: Lean compiles and Rocq 9.1.1 checks the independent bounded kernel; production and overall Testnet assurance remain blocked outside this coverage lane.
 - Priority: P1
 - Track: solver
 - Depends on: PORTAL-CXTP-131
-- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean, security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json, security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json, docs/security_verification/xaman_testnet_kernel_proofs.md
-- Validation: test -f security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean, security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v, security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json, security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json, docs/security_verification/xaman_testnet_kernel_proofs.md
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_xaman_testnet_kernel_proofs.py --repo-root .; PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_testnet_kernel_proofs.py -q
 - Acceptance: Accept only kernel-checked modeled invariants and preserve independent-kernel requirements as coverage gates.
 
 ## PORTAL-CXTP-137 Govern Leanstral-assisted proof suggestions
@@ -1211,32 +1211,374 @@ Execution sequence:
 - Completion: manual
 - Priority: P0
 - Track: governance
-- Blocked reason: Requires XRPL Labs-authorized release provenance, native vault and biometric documentation, backend payload-service evidence, XRPL/RPC trust assumptions, accountable owners, and responsible-disclosure approval.
+- Blocked reason: PORTAL-CXTP-153 currently has review artifacts but the review decision is `needs_clarification`; requires XRPL Labs-authorized release provenance, native vault and biometric documentation, backend payload-service evidence, XRPL/RPC trust assumptions, accountable owners, and responsible-disclosure approval before `review_accepted_for_gap_clearance` can be true.
 - Depends on: PORTAL-CXTP-152
-- Outputs: security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json, docs/security_verification/xaman_vendor_evidence_review.md
+- Outputs: security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review-template.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review-verification.json, docs/security_verification/xaman_vendor_evidence_review.md
 - Validation: test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json; test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json; test -f docs/security_verification/xaman_vendor_evidence_review.md
 - Acceptance: Permit vendor-release assurance work only after authorized, redacted, current, reviewed evidence binds every native, backend, build, and XRPL/RPC assumption to an accountable owner; otherwise preserve the public-source/Testnet non-secure boundary.
 
-## PORTAL-CXTP-154 Hydrate and parse the pinned public Xaman source checkout
+## PORTAL-CXTP-154 Prepare a verifier-only Xaman self-hosted endpoint-rebind candidate
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/endpoint-rebound-candidate.json` has CID `sha256:8ecdf83286a89d1b5d4862200ba5dab3c8ba85e6e6310e80ef1e6cbf1d8b9e88` and a separate source candidate was materialized from public commit `942f43876265a7af44f233288ad2b1d00841d5fa`.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-143, PORTAL-CXTP-144
+- Outputs: scripts/ops/security_verification/prepare_xaman_self_hosted_endpoint_rebind.py, tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_endpoint_rebind.py, docs/security_verification/xaman_self_hosted_endpoint_rebind_candidate.md, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/endpoint-rebound-candidate.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_endpoint_rebind.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/prepare_xaman_self_hosted_endpoint_rebind.py --source-root /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app
+- Acceptance: Verify the frozen public source checkout, create an external verifier-only candidate, replace vendor/public API and ledger routes with local bridge roles, reject a non-local network ID before connection, remove Android vendor-host fallback, and record exact source/candidate file digests. This task must not claim runtime execution, vendor-release equivalence, or wallet security.
+
+## PORTAL-CXTP-155 Provision and verify an isolated self-hosted XRPL bridge
+
+- Status: completed
+- Completion: automated plus reviewed configuration
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/daemon-health.json` has CID `sha256:5d7fdd061bfa121e1028b755b49548afa1c320f4e706f2345b05e7aaedc6d36b`; `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/bridge-isolation-report.json` has CID `sha256:f4c6b70f93ec8821896a001fc94b6d8448f715968cbd9a94e36277212998a04d`. The captured retained run checks standalone network ID `777777`, loopback-only exposure, and denied public egress. It is not an independent review or a wallet-security result.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-154
+- Outputs: scripts/ops/security_verification/provision_xaman_self_hosted_testnet.py, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/daemon-health.json, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/bridge-isolation-report.json, docs/security_verification/xaman_self_hosted_testnet_prerequisites.md
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_testnet_provisioner.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/provision_xaman_self_hosted_testnet.py --out-health /tmp/xaman-self-hosted-dry-run-health.json --out-isolation /tmp/xaman-self-hosted-dry-run-isolation.json
+- Acceptance: Pin the `rippled` image by digest; isolate the daemon and bridge in a Docker network; expose only reviewed host-loopback listeners for an emulator; deny public egress and public Testnet/vendor endpoints; record categorical health and cleanup evidence without seeds, addresses, transaction blobs, raw RPC responses, or endpoints.
+
+## PORTAL-CXTP-156 Independently review the endpoint-rebound candidate and bridge isolation
+
+- Status: completed
+- Completion: manual
+- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_review.py -q
+- Priority: P0
+- Track: review
+- Depends on: PORTAL-CXTP-154, PORTAL-CXTP-155
+- Outputs: security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/endpoint-rebind-review.json
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/endpoint-rebind-review.json
+- Acceptance: The signed review must bind the pinned source commit, candidate manifest CID, daemon/bridge configuration digest, reviewer identity, scope, expiry, and an explicit pass/fail result. It must reject unreviewed external egress, vendor fallback, non-local network selection, or claims of vendor equivalence.
+
+## PORTAL-CXTP-157 Capture a redacted self-hosted Xaman runtime-conformance trace
+
+- Status: completed
+- Completion: automated plus reviewed trace
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-trace-review.json` has CID `bafkreigyua5yjzvcuq5ajzzuw4agxzvauey666tqx6nvs5i3n2tex5cpwa`; `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-conformance-report.json` has CID `bafkreic3olc6u2lwlxywbn6wxoiochfzjnkeje54sd2mzs3pdj5uz5wz2a`
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-119, PORTAL-CXTP-120, PORTAL-CXTP-150, PORTAL-CXTP-155, PORTAL-CXTP-156, PORTAL-CXTP-158, PORTAL-CXTP-159, PORTAL-CXTP-160, PORTAL-CXTP-161
+- Outputs: security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-trace-review.json, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-conformance-report.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_runtime_trace.py -q
+- Acceptance: Bind a fresh debug-emulator build to the reviewed candidate and local network, then capture only redacted categories for onboarding, local network selection, review, signature decision, submit result, cancellation, expiry, replay, reconnect, and network change. Runtime evidence remains public-source/verifier-only and cannot promote a vendor-release or production assurance claim.
+
+## PORTAL-CXTP-158 Prepare a fail-closed self-hosted runtime-trace contract
+
+- Status: completed
+- Completion: automated
+- Completion evidence: The non-evidence template at `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-trace-template.json` declares `NOT_RUNTIME_EVIDENCE`; the validator and focused tests reject missing lifecycle categories, expired review, vendor-equivalence scope, or raw sensitive material.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-154, PORTAL-CXTP-155
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_self_hosted_runtime_trace.py, scripts/ops/security_verification/validate_xaman_self_hosted_runtime_trace.py, tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_runtime_trace.py, docs/security_verification/xaman_self_hosted_runtime_trace_contract.md, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/runtime-trace-template.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_runtime_trace.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/validate_xaman_self_hosted_runtime_trace.py --write-template
+- Acceptance: Require an unexpired independent bridge review and exactly one redacted category for onboarding, local network selection, review, signature decision, submit result, cancellation, expiry, replay, reconnect, and network change. Reject secrets, account identifiers, payloads, transaction blobs, credentials, raw endpoints, raw bodies, vendor fallback, production equivalence, and missing evidence. This task creates no runtime trace and makes no security claim.
+
+## PORTAL-CXTP-159 Check conditional local resolver semantics with Tamarin and ProVerif
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/resolution-protocol-report.json` records passing Tamarin and ProVerif runs with decision `SELF_HOSTED_RESOLUTION_MODEL_CHECKED_CONDITIONALLY` and retains `production_release_blocked: true`.
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-155
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_self_hosted_resolution_protocol.py, scripts/ops/security_verification/generate_xaman_self_hosted_resolution_protocol.py, tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_resolution_protocol.py, docs/security_verification/xaman_self_hosted_resolution_protocol.md, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/xaman_self_hosted_resolution.spthy, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/xaman_self_hosted_resolution.pv, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/protocol/resolution-protocol-report.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_resolution_protocol.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_xaman_self_hosted_resolution_protocol.py --run-solver
+- Acceptance: Tamarin must prove at-most-one local submit, cancellation and expiry exclusion of later submit, and replay-after-submit blocking; ProVerif must independently check terminal-event causality. The model applies only to the reviewed local resolver and must preserve the vendor backend, vendor release, and production wallet assumptions as unresolved.
+
+## PORTAL-CXTP-160 Prepare a content-addressed independent-review packet
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/independent-review-packet.json` has CID `bafkreibg3zvjoh5fzuns2dvu2v26ugnb4yoleenix6wlvu5vp36iji36ku` and remains `PENDING_INDEPENDENT_REVIEW`; its companion template is explicitly non-review evidence.
+- Priority: P0
+- Track: review
+- Depends on: PORTAL-CXTP-154, PORTAL-CXTP-155
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_self_hosted_review.py, scripts/ops/security_verification/build_xaman_self_hosted_review_packet.py, tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_review.py, docs/security_verification/xaman_self_hosted_independent_review.md, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/independent-review-packet.json, security_ir_artifacts/corpora/xaman-app/self-hosted-testnet/independent-review-template.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_review.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/build_xaman_self_hosted_review_packet.py --write-template
+- Acceptance: Bind only the candidate, daemon-health, and bridge-isolation CIDs plus categorical local controls. Require a separate reviewer, unexpired decision, six mandatory control checks, digest-only notes, and verifier-only scope. The packet must not create a review decision, authorize runtime capture, or make a wallet-security claim.
+
+## PORTAL-CXTP-161 Validate independent endpoint-rebind review decisions fail-closed
+
+- Status: completed
+- Completion: automated
+- Completion evidence: The review validator is tested to reject an unbound packet, non-independent reviewer attestation, failed mandatory check, or production-scope escalation. A valid review can only emit `ALLOW_VERIFIER_ONLY_RUNTIME_CAPTURE` and still retains `production_release_blocked: true`.
+- Priority: P0
+- Track: review
+- Depends on: PORTAL-CXTP-160
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_self_hosted_review.py, scripts/ops/security_verification/build_xaman_self_hosted_review_packet.py, tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_review.py, docs/security_verification/xaman_self_hosted_independent_review.md
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_self_hosted_review.py -q
+- Acceptance: Reject a missing, expired, unbound, unsafe, non-independent, failed, or production-scoped decision. A valid reviewer pass may authorize only the verifier-only redacted runtime capture; it must not clear vendor backend, vendor release, or production security assumptions.
+
+## PORTAL-CXTP-162 Assess public native-vault source and check rekey recovery invariants
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/native-vault-public-source-assessment.json` has CID `bafkreiacnwrbg7o7t5rbff4qjvonwgiwxy3et567wrhrzw6virnjyyr2qe`; both Z3 4.16.0 and CVC5 1.3.2 return `unsat`, `unsat`, and `sat` for the bounded successful-rekey, recovery-preservation, and expected-partial-state queries.
+- Priority: P0
+- Track: solver
+- Depends on: PORTAL-CXTP-144, PORTAL-CXTP-145
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_native_vault_assessment.py, scripts/ops/security_verification/build_xaman_native_vault_assessment.py, tests/logic/security_models/crypto_exchange/test_xaman_native_vault_assessment.py, docs/security_verification/xaman_native_vault_public_source_assessment.md, security_ir_artifacts/corpora/xaman-app/native-vault-public-source-assessment.json, security_ir_artifacts/corpora/xaman-app/native-vault/rekey-recovery.smt2
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_native_vault_assessment.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/build_xaman_native_vault_assessment.py --source-root /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app
+- Acceptance: Bind public Android, iOS, and TypeScript vault sources to the pinned manifest; use independent Z3/CVC5 checks for a source-derived rekey ordering model; record the recovery-only failure state as a runtime test obligation, not as a confirmed vulnerability; retain all OS, firmware, release, and production assumptions as blocking.
+
+## PORTAL-CXTP-163 Fault-inject public native-vault rekey transitions on Android and iOS
+
+- Status: completed
+- Completion: reviewed runtime evidence
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-156, PORTAL-CXTP-162, PORTAL-CXTP-165, PORTAL-CXTP-166, PORTAL-CXTP-167, PORTAL-CXTP-168
+- Outputs: security_ir_artifacts/corpora/xaman-app/runtime/native-vault-rekey-fault-injection-report.json, docs/security_verification/xaman_native_vault_rekey_fault_injection.md
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/runtime/native-vault-rekey-fault-injection-report.json` has CID `bafkreihasfexicx3zvfabm3bbs5hcr5saxd233ij43r44fcehjrdog7ekq`; `docs/security_verification/xaman_native_vault_rekey_fault_injection.md`
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/runtime/native-vault-rekey-fault-injection-report.json; test -f docs/security_verification/xaman_native_vault_rekey_fault_injection.md
+- Acceptance: On a reviewed verifier-only Android emulator and an iOS XCTest-capable host, inject both replacement-write failure after primary-vault deletion and recovery-cleanup failure after replacement creation. Cover twelve cases: Android/iOS single rekey plus first- and later-vault batch positions for both fault phases. For replacement failure verify recovery-only behavior, and for cleanup failure verify a rejected operation with a new-key primary plus old-key recovery. Do not retain passcodes, keys, account material, payloads, transaction blobs, or raw endpoints. This must not claim vendor-release or production equivalence.
+
+## PORTAL-CXTP-164 Triage disproof and fuzz outputs by source support and evidence owner
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/counterexample-triage.json` has CID `bafkreig66sstrnk3it7c3vtnmcwoy6fsigiw4d7kkc6f3a2z7r52ckw3x4`; all 37 retained entries, including three source-bounded native-vault runtime obligations, are classified without a confirmed-vulnerability label.
+- Priority: P0
+- Track: disproof
+- Depends on: PORTAL-CXTP-146, PORTAL-CXTP-148, PORTAL-CXTP-167
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_counterexample_triage.py, scripts/ops/security_verification/build_xaman_counterexample_triage.py, tests/logic/security_models/crypto_exchange/test_xaman_counterexample_triage.py, docs/security_verification/xaman_counterexample_triage.md, security_ir_artifacts/corpora/xaman-app/counterexample-triage.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_counterexample_triage.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/build_xaman_counterexample_triage.py
+- Acceptance: Classify every retained result as a source-supported coverage gap, source-bounded runtime test obligation, model mutation, proof-consumer control test, unmodeled runtime/backend semantic, or external-evidence requirement; preserve fail-closed handling and require unmodified-runtime reproduction before any product-defect claim.
+
+## PORTAL-CXTP-165 Prepare redacted native-vault fault-injection evidence contract
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/native-vault/fault-injection-plan.json` has CID `bafkreidnoaul3gxidib5pchyq4qkwebkv3uiec4l5lbbojypvp3rqmp3ri`; its companion template explicitly declares `NOT_RUNTIME_EVIDENCE`. The validator rejects an absent Android/iOS single or first/later-batch case for either replacement-write or recovery-cleanup failure, an unapproved or expired review, a scope escalation, raw sensitive material, and an invalid content identifier.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-162, PORTAL-CXTP-167
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_native_vault_fault_injection.py, scripts/ops/security_verification/prepare_xaman_native_vault_fault_injection.py, tests/logic/security_models/crypto_exchange/test_xaman_native_vault_fault_injection.py, docs/security_verification/xaman_native_vault_rekey_fault_injection.md, security_ir_artifacts/corpora/xaman-app/native-vault/fault-injection-plan.json, security_ir_artifacts/corpora/xaman-app/runtime/native-vault-rekey-fault-injection-template.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_native_vault_fault_injection.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/prepare_xaman_native_vault_fault_injection.py
+- Acceptance: Bind Android and iOS replacement-write and recovery-cleanup injection points to the pinned source assessment; require twelve single and first/later-batch rekey cases for both platforms and both fault phases; reject raw passcodes, keys, account material, payloads, transaction blobs, credentials, endpoints, and logs; require a valid independent verifier-only capture decision. This task only prepares a contract and cannot create runtime, vendor-release, or production security evidence.
+
+## PORTAL-CXTP-166 Verify Android host readiness for native-vault fault injection
+
+- Status: completed
+- Completion: automated host preflight
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/runtime/native-vault-android-host-preflight.json` has CID `bafkreigtyz64cpjzyarknmbzmst2cdsvng6ps3hscwajoy7pypgq6gkgxi` and records executable command-line tools 19.0, ADB 37.0.0, emulator 36.6.11, and the redacted API-34/x86_64/google-APIs AVD configuration. It did not boot an emulator, build Xaman, or capture a wallet trace.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-165
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_native_vault_android_preflight.py, scripts/ops/security_verification/probe_xaman_native_vault_android_host.py, tests/logic/security_models/crypto_exchange/test_xaman_native_vault_android_preflight.py, docs/security_verification/xaman_native_vault_android_host_preflight.md, security_ir_artifacts/corpora/xaman-app/runtime/native-vault-android-host-preflight.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_native_vault_android_preflight.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_xaman_native_vault_android_host.py --android-sdk /home/barberb/lift_coding/.tools/android-sdk --java-home /home/barberb/.local/jdks/jdk-17.0.18+8
+- Acceptance: Verify only that explicit Android command-line tools, ADB, emulator, and the API-34 verifier AVD are present and mutually discoverable; redact host paths; do not boot the emulator, build the wallet, mutate source, capture runtime evidence, or create a vendor-release or production claim. Preserve the independent review and iOS XCTest host as blockers.
+
+## PORTAL-CXTP-167 Exhaustively state-fuzz native-vault rekey fault boundaries
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json` has CID `bafkreieaqpjiyuhsejag2vf6zfysh3l4rjws6gpuv5rnmlgbu34wdyifa4`; the source-bound campaign enumerates 14 single/two-vault phase/index cases using the source's per-vault purge/replacement batch order, and Z3 4.16.0 plus CVC5 1.3.2 independently return the expected `unsat`, `unsat`, `unsat`, and `sat` results. The SAT cleanup witness is recorded only as a runtime test obligation.
+- Priority: P0
+- Track: fuzz
+- Depends on: PORTAL-CXTP-162
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_native_vault_state_fuzz.py, scripts/ops/security_verification/build_xaman_native_vault_state_fuzz.py, tests/logic/security_models/crypto_exchange/test_xaman_native_vault_state_fuzz.py, docs/security_verification/xaman_native_vault_state_fuzz.md, security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json, security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz.smt2
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_native_vault_state_fuzz.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/build_xaman_native_vault_state_fuzz.py --source-root /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app
+- Acceptance: Bind Android, iOS, TypeScript bridge, caller rollback, and batch-loop order markers to the pinned source manifest; exhaustively enumerate the bounded single/two-vault phase/index fault space; independently check the state predicates with Z3 and CVC5; classify replacement-write and recovery-cleanup outcomes as source-bounded runtime test obligations; do not make a product-defect, vendor-release, or production-security claim.
+
+## PORTAL-CXTP-168 Verify iOS/XCTest host readiness for native-vault fault injection
+
+- Status: completed
+- Completion: automated host preflight
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/runtime/native-vault-ios-host-preflight.json` has CID `bafkreidqehalti65voyeqt34fmvmjt45o666fhv7sjldqulrrmqf65j5nu` and reports `IOS_NATIVE_VAULT_HOST_PREPARED_BLOCKED_NON_DARWIN`.
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-165, PORTAL-CXTP-167
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_native_vault_ios_preflight.py, scripts/ops/security_verification/probe_xaman_native_vault_ios_host.py, tests/logic/security_models/crypto_exchange/test_xaman_native_vault_ios_preflight.py, docs/security_verification/xaman_native_vault_ios_host_preflight.md, security_ir_artifacts/corpora/xaman-app/runtime/native-vault-ios-host-preflight.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_native_vault_ios_preflight.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/probe_xaman_native_vault_ios_host.py --source-root /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app
+- Acceptance: Verify only that a Darwin/Xcode host has executable `xcodebuild`, `xcrun`, and resolved `simctl`; that at least one simulator is available; that an iOS runtime is listed; that the source is checked against the pinned commit and clean checkout; and that native iOS vault test/source markers remain intact. Redact host paths, do not start simulators, do not build Xaman, do not capture runtime traces, and do not create production-equivalent claims. Preserve independent review (`PORTAL-CXTP-156`) and reviewed Android/iOS runtime execution as explicit blockers.
+
+## PORTAL-CXTP-169 Add a deterministic iOS preflight blocker artifact mode for non-Darwin environments
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/runtime/native-vault-ios-host-preflight-blocker.json`
+- Priority: P0
+- Track: runtime
+- Depends on: PORTAL-CXTP-165
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_native_vault_ios_preflight.py, scripts/ops/security_verification/probe_xaman_native_vault_ios_host.py, docs/security_verification/xaman_native_vault_ios_host_preflight.md, security_ir_artifacts/corpora/xaman-app/runtime/native-vault-ios-host-preflight-blocker.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_native_vault_ios_preflight.py::test_probe_reports_darwin_requirement -q
+- Acceptance: On non-Darwin supervisors, emit an explicit, content-addressed `BLOCKED_NON_DARWIN` preflight evidence record with full redaction and blocker reasons (`xcodebuild/xcrun/simctl unavailable` and `requires_darwin_host`) so dependency orchestration does not hang; on Darwin, continue to run the full executable checks from PORTAL-CXTP-168.
+
+## PORTAL-CXTP-170 Prioritize proof-lane gap remediation from counterexample and fuzz classification
+
+- Status: completed
+- Completion: automated
+- Completion evidence: `security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json`
+- Priority: P0
+- Track: disproof
+- Depends on: PORTAL-CXTP-146, PORTAL-CXTP-148, PORTAL-CXTP-164
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_counterexample_triage.py, scripts/ops/security_verification/plan_gap_remediation_from_triage.py, security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json, docs/security_verification/xaman_gap_remediation_plan.md
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_counterexample_triage.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/plan_gap_remediation_from_triage.py
+- Acceptance: Produce a ranked list (source-supported vs. external-evidence vs. runtime-obligation) that links `OfferCreate`, `SignerListSet`, `TrustSet`, and `multisign` support gaps to exact claims and required next tasks, and preserve fail-closed interpretation for all `UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS` and `EXTERNAL_EVIDENCE_REQUIRED` classes.
+
+## PORTAL-CXTP-171 Remediate ErgoAI executable discovery and launcher compatibility
+
+- Status: completed
+- Completion: manual
+- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --out security_ir_artifacts/environment/optional-solver-install-report.json; `security_ir_artifacts/environment/optional-solver-install-report.json`
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-086
+- Outputs: scripts/ops/security_verification/install_optional_theorem_solvers.py, ipfs_datasets_py/logic/integration/bridges/prover_installer.py, tests/unit_tests/logic/external_provers/test_lazy_native_solver_installation.py, tests/unit/logic/test_flogic_integration.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_optional_solver_installer.py tests/unit_tests/logic/external_provers/test_lazy_native_solver_installation.py tests/unit/logic/test_flogic_integration.py -q
+- Acceptance: Resolve managed path and PATH alias mismatches so optional-lane probing does not falsely block on installed ErgoAI, while keeping unconfigured PATH-only `runergo`/`runErgo.sh` artifacts from being treated as usable.
+
+## PORTAL-CXTP-172 Execute prioritized proof lanes and fuzz gaps from remediation matrix
+
+- Status: completed
+- Priority: P1
+- Track: disproof
+- Depends on: PORTAL-CXTP-170, PORTAL-CXTP-171
+- Outputs: scripts/ops/security_verification/run_gap_remediation_workflow.py, docs/security_verification/xaman_gap_remediation_plan.md, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json
+- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_counterexample_triage.py tests/logic/security_models/crypto_exchange/test_xaman_disproof_vectors.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/run_xaman_testnet_fuzzing.py --manifest security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/run_gap_remediation_workflow.py --matrix security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json --counterexample-report security_ir_artifacts/corpora/xaman-app/counterexample-report.json --fuzz-report security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json --fuzz-counterexample-manifest security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json --native-vault-state-fuzz security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json --out security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json
+- Refreshed evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_vendor_evidence.py tests/logic/security_models/crypto_exchange/test_xaman_counterexample_triage.py tests/logic/security_models/crypto_exchange/test_xaman_testnet_solver_portfolio.py tests/logic/security_models/crypto_exchange/test_xaman_testnet_fuzzing.py tests/logic/security_models/crypto_exchange/test_xaman_testnet_adversarial_fuzzing.py tests/logic/security_models/crypto_exchange/test_xaman_testnet_kernel_proofs.py tests/logic/security_models/crypto_exchange/test_xaman_testnet_protocol.py -q; regenerated fuzz report CID `bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m`, campaign manifest CID `bafkreigkeou4xkg25hidftiynajigmy46kk53kwtvv6von4hgbwj4trgiu`, and solver portfolio report CID `bafkreihg2uxqmq3gg7fs3rff25efn3rfzjznyda6j4upybtdjzkdzd4d74`.
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_counterexample_triage.py tests/logic/security_models/crypto_exchange/test_xaman_disproof_vectors.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/run_xaman_testnet_fuzzing.py --manifest security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json
+- Blocked reason: Execution currently emits a residual manifest with `ready_count = 35` and `blocked_count = 2`; remaining blocker class is `EXTERNAL_EVIDENCE_REQUIRED` (2). The blocked entries are `xaman-disproof:backend-double-use` for `xaman-claim:backend-payload-service-is-trusted-not-proved` and `xaman-disproof:runtime-equivalence-missing` for `xaman-claim:runtime-equivalence-is-blocked-without-device-traces`. Runtime-obligation blockers have been cleared by self-hosted runtime evidence and host preflight evidence for task sequence `PORTAL-CXTP-157` / `PORTAL-CXTP-163` / `PORTAL-CXTP-168`, while blocked entries now require explicit vendor evidence `PORTAL-CXTP-153`.
+- Acceptance: Expand the remediation workflow to execute only the non-blocked source-bounded proof lanes and fuzz/counterexample campaigns required by the ranked matrix, generate a unified residual-gap manifest for every unprovable/disputed claim class, and keep fail-closed gates for all unsupported or external-evidence-limited classes.
+
+## PORTAL-CXTP-173 Recompute disproof vectors and counterexample report before each remediation run
+
+- Status: completed
+- Completion: automated
+- Priority: P1
+- Track: disproof
+- Depends on: PORTAL-CXTP-070
+- Outputs: scripts/ops/security_verification/generate_xaman_disproof_vectors.py, security_ir_artifacts/corpora/xaman-app/disproof-vectors.json, security_ir_artifacts/corpora/xaman-app/counterexample-report.json, tests/logic/security_models/crypto_exchange/test_xaman_disproof_vectors.py
+- Completion evidence: /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_xaman_disproof_vectors.py; PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_disproof_vectors.py -q
+- Validation: /home/barberb/miniforge3/bin/python scripts/ops/security_verification/generate_xaman_disproof_vectors.py; PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_disproof_vectors.py -q
+- Acceptance: Keep the disproof/counterexample artifacts synchronized so gap execution does not fail on `counterexample_report_entry_missing`, and retain `blocked_by_missing_evidence` outcomes where external evidence is required.
+
+## PORTAL-CXTP-174 Capture a reconciled residual-gap blocker manifest and blocker-class index
+
+- Status: completed
+- Completion: manual
+- Priority: P1
+- Track: disproof
+- Depends on: PORTAL-CXTP-173, PORTAL-CXTP-171
+- Outputs: scripts/ops/security_verification/run_gap_remediation_workflow.py, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/run-gap-remediation-workflow-output.json, docs/security_verification/xaman_gap_remediation_plan.md
+- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/run_gap_remediation_workflow.py --matrix security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json --counterexample-report security_ir_artifacts/corpora/xaman-app/counterexample-report.json --fuzz-report security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json --fuzz-counterexample-manifest security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json --native-vault-state-fuzz security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json --out security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json
+- Validation: /home/barberb/miniforge3/bin/python scripts/ops/security_verification/run_gap_remediation_workflow.py --matrix security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json --counterexample-report security_ir_artifacts/corpora/xaman-app/counterexample-report.json --fuzz-report security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json --fuzz-counterexample-manifest security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json --native-vault-state-fuzz security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json --out security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json
+- Acceptance: Maintain a deterministic manifest that is not silently drifted by partial runs; persist and surface the exact `blocked_by` classes and associated claims for each unresolved lane.
+
+## PORTAL-CXTP-175 Bind each unresolved gap to explicit external/runtime unblock lanes
 
 - Status: completed
 - Completion: manual
 - Priority: P0
-- Track: source
-- Depends on: PORTAL-CXTP-144
-- Outputs: scripts/ops/security_verification/hydrate_xaman_public_source.py, security_ir_artifacts/corpora/xaman-app/source-coverage-hydrated.json, tests/logic/security_models/crypto_exchange/test_xaman_public_source_hydration.py
-- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_source_extractor.py tests/logic/security_models/crypto_exchange/test_xaman_public_source_hydration.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/hydrate_xaman_public_source.py --corpus-root /home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app
-- Acceptance: Verify a clean local checkout exactly matches the frozen Xaman commit and public remote, generate a separate parsed-coverage artifact without changing the manifest-only baseline, and fail closed if the checkout identity or cleanliness differs.
-- Completion evidence: Hydrated source parsing completed against `942f43876265a7af44f233288ad2b1d00841d5fa`; the artifact records 643 parsed security-relevant files, preserves the frozen baseline, and records no absolute checkout path.
+- Track: ops
+- Depends on: PORTAL-CXTP-172, PORTAL-CXTP-153
+- Outputs: docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md, docs/security_verification/xaman_gap_remediation_unblock_matrix.md, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json && python - <<'PY'
+from pathlib import Path
+import json
 
-## PORTAL-CXTP-155 Record public responsible-disclosure routing without treating it as vendor authorization
+manifest = json.loads(Path('security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json').read_text())
+blocked = [e for e in manifest['entries'] if e['execution_state'] == 'blocked']
+assert len(blocked) == 2
+blocked_by = { 'EXTERNAL_EVIDENCE_REQUIRED': 0 }
+for item in blocked:
+    for blocker in item.get('blocked_by', []):
+        if blocker in blocked_by:
+            blocked_by[blocker] += 1
+assert blocked_by == {'EXTERNAL_EVIDENCE_REQUIRED': 2}
+print('blocked_by map:', blocked_by)
+PY
+- Acceptance: Produce a concrete unblock plan where `UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS` is routed through runtime-capture/review evidence paths and `EXTERNAL_EVIDENCE_REQUIRED` is routed through authorized vendor evidence (`PORTAL-CXTP-153`) with no fail-closed bypasses.
 
-- Status: completed
+## PORTAL-CXTP-176 Execute an owner-authorized EXTERNAL evidence collection campaign for EXTERNAL_EVIDENCE_REQUIRED blocker closure
+
+- Status: blocked
 - Completion: manual
 - Priority: P0
 - Track: governance
-- Depends on: PORTAL-CXTP-152
-- Outputs: docs/security_verification/xaman_public_disclosure_routing.md, security_ir_artifacts/corpora/xaman-app/public-disclosure-routing.json, tests/logic/security_models/crypto_exchange/test_xaman_public_disclosure_routing.py
-- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_public_disclosure_routing.py -q
-- Acceptance: Record the pinned source route, detect its expired Android `security.txt` declaration, record the current public policy route, and preserve the rule that sensitive evidence requires written vendor authorization and an approved private channel.
-- Completion evidence: Public policy review identified `support@xaman.app` as a report route while retaining `PORTAL-CXTP-153` as blocked pending owner authorization and evidence exchange approval.
+- Blocked reason: Requires an authorized vendor disclosure route, role-correct reviewers, redacted evidence packets, and explicit owner signoff before this path can clear `PORTAL-CXTP-153` blocker claims.
+- Depends on: PORTAL-CXTP-153
+- Outputs: docs/security_verification/xaman_vendor_evidence_request.md, security_ir_artifacts/corpora/xaman-app/vendor-evidence-request.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review-template.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-intake-template.json
+- Validation: test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-request.json; test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json; test -f security_ir_artifacts/corpora/xaman-app/vendor-evidence-review-template.json
+- Acceptance: Define and transmit an authorized evidence-request packet listing all required categories and redaction constraints for backend payload semantics, native-vault/biometric policy, release provenance, signed-build attestation, XRPL/RPC trust assumptions, and independent test-device trace review; keep production-security and vendor-equivalence claims false/unsupported.
+
+## PORTAL-CXTP-177 Populate each required vendor-evidence category with redacted references and owner bindings
+
+- Status: blocked
+- Completion: manual
+- Priority: P0
+- Track: governance
+- Blocked reason: Evidence packet is currently pending submission; category evidence for `backend_payload_semantics`, `native_vault_biometric_policy`, `release_provenance`, `signed_build_attestation`, `test_device_trace_review`, `xrpl_rpc_trust_assumptions`, and `responsible_disclosure_routing` has not been supplied or reviewed.
+- Depends on: PORTAL-CXTP-176
+- Outputs: security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python - <<'PY'
+from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_vendor_evidence import load_json, validate_vendor_evidence_manifest
+print(validate_vendor_evidence_manifest(load_json('security_ir_artifacts/corpora/xaman-app/vendor-evidence-manifest.json'))['manifest_status'])
+PY
+- Acceptance: For each required category, set `evidence_received=true`, provide immutable redacted references (hashes/path), record owner signoff with authorized channel, and include the source-review bindings that map to both blocked claims.
+
+## PORTAL-CXTP-178 Conduct vendor-evidence review to `accepted` and generate verification status
+
+- Status: blocked
+- Completion: manual
+- Priority: P0
+- Track: review
+- Blocked reason: `PORTAL-CXTP-153` requires `review_accepted_for_gap_clearance=true` but vendor review is currently `needs_clarification`.
+- Depends on: PORTAL-CXTP-177
+- Outputs: security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json, security_ir_artifacts/corpora/xaman-app/vendor-evidence-review-verification.json, docs/security_verification/xaman_vendor_evidence_review.md
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/build_xaman_vendor_evidence_packet.py --review security_ir_artifacts/corpora/xaman-app/vendor-evidence-review.json --verification-out security_ir_artifacts/corpora/xaman-app/vendor-evidence-review-verification.json
+- Acceptance: Produce a review packet with `decision=accepted`, all required claims bound, and all required categories evidence-reviewed and redaction-accepted; rejection requires explicit rewrite of blocker evidence rather than bypassing.
+
+## PORTAL-CXTP-179 Reconcile residual gap manifest after external-evidence acceptance
+
+- Status: blocked
+- Completion: manual
+- Priority: P0
+- Track: disproof
+- Blocked reason: Final-gap remediation remains blocked by `EXTERNAL_EVIDENCE_REQUIRED` until `PORTAL-CXTP-153` validation is accepted.
+- Depends on: PORTAL-CXTP-176, PORTAL-CXTP-177, PORTAL-CXTP-178
+- Outputs: security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/run-gap-remediation-workflow-output.json, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/run-gap-remediation-workflow.json, docs/security_verification/xaman_gap_remediation_plan.md
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/run_gap_remediation_workflow.py --matrix security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json --counterexample-report security_ir_artifacts/corpora/xaman-app/counterexample-report.json --fuzz-report security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json --fuzz-counterexample-manifest security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json --native-vault-state-fuzz security_ir_artifacts/corpora/xaman-app/native-vault/rekey-state-fuzz-report.json --out security_ir_artifacts/corpora/xaman-app/testnet/fuzz/final-gap-remediation-manifest.json
+- Acceptance: Residual manifest must show `ready_count=37`, `blocked_count=0`, and `blocked_by` empty for all testnet claims.
+
+## PORTAL-CXTP-180 Add explicit install-time progress and stale-version refresh telemetry for all lazy theorem-prover lanes
+
+- Status: completed
+- Completion: automated
+- Priority: P1
+- Track: ops
+- Depends on: PORTAL-CXTP-086
+- Outputs: scripts/ops/security_verification/install_optional_theorem_solvers.py, ipfs_datasets_py/logic/integration/bridges/prover_installer.py, docs/security_verification/optional_solver_installation.md
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --solver z3 --install --yes --strict --out security_ir_artifacts/environment/optional-solver-install-report.json
+- Completion evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_optional_solver_installer.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/unit_tests/logic/external_provers/test_lazy_native_solver_installation.py -q; PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --solver z3 --install --yes --strict --out security_ir_artifacts/environment/optional-solver-install-report.json
+- Acceptance: On long install/update operations, emit phase-level progress messages and explicit network/compile/version refresh status in both CLI and artifact output, so codepaths never appear stalled while binaries are being provisioned.
+
+## PORTAL-CXTP-181 Complete `PORTAL-CXTP-086` dependency matrix for out-of-date binaries (Tamarin, ProVerif, Maude, z3, cvc5, Lean, Coq/Rocq 9.1.1, and leanstral)
+
+- Status: completed
+- Completion: manual
+- Priority: P1
+- Track: solver
+- Depends on: PORTAL-CXTP-180
+- Blocked reason: Matrix/report generation now includes Leanstral and explicit stale-version telemetry, but `security_ir_artifacts/environment/optional-solver-install-report.json` still records Leanstral as unconfigured and ErgoAI as manual-update-required; full closure requires configuring an approved Leanstral route or reviewed local weights, reviewing/refreshing ErgoAI, and running the full selected-solver update validation.
+- Outputs: docs/security_verification/optional_solver_installation.md, scripts/ops/security_verification/install_optional_theorem_solvers.py, security_ir_artifacts/environment/optional-solver-install-report.json, ipfs_datasets_py/logic/integration/bridges/prover_installer.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --solver tamarin --solver proverif --solver maude --solver rocq --solver lean --solver cvc5 --solver z3 --update --yes --strict
+- Progress evidence: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/install_optional_theorem_solvers.py --out security_ir_artifacts/environment/optional-solver-install-report.json reports 9 ready lanes, 2 degraded lanes (`ergoai`, `leanstral`), and `security_decision=OPTIONAL_SOLVER_LANES_EXPLICITLY_BLOCKED_OR_READY`.
+- Acceptance: Keep manual-update decisions explicit in solver lane reports, refresh when reviewed versions are stale, and retain `degraded_optional_lane` only with explicit warning state when manual verification is still pending.
+
+## PORTAL-CXTP-182 Consolidate local gap-remediation status after proof, fuzz, and counterexample reruns
+
+- Status: completed
+- Completion: automated
+- Priority: P0
+- Track: disproof
+- Depends on: PORTAL-CXTP-147, PORTAL-CXTP-148, PORTAL-CXTP-172
+- Outputs: ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_gap_remediation_status.py, scripts/ops/security_verification/build_xaman_gap_remediation_status.py, security_ir_artifacts/corpora/xaman-app/testnet/fuzz/gap-remediation-status.json, tests/logic/security_models/crypto_exchange/test_xaman_gap_remediation_status.py
+- Validation: PYTHONPATH=. /home/barberb/miniforge3/bin/python scripts/ops/security_verification/build_xaman_gap_remediation_status.py --repo-root . --out security_ir_artifacts/corpora/xaman-app/testnet/fuzz/gap-remediation-status.json; PYTHONPATH=. /home/barberb/miniforge3/bin/python -m pytest tests/logic/security_models/crypto_exchange/test_xaman_gap_remediation_status.py -q
+- Completion evidence: `gap-remediation-status.json` reports `local_remediated_count=35`, `external_blocked_count=2`, `solver_proved_claim_count=0`, `solver_fail_closed_claim_count=12`, and `fuzz_counterexample_count=25`.
+- Acceptance: Convert the 35 locally actionable gap entries into explicit fail-closed remediation statuses, preserve the two `EXTERNAL_EVIDENCE_REQUIRED` blockers with concrete next actions, and prohibit proof or production promotion until vendor/release-equivalent evidence clears the remaining blocked entries.

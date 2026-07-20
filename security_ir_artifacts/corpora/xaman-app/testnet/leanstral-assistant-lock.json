@@ -23,9 +23,9 @@
     },
     "testnet_coq_coverage": {
       "candidate_acceptance_for_current_audit": "none",
-      "overall_status": "coverage_gap_required_independent_kernel_missing",
+      "overall_status": "independent_kernel_checked",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING"
+      "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED"
     },
     "testnet_lean_kernel": {
       "candidate_acceptance_for_current_audit": "none",
@@ -71,7 +71,7 @@
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json"
     },
     "lean_solver_lane_report": {
-      "artifact_cid": "sha256:a8c5981ac2f014da7d5e612d392b60c44a0bc3de9b24a91e365d8948125ea142",
+      "artifact_cid": "sha256:995d75dc6011a3100432e41082894dd052157921f8dc608b223ca60563091348",
       "overall_status": "ready",
       "path": "security_ir_artifacts/environment/lean-solver-lane-report.json",
       "present": true,
@@ -80,13 +80,13 @@
       "task_id": "PORTAL-CXTP-090"
     },
     "leanstral_general_lane_report": {
-      "artifact_cid": "sha256:c536f0958166f92fd50bafe0488cd84cd8b5c73dbe4061c8080fb0c5c4f8ff39",
+      "artifact_cid": "sha256:05893c3a41580056897b41e9e17679617b967d60365a6a65fb7f6b0366f625a0",
       "overall_status": "degraded",
       "path": "security_ir_artifacts/environment/leanstral-proof-assistant-report.json",
       "present": true,
       "schema_version": "crypto-exchange-leanstral-proof-assistant-report/v1",
       "security_decision": "DEGRADE_LEANSTRAL_ASSISTANT_UNCONFIGURED",
-      "sha256": "sha256:4fbc9cd70f53b68030f185369911e1a8fcda8ac53b69099644756fd24733428a",
+      "sha256": "sha256:3dcc652a99cadaa7a30a514c4ad5e9f9a8868c8e598c2d5ab6b1f7b794d9c8b4",
       "task_id": "PORTAL-CXTP-097"
     },
     "reviewed_testnet_plan": {
@@ -99,16 +99,16 @@
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
     },
     "testnet_coq_coverage_decision": {
-      "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
-      "overall_status": "coverage_gap_required_independent_kernel_missing",
+      "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
+      "overall_status": "independent_kernel_checked",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
       "present": true,
       "schema_version": "xaman-testnet-coq-coverage-decision/v1",
-      "security_decision": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+      "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED",
       "task_id": "PORTAL-CXTP-136"
     },
     "testnet_lean_kernel_report": {
-      "artifact_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+      "artifact_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
       "overall_status": "checked_with_scope_limits",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
       "present": true,
@@ -129,7 +129,7 @@
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-worker-lock.json"
     }
   },
-  "lock_cid": "bafkreiexpzripxard7io327v4pqvtrjupv3dba3jag4pkvge4lwfucw5xy",
+  "lock_cid": "bafkreielymldcxjkzw7aivahbwgmknacqia5oroakbqr6irl27kndsr554",
   "model": {
     "allowed_model_cids": [
       "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43"

@@ -1,0 +1,429 @@
+DIGEST cbfa33c7e21786948d311b3927f2755b
+FXamanReceipt
+R102:119 Stdlib.Strings.String <> <> lib
+ind 133:143 <> ProofStatus
+constr 150:155 <> proved
+constr 159:167 <> disproved
+constr 171:177 <> unknown
+constr 181:190 <> notModeled
+scheme 133:143 <> ProofStatus_rect
+scheme 133:143 <> ProofStatus_ind
+scheme 133:143 <> ProofStatus_rec
+scheme 133:143 <> ProofStatus_sind
+rec 201:211 <> ProofReport
+proj 220:231 <> proofClaimId
+proj 245:257 <> proofModelCid
+proj 271:281 <> proofStatus
+proj 300:322 <> proofAssumptionsCleared
+proj 334:354 <> proofEvidenceReviewed
+proj 366:385 <> proofSolverAgreement
+proj 397:417 <> proofNoCounterexample
+R235:240 Stdlib.Strings.String <> string ind
+R261:266 Stdlib.Strings.String <> string ind
+R285:295 XamanReceipt <> ProofStatus ind
+R326:329 Corelib.Init.Datatypes <> bool ind
+R358:361 Corelib.Init.Datatypes <> bool ind
+R389:392 Corelib.Init.Datatypes <> bool ind
+R421:424 Corelib.Init.Datatypes <> bool ind
+rec 437:448 <> ProofReceipt
+proj 457:470 <> receiptClaimId
+proj 484:498 <> receiptModelCid
+proj 512:534 <> receiptReportCidMatches
+proj 546:582 <> receiptTrustedSignatureOrCanonicalCid
+proj 594:626 <> receiptAcceptedAssumptionsCurrent
+proj 638:659 <> receiptSupportedProver
+R474:479 Stdlib.Strings.String <> string ind
+R502:507 Stdlib.Strings.String <> string ind
+R538:541 Corelib.Init.Datatypes <> bool ind
+R586:589 Corelib.Init.Datatypes <> bool ind
+R630:633 Corelib.Init.Datatypes <> bool ind
+R663:666 Corelib.Init.Datatypes <> bool ind
+def 683:696 <> bindingMatches
+R708:718 XamanReceipt <> ProofReport rec
+binder 699:704 <> report:18
+R732:743 XamanReceipt <> ProofReceipt rec
+binder 722:728 <> receipt:19
+R748:751 Corelib.Init.Datatypes <> bool ind
+R815:822 Corelib.Init.Datatypes <> ::bool_scope:x_'&&'_x not
+R758:767 Stdlib.Strings.String <> eqb def
+R777:788 XamanReceipt <> proofClaimId proj
+R769:774 XamanReceipt <> report:18 var
+R800:813 XamanReceipt <> receiptClaimId proj
+R791:797 XamanReceipt <> receipt:19 var
+R823:832 Stdlib.Strings.String <> eqb def
+R842:854 XamanReceipt <> proofModelCid proj
+R834:839 XamanReceipt <> report:18 var
+R866:880 XamanReceipt <> receiptModelCid proj
+R857:863 XamanReceipt <> receipt:19 var
+def 896:904 <> canAccept
+R916:926 XamanReceipt <> ProofReport rec
+binder 907:912 <> report:20
+R940:951 XamanReceipt <> ProofReceipt rec
+binder 930:936 <> receipt:21
+R956:959 Corelib.Init.Datatypes <> bool ind
+R980:990 XamanReceipt <> proofStatus proj
+R972:977 XamanReceipt <> report:20 var
+R1002:1007 XamanReceipt <> proved constr
+R1029:1051 XamanReceipt <> proofAssumptionsCleared proj
+R1021:1026 XamanReceipt <> report:20 var
+R1702:1706 Corelib.Init.Datatypes <> false constr
+R1078:1098 XamanReceipt <> proofEvidenceReviewed proj
+R1070:1075 XamanReceipt <> report:20 var
+R1685:1689 Corelib.Init.Datatypes <> false constr
+R1127:1146 XamanReceipt <> proofSolverAgreement proj
+R1119:1124 XamanReceipt <> report:20 var
+R1666:1670 Corelib.Init.Datatypes <> false constr
+R1177:1197 XamanReceipt <> proofNoCounterexample proj
+R1169:1174 XamanReceipt <> report:20 var
+R1645:1649 Corelib.Init.Datatypes <> false constr
+R1222:1235 XamanReceipt <> bindingMatches def
+R1237:1242 XamanReceipt <> report:20 var
+R1244:1250 XamanReceipt <> receipt:21 var
+R1622:1626 Corelib.Init.Datatypes <> false constr
+R1285:1307 XamanReceipt <> receiptReportCidMatches proj
+R1276:1282 XamanReceipt <> receipt:21 var
+R1597:1601 Corelib.Init.Datatypes <> false constr
+R1345:1381 XamanReceipt <> receiptTrustedSignatureOrCanonicalCid proj
+R1336:1342 XamanReceipt <> receipt:21 var
+R1570:1574 Corelib.Init.Datatypes <> false constr
+R1421:1453 XamanReceipt <> receiptAcceptedAssumptionsCurrent proj
+R1412:1418 XamanReceipt <> receipt:21 var
+R1541:1545 Corelib.Init.Datatypes <> false constr
+R1492:1513 XamanReceipt <> receiptSupportedProver proj
+R1483:1489 XamanReceipt <> receipt:21 var
+R1717:1721 Corelib.Init.Datatypes <> false constr
+def 1742:1751 <> withStatus
+R1763:1773 XamanReceipt <> ProofReport rec
+binder 1754:1759 <> report:22
+R1786:1796 XamanReceipt <> ProofStatus ind
+binder 1777:1782 <> status:23
+R1801:1811 XamanReceipt <> ProofReport rec
+R1821:1832 XamanReceipt <> proofClaimId proj
+R1821:1832 XamanReceipt <> proofClaimId proj
+R1821:1832 XamanReceipt <> proofClaimId proj
+R1865:1877 XamanReceipt <> proofModelCid proj
+R1865:1877 XamanReceipt <> proofModelCid proj
+R1911:1921 XamanReceipt <> proofStatus proj
+R1911:1921 XamanReceipt <> proofStatus proj
+R1939:1961 XamanReceipt <> proofAssumptionsCleared proj
+R1939:1961 XamanReceipt <> proofAssumptionsCleared proj
+R2005:2025 XamanReceipt <> proofEvidenceReviewed proj
+R2005:2025 XamanReceipt <> proofEvidenceReviewed proj
+R2067:2086 XamanReceipt <> proofSolverAgreement proj
+R2067:2086 XamanReceipt <> proofSolverAgreement proj
+R2127:2147 XamanReceipt <> proofNoCounterexample proj
+R2127:2147 XamanReceipt <> proofNoCounterexample proj
+R1845:1856 XamanReceipt <> proofClaimId proj
+R1837:1842 XamanReceipt <> report:22 var
+R1890:1902 XamanReceipt <> proofModelCid proj
+R1882:1887 XamanReceipt <> report:22 var
+R1926:1931 XamanReceipt <> status:23 var
+R1974:1996 XamanReceipt <> proofAssumptionsCleared proj
+R1966:1971 XamanReceipt <> report:22 var
+R2038:2058 XamanReceipt <> proofEvidenceReviewed proj
+R2030:2035 XamanReceipt <> report:22 var
+R2099:2118 XamanReceipt <> proofSolverAgreement proj
+R2091:2096 XamanReceipt <> report:22 var
+R2160:2180 XamanReceipt <> proofNoCounterexample proj
+R2152:2157 XamanReceipt <> report:22 var
+def 2199:2220 <> withAssumptionsCleared
+R2232:2242 XamanReceipt <> ProofReport rec
+binder 2223:2228 <> report:24
+R2254:2257 Corelib.Init.Datatypes <> bool ind
+binder 2246:2250 <> value:25
+R2262:2272 XamanReceipt <> ProofReport rec
+R2282:2293 XamanReceipt <> proofClaimId proj
+R2282:2293 XamanReceipt <> proofClaimId proj
+R2282:2293 XamanReceipt <> proofClaimId proj
+R2326:2338 XamanReceipt <> proofModelCid proj
+R2326:2338 XamanReceipt <> proofModelCid proj
+R2372:2382 XamanReceipt <> proofStatus proj
+R2372:2382 XamanReceipt <> proofStatus proj
+R2414:2436 XamanReceipt <> proofAssumptionsCleared proj
+R2414:2436 XamanReceipt <> proofAssumptionsCleared proj
+R2453:2473 XamanReceipt <> proofEvidenceReviewed proj
+R2453:2473 XamanReceipt <> proofEvidenceReviewed proj
+R2515:2534 XamanReceipt <> proofSolverAgreement proj
+R2515:2534 XamanReceipt <> proofSolverAgreement proj
+R2575:2595 XamanReceipt <> proofNoCounterexample proj
+R2575:2595 XamanReceipt <> proofNoCounterexample proj
+R2306:2317 XamanReceipt <> proofClaimId proj
+R2298:2303 XamanReceipt <> report:24 var
+R2351:2363 XamanReceipt <> proofModelCid proj
+R2343:2348 XamanReceipt <> report:24 var
+R2395:2405 XamanReceipt <> proofStatus proj
+R2387:2392 XamanReceipt <> report:24 var
+R2441:2445 XamanReceipt <> value:25 var
+R2486:2506 XamanReceipt <> proofEvidenceReviewed proj
+R2478:2483 XamanReceipt <> report:24 var
+R2547:2566 XamanReceipt <> proofSolverAgreement proj
+R2539:2544 XamanReceipt <> report:24 var
+R2608:2628 XamanReceipt <> proofNoCounterexample proj
+R2600:2605 XamanReceipt <> report:24 var
+def 2647:2666 <> withEvidenceReviewed
+R2678:2688 XamanReceipt <> ProofReport rec
+binder 2669:2674 <> report:26
+R2700:2703 Corelib.Init.Datatypes <> bool ind
+binder 2692:2696 <> value:27
+R2708:2718 XamanReceipt <> ProofReport rec
+R2728:2739 XamanReceipt <> proofClaimId proj
+R2728:2739 XamanReceipt <> proofClaimId proj
+R2728:2739 XamanReceipt <> proofClaimId proj
+R2772:2784 XamanReceipt <> proofModelCid proj
+R2772:2784 XamanReceipt <> proofModelCid proj
+R2818:2828 XamanReceipt <> proofStatus proj
+R2818:2828 XamanReceipt <> proofStatus proj
+R2860:2882 XamanReceipt <> proofAssumptionsCleared proj
+R2860:2882 XamanReceipt <> proofAssumptionsCleared proj
+R2926:2946 XamanReceipt <> proofEvidenceReviewed proj
+R2926:2946 XamanReceipt <> proofEvidenceReviewed proj
+R2963:2982 XamanReceipt <> proofSolverAgreement proj
+R2963:2982 XamanReceipt <> proofSolverAgreement proj
+R3023:3043 XamanReceipt <> proofNoCounterexample proj
+R3023:3043 XamanReceipt <> proofNoCounterexample proj
+R2752:2763 XamanReceipt <> proofClaimId proj
+R2744:2749 XamanReceipt <> report:26 var
+R2797:2809 XamanReceipt <> proofModelCid proj
+R2789:2794 XamanReceipt <> report:26 var
+R2841:2851 XamanReceipt <> proofStatus proj
+R2833:2838 XamanReceipt <> report:26 var
+R2895:2917 XamanReceipt <> proofAssumptionsCleared proj
+R2887:2892 XamanReceipt <> report:26 var
+R2951:2955 XamanReceipt <> value:27 var
+R2995:3014 XamanReceipt <> proofSolverAgreement proj
+R2987:2992 XamanReceipt <> report:26 var
+R3056:3076 XamanReceipt <> proofNoCounterexample proj
+R3048:3053 XamanReceipt <> report:26 var
+def 3095:3113 <> withSolverAgreement
+R3125:3135 XamanReceipt <> ProofReport rec
+binder 3116:3121 <> report:28
+R3147:3150 Corelib.Init.Datatypes <> bool ind
+binder 3139:3143 <> value:29
+R3155:3165 XamanReceipt <> ProofReport rec
+R3175:3186 XamanReceipt <> proofClaimId proj
+R3175:3186 XamanReceipt <> proofClaimId proj
+R3175:3186 XamanReceipt <> proofClaimId proj
+R3219:3231 XamanReceipt <> proofModelCid proj
+R3219:3231 XamanReceipt <> proofModelCid proj
+R3265:3275 XamanReceipt <> proofStatus proj
+R3265:3275 XamanReceipt <> proofStatus proj
+R3307:3329 XamanReceipt <> proofAssumptionsCleared proj
+R3307:3329 XamanReceipt <> proofAssumptionsCleared proj
+R3373:3393 XamanReceipt <> proofEvidenceReviewed proj
+R3373:3393 XamanReceipt <> proofEvidenceReviewed proj
+R3435:3454 XamanReceipt <> proofSolverAgreement proj
+R3435:3454 XamanReceipt <> proofSolverAgreement proj
+R3471:3491 XamanReceipt <> proofNoCounterexample proj
+R3471:3491 XamanReceipt <> proofNoCounterexample proj
+R3199:3210 XamanReceipt <> proofClaimId proj
+R3191:3196 XamanReceipt <> report:28 var
+R3244:3256 XamanReceipt <> proofModelCid proj
+R3236:3241 XamanReceipt <> report:28 var
+R3288:3298 XamanReceipt <> proofStatus proj
+R3280:3285 XamanReceipt <> report:28 var
+R3342:3364 XamanReceipt <> proofAssumptionsCleared proj
+R3334:3339 XamanReceipt <> report:28 var
+R3406:3426 XamanReceipt <> proofEvidenceReviewed proj
+R3398:3403 XamanReceipt <> report:28 var
+R3459:3463 XamanReceipt <> value:29 var
+R3504:3524 XamanReceipt <> proofNoCounterexample proj
+R3496:3501 XamanReceipt <> report:28 var
+def 3543:3562 <> withNoCounterexample
+R3574:3584 XamanReceipt <> ProofReport rec
+binder 3565:3570 <> report:30
+R3596:3599 Corelib.Init.Datatypes <> bool ind
+binder 3588:3592 <> value:31
+R3604:3614 XamanReceipt <> ProofReport rec
+R3624:3635 XamanReceipt <> proofClaimId proj
+R3624:3635 XamanReceipt <> proofClaimId proj
+R3624:3635 XamanReceipt <> proofClaimId proj
+R3668:3680 XamanReceipt <> proofModelCid proj
+R3668:3680 XamanReceipt <> proofModelCid proj
+R3714:3724 XamanReceipt <> proofStatus proj
+R3714:3724 XamanReceipt <> proofStatus proj
+R3756:3778 XamanReceipt <> proofAssumptionsCleared proj
+R3756:3778 XamanReceipt <> proofAssumptionsCleared proj
+R3822:3842 XamanReceipt <> proofEvidenceReviewed proj
+R3822:3842 XamanReceipt <> proofEvidenceReviewed proj
+R3884:3903 XamanReceipt <> proofSolverAgreement proj
+R3884:3903 XamanReceipt <> proofSolverAgreement proj
+R3944:3964 XamanReceipt <> proofNoCounterexample proj
+R3944:3964 XamanReceipt <> proofNoCounterexample proj
+R3648:3659 XamanReceipt <> proofClaimId proj
+R3640:3645 XamanReceipt <> report:30 var
+R3693:3705 XamanReceipt <> proofModelCid proj
+R3685:3690 XamanReceipt <> report:30 var
+R3737:3747 XamanReceipt <> proofStatus proj
+R3729:3734 XamanReceipt <> report:30 var
+R3791:3813 XamanReceipt <> proofAssumptionsCleared proj
+R3783:3788 XamanReceipt <> report:30 var
+R3855:3875 XamanReceipt <> proofEvidenceReviewed proj
+R3847:3852 XamanReceipt <> report:30 var
+R3916:3935 XamanReceipt <> proofSolverAgreement proj
+R3908:3913 XamanReceipt <> report:30 var
+R3969:3973 XamanReceipt <> value:31 var
+def 3988:4015 <> can_accept_rejects_disproved
+R4033:4043 XamanReceipt <> ProofReport rec
+binder 4029:4029 <> r:32
+R4051:4062 XamanReceipt <> ProofReceipt rec
+binder 4047:4047 <> p:33
+R4102:4104 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4066:4074 XamanReceipt <> canAccept def
+R4077:4086 XamanReceipt <> withStatus def
+R4088:4088 XamanReceipt <> r:32 var
+R4090:4098 XamanReceipt <> disproved constr
+R4101:4101 XamanReceipt <> p:33 var
+R4105:4109 Corelib.Init.Datatypes <> false constr
+R4138:4146 XamanReceipt <> canAccept def
+R4149:4158 XamanReceipt <> withStatus def
+def 4199:4224 <> can_accept_rejects_unknown
+R4242:4252 XamanReceipt <> ProofReport rec
+binder 4238:4238 <> r:34
+R4260:4271 XamanReceipt <> ProofReceipt rec
+binder 4256:4256 <> p:35
+R4309:4311 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4275:4283 XamanReceipt <> canAccept def
+R4286:4295 XamanReceipt <> withStatus def
+R4297:4297 XamanReceipt <> r:34 var
+R4299:4305 XamanReceipt <> unknown constr
+R4308:4308 XamanReceipt <> p:35 var
+R4312:4316 Corelib.Init.Datatypes <> false constr
+R4345:4353 XamanReceipt <> canAccept def
+R4356:4365 XamanReceipt <> withStatus def
+def 4406:4434 <> can_accept_rejects_notModeled
+R4452:4462 XamanReceipt <> ProofReport rec
+binder 4448:4448 <> r:36
+R4470:4481 XamanReceipt <> ProofReceipt rec
+binder 4466:4466 <> p:37
+R4522:4524 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4485:4493 XamanReceipt <> canAccept def
+R4496:4505 XamanReceipt <> withStatus def
+R4507:4507 XamanReceipt <> r:36 var
+R4509:4518 XamanReceipt <> notModeled constr
+R4521:4521 XamanReceipt <> p:37 var
+R4525:4529 Corelib.Init.Datatypes <> false constr
+R4558:4566 XamanReceipt <> canAccept def
+R4569:4578 XamanReceipt <> withStatus def
+def 4619:4646 <> can_accept_rejects_uncleared
+R4664:4674 XamanReceipt <> ProofReport rec
+binder 4660:4660 <> r:38
+R4682:4693 XamanReceipt <> ProofReceipt rec
+binder 4678:4678 <> p:39
+R4745:4747 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4701:4709 XamanReceipt <> canAccept def
+R4712:4733 XamanReceipt <> withAssumptionsCleared def
+R4735:4735 XamanReceipt <> r:38 var
+R4737:4741 Corelib.Init.Datatypes <> false constr
+R4744:4744 XamanReceipt <> p:39 var
+R4748:4752 Corelib.Init.Datatypes <> false constr
+R4781:4789 XamanReceipt <> canAccept def
+R4792:4813 XamanReceipt <> withAssumptionsCleared def
+R4828:4838 XamanReceipt <> proofStatus proj
+R4828:4838 XamanReceipt <> proofStatus proj
+def 4878:4906 <> can_accept_rejects_unreviewed
+R4924:4934 XamanReceipt <> ProofReport rec
+binder 4920:4920 <> r:40
+R4942:4953 XamanReceipt <> ProofReceipt rec
+binder 4938:4938 <> p:41
+R5003:5005 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4961:4969 XamanReceipt <> canAccept def
+R4972:4991 XamanReceipt <> withEvidenceReviewed def
+R4993:4993 XamanReceipt <> r:40 var
+R4995:4999 Corelib.Init.Datatypes <> false constr
+R5002:5002 XamanReceipt <> p:41 var
+R5006:5010 Corelib.Init.Datatypes <> false constr
+R5039:5047 XamanReceipt <> canAccept def
+R5050:5069 XamanReceipt <> withEvidenceReviewed def
+R5084:5094 XamanReceipt <> proofStatus proj
+R5084:5094 XamanReceipt <> proofStatus proj
+R5136:5158 XamanReceipt <> proofAssumptionsCleared proj
+R5136:5158 XamanReceipt <> proofAssumptionsCleared proj
+def 5249:5282 <> can_accept_rejects_solver_disagree
+R5300:5310 XamanReceipt <> ProofReport rec
+binder 5296:5296 <> r:42
+R5318:5329 XamanReceipt <> ProofReceipt rec
+binder 5314:5314 <> p:43
+R5378:5380 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5337:5345 XamanReceipt <> canAccept def
+R5348:5366 XamanReceipt <> withSolverAgreement def
+R5368:5368 XamanReceipt <> r:42 var
+R5370:5374 Corelib.Init.Datatypes <> false constr
+R5377:5377 XamanReceipt <> p:43 var
+R5381:5385 Corelib.Init.Datatypes <> false constr
+R5414:5422 XamanReceipt <> canAccept def
+R5425:5443 XamanReceipt <> withSolverAgreement def
+R5458:5468 XamanReceipt <> proofStatus proj
+R5458:5468 XamanReceipt <> proofStatus proj
+R5510:5532 XamanReceipt <> proofAssumptionsCleared proj
+R5510:5532 XamanReceipt <> proofAssumptionsCleared proj
+R5561:5581 XamanReceipt <> proofEvidenceReviewed proj
+R5561:5581 XamanReceipt <> proofEvidenceReviewed proj
+def 5691:5723 <> can_accept_rejects_counterexample
+R5741:5751 XamanReceipt <> ProofReport rec
+binder 5737:5737 <> r:44
+R5759:5770 XamanReceipt <> ProofReceipt rec
+binder 5755:5755 <> p:45
+R5820:5822 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5778:5786 XamanReceipt <> canAccept def
+R5789:5808 XamanReceipt <> withNoCounterexample def
+R5810:5810 XamanReceipt <> r:44 var
+R5812:5816 Corelib.Init.Datatypes <> false constr
+R5819:5819 XamanReceipt <> p:45 var
+R5823:5827 Corelib.Init.Datatypes <> false constr
+R5856:5864 XamanReceipt <> canAccept def
+R5867:5886 XamanReceipt <> withNoCounterexample def
+R5901:5911 XamanReceipt <> proofStatus proj
+R5901:5911 XamanReceipt <> proofStatus proj
+R5953:5975 XamanReceipt <> proofAssumptionsCleared proj
+R5953:5975 XamanReceipt <> proofAssumptionsCleared proj
+R6004:6024 XamanReceipt <> proofEvidenceReviewed proj
+R6004:6024 XamanReceipt <> proofEvidenceReviewed proj
+R6055:6074 XamanReceipt <> proofSolverAgreement proj
+R6055:6074 XamanReceipt <> proofSolverAgreement proj
+def 6208:6228 <> acceptedExampleReport
+R6232:6242 XamanReceipt <> ProofReport rec
+R6252:6263 XamanReceipt <> proofClaimId proj
+R6252:6263 XamanReceipt <> proofClaimId proj
+R6252:6263 XamanReceipt <> proofClaimId proj
+R6334:6346 XamanReceipt <> proofModelCid proj
+R6334:6346 XamanReceipt <> proofModelCid proj
+R6431:6441 XamanReceipt <> proofStatus proj
+R6431:6441 XamanReceipt <> proofStatus proj
+R6459:6481 XamanReceipt <> proofAssumptionsCleared proj
+R6459:6481 XamanReceipt <> proofAssumptionsCleared proj
+R6497:6517 XamanReceipt <> proofEvidenceReviewed proj
+R6497:6517 XamanReceipt <> proofEvidenceReviewed proj
+R6533:6552 XamanReceipt <> proofSolverAgreement proj
+R6533:6552 XamanReceipt <> proofSolverAgreement proj
+R6568:6588 XamanReceipt <> proofNoCounterexample proj
+R6568:6588 XamanReceipt <> proofNoCounterexample proj
+R6446:6451 XamanReceipt <> proved constr
+R6486:6489 Corelib.Init.Datatypes <> true constr
+R6522:6525 Corelib.Init.Datatypes <> true constr
+R6557:6560 Corelib.Init.Datatypes <> true constr
+R6593:6596 Corelib.Init.Datatypes <> true constr
+def 6614:6635 <> acceptedExampleReceipt
+R6639:6650 XamanReceipt <> ProofReceipt rec
+R6660:6673 XamanReceipt <> receiptClaimId proj
+R6660:6673 XamanReceipt <> receiptClaimId proj
+R6660:6673 XamanReceipt <> receiptClaimId proj
+R6744:6758 XamanReceipt <> receiptModelCid proj
+R6744:6758 XamanReceipt <> receiptModelCid proj
+R6843:6865 XamanReceipt <> receiptReportCidMatches proj
+R6843:6865 XamanReceipt <> receiptReportCidMatches proj
+R6881:6917 XamanReceipt <> receiptTrustedSignatureOrCanonicalCid proj
+R6881:6917 XamanReceipt <> receiptTrustedSignatureOrCanonicalCid proj
+R6933:6965 XamanReceipt <> receiptAcceptedAssumptionsCurrent proj
+R6933:6965 XamanReceipt <> receiptAcceptedAssumptionsCurrent proj
+R6981:7002 XamanReceipt <> receiptSupportedProver proj
+R6981:7002 XamanReceipt <> receiptSupportedProver proj
+R6870:6873 Corelib.Init.Datatypes <> true constr
+R6922:6925 Corelib.Init.Datatypes <> true constr
+R6970:6973 Corelib.Init.Datatypes <> true constr
+R7007:7010 Corelib.Init.Datatypes <> true constr
+def 7025:7040 <> accepted_example
+R7098:7100 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R7044:7052 XamanReceipt <> canAccept def
+R7054:7074 XamanReceipt <> acceptedExampleReport def
+R7076:7097 XamanReceipt <> acceptedExampleReceipt def
+R7101:7104 Corelib.Init.Datatypes <> true constr

@@ -1,0 +1,87 @@
+{
+  "created_at": "2026-07-19T14:51:32.700315+00:00",
+  "decomposition_plan": null,
+  "metadata": {},
+  "normalized_evidence": [],
+  "notes": [
+    "HAMMER-015 release-evidence golden case: unsupported_translation"
+  ],
+  "publishable_digest": "bafkreigel7jgnyo5srp5lgtpwtghqgq3ylkszvfgvs3g32sd4g4kjfxhzq",
+  "receipt_id": "bafkreicusrwt32xu3kjcrsxbnrzvghpggsneriye3uowyzoq4km7mwngaa",
+  "reconstruction_evidence": null,
+  "redaction_notes": [
+    "private-theorem-goal"
+  ],
+  "result": {
+    "completed_at": "2026-01-01T00:00:05+00:00",
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "environment_lock": null,
+    "errors": [
+      "dependent type is not supported: Vec n"
+    ],
+    "notes": [
+      "dependent-type construct cannot be lowered to any supported translation target"
+    ],
+    "premises": [
+      {
+        "content_digest": "bafkreiex3n5ic2zx3tvo2qh6sdhr4krx7uuv44ak7cbslbxalgm3s7nia4",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_assoc",
+        "rank": 0,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)"
+      }
+    ],
+    "proof_candidate": null,
+    "reconstruction": null,
+    "request": {
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-01-01T00:00:00+00:00",
+      "goal_statement": "<redacted:private-theorem-goal length=23 digest=bafkreih25tkn6hcamqpjpz26dplxvqkhr4ts5x5fjqdl5b6u4rzgopifpy>",
+      "itp": "lean",
+      "metadata": {},
+      "policy": {
+        "allow_learned_premise_selector": false,
+        "allow_llm_decomposition_hints": false,
+        "allow_llm_premise_ranking": false,
+        "allow_native_automation_fallback": false,
+        "allowed_solvers": [],
+        "cpu_seconds": null,
+        "max_decomposition_subgoals": 4,
+        "max_premises": 64,
+        "memory_mb": null,
+        "network_allowed": false,
+        "schema_version": "1.0.0",
+        "timeout_seconds": 20.0
+      },
+      "request_id": "golden-unsupported-1",
+      "schema_version": "1.0.0",
+      "theorem_id": "hammer_golden_unsupported"
+    },
+    "result_id": "golden-unsupported-1:result",
+    "schema_version": "1.0.0",
+    "solver_attempts": [],
+    "status": "unsupported_translation",
+    "translations": [
+      {
+        "content_digest": null,
+        "obligations": [],
+        "request_id": "golden-unsupported-1",
+        "schema_version": "1.0.0",
+        "source_construct": "goal",
+        "status": "unsupported",
+        "target": "tptp",
+        "translated_text": null,
+        "translation_id": "golden-unsupported-1:goal:tptp:0",
+        "unsupported_reason": "dependent type is not supported: Vec n"
+      }
+    ]
+  },
+  "schema_version": "1.0.0",
+  "solver_evidence": [],
+  "visibility": "publishable"
+}

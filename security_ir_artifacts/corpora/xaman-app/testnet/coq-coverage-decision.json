@@ -1,36 +1,39 @@
 {
-  "artifact_cid": "bafkreiepryxlzk5ggescrr7ershsavmh6sspowpewf5hsqmfyllz2o2oja",
+  "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
   "coq": {
     "check": {
       "command": [
         "/home/barberb/.local/bin/coqc",
+        "-noglob",
+        "-o",
+        "tmp/cxtp-proof-checks/XamanTestnet.vo",
         "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v"
       ],
-      "returncode": null,
-      "status": "not-run",
-      "stderr": "coq kernel artifact is missing",
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "",
       "stdout": ""
     },
     "coqc_executable": "/home/barberb/.local/bin/coqc",
     "coqc_present": true,
     "coqc_version": "The Rocq Prover, version 9.1.1",
-    "kernel_artifact_cid": null,
+    "kernel_artifact_cid": "sha256:8b3bca9785463a119cf0a90c77a075a0ef4fc09d4e1c07ba4d8705bacc9d347b",
     "kernel_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.v",
-    "kernel_present": false
+    "kernel_present": true
   },
   "coq_required_by_reviewed_threat_model": true,
   "coverage_gap": {
     "does_not_invalidate_checked_lean_formalized_invariant": true,
-    "missing_coq_declared_coverage_gap": true,
+    "missing_coq_declared_coverage_gap": false,
     "scope": "Coq would provide an independent kernel check for the same formalized invariant family; it would still not prove facts outside the model or raw/runtime behavior not represented there.",
-    "unavailable_or_missing_coq_blocks_testnet_assurance": true
+    "unavailable_or_missing_coq_blocks_testnet_assurance": false
   },
-  "decision": "required_missing_artifact",
+  "decision": "required_checked",
   "generated_at_utc": "2026-07-11T00:00:00Z",
   "lean_report": {
     "formalized_invariant_only": true,
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
-    "report_cid": "bafkreiekew3cnki5stlklpldifkxidkud2hikllr6aveboteq5c7qei2pq",
+    "report_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
     "schema_version": "xaman-testnet-lean-kernel-report/v1",
     "security_decision": "LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY"
   },
@@ -41,14 +44,14 @@
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
     "schema_version": "security-model-ir/xaman/v1"
   },
-  "overall_status": "coverage_gap_required_independent_kernel_missing",
+  "overall_status": "independent_kernel_checked",
   "production_release_blocked": true,
   "requirement_source": {
     "path": "docs/security_verification/xaman_xrpl_testnet_theorem_prover_assurance_plan.md",
     "rule": "The reviewed Testnet plan requires Coq when independent kernel coverage is needed; this task records that Lean-only evidence is insufficient for the independent-kernel lane."
   },
   "schema_version": "xaman-testnet-coq-coverage-decision/v1",
-  "security_decision": "BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING",
+  "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED",
   "task_id": "PORTAL-CXTP-136",
-  "testnet_assurance_blocked": true
+  "testnet_assurance_blocked": false
 }

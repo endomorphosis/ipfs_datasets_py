@@ -12,7 +12,6 @@
 		"@mwni/toml": "^1.0.0",
 		"@orbitdb/core": "^2.1.0",
 		"@orbitdb/quickstart": "^1.0.0",
-		"aws-sdk": "^2.1597.0",
 		"commander": "^11.0.0",
 		"crypto": "^1.0.1",
 		"deasync": "^0.1.29",

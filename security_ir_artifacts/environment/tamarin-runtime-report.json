@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "sha256:86e69bf463a046dff323d00cccc770c5ce38f5180518cef437ef6514e3537f9d",
+  "artifact_cid": "sha256:d032d05b7487251155a672fac582c03b547e6629e8c50e3387129079a0bdfe86",
   "blockers": [],
   "depends_on": [
     "PORTAL-CXTP-092"
@@ -26,7 +26,7 @@
       "sha256": "sha256:03c4e139a1385be0f76904274e4c9d4809dc9fc0baa595eeaa46766c15a16dd9"
     }
   },
-  "generated_at": "2026-07-11T07:12:09Z",
+  "generated_at": "2026-07-19T06:35:02Z",
   "minimal_theory": {
     "name": "TamarinRuntimeSmoke",
     "run": {
@@ -34,12 +34,12 @@
         "/home/barberb/.local/bin/tamarin-prover",
         "--with-maude=/home/barberb/.local/bin/maude",
         "--prove",
-        "/tmp/tamarin-runtime-ljav3pub/runtime_smoke.spthy"
+        "/tmp/tamarin-runtime-ywlew8tq/runtime_smoke.spthy"
       ],
       "returncode": 0,
       "status": "passed",
       "stderr": "maude tool: '/home/barberb/.local/bin/maude'\n checking version: 3.5.1. OK.\n checking installation: OK.\n[Theory TamarinRuntimeSmoke] Theory loaded\n[Theory TamarinRuntimeSmoke] Theory translated\n[Theory TamarinRuntimeSmoke] Derivation checks started\n[Theory TamarinRuntimeSmoke] Derivation checks ended\n[Theory TamarinRuntimeSmoke] Theory closed\n",
-      "stdout": "theory TamarinRuntimeSmoke\n\nbegin\n\n// Function signature and definition of the equational theory E\n\nfunctions: fst/1, h/1, pair/2, snd/1\nequations: fst(<x.1, x.2>) = x.1, snd(<x.1, x.2>) = x.2\n\nrule (modulo E) Runtime_Smoke:\n   [ Fr( ~x ) ] --[ RuntimeReady( ~x ) ]-> [ Out( h(~x) ) ]\n\n  /* has exactly the trivial AC variant */\n\nlemma runtime_smoke_exists:\n  exists-trace \"\u2203 x #i. RuntimeReady( x ) @ #i\"\n/*\nguarded formula characterizing all satisfying traces:\n\"\u2203 x #i. (RuntimeReady( x ) @ #i)\"\n*/\nsimplify\nSOLVED // trace found\n\n/* All wellformedness checks were successful. */\n\n/*\nGenerated from:\nTamarin version 1.12.0\nMaude version 3.5.1\nGit revision: 82780bbaf3328a45f624ddb41e51bf75425f851c (with uncommited changes), branch: master\nCompiled at: 2026-03-07 14:22:39.174278293 UTC\n*/\n\nend\n\n==============================================================================\nsummary of summaries:\n\nanalyzed: /tmp/tamarin-runtime-ljav3pub/runtime_smoke.spthy\n\n  processing time: 0.14s\n  \n  runtime_smoke_exists (exists-trace): verified (2 steps)\n\n==============================================================================\n"
+      "stdout": "theory TamarinRuntimeSmoke\n\nbegin\n\n// Function signature and definition of the equational theory E\n\nfunctions: fst/1, h/1, pair/2, snd/1\nequations: fst(<x.1, x.2>) = x.1, snd(<x.1, x.2>) = x.2\n\nrule (modulo E) Runtime_Smoke:\n   [ Fr( ~x ) ] --[ RuntimeReady( ~x ) ]-> [ Out( h(~x) ) ]\n\n  /* has exactly the trivial AC variant */\n\nlemma runtime_smoke_exists:\n  exists-trace \"\u2203 x #i. RuntimeReady( x ) @ #i\"\n/*\nguarded formula characterizing all satisfying traces:\n\"\u2203 x #i. (RuntimeReady( x ) @ #i)\"\n*/\nsimplify\nSOLVED // trace found\n\n/* All wellformedness checks were successful. */\n\n/*\nGenerated from:\nTamarin version 1.12.0\nMaude version 3.5.1\nGit revision: 82780bbaf3328a45f624ddb41e51bf75425f851c (with uncommited changes), branch: master\nCompiled at: 2026-03-07 14:22:39.174278293 UTC\n*/\n\nend\n\n==============================================================================\nsummary of summaries:\n\nanalyzed: /tmp/tamarin-runtime-ywlew8tq/runtime_smoke.spthy\n\n  processing time: 0.11s\n  \n  runtime_smoke_exists (exists-trace): verified (2 steps)\n\n==============================================================================\n"
     },
     "source": "theory TamarinRuntimeSmoke\nbegin\n\nbuiltins: hashing\n\nrule Runtime_Smoke:\n  [ Fr(~x) ]\n  --[ RuntimeReady(~x) ]->\n  [ Out(h(~x)) ]\n\nlemma runtime_smoke_exists:\n  exists-trace\n  \"Ex x #i. RuntimeReady(x) @ i\"\n\nend\n",
     "source_sha256": "sha256:10f7fa91601b252da82c3ab87cbd07bb080b8b9e3181bdd2892c09ac036031d8",

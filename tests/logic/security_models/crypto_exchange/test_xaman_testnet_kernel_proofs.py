@@ -26,6 +26,7 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_testne
     TRACE_MAP_PATH,
     build_xaman_testnet_coq_coverage_decision,
     build_xaman_testnet_lean_report,
+    run_coq_kernel_check,
 )
 
 
@@ -34,6 +35,7 @@ PINNED_MODEL_CID = 'sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879
 LEAN_PATH = REPO_ROOT / LEAN_KERNEL_PATH
 LEAN_REPORT = REPO_ROOT / LEAN_REPORT_PATH
 COQ_DECISION = REPO_ROOT / COQ_DECISION_PATH
+COQ_PATH = REPO_ROOT / COQ_KERNEL_PATH
 DOC_PATH = REPO_ROOT / 'docs' / 'security_verification' / 'xaman_testnet_kernel_proofs.md'
 
 
@@ -143,7 +145,7 @@ def test_coq_coverage_decision_is_regenerable_and_declares_required_gap() -> Non
     model, model_cid, _trace_map, _assumptions, _lean_source = _inputs()
     lean_report = _load_json(LEAN_REPORT)
     decision = _load_json(COQ_DECISION)
-    coq_source = None
+    coq_source = COQ_PATH.read_text(encoding='utf-8')
     generated = build_xaman_testnet_coq_coverage_decision(
         model_payload=model,
         model_cid=model_cid,
@@ -161,15 +163,15 @@ def test_coq_coverage_decision_is_regenerable_and_declares_required_gap() -> Non
     assert decision['lean_report']['path'] == LEAN_REPORT_PATH
     assert decision['lean_report']['formalized_invariant_only'] is True
     assert decision['coq_required_by_reviewed_threat_model'] is True
-    assert decision['decision'] == 'required_missing_artifact'
-    assert decision['overall_status'] == 'coverage_gap_required_independent_kernel_missing'
-    assert decision['security_decision'] == 'BLOCK_TESTNET_ASSURANCE_INDEPENDENT_COQ_KERNEL_MISSING'
-    assert decision['testnet_assurance_blocked'] is True
+    assert decision['decision'] == 'required_checked'
+    assert decision['overall_status'] == 'independent_kernel_checked'
+    assert decision['security_decision'] == 'COQ_INDEPENDENT_KERNEL_CHECKED'
+    assert decision['testnet_assurance_blocked'] is False
     assert decision['coq']['kernel_path'] == COQ_KERNEL_PATH
-    assert decision['coq']['kernel_present'] is False
-    assert decision['coq']['check']['status'] == 'not-run'
-    assert decision['coverage_gap']['missing_coq_declared_coverage_gap'] is True
-    assert decision['coverage_gap']['unavailable_or_missing_coq_blocks_testnet_assurance'] is True
+    assert decision['coq']['kernel_present'] is True
+    assert decision['coq']['check']['status'] == 'passed'
+    assert decision['coverage_gap']['missing_coq_declared_coverage_gap'] is False
+    assert decision['coverage_gap']['unavailable_or_missing_coq_blocks_testnet_assurance'] is False
     assert decision['coverage_gap']['does_not_invalidate_checked_lean_formalized_invariant'] is True
     assert decision['artifact_cid'] == _cid_without(decision, 'artifact_cid')
 
@@ -201,7 +203,20 @@ def test_coq_decision_can_report_checked_when_artifact_and_checker_are_present(t
     assert checked['testnet_assurance_blocked'] is False
 
 
-def test_documentation_records_scope_and_coq_gap() -> None:
+def test_roqc_kernel_compiles_without_persisting_compiler_artifacts() -> None:
+    executable, version, source, check = run_coq_kernel_check(repo_root=REPO_ROOT)
+
+    assert executable is not None
+    assert version.startswith('The Rocq Prover, version 9.1.1')
+    assert source == COQ_PATH.read_text(encoding='utf-8')
+    assert check['status'] == 'passed'
+    assert check['returncode'] == 0
+    assert not list(COQ_PATH.parent.glob('XamanTestnet.vo'))
+    assert not list(COQ_PATH.parent.glob('XamanTestnet.vok'))
+    assert not list(COQ_PATH.parent.glob('XamanTestnet.vos'))
+
+
+def test_documentation_records_scope_and_checked_roqc_lane() -> None:
     doc = DOC_PATH.read_text(encoding='utf-8')
 
     assert 'PORTAL-CXTP-136' in doc
@@ -210,6 +225,7 @@ def test_documentation_records_scope_and_coq_gap() -> None:
     assert COQ_DECISION_PATH in doc
     assert PINNED_MODEL_CID in doc
     assert 'evidence only about the predicates in `XamanTestnet.lean`' in doc
-    assert 'required_missing_artifact' in doc
-    assert 'Missing Coq is therefore a declared coverage gap' in doc
+    assert COQ_KERNEL_PATH in doc
+    assert 'required_checked' in doc
+    assert 'COQ_INDEPENDENT_KERNEL_CHECKED' in doc
     assert 'does not invalidate the checked Lean formalized invariant' in doc

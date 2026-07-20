@@ -1,0 +1,23 @@
+{
+  "all_required_claims_bound": true,
+  "artifact_cid": "bafkreig3fiukmk4dou3cuibvogeng43e7y2vbocimiffxvqkaf5ntzhabi",
+  "decision": "needs_clarification",
+  "expires_at_utc": "2026-07-25T00:00:00Z",
+  "manifest_cid": "bafkreih2xqft37oso7apce6q6xpxynvtqtljky5ltragt2koim4qmtpt5e",
+  "overall_status": "pending_review",
+  "required_claims_present": [
+    "xaman-claim:backend-payload-service-is-trusted-not-proved",
+    "xaman-claim:runtime-equivalence-is-blocked-without-device-traces"
+  ],
+  "review_accepted_for_gap_clearance": false,
+  "review_task_id": "PORTAL-CXTP-153",
+  "reviewed_at_utc": "2026-07-19T00:00:00Z",
+  "reviewer_id_sha256": "f9d7022d638ad1085bc91a6cdf644b021d4c23754c3258a212e8bb52ab47f0b3",
+  "schema_version": "xaman-vendor-evidence-review-verification/v1",
+  "scope": {
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "vendor_release_equivalent": false
+  },
+  "task_id": "PORTAL-CXTP-153"
+}

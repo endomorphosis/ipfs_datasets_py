@@ -17,7 +17,7 @@ PREFLIGHT_SCRIPT_PATH = (
     REPO_ROOT / 'scripts' / 'ops' / 'security_verification' / 'preflight_crypto_exchange_taskboard.py'
 )
 
-RECONSTRUCTED_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(119, 156)]
+RECONSTRUCTED_TASK_START = 119
 COMPLETED_EVIDENCE_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(119, 143)]
 PRODUCTION_BLOCKER_TASK_IDS = [f'PORTAL-CXTP-{number:03d}' for number in range(77, 85)]
 
@@ -64,6 +64,14 @@ def _load_reconciliation() -> dict[str, Any]:
     return json.loads(RECONCILIATION_PATH.read_text(encoding='utf-8'))
 
 
+def _reconstructed_task_ids(tasks: dict[str, Any]) -> list[str]:
+    return [
+        task_id
+        for task_id in sorted(tasks)
+        if task_id.startswith('PORTAL-CXTP-') and int(task_id.rsplit('-', 1)[1]) >= RECONSTRUCTED_TASK_START
+    ]
+
+
 def test_reconciliation_artifact_matches_canonical_board_and_supervisor_state() -> None:
     tasks = _load_board_tasks()
     state = _load_state()
@@ -95,10 +103,11 @@ def test_reconstructed_records_are_present_and_status_aligned() -> None:
     artifact = _load_reconciliation()
     records = {record['task_id']: record for record in artifact['durable_task_records']}
 
-    assert artifact['reconstructed_task_ids'] == RECONSTRUCTED_TASK_IDS
-    assert sorted(records) == RECONSTRUCTED_TASK_IDS
+    reconstructed_task_ids = _reconstructed_task_ids(tasks)
+    assert artifact['reconstructed_task_ids'] == reconstructed_task_ids
+    assert sorted(records) == reconstructed_task_ids
 
-    for task_id in RECONSTRUCTED_TASK_IDS:
+    for task_id in reconstructed_task_ids:
         task = tasks[task_id]
         record = records[task_id]
         assert record['taskboard_status'] == task.status
@@ -165,9 +174,11 @@ def test_next_task_and_production_blockers_remain_fail_closed() -> None:
     state = _load_state()
     artifact = _load_reconciliation()
 
-    selectable = state.get('selectable_ready_task_ids', state.get('ready_task_ids', []))
-    assert artifact['next_selectable_task_ids'] == selectable == []
-    assert tasks['PORTAL-CXTP-143'].status == 'completed'
+    assert artifact['next_selectable_task_ids'] == state['selectable_ready_task_ids'] == []
+    assert tasks['PORTAL-CXTP-155'].status == 'completed'
+    assert tasks['PORTAL-CXTP-156'].status == 'completed'
+    assert tasks['PORTAL-CXTP-157'].status == 'completed'
+    assert all(task.status != 'ready' for task in tasks.values())
 
     assert artifact['production_blocker_policy']['downgraded'] is False
     assert artifact['production_blocker_policy']['blocker_task_ids'] == PRODUCTION_BLOCKER_TASK_IDS

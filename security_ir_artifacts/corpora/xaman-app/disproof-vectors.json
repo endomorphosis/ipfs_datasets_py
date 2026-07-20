@@ -112,11 +112,6 @@
   ],
   "xrpl_transaction_coverage": {
     "artifact_cid": "sha256:3afcf320e04094a6b39cca1952c9c8a68351cc0c4b1f5ed26880a017d0914beb",
-    "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json",
-    "transaction_classes": [
-      "TrustSet",
-      "OfferCreate",
-      "SignerListSet"
-    ]
+    "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-coverage.json"
   }
 }

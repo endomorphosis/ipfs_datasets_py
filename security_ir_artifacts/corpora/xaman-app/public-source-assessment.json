@@ -1,5 +1,5 @@
 {
-  "artifact_cid": "sha256:1a35ea305d476712bdf77a1a4b551ed60c975b58faeea9bcc8ee7bc7c9c51bbe",
+  "artifact_cid": "sha256:2b423b226d4a780a405b5bea7a70298632ed55fbab6ab5901f5517b7a94e98ab",
   "assessment_boundary": {
     "may_be_used_for_production_release_approval": false,
     "not_a_production_release_approval": true,
@@ -524,7 +524,7 @@
       "path": "security_ir_artifacts/corpora/xaman-app/counterexample-report.json",
       "schema_version": "xaman-counterexample-report/v1",
       "security_decision": "BLOCK_COUNTEREXAMPLES_AND_MISSING_EVIDENCE",
-      "sha256": "sha256:3e1ede3a7942fbd3058b85c1b527b85fd1eb358d9f0450d1c2945b186d8e43e4",
+      "sha256": "sha256:eb9811ec2669e76098e9c8fa9c9dcf2abb5f1818362d5c8c87c55b6761396c3e",
       "task_id": "PORTAL-CXTP-070"
     },
     {
@@ -551,7 +551,7 @@
       "path": "security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json",
       "schema_version": "xaman-protocol-projection-report/v1",
       "security_decision": "BLOCK_PROTOCOL_SOLVERS_UNAVAILABLE",
-      "sha256": "sha256:6e757e999787a6fce907ee24beadc9bbb9a28c53ee9c61637fc7420b9d8a1a63",
+      "sha256": "sha256:5b6273a4e08ffa110f9e5cdd30d05174d5a0f84f07f312456b34a9c17a4d5722",
       "task_id": "PORTAL-CXTP-072"
     },
     {
@@ -622,7 +622,7 @@
     },
     {
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json",
-      "coverage_gap": "Apalache executable is unavailable, so TLA invariants have not been model checked.",
+      "coverage_gap": "Apalache checked the bounded TLA invariants; this remains bounded model evidence, not a proof of deployed runtime or production safety.",
       "covered_claim_ids": [
         "xaman-claim:software-custody-requires-vault-authentication",
         "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
@@ -632,16 +632,16 @@
       "lane": "tla_apalache",
       "missing": [],
       "overall_status": "checked_bounded_model_only",
-      "public_source_result": "solver_lane_missing",
+      "public_source_result": "solver_lane_checked_bounded_only",
       "security_decision": "ACCEPT_BOUNDED_MODEL_EVIDENCE_ONLY"
     },
     {
       "artifact_path": "security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json",
       "coverage_gap": "Tamarin and ProVerif protocol checks have not run.",
       "covered_claim_ids": [
-        "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
         "xaman-claim:payload-integrity-is-digest-checked-and-revalidated",
         "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+        "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
         "xaman-claim:backend-payload-service-is-trusted-not-proved"
       ],
       "lane": "protocol_tamarin_proverif",

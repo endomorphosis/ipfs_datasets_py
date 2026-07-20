@@ -1,0 +1,302 @@
+{
+  "artifact_cid": "bafkreic5bcpkqepuxjc4p7kjnb3tqlgw76ilmejyjfoqf5kwveq7g4d5em",
+  "blockers": [],
+  "depends_on": [
+    "PORTAL-CXTP-071",
+    "PORTAL-CXTP-091"
+  ],
+  "executables": [
+    {
+      "name": "apalache-mc",
+      "path": "/home/barberb/.local/bin/apalache-mc",
+      "present": true,
+      "version": "0.58.3"
+    },
+    {
+      "name": "apalache",
+      "path": null,
+      "present": false,
+      "version": ""
+    }
+  ],
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_check": {
+    "checked_invariants": [
+      "NoSignWithoutDigest",
+      "NoSignWithoutAuthentication",
+      "NoSignWithoutVault",
+      "NoSignWithoutNetworkBinding",
+      "NoBroadcastWithoutSignature",
+      "NoBroadcastAfterReject",
+      "SigningGateInvariant"
+    ],
+    "required_version": "0.58.3",
+    "runs": [
+      {
+        "apalache_version": "0.58.3",
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=NoSignWithoutDigest",
+          "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla"
+        ],
+        "exit_code": 0,
+        "input_tla_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+        "invariant": "NoSignWithoutDigest",
+        "output_evidence": {
+          "normalized_markers": [
+            "# APALACHE version: 0.58.3 | build: f4ac7ff",
+            "PASS #0: SanyParser",
+            "PASS #1: TypeCheckerSnowcat",
+            "The outcome is: NoError",
+            "Checker reports no error up to computation length 10",
+            "EXITCODE: OK"
+          ],
+          "normalized_output_sha256": "sha256:50a45a87aca5f8ccec2ac41a25a09e98c1edf61698588d80ac5438e8afdbc462",
+          "raw_output_retained": false,
+          "scope_statement": "bounded_model_only"
+        },
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass",
+        "version_output": "0.58.3"
+      },
+      {
+        "apalache_version": "0.58.3",
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=NoSignWithoutAuthentication",
+          "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla"
+        ],
+        "exit_code": 0,
+        "input_tla_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+        "invariant": "NoSignWithoutAuthentication",
+        "output_evidence": {
+          "normalized_markers": [
+            "# APALACHE version: 0.58.3 | build: f4ac7ff",
+            "PASS #0: SanyParser",
+            "PASS #1: TypeCheckerSnowcat",
+            "The outcome is: NoError",
+            "Checker reports no error up to computation length 10",
+            "EXITCODE: OK"
+          ],
+          "normalized_output_sha256": "sha256:50a45a87aca5f8ccec2ac41a25a09e98c1edf61698588d80ac5438e8afdbc462",
+          "raw_output_retained": false,
+          "scope_statement": "bounded_model_only"
+        },
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass",
+        "version_output": "0.58.3"
+      },
+      {
+        "apalache_version": "0.58.3",
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=NoSignWithoutVault",
+          "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla"
+        ],
+        "exit_code": 0,
+        "input_tla_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+        "invariant": "NoSignWithoutVault",
+        "output_evidence": {
+          "normalized_markers": [
+            "# APALACHE version: 0.58.3 | build: f4ac7ff",
+            "PASS #0: SanyParser",
+            "PASS #1: TypeCheckerSnowcat",
+            "The outcome is: NoError",
+            "Checker reports no error up to computation length 10",
+            "EXITCODE: OK"
+          ],
+          "normalized_output_sha256": "sha256:50a45a87aca5f8ccec2ac41a25a09e98c1edf61698588d80ac5438e8afdbc462",
+          "raw_output_retained": false,
+          "scope_statement": "bounded_model_only"
+        },
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass",
+        "version_output": "0.58.3"
+      },
+      {
+        "apalache_version": "0.58.3",
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=NoSignWithoutNetworkBinding",
+          "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla"
+        ],
+        "exit_code": 0,
+        "input_tla_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+        "invariant": "NoSignWithoutNetworkBinding",
+        "output_evidence": {
+          "normalized_markers": [
+            "# APALACHE version: 0.58.3 | build: f4ac7ff",
+            "PASS #0: SanyParser",
+            "PASS #1: TypeCheckerSnowcat",
+            "The outcome is: NoError",
+            "Checker reports no error up to computation length 10",
+            "EXITCODE: OK"
+          ],
+          "normalized_output_sha256": "sha256:50a45a87aca5f8ccec2ac41a25a09e98c1edf61698588d80ac5438e8afdbc462",
+          "raw_output_retained": false,
+          "scope_statement": "bounded_model_only"
+        },
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass",
+        "version_output": "0.58.3"
+      },
+      {
+        "apalache_version": "0.58.3",
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=NoBroadcastWithoutSignature",
+          "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla"
+        ],
+        "exit_code": 0,
+        "input_tla_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+        "invariant": "NoBroadcastWithoutSignature",
+        "output_evidence": {
+          "normalized_markers": [
+            "# APALACHE version: 0.58.3 | build: f4ac7ff",
+            "PASS #0: SanyParser",
+            "PASS #1: TypeCheckerSnowcat",
+            "The outcome is: NoError",
+            "Checker reports no error up to computation length 10",
+            "EXITCODE: OK"
+          ],
+          "normalized_output_sha256": "sha256:50a45a87aca5f8ccec2ac41a25a09e98c1edf61698588d80ac5438e8afdbc462",
+          "raw_output_retained": false,
+          "scope_statement": "bounded_model_only"
+        },
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass",
+        "version_output": "0.58.3"
+      },
+      {
+        "apalache_version": "0.58.3",
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=NoBroadcastAfterReject",
+          "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla"
+        ],
+        "exit_code": 0,
+        "input_tla_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+        "invariant": "NoBroadcastAfterReject",
+        "output_evidence": {
+          "normalized_markers": [
+            "# APALACHE version: 0.58.3 | build: f4ac7ff",
+            "PASS #0: SanyParser",
+            "PASS #1: TypeCheckerSnowcat",
+            "The outcome is: NoError",
+            "Checker reports no error up to computation length 10",
+            "EXITCODE: OK"
+          ],
+          "normalized_output_sha256": "sha256:50a45a87aca5f8ccec2ac41a25a09e98c1edf61698588d80ac5438e8afdbc462",
+          "raw_output_retained": false,
+          "scope_statement": "bounded_model_only"
+        },
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass",
+        "version_output": "0.58.3"
+      },
+      {
+        "apalache_version": "0.58.3",
+        "command": [
+          "/home/barberb/.local/bin/apalache-mc",
+          "check",
+          "--no-deadlock",
+          "--init=Init",
+          "--next=Next",
+          "--inv=SigningGateInvariant",
+          "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla"
+        ],
+        "exit_code": 0,
+        "input_tla_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+        "invariant": "SigningGateInvariant",
+        "output_evidence": {
+          "normalized_markers": [
+            "# APALACHE version: 0.58.3 | build: f4ac7ff",
+            "PASS #0: SanyParser",
+            "PASS #1: TypeCheckerSnowcat",
+            "The outcome is: NoError",
+            "Checker reports no error up to computation length 10",
+            "EXITCODE: OK"
+          ],
+          "normalized_output_sha256": "sha256:50a45a87aca5f8ccec2ac41a25a09e98c1edf61698588d80ac5438e8afdbc462",
+          "raw_output_retained": false,
+          "scope_statement": "bounded_model_only"
+        },
+        "reason": "apalache completed the bounded invariant check without a counterexample",
+        "status": "pass",
+        "version_output": "0.58.3"
+      }
+    ],
+    "scope_statement": "bounded_model_only",
+    "version": "0.58.3",
+    "version_output": "0.58.3"
+  },
+  "overall_status": "ready_bounded_model_only",
+  "production_release_blocked_by_apalache_lane": false,
+  "schema_version": "crypto-exchange-apalache-solver-lane-report/v1",
+  "scope": {
+    "meaning": "This lane records Apalache 0.58.3 bounded model-check output only and must not be interpreted as an unbounded proof.",
+    "statement": "bounded_model_only"
+  },
+  "security_decision": "APALACHE_0583_BOUNDED_MODEL_OUTPUT_BOUND",
+  "selected_executable": {
+    "name": "apalache-mc",
+    "path": "/home/barberb/.local/bin/apalache-mc",
+    "version": "0.58.3",
+    "version_output": "0.58.3"
+  },
+  "summary": {
+    "apalache_present": true,
+    "apalache_version_matches_required": true,
+    "blocker_count": 0,
+    "checked_invariant_count": 7,
+    "model_check_passed": true,
+    "model_check_run": true,
+    "report_source_bound": true,
+    "required_invariant_count": 7,
+    "scope_statement": "bounded_model_only",
+    "source_reconciled": true,
+    "tla_model_present": true
+  },
+  "task_id": "PORTAL-CXTP-140",
+  "tla_model": {
+    "exists": true,
+    "generator_matches_checked_source": true,
+    "generator_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+    "path": "security_ir_artifacts/corpora/xaman-app/tla/XamanSigning.tla",
+    "sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff"
+  },
+  "xaman_tla_report": {
+    "exists": true,
+    "overall_status": "checked_bounded_model_only",
+    "path": "security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json",
+    "reported_tla_sha256": "sha256:41bee7cb52ff6a6f3567ee35e18621ff2b2d73a06301353e5f32ba5b190b8cff",
+    "scope_statement": "bounded_model_only",
+    "security_decision": "ACCEPT_BOUNDED_MODEL_EVIDENCE_ONLY",
+    "source_matches_report": true,
+    "source_reconciled": true
+  }
+}

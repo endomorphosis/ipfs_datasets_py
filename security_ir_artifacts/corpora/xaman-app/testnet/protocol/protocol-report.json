@@ -75,30 +75,35 @@
       }
     ],
     "fuzz_counterexamples": [
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-after-submit-race.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-gap-promoted.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-decline-gap-promoted.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-downgraded-evidence-review.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-after-auth-race.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-gap-promoted.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-forged-broadcast-finality.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-imported-production-account.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-malformed-payload-shape.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-offercreate-transaction-type.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-path-payment-semantics-skipped.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-proof-obligation-status-forged.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-payload-material.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-signature-blob.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-reconnect-before-submit-result-race.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-resolution.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-submit-result.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-review-bypass.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signerlistset-transaction-type.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signing-before-auth.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-solver-result-upgrade.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-stale-evidence-digest.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-submit-result-removed.json",
+      "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-trustset-transaction-type.json",
       "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-wrong-network.json"
     ],
     "policy": "preserve_attack_traces_as_blocking_counterevidence_until an approved solver run discharges or refines them"
   },
-  "blockers": [
-    {
-      "code": "PROVERIF_MODEL_MISSING",
-      "message": "Required ProVerif projection security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv is not present."
-    },
-    {
-      "code": "TAMARIN_CHECK_NOT_RUN",
-      "message": "Required Tamarin protocol check has not been executed."
-    }
-  ],
+  "blockers": [],
   "claim_coverage": [
     {
       "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
@@ -112,7 +117,10 @@
         "auth_requires_review",
         "signing_decision_requires_review_and_auth",
         "submit_ui_requires_signing_decision",
-        "audit_redaction_preserved_for_modeled_events"
+        "audit_redaction_preserved_for_payload_intake",
+        "audit_redaction_preserved_for_review",
+        "audit_redaction_preserved_for_signing_decision",
+        "audit_redaction_preserved_for_submit_result"
       ],
       "protocol_status": "MODELED_WITH_TESTNET_SCOPE",
       "severity": "high"
@@ -129,7 +137,10 @@
         "auth_requires_review",
         "signing_decision_requires_review_and_auth",
         "submit_ui_requires_signing_decision",
-        "audit_redaction_preserved_for_modeled_events"
+        "audit_redaction_preserved_for_payload_intake",
+        "audit_redaction_preserved_for_review",
+        "audit_redaction_preserved_for_signing_decision",
+        "audit_redaction_preserved_for_submit_result"
       ],
       "protocol_status": "MODELED_WITH_TESTNET_SCOPE",
       "severity": "blocking"
@@ -146,7 +157,10 @@
         "auth_requires_review",
         "signing_decision_requires_review_and_auth",
         "submit_ui_requires_signing_decision",
-        "audit_redaction_preserved_for_modeled_events"
+        "audit_redaction_preserved_for_payload_intake",
+        "audit_redaction_preserved_for_review",
+        "audit_redaction_preserved_for_signing_decision",
+        "audit_redaction_preserved_for_submit_result"
       ],
       "protocol_status": "MODELED_WITH_TESTNET_SCOPE",
       "severity": "blocking"
@@ -163,7 +177,10 @@
         "auth_requires_review",
         "signing_decision_requires_review_and_auth",
         "submit_ui_requires_signing_decision",
-        "audit_redaction_preserved_for_modeled_events"
+        "audit_redaction_preserved_for_payload_intake",
+        "audit_redaction_preserved_for_review",
+        "audit_redaction_preserved_for_signing_decision",
+        "audit_redaction_preserved_for_submit_result"
       ],
       "protocol_status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY",
       "severity": "blocking"
@@ -180,7 +197,10 @@
         "auth_requires_review",
         "signing_decision_requires_review_and_auth",
         "submit_ui_requires_signing_decision",
-        "audit_redaction_preserved_for_modeled_events"
+        "audit_redaction_preserved_for_payload_intake",
+        "audit_redaction_preserved_for_review",
+        "audit_redaction_preserved_for_signing_decision",
+        "audit_redaction_preserved_for_submit_result"
       ],
       "protocol_status": "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY",
       "severity": "blocking"
@@ -257,7 +277,10 @@
         "auth_requires_review",
         "signing_decision_requires_review_and_auth",
         "submit_ui_requires_signing_decision",
-        "audit_redaction_preserved_for_modeled_events"
+        "audit_redaction_preserved_for_payload_intake",
+        "audit_redaction_preserved_for_review",
+        "audit_redaction_preserved_for_signing_decision",
+        "audit_redaction_preserved_for_submit_result"
       ],
       "protocol_status": "MODELED_WITH_TESTNET_SCOPE",
       "severity": "blocking"
@@ -315,8 +338,8 @@
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json"
     },
     "fuzz_counterexamples": {
-      "artifact_cid": "bafkreifbh3m333sxkkeyubeamkuu7ja2qbo3orxquq2lsdfgdv7of6zpae",
-      "counterexample_count": 11,
+      "artifact_cid": "bafkreichcomn2x5sodl7cojsjmuobbcozswkilwkptq5sbz4vfl3lqu774",
+      "counterexample_count": 25,
       "exists": true,
       "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
       "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/manifest.json"
@@ -330,17 +353,17 @@
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
     "schema_version": "security-model-ir/xaman/v1"
   },
-  "overall_status": "blocked_required_lane_unavailable",
+  "overall_status": "checked_with_unresolved_threat_model_gaps",
   "production_release_blocked": true,
   "proverif_model": {
-    "coverage_decision": "required_but_unavailable",
-    "exists": false,
+    "coverage_decision": "required_projection_present",
+    "exists": true,
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv",
-    "sha256": null
+    "sha256": "sha256:e407a1cab27f5da1272c922e41e2e5e992932430d3e5604e55a3687ffb7969a3"
   },
-  "report_cid": "bafkreicoh34zbyengansvhulfwctv2if5gsnjmcezmzby4q2ls2rovkm7e",
+  "report_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
   "schema_version": "xaman-testnet-protocol-report/v1",
-  "security_decision": "BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE",
+  "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
   "solver_lanes": {
     "proverif": {
       "available": true,
@@ -350,11 +373,21 @@
       ],
       "executable": "/home/barberb/.local/bin/proverif",
       "required": true,
-      "run": null,
+      "run": {
+        "command": [
+          "/home/barberb/.local/bin/proverif",
+          "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.pv"
+        ],
+        "exit_code": 0,
+        "output_retained": false,
+        "status": "pass",
+        "stderr": "",
+        "stdout": "Process 0 (that is, the initial process):\n{1}new payload: bitstring;\n{2}event testnet_bound(payload);\n{3}event fresh_testnet_account(payload);\n{4}event audit_redaction_preserved(payload);\n{5}event payload_reviewed(payload);\n{6}event auth_authorized(payload);\n{7}event signing_decision_observed(payload);\n{8}event submit_attempt_observed(payload);\n{9}event submit_result_observed(payload)\n\n-- Query event(payload_reviewed(payload_1)) ==> event(testnet_bound(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(payload_reviewed(payload_1)) ==> event(testnet_bound(payload_1))\ngoal reachable: b-event(testnet_bound(payload[])) -> event(payload_reviewed(payload[]))\nRESULT event(payload_reviewed(payload_1)) ==> event(testnet_bound(payload_1)) is true.\n-- Query event(payload_reviewed(payload_1)) ==> event(fresh_testnet_account(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(payload_reviewed(payload_1)) ==> event(fresh_testnet_account(payload_1))\ngoal reachable: b-event(fresh_testnet_account(payload[])) -> event(payload_reviewed(payload[]))\nRESULT event(payload_reviewed(payload_1)) ==> event(fresh_testnet_account(payload_1)) is true.\n-- Query event(auth_authorized(payload_1)) ==> event(payload_reviewed(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(auth_authorized(payload_1)) ==> event(payload_reviewed(payload_1))\ngoal reachable: b-event(payload_reviewed(payload[])) -> event(auth_authorized(payload[]))\nRESULT event(auth_authorized(payload_1)) ==> event(payload_reviewed(payload_1)) is true.\n-- Query event(signing_decision_observed(payload_1)) ==> event(auth_authorized(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(signing_decision_observed(payload_1)) ==> event(auth_authorized(payload_1))\ngoal reachable: b-event(auth_authorized(payload[])) -> event(signing_decision_observed(payload[]))\nRESULT event(signing_decision_observed(payload_1)) ==> event(auth_authorized(payload_1)) is true.\n-- Query event(submit_attempt_observed(payload_1)) ==> event(signing_decision_observed(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(submit_attempt_observed(payload_1)) ==> event(signing_decision_observed(payload_1))\ngoal reachable: b-event(signing_decision_observed(payload[])) -> event(submit_attempt_observed(payload[]))\nRESULT event(submit_attempt_observed(payload_1)) ==> event(signing_decision_observed(payload_1)) is true.\n-- Query event(submit_result_observed(payload_1)) ==> event(submit_attempt_observed(payload_1)) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query event(submit_result_observed(payload_1)) ==> event(submit_attempt_observed(payload_1))\ngoal reachable: b-event(submit_attempt_observed(payload[])) -> event(submit_result_observed(payload[]))\nRESULT event(submit_result_observed(payload_1)) ==> event(submit_attempt_observed(payload_1)) is true.\n\n--------------------------------------------------------------\nVerification summary:\n\nQuery event(payload_reviewed(payload_1)) ==> event(testnet_bound(payload_1)) is true.\n\nQuery event(payload_reviewed(payload_1)) ==> event(fresh_testnet_account(payload_1)) is true.\n\nQuery event(auth_authorized(payload_1)) ==> event(payload_reviewed(payload_1)) is true.\n\nQuery event(signing_decision_observed(payload_1)) ==> event(auth_authorized(payload_1)) is true.\n\nQuery event(submit_attempt_observed(payload_1)) ==> event(signing_decision_observed(payload_1)) is true.\n\nQuery event(submit_result_observed(payload_1)) ==> event(submit_attempt_observed(payload_1)) is true.\n\n--------------------------------------------------------------\n\n"
+      },
       "solver": "proverif",
-      "status": "not-run",
+      "status": "passed",
       "unavailable_blocks_testnet_assurance": true,
-      "version": null
+      "version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre"
     },
     "tamarin": {
       "available": true,
@@ -365,16 +398,27 @@
       ],
       "executable": "/home/barberb/.local/bin/tamarin-prover",
       "required": true,
-      "run": null,
+      "run": {
+        "command": [
+          "/home/barberb/.local/bin/tamarin-prover",
+          "--prove",
+          "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy"
+        ],
+        "exit_code": 0,
+        "output_retained": false,
+        "status": "pass",
+        "stderr": "maude tool: 'maude'\n checking version: 3.5.1. OK.\n checking installation: OK.\n[Theory XamanTestnetPayload] Theory loaded\n[Theory XamanTestnetPayload] Theory translated\n[Theory XamanTestnetPayload] Derivation checks started\n[Theory XamanTestnetPayload] Derivation checks ended\n[Theory XamanTestnetPayload] Theory closed\n[Saturating Sources] Step 1 (Max 5)\n[Saturating Sources] Done\n",
+        "stdout": "theory XamanTestnetPayload\n\nbegin\n\n// Function signature and definition of the equational theory E\n\nfunctions: fst/1, h/1, pair/2, payload_id/1, pk/1, redaction_digest/1,\n           sign/2, snd/1, true/0, ui_result/1, verify/3, xrpl_mainnet/0,\n           xrpl_testnet/0\nequations:\n    fst(<x.1, x.2>) = x.1,\n    snd(<x.1, x.2>) = x.2,\n    verify(sign(x.1, x.2), x.1, pk(x.2)) = true\n\nrule (modulo E) Remote_Service_Issues_Redacted_Testnet_Payload:\n   [ Fr( ~payload ), Fr( ~account ) ]\n  --[\n  RemotePayloadIssued( ~payload ), TestnetBound( ~payload ),\n  FreshTestnetAccountBoundary( ~account ),\n  AuditRedactionPreserved( ~payload )\n  ]->\n   [\n   Out( <xrpl_testnet, payload_id(~payload), redaction_digest(~payload)> ),\n   !ReviewedTestnetPayload( ~payload, payload_id(~payload),\n                            redaction_digest(~payload), ~account\n   )\n   ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Device_Intakes_Categorical_Payload:\n   [\n   In( <xrpl_testnet, payload_id(payload), redaction_digest(payload)> ),\n   !ReviewedTestnetPayload( payload, payload_id(payload),\n                            redaction_digest(payload), account\n   )\n   ]\n  --[\n  PayloadIntakeCategorical( payload ), TestnetBound( payload ),\n  FreshTestnetAccountBoundary( account ),\n  AuditRedactionPreserved( payload )\n  ]->\n   [ ReviewablePayload( payload, account ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Device_Reviews_Payload:\n   [ ReviewablePayload( payload, account ) ]\n  --[\n  PayloadReviewed( payload ), TestnetBound( payload ),\n  FreshTestnetAccountBoundary( account ),\n  AuditRedactionPreserved( payload )\n  ]->\n   [ ReviewedPayload( payload, account ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Operator_Authorizes_After_Review:\n   [ ReviewedPayload( payload, account ) ]\n  --[ AuthDecisionAuthorized( payload ), AuditRedactionPreserved( payload )\n  ]->\n   [ AuthorizedPayload( payload, account ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Device_Observes_Signing_Decision:\n   [ AuthorizedPayload( payload, account ) ]\n  --[\n  SigningDecisionObserved( payload ), AuditRedactionPreserved( payload )\n  ]->\n   [\n   SignedDecision( payload, account,\n                   sign(payload_id(payload), redaction_digest(payload))\n   )\n   ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Device_Observes_Submit_UI:\n   [ SignedDecision( payload, account, signature ) ]\n  --[\n  SubmitAttemptObserved( payload ), SubmitResultObserved( payload ),\n  AuditRedactionPreserved( payload )\n  ]->\n   [ Out( <ui_result(payload), signature> ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Wrong_Network:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceWrongNetwork( ~payload ) ]->\n   [ Out( <xrpl_mainnet, payload_id(~payload), redaction_digest(~payload)> )\n   ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Imported_Production_Account:\n   [ Fr( ~account ) ]\n  --[ AttackTraceImportedProductionAccount( ~account ) ]->\n   [ Out( ~account ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Signing_Before_Auth:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceSigningBeforeAuth( ~payload ) ]->\n   [\n   Out( <payload_id(~payload), \n         sign(payload_id(~payload), redaction_digest(~payload))>\n   )\n   ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Replay_Duplicate_Resolution:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceReplayDuplicateResolution( ~payload ) ]->\n   [ Out( <payload_id(~payload), payload_id(~payload)> ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Raw_Payload_Material:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceRawPayloadMaterial( ~payload ) ]->\n   [ Out( ~payload ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Raw_Signature_Blob:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceRawSignatureBlob( ~payload ) ]->\n   [ Out( sign(payload_id(~payload), redaction_digest(~payload)) ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Forged_Broadcast_Finality:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceForgedBroadcastFinality( ~payload ) ]->\n   [ Out( <ui_result(~payload), xrpl_mainnet> ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Decline_Gap:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceDeclineGap( ~payload ) ]->\n   [ Out( <payload_id(~payload), 'decline_gap'> ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Cancel_Gap:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceCancelGap( ~payload ) ]->\n   [ Out( <payload_id(~payload), 'cancel_gap'> ) ]\n\n  /* has exactly the trivial AC variant */\n\nrule (modulo E) Preserve_Attack_Expiry_Gap:\n   [ Fr( ~payload ) ]\n  --[ AttackTraceExpiryGap( ~payload ) ]->\n   [ Out( <payload_id(~payload), 'expiry_gap'> ) ]\n\n  /* has exactly the trivial AC variant */\n\nlemma review_requires_testnet_binding:\n  all-traces\n  \"\u2200 payload #i.\n    (PayloadReviewed( payload ) @ #i) \u21d2\n    (\u2203 #j. (TestnetBound( payload ) @ #j) \u2227 (#j < #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (PayloadReviewed( payload ) @ #i)\n \u2227\n  \u2200 #j. (TestnetBound( payload ) @ #j) \u21d2 \u00ac(#j < #i)\"\n*/\nsimplify\nsolve( ReviewablePayload( payload, account ) \u25b6\u2080 #i )\n  case Device_Intakes_Categorical_Payload\n  by contradiction /* from formulas */\nqed\n\nlemma review_requires_fresh_testnet_account:\n  all-traces\n  \"\u2200 payload #i.\n    (PayloadReviewed( payload ) @ #i) \u21d2\n    (\u2203 account #j.\n      (FreshTestnetAccountBoundary( account ) @ #j) \u2227 (#j < #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (PayloadReviewed( payload ) @ #i)\n \u2227\n  \u2200 account #j. (FreshTestnetAccountBoundary( account ) @ #j) \u21d2 \u00ac(#j < #i)\"\n*/\nsimplify\nsolve( ReviewablePayload( payload, account ) \u25b6\u2080 #i )\n  case Device_Intakes_Categorical_Payload\n  by contradiction /* from formulas */\nqed\n\nlemma auth_requires_review:\n  all-traces\n  \"\u2200 payload #i.\n    (AuthDecisionAuthorized( payload ) @ #i) \u21d2\n    (\u2203 #j. (PayloadReviewed( payload ) @ #j) \u2227 (#j < #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (AuthDecisionAuthorized( payload ) @ #i)\n \u2227\n  \u2200 #j. (PayloadReviewed( payload ) @ #j) \u21d2 \u00ac(#j < #i)\"\n*/\nsimplify\nsolve( ReviewedPayload( payload, account ) \u25b6\u2080 #i )\n  case Device_Reviews_Payload\n  by contradiction /* from formulas */\nqed\n\nlemma signing_decision_requires_review_and_auth:\n  all-traces\n  \"\u2200 payload #i.\n    (SigningDecisionObserved( payload ) @ #i) \u21d2\n    (\u2203 #j #k.\n      (((PayloadReviewed( payload ) @ #j) \u2227\n        (AuthDecisionAuthorized( payload ) @ #k)) \u2227\n       (#j < #i)) \u2227\n      (#k < #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (SigningDecisionObserved( payload ) @ #i)\n \u2227\n  \u2200 #j #k.\n   (PayloadReviewed( payload ) @ #j) \u2227\n   (AuthDecisionAuthorized( payload ) @ #k)\n  \u21d2\n   ((\u00ac(#j < #i)) \u2228 (\u00ac(#k < #i)))\"\n*/\nsimplify\nsolve( AuthorizedPayload( payload, account ) \u25b6\u2080 #i )\n  case Operator_Authorizes_After_Review\n  by contradiction /* from formulas */\nqed\n\nlemma submit_ui_requires_signing_decision:\n  all-traces\n  \"\u2200 payload #i.\n    (SubmitAttemptObserved( payload ) @ #i) \u21d2\n    (\u2203 #j. (SigningDecisionObserved( payload ) @ #j) \u2227 (#j < #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (SubmitAttemptObserved( payload ) @ #i)\n \u2227\n  \u2200 #j. (SigningDecisionObserved( payload ) @ #j) \u21d2 \u00ac(#j < #i)\"\n*/\nsimplify\nsolve( SignedDecision( payload, account, signature ) \u25b6\u2080 #i )\n  case Device_Observes_Signing_Decision\n  by contradiction /* from formulas */\nqed\n\nlemma audit_redaction_preserved_for_payload_intake:\n  all-traces\n  \"\u2200 payload #i.\n    (PayloadIntakeCategorical( payload ) @ #i) \u21d2\n    (\u2203 #j. (AuditRedactionPreserved( payload ) @ #j) \u2227 (#j = #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (PayloadIntakeCategorical( payload ) @ #i)\n \u2227\n  \u2200 #j. (AuditRedactionPreserved( payload ) @ #j) \u2227 (#j = #i) \u21d2 \u22a5\"\n*/\nsimplify\nby contradiction /* from formulas */\n\nlemma audit_redaction_preserved_for_review:\n  all-traces\n  \"\u2200 payload #i.\n    (PayloadReviewed( payload ) @ #i) \u21d2\n    (\u2203 #j. (AuditRedactionPreserved( payload ) @ #j) \u2227 (#j = #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (PayloadReviewed( payload ) @ #i)\n \u2227\n  \u2200 #j. (AuditRedactionPreserved( payload ) @ #j) \u2227 (#j = #i) \u21d2 \u22a5\"\n*/\nsimplify\nby contradiction /* from formulas */\n\nlemma audit_redaction_preserved_for_signing_decision:\n  all-traces\n  \"\u2200 payload #i.\n    (SigningDecisionObserved( payload ) @ #i) \u21d2\n    (\u2203 #j. (AuditRedactionPreserved( payload ) @ #j) \u2227 (#j = #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (SigningDecisionObserved( payload ) @ #i)\n \u2227\n  \u2200 #j. (AuditRedactionPreserved( payload ) @ #j) \u2227 (#j = #i) \u21d2 \u22a5\"\n*/\nsimplify\nby contradiction /* from formulas */\n\nlemma audit_redaction_preserved_for_submit_result:\n  all-traces\n  \"\u2200 payload #i.\n    (SubmitResultObserved( payload ) @ #i) \u21d2\n    (\u2203 #j. (AuditRedactionPreserved( payload ) @ #j) \u2227 (#j = #i))\"\n/*\nguarded formula characterizing all counter-examples:\n\"\u2203 payload #i.\n  (SubmitResultObserved( payload ) @ #i)\n \u2227\n  \u2200 #j. (AuditRedactionPreserved( payload ) @ #j) \u2227 (#j = #i) \u21d2 \u22a5\"\n*/\nsimplify\nby contradiction /* from formulas */\n\nlemma preserved_attack_traces_are_reachable:\n  exists-trace\n  \"\u2203 wrong_network_payload account signing_before_auth_payload\n     replay_payload raw_payload signature_payload finality_payload\n     decline_payload cancel_payload expiry_payload #i #j #k #l #m #n #o #p #q\n     #r.\n    (((((((((AttackTraceWrongNetwork( wrong_network_payload ) @ #i) \u2227\n            (AttackTraceImportedProductionAccount( account ) @ #j)) \u2227\n           (AttackTraceSigningBeforeAuth( signing_before_auth_payload ) @ #k)) \u2227\n          (AttackTraceReplayDuplicateResolution( replay_payload ) @ #l)) \u2227\n         (AttackTraceRawPayloadMaterial( raw_payload ) @ #m)) \u2227\n        (AttackTraceRawSignatureBlob( signature_payload ) @ #n)) \u2227\n       (AttackTraceForgedBroadcastFinality( finality_payload ) @ #o)) \u2227\n      (AttackTraceDeclineGap( decline_payload ) @ #p)) \u2227\n     (AttackTraceCancelGap( cancel_payload ) @ #q)) \u2227\n    (AttackTraceExpiryGap( expiry_payload ) @ #r)\"\n/*\nguarded formula characterizing all satisfying traces:\n\"\u2203 wrong_network_payload account signing_before_auth_payload\n   replay_payload raw_payload signature_payload finality_payload\n   decline_payload cancel_payload expiry_payload #i #j #k #l #m #n #o #p #q\n   #r.\n  (AttackTraceWrongNetwork( wrong_network_payload ) @ #i) \u2227\n  (AttackTraceImportedProductionAccount( account ) @ #j) \u2227\n  (AttackTraceSigningBeforeAuth( signing_before_auth_payload ) @ #k) \u2227\n  (AttackTraceReplayDuplicateResolution( replay_payload ) @ #l) \u2227\n  (AttackTraceRawPayloadMaterial( raw_payload ) @ #m) \u2227\n  (AttackTraceRawSignatureBlob( signature_payload ) @ #n) \u2227\n  (AttackTraceForgedBroadcastFinality( finality_payload ) @ #o) \u2227\n  (AttackTraceDeclineGap( decline_payload ) @ #p) \u2227\n  (AttackTraceCancelGap( cancel_payload ) @ #q) \u2227\n  (AttackTraceExpiryGap( expiry_payload ) @ #r)\"\n*/\nsimplify\nSOLVED // trace found\n\n/* All wellformedness checks were successful. */\n\n/*\nGenerated from:\nTamarin version 1.12.0\nMaude version 3.5.1\nGit revision: 82780bbaf3328a45f624ddb41e51bf75425f851c (with uncommited changes), branch: master\nCompiled at: 2026-03-07 14:22:39.174278293 UTC\n*/\n\nend\n\n==============================================================================\nsummary of summaries:\n\nanalyzed: /home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy\n\n  processing time: 0.62s\n  \n  review_requires_testnet_binding (all-traces): verified (3 steps)\n  review_requires_fresh_testnet_account (all-traces): verified (3 steps)\n  auth_requires_review (all-traces): verified (3 steps)\n  signing_decision_requires_review_and_auth (all-traces): verified (3 steps)\n  submit_ui_requires_signing_decision (all-traces): verified (3 steps)\n  audit_redaction_preserved_for_payload_intake (all-traces): verified (2 steps)\n  audit_redaction_preserved_for_review (all-traces): verified (2 steps)\n  audit_redaction_preserved_for_signing_decision (all-traces): verified (2 steps)\n  audit_redaction_preserved_for_submit_result (all-traces): verified (2 steps)\n  preserved_attack_traces_are_reachable (exists-trace): verified (2 steps)\n\n==============================================================================\n"
+      },
       "solver": "tamarin-prover",
-      "status": "not-run",
+      "status": "passed",
       "unavailable_blocks_testnet_assurance": true,
       "version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
     }
   },
   "summary": {
-    "attack_trace_count": 23,
-    "blocker_count": 2,
+    "attack_trace_count": 37,
+    "blocker_count": 0,
     "blocking_assumption_count": 12,
     "claim_count": 12,
     "modeled_claim_count": 6,
@@ -382,17 +426,20 @@
     "unsupported_semantic_count": 8
   },
   "tamarin_model": {
-    "artifact_cid": "bafkreic4lhqaombytjwxjp7e2yz5znok7ywz35zmcbwmfs5limdw6xnceu",
+    "artifact_cid": "bafkreiajqhfi67xyaphjl22hanxigbl7ca2x7ksdbpr5yefbepeohjvxqy",
     "lemmas": [
       "review_requires_testnet_binding",
       "review_requires_fresh_testnet_account",
       "auth_requires_review",
       "signing_decision_requires_review_and_auth",
       "submit_ui_requires_signing_decision",
-      "audit_redaction_preserved_for_modeled_events",
+      "audit_redaction_preserved_for_payload_intake",
+      "audit_redaction_preserved_for_review",
+      "audit_redaction_preserved_for_signing_decision",
+      "audit_redaction_preserved_for_submit_result",
       "preserved_attack_traces_are_reachable"
     ],
-    "line_count": 159,
+    "line_count": 179,
     "path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/xaman_testnet_payload.spthy",
     "required_events": [
       "RemotePayloadIssued",
@@ -416,7 +463,7 @@
       "AttackTraceCancelGap",
       "AttackTraceExpiryGap"
     ],
-    "sha256": "sha256:a0ffbe3d03e88a8904aab5d5ab71a17f8c1044fea82d59cca02682446540178e",
+    "sha256": "sha256:f2919ddb7881df91d652af6f3612218b460bef2a7c2ffb421468878e08a26964",
     "theory": "XamanTestnetPayload"
   },
   "task_id": "PORTAL-CXTP-135",

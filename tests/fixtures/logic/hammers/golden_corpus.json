@@ -1,0 +1,41 @@
+{
+  "corpus_id": "hammer-golden-fixture",
+  "name": "ITP Hammer Golden Fixture Corpus",
+  "source_itp": "lean",
+  "version_ref": "golden-fixture-v1",
+  "license_id": "Apache-2.0",
+  "license_url": "https://www.apache.org/licenses/LICENSE-2.0",
+  "description": "A small, hand-built, deterministic fixture corpus used by tests/integration/logic/hammers/test_end_to_end_hammer.py and tests/integration/logic/hammers/test_adversarial_hammer.py (HAMMER-014) as the golden corpus underpinning the end-to-end and adversarial hammer test suites. Statements are simplified/synthetic Nat identities that follow real Lean4 naming and import conventions, not a real excerpt of Mathlib4. The corpus revision computed from this file is asserted stable across test runs.",
+  "theorems": [
+    {
+      "theorem_id": "Hammer.Nat.add_comm",
+      "statement": "theorem add_comm : forall a b : Nat, Nat.add a b = Nat.add b a",
+      "imports": ["Mathlib.Algebra.Group.Defs", "Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Hammer.Nat.add_zero",
+      "statement": "theorem add_zero : forall a : Nat, Nat.add a Nat.zero = a",
+      "imports": ["Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Hammer.Nat.add_assoc",
+      "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)",
+      "imports": ["Mathlib.Algebra.Group.Defs", "Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Hammer.Nat.mul_comm",
+      "statement": "theorem mul_comm : forall a b : Nat, Nat.mul a b = Nat.mul b a",
+      "imports": ["Mathlib.Algebra.Group.Defs", "Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Hammer.Nat.eq_refl",
+      "statement": "theorem eq_refl : forall a : Nat, a = a",
+      "imports": ["Mathlib.Data.Nat.Basic"]
+    },
+    {
+      "theorem_id": "Hammer.Nat.zero_add",
+      "statement": "theorem zero_add : forall a : Nat, Nat.add Nat.zero a = a",
+      "imports": ["Mathlib.Data.Nat.Basic"]
+    }
+  ]
+}

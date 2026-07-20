@@ -410,8 +410,9 @@ def render_xaman_testnet_solver_portfolio_markdown(
             'and are not consumed as proof evidence.',
             '',
             'The current portfolio records SMT counterexamples for every frozen Testnet claim, unresolved Apalache '
-            'assumptions, required Tamarin/ProVerif protocol blockers, a missing required Rocq/Coq kernel artifact, '
-            'and fuzz counterexamples consumed as blocking counterevidence.',
+            'and protocol assumptions, accepted bounded Tamarin/ProVerif/Lean/Rocq/Coq checks, and fuzz '
+            'counterexamples consumed as blocking counterevidence. Accepted bounded lanes do not discharge '
+            'assumptions, runtime-equivalence gaps, or counterexamples in other lanes.',
             '',
         ]
     )

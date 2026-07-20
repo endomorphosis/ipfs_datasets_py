@@ -98,22 +98,16 @@ def test_verdict_preserves_precise_blockers_and_owner_actions_to_advance() -> No
         'SMT_COUNTEREXAMPLES_FOUND',
         'BLOCKING_TESTNET_ASSUMPTIONS',
         'UNRESOLVED_CONCURRENCY_ASSUMPTIONS',
-        'REQUIRED_PROTOCOL_LANE_UNAVAILABLE',
-        'INDEPENDENT_COQ_KERNEL_MISSING',
         'NOT_MODELED_TESTNET_CLAIMS',
         'PRODUCTION_SECURITY_RESULT_EXCLUDED',
     } == blocker_codes
     assert bundle['claim_summary']['smt_result_counts'] == {'COUNTEREXAMPLE': 12}
     assert len(bundle['blocking_assumptions']) == 14
-    assert bundle['lane_summary']['protocol']['blocker_codes'] == [
-        'PROVERIF_MODEL_MISSING',
-        'TAMARIN_CHECK_NOT_RUN',
-    ]
+    assert bundle['lane_summary']['protocol']['blocker_codes'] == []
     action_text = json.dumps(verdict['precise_evidence_or_owner_action_required_to_advance'])
     assert 'production runtime network trace' in action_text
-    assert 'Run the pinned Tamarin model' in action_text
-    assert 'ProVerif projection' in action_text
-    assert 'XamanTestnet.v' in action_text
+    assert 'reviewed cancel trace' in action_text
+    assert 'backend atomic single-use evidence' in action_text
     assert 'Z3/CVC5 no longer emit counterexamples' in verdict['next_decision_rule']
 
 
@@ -126,5 +120,5 @@ def test_verdict_document_records_scope_result_and_advancement_requirements() ->
     assert BUNDLE_PATH in doc
     assert VERDICT_PATH in doc
     assert 'BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES' in doc
-    assert 'BLOCK_TESTNET_ASSURANCE_PROTOCOL_SOLVER_LANE_UNAVAILABLE' in doc
+    assert 'BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS' in doc
     assert 'Allowed verdict values remain exactly' in doc

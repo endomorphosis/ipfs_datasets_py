@@ -1,0 +1,649 @@
+{
+  "benchmark_name": "itp_hammer_premise_selection",
+  "comparison": {
+    "baseline": {
+      "latency": {
+        "max_ms": 3.5692,
+        "mean_ms": 2.6188,
+        "median_ms": 2.562,
+        "min_ms": 2.293,
+        "p95_ms": 2.9352
+      },
+      "mean_recall_at_k": 0.8778,
+      "mean_reciprocal_rank": 1.0,
+      "selection_method": "deterministic-baseline"
+    },
+    "learned": {
+      "fallback_count": 0,
+      "fallback_rate": 0.0,
+      "latency": {
+        "max_ms": 2.92,
+        "mean_ms": 2.7362,
+        "median_ms": 2.7183,
+        "min_ms": 2.456,
+        "p95_ms": 2.9168
+      },
+      "mean_recall_at_k": 0.8778,
+      "mean_reciprocal_rank": 1.0,
+      "selection_method_prefix": "learned-selector"
+    },
+    "per_theorem": [
+      {
+        "baseline": {
+          "latency_ms": 2.9352,
+          "recall_at_k": 0.8333,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Group.mul_left_inv",
+            "Group.mul_assoc",
+            "Group.mul_one",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.9148,
+          "recall_at_k": 0.8333,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Group.mul_left_inv",
+            "Group.mul_assoc",
+            "Group.mul_one",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 6,
+        "theorem_id": "Group.inv_inv"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.4653,
+          "recall_at_k": 0.8333,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Group.mul_one",
+            "Group.mul_left_inv",
+            "Group.inv_inv",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.8522,
+          "recall_at_k": 0.8333,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Group.mul_one",
+            "Group.mul_left_inv",
+            "Group.inv_inv",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 6,
+        "theorem_id": "Group.mul_assoc"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.5551,
+          "recall_at_k": 0.8333,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Group.mul_one",
+            "Group.inv_inv",
+            "Group.mul_assoc",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.5782,
+          "recall_at_k": 0.8333,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Group.mul_one",
+            "Group.inv_inv",
+            "Group.mul_assoc",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 6,
+        "theorem_id": "Group.mul_left_inv"
+      },
+      {
+        "baseline": {
+          "latency_ms": 3.5692,
+          "recall_at_k": 0.8333,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Group.mul_left_inv",
+            "Group.mul_assoc",
+            "Group.inv_inv",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.7451,
+          "recall_at_k": 0.8333,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Group.mul_left_inv",
+            "Group.mul_assoc",
+            "Group.inv_inv",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 6,
+        "theorem_id": "Group.mul_one"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.765,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.reverse_append",
+            "List.append_nil",
+            "List.length_append",
+            "List.map_append",
+            "Nat.add_zero"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.6827,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.reverse_append",
+            "List.length_append",
+            "List.append_nil",
+            "List.map_append",
+            "Nat.add_zero"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 4,
+        "theorem_id": "List.append_assoc"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.5688,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.append_assoc",
+            "List.reverse_append",
+            "List.length_append",
+            "List.map_append",
+            "Nat.add_zero"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.9124,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.append_assoc",
+            "List.reverse_append",
+            "List.length_append",
+            "List.map_append",
+            "Nat.add_zero"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 4,
+        "theorem_id": "List.append_nil"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.5841,
+          "recall_at_k": 0.5556,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.append_assoc",
+            "List.reverse_append",
+            "List.append_nil",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.92,
+          "recall_at_k": 0.5556,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.append_assoc",
+            "List.reverse_append",
+            "List.append_nil",
+            "List.map_append",
+            "Nat.add_assoc"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 9,
+        "theorem_id": "List.length_append"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.4842,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.append_assoc",
+            "List.reverse_append",
+            "List.length_append",
+            "List.append_nil",
+            "Nat.add_zero"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.8667,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.append_assoc",
+            "List.reverse_append",
+            "List.length_append",
+            "List.append_nil",
+            "Nat.add_zero"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 4,
+        "theorem_id": "List.map_append"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.518,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.append_assoc",
+            "List.append_nil",
+            "List.length_append",
+            "List.map_append",
+            "Nat.add_zero"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.6207,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "List.append_assoc",
+            "List.length_append",
+            "List.append_nil",
+            "List.map_append",
+            "Nat.add_zero"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 4,
+        "theorem_id": "List.reverse_append"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.7276,
+          "recall_at_k": 0.5556,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.add_comm",
+            "Nat.add_zero",
+            "Nat.mul_add",
+            "Nat.mul_comm",
+            "List.length_append"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.6092,
+          "recall_at_k": 0.5556,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.add_comm",
+            "Nat.add_zero",
+            "Nat.mul_add",
+            "Nat.mul_comm",
+            "List.length_append"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 9,
+        "theorem_id": "Nat.add_assoc"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.7011,
+          "recall_at_k": 0.5556,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.add_assoc",
+            "Nat.add_zero",
+            "Nat.mul_add",
+            "Nat.mul_comm",
+            "List.length_append"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.6161,
+          "recall_at_k": 0.5556,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.add_assoc",
+            "Nat.add_zero",
+            "Nat.mul_add",
+            "Nat.mul_comm",
+            "List.length_append"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 9,
+        "theorem_id": "Nat.add_comm"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.4715,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.add_assoc",
+            "Nat.add_comm",
+            "Nat.mul_add",
+            "List.length_append",
+            "Nat.mul_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.9168,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.add_assoc",
+            "Nat.add_comm",
+            "Nat.mul_add",
+            "List.length_append",
+            "Nat.mul_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 5,
+        "theorem_id": "Nat.add_zero"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.5871,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.add_assoc",
+            "Nat.add_comm",
+            "Nat.mul_comm",
+            "Nat.add_zero",
+            "List.length_append"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.8753,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.add_assoc",
+            "Nat.add_comm",
+            "Nat.mul_comm",
+            "Nat.add_zero",
+            "List.length_append"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 5,
+        "theorem_id": "Nat.mul_add"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.4903,
+          "recall_at_k": 0.5556,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.mul_add",
+            "Nat.add_assoc",
+            "Nat.add_comm",
+            "Nat.add_zero",
+            "List.length_append"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.9011,
+          "recall_at_k": 0.5556,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Nat.mul_add",
+            "Nat.add_assoc",
+            "Nat.add_comm",
+            "Nat.add_zero",
+            "List.length_append"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 9,
+        "theorem_id": "Nat.mul_comm"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.4745,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Order.le_trans",
+            "Group.inv_inv",
+            "Group.mul_assoc",
+            "Group.mul_left_inv",
+            "Group.mul_one"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.5819,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Order.le_trans",
+            "Group.inv_inv",
+            "Group.mul_assoc",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 1,
+        "theorem_id": "Order.le_refl"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.7511,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Order.le_refl",
+            "Group.inv_inv",
+            "Group.mul_assoc",
+            "Group.mul_left_inv",
+            "Group.mul_one"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.5332,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Order.le_refl",
+            "Group.inv_inv",
+            "Group.mul_assoc",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 1,
+        "theorem_id": "Order.le_trans"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.6527,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Set.union_assoc",
+            "Set.union_comm",
+            "Set.subset_union_left",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.456,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Set.union_assoc",
+            "Set.union_comm",
+            "Set.subset_union_left",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 3,
+        "theorem_id": "Set.inter_comm"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.348,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Set.union_assoc",
+            "Set.union_comm",
+            "Set.inter_comm",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.6916,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Set.union_assoc",
+            "Set.union_comm",
+            "Set.inter_comm",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 3,
+        "theorem_id": "Set.subset_union_left"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.4335,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Set.union_comm",
+            "Set.subset_union_left",
+            "Set.inter_comm",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.8185,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Set.union_comm",
+            "Set.subset_union_left",
+            "Set.inter_comm",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 3,
+        "theorem_id": "Set.union_assoc"
+      },
+      {
+        "baseline": {
+          "latency_ms": 2.293,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Set.union_assoc",
+            "Set.subset_union_left",
+            "Set.inter_comm",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ]
+        },
+        "learned": {
+          "fallback_reason": "none",
+          "latency_ms": 2.6312,
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "selected_ids": [
+            "Set.union_assoc",
+            "Set.subset_union_left",
+            "Set.inter_comm",
+            "Nat.add_assoc",
+            "Nat.add_comm"
+          ],
+          "used_learned_selector": true
+        },
+        "relevant_count": 3,
+        "theorem_id": "Set.union_comm"
+      }
+    ],
+    "theorem_count": 20,
+    "top_k": 5
+  },
+  "corpus_fixture": "tests/fixtures/logic/hammers/premise_selection_corpus.json",
+  "corpus_revision": "bafkreihnfjajglbplruzb2awn4i7tt5za367cuk5byt6qr36myrb5ktizq",
+  "fallback_smoke_test": {
+    "fallback_reason": "model_missing",
+    "passed": true,
+    "selection_method": "deterministic-baseline",
+    "theorem_id": "Group.inv_inv",
+    "used_learned_selector": false
+  },
+  "feature_version": "learned-selector-features-v1",
+  "generated_at": "2026-07-19T14:50:37Z",
+  "model_digest": "sha256:ad48f4b45a454bc41b63bef17ed7b4c1695b8c21ab118c1ec16766f21a14aa75",
+  "model_fixture": "tests/fixtures/logic/hammers/learned_selector_model.json",
+  "model_id": "graph-selector-default-v1"
+}

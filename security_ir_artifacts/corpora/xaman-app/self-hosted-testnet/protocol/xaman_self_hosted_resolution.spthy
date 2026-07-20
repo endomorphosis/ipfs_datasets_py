@@ -1,0 +1,61 @@
+theory XamanSelfHostedResolution
+begin
+
+/* PORTAL-CXTP-159: conditional local-resolver model. The linear Open state
+   is an explicit implementation assumption for the reviewed self-hosted
+   bridge. This model proves no property of the vendor payload service. */
+
+rule Issue:
+  [ Fr(~payload) ]
+  --[ PayloadIssued(~payload) ]->
+  [ Open(~payload) ]
+
+rule Submit:
+  [ Open(payload) ]
+  --[ SubmitAccepted(payload) ]->
+  [ Submitted(payload), ReplayEligible(payload) ]
+
+rule Cancel:
+  [ Open(payload) ]
+  --[ Cancelled(payload) ]->
+  [ CancelledState(payload) ]
+
+rule Expire:
+  [ Open(payload) ]
+  --[ Expired(payload) ]->
+  [ ExpiredState(payload) ]
+
+rule ReplayBlocked:
+  [ Submitted(payload), ReplayEligible(payload) ]
+  --[ ReplayBlocked(payload) ]->
+  [ Submitted(payload), ReplayRejected(payload) ]
+
+lemma submit_is_single_use:
+  "All payload #i #j.
+    SubmitAccepted(payload) @ i & SubmitAccepted(payload) @ j
+    ==> #i = #j"
+
+lemma cancellation_blocks_later_submit:
+  "All payload #i #j.
+    Cancelled(payload) @ i & SubmitAccepted(payload) @ j
+    ==> #j < #i"
+
+lemma expiry_blocks_later_submit:
+  "All payload #i #j.
+    Expired(payload) @ i & SubmitAccepted(payload) @ j
+    ==> #j < #i"
+
+lemma replay_block_requires_prior_submit:
+  "All payload #i.
+    ReplayBlocked(payload) @ i
+    ==> (Ex #j. SubmitAccepted(payload) @ j & #j < #i)"
+
+lemma terminal_paths_are_reachable:
+  exists-trace
+  "Ex submitted cancelled expired replayed #i #j #k #l.
+    SubmitAccepted(submitted) @ i &
+    Cancelled(cancelled) @ j &
+    Expired(expired) @ k &
+    ReplayBlocked(replayed) @ l"
+
+end

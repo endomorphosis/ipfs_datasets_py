@@ -163,18 +163,18 @@ def test_portfolio_reconciles_current_fail_closed_lane_results() -> None:
     assert report['summary']['proved_claim_count'] == 0
     assert report['summary']['fail_closed_claim_count'] == 12
     assert report['summary']['lane_result_counts']['COUNTEREXAMPLE'] >= 12
-    assert report['summary']['lane_result_counts']['REQUIRED_MISSING_ARTIFACT'] >= 4
-    assert report['summary']['lane_result_counts']['NOT_RUN'] >= 1
+    assert report['summary']['lane_result_counts']['ACCEPTED'] >= 4
+    assert report['summary']['lane_result_counts']['INCOMPLETE'] >= 1
     assert all(claim['proof_promotion_allowed'] is False for claim in report['claims'])
     assert all(claim['fail_closed'] is True for claim in report['claims'])
 
     first = report['claims'][0]
     lane_by_id = {lane['lane_id']: lane for lane in first['applicable_lane_results']}
     assert lane_by_id['z3_cvc5_differential']['result'] == 'COUNTEREXAMPLE'
-    assert lane_by_id['tamarin_protocol']['result'] == 'NOT_RUN'
-    assert lane_by_id['proverif_protocol']['result'] == 'REQUIRED_MISSING_ARTIFACT'
+    assert lane_by_id['tamarin_protocol']['result'] == 'ACCEPTED'
+    assert lane_by_id['proverif_protocol']['result'] == 'ACCEPTED'
     assert lane_by_id['lean_kernel']['result'] == 'ACCEPTED'
-    assert lane_by_id['rocq_kernel']['result'] == 'REQUIRED_MISSING_ARTIFACT'
+    assert lane_by_id['rocq_kernel']['result'] == 'ACCEPTED'
 
 
 def test_disagreeing_smt_lane_fails_closed_not_proved() -> None:
