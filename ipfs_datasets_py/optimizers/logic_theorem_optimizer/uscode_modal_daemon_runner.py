@@ -84,6 +84,13 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import 
     build_modal_supervisor_health_report,
     state_to_compiler_patch_lag,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cache import (
+    LegalIREvaluationArtifact,
+    LegalIREvaluationCache,
+    LegalIREvaluationCacheKey,
+    configuration_digest as legal_ir_evaluation_configuration_digest,
+    sample_content_hash as legal_ir_evaluation_sample_hash,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry import (
     RUNTIME_PHASES,
     RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION,
@@ -2230,6 +2237,74 @@ def _compiler_guidance_legal_ir_family_gap(gap_name: str) -> str:
     return f"{_compiler_guidance_legal_ir_gap_family(gap_name)}:{direction}"
 
 
+def _legal_ir_evaluation_key(
+    sample: Any,
+    *,
+    codec: Any,
+    compiler_guidance: Optional[Mapping[str, Any]],
+    use_autoencoder_guidance: bool,
+    guidance_top_k: int,
+    compiler_commit: str,
+    state_hash: str,
+    metric_schema: str,
+    config_hash: str,
+) -> LegalIREvaluationCacheKey:
+    resolved_config_hash = str(config_hash or "").strip()
+    if not resolved_config_hash:
+        resolved_config_hash = legal_ir_evaluation_configuration_digest(
+            {
+                "codec": {
+                    "config": _metric_cache_object_payload(getattr(codec, "config", None)),
+                    "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
+                },
+                "compiler_guidance": _metric_cache_object_payload(compiler_guidance),
+                "compiler_guidance_cache_policy": _COMPILER_IR_GUIDANCE_CACHE_POLICY,
+                "guidance_top_k": int(guidance_top_k),
+                "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
+                "use_autoencoder_guidance": bool(use_autoencoder_guidance),
+            }
+        )
+    return LegalIREvaluationCacheKey(
+        sample_hash=legal_ir_evaluation_sample_hash(sample),
+        compiler_commit=str(compiler_commit or _compiler_ir_sample_code_fingerprint()),
+        state_hash=str(state_hash or "state-independent"),
+        metric_schema=str(metric_schema or AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION),
+        config_hash=resolved_config_hash,
+    )
+
+
+def _legal_ir_evaluation_artifact(
+    key: LegalIREvaluationCacheKey,
+    result: Any,
+    sample: Any,
+    *,
+    compiler_guidance: Optional[Mapping[str, Any]],
+    compilation_seconds: float,
+) -> LegalIREvaluationArtifact:
+    result_losses = dict(getattr(result, "losses", {}) or {})
+    view_metrics = {
+        family: dict(result_losses)
+        for family in _compiler_ir_result_view_families(result, compiler_guidance)
+    }
+    return LegalIREvaluationArtifact(
+        key=key,
+        compiler_artifact=_compiler_ir_metric_result_cache_payload(result),
+        embedding=tuple(
+            float(value)
+            for value in list(getattr(sample, "embedding_vector", ()) or ())
+        ),
+        metrics=result_losses,
+        per_view_metrics=view_metrics,
+        metadata={
+            "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
+            "sample_id_hash": hashlib.sha256(
+                str(getattr(sample, "sample_id", "") or "").encode("utf-8")
+            ).hexdigest(),
+        },
+        compilation_seconds=max(0.0, float(compilation_seconds)),
+    )
+
+
 def compiler_ir_metric_block(
     samples: Sequence[Any],
     codec: DeterministicModalLogicCodec,
@@ -2242,12 +2317,18 @@ def compiler_ir_metric_block(
     metric_text_policy: str = DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
     progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
     sample_timeout_seconds: float = 0.0,
+    evaluation_cache: Optional[LegalIREvaluationCache] = None,
+    compiler_commit: str = "",
+    state_hash: str = "",
+    metric_schema: str = AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+    config_hash: str = "",
+    evaluation_role: str = "unspecified",
 ) -> Dict[str, Any]:
     """Aggregate deterministic compiler/IR/decompiler round-trip metrics."""
     sample_list = list(samples)
     if not sample_list:
         family_block = legal_ir_view_family_metric_block()
-        return {
+        empty_block = {
             "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
             "evaluated_count": 0,
             "legal_ir_view_family_metric_schema_version": (
@@ -2260,6 +2341,9 @@ def compiler_ir_metric_block(
             "view_family_metrics": family_block["view_family_metrics"],
             **family_block["flat_metrics"],
         }
+        if evaluation_cache is not None:
+            empty_block["evaluation_artifact_cache"] = evaluation_cache.summary()
+        return empty_block
 
     started_at = time.time()
     max_sample_text_chars = max(0, int(max_sample_text_chars or 0))
@@ -2339,11 +2423,14 @@ def compiler_ir_metric_block(
 
     persistent_cache_key: Optional[str] = None
     metric_block_cacheable = (
-        (not use_autoencoder_guidance and autoencoder is None)
-        or (
-            use_autoencoder_guidance
-            and autoencoder is not None
-            and not guidance_failures
+        evaluation_cache is None
+        and (
+            (not use_autoencoder_guidance and autoencoder is None)
+            or (
+                use_autoencoder_guidance
+                and autoencoder is not None
+                and not guidance_failures
+            )
         )
     )
     if metric_block_cacheable:
@@ -2556,9 +2643,31 @@ def compiler_ir_metric_block(
             metric_sample,
             codec=codec,
         )
-        cached_result_payload = _read_metric_disk_cache(
-            "compiler_ir_metric_sample",
-            sample_cache_key,
+        evaluation_key: Optional[LegalIREvaluationCacheKey] = None
+        evaluation_artifact: Optional[LegalIREvaluationArtifact] = None
+        if evaluation_cache is not None:
+            evaluation_key = _legal_ir_evaluation_key(
+                metric_sample,
+                codec=codec,
+                compiler_guidance=compiler_guidance,
+                use_autoencoder_guidance=use_autoencoder_guidance,
+                guidance_top_k=guidance_top_k,
+                compiler_commit=compiler_commit,
+                state_hash=state_hash,
+                metric_schema=metric_schema,
+                config_hash=config_hash,
+            )
+            evaluation_artifact = evaluation_cache.get(
+                evaluation_key,
+                role=evaluation_role,
+            )
+        cached_result_payload = (
+            dict(evaluation_artifact.compiler_artifact)
+            if evaluation_artifact is not None
+            else _read_metric_disk_cache(
+                "compiler_ir_metric_sample",
+                sample_cache_key,
+            )
         )
         timeout_record = _compiler_ir_metric_sample_timeout_record_from_cache_payload(
             cached_result_payload,
@@ -2624,23 +2733,51 @@ def compiler_ir_metric_block(
                 with _compiler_ir_metric_sample_timeout(
                     sample_timeout_seconds
                 ) as timeout_guarded:
-                    try:
-                        result = codec.encode(
-                            metric_sample.text,
-                            document_id=metric_sample.sample_id,
-                            citation=metric_sample.citation,
-                            source=metric_sample.source,
-                            source_embedding=metric_sample.embedding_vector,
-                            compiler_guidance=compiler_guidance,
+                    def encode_result() -> Any:
+                        try:
+                            return codec.encode(
+                                metric_sample.text,
+                                document_id=metric_sample.sample_id,
+                                citation=metric_sample.citation,
+                                source=metric_sample.source,
+                                source_embedding=metric_sample.embedding_vector,
+                                compiler_guidance=compiler_guidance,
+                            )
+                        except TypeError:
+                            return codec.encode(
+                                metric_sample.text,
+                                document_id=metric_sample.sample_id,
+                                citation=metric_sample.citation,
+                                source=metric_sample.source,
+                                source_embedding=metric_sample.embedding_vector,
+                            )
+
+                    if evaluation_cache is not None and evaluation_key is not None:
+                        def compute_evaluation_artifact() -> LegalIREvaluationArtifact:
+                            compilation_started = time.monotonic()
+                            computed_result = encode_result()
+                            return _legal_ir_evaluation_artifact(
+                                evaluation_key,
+                                computed_result,
+                                metric_sample,
+                                compiler_guidance=compiler_guidance,
+                                compilation_seconds=(
+                                    time.monotonic() - compilation_started
+                                ),
+                            )
+
+                        evaluation_artifact = evaluation_cache.get_or_compute(
+                            evaluation_key,
+                            compute_evaluation_artifact,
+                            role=evaluation_role,
                         )
-                    except TypeError:
-                        result = codec.encode(
-                            metric_sample.text,
-                            document_id=metric_sample.sample_id,
-                            citation=metric_sample.citation,
-                            source=metric_sample.source,
-                            source_embedding=metric_sample.embedding_vector,
+                        result = _compiler_ir_metric_result_from_cache_payload(
+                            evaluation_artifact.compiler_artifact
                         )
+                        if result is None:
+                            raise RuntimeError("typed evaluation artifact failed decoding")
+                    else:
+                        result = encode_result()
                 if sample_timeout_seconds > 0.0 and not timeout_guarded:
                     emit_progress(
                         "sample_timeout_guard_unsupported",
@@ -2740,6 +2877,26 @@ def compiler_ir_metric_block(
                     _compiler_ir_metric_result_cache_payload(result),
                 )
         elif not result_from_timeout_cache:
+            if (
+                evaluation_cache is not None
+                and evaluation_key is not None
+                and evaluation_artifact is None
+            ):
+                legacy_result = result
+                evaluation_artifact = evaluation_cache.get_or_compute(
+                    evaluation_key,
+                    lambda: _legal_ir_evaluation_artifact(
+                        evaluation_key,
+                        legacy_result,
+                        metric_sample,
+                        compiler_guidance=compiler_guidance,
+                        compilation_seconds=0.0,
+                    ),
+                    role=evaluation_role,
+                )
+                result = _compiler_ir_metric_result_from_cache_payload(
+                    evaluation_artifact.compiler_artifact
+                ) or legacy_result
             persistent_sample_cache_hits += 1
             emit_progress(
                 "sample_persistent_cache_hit",
@@ -3085,6 +3242,9 @@ def compiler_ir_metric_block(
             9,
         )
     block = _add_compiler_ir_metric_aliases(block)
+    if evaluation_cache is not None:
+        block["evaluation_artifact_cache"] = evaluation_cache.summary()
+        block["evaluation_artifact_role"] = str(evaluation_role or "unspecified")
     if persistent_cache_key is not None and sample_timeouts <= 0:
         block["persistent_cache_enabled"] = _metric_disk_cache_enabled()
         block["persistent_cache_hit"] = False
@@ -15783,6 +15943,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         save_summary(summary_path, summary)
     runtime_telemetry = RuntimeTelemetry(args.run_id)
     attach_runtime_telemetry(summary, runtime_telemetry)
+    evaluation_cache = LegalIREvaluationCache(
+        log_dir / "legal-ir-evaluation-cache"
+    )
+    evaluation_compiler_commit = _compiler_commit(root)
+    summary["legal_ir_evaluation_cache"] = evaluation_cache.summary()
     bridge_adapters = bridge_loss_adapter_names(args)
     bridge_evaluate_provers = bool(
         getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())
@@ -16779,6 +16944,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 use_sample_memory=False,
             )
             compiler_ir_metric_kwargs = {
+                "compiler_commit": evaluation_compiler_commit,
+                "evaluation_cache": evaluation_cache,
                 "max_sample_text_chars": int(
                     getattr(
                         args,
@@ -16787,6 +16954,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     )
                     or 0
                 ),
+                "metric_schema": AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
                 "metric_text_policy": str(
                     getattr(
                         args,
@@ -16803,11 +16971,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     or 0.0
                 ),
             }
+            baseline_evaluation_state_hash = autoencoder_canonical_state_hash(state)
             mark_cycle_phase("compiler_ir_train", sample_count=len(train_samples))
             compiler_ir_train = compiler_ir_metric_block(
                 train_samples,
                 feature_codec,
+                evaluation_role="baseline_train",
                 progress_callback=metric_progress_callback("compiler_ir_train"),
+                state_hash=baseline_evaluation_state_hash,
                 **compiler_ir_metric_kwargs,
             )
             mark_cycle_phase(
@@ -16817,7 +16988,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             compiler_ir_validation = compiler_ir_metric_block(
                 acceptance_validation_samples,
                 feature_codec,
+                evaluation_role="baseline_validation",
                 progress_callback=metric_progress_callback("compiler_ir_validation"),
+                state_hash=baseline_evaluation_state_hash,
                 **compiler_ir_metric_kwargs,
             )
             compiler_ir_validation_sample_ids = [
@@ -17216,13 +17389,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     acceptance_validation_samples,
                     use_sample_memory=True,
                 )
+            guided_evaluation_state_hash = autoencoder_canonical_state_hash(state)
             mark_cycle_phase("compiler_ir_guided_train", sample_count=len(train_samples))
             compiler_ir_guided_train = compiler_ir_metric_block(
                 train_samples,
                 feature_codec,
                 autoencoder=autoencoder,
                 use_autoencoder_guidance=True,
+                evaluation_role="guided_train",
                 progress_callback=metric_progress_callback("compiler_ir_guided_train"),
+                state_hash=guided_evaluation_state_hash,
                 **compiler_ir_metric_kwargs,
             )
             mark_cycle_phase(
@@ -17234,7 +17410,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 feature_codec,
                 autoencoder=autoencoder,
                 use_autoencoder_guidance=True,
+                evaluation_role="guided_validation",
                 progress_callback=metric_progress_callback("compiler_ir_guided_validation"),
+                state_hash=guided_evaluation_state_hash,
                 **compiler_ir_metric_kwargs,
             )
             guidance_canary = compiler_guidance_canary_block(
@@ -17681,6 +17859,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_compiler_ir_guided_validation"] = (
                 compiler_ir_guided_validation
             )
+            evaluation_cache_summary = evaluation_cache.summary()
+            summary["legal_ir_evaluation_cache"] = evaluation_cache_summary
+            summary["avoided_recompilations"] = int(
+                evaluation_cache_summary.get("avoided_recompilations", 0) or 0
+            )
+            summary["evaluation_cache_saved_wall_time_seconds"] = float(
+                evaluation_cache_summary.get("saved_wall_time_seconds", 0.0) or 0.0
+            )
+            summary["saved_wall_time_seconds"] = summary[
+                "evaluation_cache_saved_wall_time_seconds"
+            ]
             summary["latest_compiler_ir_ce"] = latest_compiler_ir_ce
             summary["latest_compiler_ir_ce_excess"] = latest_compiler_ir_ce_excess
             summary["latest_compiler_ir_cosine"] = latest_compiler_ir_cosine
