@@ -4238,6 +4238,15 @@ def _typed_ir_reconstruction_phrases(
         exception_values=exception_values,
         semantic_atoms=semantic_atoms,
     )
+    temporal_deadline_anchor_slots = _typed_ir_temporal_deadline_anchor_slots(
+        source_family=family,
+        targets=ordered_targets,
+        force=force,
+        roles=roles,
+        condition_values=condition_values,
+        cue_values=_formula_cues(formula),
+        max_tokens=max_tokens,
+    )
     semantic_profile_texts = _typed_ir_semantic_profile_texts(
         source_family=family,
         targets=ordered_targets,
@@ -4312,6 +4321,17 @@ def _typed_ir_reconstruction_phrases(
                 slot="typed_ir_scope_frame_signature",
                 spans=spans,
                 provenance_only=True,
+            )
+        )
+    for slot, value in temporal_deadline_anchor_slots:
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=provenance_only
+                if slot.endswith("_reconstruction")
+                else True,
             )
         )
     for semantic_profile_text in semantic_profile_texts:
@@ -4720,6 +4740,160 @@ def _typed_ir_scope_frame_texts(
             ]
             add_text(parts)
     return texts
+
+
+def _typed_ir_temporal_deadline_anchor_slots(
+    *,
+    source_family: str,
+    targets: Sequence[str],
+    force: str,
+    roles: Mapping[str, str],
+    condition_values: Sequence[str],
+    cue_values: Sequence[str],
+    max_tokens: int = 32,
+) -> List[Tuple[str, str]]:
+    """Expose deadline magnitude and anchor event/date from temporal conditions."""
+    source = _clean_text(source_family).lower()
+    if not source:
+        return []
+    normalized_targets = {
+        _clean_text(target).lower()
+        for target in targets
+        if _clean_text(target).lower()
+    }
+    if source != "temporal" and "temporal" not in normalized_targets:
+        return []
+
+    modal_cue = _first_modal_cue_value(cue_values)
+    subject = _humanize_typed_ir_value(roles.get("subject", ""))
+    action = _humanize_typed_ir_value(roles.get("action", ""))
+    object_value = _humanize_typed_ir_value(roles.get("object", ""))
+    slots: List[Tuple[str, str]] = []
+    for scope in _typed_clause_scope_units(condition_values, clause_type="condition"):
+        relation = scope["temporal_relation"]
+        if relation != "deadline":
+            continue
+        prefix_key = _clean_text(scope["prefix_key"]).lower()
+        deadline_value, anchor_value = _split_temporal_deadline_anchor(scope["value"])
+        if not deadline_value:
+            deadline_value = _clean_text(scope["value"])
+        if not deadline_value:
+            continue
+        anchor_parts = [
+            "temporal deadline",
+            scope["prefix"],
+            deadline_value,
+            f"of {anchor_value}" if anchor_value else "",
+        ]
+        reconstruction_parts = [
+            _typed_ir_family_pair_reconstruction_label(source, "temporal"),
+            f"{force} force" if force else "",
+            *anchor_parts,
+            subject,
+            action,
+            object_value,
+        ]
+        reconstruction = _bounded_reconstruction_text(
+            reconstruction_parts,
+            max_tokens=max_tokens,
+        )
+        signature = "|".join(
+            value
+            for value in (
+                prefix_key,
+                relation,
+                _slot_safe_family_pair_key(deadline_value),
+                _slot_safe_family_pair_key(anchor_value),
+            )
+            if value
+        )
+        pair = f"{source}->temporal"
+        slots.extend(
+            (
+                (
+                    "typed_ir_temporal_deadline_anchor",
+                    _bounded_reconstruction_text(anchor_parts, max_tokens=16),
+                ),
+                ("typed_ir_temporal_deadline_anchor_signature", signature),
+                ("typed_ir_temporal_deadline_anchor_pair", f"{pair}:{prefix_key}"),
+                (
+                    "semantic_slot_prototype",
+                    f"slot:typed-ir-temporal-deadline-anchor:{prefix_key}:{relation}",
+                ),
+                (
+                    "family_semantic_slot_prototype",
+                    (
+                        "temporal||slot:typed-ir-temporal-deadline-anchor:"
+                        f"{prefix_key}:{relation}"
+                    ),
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        "temporal||slot:typed-ir-temporal-deadline-anchor:"
+                        f"{prefix_key}:{relation}||TDFOL.prover"
+                    ),
+                ),
+                (
+                    "family_semantic_slot_legal_ir_view_prototype",
+                    (
+                        "temporal||slot:typed-ir-temporal-deadline-anchor:"
+                        f"{prefix_key}:{relation}||CEC.native"
+                    ),
+                ),
+            )
+        )
+        if reconstruction:
+            slots.append(
+                (
+                    "typed_ir_temporal_deadline_anchor_reconstruction",
+                    reconstruction,
+                )
+            )
+        if modal_cue:
+            slots.append(
+                (
+                    "discourse_flow_cue_transition",
+                    f"{prefix_key}->{modal_cue}:conditioned+temporal",
+                )
+            )
+            slots.append(
+                (
+                    "family_semantic_slot_prototype",
+                    (
+                        "temporal||slot:discourse-flow:"
+                        f"{prefix_key}->{modal_cue}:conditioned+temporal"
+                    ),
+                )
+            )
+    return _unique_slot_values(slots)
+
+
+def _first_modal_cue_value(cue_values: Sequence[str]) -> str:
+    for cue in cue_values:
+        normalized = _slot_safe_family_pair_key(cue)
+        if normalized:
+            return normalized
+    return ""
+
+
+def _split_temporal_deadline_anchor(value: str) -> Tuple[str, str]:
+    """Split "90 days of December 23, 2011" into duration and anchor."""
+    cleaned = _clean_text(value)
+    if not cleaned:
+        return "", ""
+    match = re.match(
+        r"^(?P<deadline>.+?)\s+"
+        r"(?P<link>of|after|before|from|following|beginning on|starting on)\s+"
+        r"(?P<anchor>.+)$",
+        cleaned,
+        re.IGNORECASE,
+    )
+    if not match:
+        return cleaned, ""
+    deadline = _clean_text(match.group("deadline"))
+    anchor = _clean_text(match.group("anchor"))
+    return deadline, anchor
 
 
 def _typed_clause_scope_units(

@@ -1205,6 +1205,67 @@ def test_modal_decompiler_refines_only_after_condition_as_deontic_temporal_scope
     ]
 
 
+def test_modal_decompiler_preserves_temporal_deadline_anchor_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="f_within_deadline_anchor",
+        operator=ModalIROperator(
+            family="temporal",
+            system="LTL",
+            symbol="F",
+            label="eventuality",
+        ),
+        predicate=ModalIRPredicate(
+            name="enter_inspector_general_services_agreement",
+            arguments=[
+                "actor:Defense Nuclear Facilities Safety Board",
+                "object:Office of Inspector General",
+            ],
+        ),
+        provenance=ModalIRProvenance(
+            source_id="within-deadline-anchor-doc",
+            start_char=0,
+            end_char=164,
+            citation="42 U.S.C. 2286j",
+        ),
+        conditions=["within 90 days of December 23, 2011"],
+        metadata={"cue": "shall"},
+    )
+    document = ModalIRDocument(
+        document_id="within-deadline-anchor-doc",
+        source="us_code",
+        normalized_text=(
+            "Within 90 days of December 23, 2011, the Defense Nuclear "
+            "Facilities Safety Board shall enter into an agreement for "
+            "inspector general services with the Office of Inspector General."
+        ),
+        formulas=[formula],
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
+
+    assert slot_texts["typed_ir_temporal_deadline_anchor"] == [
+        "temporal deadline within 90 days of december 23 2011"
+    ]
+    assert slot_texts["typed_ir_temporal_deadline_anchor_signature"] == [
+        "within|deadline|90_days|december_23_2011"
+    ]
+    assert "temporal->temporal:within" in slot_texts[
+        "typed_ir_temporal_deadline_anchor_pair"
+    ]
+    assert "within->shall:conditioned+temporal" in slot_texts[
+        "discourse_flow_cue_transition"
+    ]
+    assert (
+        "temporal||slot:typed-ir-temporal-deadline-anchor:within:deadline||"
+        "TDFOL.prover"
+        in slot_texts["family_semantic_slot_legal_ir_view_prototype"]
+    )
+    assert any(
+        "90 days" in value and "december 23 2011" in value
+        for value in slot_texts["typed_ir_temporal_deadline_anchor_reconstruction"]
+    )
+
+
 def test_modal_decompiler_emits_condition_role_slot_pair_prototypes() -> None:
     formula = ModalIRFormula(
         formula_id="f_condition_role_slot_pair",
