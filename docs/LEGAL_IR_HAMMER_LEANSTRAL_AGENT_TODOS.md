@@ -477,7 +477,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-020 Expand proof obligations from canonical contracts
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: proof-obligations
