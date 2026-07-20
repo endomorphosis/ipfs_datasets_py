@@ -239,13 +239,13 @@ setup(
         'transformers',
         "numpy>=1.26.4,<=2.1.3; python_version < '3.14'",
         "numpy>=2.0.0; python_version >= '3.14'",
-        'urllib3',
+        'urllib3>=2.5.0,<3.0.0',
         'requests',
         'boto3',
         'ipfsspec<0.6.0',
         "duckdb",
         "aiosqlite>=0.17.0",  # Async SQLite for metadata/auth
-        "pyarrow>=10.0.0; python_version < '3.14'",
+        "pyarrow>=23.0.1,<26.0.0; python_version < '3.14'",
         "fsspec>=2023.1.0,<=2024.6.1",
         "datasets>=4.0.0,<5.0.0",
         "huggingface-hub>=0.34.0,<1.0.0",
@@ -301,13 +301,12 @@ setup(
 
         # Error reporting API (Flask endpoints)
         'Flask>=3.1.1',
-        # Default OCR engine (Surya; skip Windows / Python 3.14+)
-        'surya-ocr>=0.14.6; platform_system!="Windows" and python_version < "3.14"',
+        # Surya remains runtime-optional until it supports Pillow >= 12.2.0.
         # PDF / RTF runtime dependencies used by default processors
         'nltk>=3.8.1',
         'pdfplumber>=0.11.7',
         'pymupdf>=1.26.3',
-        'pillow>=10.2.0,<11.0.0',
+        'pillow>=12.2.0,<13.0.0',
         'PyPDF2>=3.0.0',
         'pypdf>=5.0.0',
         'pytesseract>=0.3.13',
@@ -377,7 +376,7 @@ setup(
             'warcio>=1.7.4',
         ],
         'legal_netherlands': [
-            'pyarrow>=10.0.0',
+            'pyarrow>=23.0.1,<26.0.0',
             'huggingface-hub>=0.34.0',
             'datasets>=2.10.0',
             'faiss-cpu>=1.7.0' if IS_WINDOWS else 'faiss-cpu>=1.8.0',
@@ -412,7 +411,7 @@ setup(
             'beautifulsoup4>=4.12.0',  # For HTML email parsing (optional)
         ],
         'test': [
-            'pytest>=7.3.1',
+            'pytest>=9.0.3,<10.0.0',
             'pytest-cov>=4.1.0',
             'pytest-asyncio>=0.21.0',
             'pytest-trio>=0.8.0',
@@ -449,7 +448,7 @@ setup(
         'multimedia': [
             'yt-dlp>=2024.0.0',
             'ffmpeg-python>=0.2.0',
-            'pillow>=10.0.0,<12.0.0',
+            'pillow>=12.2.0,<13.0.0',
             'moviepy',
         ],
         # File conversion (Phase 1: Import & Wrap external libraries)
@@ -477,10 +476,10 @@ setup(
         ],
         # Machine Learning extras
         'ml': [
-            'torch>=2.0.0',
+            'torch>=2.13.0,<3.0.0',
             'llama-index>=0.13.5',
             'openai>=1.0.0',
-        ] + (['surya-ocr>=0.14.0'] if (IS_LINUX or IS_MACOS) else []),  # May have issues on Windows
+        ],
         # Vector stores
         'vectors': [
             'faiss-cpu>=1.7.0' if IS_WINDOWS else 'faiss-cpu>=1.8.0',  # Windows may need older version
@@ -534,7 +533,7 @@ setup(
             # Install from GitHub main branch
             'ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main',
             'sentence-transformers',
-            'torch>=2.0.0',
+            'torch>=2.13.0,<3.0.0',
             'transformers>=4.46.0',
         ],
         'all': [
@@ -565,7 +564,7 @@ setup(
             # Email
             'beautifulsoup4>=4.12.0',
             # Testing
-            'pytest>=7.3.1',
+            'pytest>=9.0.3,<10.0.0',
             'pytest-cov>=4.1.0',
             'pytest-asyncio>=0.21.0',
             'pytest-timeout>=2.0.2',
@@ -583,7 +582,7 @@ setup(
             # Multimedia
             'yt-dlp>=2024.0.0',
             'ffmpeg-python>=0.2.0',
-            'pillow>=10.0.0',
+            'pillow>=12.2.0,<13.0.0',
             'moviepy',
             # File conversion
             'markitdown>=0.1.0',

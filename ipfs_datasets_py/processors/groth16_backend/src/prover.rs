@@ -11,9 +11,9 @@ use crate::{
 };
 
 use ark_bn254::{Bn254, Fr};
-use ark_ff::{BigInteger, Field, PrimeField};
+use ark_ff::{AdditiveGroup, BigInteger, Field, PrimeField};
 use ark_groth16::{Groth16, Proof, ProvingKey};
-use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
+use ark_relations::gr1cs::{ConstraintSynthesizer, ConstraintSystem};
 use ark_serialize::CanonicalDeserialize;
 use ark_snark::SNARK;
 use rand::rngs::{OsRng, StdRng};
@@ -548,6 +548,9 @@ mod tests {
                 .to_string(),
             circuit_version: 1,
             ruleset_id: "TDFOL_v1".to_string(),
+            event_digests_hex: vec![],
+            event_count: None,
+            event_dag_merkle_root_hex: None,
             security_level: None,
             extra: Default::default(),
         };
@@ -577,6 +580,9 @@ mod tests {
                 .to_string(),
             circuit_version: 1,
             ruleset_id: "TDFOL_v1".to_string(),
+            event_digests_hex: vec![],
+            event_count: None,
+            event_dag_merkle_root_hex: None,
             security_level: None,
             extra: Default::default(),
         };
@@ -622,6 +628,9 @@ mod tests {
             theorem_hash_hex: hex::encode(Sha256::digest(b"Q")),
             circuit_version: 2,
             ruleset_id: "TDFOL_v1".to_string(),
+            event_digests_hex: vec![],
+            event_count: None,
+            event_dag_merkle_root_hex: None,
             security_level: None,
             extra: Default::default(),
         };
