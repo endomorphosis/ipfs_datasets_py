@@ -40,6 +40,13 @@ from .decompiler import (
     modal_formula_to_text,
     modal_text_token_similarity,
 )
+from .decompiler_repairs import (
+    DECOMPILER_CONTRACT_ID,
+    MODAL_DECOMPILER_REPAIR_SCHEMA_VERSION,
+    decompile_modal_ir_structure,
+    repair_decompiler_round_trip,
+    validate_decompiler_round_trip_preservation,
+)
 from .kg_bridge import (
     flogic_ontology_to_dict,
     flogic_triples_to_graph_data,
@@ -245,9 +252,14 @@ from .introspection_analysis import (
 )
 
 __all__ = [
+    "DECOMPILER_CONTRACT_ID",
+    "MODAL_DECOMPILER_REPAIR_SCHEMA_VERSION",
     "MODAL_COMPILER_REPAIR_SCHEMA_VERSION",
     "compile_exception_precedence",
     "compile_frame_role_bindings",
+    "decompile_modal_ir_structure",
+    "repair_decompiler_round_trip",
+    "validate_decompiler_round_trip_preservation",
     "DecodedModalPhrase",
     "DecodedModalText",
     "DEFAULT_LEGAL_IR_BRIDGE_NAMES",

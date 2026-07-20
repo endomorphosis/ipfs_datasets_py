@@ -80,6 +80,11 @@ _TARGET_ALLOWED_PATHS: Mapping[str, Sequence[str]] = {
         "ipfs_datasets_py/logic/modal/compiler.py",
         "ipfs_datasets_py/logic/modal/kg_bridge.py",
     ),
+    "modal.ir_decompiler": (
+        "ipfs_datasets_py/logic/modal/decompiler.py",
+        "ipfs_datasets_py/logic/modal/codec.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+    ),
 }
 
 _TARGET_METRICS: Mapping[str, Sequence[str]] = {
@@ -95,6 +100,12 @@ _TARGET_METRICS: Mapping[str, Sequence[str]] = {
         "symbolic_validity_penalty",
     ),
     "modal.frame_logic": ("flogic_similarity_loss", "symbolic_validity_penalty"),
+    "modal.ir_decompiler": (
+        "round_trip_structural_reconstruction_loss",
+        "round_trip_source_copy_guardrail_loss",
+        "source_decompiled_text_embedding_cosine_loss",
+        "source_decompiled_text_token_loss",
+    ),
 }
 
 _EXCEPTION_RE = re.compile(
@@ -380,6 +391,7 @@ def generate_clustered_verified_legal_ir_gap_repairs(
         semantics = _compile_cluster_semantics(
             cluster,
             text=text,
+            sample_or_document=sample,
             provenance_id=provenance_id,
             source_hash=source_hash,
         )
@@ -456,6 +468,26 @@ def generate_clustered_legal_ir_compiler_repairs(
         clustered_gaps=clustered_gaps,
         sample_or_document=sample_or_document,
     )
+
+
+def generate_clustered_legal_ir_decompiler_repairs(
+    clusters_or_sample: Any = None,
+    *,
+    clustered_gaps: Any = None,
+    sample_or_document: Any = None,
+) -> List[LegalIRVerifiedGapRepair]:
+    """Compile only recurrence-qualified deterministic decompiler repairs."""
+
+    repairs = generate_clustered_verified_legal_ir_gap_repairs(
+        clusters_or_sample,
+        clustered_gaps=clustered_gaps,
+        sample_or_document=sample_or_document,
+    )
+    return [
+        repair
+        for repair in repairs
+        if repair.target_component == "modal.ir_decompiler"
+    ]
 
 
 def _as_mapping(value: Any) -> Dict[str, Any]:
@@ -708,6 +740,8 @@ def _cluster_validation_commands(cluster: Mapping[str, Any], *, lane: Any) -> Li
 
 def _cluster_action(obligation_family: str, target_component: str) -> str:
     family = _atom(obligation_family, fallback="")
+    if target_component == "modal.ir_decompiler":
+        return "repair_decompiler_round_trip_preservation"
     if "exception" in family:
         return "repair_exception_scope_precedence"
     if "prohibition" in family or "polarity" in family:
@@ -736,6 +770,7 @@ def _compile_cluster_semantics(
     cluster: Mapping[str, Any],
     *,
     text: str,
+    sample_or_document: Any,
     provenance_id: str,
     source_hash: str,
 ) -> Dict[str, Any]:
@@ -750,7 +785,23 @@ def _compile_cluster_semantics(
         "source_text_sha256": source_hash,
     }
 
-    if "exception" in family:
+    if "decompiler" in view or "round_trip" in family:
+        result = _call_decompiler_lane(
+            sample_or_document,
+            provenance_id=provenance_id,
+        )
+        fallback = {
+            "preservation": "typed_structure_and_identifier_only_provenance",
+            "required_dimensions": [
+                "modality",
+                "roles",
+                "exception_scope",
+                "temporal_anchors",
+                "citation_provenance",
+                "structural_summary",
+            ],
+        }
+    elif "exception" in family:
         result = _call_text_lane(
             "ipfs_datasets_py.logic.modal", "compile_exception_precedence", text, provenance_id
         )
@@ -793,6 +844,19 @@ def _compile_cluster_semantics(
         fallback = {"preservation": "canonical_contract_required_fields_and_semantics"}
 
     return dict(sorted(_source_free({**common, **fallback, **result}).items()))
+
+
+def _call_decompiler_lane(value: Any, *, provenance_id: str) -> Dict[str, Any]:
+    try:
+        function = getattr(
+            importlib.import_module("ipfs_datasets_py.logic.modal"),
+            "repair_decompiler_round_trip",
+        )
+        result = function(value, provenance_id=provenance_id)
+    except (ImportError, AttributeError, TypeError, ValueError):
+        return {}
+    mapping = _as_mapping(result)
+    return mapping if mapping else {}
 
 
 def _call_text_lane(module_name: str, function_name: str, text: str, provenance_id: str) -> Dict[str, Any]:
@@ -1051,6 +1115,7 @@ __all__ = [
     "LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION",
     "LegalIRVerifiedGapRepair",
     "generate_clustered_legal_ir_compiler_repairs",
+    "generate_clustered_legal_ir_decompiler_repairs",
     "generate_clustered_verified_legal_ir_gap_repairs",
     "generate_verified_legal_ir_gap_repairs",
 ]

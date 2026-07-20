@@ -50,6 +50,9 @@ MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
 MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
 HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION = "legal-ir-hammer-guidance-metrics-v1"
 LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION = "legal-ir-view-family-metrics-v1"
+DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION = (
+    "legal-ir-decompiler-structural-learning-target-v1"
+)
 LEGAL_IR_VIEW_FAMILIES = (
     "deontic",
     "frame_logic",
@@ -24352,6 +24355,210 @@ def _source_decompiled_text_losses_from_targets(
     }
 
 
+_DECOMPILER_LEARNING_FORBIDDEN_KEYS = frozenset(
+    {
+        "copied_text",
+        "decompiled_text",
+        "full_text",
+        "normalized_text",
+        "raw_source",
+        "source_text",
+        "text",
+    }
+)
+_DECOMPILER_LEARNING_NON_FEATURE_KEYS = frozenset(
+    {
+        "canonical_citation",
+        "citation_sha256",
+        "document_id",
+        "formula_id",
+        "provenance_ids",
+        "schema_version",
+        "source_id",
+        "source_span_sha256",
+        "structural_signature",
+    }
+)
+
+
+def build_decompiler_structural_learning_target(
+    document_or_record: Any,
+    *,
+    source_text: str = "",
+    source_contract_id: str = "",
+) -> Dict[str, Any]:
+    """Project decompiler preservation into source-copy-safe learned targets.
+
+    The target contains bounded categorical structural features plus hash-only
+    provenance.  Supplying an already-built round-trip record is supported, but
+    it is sanitized with the same policy as a modal document.
+    """
+
+    record_mapping = (
+        dict(document_or_record)
+        if isinstance(document_or_record, Mapping)
+        else {}
+    )
+    if not (
+        record_mapping.get("schema_version")
+        == "legal-ir-modal-decompiler-repair-v1"
+        and isinstance(record_mapping.get("formulas"), Sequence)
+    ):
+        try:
+            from ipfs_datasets_py.logic.modal.decompiler_repairs import (
+                repair_decompiler_round_trip,
+            )
+
+            record_mapping = repair_decompiler_round_trip(
+                document_or_record,
+                source_contract_id=source_contract_id,
+            )
+        except (ImportError, TypeError, ValueError):
+            record_mapping = {}
+
+    resolved_source = str(source_text or "")
+    if not resolved_source:
+        modal_ir = getattr(document_or_record, "modal_ir", document_or_record)
+        resolved_source = str(getattr(modal_ir, "normalized_text", "") or "")
+        if isinstance(modal_ir, Mapping):
+            resolved_source = str(modal_ir.get("normalized_text") or "")
+    sanitized = _sanitize_decompiler_learning_value(
+        record_mapping,
+        normalized_source=" ".join(resolved_source.lower().split()),
+    )
+    sanitized_mapping = dict(sanitized) if isinstance(sanitized, Mapping) else {}
+    formulas = sanitized_mapping.get("formulas")
+    formula_targets = list(formulas) if isinstance(formulas, list) else []
+    feature_targets = _decompiler_structural_feature_targets(formula_targets)
+    summary = sanitized_mapping.get("structural_summary")
+    summary_mapping = dict(summary) if isinstance(summary, Mapping) else {}
+    identity = {
+        "feature_targets": feature_targets,
+        "formula_targets": formula_targets,
+        "structural_summary": summary_mapping,
+    }
+    source_hash = (
+        hashlib.sha256(resolved_source.encode("utf-8")).hexdigest()
+        if resolved_source
+        else ""
+    )
+    return {
+        "contract_id": "legal-ir-view/decompiler/v1",
+        "feature_targets": feature_targets,
+        "formula_targets": formula_targets,
+        "schema_version": DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION,
+        "source_copy_policy": "hash_only",
+        "source_text_sha256": source_hash,
+        "structural_signature": _hash_json(identity),
+        "structural_summary": summary_mapping,
+    }
+
+
+def _sanitize_decompiler_learning_value(
+    value: Any,
+    *,
+    normalized_source: str,
+) -> Any:
+    if isinstance(value, Mapping):
+        sanitized: Dict[str, Any] = {}
+        for raw_key, child in sorted(value.items(), key=lambda item: str(item[0])):
+            key = str(raw_key)
+            lowered = key.lower()
+            is_hash = lowered.endswith(("_hash", "_sha256", "_hashes"))
+            if (
+                lowered in _DECOMPILER_LEARNING_FORBIDDEN_KEYS
+                or ("source_span" in lowered and not is_hash)
+            ):
+                continue
+            cleaned = _sanitize_decompiler_learning_value(
+                child,
+                normalized_source=normalized_source,
+            )
+            if cleaned is not None:
+                sanitized[key] = cleaned
+        return sanitized
+    if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
+        return [
+            cleaned
+            for child in list(value)[:256]
+            for cleaned in [
+                _sanitize_decompiler_learning_value(
+                    child,
+                    normalized_source=normalized_source,
+                )
+            ]
+            if cleaned is not None
+        ]
+    if isinstance(value, str):
+        cleaned = " ".join(value.split()).strip()
+        if not cleaned:
+            return ""
+        candidate_tokens = re.findall(
+            r"[a-z0-9]+",
+            cleaned.lower().replace("_", " "),
+        )
+        source_tokens = re.findall(r"[a-z0-9]+", normalized_source)
+        candidate_token_text = " ".join(candidate_tokens)
+        source_token_text = " ".join(source_tokens)
+        if (
+            source_token_text
+            and len(candidate_tokens) >= 6
+            and (
+                f" {candidate_token_text} " in f" {source_token_text} "
+                or (
+                    len(source_tokens) >= 6
+                    and f" {source_token_text} " in f" {candidate_token_text} "
+                )
+            )
+        ):
+            return None
+        return cleaned
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    return str(value)
+
+
+def _decompiler_structural_feature_targets(
+    formulas: Sequence[Any],
+) -> List[str]:
+    features: List[str] = []
+
+    def collect(value: Any, path: str = "") -> None:
+        if len(features) >= 256:
+            return
+        if isinstance(value, Mapping):
+            for key, child in sorted(value.items(), key=lambda item: str(item[0])):
+                normalized_key = str(key)
+                if normalized_key in _DECOMPILER_LEARNING_NON_FEATURE_KEYS:
+                    continue
+                collect(child, f"{path}.{normalized_key}" if path else normalized_key)
+            return
+        if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
+            for child in list(value)[:32]:
+                collect(child, path)
+            return
+        if value is None or value == "":
+            return
+        feature = f"{path}={str(value).lower()}"
+        if feature not in features:
+            features.append(feature)
+
+    for formula in formulas:
+        if not isinstance(formula, Mapping):
+            continue
+        collect(
+            {
+                "arguments": formula.get("arguments", []),
+                "conditions": formula.get("conditions", []),
+                "exceptions": formula.get("exceptions", []),
+                "modality": formula.get("modality", {}),
+                "predicate": formula.get("predicate", {}),
+                "reconstructed_structure": formula.get("reconstructed_structure", {}),
+            }
+        )
+    return features
+
+
 def _legal_ir_component_gaps(
     target_distribution: Mapping[str, float],
     predicted_distribution: Mapping[str, float],
@@ -25015,6 +25222,17 @@ def _legal_ir_target_payload(
     view_distribution_values: Dict[str, List[float]] = {}
     target_view_distributions_by_sample: Dict[str, Dict[str, float]] = {}
     target_hashes: Dict[str, str] = {}
+    decompiler_structural_targets_by_sample: Dict[str, Dict[str, Any]] = {}
+
+    for sample in samples:
+        if not getattr(getattr(sample, "modal_ir", None), "formulas", None):
+            continue
+        structural_target = build_decompiler_structural_learning_target(
+            sample,
+            source_text=str(getattr(sample, "text", "") or ""),
+        )
+        if structural_target.get("formula_targets"):
+            decompiler_structural_targets_by_sample[str(sample.sample_id)] = structural_target
 
     for sample_id, target in target_items:
         sample_losses: Dict[str, float] = {}
@@ -25039,6 +25257,9 @@ def _legal_ir_target_payload(
             target_hashes[str(sample_id)] = str(document.canonical_hash())
 
     return {
+        "decompiler_structural_targets_by_sample": dict(
+            sorted(decompiler_structural_targets_by_sample.items())
+        ),
         "losses": {
             name: _mean(values)
             for name, values in sorted(loss_values.items())
@@ -28552,6 +28773,7 @@ __all__ = [
     "CodexCallDecision",
     "CodexCallGateConfig",
     "COMPILER_ACTIONABLE_FEATURE_GROUPS",
+    "DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION",
     "HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION",
     "LEGAL_IR_VIEW_FAMILIES",
     "LEGAL_IR_VIEW_FAMILY_METRIC_NAMES",
@@ -28570,6 +28792,7 @@ __all__ = [
     "TRUSTED_HAMMER_FEATURE_FAMILIES",
     "TrustedHammerLeanstralFeatureBus",
     "build_trusted_hammer_leanstral_feature_bus",
+    "build_decompiler_structural_learning_target",
     "cosine_loss",
     "cosine_similarity",
     "cross_entropy_excess_distribution_loss",

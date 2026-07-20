@@ -119,6 +119,7 @@ from .legal_ir_verified_gap_repairs import (
     LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION,
     LegalIRVerifiedGapRepair,
     generate_clustered_legal_ir_compiler_repairs,
+    generate_clustered_legal_ir_decompiler_repairs,
     generate_clustered_verified_legal_ir_gap_repairs,
     generate_verified_legal_ir_gap_repairs,
 )
@@ -226,6 +227,7 @@ __all__ = [
     'LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION',
     'LegalIRVerifiedGapRepair',
     'generate_clustered_legal_ir_compiler_repairs',
+    'generate_clustered_legal_ir_decompiler_repairs',
     'generate_clustered_verified_legal_ir_gap_repairs',
     'generate_verified_legal_ir_gap_repairs',
     'CANONICAL_LEGAL_IR_VIEW_CONTRACTS',
