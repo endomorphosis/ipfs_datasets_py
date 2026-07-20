@@ -41,6 +41,50 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+gate_boolean_flag() {
+  local value="${1,,}"
+  local enabled_flag="$2"
+  local disabled_flag="$3"
+  case "${value}" in
+    1|true|yes|on)
+      printf '%s' "${enabled_flag}"
+      ;;
+    0|false|no|off)
+      printf '%s' "${disabled_flag}"
+      ;;
+    *)
+      echo "invalid boolean value for representation rollout gate: $1" >&2
+      return 2
+      ;;
+  esac
+}
+
+GATE_REQUIRE_REPRESENTATION_PROMOTION="${GATE_REQUIRE_REPRESENTATION_PROMOTION:-true}"
+GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION="${GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION:-true}"
+GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE="${GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE:-true}"
+GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION="${GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION:-0.0}"
+GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION="${GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION:-0.0}"
+GATE_MAX_HAMMER_PROOF_RATE_REGRESSION="${GATE_MAX_HAMMER_PROOF_RATE_REGRESSION:-0.0}"
+GATE_MAX_RECONSTRUCTION_RATE_REGRESSION="${GATE_MAX_RECONSTRUCTION_RATE_REGRESSION:-0.0}"
+GATE_MAX_SOURCE_COPY_PENALTY_REGRESSION="${GATE_MAX_SOURCE_COPY_PENALTY_REGRESSION:-0.0}"
+GATE_MAX_TODO_PRODUCTIVITY_REGRESSION="${GATE_MAX_TODO_PRODUCTIVITY_REGRESSION:-0.0}"
+
+REPRESENTATION_PROMOTION_GATE_FLAG="$(gate_boolean_flag \
+  "${GATE_REQUIRE_REPRESENTATION_PROMOTION}" \
+  --require-representation-promotion \
+  --no-require-representation-promotion)"
+SUCCESSFUL_REPRESENTATION_PROMOTION_GATE_FLAG="$(gate_boolean_flag \
+  "${GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION}" \
+  --require-successful-representation-promotion \
+  --no-require-successful-representation-promotion)"
+COMPLETE_REPRESENTATION_EVIDENCE_GATE_FLAG="$(gate_boolean_flag \
+  "${GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE}" \
+  --require-complete-representation-evidence \
+  --no-require-complete-representation-evidence)"
+
+export RUN_SUMMARY_GATE_MODULE="scripts.ops.legal_ir.hammer_leanstral_rollout_gate"
+export RUN_SUMMARY_GATE_ARGS="${REPRESENTATION_PROMOTION_GATE_FLAG} ${SUCCESSFUL_REPRESENTATION_PROMOTION_GATE_FLAG} ${COMPLETE_REPRESENTATION_EVIDENCE_GATE_FLAG} --max-validation-ce-regression ${GATE_MAX_VALIDATION_CE_REGRESSION:-0.02} --max-validation-cosine-regression ${GATE_MAX_VALIDATION_COSINE_REGRESSION:-0.02} --max-compiler-ir-ce-regression ${GATE_MAX_COMPILER_IR_CE_REGRESSION:-0.05} --max-compiler-ir-cosine-regression ${GATE_MAX_COMPILER_IR_COSINE_REGRESSION:-0.05} --max-source-copy-penalty ${GATE_MAX_SOURCE_COPY_PENALTY:-0.35} --max-per-view-ir-metric-regression ${GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION} --max-symbolic-validity-regression ${GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION} --max-hammer-proof-rate-regression ${GATE_MAX_HAMMER_PROOF_RATE_REGRESSION} --max-reconstruction-rate-regression ${GATE_MAX_RECONSTRUCTION_RATE_REGRESSION} --max-source-copy-penalty-regression ${GATE_MAX_SOURCE_COPY_PENALTY_REGRESSION} --max-todo-productivity-regression ${GATE_MAX_TODO_PRODUCTIVITY_REGRESSION} --min-cycles-for-todo-gate ${GATE_MIN_CYCLES_FOR_TODO_GATE:-1}"
+
 export PYTHONPATH="${ROOT_DIR}:${ROOT_DIR}/../ipfs_accelerate_py${PYTHONPATH:+:${PYTHONPATH}}"
 export PYTHON_BIN
 export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE:-1}"
@@ -96,6 +140,15 @@ run_gate() {
     --max-compiler-ir-ce-regression "${GATE_MAX_COMPILER_IR_CE_REGRESSION:-0.05}" \
     --max-compiler-ir-cosine-regression "${GATE_MAX_COMPILER_IR_COSINE_REGRESSION:-0.05}" \
     --max-source-copy-penalty "${GATE_MAX_SOURCE_COPY_PENALTY:-0.35}" \
+    "${REPRESENTATION_PROMOTION_GATE_FLAG}" \
+    "${SUCCESSFUL_REPRESENTATION_PROMOTION_GATE_FLAG}" \
+    "${COMPLETE_REPRESENTATION_EVIDENCE_GATE_FLAG}" \
+    --max-per-view-ir-metric-regression "${GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION}" \
+    --max-symbolic-validity-regression "${GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION}" \
+    --max-hammer-proof-rate-regression "${GATE_MAX_HAMMER_PROOF_RATE_REGRESSION}" \
+    --max-reconstruction-rate-regression "${GATE_MAX_RECONSTRUCTION_RATE_REGRESSION}" \
+    --max-source-copy-penalty-regression "${GATE_MAX_SOURCE_COPY_PENALTY_REGRESSION}" \
+    --max-todo-productivity-regression "${GATE_MAX_TODO_PRODUCTIVITY_REGRESSION}" \
     --min-cycles-for-todo-gate "${GATE_MIN_CYCLES_FOR_TODO_GATE:-1}"
 }
 
@@ -114,8 +167,12 @@ if [[ "${DRY_RUN}" == "1" ]]; then
   echo "final_run_label=${FINAL_RUN_LABEL}"
   echo "extra_daemon_args=${EXTRA_DAEMON_ARGS}"
   echo "gate_metrics=${HARD_GUARDRAILS}"
+  echo "representation_gate_required=${GATE_REQUIRE_REPRESENTATION_PROMOTION}"
+  echo "representation_gate_require_successful=${GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION}"
+  echo "representation_gate_require_complete_evidence=${GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE}"
+  echo "representation_gate_thresholds=per_view_ir:${GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION},symbolic_validity:${GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION},hammer_proof_rate:${GATE_MAX_HAMMER_PROOF_RATE_REGRESSION},reconstruction_rate:${GATE_MAX_RECONSTRUCTION_RATE_REGRESSION},source_copy_penalty:${GATE_MAX_SOURCE_COPY_PENALTY_REGRESSION},todo_productivity:${GATE_MAX_TODO_PRODUCTIVITY_REGRESSION}"
+  echo "summary_gate_module=${RUN_SUMMARY_GATE_MODULE}"
   exit 0
 fi
 
 "${CMD[@]}"
-run_gate

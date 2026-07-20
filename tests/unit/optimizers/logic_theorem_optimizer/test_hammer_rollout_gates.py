@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,7 @@ from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
 ROOT = Path(__file__).resolve().parents[4]
 SMOKE_SCRIPT = ROOT / "scripts" / "ops" / "legal_ir" / "run_hammer_leanstral_smoke.sh"
 HPARAM_SCRIPT = ROOT / "scripts" / "ops" / "legal_ir" / "run_hammer_leanstral_hparam.sh"
+HPARAM_PIPELINE = ROOT / "scripts" / "ops" / "logic" / "run_hparam_then_8h.sh"
 
 
 def _summary_payload(**overrides: object) -> dict[str, object]:
@@ -143,7 +145,7 @@ def test_rollout_gate_cli_accepts_and_rejects_summary(tmp_path: Path) -> None:
 
     good = subprocess.run(
         [
-            os.environ.get("PYTHON_BIN", ".venv-cuda/bin/python"),
+            os.environ.get("PYTHON_BIN", sys.executable),
             "-m",
             "scripts.ops.legal_ir.hammer_leanstral_rollout_gate",
             "gate",
@@ -157,7 +159,7 @@ def test_rollout_gate_cli_accepts_and_rejects_summary(tmp_path: Path) -> None:
     )
     bad = subprocess.run(
         [
-            os.environ.get("PYTHON_BIN", ".venv-cuda/bin/python"),
+            os.environ.get("PYTHON_BIN", sys.executable),
             "-m",
             "scripts.ops.legal_ir.hammer_leanstral_rollout_gate",
             "gate",
@@ -200,3 +202,13 @@ def test_rollout_scripts_dry_run_include_hammer_leanstral_gates() -> None:
     assert "final_run_label=24h" in hparam.stdout
     assert "--daemon-hammer-guidance-enabled true" in hparam.stdout
     assert f"gate_metrics={expected_metrics}" in hparam.stdout
+    assert "representation_gate_required=true" in smoke.stdout
+    assert "representation_gate_required=true" in hparam.stdout
+    assert (
+        "summary_gate_module=scripts.ops.legal_ir.hammer_leanstral_rollout_gate"
+        in hparam.stdout
+    )
+
+    pipeline = HPARAM_PIPELINE.read_text(encoding="utf-8")
+    assert 'run_summary_gate "${summary_path}" "hparam_trial"' in pipeline
+    assert 'run_summary_gate "${LOG_DIR}/${final_run_id}-autoencoder.summary"' in pipeline

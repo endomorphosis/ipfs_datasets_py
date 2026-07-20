@@ -75,6 +75,8 @@ CODEX_SCOPE_WORKERS="${CODEX_SCOPE_WORKERS:-1}"
 CODEX_VECTOR_MIN_BUNDLE_SIZE="${CODEX_VECTOR_MIN_BUNDLE_SIZE:-2}"
 CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-120}"
 CODEX_MODEL="${CODEX_MODEL:-${IPFS_DATASETS_PY_CODEX_MODEL:-gpt-5.5}}"
+RUN_SUMMARY_GATE_MODULE="${RUN_SUMMARY_GATE_MODULE:-}"
+RUN_SUMMARY_GATE_ARGS="${RUN_SUMMARY_GATE_ARGS:-}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
@@ -207,6 +209,23 @@ echo "[pipeline] codex_scope_workers=${CODEX_SCOPE_WORKERS}"
 echo "[pipeline] codex_vector_min_bundle_size=${CODEX_VECTOR_MIN_BUNDLE_SIZE}"
 echo "[pipeline] codex_vector_max_bundle_wait_seconds=${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS}"
 echo "[pipeline] extra_daemon_arg_count=${#EXTRA_DAEMON_ARGS_ARRAY[@]}"
+
+run_summary_gate() {
+  local summary_path="$1"
+  local run_phase="$2"
+  if [[ -z "${RUN_SUMMARY_GATE_MODULE}" ]]; then
+    return 0
+  fi
+  local gate_args=()
+  if [[ -n "${RUN_SUMMARY_GATE_ARGS}" ]]; then
+    # Gate options and numeric thresholds are plain CLI tokens and contain no spaces.
+    read -r -a gate_args <<< "${RUN_SUMMARY_GATE_ARGS}"
+  fi
+  echo "[pipeline] summary_gate phase=${run_phase} summary_path=${summary_path}"
+  "${PYTHON_BIN}" -m "${RUN_SUMMARY_GATE_MODULE}" gate \
+    --summary-path "${summary_path}" \
+    "${gate_args[@]}"
+}
 
 best_run_id=""
 best_cfg=""
@@ -374,6 +393,8 @@ for idx in "${!CONFIGS[@]}"; do
     echo "[trial] missing summary: ${summary_path}"
     continue
   fi
+
+  run_summary_gate "${summary_path}" "hparam_trial"
 
   read -r ce_score cos_score ir_ce_score ir_cos_score < <(
     "${PYTHON_BIN}" - "${summary_path}" <<'PY'
@@ -632,6 +653,7 @@ print("1" if cycles >= min_cycles and best_ce < 1e11 else "0")
 PY
 )"
     if [[ "${recovered}" == "1" ]]; then
+      run_summary_gate "${final_summary_path}" "${FINAL_RUN_LABEL}_recovered"
       echo "[pipeline] recovered_final_nonzero_exit run_id=${final_run_id} code=${final_exit_code} cycles=${final_cycles} best_validation_ce=${final_best_ce} stop_reason=${final_stop_reason:-unknown}"
       echo "[pipeline] completed final ${FINAL_RUN_LABEL} run_id=${final_run_id}"
       exit 0
@@ -643,4 +665,5 @@ PY
   exit "${final_exit_code}"
 fi
 
+run_summary_gate "${LOG_DIR}/${final_run_id}-autoencoder.summary" "${FINAL_RUN_LABEL}"
 echo "[pipeline] completed final ${FINAL_RUN_LABEL} run_id=${final_run_id}"
