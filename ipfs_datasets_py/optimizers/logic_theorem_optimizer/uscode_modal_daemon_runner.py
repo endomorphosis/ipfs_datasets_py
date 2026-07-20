@@ -92,6 +92,16 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cac
     configuration_digest as legal_ir_evaluation_configuration_digest,
     sample_content_hash as legal_ir_evaluation_sample_hash,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.codex_scope_scheduler import (
+    CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION,
+    MAX_INITIAL_CODEX_WORKERS,
+    AdaptiveWorkerController,
+    CodexScopeScheduler,
+    CodexScopeTask,
+    SchedulerSignals,
+    ScopeEvidenceBundler,
+    WriteSetPredictor,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry import (
     RUNTIME_PHASES,
     RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION,
@@ -9777,6 +9787,106 @@ def _codex_scope_worker_overrides(args: argparse.Namespace) -> Dict[str, int]:
     return overrides
 
 
+def _codex_scheduler_signals(args: argparse.Namespace) -> SchedulerSignals:
+    """Return bounded recent failure signals supplied by the paired supervisor."""
+
+    return SchedulerSignals(
+        validation_failure_rate=max(
+            0.0,
+            min(1.0, float(getattr(args, "codex_validation_failure_rate", 0.0) or 0.0)),
+        ),
+        apply_conflict_rate=max(
+            0.0,
+            min(1.0, float(getattr(args, "codex_apply_conflict_rate", 0.0) or 0.0)),
+        ),
+        memory_pressure=max(
+            0.0,
+            min(1.0, float(getattr(args, "codex_memory_pressure", 0.0) or 0.0)),
+        ),
+        transient_failure_rate=max(
+            0.0,
+            min(1.0, float(getattr(args, "codex_transient_failure_rate", 0.0) or 0.0)),
+        ),
+    )
+
+
+def _conflict_aware_codex_children(
+    args: argparse.Namespace,
+    children: Sequence[Mapping[str, Any]],
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Cap an initial child wave to unique, predicted-disjoint ownership scopes.
+
+    Older programmatic callers which construct ``SimpleNamespace`` arguments do
+    not have the feature flag and retain their historical child layout.  The
+    production argument parser enables this path by default.
+    """
+
+    copied = [dict(child) for child in children]
+    if not bool(getattr(args, "codex_conflict_aware_scheduling", False)):
+        return copied, {
+            "enabled": False,
+            "requested_workers": len(copied),
+            "effective_workers": len(copied),
+            "schema_version": CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION,
+        }
+
+    requested_limit = max(
+        1,
+        min(
+            MAX_INITIAL_CODEX_WORKERS,
+            int(getattr(args, "codex_initial_max_workers", MAX_INITIAL_CODEX_WORKERS) or 1),
+        ),
+    )
+    tasks: List[CodexScopeTask] = []
+    child_by_task_id: Dict[str, Dict[str, Any]] = {}
+    unsupported: List[str] = []
+    for index, child in enumerate(copied):
+        scope = str(child.get("scope") or "").strip()
+        task_id = f"initial-scope-{index:04d}"
+        try:
+            task = CodexScopeTask(
+                task_id=task_id,
+                scope=scope,
+                # Stable input order breaks otherwise equal scope demand.
+                priority=float(len(copied) - index),
+                correlation_key=f"initial:{scope}:{index}",
+            )
+        except ValueError:
+            unsupported.append(scope)
+            continue
+        tasks.append(task)
+        child_by_task_id[task_id] = child
+
+    scheduler = CodexScopeScheduler(max_workers=requested_limit)
+    plan = scheduler.schedule(
+        tasks,
+        signals=_codex_scheduler_signals(args),
+        worker_prefix="paired-codex",
+    )
+    selected: List[Dict[str, Any]] = []
+    for assignment in plan.assignments:
+        task_id = assignment.bundle.task_ids[0]
+        child = dict(child_by_task_id[task_id])
+        child["ownership_scope"] = assignment.scope
+        child["predicted_write_set"] = assignment.write_set.to_dict()
+        child["scope_assignment_id"] = assignment.assignment_id
+        selected.append(child)
+    # A custom non-LegalIR scope remains usable when it is the only requested
+    # lane, but it can never expand the production wave past four workers.
+    if not selected and copied:
+        selected = copied[:requested_limit]
+
+    report = plan.to_dict()
+    report.update(
+        {
+            "enabled": True,
+            "requested_scope_children": len(copied),
+            "unsupported_scopes": sorted(set(unsupported)),
+        }
+    )
+    return selected, report
+
+
 def _build_codex_child_command(
     args: argparse.Namespace,
     *,
@@ -10402,6 +10512,10 @@ def build_paired_daemon_commands(
                 "worker_id": getattr(args, "worker_id", None),
             }
         ]
+    codex_children, codex_scope_schedule = _conflict_aware_codex_children(
+        args,
+        codex_children,
+    )
     codex_command = list(codex_children[0]["command"])
 
     return {
@@ -10411,6 +10525,7 @@ def build_paired_daemon_commands(
         "autoencoder_command": autoencoder_command,
         "codex_command": codex_command,
         "codex_children": codex_children,
+        "codex_scope_schedule": codex_scope_schedule,
     }
 
 
@@ -10572,6 +10687,64 @@ def paired_codex_worker_resource_plan(
     }
 
 
+def codex_adaptive_worker_plan(
+    *,
+    requested_workers: int = MAX_INITIAL_CODEX_WORKERS,
+    validation_failure_rate: float = 0.0,
+    apply_conflict_rate: float = 0.0,
+    transient_failure_rate: float = 0.0,
+    memory_pressure: float = 0.0,
+) -> Dict[str, Any]:
+    """Return the feedback-driven Codex cap used for subsequent worker waves."""
+
+    requested = max(1, min(MAX_INITIAL_CODEX_WORKERS, int(requested_workers or 1)))
+    controller = AdaptiveWorkerController(initial_workers=requested)
+    return controller.recommend(
+        SchedulerSignals(
+            validation_failure_rate=max(0.0, min(1.0, float(validation_failure_rate))),
+            apply_conflict_rate=max(0.0, min(1.0, float(apply_conflict_rate))),
+            transient_failure_rate=max(0.0, min(1.0, float(transient_failure_rate))),
+            memory_pressure=max(0.0, min(1.0, float(memory_pressure))),
+        ),
+        requested_workers=requested,
+    ).to_dict()
+
+
+def _codex_packet_adaptive_worker_plan(
+    packet: Mapping[str, Any],
+    *,
+    transient_failure_rate: float,
+    requested_workers: int = MAX_INITIAL_CODEX_WORKERS,
+) -> Dict[str, Any]:
+    validation_status = str(
+        dict(packet.get("isolated_validation", {}) or {}).get("status")
+        or dict(packet.get("main_apply_validation", {}) or {}).get("status")
+        or ""
+    ).lower()
+    patch_status = str(packet.get("patch_status") or "").lower()
+    apply_error = str(packet.get("main_apply_error") or packet.get("patch_error") or "").lower()
+    apply_conflict = bool(
+        "conflict" in patch_status
+        or "apply_check_failed" in patch_status
+        or "conflict" in apply_error
+    )
+    health = _host_resource_health()
+    available_gb = float(health.get("memory_available_gb", 0.0) or 0.0)
+    total_gb = float(health.get("memory_total_gb", 0.0) or 0.0)
+    memory_pressure = (
+        max(0.0, min(1.0, 1.0 - (available_gb / total_gb)))
+        if available_gb and total_gb
+        else 0.0
+    )
+    return codex_adaptive_worker_plan(
+        requested_workers=requested_workers,
+        validation_failure_rate=float(validation_status not in {"", "passed", "skipped"}),
+        apply_conflict_rate=float(apply_conflict),
+        transient_failure_rate=transient_failure_rate,
+        memory_pressure=memory_pressure,
+    )
+
+
 def _paired_resource_pressure(
     args: argparse.Namespace,
     *,
@@ -10690,6 +10863,53 @@ def paired_autoencoder_child_health(
     return health
 
 
+def _codex_packet_scope_schedule_evidence(
+    todos: Sequence[ModalTodo],
+    *,
+    suggested_files: Sequence[str],
+) -> Dict[str, Any]:
+    """Describe the packet's bundled scope and conservative predicted writes."""
+
+    normalized_tasks: List[CodexScopeTask] = []
+    errors: List[str] = []
+    for todo in todos:
+        payload = todo.to_dict()
+        payload["suggested_target_files"] = _suggested_target_files([todo])
+        try:
+            normalized_tasks.append(CodexScopeTask.from_value(payload))
+        except (TypeError, ValueError) as exc:
+            errors.append(f"{todo.todo_id}:{type(exc).__name__}:{exc}")
+    if not normalized_tasks:
+        return {
+            "bundle_ids": [],
+            "errors": errors,
+            "ownership_scope": None,
+            "predicted_write_set": {
+                "paths": sorted(set(str(path) for path in suggested_files if str(path))),
+                "sources": ["daemon_suggested_files"],
+                "symbols": [],
+                "unknown": not bool(suggested_files),
+            },
+            "schema_version": CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION,
+            "status": "unsupported_scope",
+        }
+    bundles = ScopeEvidenceBundler(predictor=WriteSetPredictor()).bundle(normalized_tasks)
+    combined = bundles[0].write_set
+    for bundle in bundles[1:]:
+        combined = combined.union(bundle.write_set)
+    scopes = sorted({bundle.scope for bundle in bundles})
+    return {
+        "bundle_ids": [bundle.bundle_id for bundle in bundles],
+        "errors": errors,
+        "ownership_scope": scopes[0] if len(scopes) == 1 else None,
+        "ownership_scopes": scopes,
+        "predicted_write_set": combined.to_dict(),
+        "schema_version": CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION,
+        "status": "scheduled" if len(scopes) == 1 else "mixed_scope_conflict",
+        "task_count": len(normalized_tasks),
+    }
+
+
 def create_codex_work_packet(
     *,
     cycle: int,
@@ -10706,6 +10926,10 @@ def create_codex_work_packet(
     packet_dir = work_dir / packet_id
     packet_dir.mkdir(parents=True, exist_ok=True)
     suggested_files = _suggested_target_files(todos)
+    scope_schedule_evidence = _codex_packet_scope_schedule_evidence(
+        todos,
+        suggested_files=suggested_files,
+    )
     program_synthesis_scopes = sorted(
         {
             str(todo.metadata.get("program_synthesis_scope") or "")
@@ -10799,6 +11023,9 @@ def create_codex_work_packet(
         "queue_run_id": queue_run_id,
         "repo_root": str(repo_root),
         "run_id": run_id,
+        "codex_scope_schedule": scope_schedule_evidence,
+        "ownership_scope": scope_schedule_evidence.get("ownership_scope"),
+        "predicted_write_set": scope_schedule_evidence.get("predicted_write_set", {}),
         "program_synthesis_scopes": program_synthesis_scopes,
         "semantic_bundle_keys": semantic_bundle_keys,
         "vector_bundle_anchor_ids": vector_bundle_anchor_ids,
@@ -13066,6 +13293,118 @@ def apply_codex_worktree_changes_to_main(
     return updated
 
 
+def validate_codex_work_packet_isolated(
+    packet: Mapping[str, Any],
+    *,
+    validation_commands: Optional[Sequence[Sequence[str]]] = None,
+    validation_timeout_seconds: float = 300.0,
+) -> Dict[str, Any]:
+    """Validate a candidate in its worktree before entering the merge lock.
+
+    Parallel Codex child processes call this independently, so expensive
+    candidate checks overlap while the main checkout remains untouched.  The
+    apply path still repeats validation at the merge boundary because isolated
+    feedback is an acceleration and never a replacement for promotion gates.
+    """
+
+    updated = dict(packet)
+    packet_path_value = updated.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    packet_dir = packet_path.parent if packet_path is not None else Path(".")
+    worktree_value = updated.get("worktree_path")
+    if not worktree_value:
+        updated["isolated_validation"] = {
+            "boundary": "candidate",
+            "commands": [],
+            "error": "packet has no worktree_path",
+            "status": "failed",
+        }
+        updated["main_apply_status"] = "isolated_validation_failed"
+        updated["patch_status"] = "isolated_validation_failed"
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    worktree_path = Path(str(worktree_value))
+    try:
+        diff_info = _codex_worktree_diff(worktree_path)
+        target_files = [str(path) for path in diff_info.get("target_files", [])]
+    except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+        updated["isolated_validation"] = {
+            "boundary": "candidate",
+            "commands": [],
+            "error": str(exc),
+            "status": "failed",
+        }
+        updated["main_apply_status"] = "isolated_validation_failed"
+        updated["patch_status"] = "isolated_validation_failed"
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    isolated_dir = packet_dir / "isolated-validation"
+    isolated_dir.mkdir(parents=True, exist_ok=True)
+    validation = _run_codex_apply_validation(
+        worktree_path,
+        isolated_dir,
+        target_files=target_files,
+        validation_commands=validation_commands,
+        timeout_seconds=validation_timeout_seconds,
+    )
+    validation["boundary"] = "candidate"
+    validation["isolated_worktree"] = str(worktree_path)
+    validation["promotion_gate_revalidation_required"] = True
+    updated["isolated_validation"] = validation
+    if validation.get("status") not in {"passed", "skipped"}:
+        refreshed = refresh_codex_work_packet_patch(updated)
+        refreshed["isolated_validation"] = validation
+        refreshed["main_apply_status"] = "isolated_validation_failed"
+        refreshed["main_apply_error"] = f"isolated validation {validation.get('status')}"
+        refreshed["patch_error"] = refreshed["main_apply_error"]
+        refreshed["patch_status"] = "isolated_validation_failed"
+        _save_packet_if_possible(refreshed, packet_path)
+        return refreshed
+    _save_packet_if_possible(updated, packet_path)
+    return updated
+
+
+def _validate_and_apply_codex_work_packet(
+    packet: Mapping[str, Any],
+    *,
+    commit_mode: str,
+    merge_repair_attempts: int,
+    merge_repair_mode: str,
+    validation_commands: Optional[Sequence[Sequence[str]]],
+    validation_timeout_seconds: float,
+    main_apply_lock_timeout_seconds: Optional[float],
+) -> Dict[str, Any]:
+    """Run isolated candidate checks, then serialize final apply/validation."""
+
+    isolated = validate_codex_work_packet_isolated(
+        packet,
+        validation_commands=validation_commands,
+        validation_timeout_seconds=validation_timeout_seconds,
+    )
+    if dict(isolated.get("isolated_validation", {})).get("status") not in {
+        "passed",
+        "skipped",
+    }:
+        return isolated
+    try:
+        with codex_main_apply_lock(
+            isolated,
+            timeout_seconds=main_apply_lock_timeout_seconds,
+        ):
+            return apply_codex_worktree_changes_to_main(
+                isolated,
+                commit_mode=commit_mode,
+                merge_repair_attempts=merge_repair_attempts,
+                merge_repair_mode=merge_repair_mode,
+                validation_commands=validation_commands,
+                validation_timeout_seconds=validation_timeout_seconds,
+            )
+    except TimeoutError as exc:
+        return _codex_packet_main_apply_lock_timeout(isolated, exc)
+
+
 def execute_codex_work_packet(
     packet: Mapping[str, Any],
     *,
@@ -13119,21 +13458,15 @@ def execute_codex_work_packet(
     _save_packet_if_possible(updated, packet_path)
     normalized_apply_mode = str(apply_mode).strip().lower()
     if normalized_apply_mode == "apply_to_main":
-        try:
-            with codex_main_apply_lock(
-                updated,
-                timeout_seconds=main_apply_lock_timeout_seconds,
-            ):
-                refreshed = apply_codex_worktree_changes_to_main(
-                    updated,
-                    commit_mode=commit_mode,
-                    merge_repair_attempts=merge_repair_attempts,
-                    merge_repair_mode=merge_repair_mode,
-                    validation_commands=validation_commands,
-                    validation_timeout_seconds=validation_timeout_seconds,
-                )
-        except TimeoutError as exc:
-            refreshed = _codex_packet_main_apply_lock_timeout(updated, exc)
+        refreshed = _validate_and_apply_codex_work_packet(
+            updated,
+            commit_mode=commit_mode,
+            merge_repair_attempts=merge_repair_attempts,
+            merge_repair_mode=merge_repair_mode,
+            validation_commands=validation_commands,
+            validation_timeout_seconds=validation_timeout_seconds,
+            main_apply_lock_timeout_seconds=main_apply_lock_timeout_seconds,
+        )
     else:
         refreshed = refresh_codex_work_packet_patch(updated)
     exec_result["attempt_count"] = 1
@@ -13164,21 +13497,15 @@ def execute_codex_work_packet(
         refreshed["codex_exec"] = fallback_result
         _save_packet_if_possible(refreshed, packet_path)
         if normalized_apply_mode == "apply_to_main":
-            try:
-                with codex_main_apply_lock(
-                    refreshed,
-                    timeout_seconds=main_apply_lock_timeout_seconds,
-                ):
-                    refreshed = apply_codex_worktree_changes_to_main(
-                        refreshed,
-                        commit_mode=commit_mode,
-                        merge_repair_attempts=merge_repair_attempts,
-                        merge_repair_mode=merge_repair_mode,
-                        validation_commands=validation_commands,
-                        validation_timeout_seconds=validation_timeout_seconds,
-                    )
-            except TimeoutError as exc:
-                refreshed = _codex_packet_main_apply_lock_timeout(refreshed, exc)
+            refreshed = _validate_and_apply_codex_work_packet(
+                refreshed,
+                commit_mode=commit_mode,
+                merge_repair_attempts=merge_repair_attempts,
+                merge_repair_mode=merge_repair_mode,
+                validation_commands=validation_commands,
+                validation_timeout_seconds=validation_timeout_seconds,
+                main_apply_lock_timeout_seconds=main_apply_lock_timeout_seconds,
+            )
         else:
             refreshed = refresh_codex_work_packet_patch(refreshed)
     return refreshed
@@ -13401,6 +13728,9 @@ def _codex_validation_commands_for_todos(
 def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]:
     """Summarize packet validation/apply evidence for queue finalization."""
     main_validation = dict(packet.get("main_apply_validation", {}) or {})
+    isolated_validation = dict(packet.get("isolated_validation", {}) or {})
+    if not main_validation and isolated_validation:
+        main_validation = isolated_validation
     baseline_validation = dict(packet.get("main_apply_baseline_validation", {}) or {})
     target_metric_validation = dict(packet.get("target_metric_validation", {}) or {})
     holdout_target_metric_validation = dict(
@@ -13426,6 +13756,7 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
     return {
         "baseline_failure_accepted": baseline_failure_accepted,
         "baseline_status": baseline_validation.get("status"),
+        "isolated_validation_status": isolated_validation.get("status"),
         "holdout_hard_regressed_metrics": list(
             holdout_target_metric_validation.get("hard_regressed_metrics", []) or []
         ),
@@ -15330,6 +15661,25 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--codex-conflict-aware-scheduling",
+        type=parse_bool_flag,
+        default=True,
+        help=(
+            "Bundle one ownership scope per initial Codex child, predict shared "
+            "write conflicts, and cap the initial worker wave at four."
+        ),
+    )
+    parser.add_argument(
+        "--codex-initial-max-workers",
+        type=int,
+        default=MAX_INITIAL_CODEX_WORKERS,
+        help="Maximum initial conflict-aware Codex workers (hard-capped at four).",
+    )
+    parser.add_argument("--codex-validation-failure-rate", type=float, default=0.0)
+    parser.add_argument("--codex-apply-conflict-rate", type=float, default=0.0)
+    parser.add_argument("--codex-memory-pressure", type=float, default=0.0)
+    parser.add_argument("--codex-transient-failure-rate", type=float, default=0.0)
+    parser.add_argument(
         "--codex-scope-workers",
         type=int,
         default=1,
@@ -15408,10 +15758,10 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--codex-target-file-lane-lock-scopes",
-        default="compiler_registry",
+        default="all",
         help=(
             "Comma-separated program_synthesis_scope values that use target-file "
-            "lane locks, or 'all'. Default focuses the conflict-prone registry lane."
+            "lane locks, or 'all'. Conflict-aware scheduling protects every ownership lane."
         ),
     )
     parser.add_argument(
@@ -15723,6 +16073,13 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 "worker_id": getattr(args, "worker_id", None),
             }
         ]
+    codex_resource_plan = paired_codex_worker_resource_plan(
+        args,
+        requested_workers=len(codex_children),
+    )
+    if bool(getattr(args, "codex_conflict_aware_scheduling", False)):
+        resource_cap = max(1, int(codex_resource_plan["effective_workers"]))
+        codex_children = codex_children[:resource_cap]
     codex_child_summaries: List[Dict[str, Any]] = []
     for child in codex_children:
         child_run_id = str(child["run_id"])
@@ -15747,6 +16104,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "codex_command": list(paired["codex_command"]),
         "codex_children": codex_child_summaries,
         "codex_child_count": len(codex_child_summaries),
+        "codex_resource_plan": codex_resource_plan,
+        "codex_scope_schedule": dict(paired.get("codex_scope_schedule") or {}),
         "codex_run_id": paired["codex_run_id"],
         "codex_stderr_path": str(codex_stderr_path),
         "codex_stdout_path": str(codex_stdout_path),
@@ -19392,6 +19751,16 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     optimizer_role=policy.program_synthesis_role
                 )
             )
+            summary["codex_adaptive_worker_plan"] = _codex_packet_adaptive_worker_plan(
+                packet,
+                transient_failure_rate=float(
+                    summary["program_synthesis_transient_failure_rate"] or 0.0
+                ),
+                requested_workers=int(
+                    getattr(args, "codex_initial_max_workers", MAX_INITIAL_CODEX_WORKERS)
+                    or MAX_INITIAL_CODEX_WORKERS
+                ),
+            )
             if vector_claim_report:
                 summary["latest_codex_vector_claim_report"] = dict(vector_claim_report)
             summary["latest_stop_reason"] = (
@@ -19416,6 +19785,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "main_apply_target_repo_root": packet.get("main_apply_target_repo_root"),
                     "main_apply_validation_status": dict(
                         packet.get("main_apply_validation", {})
+                    ).get("status"),
+                    "isolated_validation_status": dict(
+                        packet.get("isolated_validation", {})
                     ).get("status"),
                     "main_commit_status": dict(packet.get("main_commit", {})).get("status"),
                     "packet_path": packet.get("packet_path"),

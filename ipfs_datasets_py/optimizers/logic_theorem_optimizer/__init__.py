@@ -301,6 +301,26 @@ __all__ = [
     'map_changed_scope',
     'plan_changed_scope_validation',
     'validate_incremental_candidate',
+    # Conflict-aware Codex scope scheduling
+    'CodexOwnershipScope',
+    'CodexScopeTask',
+    'PredictedWriteSet',
+    'WriteSetPredictor',
+    'ScopeEvidenceBundle',
+    'ScopeEvidenceBundler',
+    'SchedulerSignals',
+    'SchedulerOutcome',
+    'WorkerDecision',
+    'AdaptiveWorkerController',
+    'ScopeAssignment',
+    'ScopeSchedulePlan',
+    'CodexScopeScheduler',
+    'IsolatedValidationExecutor',
+    'ConflictAwareMergeSerializer',
+    'canonical_codex_scope',
+    'predict_codex_write_set',
+    'bundle_codex_scope_evidence',
+    'schedule_codex_scopes',
     # Program-synthesis failure classification and recovery
     'FailureCategory',
     'FailureClassification',
@@ -380,6 +400,32 @@ def _enforce_export_version_gate(name: str, current_version: str | None = None) 
 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
+    if name in (
+        'CodexOwnershipScope',
+        'CodexScopeTask',
+        'PredictedWriteSet',
+        'WriteSetPredictor',
+        'ScopeEvidenceBundle',
+        'ScopeEvidenceBundler',
+        'SchedulerSignals',
+        'SchedulerOutcome',
+        'WorkerDecision',
+        'AdaptiveWorkerController',
+        'ScopeAssignment',
+        'ScopeSchedulePlan',
+        'CodexScopeScheduler',
+        'IsolatedValidationExecutor',
+        'ConflictAwareMergeSerializer',
+        'canonical_codex_scope',
+        'predict_codex_write_set',
+        'bundle_codex_scope_evidence',
+        'schedule_codex_scopes',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            codex_scope_scheduler,
+        )
+
+        return getattr(codex_scope_scheduler, name)
     if name in (
         'FailureCategory',
         'FailureClassification',
