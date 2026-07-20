@@ -104,6 +104,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_001068_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001392_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001692_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_001446_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001618_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_003238_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_002315_FAMILY_PAIRS,
@@ -40420,6 +40421,49 @@ def test_modal_compiler_surfaces_packet_001618_adaptive_ambiguity_policy(
             and ambiguity.metadata["adaptive_base_ambiguity_type"]
             == "adaptive_family_margin_low"
             for ambiguity in ambiguities
+        )
+
+
+def test_modal_registry_packet_001446_exposes_compiler_ambiguity_pairs() -> None:
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("deontic", "frame"),
+        ("frame", "deontic"),
+    }
+
+    assert set(COMPILER_AMBIGUITY_PACKET_001446_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in expected_pairs:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        _assert_refined_margin_buffer_at_least(
+            predicted_family,
+            target_family,
+            0.0015,
         )
 
 
