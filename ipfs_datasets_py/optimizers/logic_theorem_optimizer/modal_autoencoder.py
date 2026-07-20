@@ -43,7 +43,14 @@ _PROJECTION_AUTO_LINE_SEARCH_ATTEMPTS_ENV = (
 _FALSE_ENV_VALUES = {"0", "false", "no", "off", "none", "disabled"}
 _LEGAL_IR_TARGET_CODE_FINGERPRINT_LOCK = threading.Lock()
 _LEGAL_IR_TARGET_CODE_FINGERPRINT_VALUE: Optional[str] = None
-MODAL_AUTOENCODER_ARCHITECTURE_VERSION = "legacy_dense_v1"
+MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION = "legacy_dense_v1"
+MODAL_AUTOENCODER_ARCHITECTURE_VERSION = "proof_aware_auxiliary_heads_v2"
+MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS = frozenset(
+    {
+        MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION,
+        MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+    }
+)
 MODAL_AUTOENCODER_STATE_SCHEMA_VERSION = "modal-autoencoder-state-v1"
 MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION = "modal-autoencoder-low-rank-v1"
 MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
@@ -89,6 +96,38 @@ TRUSTED_HAMMER_FEATURE_FAMILIES = (
 )
 TRUSTED_HAMMER_FEATURE_BUS_MAX_FEATURES = 48
 TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY = 8
+PROOF_AUXILIARY_HEAD_SCHEMA_VERSION = "legal-ir-proof-auxiliary-heads-v1"
+PROOF_AUXILIARY_TRAINING_SCHEMA_VERSION = (
+    "legal-ir-proof-auxiliary-training-v1"
+)
+PROOF_AUXILIARY_HEAD_NAMES = (
+    "obligation_family",
+    "semantic_slots",
+    "premise_family",
+    "proof_route_availability",
+    "trusted_outcome",
+    "reconstruction_success",
+    "minimal_failing_contract",
+)
+PROOF_AUXILIARY_MULTILABEL_HEADS = frozenset(
+    {
+        "semantic_slots",
+        "premise_family",
+        "proof_route_availability",
+        "minimal_failing_contract",
+    }
+)
+PROOF_AUXILIARY_MAX_LABELS_PER_HEAD = 64
+PROOF_AUXILIARY_MAX_FAMILY_CONTEXTS = 32
+PROOF_AUXILIARY_MAX_APPLIED_RECORD_IDS = 4096
+PROOF_AUXILIARY_GLOBAL_CONTEXT = "__global__"
+PROOF_AUXILIARY_PROTECTED_OBJECTIVES = (
+    "compiler_cross_entropy",
+    "embedding_cosine",
+    "structural_reconstruction",
+    "provenance_alignment",
+    "anti_copy",
+)
 PROJECTION_DEADBAND_MODES = frozenset({"off", "shadow", "enforce"})
 PROJECTION_DEADBAND_CE_REGRESSION_KEYS = frozenset(
     {"cross_entropy_excess_loss", "cross_entropy_loss"}
@@ -802,11 +841,27 @@ class ModalAutoencoderTrainingState:
     semantic_slot_legal_ir_view_embedding_weights: Dict[str, List[float]] = field(default_factory=dict)
     semantic_slot_legal_ir_view_family_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
     semantic_slot_legal_ir_view_logits: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    proof_auxiliary_head_logits: Dict[
+        str,
+        Dict[str, Dict[str, float]],
+    ] = field(default_factory=dict)
+    proof_feedback_version_fingerprint: str = ""
+    applied_proof_feedback_ids: List[str] = field(default_factory=list)
     applied_leanstral_guidance_ids: List[str] = field(default_factory=list)
     applied_todo_ids: List[str] = field(default_factory=list)
+    architecture_version: str = MODAL_AUTOENCODER_ARCHITECTURE_VERSION
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "architecture_version": self.architecture_version,
+            "schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+            "proof_auxiliary_head_schema_version": (
+                PROOF_AUXILIARY_HEAD_SCHEMA_VERSION
+            ),
+            "proof_feedback_version_fingerprint": (
+                self.proof_feedback_version_fingerprint
+            ),
+            "applied_proof_feedback_ids": list(self.applied_proof_feedback_ids),
             "applied_leanstral_guidance_ids": list(
                 self.applied_leanstral_guidance_ids
             ),
@@ -974,6 +1029,13 @@ class ModalAutoencoderTrainingState:
                     self.semantic_slot_legal_ir_view_logits.items()
                 )
             },
+            "proof_auxiliary_head_logits": (
+                _bounded_proof_auxiliary_head_logits(
+                    self.proof_auxiliary_head_logits
+                )
+                if self.proof_feedback_version_fingerprint
+                else {}
+            ),
         }
 
     def to_json(self) -> str:
@@ -992,6 +1054,9 @@ class ModalAutoencoderTrainingState:
         }
         copied.applied_leanstral_guidance_ids = list(
             self.applied_leanstral_guidance_ids
+        )
+        copied.applied_proof_feedback_ids = list(
+            self.applied_proof_feedback_ids
         )
         copied.applied_todo_ids = list(self.applied_todo_ids)
         return copied
@@ -1031,6 +1096,7 @@ class ModalAutoencoderTrainingState:
                 self.semantic_slot_legal_ir_view_embedding_weights,
                 self.semantic_slot_legal_ir_view_family_logits,
                 self.semantic_slot_legal_ir_view_logits,
+                self.proof_auxiliary_head_logits,
             )
         )
 
@@ -1464,8 +1530,17 @@ class ModalAutoencoderTrainingState:
         sample_family_logit_scalar_count = sum(
             len(logits) for logits in self.family_logits.values()
         )
+        proof_head_context_count = sum(
+            len(contexts)
+            for contexts in self.proof_auxiliary_head_logits.values()
+        )
+        proof_head_logit_scalar_count = sum(
+            len(logits)
+            for contexts in self.proof_auxiliary_head_logits.values()
+            for logits in contexts.values()
+        )
         return {
-            "architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+            "architecture_version": self.architecture_version,
             "applied_leanstral_guidance_count": len(
                 self.applied_leanstral_guidance_ids
             ),
@@ -1482,6 +1557,22 @@ class ModalAutoencoderTrainingState:
             "nested_logit_entry_count": sum(nested_logit_entry_counts.values()),
             "nested_logit_entry_counts": nested_logit_entry_counts,
             "nested_logit_scalar_count": nested_logit_scalar_count,
+            "proof_auxiliary_head_count": len(
+                self.proof_auxiliary_head_logits
+            ),
+            "proof_auxiliary_head_context_count": proof_head_context_count,
+            "proof_auxiliary_head_logit_scalar_count": (
+                proof_head_logit_scalar_count
+            ),
+            "proof_auxiliary_head_schema_version": (
+                PROOF_AUXILIARY_HEAD_SCHEMA_VERSION
+            ),
+            "proof_feedback_applied_count": len(
+                self.applied_proof_feedback_ids
+            ),
+            "proof_feedback_version_fingerprint": (
+                self.proof_feedback_version_fingerprint
+            ),
             "schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
             "sample_memory_entry_count": len(self.decoded_embeddings)
             + len(self.family_logits),
@@ -1619,9 +1710,21 @@ class ModalAutoencoderTrainingState:
                 feature: dict(logits)
                 for feature, logits in self.feature_legal_ir_view_logits.items()
             },
+            proof_auxiliary_head_logits={
+                head: {
+                    context: dict(logits)
+                    for context, logits in contexts.items()
+                }
+                for head, contexts in self.proof_auxiliary_head_logits.items()
+            },
+            proof_feedback_version_fingerprint=(
+                self.proof_feedback_version_fingerprint
+            ),
+            applied_proof_feedback_ids=list(self.applied_proof_feedback_ids),
             applied_leanstral_guidance_ids=list(
                 self.applied_leanstral_guidance_ids
             ),
+            architecture_version=self.architecture_version,
         )
 
     def merge_generalizable_from(
@@ -1631,6 +1734,57 @@ class ModalAutoencoderTrainingState:
         scale: float = 1.0,
     ) -> None:
         """Add feature-level weights from ``other`` into this state."""
+        if other.proof_auxiliary_head_logits:
+            fingerprints_match = bool(
+                other.proof_feedback_version_fingerprint
+                and (
+                    not self.proof_feedback_version_fingerprint
+                    or self.proof_feedback_version_fingerprint
+                    == other.proof_feedback_version_fingerprint
+                )
+            )
+            if fingerprints_match:
+                if not self.proof_feedback_version_fingerprint:
+                    self.proof_feedback_version_fingerprint = (
+                        other.proof_feedback_version_fingerprint
+                    )
+                for head, contexts in other.proof_auxiliary_head_logits.items():
+                    if head not in PROOF_AUXILIARY_HEAD_NAMES:
+                        continue
+                    target_contexts = self.proof_auxiliary_head_logits.setdefault(
+                        head,
+                        {},
+                    )
+                    head_vocabulary = {
+                        label
+                        for context_logits in target_contexts.values()
+                        for label in context_logits
+                    }
+                    for context, logits in contexts.items():
+                        if (
+                            context not in target_contexts
+                            and len(target_contexts)
+                            >= PROOF_AUXILIARY_MAX_FAMILY_CONTEXTS
+                        ):
+                            continue
+                        target_logits = target_contexts.setdefault(context, {})
+                        for label, value in logits.items():
+                            if (
+                                label not in head_vocabulary
+                                and len(head_vocabulary)
+                                >= PROOF_AUXILIARY_MAX_LABELS_PER_HEAD
+                            ):
+                                continue
+                            head_vocabulary.add(label)
+                            target_logits[label] = target_logits.get(label, 0.0) + (
+                                float(value) * scale
+                            )
+                self.applied_proof_feedback_ids = _unique_preserve_order(
+                    [
+                        *self.applied_proof_feedback_ids,
+                        *other.applied_proof_feedback_ids,
+                    ]
+                )[:PROOF_AUXILIARY_MAX_APPLIED_RECORD_IDS]
         for slot, vector in other.compiler_quality_embedding_weights.items():
             if slot not in self.compiler_quality_embedding_weights:
                 self.compiler_quality_embedding_weights[slot] = [
@@ -2478,6 +2632,54 @@ class ModalAutoencoderTrainingState:
                 count = feature_legal_view_counts.get((feature, view), 0)
                 if count > 0:
                     logits[view] = value / count
+
+        proof_states = [
+            state
+            for state in state_list
+            if state.proof_auxiliary_head_logits
+            and state.proof_feedback_version_fingerprint
+        ]
+        proof_fingerprints = {
+            state.proof_feedback_version_fingerprint for state in proof_states
+        }
+        # Averaging across compiler/toolchain versions would silently turn stale
+        # labels into current parameters.  Ambiguous proof state is omitted.
+        if len(proof_fingerprints) == 1:
+            merged.proof_feedback_version_fingerprint = next(
+                iter(proof_fingerprints)
+            )
+            proof_counts: Dict[tuple[str, str, str], int] = {}
+            for state in proof_states:
+                for head, contexts in state.proof_auxiliary_head_logits.items():
+                    if head not in PROOF_AUXILIARY_HEAD_NAMES:
+                        continue
+                    target_contexts = merged.proof_auxiliary_head_logits.setdefault(
+                        head,
+                        {},
+                    )
+                    for context, logits in contexts.items():
+                        target_logits = target_contexts.setdefault(context, {})
+                        for label, value in logits.items():
+                            key = (head, context, label)
+                            target_logits[label] = target_logits.get(label, 0.0) + float(value)
+                            proof_counts[key] = proof_counts.get(key, 0) + 1
+                merged.applied_proof_feedback_ids.extend(
+                    state.applied_proof_feedback_ids
+                )
+            for head, contexts in merged.proof_auxiliary_head_logits.items():
+                for context, logits in contexts.items():
+                    for label, value in list(logits.items()):
+                        count = proof_counts.get((head, context, label), 0)
+                        if count > 0:
+                            logits[label] = value / count
+            merged.proof_auxiliary_head_logits = (
+                _bounded_proof_auxiliary_head_logits(
+                    merged.proof_auxiliary_head_logits
+                )
+            )
+            merged.applied_proof_feedback_ids = _unique_preserve_order(
+                merged.applied_proof_feedback_ids
+            )[:PROOF_AUXILIARY_MAX_APPLIED_RECORD_IDS]
         return merged
 
     def save_json(self, path: str | Path) -> None:
@@ -2499,6 +2701,22 @@ class ModalAutoencoderTrainingState:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ModalAutoencoderTrainingState":
+        architecture_version = str(
+            data.get("architecture_version")
+            or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION
+        )
+        if architecture_version not in MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS:
+            raise ValueError(
+                "unsupported modal autoencoder architecture version: "
+                f"{architecture_version!r}"
+            )
+        schema_version = str(
+            data.get("schema_version") or MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
+        )
+        if schema_version != MODAL_AUTOENCODER_STATE_SCHEMA_VERSION:
+            raise ValueError(
+                f"unsupported modal autoencoder state schema: {schema_version!r}"
+            )
         return cls(
             decoded_embeddings={
                 str(sample_id): [float(value) for value in vector]
@@ -2707,11 +2925,27 @@ class ModalAutoencoderTrainingState:
                     data.get("feature_legal_ir_view_logits", {})
                 ).items()
             },
+            proof_auxiliary_head_logits=(
+                _bounded_proof_auxiliary_head_logits(
+                    data.get("proof_auxiliary_head_logits", {})
+                )
+                if str(data.get("proof_feedback_version_fingerprint") or "")
+                else {}
+            ),
+            proof_feedback_version_fingerprint=str(
+                data.get("proof_feedback_version_fingerprint") or ""
+            ),
+            applied_proof_feedback_ids=[
+                str(value)
+                for value in data.get("applied_proof_feedback_ids", [])
+            ][:PROOF_AUXILIARY_MAX_APPLIED_RECORD_IDS],
             applied_leanstral_guidance_ids=[
                 str(value)
                 for value in data.get("applied_leanstral_guidance_ids", [])
             ],
             applied_todo_ids=[str(value) for value in data.get("applied_todo_ids", [])],
+            # Compatible legacy payloads are upgraded on their next save.
+            architecture_version=MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
         )
 
     @classmethod
@@ -3053,6 +3287,13 @@ class AdaptiveModalAutoencoder:
         legal_ir_view_head_update_normalization: float = 0.0,
         feature_activity_reference: int = 64,
         feature_logit_clip: float = 24.0,
+        proof_head_max_labels: int = PROOF_AUXILIARY_MAX_LABELS_PER_HEAD,
+        proof_head_max_family_contexts: int = (
+            PROOF_AUXILIARY_MAX_FAMILY_CONTEXTS
+        ),
+        proof_head_logit_clip: float = 12.0,
+        proof_head_abstention_threshold: float = 0.55,
+        proof_feedback_version_fingerprint: str = "",
         compute_device: str = "auto",
     ) -> None:
         self.state = state or ModalAutoencoderTrainingState()
@@ -3359,6 +3600,44 @@ class AdaptiveModalAutoencoder:
         )
         self.feature_activity_reference = max(8, int(feature_activity_reference))
         self.feature_logit_clip = max(0.0, float(feature_logit_clip))
+        self.proof_head_max_labels = max(
+            1,
+            min(
+                PROOF_AUXILIARY_MAX_LABELS_PER_HEAD,
+                int(proof_head_max_labels),
+            ),
+        )
+        self.proof_head_max_family_contexts = max(
+            1,
+            min(
+                PROOF_AUXILIARY_MAX_FAMILY_CONTEXTS,
+                int(proof_head_max_family_contexts),
+            ),
+        )
+        self.proof_head_logit_clip = max(
+            1.0,
+            min(12.0, float(proof_head_logit_clip)),
+        )
+        self.proof_head_abstention_threshold = max(
+            0.0,
+            min(1.0, float(proof_head_abstention_threshold)),
+        )
+        requested_feedback_fingerprint = str(
+            proof_feedback_version_fingerprint or ""
+        ).strip()
+        if (
+            requested_feedback_fingerprint
+            and self.state.proof_feedback_version_fingerprint
+            and requested_feedback_fingerprint
+            != self.state.proof_feedback_version_fingerprint
+        ):
+            raise ValueError(
+                "proof feedback version does not match serialized head state"
+            )
+        if requested_feedback_fingerprint:
+            self.state.proof_feedback_version_fingerprint = (
+                requested_feedback_fingerprint
+            )
         (
             self.compute_device_request,
             self.compute_backend,
@@ -4823,6 +5102,416 @@ class AdaptiveModalAutoencoder:
         ]
         keys.extend(self._feature_keys_for(sample))
         return _unique_preserve_order(keys)
+
+    def proof_auxiliary_head_architecture(self) -> Dict[str, Any]:
+        """Describe the bounded, objective-isolated proof supervision heads."""
+
+        return {
+            "architecture_version": self.state.architecture_version,
+            "head_count": len(PROOF_AUXILIARY_HEAD_NAMES),
+            "heads": {
+                head: {
+                    "kind": (
+                        "multilabel"
+                        if head in PROOF_AUXILIARY_MULTILABEL_HEADS
+                        else "categorical"
+                    ),
+                    "max_labels": self.proof_head_max_labels,
+                }
+                for head in PROOF_AUXILIARY_HEAD_NAMES
+            },
+            "max_family_contexts": self.proof_head_max_family_contexts,
+            "objective_isolation": {
+                "proof_loss_weight_in_primary_objective": 0.0,
+                "protected_objectives": list(
+                    PROOF_AUXILIARY_PROTECTED_OBJECTIVES
+                ),
+                "separate_parameters": True,
+            },
+            "proof_feedback_version_fingerprint": (
+                self.state.proof_feedback_version_fingerprint
+            ),
+            "schema_version": PROOF_AUXILIARY_HEAD_SCHEMA_VERSION,
+        }
+
+    def predict_proof_auxiliary_heads(
+        self,
+        legal_ir_family: str,
+        *,
+        abstention_threshold: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Return bounded proof-head probabilities for one LegalIR family.
+
+        These predictions are advisory.  They are never fed into the compiler
+        CE, embedding, structural, provenance, or anti-copy objectives.
+        """
+
+        family = _proof_auxiliary_family_context(legal_ir_family)
+        threshold = (
+            self.proof_head_abstention_threshold
+            if abstention_threshold is None
+            else max(0.0, min(1.0, float(abstention_threshold)))
+        )
+        heads: Dict[str, Any] = {}
+        for head in PROOF_AUXILIARY_HEAD_NAMES:
+            logits = self._proof_auxiliary_logits(head, family)
+            kind = (
+                "multilabel"
+                if head in PROOF_AUXILIARY_MULTILABEL_HEADS
+                else "categorical"
+            )
+            if kind == "multilabel":
+                probabilities = {
+                    label: _sigmoid(value)
+                    for label, value in sorted(logits.items())
+                }
+                selected = [
+                    label
+                    for label, probability in probabilities.items()
+                    if probability >= 0.5
+                ]
+                confidence = max(probabilities.values(), default=0.0)
+                prediction: Any = selected
+            else:
+                probabilities = _softmax(logits)
+                prediction = (
+                    max(probabilities, key=probabilities.get)
+                    if probabilities
+                    else None
+                )
+                confidence = (
+                    float(probabilities.get(prediction, 0.0))
+                    if prediction is not None
+                    else 0.0
+                )
+            abstained = not probabilities or confidence < threshold
+            heads[head] = {
+                "abstained": abstained,
+                "confidence": round(confidence, 12),
+                "kind": kind,
+                "prediction": None if abstained else prediction,
+                "probabilities": {
+                    label: round(float(probability), 12)
+                    for label, probability in sorted(probabilities.items())
+                },
+            }
+        return {
+            "architecture_version": self.state.architecture_version,
+            "bounded": all(
+                len(payload["probabilities"]) <= self.proof_head_max_labels
+                for payload in heads.values()
+            ),
+            "family": family,
+            "heads": heads,
+            "proof_feedback_version_fingerprint": (
+                self.state.proof_feedback_version_fingerprint
+            ),
+            "schema_version": PROOF_AUXILIARY_HEAD_SCHEMA_VERSION,
+        }
+
+    def evaluate_proof_auxiliary_heads(
+        self,
+        feedback_records: Iterable[Any],
+        *,
+        expected_versions: Optional[Any] = None,
+        expected_version_fingerprint: str = "",
+        require_train_partition: bool = False,
+        abstention_threshold: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Report loss, calibration, coverage, and abstention by family."""
+
+        expected_fingerprint = (
+            str(expected_version_fingerprint or "").strip()
+            or _proof_feedback_expected_fingerprint(expected_versions)
+            or self.state.proof_feedback_version_fingerprint
+        )
+        records, filtering = _validated_proof_feedback_records(
+            feedback_records,
+            expected_fingerprint=expected_fingerprint,
+            require_train_partition=require_train_partition,
+        )
+        metrics = _proof_auxiliary_metrics(
+            self,
+            records,
+            abstention_threshold=abstention_threshold,
+        )
+        metrics.update(
+            {
+                "architecture_version": self.state.architecture_version,
+                "candidate_count": filtering["candidate_count"],
+                "eligible_count": len(records),
+                "proof_feedback_version_fingerprint": expected_fingerprint,
+                "schema_version": PROOF_AUXILIARY_TRAINING_SCHEMA_VERSION,
+                "skipped_holdout_count": filtering["skipped_holdout_count"],
+                "skipped_invalid_count": filtering["skipped_invalid_count"],
+                "skipped_untrusted_count": filtering["skipped_untrusted_count"],
+                "skipped_version_mismatch_count": filtering[
+                    "skipped_version_mismatch_count"
+                ],
+            }
+        )
+        return metrics
+
+    def train_proof_auxiliary_heads(
+        self,
+        feedback_records: Iterable[Any],
+        *,
+        expected_versions: Optional[Any] = None,
+        expected_version_fingerprint: str = "",
+        learning_rate: float = 0.10,
+        max_records: int = 256,
+        require_train_partition: bool = True,
+        abstention_threshold: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Train all proof heads from version-matched verifier feedback only.
+
+        The first accepted version pins an empty head state.  A caller may pin
+        it explicitly with ``expected_versions``.  Once pinned, records from a
+        different compiler/toolchain fingerprint are rejected.  Holdout rows
+        are excluded by default.
+        """
+
+        raw_records = _proof_feedback_record_items(feedback_records)
+        requested_fingerprint = (
+            str(expected_version_fingerprint or "").strip()
+            or _proof_feedback_expected_fingerprint(expected_versions)
+        )
+        pinned_fingerprint = self.state.proof_feedback_version_fingerprint
+        expected_fingerprint = requested_fingerprint or pinned_fingerprint
+        protected_before = _proof_protected_objective_fingerprint(self.state)
+        records, filtering = _validated_proof_feedback_records(
+            raw_records,
+            expected_fingerprint=expected_fingerprint,
+            require_train_partition=require_train_partition,
+        )
+        if not expected_fingerprint and records:
+            expected_fingerprint = records[0].version_fingerprint
+            records = [
+                record
+                for record in records
+                if record.version_fingerprint == expected_fingerprint
+            ]
+            filtering["skipped_version_mismatch_count"] += (
+                filtering["eligible_before_version_count"] - len(records)
+            )
+
+        configuration_mismatch = bool(
+            requested_fingerprint
+            and pinned_fingerprint
+            and requested_fingerprint != pinned_fingerprint
+        )
+        if configuration_mismatch:
+            filtering["skipped_version_mismatch_count"] += len(records)
+            records = []
+            expected_fingerprint = pinned_fingerprint
+
+        step = _clamp_learning_rate(learning_rate)
+        record_limit = max(0, int(max_records))
+        applied_ids = set(self.state.applied_proof_feedback_ids)
+        duplicate_count = 0
+        applied_records: List[Any] = []
+        updated_head_counts = {head: 0 for head in PROOF_AUXILIARY_HEAD_NAMES}
+        dropped_label_count = 0
+
+        if step > 0.0 and record_limit > 0 and not configuration_mismatch:
+            for record in records[:record_limit]:
+                if record.record_id in applied_ids:
+                    duplicate_count += 1
+                    continue
+                family = _proof_feedback_record_family(record)
+                targets = _proof_auxiliary_targets(record)
+                record_updated = False
+                for head in PROOF_AUXILIARY_HEAD_NAMES:
+                    labels = targets[head]
+                    updated, dropped = self._update_proof_auxiliary_head(
+                        head,
+                        family,
+                        labels,
+                        learning_rate=step,
+                    )
+                    dropped_label_count += dropped
+                    if updated:
+                        updated_head_counts[head] += 1
+                        record_updated = True
+                if not record_updated:
+                    continue
+                self.state.applied_proof_feedback_ids.append(record.record_id)
+                self.state.applied_proof_feedback_ids = (
+                    self.state.applied_proof_feedback_ids[
+                        -PROOF_AUXILIARY_MAX_APPLIED_RECORD_IDS:
+                    ]
+                )
+                applied_ids.add(record.record_id)
+                applied_records.append(record)
+
+        if applied_records and not self.state.proof_feedback_version_fingerprint:
+            self.state.proof_feedback_version_fingerprint = expected_fingerprint
+
+        metrics = _proof_auxiliary_metrics(
+            self,
+            applied_records,
+            abstention_threshold=abstention_threshold,
+        )
+        protected_after = _proof_protected_objective_fingerprint(self.state)
+        objective_isolation = {
+            "proof_loss_weight_in_primary_objective": 0.0,
+            "protected_objectives": list(PROOF_AUXILIARY_PROTECTED_OBJECTIVES),
+            "protected_parameters_unchanged": protected_before == protected_after,
+            "separate_parameters": True,
+        }
+        metrics.update(
+            {
+                "applied_count": len(applied_records),
+                "architecture_version": self.state.architecture_version,
+                "candidate_count": filtering["candidate_count"],
+                "configuration_version_mismatch": configuration_mismatch,
+                "dropped_label_count": dropped_label_count,
+                "duplicate_count": duplicate_count,
+                "eligible_count": len(records),
+                "head_update_counts": updated_head_counts,
+                "objective_isolation": objective_isolation,
+                "proof_feedback_version_fingerprint": (
+                    self.state.proof_feedback_version_fingerprint
+                    or expected_fingerprint
+                ),
+                "schema_version": PROOF_AUXILIARY_TRAINING_SCHEMA_VERSION,
+                "skipped_holdout_count": filtering["skipped_holdout_count"],
+                "skipped_invalid_count": filtering["skipped_invalid_count"],
+                "skipped_limit_count": max(
+                    0,
+                    len(records) - record_limit,
+                ),
+                "skipped_untrusted_count": filtering["skipped_untrusted_count"],
+                "skipped_version_mismatch_count": filtering[
+                    "skipped_version_mismatch_count"
+                ],
+                "status": (
+                    "applied"
+                    if applied_records
+                    else "version_mismatch"
+                    if configuration_mismatch
+                    else "disabled"
+                    if step <= 0.0 or record_limit <= 0
+                    else "no_applicable_feedback"
+                ),
+            }
+        )
+        return metrics
+
+    def train_proof_feedback_heads(
+        self,
+        feedback_records: Iterable[Any],
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Compatibility alias for :meth:`train_proof_auxiliary_heads`."""
+
+        return self.train_proof_auxiliary_heads(feedback_records, **kwargs)
+
+    def apply_proof_feedback(
+        self,
+        feedback_records: Iterable[Any],
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Apply trusted proof records to the isolated auxiliary heads."""
+
+        return self.train_proof_auxiliary_heads(feedback_records, **kwargs)
+
+    def apply_proof_feedback_records(
+        self,
+        feedback_records: Iterable[Any],
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Compatibility alias for proof-feedback replay callers."""
+
+        return self.train_proof_auxiliary_heads(feedback_records, **kwargs)
+
+    def evaluate_proof_feedback_heads(
+        self,
+        feedback_records: Iterable[Any],
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Compatibility alias for proof-head evaluation callers."""
+
+        return self.evaluate_proof_auxiliary_heads(feedback_records, **kwargs)
+
+    def _proof_auxiliary_logits(
+        self,
+        head: str,
+        family: str,
+    ) -> Dict[str, float]:
+        contexts = self.state.proof_auxiliary_head_logits.get(head, {})
+        global_logits = contexts.get(PROOF_AUXILIARY_GLOBAL_CONTEXT, {})
+        family_logits = contexts.get(family, {})
+        labels = sorted(set(global_logits) | set(family_logits))[
+            : self.proof_head_max_labels
+        ]
+        return {
+            label: (
+                float(global_logits.get(label, 0.0))
+                + float(family_logits.get(label, 0.0))
+            )
+            / (2.0 if global_logits and family_logits else 1.0)
+            for label in labels
+        }
+
+    def _update_proof_auxiliary_head(
+        self,
+        head: str,
+        family: str,
+        target_labels: Sequence[str],
+        *,
+        learning_rate: float,
+    ) -> tuple[bool, int]:
+        contexts = self.state.proof_auxiliary_head_logits.setdefault(head, {})
+        vocabulary = {
+            label
+            for logits in contexts.values()
+            for label in logits
+        }
+        targets: List[str] = []
+        dropped = 0
+        for raw_label in target_labels:
+            label = _proof_auxiliary_label(raw_label)
+            if label in vocabulary or len(vocabulary) < self.proof_head_max_labels:
+                if label not in vocabulary:
+                    vocabulary.add(label)
+                targets.append(label)
+            else:
+                dropped += 1
+        targets = _unique_preserve_order(targets)
+        if not targets:
+            return False, dropped
+
+        contexts_to_update = [PROOF_AUXILIARY_GLOBAL_CONTEXT]
+        if family != PROOF_AUXILIARY_GLOBAL_CONTEXT:
+            if family in contexts or len(contexts) < self.proof_head_max_family_contexts:
+                contexts_to_update.append(family)
+        per_context_step = learning_rate / math.sqrt(len(contexts_to_update))
+        for context in contexts_to_update:
+            logits = contexts.setdefault(context, {})
+            labels = sorted(vocabulary)
+            for label in labels:
+                logits.setdefault(label, 0.0)
+            if head in PROOF_AUXILIARY_MULTILABEL_HEADS:
+                target_set = set(targets)
+                for label in labels:
+                    prediction = _sigmoid(logits[label])
+                    target = 1.0 if label in target_set else 0.0
+                    logits[label] = _clip_float(
+                        logits[label] + per_context_step * (target - prediction),
+                        self.proof_head_logit_clip,
+                    )
+            else:
+                target = targets[0]
+                probabilities = _softmax(logits)
+                for label in labels:
+                    logits[label] = _clip_float(
+                        logits[label]
+                        + per_context_step
+                        * ((1.0 if label == target else 0.0) - probabilities[label]),
+                        self.proof_head_logit_clip,
+                    )
+        return True, dropped
 
     def trusted_hammer_leanstral_feature_bus(
         self,
@@ -27499,6 +28188,406 @@ def _codex_gate_local_loss(
     return loss
 
 
+def _bounded_proof_auxiliary_head_logits(value: Any) -> Dict[str, Dict[str, Dict[str, float]]]:
+    """Load proof-head state while enforcing architecture cardinality bounds."""
+
+    if not isinstance(value, Mapping):
+        return {}
+    result: Dict[str, Dict[str, Dict[str, float]]] = {}
+    for head in PROOF_AUXILIARY_HEAD_NAMES:
+        raw_contexts = value.get(head)
+        if not isinstance(raw_contexts, Mapping):
+            continue
+        contexts: Dict[str, Dict[str, float]] = {}
+        head_labels: set[str] = set()
+        for raw_context, raw_logits in sorted(
+            raw_contexts.items(),
+            key=lambda item: str(item[0]),
+        )[:PROOF_AUXILIARY_MAX_FAMILY_CONTEXTS]:
+            if not isinstance(raw_logits, Mapping):
+                continue
+            context = _proof_auxiliary_family_context(str(raw_context))
+            logits: Dict[str, float] = {}
+            for raw_label, raw_value in sorted(
+                raw_logits.items(),
+                key=lambda item: str(item[0]),
+            )[:PROOF_AUXILIARY_MAX_LABELS_PER_HEAD]:
+                try:
+                    number = float(raw_value)
+                except (TypeError, ValueError):
+                    continue
+                if not math.isfinite(number):
+                    continue
+                label = _proof_auxiliary_label(str(raw_label))
+                if (
+                    label not in head_labels
+                    and len(head_labels) >= PROOF_AUXILIARY_MAX_LABELS_PER_HEAD
+                ):
+                    continue
+                head_labels.add(label)
+                logits[label] = _clip_float(
+                    number,
+                    12.0,
+                )
+            if logits:
+                contexts[context] = logits
+        if contexts:
+            result[head] = contexts
+    return result
+
+
+def _proof_auxiliary_label(value: Any) -> str:
+    text = str(value or "unknown").strip()
+    text = re.sub(r"[^A-Za-z0-9._:/@+|=\-]+", "_", text).strip("_")
+    if not text:
+        return "unknown"
+    if len(text) <= 160:
+        return text
+    return f"sha256:{hashlib.sha256(text.encode('utf-8')).hexdigest()}"
+
+
+def _proof_auxiliary_family_context(value: Any) -> str:
+    text = str(value or "").strip()
+    if text == PROOF_AUXILIARY_GLOBAL_CONTEXT:
+        return text
+    family = _legal_ir_view_family_name(text)
+    return family if family in LEGAL_IR_VIEW_FAMILIES else "other"
+
+
+def _proof_feedback_record_family(record: Any) -> str:
+    legal_ir_view = str(getattr(record, "legal_ir_view", "") or "")
+    semantic_family = str(getattr(record, "semantic_family", "") or "")
+    family = _proof_auxiliary_family_context(legal_ir_view)
+    if family == "other":
+        family = _proof_auxiliary_family_context(semantic_family)
+    return family
+
+
+def _proof_auxiliary_targets(record: Any) -> Dict[str, tuple[str, ...]]:
+    semantic_slots = dict(getattr(record, "semantic_slots", {}) or {})
+    premises = tuple(getattr(record, "selected_premise_families", ()) or ())
+    route_availability = dict(getattr(record, "route_availability", {}) or {})
+    kernel = getattr(record, "kernel_reconstruction", None)
+    contract = getattr(record, "minimal_failing_contract", None)
+
+    slot_labels = tuple(
+        f"{_proof_auxiliary_label(slot)}={_proof_auxiliary_label(state)}"
+        for slot, state in sorted(semantic_slots.items(), key=lambda item: str(item[0]))
+    ) or ("none",)
+    premise_labels = tuple(
+        _proof_auxiliary_label(value) for value in sorted(premises, key=str)
+    ) or ("none",)
+    route_labels = tuple(
+        f"{_proof_auxiliary_label(route)}={'available' if bool(available) else 'unavailable'}"
+        for route, available in sorted(
+            route_availability.items(),
+            key=lambda item: str(item[0]),
+        )
+    ) or ("none",)
+    if bool(getattr(kernel, "verified", False)):
+        reconstruction = "success"
+    elif bool(getattr(kernel, "attempted", False)):
+        reconstruction = "failure"
+    else:
+        reconstruction = "not_attempted"
+
+    contract_labels: tuple[str, ...]
+    if contract is None:
+        contract_labels = ("none",)
+    else:
+        values = [
+            f"contract:{_proof_auxiliary_label(getattr(contract, 'contract_id', 'unknown'))}",
+            f"failure:{_proof_auxiliary_label(getattr(contract, 'failure_code', 'unknown'))}",
+        ]
+        values.extend(
+            f"field:{_proof_auxiliary_label(field_name)}"
+            for field_name in tuple(getattr(contract, "failing_fields", ()) or ())
+        )
+        contract_labels = tuple(_unique_preserve_order(values))
+
+    training_label = getattr(record, "training_label", "unknown")
+    trusted_outcome = str(getattr(training_label, "value", training_label) or "unknown")
+    return {
+        "obligation_family": (
+            _proof_auxiliary_label(getattr(record, "obligation_type", "unknown")),
+        ),
+        "semantic_slots": slot_labels,
+        "premise_family": premise_labels,
+        "proof_route_availability": route_labels,
+        "trusted_outcome": (_proof_auxiliary_label(trusted_outcome),),
+        "reconstruction_success": (reconstruction,),
+        "minimal_failing_contract": contract_labels,
+    }
+
+
+def _proof_feedback_expected_fingerprint(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    for name in ("fingerprint", "version_fingerprint"):
+        attribute = getattr(value, name, None)
+        if attribute:
+            return str(attribute)
+    if isinstance(value, Mapping):
+        explicit = value.get("version_fingerprint") or value.get("fingerprint")
+        if explicit:
+            return str(explicit)
+        try:
+            from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import (
+                ProofFeedbackVersions,
+            )
+
+            return ProofFeedbackVersions.from_dict(value).fingerprint
+        except (KeyError, TypeError, ValueError):
+            return ""
+    return ""
+
+
+def _validated_proof_feedback_records(
+    feedback_records: Iterable[Any],
+    *,
+    expected_fingerprint: str,
+    require_train_partition: bool,
+) -> tuple[List[Any], Dict[str, int]]:
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import (
+        LegalIRProofFeedbackRecord,
+        ProofFeedbackPartition,
+    )
+
+    raw_records = _proof_feedback_record_items(feedback_records)
+    counters = {
+        "candidate_count": len(raw_records),
+        "eligible_before_version_count": 0,
+        "skipped_holdout_count": 0,
+        "skipped_invalid_count": 0,
+        "skipped_untrusted_count": 0,
+        "skipped_version_mismatch_count": 0,
+    }
+    accepted: List[Any] = []
+    for raw_record in raw_records:
+        try:
+            if isinstance(raw_record, LegalIRProofFeedbackRecord):
+                record = LegalIRProofFeedbackRecord.from_dict(raw_record.to_dict())
+            elif isinstance(raw_record, Mapping):
+                record = LegalIRProofFeedbackRecord.from_dict(raw_record)
+            else:
+                to_dict = getattr(raw_record, "to_dict", None)
+                if not callable(to_dict):
+                    raise TypeError("proof feedback must be a record or mapping")
+                record = LegalIRProofFeedbackRecord.from_dict(to_dict())
+        except (AttributeError, KeyError, TypeError, ValueError):
+            counters["skipped_invalid_count"] += 1
+            continue
+        if not record.eligible_for_training:
+            counters["skipped_untrusted_count"] += 1
+            continue
+        if require_train_partition and record.partition != ProofFeedbackPartition.TRAIN:
+            counters["skipped_holdout_count"] += 1
+            continue
+        counters["eligible_before_version_count"] += 1
+        if expected_fingerprint and record.version_fingerprint != expected_fingerprint:
+            counters["skipped_version_mismatch_count"] += 1
+            continue
+        accepted.append(record)
+    accepted.sort(key=lambda record: record.record_id)
+    return accepted, counters
+
+
+def _proof_feedback_record_items(value: Any) -> List[Any]:
+    if value is None:
+        return []
+    if isinstance(value, Mapping) or hasattr(value, "record_id"):
+        return [value]
+    if isinstance(value, (str, bytes, bytearray)):
+        return [value]
+    try:
+        return list(value)
+    except TypeError:
+        return [value]
+
+
+def _proof_head_probabilities(
+    autoencoder: AdaptiveModalAutoencoder,
+    head: str,
+    family: str,
+    target_labels: Sequence[str],
+) -> Dict[str, float]:
+    logits = autoencoder._proof_auxiliary_logits(head, family)
+    for label in target_labels:
+        logits.setdefault(label, 0.0)
+    labels = sorted(logits)[: autoencoder.proof_head_max_labels]
+    logits = {label: logits[label] for label in labels}
+    if head in PROOF_AUXILIARY_MULTILABEL_HEADS:
+        return {label: _sigmoid(value) for label, value in logits.items()}
+    return _softmax(logits)
+
+
+def _proof_auxiliary_metrics(
+    autoencoder: AdaptiveModalAutoencoder,
+    records: Sequence[Any],
+    *,
+    abstention_threshold: Optional[float],
+) -> Dict[str, Any]:
+    threshold = (
+        autoencoder.proof_head_abstention_threshold
+        if abstention_threshold is None
+        else max(0.0, min(1.0, float(abstention_threshold)))
+    )
+    observations: Dict[str, Dict[str, List[Dict[str, float]]]] = {}
+    family_record_counts: Dict[str, int] = {}
+    for record in records:
+        family = _proof_feedback_record_family(record)
+        family_record_counts[family] = family_record_counts.get(family, 0) + 1
+        targets = _proof_auxiliary_targets(record)
+        family_heads = observations.setdefault(family, {})
+        for head, target_labels in targets.items():
+            probabilities = _proof_head_probabilities(
+                autoencoder,
+                head,
+                family,
+                target_labels,
+            )
+            target_set = set(target_labels)
+            if head in PROOF_AUXILIARY_MULTILABEL_HEADS:
+                labels = sorted(set(probabilities) | target_set)
+                per_label_losses: List[float] = []
+                per_label_calibration: List[float] = []
+                correct = True
+                for label in labels:
+                    target = 1.0 if label in target_set else 0.0
+                    probability = min(
+                        1.0 - 1e-12,
+                        max(1e-12, float(probabilities.get(label, 0.5))),
+                    )
+                    per_label_losses.append(
+                        -(target * math.log(probability)
+                          + (1.0 - target) * math.log(1.0 - probability))
+                    )
+                    per_label_calibration.append((probability - target) ** 2)
+                    correct = correct and ((probability >= 0.5) == bool(target))
+                loss = _mean(per_label_losses)
+                calibration = _mean(per_label_calibration)
+                confidence = max(probabilities.values(), default=0.0)
+            else:
+                target = target_labels[0]
+                probability = min(
+                    1.0,
+                    max(1e-12, float(probabilities.get(target, 0.0))),
+                )
+                loss = -math.log(probability)
+                calibration = sum(
+                    (
+                        float(predicted_probability)
+                        - (1.0 if label == target else 0.0)
+                    )
+                    ** 2
+                    for label, predicted_probability in probabilities.items()
+                ) / max(1, len(probabilities))
+                predicted = (
+                    max(probabilities, key=probabilities.get)
+                    if probabilities
+                    else None
+                )
+                correct = predicted == target
+                confidence = max(probabilities.values(), default=0.0)
+            abstained = confidence < threshold
+            family_heads.setdefault(head, []).append(
+                {
+                    "abstained": 1.0 if abstained else 0.0,
+                    "calibration": calibration,
+                    "confidence": confidence,
+                    "correct": 1.0 if correct else 0.0,
+                    "loss": loss,
+                }
+            )
+
+    by_family: Dict[str, Any] = {}
+    all_rows: List[Dict[str, float]] = []
+    aggregate_head_rows: Dict[str, List[Dict[str, float]]] = {
+        head: [] for head in PROOF_AUXILIARY_HEAD_NAMES
+    }
+    for family, family_heads in sorted(observations.items()):
+        head_metrics: Dict[str, Any] = {}
+        family_rows: List[Dict[str, float]] = []
+        for head in PROOF_AUXILIARY_HEAD_NAMES:
+            rows = family_heads.get(head, [])
+            family_rows.extend(rows)
+            aggregate_head_rows[head].extend(rows)
+            head_metrics[head] = _proof_metric_rows(rows)
+        family_metrics = _proof_metric_rows(family_rows)
+        family_metrics["heads"] = head_metrics
+        family_metrics["record_count"] = family_record_counts.get(family, 0)
+        by_family[family] = family_metrics
+        all_rows.extend(family_rows)
+
+    aggregate = _proof_metric_rows(all_rows)
+    head_metrics = {
+        head: _proof_metric_rows(rows)
+        for head, rows in aggregate_head_rows.items()
+    }
+    return {
+        **aggregate,
+        "by_legal_ir_family": by_family,
+        "calibration_by_family": {
+            family: payload["calibration_error"]
+            for family, payload in by_family.items()
+        },
+        "head_metrics": head_metrics,
+        "per_family_loss": {
+            family: payload["loss"]
+            for family, payload in by_family.items()
+        },
+        "record_count": len(records),
+    }
+
+
+def _proof_metric_rows(rows: Sequence[Mapping[str, float]]) -> Dict[str, Any]:
+    count = len(rows)
+    abstention_rate = _mean([float(row["abstained"]) for row in rows])
+    return {
+        "abstention_rate": round(abstention_rate, 12),
+        "accuracy": round(_mean([float(row["correct"]) for row in rows]), 12),
+        "calibration_error": round(
+            _mean([float(row["calibration"]) for row in rows]),
+            12,
+        ),
+        "coverage": round(1.0 - abstention_rate if count else 0.0, 12),
+        "loss": round(_mean([float(row["loss"]) for row in rows]), 12),
+        "observation_count": count,
+    }
+
+
+def _proof_protected_objective_fingerprint(
+    state: ModalAutoencoderTrainingState,
+) -> str:
+    payload = state.to_dict()
+    for key in (
+        "applied_proof_feedback_ids",
+        "architecture_version",
+        "proof_auxiliary_head_logits",
+        "proof_auxiliary_head_schema_version",
+        "proof_feedback_version_fingerprint",
+        "schema_version",
+    ):
+        payload.pop(key, None)
+    return _hash_json(payload)
+
+
+def _sigmoid(value: float) -> float:
+    number = float(value)
+    if number >= 0.0:
+        exponent = math.exp(-number)
+        return 1.0 / (1.0 + exponent)
+    exponent = math.exp(number)
+    return exponent / (1.0 + exponent)
+
+
+def _clip_float(value: float, absolute_limit: float) -> float:
+    limit = max(0.0, float(absolute_limit))
+    return max(-limit, min(limit, float(value)))
+
+
 def _softmax(logits: Mapping[str, float]) -> Dict[str, float]:
     if not logits:
         return {}
@@ -29134,12 +30223,20 @@ __all__ = [
     "LEGAL_IR_VIEW_FAMILY_METRIC_NAMES",
     "LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
+    "MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS",
+    "MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION",
     "MODAL_AUTOENCODER_LOW_RANK_BASIS",
     "MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK",
     "MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_STATE_SCHEMA_VERSION",
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
+    "PROOF_AUXILIARY_HEAD_NAMES",
+    "PROOF_AUXILIARY_HEAD_SCHEMA_VERSION",
+    "PROOF_AUXILIARY_MAX_FAMILY_CONTEXTS",
+    "PROOF_AUXILIARY_MAX_LABELS_PER_HEAD",
+    "PROOF_AUXILIARY_PROTECTED_OBJECTIVES",
+    "PROOF_AUXILIARY_TRAINING_SCHEMA_VERSION",
     "ProverCompilationSignal",
     "StableLegalIRFeatureExport",
     "TRUSTED_HAMMER_FEATURE_BUS_MAX_FEATURES",
