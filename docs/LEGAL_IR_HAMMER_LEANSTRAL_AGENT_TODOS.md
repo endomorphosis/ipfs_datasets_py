@@ -1017,7 +1017,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-044 Make Lean and solver process cleanup supervisor-owned
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: process-reliability
