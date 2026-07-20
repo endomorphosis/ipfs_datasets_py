@@ -264,6 +264,14 @@ __all__ = [
     'SnapshotEvaluator',
     'SnapshotBackpressureTimeout',
     'canonical_holdout_version',
+    # Semantic-family sharded evaluation
+    'LEGAL_IR_EVALUATION_FAMILIES',
+    'SharedEvaluationArtifacts',
+    'FamilyShardRequest',
+    'FamilyShardResult',
+    'FamilyEvaluationAggregate',
+    'LegalIRFamilyEvaluator',
+    'aggregate_family_results',
 ]
 
 __version__ = '0.1.0'
@@ -340,6 +348,20 @@ def __getattr__(name):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import snapshot_evaluator
 
         return getattr(snapshot_evaluator, name)
+    if name in (
+        'LEGAL_IR_EVALUATION_FAMILIES',
+        'SharedEvaluationArtifacts',
+        'FamilyShardRequest',
+        'FamilyShardResult',
+        'FamilyEvaluationAggregate',
+        'LegalIRFamilyEvaluator',
+        'aggregate_family_results',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_family_evaluator,
+        )
+
+        return getattr(legal_ir_family_evaluator, name)
     if name in (
         'ResourceLane',
         'LaneReservation',
