@@ -42,6 +42,7 @@ from ipfs_datasets_py.logic.integration.reasoning import (
     attach_legal_ir_contract_telemetry,
     collect_legal_ir_contract_telemetry,
     generate_legal_ir_proof_obligations,
+    legal_ir_view_contract,
     run_legal_ir_hammer,
     summarize_legal_ir_contract_telemetry,
 )
@@ -3940,21 +3941,33 @@ def load_leanstral_direct_guidance_artifacts(
             )
             continue
         for payload in payloads:
-            for guidance in _leanstral_guidance_items_from_payload(payload):
+            for raw_guidance in _leanstral_guidance_items_from_payload(payload):
+                guidance = dict(raw_guidance)
+                # The same deterministic guidance ID can recur in separate daemon
+                # cycle artifacts.  Preserve that independent observation while
+                # still deduping repeated copies within one artifact.
+                is_hammer_item = _hammer_projection_is_hammer_item(guidance)
+                if is_hammer_item:
+                    guidance.setdefault("_hammer_projection_artifact_path", str(path))
                 guidance_id = str(
                     guidance.get("guidance_id")
                     or guidance.get("task_id")
                     or guidance.get("modal_ir_hash")
                     or ""
                 ).strip()
-                dedupe_key = guidance_id or hashlib.sha256(
-                    json.dumps(
-                        guidance,
-                        ensure_ascii=True,
-                        sort_keys=True,
-                        default=str,
-                    ).encode("utf-8")
-                ).hexdigest()
+                dedupe_key = (
+                    _hammer_projection_occurrence_key(guidance)
+                    if is_hammer_item
+                    else guidance_id
+                    or hashlib.sha256(
+                        json.dumps(
+                            guidance,
+                            ensure_ascii=True,
+                            sort_keys=True,
+                            default=str,
+                        ).encode("utf-8")
+                    ).hexdigest()
+                )
                 if dedupe_key in seen:
                     continue
                 seen.add(dedupe_key)
@@ -4321,15 +4334,25 @@ def _read_leanstral_guidance_payloads(
     return [dict(payload)] if isinstance(payload, Mapping) else []
 
 
-def _leanstral_guidance_items_from_payload(value: Any) -> List[Dict[str, Any]]:
+def _leanstral_guidance_items_from_payload(
+    value: Any,
+    *,
+    _replay_context: Optional[Mapping[str, Any]] = None,
+) -> List[Dict[str, Any]]:
     if not isinstance(value, Mapping):
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             items: List[Dict[str, Any]] = []
             for item in value:
-                items.extend(_leanstral_guidance_items_from_payload(item))
+                items.extend(
+                    _leanstral_guidance_items_from_payload(
+                        item,
+                        _replay_context=_replay_context,
+                    )
+                )
             return items
         return []
     payload = dict(value)
+    replay_context = _hammer_projection_replay_context(payload, _replay_context)
     if (
         payload.get("schema_version") == "legal-ir-leanstral-draft-guidance-v1"
         or str(payload.get("schema_version") or "").startswith("legal-ir-hammer-")
@@ -4340,6 +4363,16 @@ def _leanstral_guidance_items_from_payload(value: Any) -> List[Dict[str, Any]]:
             or payload.get("source") == "leanstral_shadow_proof"
         )
     ):
+        if replay_context.get("replay_failure"):
+            payload["_hammer_projection_replay_failure"] = True
+            payload["_hammer_projection_replay_case_id"] = str(
+                replay_context.get("replay_case_id") or ""
+            )
+            payload["_hammer_projection_replay_schema_version"] = str(
+                replay_context.get("replay_schema_version") or ""
+            )
+        if replay_context.get("high_impact_replay_failure"):
+            payload["_hammer_projection_high_impact_replay_failure"] = True
         return [payload]
 
     items: List[Dict[str, Any]] = []
@@ -4350,15 +4383,30 @@ def _leanstral_guidance_items_from_payload(value: Any) -> List[Dict[str, Any]]:
     ):
         nested = payload.get(key)
         if nested:
-            items.extend(_leanstral_guidance_items_from_payload(nested))
+            items.extend(
+                _leanstral_guidance_items_from_payload(
+                    nested,
+                    _replay_context=replay_context,
+                )
+            )
     for key in ("external_guidance", "guidance_items", "items"):
         nested_items = payload.get(key)
         if nested_items:
-            items.extend(_leanstral_guidance_items_from_payload(nested_items))
+            items.extend(
+                _leanstral_guidance_items_from_payload(
+                    nested_items,
+                    _replay_context=replay_context,
+                )
+            )
     for key in ("hammer_guidance_artifacts", "verified_guidance"):
         nested_items = payload.get(key)
         if nested_items:
-            items.extend(_leanstral_guidance_items_from_payload(nested_items))
+            items.extend(
+                _leanstral_guidance_items_from_payload(
+                    nested_items,
+                    _replay_context=replay_context,
+                )
+            )
     candidate_results = payload.get("candidate_results")
     if isinstance(candidate_results, Sequence) and not isinstance(
         candidate_results,
@@ -4369,20 +4417,27 @@ def _leanstral_guidance_items_from_payload(value: Any) -> List[Dict[str, Any]]:
                 continue
             items.extend(
                 _leanstral_guidance_items_from_payload(
-                    candidate_result.get("verified_guidance")
+                    candidate_result.get("verified_guidance"),
+                    _replay_context=replay_context,
                 )
             )
             hammer_report = candidate_result.get("hammer_report")
             if isinstance(hammer_report, Mapping):
                 items.extend(
                     _leanstral_guidance_items_from_payload(
-                        hammer_report.get("artifacts")
+                        hammer_report.get("artifacts"),
+                        _replay_context=replay_context,
                     )
                 )
     for key in ("compiler_guidance", "leanstral_shadow"):
         nested = payload.get(key)
         if isinstance(nested, Mapping):
-            items.extend(_leanstral_guidance_items_from_payload(nested))
+            items.extend(
+                _leanstral_guidance_items_from_payload(
+                    nested,
+                    _replay_context=replay_context,
+                )
+            )
     return items
 
 
@@ -5842,6 +5897,36 @@ def _hammer_projection_unique_strings(values: Any) -> List[str]:
     return list(dict.fromkeys(str(value).strip() for value in raw_values if str(value).strip()))
 
 
+HAMMER_FAILURE_CLUSTER_SCHEMA_VERSION = "legal-ir-hammer-failure-cluster-v1"
+HAMMER_FAILURE_CLUSTER_DEDUPE_FIELDS = (
+    "contract_id",
+    "obligation_family",
+    "target_view",
+    "failure_reason",
+    "allowed_paths",
+)
+_HAMMER_PROJECTION_SUCCESS_RECONSTRUCTION_STATUSES = frozenset(
+    {
+        "checked",
+        "proof_checked",
+        "reconstructed",
+        "success",
+        "trusted",
+        "verified",
+    }
+)
+_HAMMER_PROJECTION_HIGH_IMPACT_REASONS = frozenset(
+    {
+        "contract_violation",
+        "decompiler_reconstruction_failed",
+        "exception_scope_lost",
+        "hammer_proof_regressed",
+        "source_copy_rejected",
+        "symbolic_validity_regressed",
+    }
+)
+
+
 def _hammer_projection_normalize_item(value: Any) -> Dict[str, Any]:
     if value is None:
         return {}
@@ -5855,9 +5940,150 @@ def _hammer_projection_normalize_item(value: Any) -> Dict[str, Any]:
     return {}
 
 
-def _hammer_projection_items(value: Any) -> List[Mapping[str, Any]]:
+def _hammer_projection_numeric(value: Any) -> Optional[float]:
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if math.isfinite(result) else None
+
+
+def _hammer_projection_high_impact_payload(value: Mapping[str, Any]) -> bool:
+    """Identify replay failures whose impact is strong enough to bypass recurrence.
+
+    Explicit impact labels are preferred.  Replay fixtures can also demonstrate
+    impact with a large proof, reconstruction, or symbolic-validity regression;
+    this keeps adversarial guardrail replays useful without treating every replay
+    example as an implementation task.
+    """
+
+    metadata = _hammer_projection_metadata(value)
+    payloads = (value, metadata)
+    for payload in payloads:
+        if any(
+            _hammer_projection_truthy(payload.get(field))
+            for field in (
+                "critical",
+                "high_impact",
+                "high_impact_failure",
+                "high_impact_replay",
+                "high_impact_replay_failure",
+            )
+        ):
+            return True
+        label = str(
+            payload.get("impact")
+            or payload.get("impact_level")
+            or payload.get("priority")
+            or payload.get("severity")
+            or ""
+        ).strip().lower()
+        if label in {"blocker", "critical", "high", "p0"}:
+            return True
+        score = _hammer_projection_numeric(
+            payload.get("impact_score")
+            or payload.get("replay_impact_score")
+            or payload.get("severity_score")
+        )
+        if score is not None and score >= 0.8:
+            return True
+
+    expected = value.get("expected")
+    expected = dict(expected) if isinstance(expected, Mapping) else {}
+    expected_reasons = {
+        re.sub(r"[^a-z0-9_]+", "_", reason.lower()).strip("_")
+        for reason in _hammer_projection_unique_strings(
+            expected.get("failure_reasons") or value.get("expected_failure_reasons")
+        )
+    }
+    if expected_reasons & _HAMMER_PROJECTION_HIGH_IMPACT_REASONS:
+        return True
+
+    baseline = value.get("baseline")
+    candidate = value.get("candidate")
+    baseline_metrics = (
+        baseline.get("metrics") if isinstance(baseline, Mapping) else None
+    )
+    candidate_metrics = (
+        candidate.get("metrics") if isinstance(candidate, Mapping) else None
+    )
+    if isinstance(baseline_metrics, Mapping) and isinstance(candidate_metrics, Mapping):
+        for metric in (
+            "hammer_proof_success_rate",
+            "hammer_reconstruction_success_rate",
+            "round_trip_reconstruction_success_rate",
+            "symbolic_validity_success_rate",
+        ):
+            before = _hammer_projection_numeric(baseline_metrics.get(metric))
+            after = _hammer_projection_numeric(candidate_metrics.get(metric))
+            if before is not None and after is not None and before - after >= 0.5:
+                return True
+        for metric in (
+            "source_copy_reward_hack_penalty",
+            "symbolic_validity_penalty",
+        ):
+            penalty = _hammer_projection_numeric(candidate_metrics.get(metric))
+            if penalty is not None and penalty >= 0.5:
+                return True
+    return False
+
+
+def _hammer_projection_replay_context(
+    value: Mapping[str, Any],
+    inherited: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    context = dict(inherited or {})
+    metadata = _hammer_projection_metadata(value)
+    schema_version = str(value.get("schema_version") or "").strip()
+    source = str(value.get("source") or metadata.get("source") or "").strip()
+    replay = bool(context.get("replay_failure")) or "replay" in schema_version.lower()
+    replay = replay or "replay" in source.lower() or any(
+        _hammer_projection_truthy(
+            value.get(field) if field in value else metadata.get(field)
+        )
+        for field in ("is_replay", "replay", "replay_failure")
+    )
+    replay_case_id = str(
+        value.get("replay_case_id")
+        or value.get("case_id")
+        or value.get("replay_id")
+        or metadata.get("replay_case_id")
+        or context.get("replay_case_id")
+        or ""
+    ).strip()
+    replay = replay or bool(replay_case_id) or any(
+        _hammer_projection_truthy(
+            value.get(field) if field in value else metadata.get(field)
+        )
+        for field in ("high_impact_replay", "high_impact_replay_failure")
+    )
+    high_impact = bool(context.get("high_impact_replay_failure"))
+    if replay and _hammer_projection_high_impact_payload(value):
+        high_impact = True
+    context.update(
+        {
+            "high_impact_replay_failure": high_impact,
+            "replay_case_id": replay_case_id,
+            "replay_failure": replay,
+            "replay_schema_version": schema_version
+            if replay and "replay" in schema_version.lower()
+            else str(context.get("replay_schema_version") or ""),
+        }
+    )
+    return context
+
+
+def _hammer_projection_items(
+    value: Any,
+    *,
+    _replay_context: Optional[Mapping[str, Any]] = None,
+) -> List[Mapping[str, Any]]:
     normalized = _hammer_projection_normalize_item(value)
     if normalized:
+        replay_context = _hammer_projection_replay_context(
+            normalized,
+            _replay_context,
+        )
         nested: List[Mapping[str, Any]] = []
         for key in (
             "artifacts",
@@ -5867,7 +6093,12 @@ def _hammer_projection_items(value: Any) -> List[Mapping[str, Any]]:
             "items",
         ):
             if key in normalized:
-                nested.extend(_hammer_projection_items(normalized.get(key)))
+                nested.extend(
+                    _hammer_projection_items(
+                        normalized.get(key),
+                        _replay_context=replay_context,
+                    )
+                )
         candidate_results = normalized.get("candidate_results")
         if isinstance(candidate_results, Sequence) and not isinstance(
             candidate_results,
@@ -5876,24 +6107,48 @@ def _hammer_projection_items(value: Any) -> List[Mapping[str, Any]]:
             for candidate_result in candidate_results:
                 if not isinstance(candidate_result, Mapping):
                     continue
-                nested.extend(_hammer_projection_items(candidate_result.get("verified_guidance")))
                 nested.extend(
                     _hammer_projection_items(
-                        candidate_result.get("hammer_guidance_artifacts")
+                        candidate_result.get("verified_guidance"),
+                        _replay_context=replay_context,
+                    )
+                )
+                nested.extend(
+                    _hammer_projection_items(
+                        candidate_result.get("hammer_guidance_artifacts"),
+                        _replay_context=replay_context,
                     )
                 )
                 hammer_report = candidate_result.get("hammer_report")
                 if isinstance(hammer_report, Mapping):
-                    nested.extend(_hammer_projection_items(hammer_report.get("artifacts")))
+                    nested.extend(
+                        _hammer_projection_items(
+                            hammer_report.get("artifacts"),
+                            _replay_context=replay_context,
+                        )
+                    )
         if nested:
             return nested
         if _hammer_projection_is_hammer_item(normalized):
-            return [normalized]
+            item = dict(normalized)
+            if replay_context.get("replay_failure"):
+                item["_hammer_projection_replay_failure"] = True
+                item["_hammer_projection_replay_case_id"] = str(
+                    replay_context.get("replay_case_id") or ""
+                )
+                item["_hammer_projection_replay_schema_version"] = str(
+                    replay_context.get("replay_schema_version") or ""
+                )
+            if replay_context.get("high_impact_replay_failure"):
+                item["_hammer_projection_high_impact_replay_failure"] = True
+            return [item]
         return []
     if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
         items: List[Mapping[str, Any]] = []
         for item in value:
-            items.extend(_hammer_projection_items(item))
+            items.extend(
+                _hammer_projection_items(item, _replay_context=_replay_context)
+            )
         return items
     return []
 
@@ -5904,6 +6159,9 @@ def _hammer_projection_is_hammer_item(item: Mapping[str, Any]) -> bool:
     return (
         schema_version.startswith("legal-ir-hammer-")
         or source == "hammer_verified_guidance"
+        or source.startswith(("hammer_", "legal_ir_hammer"))
+        or _hammer_projection_truthy(item.get("hammer_verified"))
+        or _hammer_projection_truthy(item.get("verified_failure"))
         or bool(item.get("backend_statuses"))
         or "proved" in item
         or "proof_checked" in item
@@ -5922,21 +6180,35 @@ def _hammer_projection_truthy(value: Any) -> bool:
 
 
 def _hammer_projection_failure_reason(item: Mapping[str, Any]) -> str:
-    rejection_reasons = _hammer_projection_unique_strings(item.get("rejection_reasons"))
-    if any("copy" in reason.lower() for reason in rejection_reasons):
-        return "source_copy_rejected"
-    failure_reason = str(item.get("failure_reason") or "").strip()
+    metadata = _hammer_projection_metadata(item)
+    failure_reason = str(
+        item.get("failure_reason") or metadata.get("failure_reason") or ""
+    ).strip()
     if failure_reason:
         return re.sub(r"[^a-z0-9_]+", "_", failure_reason.lower()).strip("_")
-    reconstruction_status = str(item.get("reconstruction_status") or "").strip().lower()
-    if _hammer_projection_truthy(item.get("proved")) and reconstruction_status not in {
-        "",
-        "checked",
-        "proof_checked",
-        "reconstructed",
-        "success",
-        "verified",
-    }:
+    rejection_reasons = _hammer_projection_unique_strings(
+        item.get("rejection_reasons")
+        or item.get("failure_reasons")
+        or metadata.get("rejection_reasons")
+        or metadata.get("failure_reasons")
+    )
+    if any("copy" in reason.lower() for reason in rejection_reasons):
+        return "source_copy_rejected"
+    if rejection_reasons:
+        return re.sub(
+            r"[^a-z0-9_]+", "_", rejection_reasons[0].lower()
+        ).strip("_")
+    reconstruction_status = str(
+        item.get("reconstruction_status")
+        or metadata.get("reconstruction_status")
+        or ""
+    ).strip().lower()
+    if (
+        _hammer_projection_truthy(item.get("proved"))
+        and reconstruction_status
+        and reconstruction_status
+        not in _HAMMER_PROJECTION_SUCCESS_RECONSTRUCTION_STATUSES
+    ):
         return "reconstruction_failed"
     backend_statuses = item.get("backend_statuses")
     if isinstance(backend_statuses, Mapping):
@@ -5954,8 +6226,272 @@ def _hammer_projection_failure_reason(item: Mapping[str, Any]) -> str:
     return ""
 
 
+def _hammer_projection_is_verified_failure(
+    item: Mapping[str, Any],
+    failure_reason: str,
+) -> bool:
+    """Return whether an item is a terminal, hammer-attributed failure."""
+
+    if not failure_reason or not _hammer_projection_is_hammer_item(item):
+        return False
+    if item.get("verified_failure") is False:
+        return False
+    status = str(item.get("status") or "").strip().lower()
+    if status in {"accepted", "passed", "proved", "success", "trusted"}:
+        return False
+    if _hammer_projection_truthy(item.get("trusted")) and not item.get(
+        "rejection_reasons"
+    ):
+        reconstruction_status = str(
+            item.get("reconstruction_status") or ""
+        ).strip().lower()
+        if (
+            not reconstruction_status
+            or reconstruction_status
+            in _HAMMER_PROJECTION_SUCCESS_RECONSTRUCTION_STATUSES
+        ):
+            return False
+    if failure_reason == "backend_unavailable" and not _hammer_projection_truthy(
+        item.get("verified_failure")
+    ):
+        # Infrastructure availability is not evidence of a compiler contract gap.
+        return False
+    backend_statuses = item.get("backend_statuses")
+    if isinstance(backend_statuses, Mapping):
+        statuses = {
+            str(value).strip().lower()
+            for value in backend_statuses.values()
+            if str(value).strip()
+        }
+        if statuses and statuses <= {"pending", "queued", "running", "unavailable"}:
+            return False
+    return True
+
+
+def _hammer_projection_string_field(
+    item: Mapping[str, Any],
+    metadata: Mapping[str, Any],
+    *names: str,
+) -> str:
+    for name in names:
+        value = item.get(name)
+        if value is None or value == "":
+            value = metadata.get(name)
+        values = _hammer_projection_unique_strings(value)
+        if values:
+            return values[0]
+    return ""
+
+
+def _hammer_projection_target_view(item: Mapping[str, Any]) -> str:
+    metadata = _hammer_projection_metadata(item)
+    return _hammer_projection_string_field(
+        item,
+        metadata,
+        "target_view",
+        "legal_ir_view",
+        "target_component",
+    ) or "modal.frame_logic"
+
+
+def _hammer_projection_contract_profile(
+    item: Mapping[str, Any],
+    target_view: str,
+) -> tuple[str, Any]:
+    metadata = _hammer_projection_metadata(item)
+    supplied_contract_id = _hammer_projection_string_field(
+        item,
+        metadata,
+        "contract_id",
+        "primary_contract_id",
+        "source_contract_id",
+    )
+    candidates = _hammer_projection_unique_strings(
+        [
+            supplied_contract_id,
+            target_view,
+            item.get("target_component"),
+            metadata.get("target_component"),
+        ]
+    )
+    contract = None
+    for candidate in candidates:
+        try:
+            contract = legal_ir_view_contract(candidate)
+        except (KeyError, TypeError, ValueError):
+            continue
+        break
+    if contract is not None:
+        return str(supplied_contract_id or contract.contract_id), contract
+    fallback = supplied_contract_id or f"unregistered:{target_view.lower()}"
+    return fallback, None
+
+
+def _hammer_projection_obligation_family(item: Mapping[str, Any]) -> str:
+    metadata = _hammer_projection_metadata(item)
+    return _hammer_projection_string_field(
+        item,
+        metadata,
+        "obligation_family",
+        "obligation_families",
+        "obligation_kind",
+        "subgoal_kind",
+        "logic_family",
+    ) or "legal_ir_obligation"
+
+
+def _hammer_projection_safe_paths(values: Any, *, max_paths: int = 8) -> List[str]:
+    paths: List[str] = []
+    for raw_path in _hammer_projection_unique_strings(values):
+        path = raw_path.replace("\\", "/").strip()
+        parts = [part for part in path.split("/") if part]
+        if (
+            not path
+            or path.startswith("/")
+            or any(part in {".", ".."} for part in parts)
+            or not path.startswith(("ipfs_datasets_py/", "tests/"))
+        ):
+            continue
+        paths.append(path.rstrip("/"))
+    return sorted(dict.fromkeys(paths))[: max(0, int(max_paths))]
+
+
+def _hammer_projection_item_allowed_paths(
+    item: Mapping[str, Any],
+    *,
+    action: str,
+    contract: Any,
+    target_component: str,
+) -> List[str]:
+    metadata = _hammer_projection_metadata(item)
+    validation_set = metadata.get("validation_set")
+    validation_set = dict(validation_set) if isinstance(validation_set, Mapping) else {}
+    change_spec = item.get("compiler_change_spec") or metadata.get(
+        "compiler_change_spec"
+    )
+    change_spec = dict(change_spec) if isinstance(change_spec, Mapping) else {}
+    explicit_paths = _hammer_projection_safe_paths(
+        [
+            *_hammer_projection_unique_strings(item.get("allowed_paths")),
+            *_hammer_projection_unique_strings(item.get("allowed_path")),
+            *_hammer_projection_unique_strings(metadata.get("allowed_paths")),
+            *_hammer_projection_unique_strings(metadata.get("allowed_path")),
+            *_hammer_projection_unique_strings(validation_set.get("allowed_paths")),
+            *_hammer_projection_unique_strings(change_spec.get("allowed_paths")),
+        ]
+    )
+    if explicit_paths:
+        return explicit_paths
+    if contract is not None:
+        contract_paths = _hammer_projection_safe_paths(
+            contract.codex_todo_projection().get("allowed_paths")
+        )
+        if contract_paths:
+            return contract_paths
+    return _hammer_projection_safe_paths(
+        _hammer_projection_allowed_paths(
+            action=action,
+            target_component=target_component,
+        )
+    )
+
+
+def _hammer_projection_command_strings(values: Any) -> List[str]:
+    if values is None:
+        return []
+    if isinstance(values, str):
+        return [values.strip()] if values.strip() else []
+    if not isinstance(values, Sequence) or isinstance(values, (bytes, bytearray)):
+        return []
+    commands: List[str] = []
+    for value in values:
+        if isinstance(value, str) and value.strip():
+            commands.append(value.strip())
+        elif isinstance(value, Sequence) and not isinstance(
+            value, (bytes, bytearray, str)
+        ):
+            tokens = [str(token) for token in value if str(token)]
+            if tokens:
+                commands.append(shlex.join(tokens))
+    return commands
+
+
+def _hammer_projection_validation_commands(
+    items: Sequence[Mapping[str, Any]],
+    *,
+    contract: Any,
+    scope: str,
+) -> List[str]:
+    commands: List[str] = []
+    for item in items:
+        metadata = _hammer_projection_metadata(item)
+        validation_set = metadata.get("validation_set")
+        validation_set = (
+            dict(validation_set) if isinstance(validation_set, Mapping) else {}
+        )
+        for payload in (item, metadata, validation_set):
+            commands.extend(
+                _hammer_projection_command_strings(payload.get("validation_commands"))
+            )
+            command = str(payload.get("validation_command") or "").strip()
+            if command:
+                commands.append(command)
+    if contract is not None:
+        commands.extend(
+            _hammer_projection_command_strings(
+                contract.codex_todo_projection().get("validation_commands")
+            )
+        )
+    commands.extend(_compiler_guidance_validation_commands(scope))
+    commands.append(
+        f"{sys.executable} -m pytest -q "
+        "tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py"
+    )
+    return _hammer_projection_unique_strings(commands)[:8]
+
+
+def _hammer_projection_occurrence_key(item: Mapping[str, Any]) -> str:
+    metadata = _hammer_projection_metadata(item)
+    run_marker = _hammer_projection_string_field(
+        item,
+        metadata,
+        "hammer_run_id",
+        "run_id",
+        "cycle_id",
+        "cycle",
+        "observed_at",
+        "_hammer_projection_artifact_path",
+    )
+    occurrence_id = _hammer_projection_string_field(
+        item,
+        metadata,
+        "occurrence_id",
+        "failure_id",
+        "replay_case_id",
+        "_hammer_projection_replay_case_id",
+        "sample_id",
+        "guidance_id",
+        "artifact_sha256",
+    )
+    if occurrence_id:
+        return f"{run_marker}:{occurrence_id}" if run_marker else occurrence_id
+    payload = {
+        str(key): value
+        for key, value in item.items()
+        if str(key).lower()
+        not in {"created_at", "observed_at", "timestamp", "updated_at"}
+    }
+    return hashlib.sha256(
+        json.dumps(payload, default=str, ensure_ascii=True, sort_keys=True).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+
 def _hammer_projection_route_for_view(view: str) -> tuple[str, str]:
     normalized = str(view or "").lower()
+    if "decompiler" in normalized or "reconstruction" in normalized:
+        return "refine_semantic_decompiler_reconstruction", "modal.ir_decompiler"
     if "deontic" in normalized:
         return "repair_deontic_bridge_quality_gate", "deontic.ir"
     if "tdfol" in normalized or "fol" in normalized:
@@ -6037,58 +6573,126 @@ def hammer_failure_projection_todos(
     max_todos_per_cycle: int = 5,
     max_todos_per_scope: int = 2,
 ) -> List[ModalTodo]:
-    """Create bounded Codex TODOs from repeated hammer-verified failures."""
+    """Create bounded Codex TODOs from recurrence-qualified hammer failures.
+
+    A normal failure must have at least two independent observations.  A single
+    observation may qualify only when it belongs to a high-impact replay.  The
+    complete five-field cluster key is also the queue dedupe identity, preventing
+    unrelated contracts, view aliases, or repair surfaces from being merged.
+    """
 
     resolved_policy = policy or ModalOptimizerPolicy()
-    groups: Dict[tuple[str, str, str], List[Mapping[str, Any]]] = {}
+    recurrence_threshold = max(2, int(min_support))
+    cycle_limit = max(0, int(max_todos_per_cycle))
+    scope_limit = max(0, int(max_todos_per_scope))
+    if cycle_limit == 0 or scope_limit == 0:
+        return []
+
+    groups: Dict[
+        tuple[str, str, str, str, tuple[str, ...]],
+        List[Mapping[str, Any]],
+    ] = {}
+    profiles: Dict[
+        tuple[str, str, str, str, tuple[str, ...]],
+        Dict[str, Any],
+    ] = {}
     for item in _hammer_projection_items(guidance):
         reason = _hammer_projection_failure_reason(item)
-        if not reason:
+        if not _hammer_projection_is_verified_failure(item, reason):
             continue
-        metadata = _hammer_projection_metadata(item)
-        view = str(
-            item.get("legal_ir_view")
-            or item.get("target_view")
-            or item.get("target_component")
-            or metadata.get("legal_ir_view")
-            or "modal.frame_logic"
-        ).strip()
-        obligation_kind = str(
-            item.get("obligation_kind")
-            or metadata.get("obligation_kind")
-            or item.get("logic_family")
-            or "legal_ir_obligation"
-        ).strip()
-        action, target_component = _hammer_projection_route_for_view(view)
+        target_view = _hammer_projection_target_view(item)
+        contract_id, contract = _hammer_projection_contract_profile(item, target_view)
+        route_view = str(
+            getattr(contract, "target_component", "") or target_view
+        )
+        action, target_component = _hammer_projection_route_for_view(route_view)
+        if contract is not None:
+            target_component = str(contract.target_component)
         scope = _hammer_projection_scope_for_target(target_component)
-        groups.setdefault((scope, reason, obligation_kind), []).append(item)
-
-    todos: List[ModalTodo] = []
-    scope_counts: Counter[str] = Counter()
-    for (scope, reason, obligation_kind), items in sorted(
-        groups.items(),
-        key=lambda entry: (-len(entry[1]), entry[0]),
-    ):
-        support_count = len(items)
-        if support_count < max(1, int(min_support)):
-            continue
-        if len(todos) >= max(0, int(max_todos_per_cycle)):
-            break
-        if scope_counts[scope] >= max(1, int(max_todos_per_scope)):
-            continue
-        representative = items[0]
-        view = str(
-            representative.get("legal_ir_view")
-            or representative.get("target_view")
-            or representative.get("target_component")
-            or "modal.frame_logic"
-        ).strip()
-        action, target_component = _hammer_projection_route_for_view(view)
-        allowed_paths = _hammer_projection_allowed_paths(
+        obligation_family = _hammer_projection_obligation_family(item)
+        allowed_paths = _hammer_projection_item_allowed_paths(
+            item,
             action=action,
+            contract=contract,
             target_component=target_component,
         )
         if not allowed_paths:
+            continue
+        key = (
+            contract_id,
+            obligation_family,
+            target_view,
+            reason,
+            tuple(allowed_paths),
+        )
+        groups.setdefault(key, []).append(item)
+        profiles[key] = {
+            "action": action,
+            "contract": contract,
+            "scope": scope,
+            "target_component": target_component,
+        }
+
+    qualified_groups: List[
+        tuple[
+            bool,
+            int,
+            tuple[str, str, str, str, tuple[str, ...]],
+            List[Mapping[str, Any]],
+            int,
+        ]
+    ] = []
+    for key, raw_items in groups.items():
+        observations: Dict[str, Mapping[str, Any]] = {}
+        for item in sorted(
+            raw_items,
+            key=lambda value: json.dumps(
+                value,
+                default=str,
+                ensure_ascii=True,
+                sort_keys=True,
+            ),
+        ):
+            observations.setdefault(_hammer_projection_occurrence_key(item), item)
+        items = list(observations.values())
+        support_count = len(items)
+        high_impact_replay = any(
+            bool(item.get("_hammer_projection_replay_failure"))
+            and bool(item.get("_hammer_projection_high_impact_replay_failure"))
+            for item in items
+        )
+        if support_count < recurrence_threshold and not high_impact_replay:
+            continue
+        qualified_groups.append(
+            (
+                high_impact_replay,
+                support_count,
+                key,
+                items,
+                len(raw_items),
+            )
+        )
+
+    qualified_groups.sort(
+        key=lambda entry: (
+            -int(entry[0]),
+            -entry[1],
+            entry[2],
+        )
+    )
+    todos: List[ModalTodo] = []
+    scope_counts: Counter[str] = Counter()
+    for high_impact_replay, support_count, key, items, observation_count in qualified_groups:
+        contract_id, obligation_family, target_view, reason, path_key = key
+        profile = profiles[key]
+        action = str(profile["action"])
+        contract = profile["contract"]
+        scope = str(profile["scope"])
+        target_component = str(profile["target_component"])
+        allowed_paths = list(path_key)
+        if len(todos) >= cycle_limit:
+            break
+        if scope_counts[scope] >= scope_limit:
             continue
         sample_ids = _hammer_projection_unique_strings(
             [
@@ -6113,6 +6717,7 @@ def hammer_failure_projection_todos(
         )
         failure_examples = [
             {
+                "contract_id": contract_id,
                 "failure_reason": reason,
                 "guidance_id": str(item.get("guidance_id") or ""),
                 "legal_ir_view": str(
@@ -6121,7 +6726,11 @@ def hammer_failure_projection_todos(
                     or item.get("target_component")
                     or ""
                 ),
+                "obligation_family": obligation_family,
                 "obligation_id": str(item.get("obligation_id") or ""),
+                "replay_case_id": str(
+                    item.get("_hammer_projection_replay_case_id") or ""
+                ),
                 "reconstruction_status": str(item.get("reconstruction_status") or ""),
                 "sample_id": str(
                     item.get("sample_id")
@@ -6132,15 +6741,15 @@ def hammer_failure_projection_todos(
             }
             for item in items[:8]
         ]
-        dedupe_payload = {
-            "obligation_kind": obligation_kind,
-            "reason": reason,
-            "scope": scope,
-            "source": "hammer_failure_projection_v1",
-            "target_component": target_component,
+        cluster_key = {
+            "allowed_paths": allowed_paths,
+            "contract_id": contract_id,
+            "failure_reason": reason,
+            "obligation_family": obligation_family,
+            "target_view": target_view,
         }
         dedupe_signature = "hammer-failure:" + hashlib.sha256(
-            json.dumps(dedupe_payload, ensure_ascii=True, sort_keys=True).encode(
+            json.dumps(cluster_key, ensure_ascii=True, sort_keys=True).encode(
                 "utf-8"
             )
         ).hexdigest()[:20]
@@ -6150,15 +6759,20 @@ def hammer_failure_projection_todos(
             scope=scope,
             target_component=target_component,
         )
-        validation_commands = _compiler_guidance_validation_commands(scope)
-        validation_commands = _hammer_projection_unique_strings(
-            [
-                *validation_commands,
-                (
-                    f"{sys.executable} -m pytest -q "
-                    "tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py"
-                ),
-            ]
+        validation_commands = _hammer_projection_validation_commands(
+            items,
+            contract=contract,
+            scope=scope,
+        )
+        if not validation_commands:
+            continue
+        replay_case_ids = _hammer_projection_unique_strings(
+            [item.get("_hammer_projection_replay_case_id") for item in items]
+        )
+        qualification_reason = (
+            "high_impact_replay_failure"
+            if high_impact_replay and support_count < recurrence_threshold
+            else "recurring_verified_failure"
         )
         metadata = {
             **resolved_policy.metadata_for(
@@ -6166,28 +6780,46 @@ def hammer_failure_projection_todos(
                 loss_name="hammer_verified_failure",
             ),
             "allowed_paths": allowed_paths,
+            "cluster_key": cluster_key,
+            "cluster_schema_version": HAMMER_FAILURE_CLUSTER_SCHEMA_VERSION,
+            "contract_id": contract_id,
+            "dedupe_keys": list(HAMMER_FAILURE_CLUSTER_DEDUPE_FIELDS),
+            "dedupe_key_fields": list(HAMMER_FAILURE_CLUSTER_DEDUPE_FIELDS),
+            "dedupe_key_values": cluster_key,
             "dedupe_signature": dedupe_signature,
             "expected_failure_mode": reason,
             "failure_reason": reason,
             "hammer_failure_examples": failure_examples,
-            "hammer_failure_group_key": f"{scope}:{reason}:{obligation_kind}",
+            "hammer_failure_group_key": dedupe_signature,
             "hammer_projection": True,
+            "high_impact_replay_failure": high_impact_replay,
             "leanstral_projection": True,
+            "obligation_family": obligation_family,
+            "observation_count": observation_count,
             "owned_ast_scope": scope,
             "program_synthesis_scope": scope,
             "proof_obligation_ids": proof_obligation_ids,
+            "qualification_reason": qualification_reason,
+            "recurrence_threshold": recurrence_threshold,
+            "recurring_verified_failure": support_count >= recurrence_threshold,
+            "replay_case_ids": replay_case_ids,
             "semantic_bundle_key": dedupe_signature,
             "source": "hammer_failure_projection_v1",
             "support_count": support_count,
             "target_component": target_component,
             "target_metrics": target_metrics,
+            "target_view": target_view,
             "validation_commands": validation_commands,
             "validation_set": {
                 "allowed_paths": allowed_paths,
+                "contract_id": contract_id,
                 "expected_failure_mode": reason,
                 "held_out_compiler_ir_metrics": target_metrics,
+                "obligation_family": obligation_family,
                 "proof_obligation_ids": proof_obligation_ids,
                 "target_file_lane": scope,
+                "target_view": target_view,
+                "validation_commands": validation_commands,
             },
         }
         todos.append(
@@ -6195,14 +6827,19 @@ def hammer_failure_projection_todos(
                 todo_id=_hammer_projection_todo_id(dedupe_signature),
                 action=action,
                 objective=(
-                    "Repair repeated hammer-verified Legal IR failure "
-                    f"{reason!r} for {target_component} obligations."
+                    "Repair hammer-verified Legal IR failure "
+                    f"{reason!r} for {contract_id} {obligation_family} "
+                    f"obligations in {target_view}."
                 ),
                 sample_ids=sample_ids,
                 citations=citations,
                 loss_name="hammer_verified_failure",
                 loss_value=round(float(support_count), 12),
-                priority=round(80.0 + float(support_count), 6),
+                priority=round(
+                    (110.0 if high_impact_replay else 80.0)
+                    + float(support_count),
+                    6,
+                ),
                 metadata=metadata,
             )
         )
