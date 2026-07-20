@@ -51,6 +51,7 @@ from .legal_ir_hammer import (
 from .legal_ir_obligations import (
     LEGAL_IR_OBLIGATION_SCHEMA_VERSION,
     LegalIRProofObligation,
+    generate_legal_ir_contract_coverage_obligations,
     generate_legal_ir_proof_obligations,
 )
 from .legal_ir_premises import (
@@ -111,6 +112,7 @@ __all__ = [
     'run_legal_ir_hammer',
     'LEGAL_IR_OBLIGATION_SCHEMA_VERSION',
     'LegalIRProofObligation',
+    'generate_legal_ir_contract_coverage_obligations',
     'generate_legal_ir_proof_obligations',
     'LEGAL_IR_PREMISE_LIBRARY_VERSION',
     'default_legal_ir_premises',
