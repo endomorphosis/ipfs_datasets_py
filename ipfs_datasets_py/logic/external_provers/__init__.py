@@ -28,6 +28,11 @@ Usage:
 
 from typing import List, Optional
 
+from .deterministic_router import (
+    DETERMINISTIC_PROVER_ROUTE_SCHEMA_VERSION,
+    select_deterministic_prover_route,
+)
+
 __version__ = "1.0.0"
 
 try:
@@ -184,4 +189,6 @@ __all__ = [
     "prover_lazy_install_enabled",
     "ProverInstallEvent",
     "ProgressCallback",
+    "DETERMINISTIC_PROVER_ROUTE_SCHEMA_VERSION",
+    "select_deterministic_prover_route",
 ]

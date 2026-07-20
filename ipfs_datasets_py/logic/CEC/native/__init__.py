@@ -85,6 +85,11 @@ from .dcec_integration import (
     DCECParsingError,
 )
 
+from .legal_ir_lifecycle import (
+    LEGAL_IR_LIFECYCLE_SCHEMA_VERSION,
+    compile_lifecycle_events,
+)
+
 __all__ = [
     # Operators
     "DeonticOperator",
@@ -145,6 +150,8 @@ __all__ = [
     "parse_dcec_string",
     "validate_formula",
     "DCECParsingError",
+    "LEGAL_IR_LIFECYCLE_SCHEMA_VERSION",
+    "compile_lifecycle_events",
 ]
 
 # Phase 4C: Grammar-based NL processing
