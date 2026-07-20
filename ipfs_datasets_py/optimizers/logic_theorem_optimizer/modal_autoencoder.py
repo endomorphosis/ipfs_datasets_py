@@ -49,6 +49,26 @@ MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION = "modal-autoencoder-low-rank-v1
 MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
 MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
 HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION = "legal-ir-hammer-guidance-metrics-v1"
+LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION = "legal-ir-view-family-metrics-v1"
+LEGAL_IR_VIEW_FAMILIES = (
+    "deontic",
+    "frame_logic",
+    "tdfol",
+    "kg",
+    "cec",
+    "external_provers",
+    "decompiler",
+)
+LEGAL_IR_VIEW_FAMILY_METRIC_NAMES = (
+    "ir_cross_entropy_loss",
+    "ir_cosine_similarity",
+    "autoencoder_cross_entropy_loss",
+    "autoencoder_cosine_similarity",
+    "symbolic_validity_success_rate",
+    "hammer_proof_success_rate",
+    "reconstruction_success_rate",
+    "source_copy_penalty",
+)
 TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION = (
     "legal-ir-trusted-hammer-leanstral-feature-bus-v1"
 )
@@ -364,6 +384,9 @@ class AutoencoderEvaluation:
     legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
     legal_ir_target_hashes: Dict[str, str] = field(default_factory=dict)
     legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
+    legal_ir_view_family_metrics: Dict[str, Dict[str, float]] = field(
+        default_factory=dict
+    )
     cross_entropy_entropy_loss: float = 0.0
     cross_entropy_excess_loss: float = 0.0
 
@@ -383,6 +406,12 @@ class AutoencoderEvaluation:
             "legal_ir_target_count": self.legal_ir_target_count,
             "legal_ir_target_hashes": dict(sorted(self.legal_ir_target_hashes.items())),
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
+            "legal_ir_view_family_metrics": {
+                family: dict(sorted(metrics.items()))
+                for family, metrics in sorted(
+                    self.legal_ir_view_family_metrics.items()
+                )
+            },
             "reconstruction_loss": self.reconstruction_loss,
             "sample_embedding_metrics": list(self.sample_embedding_metrics),
             "sample_count": self.sample_count,
@@ -2776,6 +2805,52 @@ class ModalAutoencoderBaseline:
             frame_losses.append(frame_ranking_loss(sample))
             symbolic_penalties.append(symbolic_validity_penalty(sample))
 
+        family_metric_observations: Dict[
+            str, Dict[str, List[tuple[float, float]]]
+        ] = {}
+        target_view_distributions = dict(
+            legal_ir_payload.get("target_view_distributions_by_sample", {}) or {}
+        )
+        target_losses_by_sample = dict(
+            legal_ir_payload.get("target_losses_by_sample", {}) or {}
+        )
+        for sample_index, sample in enumerate(sample_list):
+            target_family_distribution = _legal_ir_view_family_distribution(
+                target_view_distributions.get(sample.sample_id, {})
+            )
+            for family, weight in target_family_distribution.items():
+                if family not in LEGAL_IR_VIEW_FAMILIES or weight <= 0.0:
+                    continue
+                observations = family_metric_observations.setdefault(family, {})
+                observations.setdefault(
+                    "autoencoder_cross_entropy_loss", []
+                ).append((weight, ce_losses[sample_index]))
+                observations.setdefault(
+                    "autoencoder_cosine_similarity", []
+                ).append((weight, cosine_scores[sample_index]))
+                observations.setdefault(
+                    "symbolic_validity_success_rate", []
+                ).append((weight, max(0.0, 1.0 - symbolic_penalties[sample_index])))
+            decompiler = family_metric_observations.setdefault("decompiler", {})
+            if "decompiler" not in target_family_distribution:
+                decompiler.setdefault("autoencoder_cross_entropy_loss", []).append(
+                    (1.0, ce_losses[sample_index])
+                )
+                decompiler.setdefault("autoencoder_cosine_similarity", []).append(
+                    (1.0, cosine_scores[sample_index])
+                )
+                decompiler.setdefault("symbolic_validity_success_rate", []).append(
+                    (1.0, max(0.0, 1.0 - symbolic_penalties[sample_index]))
+                )
+            target_losses = dict(
+                target_losses_by_sample.get(sample.sample_id, {}) or {}
+            )
+            copy_penalty = target_losses.get("source_copy_reward_hack_penalty")
+            if copy_penalty is not None:
+                decompiler.setdefault("source_copy_penalty", []).append(
+                    (1.0, max(0.0, _float_or_zero(copy_penalty)))
+                )
+
         return AutoencoderEvaluation(
             sample_count=len(sample_list),
             embedding_cosine_similarity=_mean(cosine_scores),
@@ -2796,6 +2871,9 @@ class ModalAutoencoderBaseline:
             legal_ir_losses=legal_ir_payload["losses"],
             legal_ir_target_hashes=legal_ir_payload["target_hashes"],
             legal_ir_view_distribution=legal_ir_payload["view_distribution"],
+            legal_ir_view_family_metrics=_weighted_view_family_metric_block(
+                family_metric_observations
+            ),
         )
 
     def encode(self, sample: LegalSample) -> Dict[str, object]:
@@ -3327,7 +3405,10 @@ class AdaptiveModalAutoencoder:
         legal_ir_view_excess_losses: List[float] = []
         predicted_view_distributions: List[Mapping[str, float]] = []
         legal_ir_view_family_loss_values: Dict[str, List[float]] = {}
-        for sample in sample_list:
+        family_metric_observations: Dict[
+            str, Dict[str, List[tuple[float, float]]]
+        ] = {}
+        for sample_index, sample in enumerate(sample_list):
             target_view_distribution = legal_ir_target_distributions.get(sample.sample_id)
             if not target_view_distribution:
                 continue
@@ -3352,12 +3433,71 @@ class AdaptiveModalAutoencoder:
                     target_view_distribution,
                 )
             )
-            for name, value in _legal_ir_view_family_loss_metrics(
+            sample_family_losses = _legal_ir_view_family_loss_metrics(
                 predicted_view_distribution,
                 target_view_distribution,
-            ).items():
+            )
+            for name, value in sample_family_losses.items():
                 legal_ir_view_family_loss_values.setdefault(name, []).append(
                     _float_or_zero(value)
+                )
+            target_family_distribution = _legal_ir_view_family_distribution(
+                target_view_distribution
+            )
+            for family, weight in target_family_distribution.items():
+                if family not in LEGAL_IR_VIEW_FAMILIES or weight <= 0.0:
+                    continue
+                observations = family_metric_observations.setdefault(family, {})
+                prefix = f"legal_ir_view_family_{family}"
+                family_cross_entropy = sample_family_losses.get(
+                    f"{prefix}_cross_entropy_loss"
+                )
+                family_cosine_gap = sample_family_losses.get(
+                    f"{prefix}_cosine_gap_loss"
+                )
+                if family_cross_entropy is not None:
+                    observations.setdefault("ir_cross_entropy_loss", []).append(
+                        (weight, family_cross_entropy)
+                    )
+                if family_cosine_gap is not None:
+                    observations.setdefault("ir_cosine_similarity", []).append(
+                        (weight, max(0.0, 1.0 - family_cosine_gap))
+                    )
+                observations.setdefault(
+                    "autoencoder_cross_entropy_loss", []
+                ).append((weight, ce_losses[sample_index]))
+                observations.setdefault(
+                    "autoencoder_cosine_similarity", []
+                ).append((weight, cosine_scores[sample_index]))
+                observations.setdefault(
+                    "symbolic_validity_success_rate", []
+                ).append((weight, max(0.0, 1.0 - symbolic_penalties[sample_index])))
+
+            # Every adaptive evaluation performs a decoder round trip.  Track
+            # that autoencoder signal under the canonical decompiler contract,
+            # independently of which logical projection views were requested.
+            decompiler_observations = family_metric_observations.setdefault(
+                "decompiler", {}
+            )
+            if "decompiler" not in target_family_distribution:
+                decompiler_observations.setdefault(
+                    "autoencoder_cross_entropy_loss", []
+                ).append((1.0, ce_losses[sample_index]))
+                decompiler_observations.setdefault(
+                    "autoencoder_cosine_similarity", []
+                ).append((1.0, cosine_scores[sample_index]))
+                decompiler_observations.setdefault(
+                    "symbolic_validity_success_rate", []
+                ).append((1.0, max(0.0, 1.0 - symbolic_penalties[sample_index])))
+            target_losses = dict(legal_ir_target_losses.get(sample.sample_id, {}) or {})
+            decompiler_source_copy = target_losses.get("source_copy_reward_hack_penalty")
+            if decompiler_source_copy is None:
+                decompiler_source_copy = target_losses.get(
+                    "round_trip_source_copy_guardrail_loss"
+                )
+            if decompiler_source_copy is not None:
+                decompiler_observations.setdefault("source_copy_penalty", []).append(
+                    (1.0, max(0.0, _float_or_zero(decompiler_source_copy)))
                 )
         if legal_ir_view_ce_losses:
             legal_ir_losses["legal_ir_view_cross_entropy_loss"] = _mean(
@@ -3396,6 +3536,9 @@ class AdaptiveModalAutoencoder:
             ),
             legal_ir_target_hashes=legal_ir_payload["target_hashes"],
             legal_ir_view_distribution=legal_ir_payload["view_distribution"],
+            legal_ir_view_family_metrics=_weighted_view_family_metric_block(
+                family_metric_observations
+            ),
         )
 
     def _cache_legal_ir_targets(
@@ -24278,23 +24421,24 @@ def _normalized_distribution(distribution: Mapping[str, float]) -> Dict[str, flo
 
 
 _LEGAL_IR_VIEW_FAMILY_RANK = {
-    "deontic": 0,
-    "frame_logic": 1,
-    "tdfol": 2,
-    "kg": 3,
-    "cec": 4,
-    "prover": 5,
-    "zkp": 6,
-    "other": 7,
+    family: index for index, family in enumerate(LEGAL_IR_VIEW_FAMILIES)
 }
+_LEGAL_IR_VIEW_FAMILY_RANK["other"] = len(_LEGAL_IR_VIEW_FAMILY_RANK)
 
 
 def _legal_ir_view_family_name(view: str) -> str:
-    """Collapse fine-grained LegalIR views into optimizer-facing families."""
+    """Collapse contract IDs, aliases, and components into canonical families."""
     normalized = str(view or "").strip().lower().replace("-", "_")
     if not normalized:
         return "other"
     compact = normalized.replace("::", ".").replace("/", ".")
+    if (
+        compact.startswith("decompiler")
+        or "ir_decompiler" in compact
+        or "modal.decompiler" in compact
+        or "decompiler." in compact
+    ):
+        return "decompiler"
     if (
         compact.startswith("deontic")
         or ".deontic" in compact
@@ -24321,15 +24465,19 @@ def _legal_ir_view_family_name(view: str) -> str:
         return "cec"
     if (
         compact.startswith("external_provers")
+        or "external_provers" in compact
         or compact.startswith("prover")
         or compact.startswith(("z3", "cvc5", "lean", "coq", "smt"))
-        or ".prover" in compact
         or "router" in compact
     ):
-        return "prover"
-    if compact.startswith("zkp") or "zero_knowledge" in compact or "circuit" in compact:
-        return "zkp"
+        return "external_provers"
     return "other"
+
+
+def legal_ir_view_family_name(view: str) -> str:
+    """Return the public canonical LegalIR family for a view-like identifier."""
+
+    return _legal_ir_view_family_name(view)
 
 
 def _legal_ir_view_family_distribution(
@@ -24431,7 +24579,53 @@ def _legal_ir_view_family_loss_metrics(
             0.0,
             1.0 - _distribution_cosine_similarity(predicted_binary, target_binary),
         )
+    # ``prover`` was the pre-contract optimizer label.  Keep its numeric loss
+    # aliases so old checkpoints and dashboards remain readable while all new
+    # family metric blocks use the canonical ``external_provers`` name.
+    external_prefix = "legal_ir_view_family_external_provers"
+    legacy_prefix = "legal_ir_view_family_prover"
+    for suffix in (
+        "cross_entropy_loss",
+        "cross_entropy_excess_loss",
+        "cosine_gap_loss",
+    ):
+        value = metrics.get(f"{external_prefix}_{suffix}")
+        if value is not None:
+            metrics[f"{legacy_prefix}_{suffix}"] = value
     return metrics
+
+
+def _weighted_view_family_metric_block(
+    weighted_values: Mapping[str, Mapping[str, Sequence[tuple[float, float]]]],
+) -> Dict[str, Dict[str, float]]:
+    """Reduce per-sample family observations without inventing missing data."""
+
+    result: Dict[str, Dict[str, float]] = {}
+    for family in LEGAL_IR_VIEW_FAMILIES:
+        family_values = dict(weighted_values.get(family, {}) or {})
+        metrics: Dict[str, float] = {}
+        metric_weights: List[float] = []
+        for name, observations in sorted(family_values.items()):
+            clean = [
+                (max(0.0, _float_or_zero(weight)), _float_or_zero(value))
+                for weight, value in observations
+                if max(0.0, _float_or_zero(weight)) > 0.0
+            ]
+            total_weight = sum(weight for weight, _value in clean)
+            if total_weight <= 0.0:
+                continue
+            metrics[name] = sum(weight * value for weight, value in clean) / total_weight
+            metrics[f"{name}_observation_count"] = float(len(clean))
+            metric_weights.append(total_weight)
+        metrics["sample_count"] = float(
+            max(
+                (len(observations) for observations in family_values.values()),
+                default=0,
+            )
+        )
+        metrics["sample_weight"] = max(metric_weights, default=0.0)
+        result[family] = metrics
+    return result
 
 
 def _joint_distribution(
@@ -27124,6 +27318,27 @@ def _hammer_metric_suffix(value: Any) -> str:
         return re.sub(r"[^a-z0-9]+", "_", str(value or "").lower()).strip("_") or "unknown"
 
 
+def _hammer_metric_family_key(item: Mapping[str, Any]) -> str:
+    """Resolve a guidance artifact through canonical view and contract aliases."""
+
+    candidates: List[Any] = [
+        item.get("legal_ir_view"),
+        item.get("target_view"),
+        item.get("contract_id"),
+        item.get("target_component"),
+        item.get("logic_family"),
+    ]
+    for key in ("contract_ids", "legal_ir_views", "premise_views", "target_views"):
+        candidates.extend(_trusted_guidance_sequence(item.get(key)))
+    for candidate in candidates:
+        family = _legal_ir_view_family_name(str(candidate or ""))
+        if family in LEGAL_IR_VIEW_FAMILIES:
+            return family
+    return "decompiler" if any(
+        "decompil" in str(candidate or "").lower() for candidate in candidates
+    ) else "other"
+
+
 def hammer_guidance_metric_block(guidance: Any) -> Dict[str, Any]:
     """Return aggregate proof and guardrail metrics for hammer guidance artifacts."""
 
@@ -27139,25 +27354,44 @@ def hammer_guidance_metric_block(guidance: Any) -> Dict[str, Any]:
     view_proved: Dict[str, int] = {}
     view_trusted: Dict[str, int] = {}
     view_reconstructed: Dict[str, int] = {}
+    view_source_copy_rejected: Dict[str, int] = {}
+    family_counts: Dict[str, int] = {family: 0 for family in LEGAL_IR_VIEW_FAMILIES}
+    family_proved: Dict[str, int] = {family: 0 for family in LEGAL_IR_VIEW_FAMILIES}
+    family_trusted: Dict[str, int] = {family: 0 for family in LEGAL_IR_VIEW_FAMILIES}
+    family_reconstructed: Dict[str, int] = {
+        family: 0 for family in LEGAL_IR_VIEW_FAMILIES
+    }
+    family_source_copy_rejected: Dict[str, int] = {
+        family: 0 for family in LEGAL_IR_VIEW_FAMILIES
+    }
     for item in items:
         view = _hammer_metric_view_key(
             item.get("legal_ir_view")
             or item.get("target_view")
             or item.get("target_component")
         )
+        family = _hammer_metric_family_key(item)
         view_counts[view] = view_counts.get(view, 0) + 1
+        if family in family_counts:
+            family_counts[family] += 1
         proved = _hammer_guidance_truthy(item.get("proved"))
         trusted = _hammer_guidance_truthy(item.get("trusted"))
         reconstructed = _hammer_guidance_reconstruction_verified(item)
         if proved:
             proved_count += 1
             view_proved[view] = view_proved.get(view, 0) + 1
+            if family in family_proved:
+                family_proved[family] += 1
         if trusted:
             trusted_count += 1
             view_trusted[view] = view_trusted.get(view, 0) + 1
+            if family in family_trusted:
+                family_trusted[family] += 1
         if reconstructed:
             reconstruction_success_count += 1
             view_reconstructed[view] = view_reconstructed.get(view, 0) + 1
+            if family in family_reconstructed:
+                family_reconstructed[family] += 1
         selected_premises = item.get("selected_premises")
         if isinstance(selected_premises, Sequence) and not isinstance(
             selected_premises,
@@ -27166,6 +27400,11 @@ def hammer_guidance_metric_block(guidance: Any) -> Dict[str, Any]:
             premise_hit_count += 1
         if _hammer_guidance_source_copy_rejected(item):
             source_copy_rejected_count += 1
+            view_source_copy_rejected[view] = (
+                view_source_copy_rejected.get(view, 0) + 1
+            )
+            if family in family_source_copy_rejected:
+                family_source_copy_rejected[family] += 1
         backend_statuses = item.get("backend_statuses")
         if isinstance(backend_statuses, Mapping):
             statuses = [
@@ -27198,6 +27437,10 @@ def hammer_guidance_metric_block(guidance: Any) -> Dict[str, Any]:
             "hammer_proof_failure_ratio": round(1.0 - proof_rate, 12),
             "hammer_proof_success_rate": round(proof_rate, 12),
             "hammer_reconstruction_success_rate": round(reconstruction_rate, 12),
+            "source_copy_penalty": round(
+                view_source_copy_rejected.get(view, 0) / view_denominator,
+                12,
+            ),
             "symbolic_validity_penalty": round(1.0 - trusted_rate, 12),
             "symbolic_validity_success_rate": round(trusted_rate, 12),
         }
@@ -27205,6 +27448,32 @@ def hammer_guidance_metric_block(guidance: Any) -> Dict[str, Any]:
         numeric_view_metrics[f"hammer_{suffix}_proof_failure_ratio"] = 1.0 - proof_rate
         numeric_view_metrics[f"symbolic_validity_{suffix}_success_rate"] = trusted_rate
         numeric_view_metrics[f"symbolic_validity_{suffix}_penalty"] = 1.0 - trusted_rate
+
+    per_family: Dict[str, Dict[str, Any]] = {}
+    numeric_family_metrics: Dict[str, float] = {}
+    for family in LEGAL_IR_VIEW_FAMILIES:
+        count = family_counts[family]
+        family_denominator = max(1, count)
+        proof_rate = family_proved[family] / family_denominator
+        trusted_rate = family_trusted[family] / family_denominator
+        reconstruction_rate = family_reconstructed[family] / family_denominator
+        copy_penalty = family_source_copy_rejected[family] / family_denominator
+        per_family[family] = {
+            "artifact_count": count,
+            "hammer_proof_success_rate": round(proof_rate, 12),
+            "reconstruction_success_rate": round(reconstruction_rate, 12),
+            "source_copy_penalty": round(copy_penalty, 12),
+            "symbolic_validity_success_rate": round(trusted_rate, 12),
+        }
+        prefix = f"legal_ir_view_family_{family}"
+        numeric_family_metrics[f"{prefix}_hammer_proof_success_rate"] = proof_rate
+        numeric_family_metrics[f"{prefix}_reconstruction_success_rate"] = (
+            reconstruction_rate
+        )
+        numeric_family_metrics[f"{prefix}_source_copy_penalty"] = copy_penalty
+        numeric_family_metrics[f"{prefix}_symbolic_validity_success_rate"] = (
+            trusted_rate
+        )
 
     metrics: Dict[str, Any] = {
         "hammer_artifact_count": artifact_count,
@@ -27229,6 +27498,7 @@ def hammer_guidance_metric_block(guidance: Any) -> Dict[str, Any]:
         "schema_version": HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION,
         "source_copy_penalty": round(source_copy_penalty, 12),
         "symbolic_validity_by_view": per_view,
+        "view_family_metrics": per_family,
         "symbolic_validity_penalty": round(symbolic_validity_penalty_value, 12),
         "symbolic_validity_success_rate": round(symbolic_validity_success_rate, 12),
         "trusted_hammer_guidance_count": trusted_count,
@@ -27236,7 +27506,256 @@ def hammer_guidance_metric_block(guidance: Any) -> Dict[str, Any]:
     metrics.update(
         {key: round(value, 12) for key, value in sorted(numeric_view_metrics.items())}
     )
+    metrics.update(
+        {key: round(value, 12) for key, value in sorted(numeric_family_metrics.items())}
+    )
     return metrics
+
+
+def legal_ir_view_family_metric_block(
+    ir_metrics: Optional[Mapping[str, Any]] = None,
+    autoencoder_metrics: Optional[Any] = None,
+    hammer_guidance: Any = None,
+) -> Dict[str, Any]:
+    """Join validation signals under the seven canonical LegalIR families.
+
+    The returned shape is intentionally complete: every family and every
+    required metric is present.  ``observed_metrics`` and the per-source counts
+    distinguish an actual zero from a metric that was unavailable in a run.
+    Flattened numeric aliases keep the block consumable by the existing metric
+    gates and JSONL summaries.
+    """
+
+    by_family: Dict[str, Dict[str, Any]] = {
+        family: {
+            **{name: 0.0 for name in LEGAL_IR_VIEW_FAMILY_METRIC_NAMES},
+            "artifact_count": 0,
+            "sample_count": 0,
+            "observed_metrics": [],
+        }
+        for family in LEGAL_IR_VIEW_FAMILIES
+    }
+
+    def observe(family: str, name: str, value: Any) -> None:
+        canonical = _legal_ir_view_family_name(family)
+        if canonical not in by_family or name not in LEGAL_IR_VIEW_FAMILY_METRIC_NAMES:
+            return
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return
+        if not math.isfinite(numeric):
+            return
+        if name == "source_copy_penalty" and name in by_family[canonical]["observed_metrics"]:
+            numeric = max(numeric, float(by_family[canonical][name]))
+        by_family[canonical][name] = round(max(0.0, numeric), 12)
+        if name not in by_family[canonical]["observed_metrics"]:
+            by_family[canonical]["observed_metrics"].append(name)
+
+    def merge_nested(
+        source: Mapping[str, Any],
+        aliases: Mapping[str, str],
+        *,
+        count_key: str,
+        require_positive_count: bool = False,
+    ) -> None:
+        nested = source.get("view_family_metrics")
+        if not isinstance(nested, Mapping):
+            nested = source.get("legal_ir_view_family_metrics")
+        if not isinstance(nested, Mapping):
+            return
+        for raw_family, raw_metrics in nested.items():
+            family = _legal_ir_view_family_name(str(raw_family))
+            if family not in by_family or not isinstance(raw_metrics, Mapping):
+                continue
+            count = raw_metrics.get(count_key, raw_metrics.get("sample_count", 0))
+            if require_positive_count:
+                try:
+                    if int(count or 0) <= 0:
+                        continue
+                except (TypeError, ValueError):
+                    continue
+            try:
+                by_family[family][count_key] = max(
+                    int(by_family[family].get(count_key, 0)), int(count or 0)
+                )
+            except (TypeError, ValueError):
+                pass
+            declared_observed = raw_metrics.get("observed_metrics")
+            observed_names = (
+                {str(name) for name in declared_observed}
+                if isinstance(declared_observed, Sequence)
+                and not isinstance(declared_observed, (bytes, bytearray, str))
+                else None
+            )
+            for source_name, target_name in aliases.items():
+                if observed_names is not None and not (
+                    source_name in observed_names or target_name in observed_names
+                ):
+                    continue
+                if source_name in raw_metrics:
+                    observe(family, target_name, raw_metrics[source_name])
+
+    ir_payload = dict(ir_metrics or {})
+    merge_nested(
+        ir_payload,
+        {
+            "ir_cross_entropy_loss": "ir_cross_entropy_loss",
+            "cross_entropy_loss": "ir_cross_entropy_loss",
+            "ir_cosine_similarity": "ir_cosine_similarity",
+            "cosine_similarity": "ir_cosine_similarity",
+            "symbolic_validity_success_rate": "symbolic_validity_success_rate",
+            "reconstruction_success_rate": "reconstruction_success_rate",
+            "source_copy_penalty": "source_copy_penalty",
+            "source_copy_reward_hack_penalty": "source_copy_penalty",
+        },
+        count_key="sample_count",
+    )
+    # The deterministic codec is itself the canonical decompiler lane.  Older
+    # metric blocks only have global fields, so preserve them under that family.
+    if ir_payload and not isinstance(ir_payload.get("view_family_metrics"), Mapping):
+        for source_name, target_name in (
+            ("cross_entropy_loss", "ir_cross_entropy_loss"),
+            ("cosine_similarity", "ir_cosine_similarity"),
+            ("symbolic_validity_success_rate", "symbolic_validity_success_rate"),
+            ("source_copy_reward_hack_penalty", "source_copy_penalty"),
+            ("source_copy_penalty", "source_copy_penalty"),
+        ):
+            if source_name in ir_payload:
+                observe("decompiler", target_name, ir_payload[source_name])
+        by_family["decompiler"]["sample_count"] = int(
+            ir_payload.get("evaluated_count", ir_payload.get("sample_count", 0)) or 0
+        )
+
+    if isinstance(autoencoder_metrics, AutoencoderEvaluation):
+        auto_payload: Dict[str, Any] = {
+            "legal_ir_view_family_metrics": {
+                str(family): dict(metrics)
+                for family, metrics in dict(
+                    autoencoder_metrics.legal_ir_view_family_metrics or {}
+                ).items()
+            }
+        }
+        auto_losses = dict(autoencoder_metrics.legal_ir_losses or {})
+        for family in LEGAL_IR_VIEW_FAMILIES:
+            prefix = f"legal_ir_view_family_{family}"
+            legacy_prefix = (
+                "legal_ir_view_family_prover"
+                if family == "external_provers"
+                else prefix
+            )
+            ce = auto_losses.get(
+                f"{prefix}_cross_entropy_loss",
+                auto_losses.get(f"{legacy_prefix}_cross_entropy_loss"),
+            )
+            cosine_gap = auto_losses.get(
+                f"{prefix}_cosine_gap_loss",
+                auto_losses.get(f"{legacy_prefix}_cosine_gap_loss"),
+            )
+            family_values = auto_payload["legal_ir_view_family_metrics"].setdefault(
+                family, {}
+            )
+            if ce is not None:
+                family_values.setdefault("ir_cross_entropy_loss", ce)
+            if cosine_gap is not None:
+                family_values.setdefault(
+                    "ir_cosine_similarity", max(0.0, 1.0 - float(cosine_gap))
+                )
+    elif isinstance(autoencoder_metrics, Mapping):
+        auto_payload = dict(autoencoder_metrics)
+    else:
+        auto_payload = {}
+    merge_nested(
+        auto_payload,
+        {
+            "ir_cross_entropy_loss": "ir_cross_entropy_loss",
+            "ir_cosine_similarity": "ir_cosine_similarity",
+            "autoencoder_cross_entropy_loss": "autoencoder_cross_entropy_loss",
+            "cross_entropy_loss": "autoencoder_cross_entropy_loss",
+            "autoencoder_cosine_similarity": "autoencoder_cosine_similarity",
+            "cosine_similarity": "autoencoder_cosine_similarity",
+            "symbolic_validity_success_rate": "symbolic_validity_success_rate",
+            "source_copy_penalty": "source_copy_penalty",
+        },
+        count_key="sample_count",
+    )
+
+    if isinstance(hammer_guidance, Mapping) and isinstance(
+        hammer_guidance.get("view_family_metrics"), Mapping
+    ):
+        hammer_payload = dict(hammer_guidance)
+    else:
+        hammer_payload = hammer_guidance_metric_block(hammer_guidance)
+    hammer_nested = hammer_payload.get("view_family_metrics")
+    hammer_has_observations = int(
+        hammer_payload.get("hammer_artifact_count", 0) or 0
+    ) > 0 or (
+        isinstance(hammer_nested, Mapping)
+        and any(
+            int(metrics.get("artifact_count", 0) or 0) > 0
+            for metrics in hammer_nested.values()
+            if isinstance(metrics, Mapping)
+        )
+    )
+    if hammer_has_observations:
+        merge_nested(
+            hammer_payload,
+            {
+                "hammer_proof_success_rate": "hammer_proof_success_rate",
+                "hammer_reconstruction_success_rate": "reconstruction_success_rate",
+                "reconstruction_success_rate": "reconstruction_success_rate",
+                "source_copy_penalty": "source_copy_penalty",
+                "symbolic_validity_success_rate": "symbolic_validity_success_rate",
+            },
+            count_key="artifact_count",
+            require_positive_count=True,
+        )
+
+    flat_metrics: Dict[str, float] = {}
+    observed_family_scores: List[float] = []
+    for family in LEGAL_IR_VIEW_FAMILIES:
+        entry = by_family[family]
+        entry["observed_metrics"] = sorted(entry["observed_metrics"])
+        quality_components: List[float] = []
+        for name in entry["observed_metrics"]:
+            value = float(entry[name])
+            if name.endswith("cross_entropy_loss"):
+                quality_components.append(1.0 / (1.0 + value))
+            elif name == "source_copy_penalty":
+                quality_components.append(1.0 - min(1.0, value))
+            else:
+                quality_components.append(min(1.0, max(0.0, value)))
+            flat_metrics[f"legal_ir_view_family_{family}_{name}"] = value
+        score = sum(quality_components) / len(quality_components) if quality_components else 0.0
+        entry["metric_coverage"] = round(
+            len(entry["observed_metrics"]) / len(LEGAL_IR_VIEW_FAMILY_METRIC_NAMES),
+            12,
+        )
+        entry["score"] = round(score, 12)
+        entry["objective_loss"] = round(1.0 - score, 12) if quality_components else 0.0
+        flat_metrics[f"legal_ir_view_family_{family}_score"] = score
+        if quality_components:
+            observed_family_scores.append(score)
+
+    macro_score = (
+        sum(observed_family_scores) / len(observed_family_scores)
+        if observed_family_scores
+        else 0.0
+    )
+    return {
+        "families": list(LEGAL_IR_VIEW_FAMILIES),
+        "family_count": len(LEGAL_IR_VIEW_FAMILIES),
+        "flat_metrics": {
+            name: round(value, 12) for name, value in sorted(flat_metrics.items())
+        },
+        "macro_objective_loss": round(1.0 - macro_score, 12)
+        if observed_family_scores
+        else 0.0,
+        "macro_score": round(macro_score, 12),
+        "metric_names": list(LEGAL_IR_VIEW_FAMILY_METRIC_NAMES),
+        "schema_version": LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION,
+        "view_family_metrics": by_family,
+    }
 
 
 def _metric_higher_is_better(name: str) -> bool:
@@ -27366,6 +27885,27 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
     component += min(1.0, values.get("source_copy_penalty", 0.0))
     component += min(1.0, values.get("source_copy_reward_hack_penalty", 0.0))
     component += min(1.0, values.get("symbolic_validity_penalty", 0.0))
+    family_objective_values: Dict[str, List[float]] = {}
+    for family in LEGAL_IR_VIEW_FAMILIES:
+        prefix = f"legal_ir_view_family_{family}_"
+        for metric_name in LEGAL_IR_VIEW_FAMILY_METRIC_NAMES:
+            key = f"{prefix}{metric_name}"
+            if key not in values:
+                continue
+            value = values[key]
+            if metric_name.endswith("cross_entropy_loss"):
+                objective_value = min(1.0, value / 3.0)
+            elif metric_name == "source_copy_penalty":
+                objective_value = min(1.0, value)
+            else:
+                objective_value = min(1.0, max(0.0, 1.0 - value))
+            family_objective_values.setdefault(family, []).append(objective_value)
+    if family_objective_values:
+        component += sum(
+            _mean(metric_values)
+            for metric_values in family_objective_values.values()
+            if metric_values
+        ) / len(family_objective_values)
     for success_name in (
         "hammer_premise_selection_hit_rate",
         "hammer_proof_success_rate",
@@ -27378,6 +27918,16 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
             component += min(1.0, max(0.0, 1.0 - values[success_name]))
     detail = 0.0
     for name, value in values.items():
+        if any(
+            name.startswith(f"legal_ir_view_family_{family}_")
+            and (
+                name.removeprefix(f"legal_ir_view_family_{family}_")
+                in LEGAL_IR_VIEW_FAMILY_METRIC_NAMES
+                or name.endswith(("_score", "_objective_loss"))
+            )
+            for family in LEGAL_IR_VIEW_FAMILIES
+        ):
+            continue
         if name in {
             "legal_ir_multiview_total_loss",
             "legal_ir_view_cross_entropy_loss",
@@ -28003,6 +28553,9 @@ __all__ = [
     "CodexCallGateConfig",
     "COMPILER_ACTIONABLE_FEATURE_GROUPS",
     "HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION",
+    "LEGAL_IR_VIEW_FAMILIES",
+    "LEGAL_IR_VIEW_FAMILY_METRIC_NAMES",
+    "LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
     "MODAL_AUTOENCODER_LOW_RANK_BASIS",
     "MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK",
@@ -28026,6 +28579,8 @@ __all__ = [
     "evaluate_modal_prover_compilation",
     "frame_ranking_loss",
     "hammer_guidance_metric_block",
+    "legal_ir_view_family_metric_block",
+    "legal_ir_view_family_name",
     "mse_loss",
     "symbolic_validity_penalty",
     "trusted_hammer_leanstral_feature_bus",

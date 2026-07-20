@@ -69,11 +69,15 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     AdaptiveModalAutoencoder,
     AutoencoderEvaluation,
     HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION,
+    LEGAL_IR_VIEW_FAMILIES,
+    LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION,
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
     evaluate_modal_prover_compilation,
     hammer_guidance_metric_block,
+    legal_ir_view_family_metric_block,
+    legal_ir_view_family_name,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import (
     build_modal_supervisor_health_report,
@@ -380,10 +384,10 @@ _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
-_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v9"
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v10"
 _COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v3"
-_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v8"
+_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v9"
 _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY = "timeout_surface_fallback_per_sample_budget_v2"
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
@@ -1196,6 +1200,17 @@ def metric_block(evaluation) -> Dict[str, Any]:
                 ).items()
             )
         }
+        family_block = legal_ir_view_family_metric_block(
+            autoencoder_metrics=evaluation
+        )
+        block["legal_ir_view_family_metric_schema_version"] = (
+            LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
+        )
+        block["legal_ir_view_family_metrics"] = family_block[
+            "view_family_metrics"
+        ]
+        block["legal_ir_view_family_macro_score"] = family_block["macro_score"]
+        block.update(family_block["flat_metrics"])
     return block
 
 
@@ -1618,22 +1633,51 @@ def autoencoder_low_rank_load_report(
 
 
 def _legal_ir_family_from_view(view: str) -> str:
-    normalized = str(view or "").strip().lower().replace("-", "_").replace("/", ".")
-    if normalized.startswith("deontic") or "norm" in normalized:
-        return "deontic"
-    if "frame_logic" in normalized or "flogic" in normalized:
-        return "frame_logic"
-    if normalized.startswith("tdfol") or normalized.startswith("fol.") or "tdfol" in normalized:
-        return "tdfol"
-    if normalized.startswith(("kg", "knowledge_graph")) or "neo4j" in normalized:
-        return "kg"
-    if normalized.startswith(("cec", "dcec")) or "event_calculus" in normalized:
-        return "cec"
-    if "prover" in normalized or "router" in normalized:
-        return "prover"
-    if normalized.startswith("zkp") or "zero_knowledge" in normalized:
-        return "zkp"
-    return "other"
+    return legal_ir_view_family_name(view)
+
+
+def _compiler_ir_result_view_families(
+    result: Any,
+    compiler_guidance: Optional[Mapping[str, Any]],
+) -> tuple[str, ...]:
+    """Return canonical families exercised by one compiler/decompiler pass."""
+
+    families = {"decompiler"}
+    metadata = dict(getattr(result, "metadata", {}) or {})
+    for modal_family in metadata.get("modal_families", ()) or ():
+        normalized = str(modal_family or "").strip().lower()
+        if normalized in {"deontic", "conditional_normative"}:
+            families.add("deontic")
+        elif normalized in {"frame", "alethic"}:
+            families.add("frame_logic")
+    if list(getattr(result, "kg_triples", ()) or ()):
+        families.add("kg")
+
+    guidance = dict(compiler_guidance or {})
+    candidates: List[Any] = []
+    for key in (
+        "contract_id",
+        "legal_ir_view",
+        "target_component",
+        "target_view",
+    ):
+        candidates.append(guidance.get(key))
+    for key in ("contract_ids", "legal_ir_views", "target_views"):
+        value = guidance.get(key)
+        if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
+            candidates.extend(value)
+    for key in (
+        "legal_ir_target_view_distribution",
+        "legal_ir_predicted_view_distribution",
+    ):
+        distribution = guidance.get(key)
+        if isinstance(distribution, Mapping):
+            candidates.extend(distribution.keys())
+    for candidate in candidates:
+        family = legal_ir_view_family_name(str(candidate or ""))
+        if family in LEGAL_IR_VIEW_FAMILIES:
+            families.add(family)
+    return tuple(family for family in LEGAL_IR_VIEW_FAMILIES if family in families)
 
 
 def _family_distribution(distribution: Mapping[str, Any]) -> Dict[str, float]:
@@ -1684,7 +1728,7 @@ def learned_ir_metric_block(evaluation: Any) -> Dict[str, Any]:
         0.0,
         1.0 - float(losses.get("legal_ir_view_family_cosine_gap_loss", 0.0) or 0.0),
     )
-    return {
+    block = {
         "family_cross_entropy_excess_by_family": {
             name: round(value, 9) for name, value in sorted(family_excess.items())
         },
@@ -1718,6 +1762,31 @@ def learned_ir_metric_block(evaluation: Any) -> Dict[str, Any]:
         ),
         "worst_family_cross_entropy_excess_name": worst_family,
     }
+    family_block = legal_ir_view_family_metric_block(
+        autoencoder_metrics=evaluation
+    )
+    block["legal_ir_view_family_metric_schema_version"] = (
+        LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
+    )
+    block["view_family_metrics"] = family_block["view_family_metrics"]
+    block["view_family_macro_score"] = family_block["macro_score"]
+    block.update(family_block["flat_metrics"])
+    return block
+
+
+def legal_ir_validation_view_family_metric_block(
+    *,
+    compiler_ir_validation: Optional[Mapping[str, Any]] = None,
+    autoencoder_validation: Optional[Any] = None,
+    hammer_validation: Any = None,
+) -> Dict[str, Any]:
+    """Return the production validation report split by canonical view family."""
+
+    return legal_ir_view_family_metric_block(
+        ir_metrics=compiler_ir_validation,
+        autoencoder_metrics=autoencoder_validation,
+        hammer_guidance=hammer_validation,
+    )
 
 
 def _guidance_slot_safe_key(value: Any) -> str:
@@ -2156,12 +2225,19 @@ def compiler_ir_metric_block(
     """Aggregate deterministic compiler/IR/decompiler round-trip metrics."""
     sample_list = list(samples)
     if not sample_list:
+        family_block = legal_ir_view_family_metric_block()
         return {
             "autoencoder_guidance_enabled": bool(use_autoencoder_guidance),
             "evaluated_count": 0,
+            "legal_ir_view_family_metric_schema_version": (
+                LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
+            ),
             "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
             "metric_failures": 0,
             "sample_count": 0,
+            "view_family_macro_score": family_block["macro_score"],
+            "view_family_metrics": family_block["view_family_metrics"],
+            **family_block["flat_metrics"],
         }
 
     started_at = time.time()
@@ -2330,6 +2406,16 @@ def compiler_ir_metric_block(
         "structural_text_reconstruction_similarity": [],
         "symbolic_validity_penalty": [],
         "text_reconstruction_loss": [],
+    }
+    view_family_metric_values: Dict[str, Dict[str, List[float]]] = {
+        family: {
+            "ir_cross_entropy_loss": [],
+            "ir_cosine_similarity": [],
+            "reconstruction_success_rate": [],
+            "source_copy_penalty": [],
+            "symbolic_validity_success_rate": [],
+        }
+        for family in LEGAL_IR_VIEW_FAMILIES
     }
     formula_counts: List[float] = []
     frame_candidate_counts: List[float] = []
@@ -2651,6 +2737,38 @@ def compiler_ir_metric_block(
         frame_candidate_counts.append(float(len(getattr(result, "frame_candidates", ()) or ())))
         metadata = dict(getattr(result, "metadata", {}) or {})
         llm_call_counts.append(float(metadata.get("llm_call_count", 0.0)))
+        result_losses = dict(getattr(result, "losses", {}) or {})
+        for family in _compiler_ir_result_view_families(result, compiler_guidance):
+            family_values = view_family_metric_values[family]
+            if "cross_entropy_loss" in result_losses:
+                family_values["ir_cross_entropy_loss"].append(
+                    float(result_losses["cross_entropy_loss"])
+                )
+            if "cosine_similarity" in result_losses:
+                family_values["ir_cosine_similarity"].append(
+                    float(result_losses["cosine_similarity"])
+                )
+            symbolic_penalty = result_losses.get("symbolic_validity_penalty")
+            if symbolic_penalty is not None:
+                family_values["symbolic_validity_success_rate"].append(
+                    max(0.0, 1.0 - float(symbolic_penalty))
+                )
+            reconstruction_loss = result_losses.get(
+                "structural_text_reconstruction_loss",
+                result_losses.get("text_reconstruction_loss"),
+            )
+            if reconstruction_loss is not None:
+                family_values["reconstruction_success_rate"].append(
+                    max(0.0, 1.0 - float(reconstruction_loss))
+                )
+            copy_penalty = result_losses.get(
+                "source_copy_reward_hack_penalty",
+                result_losses.get("source_copy_penalty"),
+            )
+            if copy_penalty is not None:
+                family_values["source_copy_penalty"].append(
+                    max(0.0, float(copy_penalty))
+                )
 
         sample_record: Dict[str, Any] = {
             "citation": citation,
@@ -2887,6 +3005,20 @@ def compiler_ir_metric_block(
             for route, _ in guidance_todo_routes.most_common(12)
             if guidance_todo_route_examples.get(route)
         }
+    block["view_family_metrics"] = {
+        family: {
+            **{
+                name: round(sum(values) / len(values), 9)
+                for name, values in sorted(family_values.items())
+                if values
+            },
+            "sample_count": max(
+                (len(values) for values in family_values.values()),
+                default=0,
+            ),
+        }
+        for family, family_values in view_family_metric_values.items()
+    }
     hammer_metrics = hammer_guidance_metric_block(precomputed_guidance)
     if int(hammer_metrics.get("hammer_artifact_count", 0) or 0) > 0:
         block["hammer_guidance_metric_schema_version"] = (
@@ -2896,6 +3028,16 @@ def compiler_ir_metric_block(
         for name, value in hammer_metrics.items():
             if isinstance(value, (int, float)):
                 block[name] = round(float(value), 9)
+    family_metric_block = legal_ir_view_family_metric_block(
+        ir_metrics=block,
+        hammer_guidance=hammer_metrics,
+    )
+    block["legal_ir_view_family_metric_schema_version"] = (
+        LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
+    )
+    block["view_family_metrics"] = family_metric_block["view_family_metrics"]
+    block["view_family_macro_score"] = family_metric_block["macro_score"]
+    block.update(family_metric_block["flat_metrics"])
     if sample_metric_records:
         block["sample_metric_records"] = sample_metric_records
         block["worst_source_decompiled_text_records"] = (
@@ -3100,6 +3242,7 @@ def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
     payload = {
         "decoded_modal_text": str(getattr(result, "decoded_modal_text", "") or ""),
         "frame_candidate_count": len(frame_candidates),
+        "kg_triple_count": len(getattr(result, "kg_triples", ()) or ()),
         "losses": _metric_cache_object_payload(getattr(result, "losses", {}) or {}),
         "metadata": _metric_cache_object_payload(getattr(result, "metadata", {}) or {}),
         "modal_formula_count": len(getattr(modal_ir, "formulas", ()) or ()),
@@ -3187,9 +3330,14 @@ def _compiler_ir_metric_result_from_cache_payload(
         )
     except (TypeError, ValueError):
         frame_candidate_count = 0
+    try:
+        kg_triple_count = max(0, int(payload.get("kg_triple_count", 0) or 0))
+    except (TypeError, ValueError):
+        kg_triple_count = 0
     return SimpleNamespace(
         decoded_modal_text=str(payload.get("decoded_modal_text") or ""),
         frame_candidates=[None] * frame_candidate_count,
+        kg_triples=[None] * kg_triple_count,
         losses={str(name): _float_or_zero(value) for name, value in losses.items()},
         compiler_guidance_slot_texts=guidance_slot_texts,
         metadata=dict(metadata),
@@ -5462,6 +5610,7 @@ def rollout_baseline_snapshot(
     compiler_ir_validation: Mapping[str, Any],
     compiler_ir_guided_validation: Optional[Mapping[str, Any]] = None,
     learned_ir_validation: Optional[Mapping[str, Any]] = None,
+    hammer_validation: Any = None,
     logic_bridge_validation: Optional[Mapping[str, Any]] = None,
     queue_counts: Optional[Mapping[str, int]] = None,
     role_queue_counts: Optional[Mapping[str, Any]] = None,
@@ -5487,6 +5636,11 @@ def rollout_baseline_snapshot(
         validation_metrics=validation_payload,
         metric_bridge_adapters=metric_bridge_adapters,
         diagnostic_bridge_adapters=diagnostic_bridge_adapters,
+    )
+    view_family_validation = legal_ir_validation_view_family_metric_block(
+        compiler_ir_validation=compiler_payload,
+        autoencoder_validation=learned_payload,
+        hammer_validation=hammer_validation,
     )
     resolved_failed_validation_count = int(
         failed_validation_count
@@ -5519,6 +5673,7 @@ def rollout_baseline_snapshot(
         "host_resource_health": dict(host_resource_health or {}),
         "learned_feature_rows": state_payload,
         "learned_ir_view_validation": learned_payload,
+        "legal_ir_view_family_validation": view_family_validation,
         "logic_bridge_validation": bridge_payload,
         "metric_schema_version": summary.get("metric_schema_version"),
         "queue_counts": dict(queue_counts or {}),
@@ -16581,6 +16736,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             learned_ir_before_validation = learned_ir_metric_block(before_validation)
             learned_ir_train = learned_ir_metric_block(after_train)
             learned_ir_validation = learned_ir_metric_block(after_validation)
+            legal_ir_view_family_validation = (
+                legal_ir_validation_view_family_metric_block(
+                    compiler_ir_validation=compiler_ir_validation,
+                    autoencoder_validation=after_validation,
+                    hammer_validation=dict(
+                        daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
+                    ),
+                )
+            )
             latest_compiler_ir_ce = _metric_value(
                 compiler_ir_validation,
                 "cross_entropy_loss",
@@ -16884,6 +17048,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_learned_ir_validation"] = learned_ir_validation
             summary["latest_learned_ir_view_ce"] = latest_learned_ir_view_ce
             summary["latest_learned_ir_view_cosine"] = latest_learned_ir_view_cosine
+            summary["latest_legal_ir_view_family_validation"] = (
+                legal_ir_view_family_validation
+            )
+            summary["latest_legal_ir_view_family_macro_score"] = float(
+                legal_ir_view_family_validation.get("macro_score", 0.0) or 0.0
+            )
             summary["latest_rollout_baseline_snapshot"] = rollout_baseline_snapshot(
                 summary=summary,
                 cycle=cycle,
@@ -16893,6 +17063,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 compiler_ir_validation=compiler_ir_validation,
                 compiler_ir_guided_validation=compiler_ir_guided_validation,
                 learned_ir_validation=learned_ir_validation,
+                hammer_validation=dict(
+                    daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
+                ),
                 logic_bridge_validation=bridge_ir_validation,
                 queue_counts=summary["latest_queue_counts"],
                 role_queue_counts=summary["latest_role_queue_counts"],
@@ -17326,6 +17499,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "learned_ir_before_validation": learned_ir_before_validation,
                     "learned_ir_train": learned_ir_train,
                     "learned_ir_validation": learned_ir_validation,
+                    "legal_ir_view_family_validation": (
+                        legal_ir_view_family_validation
+                    ),
                     "train_sample_memory_gap": train_sample_memory_gap,
                     "validation_sample_memory_gap": validation_sample_memory_gap,
                     "cycle": cycle,
