@@ -21,6 +21,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Protocol, Sequence
 
+from ipfs_datasets_py.logic.hammers.process_lifecycle import (
+    ProcessKind,
+    ProcessLimits,
+    get_process_supervisor,
+)
+
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_']*")
 _IDENT_RE = re.compile(r"[^A-Za-z0-9_]+")
@@ -474,18 +480,48 @@ class SubprocessHammerBackendRunner:
                 problem_path = handle.name
             try:
                 command = [executable, *self.args, problem_path]
-                completed = subprocess.run(
+                kind = (
+                    ProcessKind.SMT
+                    if self.problem_format.lower().startswith("smt")
+                    else ProcessKind.ATP
+                )
+                completed = get_process_supervisor().run(
                     command,
-                    capture_output=True,
-                    text=True,
-                    timeout=max(0.001, float(timeout_seconds)),
-                    check=False,
+                    kind=kind,
+                    limits=ProcessLimits(
+                        wall_time_seconds=max(0.001, float(timeout_seconds))
+                    ),
                 )
             finally:
                 try:
                     os.unlink(problem_path)
                 except OSError:
                     pass
+            if completed.timed_out:
+                return HammerBackendResult(
+                    backend=self.name,
+                    status=HammerBackendStatus.TIMEOUT,
+                    proved=False,
+                    elapsed_seconds=time.time() - start,
+                    translation_format=translation.target_format,
+                    error=f"Timeout after {timeout_seconds}s",
+                    timed_out=True,
+                    raw_output="\n".join(
+                        part for part in (completed.stdout, completed.stderr) if part
+                    ),
+                )
+            if completed.error:
+                return HammerBackendResult(
+                    backend=self.name,
+                    status=HammerBackendStatus.ERROR,
+                    proved=False,
+                    elapsed_seconds=time.time() - start,
+                    translation_format=translation.target_format,
+                    error=completed.error,
+                    raw_output="\n".join(
+                        part for part in (completed.stdout, completed.stderr) if part
+                    ),
+                )
             output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
             status, proved = self._parse_output(output)
             return HammerBackendResult(
@@ -496,19 +532,12 @@ class SubprocessHammerBackendRunner:
                 translation_format=translation.target_format,
                 proof_trace=output if proved else "",
                 raw_output=output,
-                error="" if completed.returncode == 0 or proved else output[:1000],
+                error=(
+                    ""
+                    if completed.returncode == 0 or proved
+                    else completed.error or output[:1000]
+                ),
                 metadata={"returncode": completed.returncode},
-            )
-        except subprocess.TimeoutExpired as exc:
-            return HammerBackendResult(
-                backend=self.name,
-                status=HammerBackendStatus.TIMEOUT,
-                proved=False,
-                elapsed_seconds=time.time() - start,
-                translation_format=translation.target_format,
-                error=f"Timeout after {timeout_seconds}s",
-                timed_out=True,
-                raw_output=str(exc),
             )
         except OSError as exc:
             return HammerBackendResult(
@@ -721,12 +750,11 @@ class NativeKernelVerifier:
                 handle.write(proof_script)
                 proof_path = handle.name
             try:
-                completed = subprocess.run(
+                kind = ProcessKind.LEAN if executable == "lean" else ProcessKind.OTHER
+                completed = get_process_supervisor().run(
                     [binary, proof_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                    check=False,
+                    kind=kind,
+                    limits=ProcessLimits(wall_time_seconds=30.0),
                 )
             finally:
                 try:
@@ -735,13 +763,17 @@ class NativeKernelVerifier:
                     pass
             output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
             return HammerVerification(
-                verified=completed.returncode == 0,
+                verified=completed.returncode == 0 and not completed.timed_out,
                 checker=executable,
                 elapsed_seconds=time.time() - start,
                 output=output,
-                error="" if completed.returncode == 0 else output[:1000],
+                error=(
+                    ""
+                    if completed.returncode == 0 and not completed.timed_out
+                    else ("kernel_timeout" if completed.timed_out else completed.error or output[:1000])
+                ),
             )
-        except (OSError, subprocess.TimeoutExpired) as exc:
+        except OSError as exc:
             return HammerVerification(
                 verified=False,
                 checker=executable,

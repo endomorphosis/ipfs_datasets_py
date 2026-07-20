@@ -52,7 +52,6 @@ concrete frontend enforces this by:
 
 from __future__ import annotations
 
-import subprocess
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
@@ -66,6 +65,7 @@ from ..models import (
     _require_schema_version,
     _utcnow,
 )
+from ..process_lifecycle import ProcessKind, ProcessLimits, get_process_supervisor
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -125,26 +125,29 @@ def run_bounded_process(
 
     if not command or not isinstance(command, list):
         return BoundedProcessResult(command=list(command or []), error="empty command")
-    try:
-        completed = subprocess.run(
-            command,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=cwd,
-        )
-    except subprocess.TimeoutExpired:
-        return BoundedProcessResult(
-            command=list(command), timed_out=True, error=f"timed out after {timeout}s"
-        )
-    except OSError as exc:
-        return BoundedProcessResult(command=list(command), error=str(exc))
+    executable = command[0].rsplit("/", 1)[-1].lower()
+    if executable == "lean":
+        kind = ProcessKind.LEAN
+    elif executable == "lake":
+        kind = ProcessKind.LAKE
+    else:
+        kind = ProcessKind.OTHER
+    completed = get_process_supervisor().run(
+        command,
+        kind=kind,
+        limits=ProcessLimits(wall_time_seconds=max(0.001, float(timeout))),
+        cwd=cwd,
+    )
+    error = completed.error
+    if completed.timed_out:
+        error = f"timed out after {timeout}s"
     return BoundedProcessResult(
         command=list(command),
         returncode=completed.returncode,
         stdout=completed.stdout or "",
         stderr=completed.stderr or "",
+        timed_out=completed.timed_out,
+        error=error,
     )
 
 

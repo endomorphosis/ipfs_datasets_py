@@ -52,8 +52,8 @@ check — may promote a run to ``HammerResultStatus.VERIFIED``.
 
 Security invariant
 --------------------
-Every subprocess this module runs is invoked via ``subprocess.Popen`` with a
-literal ``argv`` list and ``shell=False`` (the implicit default); no
+Every subprocess this module runs is invoked by the shared process supervisor
+with a literal ``argv`` list and ``shell=False``; no
 translated theorem text, premise text, or any other caller-supplied content
 is ever formatted into a command string. Content only ever reaches a
 solver by being written to a temporary file whose *path* (never its
@@ -66,13 +66,10 @@ import concurrent.futures
 import hashlib
 import os
 import re
-import signal
-import subprocess
 import sys
 import threading
 import time
 from dataclasses import asdict, dataclass, field
-from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
@@ -101,9 +98,14 @@ from .policy import (
     PolicyError,
     PortfolioPolicy,
     SolverBudget,
-    build_preexec_fn,
     known_solver_names,
     solver_spec,
+)
+from .process_lifecycle import (
+    ProcessKind,
+    ProcessLimits,
+    get_process_supervisor,
+    supervised_temporary_directory,
 )
 
 __all__ = [
@@ -136,8 +138,6 @@ _SOLVER_INPUT_SUFFIX: Dict[TranslationTarget, str] = {
 #: How often (seconds) the bounded process runner polls for the wall-clock
 #: deadline or an external cancellation request while a solver subprocess is
 #: still running.
-_POLL_INTERVAL_SECONDS = 0.05
-
 #: Bounded timeout (seconds) for the ``--version`` metadata probe run once
 #: per resolved executable.
 _VERSION_PROBE_TIMEOUT_SECONDS = 5.0
@@ -326,19 +326,6 @@ class SolverProcessOutcome:
         return asdict(self)
 
 
-def _kill_process_group(process: "subprocess.Popen[str]") -> None:
-    try:
-        if os.name == "posix":
-            os.killpg(process.pid, signal.SIGKILL)
-        else:
-            process.kill()
-    except (ProcessLookupError, PermissionError, OSError):
-        try:
-            process.kill()
-        except OSError:
-            pass
-
-
 def run_bounded_solver_process(
     command: List[str],
     *,
@@ -361,68 +348,31 @@ def run_bounded_solver_process(
         # never spawn a subprocess we know we will immediately kill.
         return SolverProcessOutcome(command=list(command), cancelled=True)
 
-    preexec_fn = build_preexec_fn(budget)
     start_rusage = None
     if os.name == "posix":
         import resource
 
         start_rusage = resource.getrusage(resource.RUSAGE_CHILDREN)
 
-    start = time.monotonic()
-    popen_kwargs: Dict[str, Any] = dict(
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
+    executable = os.path.basename(command[0]).lower()
+    kind = (
+        ProcessKind.SMT
+        if executable.startswith("z3") or executable.startswith("cvc5")
+        else ProcessKind.ATP
+    )
+    managed = get_process_supervisor().run(
+        command,
+        kind=kind,
+        limits=ProcessLimits(
+            wall_time_seconds=float(budget.timeout_seconds),
+            cpu_seconds=budget.cpu_seconds,
+            memory_mb=budget.memory_mb,
+        ),
+        cancel_event=cancel_event,
         cwd=cwd,
     )
-    if preexec_fn is not None:
-        popen_kwargs["preexec_fn"] = preexec_fn
 
-    try:
-        process = subprocess.Popen(command, **popen_kwargs)
-    except OSError as exc:
-        return SolverProcessOutcome(
-            command=list(command),
-            wall_time_seconds=time.monotonic() - start,
-            error=str(exc),
-        )
-
-    timed_out = False
-    cancelled = False
-    stdout = ""
-    stderr = ""
-    deadline = start + float(budget.timeout_seconds)
-
-    try:
-        while True:
-            if cancel_event is not None and cancel_event.is_set():
-                cancelled = True
-                _kill_process_group(process)
-                try:
-                    stdout, stderr = process.communicate(timeout=5)
-                except subprocess.TimeoutExpired:
-                    stdout, stderr = "", ""
-                break
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                timed_out = True
-                _kill_process_group(process)
-                try:
-                    stdout, stderr = process.communicate(timeout=5)
-                except subprocess.TimeoutExpired:
-                    stdout, stderr = "", ""
-                break
-            try:
-                stdout, stderr = process.communicate(
-                    timeout=min(_POLL_INTERVAL_SECONDS, remaining)
-                )
-                break
-            except subprocess.TimeoutExpired:
-                continue
-    finally:
-        returncode = process.poll()
-
-    wall_time = time.monotonic() - start
+    wall_time = managed.wall_time_seconds
     cpu_seconds: Optional[float] = None
     max_rss_mb: Optional[float] = None
     if os.name == "posix" and start_rusage is not None:
@@ -442,14 +392,15 @@ def run_bounded_solver_process(
 
     return SolverProcessOutcome(
         command=list(command),
-        returncode=returncode,
-        stdout=stdout or "",
-        stderr=stderr or "",
-        timed_out=timed_out,
-        cancelled=cancelled,
+        returncode=managed.returncode,
+        stdout=managed.stdout or "",
+        stderr=managed.stderr or "",
+        timed_out=managed.timed_out,
+        cancelled=managed.cancelled,
         wall_time_seconds=wall_time,
         cpu_seconds=cpu_seconds,
         max_rss_mb=max_rss_mb,
+        error=managed.error,
     )
 
 
@@ -458,15 +409,18 @@ def _probe_solver_version(executable_path: str, spec, *, timeout: float = _VERSI
     already-resolved executable. Never raises; returns ``None`` on any
     failure."""
 
-    try:
-        completed = subprocess.run(
-            [executable_path, *spec.version_args],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    except (OSError, subprocess.TimeoutExpired):
+    executable = os.path.basename(executable_path).lower()
+    kind = (
+        ProcessKind.SMT
+        if executable.startswith("z3") or executable.startswith("cvc5")
+        else ProcessKind.ATP
+    )
+    completed = get_process_supervisor().run(
+        [executable_path, *spec.version_args],
+        kind=kind,
+        limits=ProcessLimits(wall_time_seconds=max(0.001, float(timeout))),
+    )
+    if completed.error or completed.timed_out:
         return None
     output = (completed.stdout or completed.stderr or "").strip().splitlines()
     return output[0].strip() if output else None
@@ -759,7 +713,7 @@ class SolverPortfolio:
             cancel_event=portfolio_cancel_event,
             request_id=request_id,
         ) as portfolio_lease:
-            with TemporaryDirectory(prefix="itp_hammer_portfolio_") as tmp_dir:
+            with supervised_temporary_directory(prefix="itp_hammer_portfolio_") as tmp_dir:
                 work_items = []
                 for index, (spec, executable_path) in enumerate(permitted):
                     budget = self.policy.budget_for(spec.solver_name)

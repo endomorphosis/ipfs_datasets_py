@@ -48,7 +48,6 @@ from __future__ import annotations
 
 import json
 import re
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -63,6 +62,7 @@ from ..models import (
     ReconstructionRecord,
     _utcnow,
 )
+from ..process_lifecycle import supervised_temporary_directory
 from ..reconstruction import (
     DEFAULT_RECONSTRUCTION_TIMEOUT_SECONDS,
     KernelUnavailableError,
@@ -174,7 +174,7 @@ class LeanReconstructor:
         lean_path = capability.executables["lean"]["path"]
         resolved_timeout = timeout if timeout is not None else self._timeout
         started_at = _utcnow()
-        with tempfile.TemporaryDirectory(prefix="hammer-lean-recon-") as tmpdir:
+        with supervised_temporary_directory(prefix="hammer-lean-recon-") as tmpdir:
             source_path = Path(tmpdir) / "Reconstruction.lean"
             source_path.write_text(checked_source, encoding="utf-8")
             command = [lean_path, "--json", str(source_path)]

@@ -25,13 +25,13 @@ from __future__ import annotations
 
 import json
 import re
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from ipfs_datasets_py.logic.external_provers.lazy_installer import find_executable
 
 from ..models import ITPKind
+from ..process_lifecycle import supervised_temporary_directory
 from .base import (
     DEFAULT_TIMEOUT_SECONDS,
     CapabilityEvidence,
@@ -149,7 +149,7 @@ class LeanFrontend:
 
         instrumented, marker_line, marker_col = _instrument_lean_source(source)
 
-        with tempfile.TemporaryDirectory(prefix="hammer-lean-") as tmpdir:
+        with supervised_temporary_directory(prefix="hammer-lean-") as tmpdir:
             source_path = Path(tmpdir) / file_name
             source_path.write_text(instrumented, encoding="utf-8")
             lean_path = capability.executables["lean"]["path"]

@@ -9,6 +9,12 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
+from ipfs_datasets_py.logic.hammers.process_lifecycle import (
+    ProcessKind,
+    ProcessLimits,
+    get_process_supervisor,
+)
+
 from .hammer import HammerBackendRunner, SubprocessHammerBackendRunner
 
 
@@ -184,13 +190,24 @@ def check_hammer_backend_availability(
     try:
         resolved_path = _resolve_executable(resolved_spec.executable, resolver)
         if resolved_path and include_version and resolved_spec.version_args:
-            completed = subprocess.run(
-                [resolved_path, *resolved_spec.version_args],
-                capture_output=True,
-                text=True,
-                timeout=max(0.001, float(timeout_seconds)),
-                check=False,
+            kind = (
+                ProcessKind.SMT
+                if resolved_spec.problem_format.lower().startswith("smt")
+                else ProcessKind.LEAN
+                if resolved_spec.name == "lean"
+                else ProcessKind.ATP
             )
+            completed = get_process_supervisor().run(
+                [resolved_path, *resolved_spec.version_args],
+                kind=kind,
+                limits=ProcessLimits(
+                    wall_time_seconds=max(0.001, float(timeout_seconds))
+                ),
+            )
+            if completed.error:
+                error = completed.error
+            elif completed.timed_out:
+                error = f"timed out after {timeout_seconds}s"
             version_output = "\n".join(
                 part.strip() for part in (completed.stdout, completed.stderr) if part.strip()
             )[:1000]
@@ -334,12 +351,13 @@ def lazy_install_hammer_backend(
         return check_hammer_backend_availability(spec)
     if runner is None:
         def _run(command: Sequence[str], timeout: float) -> subprocess.CompletedProcess[str]:
-            return subprocess.run(
+            result = get_process_supervisor().run(
                 list(command),
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False,
+                kind=ProcessKind.TOOLCHAIN,
+                limits=ProcessLimits(wall_time_seconds=max(0.001, float(timeout))),
+            )
+            return subprocess.CompletedProcess(
+                list(command), result.returncode or 0, result.stdout, result.stderr
             )
 
         runner = _run
