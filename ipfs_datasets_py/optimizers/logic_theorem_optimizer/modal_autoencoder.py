@@ -49,6 +49,19 @@ MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION = "modal-autoencoder-low-rank-v1
 MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
 MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
 HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION = "legal-ir-hammer-guidance-metrics-v1"
+TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION = (
+    "legal-ir-trusted-hammer-leanstral-feature-bus-v1"
+)
+TRUSTED_HAMMER_FEATURE_FAMILIES = (
+    "contract_id",
+    "obligation_family",
+    "premise_family",
+    "backend_status",
+    "reconstruction_status",
+    "repair_lane",
+)
+TRUSTED_HAMMER_FEATURE_BUS_MAX_FEATURES = 48
+TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY = 8
 PROJECTION_DEADBAND_MODES = frozenset({"off", "shadow", "enforce"})
 PROJECTION_DEADBAND_CE_REGRESSION_KEYS = frozenset(
     {"cross_entropy_excess_loss", "cross_entropy_loss"}
@@ -2624,6 +2637,82 @@ class ModalAutoencoderTrainingState:
         return cls.from_dict(json.loads(source.read_text(encoding="utf-8")))
 
 
+@dataclass(frozen=True)
+class TrustedHammerLeanstralFeatureBus:
+    """Bounded, source-free features projected across the model trust boundary.
+
+    Values in ``feature_families`` are categorical contract data.  The bus does
+    not retain candidate logic, prompts, proof prose, source spans, or arbitrary
+    ranked feature strings.  ``learning_payload`` is the similarly restricted
+    view-selection signal consumed internally by the autoencoder.
+    """
+
+    guidance_id: str
+    trusted: bool
+    feature_families: Mapping[str, tuple[str, ...]]
+    feature_keys: tuple[str, ...]
+    target_views: tuple[str, ...]
+    per_view_repair_labels: Mapping[str, tuple[str, ...]]
+    excluded_field_paths: tuple[str, ...] = ()
+    learning_payload: Mapping[str, Any] = field(default_factory=dict, repr=False)
+    schema_version: str = TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION
+
+    @property
+    def feature_count(self) -> int:
+        return len(self.feature_keys)
+
+    @property
+    def bounded(self) -> bool:
+        return (
+            self.feature_count <= TRUSTED_HAMMER_FEATURE_BUS_MAX_FEATURES
+            and all(
+                len(tuple(values))
+                <= TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY
+                for values in self.feature_families.values()
+            )
+        )
+
+    @classmethod
+    def from_guidance(
+        cls,
+        guidance: Any,
+        *,
+        require_trusted: bool = True,
+    ) -> "TrustedHammerLeanstralFeatureBus":
+        """Build a bus packet from one hammer or Leanstral artifact."""
+
+        return build_trusted_hammer_leanstral_feature_bus(
+            guidance,
+            require_trusted=require_trusted,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the persistable bus receipt without its internal target view."""
+
+        return {
+            "bounded": self.bounded,
+            "excluded_field_paths": list(self.excluded_field_paths),
+            "feature_count": self.feature_count,
+            "feature_families": {
+                family: list(self.feature_families.get(family, ()))
+                for family in TRUSTED_HAMMER_FEATURE_FAMILIES
+            },
+            "feature_keys": list(self.feature_keys),
+            "guidance_id": self.guidance_id,
+            "max_feature_count": TRUSTED_HAMMER_FEATURE_BUS_MAX_FEATURES,
+            "max_values_per_family": (
+                TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY
+            ),
+            "per_view_repair_labels": {
+                view: list(labels)
+                for view, labels in sorted(self.per_view_repair_labels.items())
+            },
+            "schema_version": self.schema_version,
+            "target_views": list(self.target_views),
+            "trusted": self.trusted,
+        }
+
+
 class ModalAutoencoderBaseline:
     """Dependency-free baseline for the future encoder/decoder pair."""
 
@@ -4386,6 +4475,19 @@ class AdaptiveModalAutoencoder:
         keys.extend(self._feature_keys_for(sample))
         return _unique_preserve_order(keys)
 
+    def trusted_hammer_leanstral_feature_bus(
+        self,
+        guidance: Any,
+        *,
+        require_trusted: bool = True,
+    ) -> Dict[str, Any]:
+        """Expose the source-free feature-bus receipt used for model updates."""
+
+        return trusted_hammer_leanstral_feature_bus(
+            guidance,
+            require_trusted=require_trusted,
+        )
+
     def apply_leanstral_guidance(
         self,
         guidance: Any,
@@ -4399,9 +4501,9 @@ class AdaptiveModalAutoencoder:
         """Train LegalIR view logits from trusted Leanstral draft guidance.
 
         Leanstral guidance is intentionally treated as a view-selection target,
-        not as text reconstruction data. The method uses candidate families,
-        proof obligations, and target components while ignoring raw drafted
-        logic text as a learnable token target.
+        not as text reconstruction data.  All updates cross the trusted feature
+        bus, which keeps only bounded categorical contract signals and never
+        exposes drafted logic, proof prose, or source spans to learned heads.
         """
 
         items = self._leanstral_guidance_items(guidance)
@@ -4423,6 +4525,12 @@ class AdaptiveModalAutoencoder:
             "skipped_no_target_count": 0,
             "skipped_untrusted_count": 0,
             "target_view_counts": {},
+            "trusted_feature_bus_excluded_field_count": 0,
+            "trusted_feature_bus_feature_count": 0,
+            "trusted_feature_bus_item_count": 0,
+            "trusted_feature_bus_schema_version": (
+                TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION
+            ),
             "updated_guidance_feature_count": 0,
         }
         if item_limit <= 0 or not items or step <= 0.0:
@@ -4435,14 +4543,20 @@ class AdaptiveModalAutoencoder:
             if not item:
                 report["skipped_invalid_count"] += 1
                 continue
-            guidance_id = self._leanstral_guidance_id(item)
+            feature_bus = build_trusted_hammer_leanstral_feature_bus(
+                item,
+                require_trusted=require_trusted,
+            )
+            guidance_id = feature_bus.guidance_id
             if guidance_id in applied_ids:
                 report["duplicate_count"] += 1
                 continue
-            if require_trusted and not self._leanstral_guidance_is_trusted(item):
+            if require_trusted and not feature_bus.trusted:
                 report["skipped_untrusted_count"] += 1
                 continue
-            target_distribution = self._leanstral_guidance_target_distribution(item)
+            target_distribution = self._leanstral_guidance_target_distribution(
+                feature_bus.learning_payload
+            )
             if not target_distribution:
                 report["skipped_no_target_count"] += 1
                 continue
@@ -4470,10 +4584,18 @@ class AdaptiveModalAutoencoder:
 
             report["updated_guidance_feature_count"] += (
                 self._nudge_leanstral_guidance_feature_logits(
-                    self._leanstral_guidance_feature_keys(item),
+                    self._leanstral_guidance_feature_keys(
+                        item,
+                        feature_bus=feature_bus,
+                    ),
                     target_distribution,
                     learning_rate=step,
                 )
+            )
+            report["trusted_feature_bus_item_count"] += 1
+            report["trusted_feature_bus_feature_count"] += feature_bus.feature_count
+            report["trusted_feature_bus_excluded_field_count"] += len(
+                feature_bus.excluded_field_paths
             )
             if self._leanstral_guidance_is_hammer_item(item):
                 report["hammer_guidance_count"] += 1
@@ -4586,32 +4708,7 @@ class AdaptiveModalAutoencoder:
         return "leanstral-guidance-" + _hash_json(dict(item))[:16]
 
     def _leanstral_guidance_is_trusted(self, item: Mapping[str, Any]) -> bool:
-        rejected_keys = (
-            "copy_source_span_rejected",
-            "copied_source_span_rejected",
-            "draft_rejected",
-            "rejected",
-        )
-        if any(bool(item.get(key)) for key in rejected_keys):
-            return False
-        if item.get("accepted") is False:
-            return False
-        trusted_keys = (
-            "accepted",
-            "trusted",
-            "leanstral_verified",
-            "verified",
-            "proof_checked",
-        )
-        if any(bool(item.get(key)) for key in trusted_keys):
-            return True
-        source = str(item.get("source") or "").strip().lower()
-        return source in {
-            "hammer_verified_guidance",
-            "leanstral_direct_guidance_projection_v1",
-            "leanstral_shadow_proof",
-            "leanstral_verified_guidance",
-        }
+        return _trusted_guidance_is_trusted(item)
 
     def _leanstral_guidance_is_hammer_item(self, item: Mapping[str, Any]) -> bool:
         source = str(item.get("source") or "").strip().lower()
@@ -4765,74 +4862,25 @@ class AdaptiveModalAutoencoder:
     def _leanstral_guidance_feature_keys(
         self,
         item: Mapping[str, Any],
+        *,
+        feature_bus: Optional[TrustedHammerLeanstralFeatureBus] = None,
     ) -> List[str]:
-        keys: List[str] = []
-        for ranked in self._leanstral_sequence(item.get("ranked_guidance_features")):
-            if isinstance(ranked, Mapping):
-                feature = str(ranked.get("feature") or "").strip()
-            else:
-                feature = str(ranked or "").strip()
-            if feature:
-                keys.append(feature)
-        for key in ("action", "target_component", "source"):
-            atom = _feature_atom(item.get(key), max_tokens=5)
-            if atom:
-                keys.append(f"leanstral:{key}:{atom}")
-        for key in ("legal_ir_view", "target_view"):
-            atom = _feature_atom(item.get(key), max_tokens=5)
-            if atom:
-                keys.append(f"hammer:target-view:{atom}")
-        obligation_id = _feature_atom(item.get("obligation_id"), max_tokens=8)
+        bus = feature_bus or build_trusted_hammer_leanstral_feature_bus(
+            item,
+            require_trusted=False,
+        )
+        keys: List[str] = list(bus.feature_keys)
+
+        # Keep the two v1 identifier aliases needed to read existing optimizer
+        # state.  They are strictly capped identifier atoms, never source text.
+        obligation_id = _trusted_feature_atom(item.get("obligation_id"), max_tokens=8)
         if obligation_id:
             keys.append(f"hammer:obligation:{obligation_id}")
-        for premise in self._leanstral_sequence(item.get("selected_premises"))[:12]:
-            atom = _feature_atom(premise, max_tokens=8)
+        premise_families = bus.feature_families.get("premise_family", ())
+        for premise in tuple(premise_families)[:8]:
+            atom = _trusted_feature_atom(premise, max_tokens=8)
             if atom:
                 keys.append(f"hammer:selected-premise:{atom}")
-        for view in self._leanstral_sequence(item.get("premise_views"))[:8]:
-            atom = _feature_atom(view, max_tokens=5)
-            if atom:
-                keys.append(f"hammer:premise-view:{atom}")
-        backend_statuses = item.get("backend_statuses")
-        if isinstance(backend_statuses, Mapping):
-            for backend, status in sorted(backend_statuses.items()):
-                backend_atom = _feature_atom(backend, max_tokens=3)
-                status_atom = _feature_atom(status, max_tokens=3)
-                if backend_atom and status_atom:
-                    keys.append(f"hammer:backend-status:{backend_atom}:{status_atom}")
-        reconstruction = _feature_atom(item.get("reconstruction_status"), max_tokens=5)
-        if reconstruction:
-            keys.append(f"hammer:reconstruction-status:{reconstruction}")
-        failure = _feature_atom(item.get("failure_reason"), max_tokens=5)
-        if failure:
-            keys.append(f"hammer:failure-reason:{failure}")
-        for candidate in self._leanstral_sequence(item.get("drafted_logic_candidates")):
-            if not isinstance(candidate, Mapping):
-                continue
-            family = _feature_atom(
-                candidate.get("logic_family") or candidate.get("family"),
-                max_tokens=3,
-            )
-            if family:
-                keys.append(f"leanstral:logic-family:{family}")
-            target_view = _feature_atom(candidate.get("target_view"), max_tokens=5)
-            if target_view:
-                keys.append(f"hammer:candidate-target-view:{target_view}")
-            failure_mode = _feature_atom(candidate.get("expected_failure_mode"), max_tokens=5)
-            if failure_mode:
-                keys.append(f"hammer:candidate-failure-mode:{failure_mode}")
-            for premise_hint in self._leanstral_sequence(candidate.get("premise_hints"))[:8]:
-                atom = _feature_atom(premise_hint, max_tokens=8)
-                if atom:
-                    keys.append(f"hammer:candidate-premise-hint:{atom}")
-            for proof_id in self._leanstral_sequence(candidate.get("proof_obligation_ids"))[:8]:
-                atom = _feature_atom(proof_id, max_tokens=8)
-                if atom:
-                    keys.append(f"hammer:candidate-proof-obligation:{atom}")
-        for proof_id in self._leanstral_sequence(item.get("proof_obligation_ids"))[:8]:
-            atom = _feature_atom(proof_id, max_tokens=8)
-            if atom:
-                keys.append(f"leanstral:proof-obligation:{atom}")
         return _unique_preserve_order(keys)[:48]
 
     def _nudge_legal_ir_view_logits_toward_distribution(
@@ -26154,6 +26202,628 @@ def _hash_json(value: Any) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+_TRUSTED_GUIDANCE_FORBIDDEN_TEXT_KEYS = frozenset(
+    {
+        "candidate",
+        "completion",
+        "copied_text",
+        "draft_text",
+        "full_source_span",
+        "full_text",
+        "generated_text",
+        "leanstral_output",
+        "normalized_text",
+        "prompt",
+        "proof_text",
+        "raw_leanstral_text",
+        "raw_output",
+        "raw_source",
+        "ranked_guidance_features",
+        "response",
+        "source_span",
+        "source_text",
+        "text",
+    }
+)
+_TRUSTED_GUIDANCE_BACKENDS = frozenset(
+    {
+        "cvc4",
+        "cvc5",
+        "eprover",
+        "isabelle",
+        "lean",
+        "mock",
+        "prover9",
+        "spass",
+        "vampire",
+        "z3",
+    }
+)
+_TRUSTED_GUIDANCE_BACKEND_STATUSES = frozenset(
+    {
+        "disproved",
+        "error",
+        "no_backends",
+        "no_premises",
+        "proved",
+        "reconstruction_failed",
+        "timeout",
+        "translation_failed",
+        "unknown",
+        "unavailable",
+        "unproved",
+        "verified",
+    }
+)
+_TRUSTED_GUIDANCE_RECONSTRUCTION_STATUSES = frozenset(
+    {
+        "backend_proof",
+        "failed",
+        "kernel_rejected",
+        "native_reconstruction",
+        "native_reconstruction_failed",
+        "no_backend_proof",
+        "not_attempted",
+        "reconstruction_failed",
+        "script_generated",
+        "translation_failure",
+        "unavailable",
+        "unknown",
+        "verified",
+    }
+)
+_TRUSTED_GUIDANCE_PREMISE_KINDS = frozenset(
+    {
+        "compiler_fact",
+        "sample_local_assumption",
+        "theorem_template",
+        "verified_leanstral_theorem",
+    }
+)
+
+
+def _trusted_guidance_mapping(value: Any) -> Dict[str, Any]:
+    if isinstance(value, Mapping):
+        return {str(key): child for key, child in value.items()}
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        try:
+            converted = to_dict()
+        except (TypeError, ValueError):
+            return {}
+        if isinstance(converted, Mapping):
+            return {str(key): child for key, child in converted.items()}
+    return {}
+
+
+def _trusted_guidance_sequence(value: Any) -> List[Any]:
+    if value is None:
+        return []
+    if isinstance(value, Mapping):
+        return [value]
+    if isinstance(value, Sequence) and not isinstance(
+        value,
+        (bytes, bytearray, str),
+    ):
+        return list(value)
+    if isinstance(value, str):
+        return [item.strip() for item in value.split(",") if item.strip()]
+    return [value]
+
+
+def _trusted_guidance_bool(value: Any) -> Optional[bool]:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if float(value) == 1.0:
+            return True
+        if float(value) == 0.0:
+            return False
+        return None
+    text = str(value or "").strip().lower()
+    if text in {"1", "accepted", "proved", "true", "trusted", "verified", "yes"}:
+        return True
+    if text in {"0", "false", "no", "rejected", "untrusted"}:
+        return False
+    return None
+
+
+def _trusted_guidance_is_trusted(item: Mapping[str, Any]) -> bool:
+    """Require affirmative trust evidence and honor every explicit rejection."""
+
+    rejected_keys = (
+        "copy_source_span_rejected",
+        "copied_source_span_rejected",
+        "draft_rejected",
+        "rejected",
+        "source_copy_rejected",
+    )
+    nested_rejections = _trusted_guidance_keyed_values(
+        item,
+        frozenset(rejected_keys),
+    )
+    if any(_trusted_guidance_bool(value) is True for value in nested_rejections):
+        return False
+    if (
+        "accepted" in item
+        and _trusted_guidance_bool(item.get("accepted")) is False
+    ) or (
+        "trusted" in item
+        and _trusted_guidance_bool(item.get("trusted")) is False
+    ):
+        return False
+    rejection_reasons = {
+        _feature_atom(value, max_tokens=6)
+        for value in _trusted_guidance_keyed_values(
+            item,
+            frozenset({"rejection_reason", "rejection_reasons"}),
+        )
+    }
+    if rejection_reasons & {
+        "copied_source_span",
+        "drafted_logic_candidate_copies_source",
+        "source_copy",
+        "source_copy_rejected",
+    }:
+        return False
+    return any(
+        _trusted_guidance_bool(item.get(key)) is True
+        for key in (
+            "accepted",
+            "trusted",
+            "leanstral_verified",
+            "verified",
+            "proof_checked",
+        )
+    )
+
+
+def _trusted_guidance_excluded_field_paths(
+    value: Any,
+    *,
+    prefix: str = "",
+    depth: int = 0,
+) -> List[str]:
+    if depth > 5:
+        return []
+    excluded: List[str] = []
+    if isinstance(value, Mapping):
+        for raw_key, child in sorted(value.items(), key=lambda pair: str(pair[0])):
+            key = str(raw_key)
+            lowered = key.lower()
+            path = f"{prefix}.{key}" if prefix else key
+            is_hash = lowered.endswith(("_hash", "_sha256", "_hashes"))
+            if (
+                lowered in _TRUSTED_GUIDANCE_FORBIDDEN_TEXT_KEYS
+                or ("source_span" in lowered and not is_hash)
+                or lowered.endswith(("_source_text", "_proof_text"))
+            ):
+                excluded.append(path)
+                continue
+            excluded.extend(
+                _trusted_guidance_excluded_field_paths(
+                    child,
+                    prefix=path,
+                    depth=depth + 1,
+                )
+            )
+    elif isinstance(value, Sequence) and not isinstance(
+        value,
+        (bytes, bytearray, str),
+    ):
+        for index, child in enumerate(value[:64]):
+            path = f"{prefix}[{index}]" if prefix else f"[{index}]"
+            excluded.extend(
+                _trusted_guidance_excluded_field_paths(
+                    child,
+                    prefix=path,
+                    depth=depth + 1,
+                )
+            )
+    return _unique_preserve_order(excluded)[:64]
+
+
+def _trusted_guidance_keyed_values(
+    value: Any,
+    keys: frozenset[str],
+    *,
+    depth: int = 0,
+) -> List[Any]:
+    """Collect only named categorical fields under strict traversal bounds."""
+
+    if depth > 5:
+        return []
+    values: List[Any] = []
+    if isinstance(value, Mapping):
+        ordered_items = sorted(value.items(), key=lambda pair: str(pair[0]))
+        # Prefer the artifact's direct categorical claims.  Deep metadata is
+        # useful fallback evidence but cannot crowd out a canonical top-level
+        # contract or status by supplying a long nested list.
+        for raw_key, child in ordered_items:
+            key = str(raw_key).lower()
+            if key in keys:
+                values.extend(_trusted_guidance_sequence(child))
+            if len(values) >= 64:
+                return values[:64]
+        for raw_key, child in ordered_items:
+            key = str(raw_key).lower()
+            if key not in _TRUSTED_GUIDANCE_FORBIDDEN_TEXT_KEYS:
+                values.extend(
+                    _trusted_guidance_keyed_values(child, keys, depth=depth + 1)
+                )
+            if len(values) >= 64:
+                return values[:64]
+    elif isinstance(value, Sequence) and not isinstance(
+        value,
+        (bytes, bytearray, str),
+    ):
+        for child in value[:64]:
+            values.extend(
+                _trusted_guidance_keyed_values(child, keys, depth=depth + 1)
+            )
+            if len(values) >= 64:
+                return values[:64]
+    return values[:64]
+
+
+def _trusted_guidance_contracts() -> tuple[Any, ...]:
+    """Load canonical contracts lazily to keep the baseline import lightweight."""
+
+    try:
+        from ...logic.integration.reasoning.legal_ir_view_contracts import (
+            legal_ir_view_contracts,
+        )
+
+        return tuple(legal_ir_view_contracts())
+    except (ImportError, RuntimeError):
+        return ()
+
+
+def _trusted_guidance_contract_lookup(
+    contracts: Sequence[Any],
+) -> Dict[str, Any]:
+    lookup: Dict[str, Any] = {}
+    for contract in contracts:
+        names = (
+            getattr(contract, "contract_id", ""),
+            getattr(getattr(contract, "view", None), "value", ""),
+            getattr(contract, "target_component", ""),
+            *tuple(getattr(contract, "aliases", ()) or ()),
+        )
+        for name in names:
+            atom = _feature_atom(name, max_tokens=10)
+            if atom:
+                lookup[atom] = contract
+    return lookup
+
+
+def _trusted_feature_atom(value: Any, *, max_tokens: int = 8) -> str:
+    """Return an identifier atom with both token and byte-size bounds."""
+
+    atom = _feature_atom(value, max_tokens=max_tokens)
+    if len(atom) <= 96:
+        return atom
+    return f"{atom[:79]}_{_hash_text(atom)[:16]}"
+
+
+def _trusted_guidance_identifier(value: Any, *, fallback: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return fallback
+    if len(text) <= 128 and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]*", text):
+        return text
+    return f"trusted-guidance-{_hash_text(text)[:24]}"
+
+
+def build_trusted_hammer_leanstral_feature_bus(
+    guidance: Any,
+    *,
+    require_trusted: bool = True,
+) -> TrustedHammerLeanstralFeatureBus:
+    """Project one guidance artifact into bounded categorical model features.
+
+    Canonical LegalIR contracts supply the only accepted contract IDs,
+    obligation families, target views, and repair lanes.  Unknown backend and
+    reconstruction values collapse to ``other`` instead of creating an
+    attacker-controlled feature vocabulary.
+    """
+
+    item = _trusted_guidance_mapping(guidance)
+    trusted = bool(item) and _trusted_guidance_is_trusted(item)
+    guidance_id = _trusted_guidance_identifier(
+        item.get("guidance_id")
+        or item.get("task_id")
+        or item.get("leanstral_task_id")
+        or item.get("modal_ir_hash"),
+        fallback=f"trusted-guidance-{_hash_json(item)[:24]}",
+    )
+    excluded_paths = tuple(_trusted_guidance_excluded_field_paths(item))
+    empty_families = {family: () for family in TRUSTED_HAMMER_FEATURE_FAMILIES}
+    if not item or (require_trusted and not trusted):
+        return TrustedHammerLeanstralFeatureBus(
+            guidance_id=guidance_id,
+            trusted=False,
+            feature_families=empty_families,
+            feature_keys=(),
+            target_views=(),
+            per_view_repair_labels={},
+            excluded_field_paths=excluded_paths,
+        )
+
+    contracts = _trusted_guidance_contracts()
+    contract_lookup = _trusted_guidance_contract_lookup(contracts)
+    contract_candidates = _trusted_guidance_keyed_values(
+        item,
+        frozenset(
+            {
+                "contract_id",
+                "contract_ids",
+                "related_contract_ids",
+                "source_contract_id",
+            }
+        ),
+    )
+    view_candidates = _trusted_guidance_keyed_values(
+        item,
+        frozenset(
+            {
+                "compiler_surface",
+                "contract_view",
+                "legal_ir_view",
+                "premise_views",
+                "related_views",
+                "target_component",
+                "target_view",
+                "view",
+            }
+        ),
+    )
+    resolved_contracts: List[Any] = []
+    for value in (*contract_candidates, *view_candidates):
+        contract = contract_lookup.get(_feature_atom(value, max_tokens=10))
+        if contract is not None and contract not in resolved_contracts:
+            resolved_contracts.append(contract)
+    resolved_contracts = resolved_contracts[
+        :TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY
+    ]
+
+    known_obligation_families = {
+        str(family)
+        for contract in contracts
+        for family in tuple(getattr(contract, "all_obligation_families", ()) or ())
+    }
+    raw_obligation_families = _trusted_guidance_keyed_values(
+        item,
+        frozenset(
+            {
+                "obligation_family",
+                "obligation_families",
+                "obligation_kind",
+                "proof_obligation_family",
+            }
+        ),
+    )
+    obligation_families = _unique_preserve_order(
+        str(value).strip()
+        for value in raw_obligation_families
+        if str(value).strip() in known_obligation_families
+    )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
+
+    raw_premise_families = _trusted_guidance_keyed_values(
+        item,
+        frozenset(
+            {
+                "matched_obligation_families",
+                "premise_families",
+                "premise_family",
+                "premise_hints",
+                "premise_kind",
+                "selected_premises",
+            }
+        ),
+    )
+    known_premise_families = known_obligation_families | set(
+        _TRUSTED_GUIDANCE_PREMISE_KINDS
+    )
+    premise_families = _unique_preserve_order(
+        str(value).strip()
+        for value in raw_premise_families
+        if str(value).strip() in known_premise_families
+    )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
+
+    backend_features: List[str] = []
+    backend_status_maps = _trusted_guidance_keyed_values(
+        item,
+        frozenset({"backend_statuses"}),
+    )
+    for backend_statuses in backend_status_maps:
+        if not isinstance(backend_statuses, Mapping):
+            continue
+        for backend, status in sorted(
+            backend_statuses.items(), key=lambda pair: str(pair[0])
+        ):
+            backend_atom = _trusted_feature_atom(backend, max_tokens=2)
+            status_atom = _trusted_feature_atom(status, max_tokens=3)
+            if backend_atom not in _TRUSTED_GUIDANCE_BACKENDS:
+                backend_atom = "other"
+            if status_atom not in _TRUSTED_GUIDANCE_BACKEND_STATUSES:
+                status_atom = "other"
+            backend_features.append(f"{backend_atom}:{status_atom}")
+    backend_features = _unique_preserve_order(backend_features)[
+        :TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY
+    ]
+
+    raw_reconstruction_statuses = _trusted_guidance_keyed_values(
+        item,
+        frozenset({"outcome", "reconstruction_outcome", "reconstruction_status"}),
+    )
+    reconstruction_statuses: List[str] = []
+    for value in raw_reconstruction_statuses:
+        status = _trusted_feature_atom(value, max_tokens=5)
+        if not status:
+            continue
+        if status not in _TRUSTED_GUIDANCE_RECONSTRUCTION_STATUSES:
+            status = "other"
+        if status not in reconstruction_statuses:
+            reconstruction_statuses.append(status)
+    reconstruction_statuses = reconstruction_statuses[
+        :TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY
+    ]
+
+    raw_repair_labels = _trusted_guidance_keyed_values(
+        item,
+        frozenset(
+            {
+                "action",
+                "repair_label",
+                "repair_labels",
+                "repair_lane",
+                "repair_lanes",
+            }
+        ),
+    )
+    per_view_repairs: Dict[str, tuple[str, ...]] = {}
+    repair_features: List[str] = []
+    successful_reconstruction = bool(
+        set(reconstruction_statuses)
+        & {"backend_proof", "native_reconstruction", "script_generated", "verified"}
+    ) or _trusted_guidance_bool(item.get("proof_checked")) is True
+    failed_reconstruction = bool(
+        set(reconstruction_statuses)
+        & {
+            "failed",
+            "kernel_rejected",
+            "native_reconstruction_failed",
+            "reconstruction_failed",
+            "translation_failure",
+        }
+    )
+    for contract in resolved_contracts:
+        view = str(getattr(contract, "target_component", "") or "").strip()
+        allowed_lanes = tuple(getattr(contract, "allowed_repair_lanes", ()) or ())
+        action_to_lane = {
+            str(getattr(lane, "action", "")): str(getattr(lane, "lane_id", ""))
+            for lane in tuple(getattr(contract, "repair_lanes", ()) or ())
+        }
+        labels = _unique_preserve_order(
+            action_to_lane.get(str(value).strip(), str(value).strip())
+            for value in raw_repair_labels
+            if action_to_lane.get(str(value).strip(), str(value).strip())
+            in allowed_lanes
+        )
+        if not labels and failed_reconstruction:
+            labels = list(allowed_lanes)
+        if not labels and successful_reconstruction:
+            labels = ["no_repair"]
+        labels = labels[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
+        if view and labels:
+            per_view_repairs[view] = tuple(labels)
+            repair_features.extend(f"{view}:{label}" for label in labels)
+
+    family_values: Dict[str, tuple[str, ...]] = {
+        "contract_id": tuple(
+            str(getattr(contract, "contract_id", "")) for contract in resolved_contracts
+        ),
+        "obligation_family": tuple(obligation_families),
+        "premise_family": tuple(premise_families),
+        "backend_status": tuple(backend_features),
+        "reconstruction_status": tuple(reconstruction_statuses),
+        "repair_lane": tuple(
+            repair_features[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
+        ),
+    }
+
+    feature_keys: List[str] = []
+    prefixes = {
+        "contract_id": "contract-id",
+        "obligation_family": "obligation-family",
+        "premise_family": "premise-family",
+        "backend_status": "backend-status",
+        "reconstruction_status": "reconstruction-status",
+        "repair_lane": "repair-lane",
+    }
+    for family in TRUSTED_HAMMER_FEATURE_FAMILIES:
+        for value in family_values[family]:
+            if family in {"backend_status", "repair_lane"} and ":" in value:
+                atoms = [
+                    _trusted_feature_atom(part, max_tokens=8)
+                    for part in value.split(":", 1)
+                ]
+                atom = ":".join(part for part in atoms if part)
+            else:
+                atom = _trusted_feature_atom(value, max_tokens=8)
+            if atom:
+                feature_keys.append(f"hammer:{prefixes[family]}:{atom}")
+    feature_keys = _unique_preserve_order(feature_keys)[
+        :TRUSTED_HAMMER_FEATURE_BUS_MAX_FEATURES
+    ]
+
+    target_views = _unique_preserve_order(
+        str(getattr(contract, "target_component", "") or "").strip()
+        for contract in resolved_contracts
+    )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
+    logic_families = _unique_preserve_order(
+        _trusted_feature_atom(value, max_tokens=3)
+        for value in _trusted_guidance_keyed_values(
+            item,
+            frozenset({"logic_family"}),
+        )
+        if _trusted_feature_atom(value, max_tokens=3)
+        in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS
+    )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
+    safe_backend_statuses = {
+        value.split(":", 1)[0]: value.split(":", 1)[1]
+        for value in backend_features
+        if ":" in value
+    }
+    learning_payload: Dict[str, Any] = {
+        "backend_statuses": safe_backend_statuses,
+        "drafted_logic_candidates": [
+            {
+                "confidence": 1.0,
+                "logic_family": family,
+                "target_view": target_views[0] if target_views else "",
+            }
+            for family in logic_families
+        ],
+        "legal_ir_view": target_views[0] if target_views else "",
+        "premise_views": list(target_views),
+        "proof_checked": _trusted_guidance_bool(item.get("proof_checked")) is True,
+        "proved": _trusted_guidance_bool(item.get("proved")) is True,
+        "reconstruction_status": (
+            reconstruction_statuses[0] if reconstruction_statuses else ""
+        ),
+        "target_component": target_views[0] if target_views else "",
+        "target_view": target_views[0] if target_views else "",
+    }
+    if item.get("obligation_id") or item.get("proof_obligation_ids"):
+        learning_payload["obligation_id"] = "present"
+
+    return TrustedHammerLeanstralFeatureBus(
+        guidance_id=guidance_id,
+        trusted=trusted,
+        feature_families=family_values,
+        feature_keys=tuple(feature_keys),
+        target_views=tuple(target_views),
+        per_view_repair_labels=per_view_repairs,
+        excluded_field_paths=excluded_paths,
+        learning_payload=learning_payload,
+    )
+
+
+def trusted_hammer_leanstral_feature_bus(
+    guidance: Any,
+    *,
+    require_trusted: bool = True,
+) -> Dict[str, Any]:
+    """Return the public dictionary representation of the trusted feature bus."""
+
+    return build_trusted_hammer_leanstral_feature_bus(
+        guidance,
+        require_trusted=require_trusted,
+    ).to_dict()
+
+
 def _text_shape(text: str) -> str:
     tokens = _token_features(text)
     return "|".join(tokens[:12]) or "empty"
@@ -27341,6 +28011,12 @@ __all__ = [
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
     "ProverCompilationSignal",
+    "TRUSTED_HAMMER_FEATURE_BUS_MAX_FEATURES",
+    "TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY",
+    "TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION",
+    "TRUSTED_HAMMER_FEATURE_FAMILIES",
+    "TrustedHammerLeanstralFeatureBus",
+    "build_trusted_hammer_leanstral_feature_bus",
     "cosine_loss",
     "cosine_similarity",
     "cross_entropy_excess_distribution_loss",
@@ -27352,4 +28028,5 @@ __all__ = [
     "hammer_guidance_metric_block",
     "mse_loss",
     "symbolic_validity_penalty",
+    "trusted_hammer_leanstral_feature_bus",
 ]

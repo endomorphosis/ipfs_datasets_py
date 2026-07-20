@@ -124,6 +124,9 @@ __all__ = [
     'CodexCallDecision',
     'CodexCallGateConfig',
     'ProverCompilationSignal',
+    'TrustedHammerLeanstralFeatureBus',
+    'build_trusted_hammer_leanstral_feature_bus',
+    'trusted_hammer_leanstral_feature_bus',
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
@@ -610,6 +613,9 @@ def __getattr__(name):
         'ModalAutoencoderBaseline',
         'ModalAutoencoderTrainingState',
         'ProverCompilationSignal',
+        'TrustedHammerLeanstralFeatureBus',
+        'build_trusted_hammer_leanstral_feature_bus',
+        'trusted_hammer_leanstral_feature_bus',
         'cosine_similarity',
         'cosine_loss',
         'mse_loss',
@@ -630,6 +636,8 @@ def __getattr__(name):
             ModalAutoencoderBaseline,
             ModalAutoencoderTrainingState,
             ProverCompilationSignal,
+            TrustedHammerLeanstralFeatureBus,
+            build_trusted_hammer_leanstral_feature_bus,
             cross_entropy_distribution_loss,
             cosine_loss,
             cosine_similarity,
@@ -638,6 +646,7 @@ def __getattr__(name):
             frame_ranking_loss,
             mse_loss,
             symbolic_validity_penalty,
+            trusted_hammer_leanstral_feature_bus,
         )
         return {
             'AdaptiveModalAutoencoder': AdaptiveModalAutoencoder,
@@ -650,6 +659,8 @@ def __getattr__(name):
             'ModalAutoencoderBaseline': ModalAutoencoderBaseline,
             'ModalAutoencoderTrainingState': ModalAutoencoderTrainingState,
             'ProverCompilationSignal': ProverCompilationSignal,
+            'TrustedHammerLeanstralFeatureBus': TrustedHammerLeanstralFeatureBus,
+            'build_trusted_hammer_leanstral_feature_bus': build_trusted_hammer_leanstral_feature_bus,
             'cosine_loss': cosine_loss,
             'cosine_similarity': cosine_similarity,
             'cross_entropy_distribution_loss': cross_entropy_distribution_loss,
@@ -658,6 +669,7 @@ def __getattr__(name):
             'frame_ranking_loss': frame_ranking_loss,
             'mse_loss': mse_loss,
             'symbolic_validity_penalty': symbolic_validity_penalty,
+            'trusted_hammer_leanstral_feature_bus': trusted_hammer_leanstral_feature_bus,
         }[name]
     elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
