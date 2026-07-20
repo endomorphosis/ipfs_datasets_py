@@ -61,7 +61,9 @@ def test_autoencoder_loop_keeps_frame_logic_graph_and_provers_before_llm() -> No
     assert result.cache_counters["codex_call_count"] == 0
     assert "codec" in result.phase_timings
     assert "prover" in result.phase_timings
-    assert result.state_to_compiler_patch_lag["lag"] >= 0
+    assert result.state_to_compiler_patch_lag["status"] == "no_data"
+    assert result.state_to_compiler_patch_lag["wall_clock_lag_seconds"]["p50"] is None
+    assert "lag" not in result.state_to_compiler_patch_lag
 
 
 def test_autoencoder_loop_default_introspection_mode_is_off() -> None:
