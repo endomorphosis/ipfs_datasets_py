@@ -13,6 +13,7 @@ import importlib
 import json
 import math
 import os
+import threading
 import time
 import tempfile
 from dataclasses import asdict, dataclass, field, replace
@@ -314,6 +315,11 @@ class LeanstralAuditWorkerConfig:
     validation_repair_retries: int = 1
     max_new_tokens: int = 1800
     batch_size: int = 1
+    batch_min_size: int = 1
+    batch_max_wait_seconds: float = 0.05
+    batch_token_budget_bucket_size: int = 256
+    batch_deadline_bucket_seconds: float = 1.0
+    batch_deadline_guard_seconds: float = 0.01
     batch_max_workers: int = 0
     batch_use_mesh: bool = True
     prompt_payload_mode: str = "rendered_full"
@@ -338,6 +344,27 @@ class LeanstralAuditWorkerConfig:
 
     def bounded_batch_size(self) -> int:
         return max(1, min(64, int(self.batch_size or 1)))
+
+    def bounded_batch_min_size(self) -> int:
+        return min(
+            self.bounded_batch_size(),
+            max(1, int(self.batch_min_size or 1)),
+        )
+
+    def bounded_batch_max_wait_seconds(self) -> float:
+        value = float(self.batch_max_wait_seconds or 0.0)
+        return max(0.0, value if math.isfinite(value) else 0.05)
+
+    def bounded_batch_token_budget_bucket_size(self) -> int:
+        return max(1, int(self.batch_token_budget_bucket_size or 1))
+
+    def bounded_batch_deadline_bucket_seconds(self) -> float:
+        value = float(self.batch_deadline_bucket_seconds or 0.0)
+        return value if math.isfinite(value) and value > 0.0 else 1.0
+
+    def bounded_batch_deadline_guard_seconds(self) -> float:
+        value = float(self.batch_deadline_guard_seconds or 0.0)
+        return max(0.0, value if math.isfinite(value) else 0.01)
 
     def bounded_batch_max_workers(self) -> Optional[int]:
         value = int(self.batch_max_workers or 0)
@@ -1095,11 +1122,15 @@ class LeanstralAuditWorkerSummary:
     schema_failures: Sequence[Mapping[str, Any]] = field(default_factory=tuple)
     stale_state_rejections: Sequence[Mapping[str, Any]] = field(default_factory=tuple)
     unavailable_count: int = 0
+    cancelled_count: int = 0
+    batch_telemetry: Mapping[str, Any] = field(default_factory=dict)
     runtime_seconds: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "cache_hit_count": int(self.cache_hit_count),
+            "batch_telemetry": _json_ready_mapping(self.batch_telemetry),
+            "cancelled_count": int(self.cancelled_count),
             "checkpoint_path": self.checkpoint_path,
             "completed_count": int(self.completed_count),
             "failed_count": int(self.failed_count),
@@ -1248,6 +1279,64 @@ class LeanstralAuditCache:
             handle.write("\n")
             temporary_path = Path(handle.name)
         os.replace(temporary_path, path)
+
+
+def _associate_leanstral_batch_responses(
+    requests: Sequence[LeanstralAuditRequest],
+    raw_responses: Sequence[Any],
+) -> tuple[List[str], List[tuple[str, ...]]]:
+    """Associate unordered/partial provider output by the echoed request ID.
+
+    Mesh implementations may finish requests out of order.  Positional fallback
+    is used only for responses that do not carry a recognized request ID; those
+    responses still pass through the normal request-specific validator.  A
+    missing output becomes an empty response so only that item is repaired or
+    retried instead of failing the whole batch.
+    """
+
+    request_list = list(requests)
+    request_indexes = {request.request_id: index for index, request in enumerate(request_list)}
+    aligned: List[Optional[str]] = [None] * len(request_list)
+    reasons: List[tuple[str, ...]] = [() for _ in request_list]
+    positional: List[tuple[int, str]] = []
+    for provider_index, raw_value in enumerate(raw_responses):
+        raw = str(raw_value or "")
+        parsed = parse_leanstral_audit_response(raw)
+        response_request_id = str(parsed.request_id or "") if parsed is not None else ""
+        request_index = request_indexes.get(response_request_id)
+        if request_index is not None and aligned[request_index] is None:
+            aligned[request_index] = raw
+            if request_index != provider_index:
+                reasons[request_index] = _merge_reasons(
+                    reasons[request_index],
+                    ("batch_response_reassociated_by_request_id",),
+                )
+            continue
+        positional.append((provider_index, raw))
+
+    remaining_indexes = [index for index, raw in enumerate(aligned) if raw is None]
+    for request_index, (provider_index, raw) in zip(remaining_indexes, positional):
+        aligned[request_index] = raw
+        reason = (
+            "batch_response_duplicate_or_unknown_request_id"
+            if parse_leanstral_audit_response(raw) is not None
+            else "batch_response_missing_request_id"
+        )
+        reasons[request_index] = _merge_reasons(reasons[request_index], (reason,))
+        if request_index != provider_index:
+            reasons[request_index] = _merge_reasons(
+                reasons[request_index],
+                ("batch_response_positional_fallback",),
+            )
+
+    for index, raw in enumerate(aligned):
+        if raw is None:
+            aligned[index] = ""
+            reasons[index] = _merge_reasons(
+                reasons[index],
+                ("batch_response_missing",),
+            )
+    return [str(raw or "") for raw in aligned], reasons
 
 
 class LeanstralAuditRunner:
@@ -1468,7 +1557,7 @@ class LeanstralAuditRunner:
             )
             for request in request_list
         ]
-        raw_responses = list(
+        provider_responses = list(
             generate_batch(
                 prompt_payloads,
                 provider=provider_name,
@@ -1485,11 +1574,10 @@ class LeanstralAuditRunner:
                 max_workers=max_workers,
             )
         )
-        if len(raw_responses) != len(request_list):
-            raise RuntimeError(
-                "Leanstral batch returned "
-                f"{len(raw_responses)} responses for {len(request_list)} requests"
-            )
+        raw_responses, association_reasons = _associate_leanstral_batch_responses(
+            request_list,
+            provider_responses,
+        )
         if trace_getter is not None:
             batch_repair_reasons = _merge_reasons(
                 batch_repair_reasons,
@@ -1502,7 +1590,11 @@ class LeanstralAuditRunner:
             )
 
         results: List[LeanstralAuditResult] = []
-        for request, raw_response in zip(request_list, raw_responses):
+        for request, raw_response, item_association_reasons in zip(
+            request_list,
+            raw_responses,
+            association_reasons,
+        ):
             response = parse_leanstral_audit_response(str(raw_response or ""))
             response, normalization_reasons = normalize_leanstral_audit_response_for_request(
                 request,
@@ -1510,7 +1602,10 @@ class LeanstralAuditRunner:
             )
             validation = validate_leanstral_audit_response(request, response)
             repair_reasons = _merge_reasons(
-                _merge_reasons(batch_repair_reasons, normalization_reasons),
+                _merge_reasons(
+                    _merge_reasons(batch_repair_reasons, item_association_reasons),
+                    normalization_reasons,
+                ),
                 validation.reasons,
             )
             if response is not None and self.config.cache_writes_enabled:
@@ -1546,6 +1641,29 @@ class LeanstralAuditWorker:
             llm_generate=llm_generate,
             llm_generate_batch=llm_generate_batch,
         )
+        self._cancellation_lock = threading.Lock()
+        self._cancelled_request_ids: set[str] = set()
+        self._active_batch_scheduler: Any = None
+
+    def cancel_request(self, request_id: str) -> bool:
+        """Cancel one queued/in-flight request without cancelling its peers."""
+
+        value = str(request_id or "").strip()
+        if not value:
+            return False
+        with self._cancellation_lock:
+            already_cancelled = value in self._cancelled_request_ids
+            self._cancelled_request_ids.add(value)
+            scheduler = self._active_batch_scheduler
+        scheduler_cancelled = bool(scheduler.cancel(value)) if scheduler is not None else False
+        return scheduler_cancelled or not already_cancelled
+
+    # Short alias used by supervisors and queue consumers.
+    cancel = cancel_request
+
+    def is_cancelled(self, request_id: str) -> bool:
+        with self._cancellation_lock:
+            return str(request_id or "") in self._cancelled_request_ids
 
     async def run_paths(self, paths: Sequence[str | Path]) -> LeanstralAuditWorkerSummary:
         records, schema_failures, source_digest = load_leanstral_audit_disagreements(
@@ -1591,21 +1709,6 @@ class LeanstralAuditWorker:
         checkpoint_lock = anyio_runtime.Lock()
         results: List[LeanstralAuditWorkResult] = []
 
-        async def run_one(item: LeanstralAuditWorkItem) -> LeanstralAuditWorkResult:
-            async with semaphore:
-                result = await self._run_item(item)
-                async with checkpoint_lock:
-                    nonlocal checkpoint_state
-                    checkpoint_state = checkpoint_state.with_result(
-                        result,
-                        source_digest=source_digest,
-                    )
-                    write_leanstral_audit_checkpoint(
-                        self.config.checkpoint_path,
-                        checkpoint_state,
-                    )
-                return result
-
         async def run_many(
             batch: Sequence[LeanstralAuditWorkItem],
         ) -> Sequence[LeanstralAuditWorkResult]:
@@ -1624,34 +1727,95 @@ class LeanstralAuditWorker:
                     )
                 return batch_results
 
-        if pending:
-            batch_size = self.config.bounded_batch_size()
-            if batch_size <= 1:
-                gathered = await anyio_runtime.gather(
-                    *(run_one(item) for item in pending),
-                    return_exceptions=False,
+        from .leanstral_audit_worker import (
+            LeanstralBatchScheduler,
+            LeanstralBatchSchedulerConfig,
+        )
+
+        scheduler = LeanstralBatchScheduler(
+            LeanstralBatchSchedulerConfig(
+                min_batch_size=self.config.bounded_batch_min_size(),
+                max_batch_size=self.config.bounded_batch_size(),
+                max_wait_seconds=self.config.bounded_batch_max_wait_seconds(),
+                token_budget_bucket_size=(
+                    self.config.bounded_batch_token_budget_bucket_size()
+                ),
+                deadline_bucket_seconds=(
+                    self.config.bounded_batch_deadline_bucket_seconds()
+                ),
+                deadline_guard_seconds=(
+                    self.config.bounded_batch_deadline_guard_seconds()
+                ),
+            )
+        )
+        with self._cancellation_lock:
+            self._active_batch_scheduler = scheduler
+        try:
+            enqueue_now = time.monotonic()
+            for item in pending:
+                scheduler.enqueue(
+                    item,
+                    model=self.config.model,
+                    token_budget=self.config.bounded_max_new_tokens(),
+                    deadline_monotonic=enqueue_now + self.config.timeout(),
+                    provider=self.config.provider,
+                    use_mesh=bool(self.config.batch_use_mesh),
+                    now=enqueue_now,
                 )
-                results = list(gathered)
-            else:
-                batches = [
-                    pending[idx : idx + batch_size]
-                    for idx in range(0, len(pending), batch_size)
-                ]
+                if self.is_cancelled(item.request.request_id):
+                    scheduler.cancel(item.request.request_id)
+            scheduler.close()
+            batches = scheduler.drain(force=True, now=enqueue_now)
+            terminal_items = scheduler.take_terminal_items()
+            results.extend(
+                _work_result(
+                    scheduled.work_item,
+                    status="cancelled" if reason == "caller_cancelled" else "timeout",
+                    attempts=0,
+                    reasons=(reason,),
+                    elapsed=0.0,
+                )
+                for scheduled, reason in terminal_items
+            )
+            if batches:
                 nested_results = await anyio_runtime.gather(
-                    *(run_many(batch) for batch in batches),
+                    *(run_many(batch.work_items) for batch in batches),
                     return_exceptions=False,
                 )
-                results = [
+                results.extend(
                     result
                     for batch_results in nested_results
                     for result in batch_results
-                ]
+                )
+        finally:
+            with self._cancellation_lock:
+                if self._active_batch_scheduler is scheduler:
+                    self._active_batch_scheduler = None
         skipped_results = [
             _result_from_checkpoint(item.work_key, checkpoint.results.get(item.work_key))
             for item in items
             if item.work_key in completed_keys
         ]
-        all_results = skipped_results + results
+        result_order = {item.work_key: index for index, item in enumerate(items)}
+        all_results = sorted(
+            skipped_results + results,
+            key=lambda result: (result_order.get(result.work_key, len(items)), result.work_key),
+        )
+        scheduler.telemetry.cache_hit_count = sum(1 for result in results if result.cache_hit)
+        scheduler.telemetry.retry_count = sum(max(0, result.attempts - 1) for result in results)
+        scheduler.telemetry.schema_repair_count = sum(
+            max(0, result.generation_attempts - 1) for result in results
+        )
+        scheduler.telemetry.reassociated_response_count = sum(
+            1
+            for result in results
+            if "batch_response_reassociated_by_request_id" in result.repair_reasons
+        )
+        scheduler.telemetry.provider_error_count = sum(
+            1
+            for result in results
+            if result.status in {"failed", "timeout", "unavailable"}
+        )
         runtime = time.monotonic() - started
         return LeanstralAuditWorkerSummary(
             schema_version=LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION,
@@ -1671,6 +1835,8 @@ class LeanstralAuditWorker:
             schema_failures=tuple(schema_failures),
             stale_state_rejections=tuple(stale_rejections),
             unavailable_count=sum(1 for result in all_results if result.status == "unavailable"),
+            cancelled_count=sum(1 for result in all_results if result.status == "cancelled"),
+            batch_telemetry=scheduler.telemetry_snapshot(),
             runtime_seconds=runtime,
         )
 
@@ -1681,7 +1847,9 @@ class LeanstralAuditWorker:
         item_list = list(items or [])
         if not item_list:
             return ()
-        if len(item_list) <= 1 or self.config.bounded_batch_size() <= 1:
+        if self.config.bounded_batch_size() <= 1:
+            return tuple([await self._run_item(item) for item in item_list])
+        if len(item_list) <= 1 and self.runner.llm_generate_batch is None:
             return tuple([await self._run_item(item) for item in item_list])
         if self.runner.llm_generate is not None and self.runner.llm_generate_batch is None:
             return tuple([await self._run_item(item) for item in item_list])
@@ -1691,6 +1859,15 @@ class LeanstralAuditWorker:
         candidates: List[LeanstralAuditWorkItem] = []
         for item in item_list:
             started = starts[item.work_key]
+            if self.is_cancelled(item.request.request_id):
+                results_by_key[item.work_key] = _work_result(
+                    item,
+                    status="cancelled",
+                    attempts=0,
+                    reasons=("caller_cancelled",),
+                    elapsed=time.monotonic() - started,
+                )
+                continue
             if self.config.require_leanstral_model and not _is_leanstral_model_identity(item.request.model):
                 results_by_key[item.work_key] = _work_result(
                     item,
@@ -1773,6 +1950,17 @@ class LeanstralAuditWorker:
                     else:
                         handled_batch = True
                         for item, audit_result in zip(candidates, audit_results):
+                            if self.is_cancelled(item.request.request_id):
+                                results_by_key[item.work_key] = _work_result(
+                                    item,
+                                    status="cancelled",
+                                    attempts=attempts_by_key[item.work_key],
+                                    reasons=("caller_cancelled",),
+                                    llm_called=audit_result.llm_called,
+                                    generation_attempts=audit_result.generation_attempts,
+                                    elapsed=time.monotonic() - starts[item.work_key],
+                                )
+                                continue
                             if audit_result.response is not None:
                                 self.runner.cache.put(
                                     item.request,
@@ -1794,7 +1982,29 @@ class LeanstralAuditWorker:
                                     elapsed=time.monotonic() - starts[item.work_key],
                                 )
                             else:
-                                results_by_key[item.work_key] = await self._run_item(item)
+                                individual_result = await self._run_item(item)
+                                results_by_key[item.work_key] = replace(
+                                    individual_result,
+                                    attempts=(
+                                        attempts_by_key[item.work_key]
+                                        + individual_result.attempts
+                                    ),
+                                    generation_attempts=(
+                                        audit_result.generation_attempts
+                                        + individual_result.generation_attempts
+                                    ),
+                                    llm_called=(
+                                        audit_result.llm_called
+                                        or individual_result.llm_called
+                                    ),
+                                    repair_reasons=_merge_reasons(
+                                        audit_result.repair_reasons,
+                                        individual_result.repair_reasons,
+                                    ),
+                                    elapsed_seconds=(
+                                        time.monotonic() - starts[item.work_key]
+                                    ),
+                                )
                         break
                 if handled_batch:
                     break
@@ -1824,6 +2034,14 @@ class LeanstralAuditWorker:
 
     async def _run_item(self, item: LeanstralAuditWorkItem) -> LeanstralAuditWorkResult:
         started = time.monotonic()
+        if self.is_cancelled(item.request.request_id):
+            return _work_result(
+                item,
+                status="cancelled",
+                attempts=0,
+                reasons=("caller_cancelled",),
+                elapsed=time.monotonic() - started,
+            )
         if self.config.require_leanstral_model and not _is_leanstral_model_identity(item.request.model):
             return _work_result(
                 item,
@@ -1881,6 +2099,16 @@ class LeanstralAuditWorker:
                         (_provider_attempt_reason(provider, reason, len(providers)),),
                     )
                 else:
+                    if self.is_cancelled(item.request.request_id):
+                        return _work_result(
+                            item,
+                            status="cancelled",
+                            attempts=attempts,
+                            reasons=("caller_cancelled",),
+                            llm_called=audit_result.llm_called,
+                            generation_attempts=audit_result.generation_attempts,
+                            elapsed=time.monotonic() - started,
+                        )
                     if audit_result.response is not None:
                         self.runner.cache.put(
                             item.request,
@@ -1927,13 +2155,33 @@ class LeanstralAuditWorker:
         *,
         provider: Optional[str] = None,
     ) -> LeanstralAuditResult:
+        generate = self.runner.llm_generate
+        if generate is None and self.runner.llm_generate_batch is not None:
+            generate_batch = self.runner.llm_generate_batch
+
+            def generate(prompt: str, **kwargs: Any) -> str:
+                outputs = list(
+                    generate_batch(
+                        [prompt],
+                        use_mesh=bool(self.config.batch_use_mesh),
+                        max_workers=self.config.bounded_batch_max_workers(),
+                        **kwargs,
+                    )
+                )
+                if len(outputs) != 1:
+                    raise RuntimeError(
+                        "Leanstral single-item repair batch returned "
+                        f"{len(outputs)} responses"
+                    )
+                return str(outputs[0] or "")
+
         thread_runner = LeanstralAuditRunner(
             replace(
                 self.runner.config,
                 cache_dir=None,
                 cache_writes_enabled=False,
             ),
-            llm_generate=self.runner.llm_generate,
+            llm_generate=generate,
             cache=LeanstralAuditCache(),
         )
         return thread_runner.run(

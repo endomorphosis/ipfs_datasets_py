@@ -716,10 +716,13 @@ def test_worker_batches_first_attempt_leanstral_audits(tmp_path) -> None:
     assert summary.completed_count == 2
     assert summary.llm_call_count == 2
     assert [result.status for result in summary.results] == ["accepted", "accepted"]
-    assert len(batch_calls) == 1
-    assert len(batch_calls[0][0]) == 2
-    assert batch_calls[0][1]["max_workers"] == 2
-    assert batch_calls[0][1]["use_mesh"] is True
+    # Continuously formed batches are homogeneous by logic family.  These two
+    # packets intentionally exercise different families, so each partial batch
+    # is flushed independently at end-of-stream.
+    assert len(batch_calls) == 2
+    assert [len(call[0]) for call in batch_calls] == [1, 1]
+    assert all(call[1]["max_workers"] == 2 for call in batch_calls)
+    assert all(call[1]["use_mesh"] is True for call in batch_calls)
 
 
 def test_worker_rechecks_cache_after_provider_disabled_checkpoint(tmp_path) -> None:
