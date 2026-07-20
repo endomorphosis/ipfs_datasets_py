@@ -9,8 +9,13 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 from .hammer import HammerBackendRunner, HammerGoal, HammerPipeline, HammerPremise, KernelVerifier
 from .hammer_backends import backend_health_for_runners, hammer_backend_health_summary
 from .hammer_guidance import HammerGuidanceArtifact
+from .legal_ir_contract_telemetry import collect_legal_ir_contract_telemetry
 from .legal_ir_obligations import LegalIRProofObligation, generate_legal_ir_proof_obligations
 from .legal_ir_premises import export_legal_ir_premises
+from .legal_ir_premise_selection import (
+    LEGAL_IR_PREMISE_SELECTION_SCHEMA_VERSION,
+    LegalIRPremiseSelector,
+)
 
 
 LEGAL_IR_HAMMER_REPORT_SCHEMA_VERSION = "legal-ir-hammer-report-v1"
@@ -109,14 +114,21 @@ class LegalIRHammerRunner:
                 theorem_registry=theorem_registry,
             )
         )
-        pipeline = self.pipeline or HammerPipeline(
-            backends=self.backends,
-            max_premises=self.config.max_premises,
-            timeout_seconds=self.config.timeout_seconds,
-            parallel_workers=self.config.parallel_workers,
-            verify_reconstruction=self.config.verify_reconstruction,
-            kernel_verifier=self.kernel_verifier,
-        )
+        if self.pipeline is not None:
+            pipeline = self.pipeline
+        else:
+            contract_telemetry = collect_legal_ir_contract_telemetry(sample_or_document)
+            pipeline = HammerPipeline(
+                backends=self.backends,
+                premise_selector=LegalIRPremiseSelector(
+                    contract_telemetry=contract_telemetry
+                ),
+                max_premises=self.config.max_premises,
+                timeout_seconds=self.config.timeout_seconds,
+                parallel_workers=self.config.parallel_workers,
+                verify_reconstruction=self.config.verify_reconstruction,
+                kernel_verifier=self.kernel_verifier,
+            )
         backend_health = backend_health_for_runners(pipeline.backends)
         backend_health_summary = hammer_backend_health_summary(backend_health)
         artifacts: List[HammerGuidanceArtifact] = []
@@ -169,6 +181,7 @@ class LegalIRHammerRunner:
             metadata={
                 "backend_health": backend_health_summary,
                 "max_premises": self.config.max_premises,
+                "premise_selection_schema_version": LEGAL_IR_PREMISE_SELECTION_SCHEMA_VERSION,
                 "timeout_seconds": self.config.timeout_seconds,
                 "verify_reconstruction": self.config.verify_reconstruction,
             },
