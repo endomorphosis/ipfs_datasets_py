@@ -50,6 +50,10 @@ MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
 MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
 HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION = "legal-ir-hammer-guidance-metrics-v1"
 LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION = "legal-ir-view-family-metrics-v1"
+LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION = (
+    "legal-ir-stable-autoencoder-feature-export-v1"
+)
+LEGAL_IR_STABLE_FEATURE_EXPORT_MAX_FEATURES = 64
 DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION = (
     "legal-ir-decompiler-structural-learning-target-v1"
 )
@@ -441,6 +445,55 @@ class AutoencoderFeatureContribution:
             "magnitude": self.magnitude,
             "metadata": dict(sorted(self.metadata.items())),
             "value": self.value,
+        }
+
+
+@dataclass(frozen=True)
+class StableLegalIRFeatureExport:
+    """Source-free, sample-memory-free autoencoder features for promotion.
+
+    This is the model side of the learned-to-deterministic trust boundary.  It
+    intentionally omits decoded vectors, sample identifiers, token features,
+    source text, and per-sample learned state.  The integration layer resolves
+    the categorical feature summaries to canonical contracts and repair lanes.
+    """
+
+    export_id: str
+    model_state_id: str
+    sample_count: int
+    stable_features: tuple[Mapping[str, Any], ...]
+    view_family_weights: Mapping[str, float]
+    contract_feature_atoms: tuple[str, ...] = ()
+    repair_lane_feature_atoms: tuple[str, ...] = ()
+    excluded_categories: tuple[str, ...] = (
+        "decoded_embeddings",
+        "raw_source_text",
+        "sample_identifiers",
+        "sample_memory",
+        "source_spans",
+        "token_features",
+    )
+    schema_version: str = LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "contract_feature_atoms": list(self.contract_feature_atoms),
+            "excluded_categories": list(self.excluded_categories),
+            "export_id": self.export_id,
+            "feature_count": len(self.stable_features),
+            "model_state_id": self.model_state_id,
+            "repair_lane_feature_atoms": list(self.repair_lane_feature_atoms),
+            "sample_count": self.sample_count,
+            "sample_memory_included": False,
+            "schema_version": self.schema_version,
+            "stable_features": [
+                _json_round_floats(dict(feature))
+                for feature in self.stable_features
+            ],
+            "view_family_weights": {
+                str(family): round(float(weight), 12)
+                for family, weight in sorted(self.view_family_weights.items())
+            },
         }
 
 
@@ -4046,6 +4099,156 @@ class AdaptiveModalAutoencoder:
                 for contribution in introspection.top_family_contributions
             ],
         }
+
+    def export_stable_legal_ir_features(
+        self,
+        samples: Iterable[LegalSample] = (),
+        *,
+        min_sample_support: int = 1,
+        max_features: int = LEGAL_IR_STABLE_FEATURE_EXPORT_MAX_FEATURES,
+    ) -> StableLegalIRFeatureExport:
+        """Export reusable learned features for deterministic IR promotion.
+
+        Only feature-level state shared across samples is eligible.  The two
+        sample-memory heads (``decoded_embeddings`` and ``family_logits``) are
+        excluded before the state fingerprint and feature ranking are built.
+        Supplying samples adds a deterministic support filter but never adds a
+        sample identifier or a source-derived token to the export.
+        """
+
+        sample_rows = list(samples)
+        minimum_support = max(1, int(min_sample_support))
+        limit = max(
+            0,
+            min(
+                int(max_features),
+                LEGAL_IR_STABLE_FEATURE_EXPORT_MAX_FEATURES,
+            ),
+        )
+        active_feature_counts: Dict[str, int] = {}
+        view_distributions: List[Mapping[str, float]] = []
+        for sample in sample_rows:
+            active = set(
+                _stable_legal_ir_feature_keys_for_autoencoder_sample(self, sample)
+            )
+            for feature in active:
+                active_feature_counts[feature] = (
+                    active_feature_counts.get(feature, 0) + 1
+                )
+            target_distribution = self._legal_ir_view_target_cache.get(
+                sample.sample_id,
+                self._legal_ir_view_target_cache.get(
+                    _sample_content_cache_id(sample),
+                    {},
+                ),
+            )
+            if target_distribution:
+                view_distributions.append(
+                    self._legal_ir_view_distribution(
+                        sample,
+                        target_distribution,
+                        use_sample_memory=False,
+                    )
+                )
+
+        feature_rows = _stable_legal_ir_learned_feature_rows(self.state)
+        if sample_rows:
+            feature_rows = [
+                row
+                for row in feature_rows
+                if active_feature_counts.get(str(row["feature"]), 0)
+                >= minimum_support
+            ]
+        stable_features: List[Dict[str, Any]] = []
+        for row in feature_rows[:limit]:
+            feature = str(row["feature"])
+            support_count = (
+                active_feature_counts.get(feature, 0)
+                if sample_rows
+                else int(row["source_head_count"])
+            )
+            stable_features.append(
+                {
+                    **row,
+                    "feature_id": "lir-feature-" + _hash_text(feature)[:20],
+                    "sample_support": support_count,
+                    "support_ratio": round(
+                        support_count / len(sample_rows), 12
+                    )
+                    if sample_rows
+                    else 1.0,
+                    "stable": True,
+                }
+            )
+
+        if view_distributions:
+            mean_view_distribution = _mean_distributions(view_distributions)
+        else:
+            mean_view_distribution = _softmax(self.state.legal_ir_view_logits)
+        family_weights: Dict[str, float] = {}
+        for view, weight in mean_view_distribution.items():
+            family = legal_ir_view_family_name(str(view))
+            if family in LEGAL_IR_VIEW_FAMILIES:
+                family_weights[family] = family_weights.get(family, 0.0) + max(
+                    0.0, float(weight)
+                )
+        family_total = sum(family_weights.values())
+        if family_total > 0.0:
+            family_weights = {
+                family: round(weight / family_total, 12)
+                for family, weight in sorted(family_weights.items())
+                if weight > 0.0
+            }
+
+        stable_state = _stable_legal_ir_model_state(self.state)
+        model_state_id = "modal-autoencoder-state-" + _hash_json(stable_state)[:24]
+        contract_atoms = sorted(
+            {
+                str(row["feature"]).removeprefix("hammer:contract-id:")
+                for row in stable_features
+                if str(row["feature"]).startswith("hammer:contract-id:")
+            }
+        )
+        repair_atoms = sorted(
+            {
+                str(row["feature"]).removeprefix("hammer:repair-lane:")
+                for row in stable_features
+                if str(row["feature"]).startswith("hammer:repair-lane:")
+            }
+        )
+        export_payload = {
+            "contract_feature_atoms": contract_atoms,
+            "model_state_id": model_state_id,
+            "repair_lane_feature_atoms": repair_atoms,
+            "sample_count": len(sample_rows),
+            "stable_features": stable_features,
+            "view_family_weights": family_weights,
+        }
+        return StableLegalIRFeatureExport(
+            export_id="lir-feature-export-" + _hash_json(export_payload)[:24],
+            model_state_id=model_state_id,
+            sample_count=len(sample_rows),
+            stable_features=tuple(stable_features),
+            view_family_weights=family_weights,
+            contract_feature_atoms=tuple(contract_atoms),
+            repair_lane_feature_atoms=tuple(repair_atoms),
+        )
+
+    # Explicit aliases keep the trust-boundary intent discoverable to callers
+    # that think in terms of guidance rather than representation export.
+    def export_stable_learned_ir_features(
+        self,
+        samples: Iterable[LegalSample] = (),
+        **kwargs: Any,
+    ) -> StableLegalIRFeatureExport:
+        return self.export_stable_legal_ir_features(samples, **kwargs)
+
+    def export_deterministic_ir_guidance_features(
+        self,
+        samples: Iterable[LegalSample] = (),
+        **kwargs: Any,
+    ) -> StableLegalIRFeatureExport:
+        return self.export_stable_legal_ir_features(samples, **kwargs)
 
     def causal_feature_attribution_for_sample(
         self,
@@ -28729,6 +28932,156 @@ def _minimal_pair_text_for_group(text: str, group: str) -> tuple[str, str]:
     return source + suffixes.get(group, ""), "append:legal-contrastive-cue"
 
 
+_STABLE_LEGAL_IR_FEATURE_PREFIX_GROUPS: tuple[tuple[str, str], ...] = (
+    ("hammer:contract-id:", "contract_id"),
+    ("hammer:repair-lane:", "repair_lane"),
+    ("compiler-contract:", "compiler_contract"),
+    ("compiler-profile:", "compiler_contract"),
+    ("decompiler-surface:", "decompiler_surface_template"),
+    ("repair-plan:", "decompiler_surface_template"),
+    ("cycle-consistency:", "cycle_consistency"),
+    ("round-trip-bridge:", "cycle_consistency"),
+    ("semantic-slot:", "semantic_slot"),
+    ("logic-view-contract:", "logic_view_contract"),
+    ("legal-ir-view:", "logic_view_contract"),
+)
+_STABLE_LEGAL_IR_FORBIDDEN_FEATURE_MARKERS = (
+    "raw-source",
+    "raw_source",
+    "sample-memory",
+    "sample_memory",
+    "source-copy",
+    "source-text",
+    "source-span",
+    "source_copy",
+    "source_text",
+    "source_span",
+    "token:",
+    "token2:",
+    "token3:",
+)
+
+
+def _stable_legal_ir_feature_group(feature: Any) -> str:
+    value = str(feature or "").strip()
+    lowered = value.lower()
+    if not value or len(value.encode("utf-8")) > 512:
+        return ""
+    if any(marker in lowered for marker in _STABLE_LEGAL_IR_FORBIDDEN_FEATURE_MARKERS):
+        return ""
+    for prefix, group in _STABLE_LEGAL_IR_FEATURE_PREFIX_GROUPS:
+        if value.startswith(prefix):
+            return group
+    return ""
+
+
+def _stable_legal_ir_numeric_magnitude(value: Any) -> float:
+    if isinstance(value, Mapping):
+        return max(
+            (_stable_legal_ir_numeric_magnitude(child) for child in value.values()),
+            default=0.0,
+        )
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        numeric = [_float_or_zero(child) for child in value]
+        return _vector_norm(numeric)
+    try:
+        numeric_value = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return abs(numeric_value) if math.isfinite(numeric_value) else 0.0
+
+
+def _stable_legal_ir_learned_feature_rows(
+    state: ModalAutoencoderTrainingState,
+) -> List[Dict[str, Any]]:
+    """Return deterministic structural feature weights from shared heads only."""
+
+    weights: Dict[str, float] = {}
+    head_counts: Dict[str, int] = {}
+    excluded_heads = {
+        "applied_leanstral_guidance_ids",
+        "applied_todo_ids",
+        "decoded_embeddings",
+        "family_logits",
+        "legal_ir_view_logits",
+    }
+    for head_name, head in sorted(vars(state).items()):
+        if head_name in excluded_heads or not isinstance(head, Mapping):
+            continue
+        for feature, value in sorted(head.items(), key=lambda item: str(item[0])):
+            feature_name = str(feature)
+            if not _stable_legal_ir_feature_group(feature_name):
+                continue
+            magnitude = _stable_legal_ir_numeric_magnitude(value)
+            if magnitude <= 0.0:
+                continue
+            weights[feature_name] = weights.get(feature_name, 0.0) + magnitude
+            head_counts[feature_name] = head_counts.get(feature_name, 0) + 1
+    rows = [
+        {
+            "feature": feature,
+            "feature_group": _stable_legal_ir_feature_group(feature),
+            "source_head_count": head_counts[feature],
+            "weight": round(weight, 12),
+        }
+        for feature, weight in weights.items()
+    ]
+    rows.sort(key=lambda row: (-float(row["weight"]), str(row["feature"])))
+    return rows
+
+
+def _stable_legal_ir_feature_keys_for_autoencoder_sample(
+    autoencoder: AdaptiveModalAutoencoder,
+    sample: LegalSample,
+) -> List[str]:
+    return sorted(
+        {
+            feature
+            for feature in autoencoder._feature_keys_for(sample)
+            if _stable_legal_ir_feature_group(feature)
+        }
+    )
+
+
+def _stable_legal_ir_model_state(
+    state: ModalAutoencoderTrainingState,
+) -> Dict[str, Any]:
+    """Build the source-free state payload used by the export fingerprint."""
+
+    return {
+        "architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+        "features": _stable_legal_ir_learned_feature_rows(state),
+        "legal_ir_view_logits": {
+            str(view): round(float(weight), 12)
+            for view, weight in sorted(state.legal_ir_view_logits.items())
+            if math.isfinite(float(weight))
+        },
+        "schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+    }
+
+
+def export_stable_legal_ir_features(
+    autoencoder: AdaptiveModalAutoencoder,
+    samples: Iterable[LegalSample] = (),
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    """Public dictionary export for deterministic learned-guidance promotion."""
+
+    return autoencoder.export_stable_legal_ir_features(samples, **kwargs).to_dict()
+
+
+def export_stable_learned_ir_features(
+    autoencoder: AdaptiveModalAutoencoder,
+    samples: Iterable[LegalSample] = (),
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    """Compatibility alias for :func:`export_stable_legal_ir_features`."""
+
+    return export_stable_legal_ir_features(autoencoder, samples, **kwargs)
+
+
 def _json_round_floats(value: Any) -> Any:
     if isinstance(value, Mapping):
         return {
@@ -28776,6 +29129,8 @@ __all__ = [
     "DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION",
     "HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION",
     "LEGAL_IR_VIEW_FAMILIES",
+    "LEGAL_IR_STABLE_FEATURE_EXPORT_MAX_FEATURES",
+    "LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION",
     "LEGAL_IR_VIEW_FAMILY_METRIC_NAMES",
     "LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
@@ -28786,6 +29141,7 @@ __all__ = [
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
     "ProverCompilationSignal",
+    "StableLegalIRFeatureExport",
     "TRUSTED_HAMMER_FEATURE_BUS_MAX_FEATURES",
     "TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY",
     "TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION",
@@ -28800,6 +29156,8 @@ __all__ = [
     "cross_entropy_loss",
     "distribution_entropy_loss",
     "evaluate_modal_prover_compilation",
+    "export_stable_legal_ir_features",
+    "export_stable_learned_ir_features",
     "frame_ranking_loss",
     "hammer_guidance_metric_block",
     "legal_ir_view_family_metric_block",
