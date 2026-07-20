@@ -301,6 +301,21 @@ __all__ = [
     'map_changed_scope',
     'plan_changed_scope_validation',
     'validate_incremental_candidate',
+    # Program-synthesis failure classification and recovery
+    'FailureCategory',
+    'FailureClassification',
+    'FailureEvidenceStore',
+    'FailureObservation',
+    'FailurePolicy',
+    'FailureRateReporter',
+    'ProgramSynthesisFailureClassifier',
+    'ProgramSynthesisFailureRecovery',
+    'RecoveryAction',
+    'RecoveryContext',
+    'RecoveryLedger',
+    'RecoveryOperations',
+    'RecoveryOutcome',
+    'RecoveryStatus',
 ]
 
 __version__ = '0.1.0'
@@ -365,6 +380,27 @@ def _enforce_export_version_gate(name: str, current_version: str | None = None) 
 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
+    if name in (
+        'FailureCategory',
+        'FailureClassification',
+        'FailureEvidenceStore',
+        'FailureObservation',
+        'FailurePolicy',
+        'FailureRateReporter',
+        'ProgramSynthesisFailureClassifier',
+        'ProgramSynthesisFailureRecovery',
+        'RecoveryAction',
+        'RecoveryContext',
+        'RecoveryLedger',
+        'RecoveryOperations',
+        'RecoveryOutcome',
+        'RecoveryStatus',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            program_synthesis_failures,
+        )
+
+        return getattr(program_synthesis_failures, name)
     if name in (
         'ValidationBoundary',
         'TypedASTScope',
