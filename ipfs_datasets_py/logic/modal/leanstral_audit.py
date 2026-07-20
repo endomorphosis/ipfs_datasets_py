@@ -19,6 +19,12 @@ from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from ipfs_datasets_py.logic.integration.reasoning.legal_ir_subgoals import (
+    DEFAULT_MAX_SUBGOALS_PER_OBLIGATION,
+    LEGAL_IR_SUBGOAL_DECOMPOSITION_SCHEMA_VERSION,
+    LegalIRSubgoal,
+    build_legal_ir_subgoal_decomposition,
+)
 from ipfs_datasets_py.utils import anyio_compat as anyio_runtime
 
 from .leanstral_artifact_cache import LeanstralArtifactCache
@@ -30,6 +36,7 @@ LEANSTRAL_AUDIT_CACHE_SCHEMA_VERSION = "legal-ir-leanstral-audit-cache-v1"
 LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION = "legal-ir-leanstral-drafted-logic-v1"
 LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES = 6
 LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS = 240
+LEANSTRAL_SUBGOAL_AUDIT_PACKET_SCHEMA_VERSION = "legal-ir-leanstral-subgoal-audit-v1"
 
 LEANSTRAL_AUDIT_REQUEST_SCHEMA: Dict[str, Any] = {
     "schema_version": LEANSTRAL_AUDIT_REQUEST_SCHEMA_VERSION,
@@ -605,6 +612,149 @@ class LeanstralAuditRequest:
             "schema_version": self.schema_version,
             "theorem_registry_hash": self.theorem_registry_hash,
         }
+
+
+@dataclass(frozen=True)
+class LeanstralSubgoalAuditPacket:
+    """One bounded failure subgoal prepared for Leanstral and Codex consumers."""
+
+    subgoal: LegalIRSubgoal
+    request: LeanstralAuditRequest
+    codex_todo_projection: Mapping[str, Any]
+    schema_version: str = LEANSTRAL_SUBGOAL_AUDIT_PACKET_SCHEMA_VERSION
+
+    @property
+    def audit_request(self) -> LeanstralAuditRequest:
+        """Compatibility alias that makes the packet's purpose explicit."""
+
+        return self.request
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "audit_request": self.request.to_dict(),
+            "codex_todo_projection": _json_ready_mapping(
+                self.codex_todo_projection
+            ),
+            "schema_version": self.schema_version,
+            "subgoal": self.subgoal.to_dict(),
+        }
+
+
+def build_leanstral_subgoal_audit_prompt(subgoal: LegalIRSubgoal) -> Dict[str, Any]:
+    """Build the strict, source-free drafting scope for one bounded subgoal."""
+
+    return {
+        "instructions": [
+            "Audit and draft guidance for exactly this one deterministic subgoal.",
+            "Treat the parent hammer failure as evidence, not as a proof.",
+            "Use only the primary contract, premise hints, and target component listed here.",
+            "Do not expand the task to sibling subgoals or copy legal source text.",
+            "Return structured audit JSON for local verification before any repair is trusted.",
+        ],
+        "primary_contract_id": subgoal.primary_contract_id,
+        "proof_obligation_id": subgoal.parent_obligation_id,
+        "schema_version": LEANSTRAL_SUBGOAL_AUDIT_PACKET_SCHEMA_VERSION,
+        "subgoal": subgoal.to_dict(),
+        "subgoal_id": subgoal.subgoal_id,
+        "validation_command": subgoal.validation_command,
+    }
+
+
+def build_leanstral_subgoal_audit_packets(
+    obligations: Sequence[Any],
+    failures: Any,
+    *,
+    evidence: Optional[Mapping[str, Any]] = None,
+    model: Mapping[str, Any] | str = "Leanstral",
+    theorem_registry: Optional[Mapping[str, Any]] = None,
+    theorem_registry_hash: Optional[str] = None,
+    max_subgoals_per_obligation: int = DEFAULT_MAX_SUBGOALS_PER_OBLIGATION,
+) -> List[LeanstralSubgoalAuditPacket]:
+    """Decompose failures before creating Leanstral or Codex work packets.
+
+    Each generated audit request covers exactly one parent obligation, one
+    bounded subgoal, and one canonical primary contract.  User-supplied common
+    evidence is recursively source-sanitized before it reaches the prompt.
+    """
+
+    decomposition = build_legal_ir_subgoal_decomposition(
+        obligations,
+        failures,
+        max_subgoals_per_obligation=max_subgoals_per_obligation,
+    )
+    common_evidence = _source_free_subgoal_evidence(evidence or {})
+    packets: List[LeanstralSubgoalAuditPacket] = []
+    for subgoal in decomposition.subgoals:
+        prompt = build_leanstral_subgoal_audit_prompt(subgoal)
+        request_evidence = {
+            **common_evidence,
+            "cluster": {
+                "compiler_surface": subgoal.target_component,
+                "semantic_family": subgoal.logic_family,
+                "subgoal_id": subgoal.subgoal_id,
+            },
+            "failure_decomposition": {
+                "max_subgoals_per_obligation": (
+                    decomposition.max_subgoals_per_obligation
+                ),
+                "schema_version": LEGAL_IR_SUBGOAL_DECOMPOSITION_SCHEMA_VERSION,
+            },
+            "failure_subgoal": subgoal.to_dict(),
+            "owned_compiler_surfaces": [subgoal.target_component],
+        }
+        request = LeanstralAuditRequest.build(
+            evidence=request_evidence,
+            prompt=prompt,
+            model=model,
+            theorem_registry=theorem_registry,
+            theorem_registry_hash=theorem_registry_hash,
+            proof_obligation_ids=(subgoal.parent_obligation_id,),
+        )
+        packets.append(
+            LeanstralSubgoalAuditPacket(
+                subgoal=subgoal,
+                request=request,
+                codex_todo_projection=subgoal.to_codex_todo_projection(),
+            )
+        )
+    return packets
+
+
+def _source_free_subgoal_evidence(value: Any) -> Any:
+    """Replace raw source-bearing fields with stable hashes at this boundary."""
+
+    source_keys = {
+        "copied_text",
+        "full_text",
+        "normalized_text",
+        "raw_source",
+        "source_span",
+        "source_text",
+        "text",
+    }
+    if isinstance(value, Mapping):
+        result: Dict[str, Any] = {}
+        for raw_key, child in sorted(value.items(), key=lambda item: str(item[0])):
+            key = str(raw_key)
+            lowered = key.lower()
+            if lowered in source_keys or lowered.endswith("_source_text"):
+                raw_text = str(child or "")
+                result[f"{key}_sha256"] = hashlib.sha256(
+                    raw_text.encode("utf-8")
+                ).hexdigest()
+                result[f"{key}_omitted"] = True
+            else:
+                result[key] = _source_free_subgoal_evidence(child)
+        return result
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_source_free_subgoal_evidence(item) for item in value]
+    return value
+
+
+# Alternate names used by queue producers and older audit integrations.
+build_leanstral_failure_subgoal_packets = build_leanstral_subgoal_audit_packets
+build_leanstral_subgoal_requests = build_leanstral_subgoal_audit_packets
+prepare_leanstral_subgoal_audits = build_leanstral_subgoal_audit_packets
 
 
 @dataclass(frozen=True)
@@ -2475,6 +2625,7 @@ def _daemon_leanstral_audit_prompt_payload(
     """Return the smallest prompt shape suitable for always-on guidance."""
 
     evidence = _json_ready_mapping(request.evidence)
+    subgoal_evidence = _leanstral_subgoal_prompt_evidence(evidence)
     cluster = _json_ready_mapping(evidence.get("cluster"))
     semantic_family = str(cluster.get("semantic_family") or "legal_ir").strip()
     compiler_surface = str(cluster.get("compiler_surface") or "legal_ir.compiler").strip()
@@ -2499,6 +2650,11 @@ def _daemon_leanstral_audit_prompt_payload(
             "Copy request_id, request_cache_key, and one proof_obligation_id exactly.",
             "Do not copy legal text spans; cite evidence_id/example_id and use predicates or hashes.",
             "For non-abstain, include missing_semantic_rule, counterexample or witness, and proposed_compiler_surface.",
+            *(
+                ["Audit only request.evidence.failure_subgoal; do not expand to sibling subgoals."]
+                if subgoal_evidence
+                else []
+            ),
         ],
         "request": {
             "cache_key": request.cache_key,
@@ -2509,6 +2665,7 @@ def _daemon_leanstral_audit_prompt_payload(
                 "referenced_examples": referenced_examples,
                 "source_record_hashes": list(evidence.get("source_record_hashes", []) or [])[:2],
                 "state_hashes": list(evidence.get("state_hashes", []) or [])[:2],
+                **subgoal_evidence,
             },
             "hashes": {
                 "evidence": request.evidence_hash,
@@ -2566,6 +2723,7 @@ def _compact_leanstral_audit_prompt_payload(
     """Return a daemon-sized prompt that preserves verifiable identifiers."""
 
     evidence = _json_ready_mapping(request.evidence)
+    subgoal_evidence = _leanstral_subgoal_prompt_evidence(evidence)
     cluster = _json_ready_mapping(evidence.get("cluster"))
     semantic_family = str(cluster.get("semantic_family") or "legal_ir").strip()
     compiler_surface = str(cluster.get("compiler_surface") or "legal_ir.compiler").strip()
@@ -2601,6 +2759,7 @@ def _compact_leanstral_audit_prompt_payload(
             "semantic_signature": evidence.get("semantic_signature"),
             "source_record_hashes": list(evidence.get("source_record_hashes", []) or [])[:4],
             "state_hashes": list(evidence.get("state_hashes", []) or [])[:4],
+            **subgoal_evidence,
         },
         "hashes": {
             "evidence": request.evidence_hash,
@@ -2637,6 +2796,11 @@ def _compact_leanstral_audit_prompt_payload(
             "For non-abstain responses, cite a compact evidence_id or example_id from request.evidence.",
             "Do not copy legal text spans; use predicates, slots, hashes, and short identifiers.",
             "For issue findings, include missing_semantic_rule and proposed_compiler_surface.",
+            *(
+                ["Audit only request.evidence.failure_subgoal; do not expand to sibling subgoals."]
+                if subgoal_evidence
+                else []
+            ),
         ],
         "output_contract": [
             "Return exactly one compact JSON object.",
@@ -2698,6 +2862,7 @@ def _compact_prompt_cluster(cluster: Mapping[str, Any]) -> Dict[str, Any]:
         "schema_version",
         "semantic_family",
         "semantic_signature",
+        "subgoal_id",
     ):
         if key in cluster:
             payload[key] = _json_ready(cluster.get(key))
@@ -2712,6 +2877,19 @@ def _compact_prompt_cluster(cluster: Mapping[str, Any]) -> Dict[str, Any]:
     if isinstance(omitted, Sequence) and not isinstance(omitted, (str, bytes)):
         payload["omitted_gap_hashes"] = [str(value) for value in omitted[:4]]
     return payload
+
+
+def _leanstral_subgoal_prompt_evidence(
+    evidence: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Preserve the bounded subgoal contract in compact and daemon prompts."""
+
+    result: Dict[str, Any] = {}
+    for key in ("failure_decomposition", "failure_subgoal"):
+        value = evidence.get(key)
+        if isinstance(value, Mapping):
+            result[key] = _json_ready_mapping(value)
+    return result
 
 
 def _compact_prompt_evidence_packet(packet: Mapping[str, Any]) -> Dict[str, Any]:
@@ -3937,6 +4115,7 @@ __all__ = [
     "LEANSTRAL_AUDIT_CHECKPOINT_SCHEMA_VERSION",
     "LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION",
     "LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION",
+    "LEANSTRAL_SUBGOAL_AUDIT_PACKET_SCHEMA_VERSION",
     "LeanstralAuditCache",
     "LeanstralAuditCacheEntry",
     "LeanstralAuditConfig",
@@ -3951,14 +4130,20 @@ __all__ = [
     "LeanstralAuditWorkerSummary",
     "LeanstralAuditWorkItem",
     "LeanstralAuditWorkResult",
+    "LeanstralSubgoalAuditPacket",
     "build_leanstral_audit_cache_key",
     "build_leanstral_audit_work_items",
+    "build_leanstral_failure_subgoal_packets",
+    "build_leanstral_subgoal_audit_packets",
+    "build_leanstral_subgoal_audit_prompt",
+    "build_leanstral_subgoal_requests",
     "cache_entry_is_current",
     "canonical_sha256",
     "leanstral_llm_router_health",
     "load_leanstral_audit_checkpoint",
     "load_leanstral_audit_disagreements",
     "parse_leanstral_audit_response",
+    "prepare_leanstral_subgoal_audits",
     "resolve_leanstral_llm_router",
     "validate_leanstral_audit_response",
     "write_leanstral_audit_checkpoint",
