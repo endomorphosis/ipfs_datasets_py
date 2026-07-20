@@ -523,7 +523,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-022 Add premise selection ranking over contracts and failures
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: premise-selection
