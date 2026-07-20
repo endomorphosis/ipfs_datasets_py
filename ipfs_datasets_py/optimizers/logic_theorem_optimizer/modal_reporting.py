@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from datetime import datetime
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .legal_samples import LegalSample
 from .modal_autoencoder import AutoencoderEvaluation
@@ -11,6 +13,17 @@ from .modal_prover_router import ModalProverRouteResult
 from ipfs_datasets_py.logic.modal.leanstral_reporting import (
     LEANSTRAL_PATCH_OUTCOME_STATUSES,
     build_leanstral_patch_feedback_report,
+)
+from ipfs_datasets_py.logic.modal.introspection_metrics import (
+    STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION,
+    STATE_TO_COMPILER_PATCH_STAGES,
+    IntrospectionMetricSchemaError,
+    StateToCompilerPatchLifecycle,
+)
+
+
+STATE_TO_COMPILER_PATCH_LAG_REPORT_SCHEMA_VERSION = (
+    "legal-ir-state-to-compiler-patch-lag-report-v1"
 )
 
 
@@ -68,7 +81,7 @@ class ModalSupervisorHealthReport:
     latest_heartbeat_age_seconds: Optional[float] = None
     latest_phase_timings: Dict[str, float] = field(default_factory=dict)
     cache_counters: Dict[str, int] = field(default_factory=dict)
-    state_to_compiler_patch_lag: Dict[str, int] = field(default_factory=dict)
+    state_to_compiler_patch_lag: Dict[str, Any] = field(default_factory=dict)
     queue_counts: Dict[str, int] = field(default_factory=dict)
     executor_health: Dict[str, Any] = field(default_factory=dict)
     transient_failure_rate: float = 0.0
@@ -254,36 +267,287 @@ def build_leanstral_feedback_summary(
 def state_to_compiler_patch_lag(
     summary: Mapping[str, Any] | None = None,
     *,
+    lifecycle_paths: Optional[
+        Iterable[StateToCompilerPatchLifecycle | Mapping[str, Any]]
+    ] = None,
     state_update_count: Optional[int] = None,
     compiler_patch_count: Optional[int] = None,
-) -> Dict[str, int]:
-    """Return the lag between learned-state updates and compiler patch output."""
+) -> Dict[str, Any]:
+    """Summarize traced state-to-compiler-patch lifecycles.
+
+    Only a path observed through the *next* compiler cycle contributes a
+    numeric end-to-end lag.  Partial and malformed paths are right-censored.
+    The legacy counter arguments remain accepted during rollout, but are
+    deliberately ignored because state-update and patch counters do not share
+    a correlation domain and therefore cannot define lag.
+    """
 
     data = dict(summary or {})
-    state_telemetry = _mapping(data.get("latest_autoencoder_state_telemetry"))
-    if state_update_count is None:
-        state_update_count = (
-            _safe_int(state_telemetry.get("applied_todo_count"))
-            + _safe_int(state_telemetry.get("generalizable_entry_count"))
+    if lifecycle_paths is None:
+        raw_paths = _state_to_patch_path_payloads(data)
+    else:
+        raw_paths = list(lifecycle_paths)
+
+    paths: List[StateToCompilerPatchLifecycle] = []
+    invalid_paths: List[Dict[str, Any]] = []
+    seen_path_ids = set()
+    for index, raw_path in enumerate(raw_paths):
+        try:
+            path = (
+                raw_path
+                if isinstance(raw_path, StateToCompilerPatchLifecycle)
+                else StateToCompilerPatchLifecycle.from_mapping(_mapping(raw_path))
+            )
+            if path.path_id in seen_path_ids:
+                raise IntrospectionMetricSchemaError(
+                    f"duplicate state-to-patch path_id: {path.path_id!r}"
+                )
+            seen_path_ids.add(path.path_id)
+            paths.append(path)
+        except (IntrospectionMetricSchemaError, TypeError, ValueError) as exc:
+            invalid_paths.append(
+                {
+                    "index": index,
+                    "reason": str(exc),
+                }
+            )
+
+    complete_paths = [path for path in paths if path.complete]
+    incomplete_paths = [path for path in paths if path.censored]
+    invalid_count = len(invalid_paths)
+    censored_count = len(incomplete_paths) + invalid_count
+
+    wall_clock_values: List[float] = []
+    cycle_values: List[float] = []
+    for path in complete_paths:
+        assert path.observed_next_cycle is not None
+        wall_clock_values.append(
+            _timestamp_seconds(path.observed_next_cycle.timestamp)
+            - _timestamp_seconds(path.state_snapshot.timestamp)
         )
-        if state_update_count <= 0:
-            state_update_count = _safe_int(data.get("applied_todo_ids"))
-    if compiler_patch_count is None:
-        compiler_patch_count = max(
-            _safe_int(data.get("program_synthesis_completed_count")),
-            _safe_int(data.get("latest_program_synthesis_seeded_count"))
-            + _safe_int(data.get("latest_compiler_ir_guidance_activation_seeded_count"))
-            + _safe_int(data.get("latest_compiler_ir_guidance_distillation_seeded_count"))
-            + _safe_int(data.get("latest_compiler_ir_guidance_guardrail_seeded_count")),
-            _recursive_status_count(data.get("latest_role_queue_counts"), "completed"),
-            _recursive_status_count(data.get("latest_queue_counts"), "completed"),
+        cycle_values.append(
+            float(path.observed_next_cycle.cycle_id - path.state_snapshot.cycle_id)
         )
-    state_updates = max(0, int(state_update_count or 0))
-    compiler_patches = max(0, int(compiler_patch_count or 0))
+
+    transition_names = tuple(
+        f"{source}_to_{destination}"
+        for source, destination in zip(
+            STATE_TO_COMPILER_PATCH_STAGES,
+            STATE_TO_COMPILER_PATCH_STAGES[1:],
+        )
+    )
+    transition_seconds: Dict[str, List[float]] = {
+        transition: [] for transition in transition_names
+    }
+    transition_cycles: Dict[str, List[float]] = {
+        transition: [] for transition in transition_names
+    }
+    transition_censored: Dict[str, int] = {
+        transition: 0 for transition in transition_names
+    }
+    censored_by_stage = {stage: 0 for stage in STATE_TO_COMPILER_PATCH_STAGES[1:]}
+
+    for path in paths:
+        milestones = path.milestones()
+        if path.censored_at_stage is not None:
+            censored_by_stage[path.censored_at_stage] += 1
+        for source, destination in zip(
+            STATE_TO_COMPILER_PATCH_STAGES,
+            STATE_TO_COMPILER_PATCH_STAGES[1:],
+        ):
+            transition = f"{source}_to_{destination}"
+            source_event = milestones[source]
+            destination_event = milestones[destination]
+            if source_event is not None and destination_event is not None:
+                transition_seconds[transition].append(
+                    _timestamp_seconds(destination_event.timestamp)
+                    - _timestamp_seconds(source_event.timestamp)
+                )
+                transition_cycles[transition].append(
+                    float(destination_event.cycle_id - source_event.cycle_id)
+                )
+            elif source_event is not None:
+                transition_censored[transition] += 1
+
+    queue_stage_seconds = {
+        transition: _percentile_summary(
+            transition_seconds[transition],
+            censored_count=transition_censored[transition],
+            unit="seconds",
+        )
+        for transition in transition_names
+    }
+    queue_stage_cycles = {
+        transition: _percentile_summary(
+            transition_cycles[transition],
+            censored_count=transition_censored[transition],
+            unit="cycles",
+        )
+        for transition in transition_names
+    }
+    path_count = len(raw_paths)
+    status = (
+        "no_data"
+        if path_count == 0
+        else "complete"
+        if censored_count == 0
+        else "censored"
+    )
+    legacy_counter_inputs_ignored = bool(
+        state_update_count is not None
+        or compiler_patch_count is not None
+        or _contains_legacy_lag_counters(data)
+    )
     return {
-        "compiler_patch_count": compiler_patches,
-        "lag": max(0, state_updates - compiler_patches),
-        "state_update_count": state_updates,
+        "schema_version": STATE_TO_COMPILER_PATCH_LAG_REPORT_SCHEMA_VERSION,
+        "lifecycle_schema_version": STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION,
+        "status": status,
+        "path_count": path_count,
+        "valid_path_count": len(paths),
+        "complete_path_count": len(complete_paths),
+        "censored_path_count": censored_count,
+        "invalid_path_count": invalid_count,
+        "completion_rate": (
+            round(len(complete_paths) / path_count, 9) if path_count else None
+        ),
+        "legacy_counter_inputs_ignored": legacy_counter_inputs_ignored,
+        "wall_clock_lag_seconds": _percentile_summary(
+            wall_clock_values,
+            censored_count=censored_count,
+            unit="seconds",
+        ),
+        "cycle_lag": _percentile_summary(
+            cycle_values,
+            censored_count=censored_count,
+            unit="cycles",
+        ),
+        "queue_stage_lag_seconds": queue_stage_seconds,
+        "queue_stage_lag_cycles": queue_stage_cycles,
+        "censored_by_stage": censored_by_stage,
+        "invalid_paths": invalid_paths,
+        "paths": [path.to_dict() for path in paths],
+        "version_paths": [
+            {
+                "path_id": path.path_id,
+                "censored": path.censored,
+                "versions": {
+                    stage: (
+                        milestone.version_id if milestone is not None else None
+                    )
+                    for stage, milestone in path.milestones().items()
+                },
+            }
+            for path in paths
+        ],
+    }
+
+
+def _state_to_patch_path_payloads(summary: Mapping[str, Any]) -> List[Any]:
+    direct_paths = summary.get("paths")
+    if isinstance(direct_paths, Sequence) and not isinstance(
+        direct_paths, (str, bytes, bytearray)
+    ):
+        return list(direct_paths)
+    if isinstance(summary.get("state_snapshot"), Mapping):
+        return [summary]
+
+    keys = (
+        "state_to_compiler_patch_lifecycles",
+        "state_to_compiler_patch_paths",
+        "state_to_patch_lifecycles",
+        "state_to_patch_paths",
+        "latest_state_to_compiler_patch_lifecycles",
+        "latest_state_to_compiler_patch_paths",
+    )
+    for key in keys:
+        value = summary.get(key)
+        if value is None:
+            continue
+        if isinstance(value, Mapping):
+            nested = value.get("paths")
+            if isinstance(nested, Sequence) and not isinstance(
+                nested, (str, bytes, bytearray)
+            ):
+                return list(nested)
+            return [value]
+        if isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
+            return list(value)
+        return [value]
+    existing_report = summary.get("state_to_compiler_patch_lag")
+    if isinstance(existing_report, Mapping):
+        nested = existing_report.get("paths")
+        if isinstance(nested, Sequence) and not isinstance(
+            nested, (str, bytes, bytearray)
+        ):
+            return list(nested)
+    return []
+
+
+def _contains_legacy_lag_counters(summary: Mapping[str, Any]) -> bool:
+    legacy_keys = (
+        "program_synthesis_completed_count",
+        "latest_program_synthesis_seeded_count",
+        "latest_compiler_ir_guidance_activation_seeded_count",
+        "latest_compiler_ir_guidance_distillation_seeded_count",
+        "latest_compiler_ir_guidance_guardrail_seeded_count",
+    )
+    state_telemetry = _mapping(summary.get("latest_autoencoder_state_telemetry"))
+    return any(key in summary for key in legacy_keys) or any(
+        key in state_telemetry
+        for key in ("applied_todo_count", "generalizable_entry_count")
+    )
+
+
+def _timestamp_seconds(value: str) -> float:
+    normalized = value[:-1] + "+00:00" if value.endswith(("Z", "z")) else value
+    return datetime.fromisoformat(normalized).timestamp()
+
+
+def _percentile_summary(
+    values: Iterable[float],
+    *,
+    censored_count: int,
+    unit: str,
+) -> Dict[str, Any]:
+    finite_values = sorted(
+        float(value)
+        for value in values
+        if isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        and float(value) >= 0.0
+    )
+
+    def percentile(quantile: float) -> Optional[float]:
+        if not finite_values:
+            return None
+        position = (len(finite_values) - 1) * quantile
+        lower = int(math.floor(position))
+        upper = int(math.ceil(position))
+        if lower == upper:
+            result = finite_values[lower]
+        else:
+            fraction = position - lower
+            result = (
+                finite_values[lower]
+                + (finite_values[upper] - finite_values[lower]) * fraction
+            )
+        return round(result, 9)
+
+    observed_count = len(finite_values)
+    return {
+        "unit": unit,
+        "observed_count": observed_count,
+        "censored_count": max(0, int(censored_count)),
+        "sample_count": observed_count + max(0, int(censored_count)),
+        "minimum": round(finite_values[0], 9) if finite_values else None,
+        "p50": percentile(0.50),
+        "p90": percentile(0.90),
+        "p95": percentile(0.95),
+        "p99": percentile(0.99),
+        "maximum": round(finite_values[-1], 9) if finite_values else None,
     }
 
 
@@ -417,22 +681,11 @@ def _float_mapping(value: Any) -> Dict[str, float]:
     return {str(key): _safe_float(raw) for key, raw in _mapping(value).items()}
 
 
-def _recursive_status_count(value: Any, status: str) -> int:
-    if isinstance(value, Mapping):
-        total = 0
-        for key, item in value.items():
-            if str(key) == status:
-                total += _safe_int(item)
-            elif isinstance(item, Mapping):
-                total += _recursive_status_count(item, status)
-        return total
-    return 0
-
-
 __all__ = [
     "LeanstralFeedbackSummary",
     "ModalSupervisorHealthReport",
     "ModalParserReport",
+    "STATE_TO_COMPILER_PATCH_LAG_REPORT_SCHEMA_VERSION",
     "build_leanstral_feedback_summary",
     "build_modal_supervisor_health_report",
     "build_modal_parser_report",

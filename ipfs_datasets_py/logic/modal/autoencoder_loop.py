@@ -198,7 +198,7 @@ class ModalAutoencoderLoopResult:
     )
     cache_counters: Dict[str, int] = field(default_factory=dict)
     phase_timings: Dict[str, float] = field(default_factory=dict)
-    state_to_compiler_patch_lag: Dict[str, int] = field(default_factory=dict)
+    state_to_compiler_patch_lag: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -388,14 +388,14 @@ class LegalModalAutoencoderLoop:
         if introspection_summary.mode == "enforce" and not introspection_summary.enforce_allowed:
             accepted = False
         cache_counters = self._cache_counters()
-        state_lag = _state_to_compiler_patch_lag(
-            state_update_count=_state_update_count(self.autoencoder),
-            compiler_patch_count=(
-                llm_patch_validation.accepted_count
-                if llm_patch_validation is not None
-                else 0
-            ),
+        # A single-document loop does not observe the cross-cycle lifecycle
+        # needed for a numeric state-to-patch lag.  Emit the explicit no-data
+        # report instead of subtracting unrelated state and patch counters.
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import (
+            state_to_compiler_patch_lag,
         )
+
+        state_lag = state_to_compiler_patch_lag()
         return ModalAutoencoderLoopResult(
             source_text=text,
             codec_result=codec_result,
@@ -824,32 +824,6 @@ def _consume_cycle_budget(cycle_budget: Optional[Dict[str, int]], key: str) -> b
         return False
     cycle_budget[used_key] = used + 1
     return True
-
-
-def _state_update_count(autoencoder: AdaptiveModalAutoencoder) -> int:
-    state = getattr(autoencoder, "state", None)
-    if state is None:
-        return 0
-    telemetry = state.telemetry() if hasattr(state, "telemetry") else {}
-    return max(
-        0,
-        int(telemetry.get("applied_todo_count", 0) or 0)
-        + int(telemetry.get("generalizable_entry_count", 0) or 0),
-    )
-
-
-def _state_to_compiler_patch_lag(
-    *,
-    state_update_count: int,
-    compiler_patch_count: int,
-) -> Dict[str, int]:
-    state_updates = max(0, int(state_update_count or 0))
-    compiler_patches = max(0, int(compiler_patch_count or 0))
-    return {
-        "compiler_patch_count": compiler_patches,
-        "lag": max(0, state_updates - compiler_patches),
-        "state_update_count": state_updates,
-    }
 
 
 def _accepted(

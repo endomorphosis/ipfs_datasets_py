@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence
 
@@ -21,6 +22,18 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
 INTROSPECTION_METRIC_SCHEMA_VERSION = "legal-ir-introspection-metrics-v1"
 INTROSPECTION_METRIC_CONFIG_VERSION = "legal-ir-introspection-metrics-config-v1"
 LEANSTRAL_CANARY_MANIFEST_VERSION = "legal-ir-leanstral-canary-manifest-v1"
+STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION = (
+    "legal-ir-state-to-compiler-patch-lifecycle-v1"
+)
+STATE_TO_COMPILER_PATCH_STAGES = (
+    "state_snapshot",
+    "audit",
+    "todo",
+    "claimed_worktree",
+    "validated_patch",
+    "merged_commit",
+    "observed_next_cycle",
+)
 REQUIRED_LEGAL_LOGIC_FAMILIES = tuple(family.value for family in ModalLogicFamily)
 
 
@@ -289,6 +302,243 @@ class PhaseTiming:
             phase=str(data.get("phase") or ""),
             duration_ms=_as_float(data, "duration_ms"),
         )
+
+
+@dataclass(frozen=True)
+class StateToCompilerPatchMilestone:
+    """One explicitly observed point in a state-to-patch lifecycle.
+
+    ``version_id`` identifies the artifact produced or consumed at this point
+    (for example a state snapshot digest, TODO ID, worktree generation, patch
+    digest, or commit ID).  It must not be replaced with a cumulative counter.
+    """
+
+    timestamp: str
+    cycle_id: int
+    version_id: str
+
+    def __post_init__(self) -> None:
+        _parse_aware_timestamp(self.timestamp, "lifecycle milestone timestamp")
+        if (
+            not isinstance(self.cycle_id, int)
+            or isinstance(self.cycle_id, bool)
+            or self.cycle_id < 0
+        ):
+            raise IntrospectionMetricSchemaError(
+                "lifecycle milestone cycle_id must be a non-negative integer"
+            )
+        if not str(self.version_id).strip():
+            raise IntrospectionMetricSchemaError(
+                "lifecycle milestone version_id must not be empty"
+            )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "cycle_id": self.cycle_id,
+            "timestamp": self.timestamp,
+            "version_id": self.version_id,
+        }
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "StateToCompilerPatchMilestone":
+        timestamp = data.get("timestamp")
+        if timestamp is None:
+            timestamp = data.get("timestamp_utc")
+        if timestamp is None:
+            timestamp = data.get("observed_at")
+        cycle_id = data.get("cycle_id")
+        if cycle_id is None:
+            cycle_id = data.get("cycle")
+        return cls(
+            timestamp=str(timestamp or ""),
+            cycle_id=_strict_non_negative_int(cycle_id, "cycle_id"),
+            version_id=str(data.get("version_id") or ""),
+        )
+
+
+@dataclass(frozen=True)
+class StateToCompilerPatchLifecycle:
+    """Trace one learned state snapshot through compiler observation.
+
+    Milestones are contiguous: once a stage is absent, every later stage must
+    also be absent.  Such a path is right-censored at the first absent stage.
+    This prevents partial work from being reported as a zero-second or
+    zero-cycle completed lag.
+    """
+
+    path_id: str
+    state_snapshot: StateToCompilerPatchMilestone
+    audit: Optional[StateToCompilerPatchMilestone] = None
+    todo: Optional[StateToCompilerPatchMilestone] = None
+    claimed_worktree: Optional[StateToCompilerPatchMilestone] = None
+    validated_patch: Optional[StateToCompilerPatchMilestone] = None
+    merged_commit: Optional[StateToCompilerPatchMilestone] = None
+    observed_next_cycle: Optional[StateToCompilerPatchMilestone] = None
+    schema_version: str = STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION:
+            raise IntrospectionMetricSchemaError(
+                f"unsupported state-to-patch lifecycle schema_version: {self.schema_version}"
+            )
+        if not str(self.path_id).strip():
+            raise IntrospectionMetricSchemaError("state-to-patch path_id must not be empty")
+
+        milestones = self.milestones()
+        missing_stage = ""
+        previous_stage = ""
+        previous_timestamp: Optional[datetime] = None
+        previous_cycle: Optional[int] = None
+        for stage in STATE_TO_COMPILER_PATCH_STAGES:
+            milestone = milestones[stage]
+            if milestone is None:
+                missing_stage = missing_stage or stage
+                continue
+            if missing_stage:
+                raise IntrospectionMetricSchemaError(
+                    f"lifecycle stage {stage!r} is present after missing stage {missing_stage!r}"
+                )
+            current_timestamp = _parse_aware_timestamp(
+                milestone.timestamp, f"{stage}.timestamp"
+            )
+            if previous_timestamp is not None and current_timestamp < previous_timestamp:
+                raise IntrospectionMetricSchemaError(
+                    f"lifecycle timestamp for {stage!r} precedes {previous_stage!r}"
+                )
+            if previous_cycle is not None and milestone.cycle_id < previous_cycle:
+                raise IntrospectionMetricSchemaError(
+                    f"lifecycle cycle_id for {stage!r} precedes {previous_stage!r}"
+                )
+            previous_stage = stage
+            previous_timestamp = current_timestamp
+            previous_cycle = milestone.cycle_id
+        if (
+            self.observed_next_cycle is not None
+            and self.merged_commit is not None
+            and self.observed_next_cycle.cycle_id <= self.merged_commit.cycle_id
+        ):
+            raise IntrospectionMetricSchemaError(
+                "observed_next_cycle.cycle_id must be later than merged_commit.cycle_id"
+            )
+
+    def milestones(self) -> Dict[str, Optional[StateToCompilerPatchMilestone]]:
+        """Return the canonical, ordered milestone mapping."""
+
+        return {
+            stage: getattr(self, stage)
+            for stage in STATE_TO_COMPILER_PATCH_STAGES
+        }
+
+    @property
+    def complete(self) -> bool:
+        return self.observed_next_cycle is not None
+
+    @property
+    def censored(self) -> bool:
+        return not self.complete
+
+    @property
+    def censored_at_stage(self) -> Optional[str]:
+        for stage, milestone in self.milestones().items():
+            if milestone is None:
+                return stage
+        return None
+
+    def to_dict(self) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "censored": self.censored,
+            "censored_at_stage": self.censored_at_stage,
+            "complete": self.complete,
+            "path_id": self.path_id,
+            "schema_version": self.schema_version,
+        }
+        payload.update(
+            {
+                stage: milestone.to_dict() if milestone is not None else None
+                for stage, milestone in self.milestones().items()
+            }
+        )
+        return payload
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "StateToCompilerPatchLifecycle":
+        raw = dict(data)
+        schema_version = str(
+            raw.get("schema_version")
+            or STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION
+        )
+        staged: Dict[str, Optional[StateToCompilerPatchMilestone]] = {
+            stage: None for stage in STATE_TO_COMPILER_PATCH_STAGES
+        }
+
+        event_sequence = raw.get("milestones")
+        if event_sequence is None:
+            event_sequence = raw.get("events")
+        if event_sequence is not None:
+            if not isinstance(event_sequence, Sequence) or isinstance(
+                event_sequence, (str, bytes, bytearray)
+            ):
+                raise IntrospectionMetricSchemaError("lifecycle milestones must be a list")
+            for item in event_sequence:
+                event = _mapping(item)
+                stage = str(event.get("stage") or "")
+                if stage not in staged:
+                    raise IntrospectionMetricSchemaError(
+                        f"unknown state-to-patch lifecycle stage: {stage!r}"
+                    )
+                if staged[stage] is not None:
+                    raise IntrospectionMetricSchemaError(
+                        f"duplicate state-to-patch lifecycle stage: {stage!r}"
+                    )
+                staged[stage] = StateToCompilerPatchMilestone.from_mapping(event)
+        else:
+            for stage in STATE_TO_COMPILER_PATCH_STAGES:
+                value = raw.get(stage)
+                if isinstance(value, Mapping):
+                    staged[stage] = StateToCompilerPatchMilestone.from_mapping(value)
+                    continue
+                timestamp = raw.get(f"{stage}_at")
+                if timestamp is None:
+                    timestamp = raw.get(f"{stage}_timestamp")
+                cycle_id = raw.get(f"{stage}_cycle_id")
+                if cycle_id is None:
+                    cycle_id = raw.get(f"{stage}_cycle")
+                version_id = raw.get(f"{stage}_version_id")
+                flat_values = (timestamp, cycle_id, version_id)
+                if any(item is not None for item in flat_values):
+                    if not all(item is not None for item in flat_values):
+                        raise IntrospectionMetricSchemaError(
+                            f"flat lifecycle stage {stage!r} requires timestamp, cycle_id, and version_id"
+                        )
+                    staged[stage] = StateToCompilerPatchMilestone(
+                        timestamp=str(timestamp),
+                        cycle_id=_strict_non_negative_int(cycle_id, f"{stage}_cycle_id"),
+                        version_id=str(version_id or ""),
+                    )
+
+        state_snapshot = staged.pop("state_snapshot")
+        if state_snapshot is None:
+            raise IntrospectionMetricSchemaError(
+                "state-to-patch lifecycle requires a state_snapshot milestone"
+            )
+        return cls(
+            path_id=str(
+                raw.get("path_id")
+                or raw.get("lifecycle_id")
+                or raw.get("correlation_id")
+                or ""
+            ),
+            state_snapshot=state_snapshot,
+            schema_version=schema_version,
+            **staged,
+        )
+
+
+# Concise aliases retained for callers that already use "state-to-patch" in
+# dashboards and storage keys.
+StateToPatchMilestone = StateToCompilerPatchMilestone
+StateToPatchLifecycle = StateToCompilerPatchLifecycle
+StateToCompilerPatchPath = StateToCompilerPatchLifecycle
 
 
 @dataclass(frozen=True)
@@ -587,6 +837,28 @@ def _stable_float(value: float) -> float:
     return round(float(value), 12)
 
 
+def _parse_aware_timestamp(value: str, name: str) -> datetime:
+    text = str(value or "").strip()
+    if not text:
+        raise IntrospectionMetricSchemaError(f"{name} must not be empty")
+    normalized = text[:-1] + "+00:00" if text.endswith(("Z", "z")) else text
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise IntrospectionMetricSchemaError(
+            f"{name} must be an ISO-8601 timestamp"
+        ) from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise IntrospectionMetricSchemaError(f"{name} must include a UTC offset")
+    return parsed
+
+
+def _strict_non_negative_int(value: Any, name: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        raise IntrospectionMetricSchemaError(f"{name} must be a non-negative integer")
+    return int(value)
+
+
 def _require_known_family(family: str) -> None:
     if family not in REQUIRED_LEGAL_LOGIC_FAMILIES:
         raise IntrospectionMetricSchemaError(f"unknown LegalIR family: {family!r}")
@@ -669,8 +941,15 @@ __all__ = [
     "LearnedIRViewFamilyMetrics",
     "PhaseTiming",
     "REQUIRED_LEGAL_LOGIC_FAMILIES",
+    "STATE_TO_COMPILER_PATCH_LIFECYCLE_SCHEMA_VERSION",
+    "STATE_TO_COMPILER_PATCH_STAGES",
     "SourceDecodedMetrics",
     "StateConfigVersions",
+    "StateToCompilerPatchLifecycle",
+    "StateToCompilerPatchMilestone",
+    "StateToCompilerPatchPath",
+    "StateToPatchLifecycle",
+    "StateToPatchMilestone",
     "StructuralProverValidity",
     "build_introspection_metric_record",
     "load_introspection_metric_record",

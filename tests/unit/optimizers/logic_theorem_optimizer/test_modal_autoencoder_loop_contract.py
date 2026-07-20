@@ -132,7 +132,8 @@ def test_modal_loop_contract_exposes_alive_vs_productive_summary() -> None:
     assert data["introspection_summary"]["productive"] is True
     assert data["cache_counters"]["autoencoder_sample_feature_cache_entries"] >= 1
     assert data["phase_timings"]["codec"] >= 0.0
-    assert data["state_to_compiler_patch_lag"]["lag"] >= 0
+    assert data["state_to_compiler_patch_lag"]["status"] == "no_data"
+    assert data["state_to_compiler_patch_lag"]["wall_clock_lag_seconds"]["p50"] is None
 
 
 def test_daemon_rollout_control_defaults_off_and_enforce_fails_closed() -> None:
@@ -200,15 +201,17 @@ def test_modal_supervisor_health_distinguishes_alive_from_productive_loop() -> N
 
     assert productive["alive"] is True
     assert productive["productive"] is True
-    assert productive["state_to_compiler_patch_lag"] == {
-        "compiler_patch_count": 1,
-        "lag": 5,
-        "state_update_count": 6,
-    }
-    assert state_to_compiler_patch_lag(
+    assert productive["state_to_compiler_patch_lag"]["status"] == "no_data"
+    assert productive["state_to_compiler_patch_lag"][
+        "legacy_counter_inputs_ignored"
+    ] is True
+    uncorrelated = state_to_compiler_patch_lag(
         state_update_count=3,
         compiler_patch_count=1,
-    )["lag"] == 2
+    )
+    assert uncorrelated["wall_clock_lag_seconds"]["p50"] is None
+    assert uncorrelated["cycle_lag"]["p50"] is None
+    assert "lag" not in uncorrelated
 
 
 def test_modal_supervisor_health_exposes_executor_pressure_and_seed_blocks() -> None:
