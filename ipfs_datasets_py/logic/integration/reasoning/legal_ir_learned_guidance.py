@@ -15,7 +15,7 @@ import json
 import math
 import re
 from collections.abc import Iterable, Iterator, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Final
 
 from ....optimizers.logic_theorem_optimizer.modal_autoencoder import (
@@ -37,6 +37,9 @@ LEGAL_IR_LEARNED_GUIDANCE_CANARY_SCHEMA_VERSION: Final = (
 )
 LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION: Final = (
     "legal-ir-learned-guidance-rollback-v1"
+)
+TRUSTED_FEEDBACK_ABLATION_SCHEMA_VERSION: Final = (
+    "legal-ir-trusted-feedback-ablation-v1"
 )
 
 _LOWER_IS_BETTER_METRICS = frozenset(
@@ -221,6 +224,274 @@ class LegalIRLearnedGuidancePromotion(_SerializableMapping):
             "source_export_id": self.source_export_id,
             "status": self.status,
         }
+
+
+@dataclass(frozen=True)
+class TrustedFeedbackAblationEvidence(_SerializableMapping):
+    """Immutable held-out evidence authorizing trusted-feedback writes.
+
+    A feedback label being trusted is necessary but not sufficient for changing
+    production weights.  This receipt records a paired evaluation on one fixed
+    holdout, verifies that none of the training samples leaked into it, and
+    requires both a positive primary-objective delta and intact source-copy and
+    symbolic-validity guardrails.
+    """
+
+    ablation_id: str
+    holdout_id: str
+    primary_metric: str
+    baseline_primary_value: float
+    candidate_primary_value: float
+    heldout_improvement: float
+    minimum_improvement: float
+    training_sample_ids: tuple[str, ...]
+    heldout_sample_ids: tuple[str, ...]
+    fixed_sample_set: bool
+    holdout_isolated: bool
+    source_copy_guard_passed: bool
+    symbolic_validity_guard_passed: bool
+    metric_guardrails_passed: bool
+    block_reasons: tuple[str, ...] = ()
+    metric_deltas: Mapping[str, float] = field(default_factory=dict)
+    schema_version: str = TRUSTED_FEEDBACK_ABLATION_SCHEMA_VERSION
+
+    @property
+    def heldout_benefit(self) -> bool:
+        return (
+            self.heldout_improvement > 0.0
+            and self.heldout_improvement >= self.minimum_improvement
+        )
+
+    @property
+    def production_writes_allowed(self) -> bool:
+        return (
+            bool(self.holdout_id)
+            and bool(self.heldout_sample_ids)
+            and self.fixed_sample_set
+            and self.holdout_isolated
+            and self.heldout_benefit
+            and self.source_copy_guard_passed
+            and self.symbolic_validity_guard_passed
+            and self.metric_guardrails_passed
+            and not self.block_reasons
+        )
+
+    @property
+    def status(self) -> str:
+        return "passed" if self.production_writes_allowed else "blocked"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "ablation_id": self.ablation_id,
+            "baseline_primary_value": round(self.baseline_primary_value, 12),
+            "block_reasons": list(self.block_reasons),
+            "candidate_primary_value": round(self.candidate_primary_value, 12),
+            "fixed_sample_set": self.fixed_sample_set,
+            "heldout_benefit": self.heldout_benefit,
+            "heldout_improvement": round(self.heldout_improvement, 12),
+            "heldout_sample_ids": list(self.heldout_sample_ids),
+            "holdout_id": self.holdout_id,
+            "holdout_isolated": self.holdout_isolated,
+            "metric_deltas": {
+                str(key): round(float(value), 12)
+                for key, value in sorted(self.metric_deltas.items())
+            },
+            "metric_guardrails_passed": self.metric_guardrails_passed,
+            "minimum_improvement": round(self.minimum_improvement, 12),
+            "primary_metric": self.primary_metric,
+            "production_writes_allowed": self.production_writes_allowed,
+            "schema_version": self.schema_version,
+            "source_copy_guard_passed": self.source_copy_guard_passed,
+            "status": self.status,
+            "symbolic_validity_guard_passed": (
+                self.symbolic_validity_guard_passed
+            ),
+            "training_sample_ids": list(self.training_sample_ids),
+        }
+
+
+_TRUSTED_FEEDBACK_LOWER_IS_BETTER = frozenset(
+    {
+        "autoencoder_cross_entropy_loss",
+        "compiler_ir_cross_entropy_loss",
+        "ir_cross_entropy_loss",
+        "legal_ir_view_cross_entropy_loss",
+        "objective_loss",
+        "reconstruction_loss",
+        "source_copy_penalty",
+        "source_copy_reward_hack_penalty",
+    }
+)
+_TRUSTED_FEEDBACK_PRIMARY_METRICS = (
+    "legal_ir_view_cross_entropy_loss",
+    "compiler_ir_cross_entropy_loss",
+    "autoencoder_cross_entropy_loss",
+    "ir_cross_entropy_loss",
+    "objective_loss",
+)
+
+
+def evaluate_trusted_feedback_ablation(
+    baseline_metrics: Mapping[str, Any] | Any,
+    candidate_metrics: Mapping[str, Any] | Any,
+    *,
+    heldout_sample_ids: Sequence[str],
+    training_sample_ids: Sequence[str] = (),
+    holdout_id: str = "",
+    baseline_holdout_id: str = "",
+    candidate_holdout_id: str = "",
+    primary_metric: str = "",
+    minimum_improvement: float = 1.0e-9,
+    metric_tolerance: float = 0.0,
+) -> TrustedFeedbackAblationEvidence:
+    """Build the fail-closed ablation receipt required for production writes.
+
+    Metric payloads may be flat or contain per-family metric mappings.  Values
+    are averaged across families, so a caller cannot obtain a pass by relying
+    on mapping order.  The source-copy and symbolic-validity guards are always
+    checked when present and missing hard-guard evidence blocks the receipt.
+    """
+
+    baseline = _flatten_ablation_metrics(_as_mapping(baseline_metrics))
+    candidate = _flatten_ablation_metrics(_as_mapping(candidate_metrics))
+    baseline_id = str(
+        baseline_holdout_id
+        or _as_mapping(baseline_metrics).get("holdout_id")
+        or _as_mapping(baseline_metrics).get("canary_id")
+        or holdout_id
+        or ""
+    )
+    candidate_id = str(
+        candidate_holdout_id
+        or _as_mapping(candidate_metrics).get("holdout_id")
+        or _as_mapping(candidate_metrics).get("canary_id")
+        or holdout_id
+        or ""
+    )
+    resolved_holdout_id = str(holdout_id or baseline_id or candidate_id)
+    fixed = bool(resolved_holdout_id) and baseline_id == candidate_id == resolved_holdout_id
+    train_ids = tuple(sorted({str(value) for value in training_sample_ids if str(value)}))
+    heldout_ids = tuple(sorted({str(value) for value in heldout_sample_ids if str(value)}))
+    isolated = bool(heldout_ids) and not set(train_ids).intersection(heldout_ids)
+    metric = str(primary_metric or "")
+    if not metric:
+        metric = next(
+            (
+                name
+                for name in _TRUSTED_FEEDBACK_PRIMARY_METRICS
+                if name in baseline and name in candidate
+            ),
+            "",
+        )
+    before = _finite_float(baseline.get(metric)) if metric else None
+    after = _finite_float(candidate.get(metric)) if metric else None
+    raw_minimum = float(minimum_improvement)
+    raw_tolerance = float(metric_tolerance)
+    if not math.isfinite(raw_minimum) or raw_minimum < 0.0:
+        raise ValueError("minimum_improvement must be finite and non-negative")
+    if not math.isfinite(raw_tolerance) or raw_tolerance < 0.0:
+        raise ValueError("metric_tolerance must be finite and non-negative")
+    minimum = raw_minimum
+    tolerance = raw_tolerance
+    deltas: dict[str, float] = {}
+    regressions: list[str] = []
+    for name in sorted(set(baseline).intersection(candidate)):
+        before_value = _finite_float(baseline[name])
+        after_value = _finite_float(candidate[name])
+        if before_value is None or after_value is None:
+            continue
+        improvement = (
+            before_value - after_value
+            if name in _TRUSTED_FEEDBACK_LOWER_IS_BETTER
+            else after_value - before_value
+        )
+        deltas[name] = round(improvement, 12)
+        if improvement < -tolerance:
+            regressions.append(name)
+
+    copy_names = (
+        "source_copy_penalty",
+        "source_copy_reward_hack_penalty",
+    )
+    symbolic_name = "symbolic_validity_success_rate"
+    copy_present = any(name in baseline and name in candidate for name in copy_names)
+    symbolic_present = symbolic_name in baseline and symbolic_name in candidate
+    copy_passed = copy_present and all(
+        deltas.get(name, -math.inf) >= -tolerance
+        for name in copy_names
+        if name in baseline and name in candidate
+    )
+    symbolic_passed = symbolic_present and deltas.get(symbolic_name, -math.inf) >= -tolerance
+    improvement = (
+        (
+            float(before) - float(after)
+            if metric in _TRUSTED_FEEDBACK_LOWER_IS_BETTER
+            else float(after) - float(before)
+        )
+        if before is not None and after is not None
+        else -math.inf
+    )
+    reasons: list[str] = []
+    if not fixed:
+        reasons.append("fixed_holdout_identity_missing_or_mismatched")
+    if not heldout_ids:
+        reasons.append("heldout_samples_missing")
+    if not isolated:
+        reasons.append("train_holdout_overlap")
+    if not metric or before is None or after is None:
+        reasons.append("primary_metric_missing")
+    elif improvement <= 0.0 or improvement < minimum:
+        reasons.append("heldout_benefit_not_demonstrated")
+    if not copy_present:
+        reasons.append("source_copy_guardrail_evidence_missing")
+    elif not copy_passed:
+        reasons.append("source_copy_guardrail_regression")
+    if not symbolic_present:
+        reasons.append("symbolic_validity_guardrail_evidence_missing")
+    elif not symbolic_passed:
+        reasons.append("symbolic_validity_guardrail_regression")
+    non_hard_regressions = sorted(
+        set(regressions) - set(copy_names) - {symbolic_name}
+    )
+    if non_hard_regressions:
+        reasons.append("heldout_metric_regression")
+    descriptor = {
+        "baseline": baseline,
+        "candidate": candidate,
+        "heldout_sample_ids": heldout_ids,
+        "holdout_id": resolved_holdout_id,
+        "minimum_improvement": minimum,
+        "primary_metric": metric,
+        "training_sample_ids": train_ids,
+    }
+    return TrustedFeedbackAblationEvidence(
+        ablation_id="lir-trusted-feedback-ablation-" + _stable_hash(descriptor)[:24],
+        holdout_id=resolved_holdout_id,
+        primary_metric=metric,
+        baseline_primary_value=float(before) if before is not None else 0.0,
+        candidate_primary_value=float(after) if after is not None else 0.0,
+        heldout_improvement=(
+            float(improvement) if math.isfinite(improvement) else 0.0
+        ),
+        minimum_improvement=minimum,
+        training_sample_ids=train_ids,
+        heldout_sample_ids=heldout_ids,
+        fixed_sample_set=fixed,
+        holdout_isolated=isolated,
+        source_copy_guard_passed=copy_passed,
+        symbolic_validity_guard_passed=symbolic_passed,
+        metric_guardrails_passed=not non_hard_regressions,
+        block_reasons=tuple(reasons),
+        metric_deltas=deltas,
+    )
+
+
+def evaluate_trusted_feedback_weight_ablation(
+    *args: Any, **kwargs: Any
+) -> TrustedFeedbackAblationEvidence:
+    """Compatibility alias with the weight-update terminology."""
+
+    return evaluate_trusted_feedback_ablation(*args, **kwargs)
 
 
 def evaluate_fixed_canary_evidence(
@@ -760,6 +1031,45 @@ def _family_metric_mapping(payload: Mapping[str, Any]) -> dict[str, dict[str, fl
                 metrics[name] = value
         result[family] = metrics
     return result
+
+
+def _flatten_ablation_metrics(payload: Mapping[str, Any]) -> dict[str, float]:
+    """Return deterministic mean metrics from flat or per-family evidence."""
+
+    candidates: list[Mapping[str, Any]] = []
+    for key in (
+        "view_family_metrics",
+        "legal_ir_view_family_metrics",
+        "family_metrics",
+        "metrics",
+    ):
+        nested = payload.get(key)
+        if isinstance(nested, Mapping):
+            if all(isinstance(value, Mapping) for value in nested.values()):
+                candidates.extend(
+                    value for value in nested.values() if isinstance(value, Mapping)
+                )
+            else:
+                candidates.append(nested)
+            break
+    if not candidates:
+        candidates = [payload]
+    values: dict[str, list[float]] = {}
+    aliases = {
+        "source_copy_loss": "source_copy_penalty",
+        "symbolic_validity": "symbolic_validity_success_rate",
+    }
+    for metrics in candidates:
+        for raw_name, raw_value in metrics.items():
+            name = aliases.get(str(raw_name), str(raw_name))
+            number = _finite_float(raw_value)
+            if number is not None:
+                values.setdefault(name, []).append(number)
+    return {
+        name: sum(items) / len(items)
+        for name, items in sorted(values.items())
+        if items
+    }
 
 
 def _resolve_fixed_canary_id(
