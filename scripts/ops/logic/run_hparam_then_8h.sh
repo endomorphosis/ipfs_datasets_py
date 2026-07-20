@@ -617,6 +617,18 @@ final_args=(
   "${PAIRED_ARGS[@]}"
 )
 
+# A sourced rollout wrapper may install a function that persists and gates the
+# complete sweep before this helper is allowed to start its selected final run.
+# Standalone behavior is unchanged when the hook name is empty.
+if [[ -n "${RUN_HPARAM_BEFORE_FINAL_FUNCTION:-}" ]]; then
+  if [[ ! "${RUN_HPARAM_BEFORE_FINAL_FUNCTION}" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] \
+      || ! declare -F "${RUN_HPARAM_BEFORE_FINAL_FUNCTION}" >/dev/null; then
+    echo "[pipeline] invalid pre-final rollout hook: ${RUN_HPARAM_BEFORE_FINAL_FUNCTION}" >&2
+    exit 2
+  fi
+  "${RUN_HPARAM_BEFORE_FINAL_FUNCTION}" "${best_run_id}"
+fi
+
 trap - ERR
 set +e
 "${PYTHON_BIN}" -m "${MODULE}" "${final_args[@]}"

@@ -19265,10 +19265,83 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 save_summary(summary_path, summary)
     finally:
         if snapshot_evaluator is not None:
-            # Shutdown must not extend a bounded daemon run by an unbounded
-            # holdout evaluation.  The worker is daemonized; pending work is
-            # cancelled explicitly and therefore remains visible in telemetry.
-            snapshot_evaluator.close(wait=False, cancel_pending=True)
+            # A rollout receipt cannot promote an unevaluated final state.  Give
+            # the already bounded worker its normal backpressure timeout to
+            # finish, then accept/promote only the result whose complete version
+            # tuple matches the latest published snapshot.  A timeout still
+            # cancels pending work and remains visible as incomplete telemetry.
+            shutdown_timeout = max(
+                0.0,
+                float(
+                    getattr(
+                        args,
+                        "snapshot_evaluation_backpressure_timeout_seconds",
+                        DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS,
+                    )
+                    or 0.0
+                ),
+            )
+            snapshot_drained = snapshot_evaluator.wait_until_idle(
+                timeout=shutdown_timeout
+            )
+            snapshot_evaluator.close(
+                wait=snapshot_drained,
+                cancel_pending=not snapshot_drained,
+            )
+            shutdown_results = snapshot_evaluator.poll_results()
+            latest_published = summary.get("latest_published_snapshot")
+            latest_snapshot_id = (
+                str(latest_published.get("snapshot_id") or "")
+                if isinstance(latest_published, Mapping)
+                else ""
+            )
+            unmatched_result_ids: List[str] = []
+            for snapshot_result in shutdown_results:
+                if snapshot_result.snapshot_id != latest_snapshot_id:
+                    unmatched_result_ids.append(snapshot_result.snapshot_id)
+                    continue
+                versions = latest_published.get("versions")
+                if not isinstance(versions, Mapping):
+                    unmatched_result_ids.append(snapshot_result.snapshot_id)
+                    continue
+                try:
+                    expected_versions = SnapshotVersions(
+                        state_version=str(versions.get("state_version") or ""),
+                        compiler_version=str(versions.get("compiler_version") or ""),
+                        holdout_version=str(versions.get("holdout_version") or ""),
+                        schema_version=str(versions.get("schema_version") or ""),
+                    )
+                except ValueError:
+                    unmatched_result_ids.append(snapshot_result.snapshot_id)
+                    continue
+                accepted = snapshot_evaluator.accept_result(
+                    snapshot_result,
+                    expected_versions,
+                    expected_sequence=int(latest_published.get("sequence", -1)),
+                )
+                promotion = (
+                    snapshot_evaluator.promote_at_boundary(
+                        SnapshotBoundary(
+                            sequence=snapshot_result.sequence,
+                            versions=expected_versions,
+                        )
+                    )
+                    if accepted
+                    else None
+                )
+                if promotion is not None and promotion.promoted:
+                    summary["latest_promoted_snapshot_evaluation"] = (
+                        snapshot_result.to_dict()
+                    )
+                    summary["latest_promoted_snapshot_boundary_cycle"] = int(
+                        snapshot_result.sequence
+                    )
+            summary["snapshot_shutdown"] = {
+                "drained": snapshot_drained,
+                "result_count": len(shutdown_results),
+                "timeout_seconds": shutdown_timeout,
+                "unmatched_result_ids": unmatched_result_ids,
+            }
             summary["snapshot_evaluator"] = snapshot_evaluator.summary()
             with snapshot_evaluation_jobs_lock:
                 snapshot_evaluation_jobs.clear()

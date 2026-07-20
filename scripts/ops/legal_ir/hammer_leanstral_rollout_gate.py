@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
+import os
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -112,6 +115,53 @@ HAMMER_ALLOWED_STATUSES = frozenset(
 )
 
 
+STAGED_ROLLOUT_SCHEMA_VERSION = "legal-ir-hammer-leanstral-rollout-v1"
+
+
+@dataclass(frozen=True)
+class RolloutStageSpec:
+    """One immutable step in the production rollout contract."""
+
+    name: str
+    duration_seconds: int
+
+
+STAGED_ROLLOUT_STAGES = (
+    RolloutStageSpec("short_smoke", 10 * 60),
+    RolloutStageSpec("one_hour_hparam", 60 * 60),
+    RolloutStageSpec("eight_hour_canary", 8 * 60 * 60),
+    RolloutStageSpec("twenty_four_hour_production", 24 * 60 * 60),
+)
+
+STAGED_HARD_GUARDRAILS = (
+    "semantic",
+    "provenance",
+    "anti_copy",
+    "hammer_proof",
+    "lean_reconstruction",
+    "process_lifecycle",
+    "queue_lag",
+)
+
+
+@dataclass(frozen=True)
+class StagedRolloutConfig:
+    """Fail-closed policy for promotion through the four rollout stages."""
+
+    require_all_stages: bool = True
+    require_complete_snapshots: bool = True
+    require_managed_process_evidence: bool = True
+    require_trusted_feedback: bool = True
+    require_rollback_evidence: bool = True
+    verify_rollback_artifacts: bool = False
+    duration_tolerance_seconds: float = 0.0
+    max_queue_lag_p95_seconds: float = 120.0
+    max_queue_lag_regression: float = 0.0
+    max_accepted_patches_per_hour_regression: float = 0.0
+    required_families: tuple[str, ...] = LEGAL_IR_VIEW_FAMILIES
+    required_guardrails: tuple[str, ...] = STAGED_HARD_GUARDRAILS
+
+
 @dataclass(frozen=True)
 class RolloutGateConfig:
     """Thresholds used to reject a rollout summary."""
@@ -156,6 +206,440 @@ class RolloutGateResult:
             "metrics": dict(self.metrics),
             "warnings": list(self.warnings),
         }
+
+
+def staged_rollout_gate(
+    snapshots: Sequence[Mapping[str, Any]] | Mapping[str, Any],
+    config: StagedRolloutConfig | None = None,
+) -> RolloutGateResult:
+    """Evaluate a complete rollout or an explicitly allowed ordered prefix.
+
+    The staged contract deliberately consumes persisted snapshots, rather than
+    live process state.  A stage is promotable only when the snapshot proves
+    its duration, guardrails, process cleanup, feedback delivery, productivity,
+    and rollback point.  Missing evidence is a failure, never a warning.
+    """
+
+    cfg = config or StagedRolloutConfig()
+    failures: list[str] = []
+    warnings: list[str] = []
+    metrics: dict[str, Any] = {
+        "schema_version": STAGED_ROLLOUT_SCHEMA_VERSION,
+        "expected_stage_sequence": [stage.name for stage in STAGED_ROLLOUT_STAGES],
+    }
+    items, envelope_failures = _staged_snapshot_items(snapshots)
+    failures.extend(envelope_failures)
+    expected_count = len(STAGED_ROLLOUT_STAGES)
+    if not items:
+        failures.append("stage_sequence:no_snapshots")
+    if len(items) > expected_count:
+        failures.append(f"stage_sequence:too_many_snapshots:{len(items)}>{expected_count}")
+    if cfg.require_all_stages and len(items) != expected_count:
+        failures.append(
+            f"stage_sequence:incomplete:{len(items)}/{expected_count}"
+        )
+
+    completed: list[str] = []
+    rates: dict[str, float] = {}
+    queue_lags: dict[str, float] = {}
+    rollback: dict[str, dict[str, Any]] = {}
+    previous_rate: float | None = None
+    previous_queue_lag: float | None = None
+
+    for index, snapshot in enumerate(items[:expected_count]):
+        expected = STAGED_ROLLOUT_STAGES[index]
+        stage_name = str(snapshot.get("stage") or snapshot.get("stage_name") or "").strip()
+        if stage_name != expected.name:
+            failures.append(
+                f"stage_sequence:index_{index}:expected_{expected.name}:got_{stage_name or 'missing'}"
+            )
+            # Attribute subsequent failures to the expected slot so malformed
+            # names cannot create ambiguous or attacker-controlled diagnostics.
+        stage_label = expected.name
+        completed.append(stage_name or stage_label)
+
+        duration = _first_finite(snapshot, ("duration_seconds", "planned_duration_seconds"))
+        if duration is None:
+            failures.append(f"stage_duration_missing:{stage_label}")
+        elif abs(duration - expected.duration_seconds) > max(0.0, cfg.duration_tolerance_seconds):
+            failures.append(
+                f"stage_duration:{stage_label}:{duration:g}!={expected.duration_seconds}"
+            )
+
+        elapsed = _first_finite(snapshot, ("elapsed_seconds", "wall_clock_seconds"))
+        if elapsed is None or elapsed <= 0.0:
+            failures.append(f"stage_wall_clock_missing:{stage_label}")
+        elif elapsed + max(0.0, cfg.duration_tolerance_seconds) < expected.duration_seconds:
+            failures.append(
+                f"stage_duration:{stage_label}:elapsed_{elapsed:g}<"
+                f"{expected.duration_seconds}"
+            )
+        status = str(snapshot.get("status") or "").strip().lower()
+        if status not in {"completed", "passed", "succeeded", "success"}:
+            failures.append(f"stage_status:{stage_label}:{status or 'missing'}")
+        if cfg.require_complete_snapshots and snapshot.get("snapshot_complete") is not True:
+            failures.append(f"incomplete_snapshot:{stage_label}")
+
+        failures.extend(_managed_process_failures(snapshot, stage_label, cfg))
+        failures.extend(_family_guardrail_failures(snapshot, stage_label, cfg))
+        failures.extend(_trusted_feedback_failures(snapshot, stage_label, cfg))
+
+        queue_lag = _stage_queue_lag(snapshot)
+        if queue_lag is None:
+            failures.append(f"queue_lag_evidence_missing:{stage_label}")
+        else:
+            queue_lags[stage_label] = queue_lag
+            if queue_lag > cfg.max_queue_lag_p95_seconds:
+                failures.append(
+                    f"queue_lag_limit_exceeded:{stage_label}:{queue_lag:g}>"
+                    f"{cfg.max_queue_lag_p95_seconds:g}"
+                )
+            if (
+                previous_queue_lag is not None
+                and queue_lag - previous_queue_lag > cfg.max_queue_lag_regression + 1.0e-12
+            ):
+                failures.append(
+                    f"queue_lag_regression:{stage_label}:{previous_queue_lag:g}->"
+                    f"{queue_lag:g}"
+                )
+            previous_queue_lag = queue_lag
+
+        patch_count = _first_finite(
+            snapshot,
+            ("accepted_patches", "codex_accepted_patch_count", "codex_main_apply_count"),
+        )
+        wall_clock = _first_finite(snapshot, ("wall_clock_seconds", "elapsed_seconds"))
+        if patch_count is None or patch_count < 0.0 or wall_clock is None or wall_clock <= 0.0:
+            failures.append(f"accepted_patch_productivity_evidence_missing:{stage_label}")
+        else:
+            rate = patch_count * 3600.0 / wall_clock
+            rates[stage_label] = round(rate, 12)
+            if (
+                previous_rate is not None
+                and previous_rate - rate
+                > cfg.max_accepted_patches_per_hour_regression + 1.0e-12
+            ):
+                failures.append(
+                    f"accepted_patches_per_hour_regression:{stage_label}:"
+                    f"{previous_rate:g}->{rate:g}"
+                )
+            previous_rate = rate
+
+        rollback_value, rollback_failures = _validated_rollback_evidence(
+            snapshot, stage_label, cfg
+        )
+        failures.extend(rollback_failures)
+        if rollback_value is not None:
+            rollback[stage_label] = rollback_value
+
+    next_stage = (
+        STAGED_ROLLOUT_STAGES[len(items)].name
+        if len(items) < expected_count
+        else None
+    )
+    metrics.update(
+        {
+            "completed_stages": completed,
+            "next_stage": next_stage,
+            "accepted_patches_per_hour": rates,
+            "accepted_patches_per_wall_clock_hour": rates,
+            "queue_lag_p95_seconds": queue_lags,
+            "rollback_evidence": rollback,
+            "trusted_feedback_reached_autoencoder": not any(
+                item.startswith("trusted_feedback_") for item in failures
+            ) and bool(items),
+        }
+    )
+    return RolloutGateResult(
+        accepted=not failures,
+        failures=list(dict.fromkeys(failures)),
+        warnings=warnings,
+        metrics=metrics,
+    )
+
+
+def _staged_snapshot_items(
+    value: Sequence[Mapping[str, Any]] | Mapping[str, Any],
+) -> tuple[list[Mapping[str, Any]], list[str]]:
+    failures: list[str] = []
+    raw: Any = value
+    if isinstance(value, Mapping):
+        schema = value.get("schema_version")
+        if schema not in (None, "", STAGED_ROLLOUT_SCHEMA_VERSION):
+            failures.append(f"snapshot_schema_unsupported:{schema}")
+        raw = value.get("snapshots", value.get("stages"))
+    if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes, bytearray)):
+        return [], failures + ["snapshot_envelope_invalid"]
+    items: list[Mapping[str, Any]] = []
+    for index, item in enumerate(raw):
+        if not isinstance(item, Mapping):
+            failures.append(f"incomplete_snapshot:index_{index}:not_an_object")
+            continue
+        items.append(item)
+    return items, failures
+
+
+def _managed_process_failures(
+    snapshot: Mapping[str, Any],
+    stage: str,
+    cfg: StagedRolloutConfig,
+) -> list[str]:
+    raw = snapshot.get("managed_processes", snapshot.get("process_lifecycle"))
+    if isinstance(raw, Mapping):
+        raw = raw.get("processes", raw.get("managed_processes"))
+    if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes, bytearray)) or not raw:
+        return [f"managed_process_evidence_missing:{stage}"] if cfg.require_managed_process_evidence else []
+    failures: list[str] = []
+    for index, process in enumerate(raw):
+        if not isinstance(process, Mapping):
+            failures.append(f"managed_process_evidence_incomplete:{stage}:index_{index}")
+            continue
+        name = str(
+            process.get("name")
+            or process.get("managed_process_id")
+            or process.get("role")
+            or f"index_{index}"
+        )
+        state = str(process.get("status") or process.get("state") or "").strip().lower()
+        orphaned = process.get("orphaned") is True or state in {
+            "orphaned", "running", "alive", "unknown", "leaked"
+        }
+        if orphaned:
+            failures.append(f"orphaned_managed_process:{stage}:{name}")
+        if state not in {"completed", "exited", "stopped", "terminated", "cleaned"}:
+            failures.append(f"managed_process_not_reaped:{stage}:{name}:{state or 'missing'}")
+        code = process.get("exit_code", process.get("returncode"))
+        if code is None:
+            failures.append(f"managed_process_exit_missing:{stage}:{name}")
+        elif _is_nonzero_exit(code):
+            failures.append(f"managed_process_failure:{stage}:{name}:exit_{code}")
+    return failures
+
+
+def _family_guardrail_failures(
+    snapshot: Mapping[str, Any],
+    stage: str,
+    cfg: StagedRolloutConfig,
+) -> list[str]:
+    raw = snapshot.get("family_metrics", snapshot.get("per_family_guardrails"))
+    if not isinstance(raw, Mapping):
+        return [f"per_family_guardrail_evidence_missing:{stage}"]
+    failures: list[str] = []
+    for family in cfg.required_families:
+        values = raw.get(family)
+        if not isinstance(values, Mapping):
+            failures.append(f"per_family_guardrail_evidence_missing:{stage}:{family}")
+            continue
+        for guardrail in cfg.required_guardrails:
+            regression_key = f"{guardrail}_regression"
+            regression = values.get(regression_key)
+            calculated = _paired_guardrail_regression(values, guardrail)
+            if regression is True or calculated is True:
+                failures.append(f"{guardrail}_regression:{stage}:{family}")
+            elif regression is not False and calculated is None:
+                failures.append(
+                    f"per_family_guardrail_evidence_missing:{stage}:{family}:{guardrail}"
+                )
+    return failures
+
+
+def _paired_guardrail_regression(
+    values: Mapping[str, Any], guardrail: str
+) -> bool | None:
+    """Recompute a declared family guardrail when paired values are present."""
+
+    baseline = values.get("baseline")
+    candidate = values.get("candidate")
+    if not isinstance(baseline, Mapping) or not isinstance(candidate, Mapping):
+        return None
+    directions: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+        "semantic": (
+            (
+                "ir_cosine_similarity",
+                "compiler_ir_cosine",
+                "symbolic_validity_success_rate",
+                "structural_validity",
+            ),
+            ("ir_cross_entropy_loss", "compiler_ir_cross_entropy_loss"),
+        ),
+        "provenance": (
+            (
+                "provenance_alignment",
+                "provenance_alignment_score",
+                "provenance_success_rate",
+                "provenance_coverage",
+            ),
+            ("provenance_failure_count", "provenance_violation_rate"),
+        ),
+        "anti_copy": (
+            ("anti_copy_success_rate",),
+            (
+                "source_copy_penalty",
+                "source_copy_reward_hack_penalty",
+                "source_copy_rate",
+            ),
+        ),
+        "hammer_proof": (("hammer_proof_success_rate",), ("hammer_failure_rate",)),
+        "lean_reconstruction": (
+            ("reconstruction_success_rate", "hammer_reconstruction_success_rate"),
+            ("reconstruction_failure_rate",),
+        ),
+        "process_lifecycle": (
+            ("process_cleanup_success_rate",),
+            ("process_failure_count", "orphan_process_count", "process_timeout_rate"),
+        ),
+        "queue_lag": ((), ("queue_lag_p95_seconds", "queue_lag_seconds")),
+    }
+    higher, lower = directions.get(guardrail, ((), ()))
+    compared = False
+    for name in higher:
+        before = _finite_float(baseline.get(name))
+        after = _finite_float(candidate.get(name))
+        if before is not None and after is not None:
+            compared = True
+            if after < before - 1.0e-12:
+                return True
+    for name in lower:
+        before = _finite_float(baseline.get(name))
+        after = _finite_float(candidate.get(name))
+        if before is not None and after is not None:
+            compared = True
+            if after > before + 1.0e-12:
+                return True
+    return False if compared else None
+
+
+def _trusted_feedback_failures(
+    snapshot: Mapping[str, Any],
+    stage: str,
+    cfg: StagedRolloutConfig,
+) -> list[str]:
+    if not cfg.require_trusted_feedback:
+        return []
+    value = snapshot.get("trusted_feedback")
+    if not isinstance(value, Mapping):
+        return [f"trusted_feedback_evidence_missing:{stage}"]
+    trusted = _first_finite(
+        value, ("trusted_count", "verified_count", "accepted_count", "produced_count")
+    )
+    received = _first_finite(
+        value,
+        (
+            "autoencoder_received_count",
+            "autoencoder_applied_count",
+            "applied_count",
+            "weight_update_count",
+        ),
+    )
+    source_digest = str(value.get("source_digest") or value.get("feedback_digest") or "")
+    received_digest = str(
+        value.get("autoencoder_source_digest")
+        or value.get("applied_feedback_digest")
+        or ""
+    )
+    applied_ids = value.get("applied_feedback_ids", value.get("guidance_ids"))
+    ids_prove_delivery = (
+        isinstance(applied_ids, Sequence)
+        and not isinstance(applied_ids, (str, bytes, bytearray))
+        and received is not None
+        and len(applied_ids) >= int(received)
+    )
+    digest_proves_delivery = bool(source_digest) and source_digest == received_digest
+    weight_writes = value.get("write_to_autoencoder_weights")
+    production_writes = value.get("production_weight_writes_enabled")
+    ablation = value.get("ablation_evidence")
+    ablation_passed = not isinstance(ablation, Mapping) or (
+        ablation.get("passed") is True
+        or ablation.get("guardrails_passed") is True
+        or str(ablation.get("status") or "").lower() in {"passed", "accepted"}
+    )
+    if (
+        trusted is None
+        or trusted <= 0.0
+        or received is None
+        or received < trusted
+        or not (digest_proves_delivery or ids_prove_delivery)
+        or weight_writes is False
+        or production_writes is False
+        or not ablation_passed
+    ):
+        return [f"trusted_feedback_not_applied:{stage}"]
+    return []
+
+
+def _stage_queue_lag(snapshot: Mapping[str, Any]) -> float | None:
+    value = snapshot.get("queue_lag")
+    if isinstance(value, Mapping):
+        result = _first_finite(value, ("p95_seconds", "queue_lag_p95_seconds", "p95"))
+        if result is not None:
+            return result
+    return _first_finite(snapshot, ("queue_lag_p95_seconds", "program_synthesis_queue_lag_p95_seconds"))
+
+
+def _validated_rollback_evidence(
+    snapshot: Mapping[str, Any],
+    stage: str,
+    cfg: StagedRolloutConfig,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    value = snapshot.get("rollback_evidence")
+    if not isinstance(value, Mapping):
+        return None, [f"rollback_evidence_missing:{stage}"] if cfg.require_rollback_evidence else []
+    artifact_path = str(value.get("artifact_path") or value.get("snapshot_path") or "").strip()
+    digest = str(value.get("sha256") or value.get("artifact_sha256") or "").strip().lower()
+    revision = str(value.get("baseline_revision") or value.get("revision") or "").strip()
+    restorable = value.get("restorable") is True
+    valid_digest = len(digest) == 64 and all(char in "0123456789abcdef" for char in digest)
+    if not artifact_path or not valid_digest or not revision or not restorable:
+        return None, [f"rollback_evidence_missing:{stage}"]
+    if cfg.verify_rollback_artifacts:
+        artifact = Path(artifact_path)
+        if not artifact.is_file():
+            return None, [f"rollback_evidence_invalid:{stage}:artifact_missing"]
+        try:
+            observed_digest = snapshot_sha256(artifact)
+        except OSError as exc:
+            return None, [
+                f"rollback_evidence_invalid:{stage}:artifact_unreadable:{type(exc).__name__}"
+            ]
+        if observed_digest != digest:
+            return None, [f"rollback_evidence_invalid:{stage}:sha256_mismatch"]
+    return {
+        "artifact_path": artifact_path,
+        "sha256": digest,
+        "baseline_revision": revision,
+        "restorable": True,
+    }, []
+
+
+def write_rollout_evidence(path: str | Path, payload: Mapping[str, Any]) -> None:
+    """Atomically persist a gate decision or rollback manifest."""
+
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    rendered = json.dumps(payload, allow_nan=False, indent=2, sort_keys=True) + "\n"
+    fd, temporary = tempfile.mkstemp(prefix=f".{destination.name}.", dir=str(destination.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(rendered)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, destination)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def snapshot_sha256(path: str | Path) -> str:
+    """Return a streaming SHA-256 digest for operator rollback evidence."""
+
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def load_summary(path: str | Path) -> dict[str, Any]:
@@ -935,6 +1419,37 @@ def build_parser() -> argparse.ArgumentParser:
     gate_parser.add_argument("--max-source-copy-penalty-regression", type=float, default=0.0)
     gate_parser.add_argument("--max-todo-productivity-regression", type=float, default=0.0)
     gate_parser.set_defaults(func=_cmd_gate)
+
+    staged_parser = subparsers.add_parser(
+        "staged-gate",
+        help="Gate a persisted smoke/hparam/canary/production snapshot manifest",
+    )
+    staged_input = staged_parser.add_mutually_exclusive_group(required=True)
+    staged_input.add_argument("--snapshot-path", type=Path)
+    staged_input.add_argument("--manifest-path", type=Path)
+    staged_parser.add_argument(
+        "--evidence-output",
+        type=Path,
+        help="Atomically store the complete promotion decision",
+    )
+    staged_parser.add_argument(
+        "--allow-prefix",
+        action="store_true",
+        help="Accept a valid ordered prefix so the launcher can authorize the next stage",
+    )
+    staged_parser.add_argument("--duration-tolerance-seconds", type=float, default=0.0)
+    staged_parser.add_argument("--max-queue-lag-p95-seconds", type=float, default=120.0)
+    staged_parser.add_argument("--max-queue-lag-regression", type=float, default=0.0)
+    staged_parser.add_argument(
+        "--max-accepted-patches-per-hour-regression", type=float, default=0.0
+    )
+    staged_parser.add_argument(
+        "--verify-rollback-artifacts",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Require rollback paths to exist and match their recorded SHA-256",
+    )
+    staged_parser.set_defaults(func=_cmd_staged_gate)
     return parser
 
 
@@ -978,6 +1493,43 @@ def _cmd_gate(args: argparse.Namespace) -> int:
         ),
     )
     print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    return 0 if result.accepted else 1
+
+
+def _cmd_staged_gate(args: argparse.Namespace) -> int:
+    snapshot_path: Path = args.snapshot_path or args.manifest_path
+    try:
+        with snapshot_path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        if not isinstance(payload, (Mapping, list)):
+            raise ValueError("snapshot manifest must be an object or array")
+        result = staged_rollout_gate(
+            payload,
+            StagedRolloutConfig(
+                require_all_stages=not args.allow_prefix,
+                verify_rollback_artifacts=args.verify_rollback_artifacts,
+                duration_tolerance_seconds=args.duration_tolerance_seconds,
+                max_queue_lag_p95_seconds=args.max_queue_lag_p95_seconds,
+                max_queue_lag_regression=args.max_queue_lag_regression,
+                max_accepted_patches_per_hour_regression=(
+                    args.max_accepted_patches_per_hour_regression
+                ),
+            ),
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        result = RolloutGateResult(
+            accepted=False,
+            failures=[f"incomplete_snapshot_manifest:{type(exc).__name__}:{exc}"],
+            metrics={"schema_version": STAGED_ROLLOUT_SCHEMA_VERSION},
+        )
+    decision = result.to_dict()
+    decision["schema_version"] = STAGED_ROLLOUT_SCHEMA_VERSION
+    decision["snapshot_path"] = str(snapshot_path)
+    if snapshot_path.is_file():
+        decision["snapshot_sha256"] = snapshot_sha256(snapshot_path)
+    if args.evidence_output is not None:
+        write_rollout_evidence(args.evidence_output, decision)
+    print(json.dumps(decision, indent=2, sort_keys=True))
     return 0 if result.accepted else 1
 
 
