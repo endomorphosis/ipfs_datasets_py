@@ -576,8 +576,15 @@ def reconstruction_receipt_from_hammer_result(
     input_formula_id: str = "",
     trusted_requires_reconstruction: bool = False,
     trusted: Optional[bool] = None,
+    cache_provenance: Any = None,
 ) -> HammerReconstructionReceipt:
-    """Build one explicit proof/reconstruction/trust receipt for ``result``."""
+    """Build one explicit proof/reconstruction/trust receipt for ``result``.
+
+    ``cache_provenance`` is verifier-owned metadata returned by
+    :mod:`ipfs_datasets_py.logic.hammers.proof_cache`.  When supplied it is
+    covered by the receipt id and retained under ``metadata.proof_cache``;
+    callers must never infer trust from this diagnostic field.
+    """
 
     records = list(
         translation_records
@@ -671,6 +678,17 @@ def reconstruction_receipt_from_hammer_result(
             else HammerTrustStatus.UNTRUSTED.value
         ),
     }
+    provenance_value = cache_provenance
+    provenance_to_dict = getattr(provenance_value, "to_dict", None)
+    if callable(provenance_to_dict):
+        provenance_value = provenance_to_dict()
+    normalized_cache_provenance = (
+        dict(provenance_value.get("proof_cache") or provenance_value)
+        if isinstance(provenance_value, Mapping)
+        else {}
+    )
+    if normalized_cache_provenance:
+        receipt_payload["proof_cache"] = normalized_cache_provenance
     return HammerReconstructionReceipt(
         receipt_id=f"hammer-receipt-{_stable_hash(receipt_payload)[:20]}",
         obligation_id=resolved_obligation_id,
@@ -694,6 +712,11 @@ def reconstruction_receipt_from_hammer_result(
         errors=tuple(dict.fromkeys(errors)),
         metadata={
             "hammer_status": _enum_value(result.status),
+            **(
+                {"proof_cache": normalized_cache_provenance}
+                if normalized_cache_provenance
+                else {}
+            ),
             "trusted_requires_reconstruction": bool(trusted_requires_reconstruction),
         },
     )
