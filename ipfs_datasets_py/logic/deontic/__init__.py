@@ -32,6 +32,10 @@ from .support_map import (
     SupportMapBuilder,
     SupportMapEntry,
 )
+from .compiler_repairs import (
+    DEONTIC_COMPILER_REPAIR_SCHEMA_VERSION,
+    compile_prohibition_polarity,
+)
 from .knowledge_base import (
     Action,
     Conjunction,
@@ -93,4 +97,6 @@ __all__ = [
     "parser_element_to_formula",
     "summarize_parser_elements",
     "summarize_phase8_parser_metrics",
+    "DEONTIC_COMPILER_REPAIR_SCHEMA_VERSION",
+    "compile_prohibition_polarity",
 ]

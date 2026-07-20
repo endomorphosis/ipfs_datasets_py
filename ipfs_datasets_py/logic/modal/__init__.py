@@ -8,6 +8,11 @@ from .compiler import (
     ModalCompilationResult,
     ModalCompilerConfig,
 )
+from .compiler_repairs import (
+    MODAL_COMPILER_REPAIR_SCHEMA_VERSION,
+    compile_exception_precedence,
+    compile_frame_role_bindings,
+)
 from .autoencoder_loop import (
     DEFAULT_LEGAL_IR_BRIDGE_NAMES,
     FrameLogicPatchValidation,
@@ -240,6 +245,9 @@ from .introspection_analysis import (
 )
 
 __all__ = [
+    "MODAL_COMPILER_REPAIR_SCHEMA_VERSION",
+    "compile_exception_precedence",
+    "compile_frame_role_bindings",
     "DecodedModalPhrase",
     "DecodedModalText",
     "DEFAULT_LEGAL_IR_BRIDGE_NAMES",

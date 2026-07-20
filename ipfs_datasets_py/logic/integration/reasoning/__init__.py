@@ -115,8 +115,11 @@ from .legal_ir_subgoals import (
     project_legal_ir_subgoals_to_codex_todos,
 )
 from .legal_ir_verified_gap_repairs import (
+    LEGAL_IR_CLUSTERED_GAP_REPAIR_SCHEMA_VERSION,
     LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION,
     LegalIRVerifiedGapRepair,
+    generate_clustered_legal_ir_compiler_repairs,
+    generate_clustered_verified_legal_ir_gap_repairs,
     generate_verified_legal_ir_gap_repairs,
 )
 from .legal_ir_view_contracts import (
@@ -219,8 +222,11 @@ __all__ = [
     'decompose_failed_legal_ir_obligations',
     'decompose_legal_ir_hammer_failures',
     'project_legal_ir_subgoals_to_codex_todos',
+    'LEGAL_IR_CLUSTERED_GAP_REPAIR_SCHEMA_VERSION',
     'LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION',
     'LegalIRVerifiedGapRepair',
+    'generate_clustered_legal_ir_compiler_repairs',
+    'generate_clustered_verified_legal_ir_gap_repairs',
     'generate_verified_legal_ir_gap_repairs',
     'CANONICAL_LEGAL_IR_VIEW_CONTRACTS',
     'CANONICAL_LEGAL_IR_VIEW_NAMES',
