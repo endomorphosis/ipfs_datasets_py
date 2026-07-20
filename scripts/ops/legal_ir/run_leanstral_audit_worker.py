@@ -117,7 +117,37 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         "--batch-size",
         type=int,
         default=2,
-        help="Number of Leanstral audit prompts to submit in each batch.",
+        help="Maximum compatible Leanstral prompts submitted in each batch.",
+    )
+    parser.add_argument(
+        "--batch-min-size",
+        type=int,
+        default=1,
+        help="Dispatch a compatible group immediately once it reaches this size.",
+    )
+    parser.add_argument(
+        "--batch-max-wait-seconds",
+        type=float,
+        default=0.05,
+        help="Maximum queue dwell before flushing a partial compatible batch.",
+    )
+    parser.add_argument(
+        "--batch-token-budget-bucket-size",
+        type=int,
+        default=256,
+        help="Token-budget compatibility bucket width.",
+    )
+    parser.add_argument(
+        "--batch-deadline-bucket-seconds",
+        type=float,
+        default=1.0,
+        help="Deadline compatibility bucket width.",
+    )
+    parser.add_argument(
+        "--batch-deadline-guard-seconds",
+        type=float,
+        default=0.01,
+        help="Flush a partial batch this long before its earliest deadline.",
     )
     parser.add_argument(
         "--batch-max-workers",
@@ -269,6 +299,11 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
         max_new_tokens=args.max_new_tokens,
         prompt_payload_mode=args.prompt_payload_mode,
         batch_size=args.batch_size,
+        batch_min_size=args.batch_min_size,
+        batch_max_wait_seconds=args.batch_max_wait_seconds,
+        batch_token_budget_bucket_size=args.batch_token_budget_bucket_size,
+        batch_deadline_bucket_seconds=args.batch_deadline_bucket_seconds,
+        batch_deadline_guard_seconds=args.batch_deadline_guard_seconds,
         batch_max_workers=args.batch_max_workers,
         batch_use_mesh=args.batch_use_mesh,
     )
