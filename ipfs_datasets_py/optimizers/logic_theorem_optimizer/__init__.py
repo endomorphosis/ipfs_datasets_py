@@ -277,6 +277,30 @@ __all__ = [
     'FamilyEvaluationAggregate',
     'LegalIRFamilyEvaluator',
     'aggregate_family_results',
+    # Changed-scope incremental candidate validation
+    'ValidationBoundary',
+    'TypedASTScope',
+    'ValidationScopeCatalog',
+    'ChangedScopeRule',
+    'ChangedScopeValidationPlan',
+    'ChangedScopeValidationPlanner',
+    'FrozenBaselineEvidence',
+    'IncrementalValidationCheck',
+    'IncrementalValidationRequest',
+    'IncrementalValidationResult',
+    'IncrementalValidationReport',
+    'IncrementalCandidateValidator',
+    'IncrementalValidationPlan',
+    'IncrementalValidationPlanner',
+    'IncrementalValidationRunner',
+    'ImmutableBaselineEvidence',
+    'ASTScope',
+    'TransientValidationError',
+    'plan_incremental_validation',
+    'build_incremental_validation_plan',
+    'map_changed_scope',
+    'plan_changed_scope_validation',
+    'validate_incremental_candidate',
 ]
 
 __version__ = '0.1.0'
@@ -341,6 +365,36 @@ def _enforce_export_version_gate(name: str, current_version: str | None = None) 
 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
+    if name in (
+        'ValidationBoundary',
+        'TypedASTScope',
+        'ValidationScopeCatalog',
+        'ChangedScopeRule',
+        'ChangedScopeValidationPlan',
+        'ChangedScopeValidationPlanner',
+        'FrozenBaselineEvidence',
+        'IncrementalValidationCheck',
+        'IncrementalValidationRequest',
+        'IncrementalValidationResult',
+        'IncrementalValidationReport',
+        'IncrementalCandidateValidator',
+        'IncrementalValidationPlan',
+        'IncrementalValidationPlanner',
+        'IncrementalValidationRunner',
+        'ImmutableBaselineEvidence',
+        'ASTScope',
+        'TransientValidationError',
+        'plan_incremental_validation',
+        'build_incremental_validation_plan',
+        'map_changed_scope',
+        'plan_changed_scope_validation',
+        'validate_incremental_candidate',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            incremental_validation,
+        )
+
+        return getattr(incremental_validation, name)
     if name in (
         'SnapshotVersions',
         'EvaluationSnapshot',

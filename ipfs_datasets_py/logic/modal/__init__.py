@@ -83,6 +83,7 @@ from .leanstral import (
     validate_python_patch_proposal,
 )
 from .leanstral_validation import (
+    DEFAULT_LEANSTRAL_REPLAY_FIXTURE,
     LEANSTRAL_MUTATION_FIXTURE_SCHEMA_VERSION,
     LEANSTRAL_PROJECTED_VALIDATION_SCHEMA_VERSION,
     LeanstralMetricComparison,
@@ -93,6 +94,12 @@ from .leanstral_validation import (
     LeanstralValidationReason,
     compare_leanstral_holdout_pareto,
     validate_leanstral_projected_change,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.incremental_validation import (
+    ChangedScopeValidationPlan,
+    TypedASTScope,
+    ValidationBoundary,
+    plan_incremental_validation,
 )
 from .leanstral_audit import (
     ALLOWED_AUDIT_CLASSIFICATIONS,
@@ -414,6 +421,10 @@ __all__ = [
     "StateConfigVersions",
     "StructuralProverValidity",
     "LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION",
+    "DEFAULT_LEANSTRAL_REPLAY_FIXTURE",
+    "ChangedScopeValidationPlan",
+    "TypedASTScope",
+    "ValidationBoundary",
     "LEANSTRAL_PATCH_OUTCOME_ACCEPTED_IMPROVEMENT",
     "LEANSTRAL_PATCH_OUTCOME_OPERATIONAL_FAILURE",
     "LEANSTRAL_PATCH_OUTCOME_QUALITY_REGRESSION",
@@ -477,6 +488,7 @@ __all__ = [
     "target_family_for_modal_ir",
     "validate_frame_logic_patch",
     "validate_leanstral_projected_change",
+    "plan_incremental_validation",
     "validate_leanstral_failure_branch_candidate",
     "verify_leanstral_hammer_candidates",
     "lean_theorem_proof_rejection_reasons",

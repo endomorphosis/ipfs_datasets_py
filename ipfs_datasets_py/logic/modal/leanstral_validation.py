@@ -16,8 +16,10 @@ import os
 import py_compile
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
@@ -31,6 +33,12 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     LegalSample,
     build_us_code_sample,
     stable_mock_embedding,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.incremental_validation import (
+    ChangedScopeValidationPlan,
+    TypedASTScope,
+    ValidationBoundary,
+    plan_incremental_validation,
 )
 
 from .codec import DeterministicModalLogicCodec, ModalLogicCodecConfig, modal_ir_to_flogic_triples
@@ -58,6 +66,10 @@ DEFAULT_LEANSTRAL_MUTATION_FIXTURE = (
 DEFAULT_LEANSTRAL_HOLDOUT_MANIFEST = (
     Path(__file__).resolve().parents[3]
     / "tests/fixtures/logic/modal/leanstral_canary_manifest.json"
+)
+DEFAULT_LEANSTRAL_REPLAY_FIXTURE = (
+    Path(__file__).resolve().parents[3]
+    / "tests/fixtures/legal_ir/hammer_failure_replay.jsonl"
 )
 
 Command = Sequence[str] | str
@@ -138,6 +150,7 @@ class LeanstralProjectedValidationConfig:
     repo_root: Optional[str] = None
     worktree_parent: Optional[str] = None
     mutation_fixture_path: Optional[str] = None
+    replay_fixture_path: Optional[str] = None
     holdout_manifest_path: Optional[str] = None
     validation_commands: Sequence[Command] = field(default_factory=tuple)
     command_timeout_seconds: float = 120.0
@@ -147,6 +160,9 @@ class LeanstralProjectedValidationConfig:
     anti_copy_deadband: float = 0.0
     max_source_span_copy_ratio: float = 0.25
     require_focus_commands: bool = True
+    validation_boundary: str = "merge"
+    max_concurrent_checks: int = 8
+    max_transient_retries: int = 1
     run_syntax_check: bool = True
     run_deterministic_round_trip: bool = True
     run_theorem_check: bool = True
@@ -154,7 +170,9 @@ class LeanstralProjectedValidationConfig:
     run_provenance_check: bool = True
     run_anti_copy_check: bool = True
     run_mutation_check: bool = True
+    run_replay_check: bool = True
     run_holdout_check: bool = True
+    run_candidate_holdout_check: bool = False
     keep_worktree: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
@@ -181,6 +199,7 @@ class LeanstralProjectedChangeValidation:
     worktree_path: str = ""
     disposable_worktree_removed: bool = False
     report_id: str = ""
+    validation_plan: Optional[ChangedScopeValidationPlan] = None
 
     def to_dict(self) -> Dict[str, Any]:
         payload = self._payload(include_report_id=False)
@@ -200,6 +219,9 @@ class LeanstralProjectedChangeValidation:
             "reasons": list(self.reasons),
             "schema_version": self.schema_version,
             "worktree_path": self.worktree_path,
+            "validation_plan": self.validation_plan.to_dict()
+            if self.validation_plan is not None
+            else None,
         }
         if include_report_id:
             payload["report_id"] = self.report_id
@@ -242,6 +264,8 @@ class LeanstralProjectedChangeValidator:
         baseline_holdout_records: Sequence[IntrospectionMetricRecord | Mapping[str, Any]] = (),
         candidate_holdout_records: Sequence[IntrospectionMetricRecord | Mapping[str, Any]] = (),
         validation_commands: Optional[Sequence[Command]] = None,
+        typed_ast_scopes: Sequence[TypedASTScope | Mapping[str, Any] | str] = (),
+        validation_boundary: Optional[ValidationBoundary | str] = None,
     ) -> LeanstralProjectedChangeValidation:
         """Run the full projected-change gate and return an auditable report."""
 
@@ -261,6 +285,7 @@ class LeanstralProjectedChangeValidator:
                 patch_validation=None,
                 worktree_path="",
                 disposable_worktree_removed=False,
+                validation_plan=None,
             )
         patch_validation = validate_python_patch_proposal(
             task,
@@ -270,6 +295,11 @@ class LeanstralProjectedChangeValidator:
         checks: List[LeanstralValidationCheck] = [
             _check_from_python_patch_validation(patch_validation)
         ]
+        plan = plan_incremental_validation(
+            patch_validation.changed_paths,
+            typed_ast_scopes=typed_ast_scopes,
+            boundary=validation_boundary or config.validation_boundary,
+        )
         if not patch_validation.accepted or patch is None:
             return _final_report(
                 checks,
@@ -277,6 +307,7 @@ class LeanstralProjectedChangeValidator:
                 patch_validation=patch_validation,
                 worktree_path="",
                 disposable_worktree_removed=False,
+                validation_plan=plan,
             )
 
         worktree_path = ""
@@ -297,6 +328,7 @@ class LeanstralProjectedChangeValidator:
                             validation_commands=validation_commands,
                             baseline_holdout_records=baseline_holdout_records,
                             candidate_holdout_records=candidate_holdout_records,
+                            validation_plan=plan,
                         )
                     )
             removed = bool(worktree_ref.removed) if worktree_ref is not None else False
@@ -315,6 +347,7 @@ class LeanstralProjectedChangeValidator:
             patch_validation=patch_validation,
             worktree_path=worktree_path,
             disposable_worktree_removed=removed,
+            validation_plan=plan,
         )
 
     def _worktree_checks(
@@ -327,37 +360,65 @@ class LeanstralProjectedChangeValidator:
         validation_commands: Optional[Sequence[Command]],
         baseline_holdout_records: Sequence[IntrospectionMetricRecord | Mapping[str, Any]],
         candidate_holdout_records: Sequence[IntrospectionMetricRecord | Mapping[str, Any]],
+        validation_plan: ChangedScopeValidationPlan,
     ) -> Sequence[LeanstralValidationCheck]:
-        checks: List[LeanstralValidationCheck] = []
         config = self.config
+        check_jobs: List[tuple[str, Callable[[], LeanstralValidationCheck]]] = []
         if config.run_syntax_check:
-            checks.append(_syntax_check(worktree, changed_paths))
+            check_jobs.append(("syntax", lambda: _syntax_check(worktree, changed_paths)))
         commands = tuple(validation_commands) if validation_commands is not None else tuple(config.validation_commands)
-        checks.append(_focused_tests_check(worktree, commands, config))
+        if (
+            not commands
+            and validation_plan.boundary is ValidationBoundary.CANDIDATE
+            and validation_plan.focused_tests
+        ):
+            commands = (
+                [sys.executable, "-m", "pytest", *validation_plan.focused_tests, "-q"],
+            )
+        check_jobs.append(("focused_tests", lambda: _focused_tests_check(worktree, commands, config)))
 
         deterministic_samples = tuple(samples) or (_sample_from_task(task),)
         if config.run_deterministic_round_trip:
-            checks.append(_deterministic_round_trip_check(deterministic_samples, config))
+            check_jobs.append(("deterministic_round_trip", lambda: _deterministic_round_trip_check(deterministic_samples, config)))
         if config.run_theorem_check:
-            checks.append(_theorem_check(deterministic_samples))
+            check_jobs.append(("theorem", lambda: _theorem_check(deterministic_samples)))
         if config.run_graph_check:
-            checks.append(_graph_check(deterministic_samples))
+            check_jobs.append(("graph", lambda: _graph_check(deterministic_samples)))
         if config.run_provenance_check:
-            checks.append(_provenance_check(deterministic_samples))
+            check_jobs.append(("provenance", lambda: _provenance_check(deterministic_samples)))
         if config.run_anti_copy_check:
-            checks.append(_anti_copy_check(deterministic_samples, config))
+            check_jobs.append(("anti_copy", lambda: _anti_copy_check(deterministic_samples, config)))
+        selected_mutations: Sequence[str] = (
+            validation_plan.mutation_cases
+            if validation_plan.boundary is ValidationBoundary.CANDIDATE
+            else ()
+        )
+        selected_replays: Sequence[str] = validation_plan.replay_samples
         if config.run_mutation_check:
-            checks.append(_mutation_check(task, config))
-        if config.run_holdout_check:
-            checks.append(
-                _holdout_check(
+            check_jobs.append(("mutation", lambda: _mutation_check(task, config, selected_case_ids=selected_mutations)))
+        if config.run_replay_check:
+            check_jobs.append(("replay", lambda: _replay_check(config, selected_case_ids=selected_replays)))
+        if config.run_holdout_check and (
+            validation_plan.boundary is not ValidationBoundary.CANDIDATE
+            or config.run_candidate_holdout_check
+        ):
+            check_jobs.append((
+                "frozen_holdout",
+                lambda: _holdout_check(
                     worktree,
                     config,
                     evaluator=self.holdout_metric_evaluator,
                     baseline_records=baseline_holdout_records,
                     candidate_records=candidate_holdout_records,
-                )
-            )
+                ),
+            ))
+        checks = _run_independent_checks(
+            check_jobs,
+            max_workers=config.max_concurrent_checks,
+            max_transient_retries=config.max_transient_retries,
+        )
+        if validation_plan.boundary.requires_complete_promotion_gates:
+            checks = (*checks, _promotion_boundary_check(validation_plan, checks))
         return tuple(checks)
 
 
@@ -371,6 +432,8 @@ def validate_leanstral_projected_change(
     candidate_holdout_records: Sequence[IntrospectionMetricRecord | Mapping[str, Any]] = (),
     validation_commands: Optional[Sequence[Command]] = None,
     holdout_metric_evaluator: Optional[HoldoutMetricEvaluator] = None,
+    typed_ast_scopes: Sequence[TypedASTScope | Mapping[str, Any] | str] = (),
+    validation_boundary: Optional[ValidationBoundary | str] = None,
 ) -> LeanstralProjectedChangeValidation:
     """Convenience wrapper for the projected-change validator."""
 
@@ -384,6 +447,8 @@ def validate_leanstral_projected_change(
         baseline_holdout_records=baseline_holdout_records,
         candidate_holdout_records=candidate_holdout_records,
         validation_commands=validation_commands,
+        typed_ast_scopes=typed_ast_scopes,
+        validation_boundary=validation_boundary,
     )
 
 
@@ -888,6 +953,8 @@ def _anti_copy_check(
 def _mutation_check(
     task: LegalIRLeanTask,
     config: LeanstralProjectedValidationConfig,
+    *,
+    selected_case_ids: Sequence[str] = (),
 ) -> LeanstralValidationCheck:
     start = time.monotonic()
     path = Path(config.mutation_fixture_path).expanduser() if config.mutation_fixture_path else DEFAULT_LEANSTRAL_MUTATION_FIXTURE
@@ -903,6 +970,8 @@ def _mutation_check(
             elapsed=time.monotonic() - start,
         )
     required = tuple(str(value) for value in (task.compiler_change_spec or {}).get("mutation_cases", ()))
+    if selected_case_ids:
+        required = tuple(dict.fromkeys((*required, *(str(value) for value in selected_case_ids))))
     by_id = {str(item["mutation_id"]): item for item in fixture}
     missing = [mutation_id for mutation_id in required if mutation_id not in by_id]
     if missing:
@@ -936,6 +1005,99 @@ def _mutation_check(
         accepted=not reasons,
         reasons=tuple(reasons),
         details={"fixture_path": str(path), "mutations": results},
+        elapsed_seconds=time.monotonic() - start,
+    )
+
+
+def _replay_check(
+    config: LeanstralProjectedValidationConfig,
+    *,
+    selected_case_ids: Sequence[str] = (),
+) -> LeanstralValidationCheck:
+    """Validate the selected content-addressable Hammer/Leanstral replay cases."""
+
+    start = time.monotonic()
+    path = (
+        Path(config.replay_fixture_path).expanduser()
+        if config.replay_fixture_path
+        else DEFAULT_LEANSTRAL_REPLAY_FIXTURE
+    )
+    reasons: List[LeanstralValidationReason] = []
+    cases: Dict[str, Mapping[str, Any]] = {}
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line_number, raw_line in enumerate(handle, 1):
+                if not raw_line.strip():
+                    continue
+                value = json.loads(raw_line)
+                if not isinstance(value, Mapping):
+                    raise ValueError(f"line {line_number} is not an object")
+                case_id = str(value.get("case_id") or "").strip()
+                if not case_id:
+                    raise ValueError(f"line {line_number} is missing case_id")
+                if case_id in cases:
+                    raise ValueError(f"duplicate replay case_id: {case_id}")
+                cases[case_id] = dict(value)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        return _single_reason_check(
+            "replay",
+            "replay_fixture_invalid",
+            "Hammer/Leanstral replay fixture could not be loaded or validated.",
+            details={"error": str(exc), "path": str(path)},
+            elapsed=time.monotonic() - start,
+        )
+
+    requested = tuple(dict.fromkeys(str(item) for item in selected_case_ids if str(item)))
+    missing = tuple(item for item in requested if item not in cases)
+    if missing:
+        reasons.append(
+            LeanstralValidationReason(
+                code="required_replay_case_missing",
+                check="replay",
+                message="Changed-scope plan references replay cases missing from the frozen fixture.",
+                details={"missing_replay_cases": list(missing)},
+            )
+        )
+    chosen = [cases[item] for item in requested if item in cases] if requested else list(cases.values())
+    replayed: List[Dict[str, Any]] = []
+    for case in chosen:
+        artifacts = case.get("hammer_guidance_artifacts") or ()
+        guidance = case.get("leanstral_guidance")
+        accepted = (
+            case.get("schema_version") == "legal-ir-hammer-replay-case-v1"
+            and isinstance(artifacts, Sequence)
+            and not isinstance(artifacts, (str, bytes))
+            and bool(artifacts or isinstance(guidance, Mapping))
+        )
+        proof_ids = tuple(
+            str(proof_id)
+            for artifact in artifacts
+            if isinstance(artifact, Mapping)
+            for proof_id in artifact.get("proof_obligation_ids", ()) or ()
+            if str(proof_id)
+        )
+        if not accepted:
+            reasons.append(
+                LeanstralValidationReason(
+                    code="replay_case_contract_invalid",
+                    check="replay",
+                    message="Frozen replay case is missing its typed guidance evidence.",
+                    details={"case_id": str(case.get("case_id") or "")},
+                )
+            )
+        replayed.append(
+            {
+                "accepted": accepted,
+                "case_id": str(case.get("case_id") or ""),
+                "case_type": str(case.get("case_type") or ""),
+                "proof_obligation_ids": list(proof_ids),
+            }
+        )
+    return LeanstralValidationCheck(
+        name="replay",
+        accepted=not reasons,
+        reasons=tuple(reasons),
+        details={"fixture_path": str(path), "replayed_cases": replayed},
         elapsed_seconds=time.monotonic() - start,
     )
 
@@ -1345,6 +1507,184 @@ def _check_from_python_patch_validation(
     )
 
 
+def _validation_check_is_transient(check: LeanstralValidationCheck) -> bool:
+    """Return whether every failure is an explicitly transient runtime failure."""
+
+    if check.accepted or not check.reasons:
+        return False
+    for reason in check.reasons:
+        code = reason.code.lower()
+        details = dict(reason.details)
+        returncode = details.get("returncode")
+        output = str(details.get("output") or "").lower()
+        transient = (
+            (reason.check == "focused_tests" and (returncode == 124 or "timed out" in output))
+            or code.startswith("holdout_metric_evaluator_error:timeouterror")
+            or code.startswith("holdout_metric_evaluator_error:connectionerror")
+            or code.startswith("validation_check_transient_error")
+        )
+        if not transient:
+            return False
+    return True
+
+
+def _run_independent_checks(
+    jobs: Sequence[tuple[str, Callable[[], LeanstralValidationCheck]]],
+    *,
+    max_workers: int,
+    max_transient_retries: int,
+) -> Sequence[LeanstralValidationCheck]:
+    """Run independent projected-change checks concurrently in stable order."""
+
+    if int(max_workers) < 1:
+        raise ValueError("max_concurrent_checks must be at least one")
+    if int(max_transient_retries) < 0:
+        raise ValueError("max_transient_retries must be non-negative")
+    order = [name for name, _ in jobs]
+    if len(set(order)) != len(order):
+        raise ValueError("projected validation check names must be unique")
+
+    def execute(name: str, callback: Callable[[], LeanstralValidationCheck]) -> LeanstralValidationCheck:
+        transient_failures = 0
+        started = time.monotonic()
+        for attempt in range(1, int(max_transient_retries) + 2):
+            try:
+                result = callback()
+            except (TimeoutError, ConnectionError) as exc:
+                result = _single_reason_check(
+                    name,
+                    f"validation_check_transient_error:{exc.__class__.__name__}",
+                    "Independent validation check encountered a transient runtime failure.",
+                    details={"error": str(exc)},
+                    elapsed=time.monotonic() - started,
+                )
+            except Exception as exc:
+                return _single_reason_check(
+                    name,
+                    f"validation_check_error:{exc.__class__.__name__}",
+                    "Independent validation check failed unexpectedly.",
+                    details={"attempt_count": attempt, "error": str(exc)},
+                    elapsed=time.monotonic() - started,
+                )
+            if result.accepted or not _validation_check_is_transient(result):
+                details = dict(result.details)
+                details.update(
+                    {
+                        "attempt_count": attempt,
+                        "transient_failure_count": transient_failures,
+                    }
+                )
+                return LeanstralValidationCheck(
+                    name=result.name,
+                    accepted=result.accepted,
+                    reasons=result.reasons,
+                    details=details,
+                    elapsed_seconds=time.monotonic() - started,
+                )
+            transient_failures += 1
+            if attempt > int(max_transient_retries):
+                details = dict(result.details)
+                details.update(
+                    {
+                        "attempt_count": attempt,
+                        "transient_failure_count": transient_failures,
+                        "retry_budget_exhausted": True,
+                    }
+                )
+                return LeanstralValidationCheck(
+                    name=result.name,
+                    accepted=False,
+                    reasons=result.reasons,
+                    details=details,
+                    elapsed_seconds=time.monotonic() - started,
+                )
+        raise AssertionError("unreachable projected validation retry state")
+
+    results: Dict[str, LeanstralValidationCheck] = {}
+    if not jobs:
+        return ()
+    with ThreadPoolExecutor(
+        max_workers=min(int(max_workers), len(jobs)),
+        thread_name_prefix="leanstral-validation",
+    ) as executor:
+        futures = {
+            executor.submit(execute, name, callback): name
+            for name, callback in jobs
+        }
+        for future in as_completed(futures):
+            name = futures[future]
+            try:
+                results[name] = future.result()
+            except Exception as exc:  # pragma: no cover - defensive executor path
+                results[name] = _single_reason_check(
+                    name,
+                    f"validation_executor_error:{exc.__class__.__name__}",
+                    "Concurrent validation executor failed closed.",
+                    details={"error": str(exc)},
+                )
+    return tuple(results[name] for name in order)
+
+
+def _promotion_boundary_check(
+    plan: ChangedScopeValidationPlan,
+    checks: Sequence[LeanstralValidationCheck],
+) -> LeanstralValidationCheck:
+    """Fail closed unless merge/rollout has the complete promotion proof set."""
+
+    by_name = {check.name: check for check in checks}
+    required = (
+        "syntax",
+        "focused_tests",
+        "deterministic_round_trip",
+        "theorem",
+        "graph",
+        "provenance",
+        "anti_copy",
+        "mutation",
+        "replay",
+        "frozen_holdout",
+    )
+    missing = tuple(name for name in required if name not in by_name)
+    failed = tuple(name for name in required if name in by_name and not by_name[name].accepted)
+    complete_catalog = bool(
+        plan.complete_frozen_canary_required
+        and plan.complete_promotion_proofs_required
+        and plan.mutation_cases
+        and plan.replay_samples
+        and plan.proof_obligations
+        and plan.legal_ir_families
+    )
+    accepted = not missing and not failed and complete_catalog
+    reasons: tuple[LeanstralValidationReason, ...] = ()
+    if not accepted:
+        reasons = (
+            LeanstralValidationReason(
+                code="promotion_proof_set_incomplete",
+                check="promotion_boundary",
+                message="Merge and rollout require the complete frozen canary and promotion proof set.",
+                details={
+                    "boundary": plan.boundary.value,
+                    "failed_checks": list(failed),
+                    "missing_checks": list(missing),
+                    "scope_catalog_complete": complete_catalog,
+                },
+            ),
+        )
+    return LeanstralValidationCheck(
+        name="promotion_boundary",
+        accepted=accepted,
+        reasons=reasons,
+        details={
+            "boundary": plan.boundary.value,
+            "complete_frozen_canary_required": plan.complete_frozen_canary_required,
+            "complete_promotion_proofs_required": plan.complete_promotion_proofs_required,
+            "failed_checks": list(failed),
+            "missing_checks": list(missing),
+            "proof_obligation_count": len(plan.proof_obligations),
+        },
+    )
+
+
 def _final_report(
     checks: Sequence[LeanstralValidationCheck],
     *,
@@ -1352,6 +1692,7 @@ def _final_report(
     patch_validation: Optional[PythonPatchValidation],
     worktree_path: str,
     disposable_worktree_removed: bool,
+    validation_plan: Optional[ChangedScopeValidationPlan],
 ) -> LeanstralProjectedChangeValidation:
     reason_details: List[LeanstralValidationReason] = []
     for check in checks:
@@ -1367,6 +1708,7 @@ def _final_report(
         patch_validation=patch_validation,
         worktree_path=worktree_path,
         disposable_worktree_removed=disposable_worktree_removed,
+        validation_plan=validation_plan,
     )
     return LeanstralProjectedChangeValidation(
         accepted=result.accepted,
@@ -1378,6 +1720,7 @@ def _final_report(
         worktree_path=result.worktree_path,
         disposable_worktree_removed=result.disposable_worktree_removed,
         report_id=result.expected_report_id(),
+        validation_plan=result.validation_plan,
     )
 
 
