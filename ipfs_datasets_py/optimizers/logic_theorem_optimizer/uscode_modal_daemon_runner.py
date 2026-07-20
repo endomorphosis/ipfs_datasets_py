@@ -84,6 +84,13 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import 
     build_modal_supervisor_health_report,
     state_to_compiler_patch_lag,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry import (
+    RUNTIME_PHASES,
+    RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION,
+    RUNTIME_TELEMETRY_SCHEMA_VERSION,
+    RuntimeTelemetry,
+    attach_runtime_telemetry,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     LeanstralTodoProjectionConfig,
     ModalOptimizationRun,
@@ -424,6 +431,19 @@ COMPILER_IR_METRIC_ALIASES = {
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _runtime_queue_depth(queue: Any) -> int:
+    """Return open queue depth without depending on a particular queue class."""
+
+    try:
+        counts = dict(queue.status_counts())
+    except (AttributeError, TypeError, ValueError):
+        return 0
+    return sum(
+        max(0, int(counts.get(status, 0) or 0))
+        for status in ("pending", "claimed")
+    )
 
 
 def _stable_metric_json(value: Any) -> str:
@@ -3582,6 +3602,25 @@ def bridge_ir_metric_block(
             thread_name_prefix="bridge-ir-metrics",
         ) as executor:
             sample_results = list(executor.map(evaluate_sample, sample_list))
+        # Worker threads avoid calling the shared heartbeat callback directly;
+        # replay bounded, source-free completion observations on the owner
+        # thread so every bridge sample still receives a telemetry span.
+        for sample_index, (sample, result) in enumerate(
+            zip(sample_list, sample_results),
+            start=1,
+        ):
+            sample_id = str(getattr(sample, "sample_id", "") or "")
+            emit_progress(
+                "sample_start",
+                sample_id=sample_id,
+                sample_index=sample_index,
+            )
+            emit_progress(
+                "sample_done" if result[1] == "miss" else "sample_cache_hit",
+                cache_source=result[1],
+                sample_id=sample_id,
+                sample_index=sample_index,
+            )
 
     multiview_reports = [result[0] for result in sample_results]
     cache_sources = [str(result[1]) for result in sample_results]
@@ -4669,6 +4708,7 @@ def run_daemon_hammer_guidance_cycle(
     autoencoder: Optional[AdaptiveModalAutoencoder] = None,
     samples_by_id: Optional[Mapping[str, Any]] = None,
     artifact_paths: Optional[Sequence[str | Path]] = None,
+    runtime_telemetry: Optional[RuntimeTelemetry] = None,
 ) -> Dict[str, Any]:
     """Run the daemon-local hammer guidance phase with fail-closed skip records."""
 
@@ -4690,6 +4730,21 @@ def run_daemon_hammer_guidance_cycle(
     contract_telemetry_records = [
         collect_legal_ir_contract_telemetry(sample) for sample in selected_samples
     ]
+    if runtime_telemetry is not None:
+        for sample, contract_record in zip(selected_samples, contract_telemetry_records):
+            sample_id = _daemon_hammer_sample_id(sample)
+            observed_views = set(contract_record.contract_coverage)
+            for family in LEGAL_IR_VIEW_FAMILIES:
+                runtime_telemetry.record_instant(
+                    f"legal_ir_view.{family}",
+                    cycle=cycle,
+                    sample_id=sample_id,
+                    unit_count=1 if family in observed_views else 0,
+                    attributes={
+                        "status": "observed" if family in observed_views else "not_observed",
+                        "view": family,
+                    },
+                )
     contract_telemetry_by_sample = {
         record.sample_id: record for record in contract_telemetry_records
     }
@@ -4719,11 +4774,24 @@ def run_daemon_hammer_guidance_cycle(
         ],
         **contract_telemetry_summary,
     }
-    loaded_guidance = _daemon_hammer_loaded_guidance(
-        args=args,
-        root=root,
-        artifact_paths=list(artifact_paths or []),
-    )
+    if runtime_telemetry is None:
+        loaded_guidance = _daemon_hammer_loaded_guidance(
+            args=args,
+            root=root,
+            artifact_paths=list(artifact_paths or []),
+        )
+    else:
+        with runtime_telemetry.span(
+            "leanstral_inference",
+            cycle=cycle,
+            unit_count=len(artifact_paths or []),
+            attributes={"mode": "artifact_ingest"},
+        ):
+            loaded_guidance = _daemon_hammer_loaded_guidance(
+                args=args,
+                root=root,
+                artifact_paths=list(artifact_paths or []),
+            )
     result["leanstral_drafting"] = {
         "artifact_count": int(loaded_guidance.get("artifact_count", 0) or 0),
         "candidate_count": int(loaded_guidance.get("candidate_count", 0) or 0),
@@ -4768,6 +4836,12 @@ def run_daemon_hammer_guidance_cycle(
                 result["status"] = "cache_hit"
         except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             result["cache_error"] = f"{type(exc).__name__}: {str(exc)[:240]}"
+    if runtime_telemetry is not None:
+        runtime_telemetry.record_cache_lookup(
+            hit=bool(result.get("cache_hit")),
+            cycle=cycle,
+            cache_kind="daemon_hammer_guidance",
+        )
 
     hammer_artifacts: List[Dict[str, Any]] = []
     for cached_artifact in cached_artifacts:
@@ -4801,7 +4875,16 @@ def run_daemon_hammer_guidance_cycle(
         for sample in selected_samples:
             sample_id = _daemon_hammer_sample_id(sample)
             try:
-                obligations = generate_legal_ir_proof_obligations(sample)
+                if runtime_telemetry is None:
+                    obligations = generate_legal_ir_proof_obligations(sample)
+                else:
+                    with runtime_telemetry.span(
+                        "premise_selection",
+                        cycle=cycle,
+                        sample_id=sample_id,
+                        unit_count=1,
+                    ):
+                        obligations = generate_legal_ir_proof_obligations(sample)
             except (KeyError, TypeError, ValueError, RuntimeError) as exc:
                 obligation_failures.append(
                     {
@@ -4816,11 +4899,25 @@ def run_daemon_hammer_guidance_cycle(
             if not obligations:
                 continue
             try:
-                report = run_legal_ir_hammer(
-                    sample,
-                    obligations=obligations,
-                    config=hammer_config,
-                )
+                if runtime_telemetry is None:
+                    report = run_legal_ir_hammer(
+                        sample,
+                        obligations=obligations,
+                        config=hammer_config,
+                    )
+                else:
+                    with runtime_telemetry.span(
+                        "solver_execution",
+                        cycle=cycle,
+                        sample_id=sample_id,
+                        unit_count=len(obligations),
+                        attributes={"obligation_count": len(obligations)},
+                    ):
+                        report = run_legal_ir_hammer(
+                            sample,
+                            obligations=obligations,
+                            config=hammer_config,
+                        )
             except (OSError, KeyError, TypeError, ValueError, RuntimeError) as exc:
                 hammer_failures.append(
                     {
@@ -4848,6 +4945,16 @@ def run_daemon_hammer_guidance_cycle(
                 )
             hammer_reports.append(report_dict)
             hammer_artifacts.extend(sample_artifacts)
+            if runtime_telemetry is not None:
+                runtime_telemetry.record_instant(
+                    "lean_reconstruction",
+                    cycle=cycle,
+                    sample_id=sample_id,
+                    unit_count=len(
+                        report_dict.get("reconstruction_receipts", []) or []
+                    ),
+                    attributes={"status": "observed"},
+                )
 
     combined_guidance = [
         *list(loaded_guidance.get("guidance_items", []) or []),
@@ -13636,6 +13743,11 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "loop_role": getattr(args, "loop_role", "autoencoder"),
         "max_cycles": max(0, int(getattr(args, "max_cycles", 0) or 0)),
         "metric_schema_version": AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+        "runtime_telemetry_schema_version": RUNTIME_TELEMETRY_SCHEMA_VERSION,
+        "runtime_resource_telemetry_schema_version": (
+            RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION
+        ),
+        "runtime_phase_catalog": list(RUNTIME_PHASES),
         "autoencoder_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
         "autoencoder_state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
         "metric_failures": 0,
@@ -15669,6 +15781,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             state_path=state_path,
         )
         save_summary(summary_path, summary)
+    runtime_telemetry = RuntimeTelemetry(args.run_id)
+    attach_runtime_telemetry(summary, runtime_telemetry)
     bridge_adapters = bridge_loss_adapter_names(args)
     bridge_evaluate_provers = bool(
         getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())
@@ -16368,6 +16482,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             cycle_started = time.time()
             cycle_phase_timings: Dict[str, float] = {}
             active_phase = {"name": "", "started_at": cycle_started}
+            runtime_telemetry.start_cycle(
+                cycle,
+                queue_depth=_runtime_queue_depth(supervisor.queue),
+            )
 
             def mark_cycle_phase(phase: str, **payload: Any) -> None:
                 now = time.time()
@@ -16379,6 +16497,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     )
                 active_phase["name"] = str(phase)
                 active_phase["started_at"] = now
+                runtime_telemetry.transition_cycle_phase(
+                    phase,
+                    cycle=cycle,
+                    queue_depth=_runtime_queue_depth(supervisor.queue),
+                    attributes=payload,
+                )
                 summary["active_cycle"] = cycle
                 summary["active_cycle_phase"] = str(phase)
                 summary["active_cycle_bridge_loss_adapters"] = list(bridge_adapters)
@@ -16426,6 +16550,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     name: round(seconds, 3)
                     for name, seconds in sorted(cycle_phase_timings.items())
                 }
+                runtime_telemetry.end_cycle(
+                    queue_depth=_runtime_queue_depth(supervisor.queue),
+                )
+                attach_runtime_telemetry(
+                    summary,
+                    runtime_telemetry,
+                    cycle=cycle,
+                )
 
             def projection_progress_callback(progress: Mapping[str, Any]) -> None:
                 payload = dict(progress)
@@ -16452,6 +16584,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     payload = dict(progress)
                     payload["cycle"] = cycle
                     payload["dataset"] = str(dataset)
+                    runtime_telemetry.observe_progress(
+                        payload,
+                        cycle=cycle,
+                        dataset=dataset,
+                        queue_depth=_runtime_queue_depth(supervisor.queue),
+                    )
                     summary["active_cycle"] = cycle
                     summary["active_cycle_metric_progress"] = payload
                     summary["active_cycle_last_heartbeat_at"] = utc_now()
@@ -16502,6 +16640,19 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
                 max_sample_text_chars=int(getattr(args, "max_sample_text_chars", 0) or 0),
             )
+            for dataset, sampled_rows in (
+                ("train", train_samples),
+                ("validation", validation_samples),
+            ):
+                for sample in sampled_rows:
+                    runtime_telemetry.record_instant(
+                        "sampling",
+                        cycle=cycle,
+                        sample_id=str(getattr(sample, "sample_id", "") or ""),
+                        unit_count=1,
+                        queue_depth=_runtime_queue_depth(supervisor.queue),
+                        attributes={"dataset": dataset, "status": "selected"},
+                    )
             acceptance_validation_samples = validation_canary_samples or validation_samples
             acceptance_validation_indices = validation_canary_indices or validation_indices
             validation_mode = (
@@ -16817,6 +16968,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     train_sample_count=len(train_samples),
                     validation_sample_count=len(acceptance_validation_samples),
                 )
+                for sample in train_samples:
+                    runtime_telemetry.record_instant(
+                        "projection_training",
+                        cycle=cycle,
+                        sample_id=str(getattr(sample, "sample_id", "") or ""),
+                        unit_count=generalizable_projection_epochs,
+                        queue_depth=_runtime_queue_depth(supervisor.queue),
+                        attributes={"epoch_count": generalizable_projection_epochs},
+                    )
                 feature_projection_report = autoencoder.train_generalizable_projection(
                     train_samples,
                     validation_samples=acceptance_validation_samples,
@@ -17100,6 +17260,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "introspection_disagreement_export",
                 sample_count=len(introspection_export_validation_samples),
             )
+            for sample in introspection_export_validation_samples:
+                runtime_telemetry.record_instant(
+                    "disagreement_export",
+                    cycle=cycle,
+                    sample_id=str(getattr(sample, "sample_id", "") or ""),
+                    unit_count=1,
+                    queue_depth=_runtime_queue_depth(supervisor.queue),
+                    attributes={"status": "eligible"},
+                )
             if (
                 pre_todo_introspection_export.get("enabled")
                 and not pre_todo_introspection_export.get("skipped")
@@ -17152,6 +17321,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     for path in introspection_export.get("paths", []) or []
                     if str(path)
                 ],
+                runtime_telemetry=runtime_telemetry,
             )
             summary["active_cycle_hammer_guidance"] = dict(
                 daemon_hammer_guidance_cycle
@@ -18197,6 +18367,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 append_event(log_path, args.run_id, test_result)
                 save_summary(summary_path, summary)
     finally:
+        runtime_telemetry.close_open_spans(
+            status="cancelled" if stop_requested else "finished",
+            queue_depth=_runtime_queue_depth(supervisor.queue),
+        )
+        attach_runtime_telemetry(summary, runtime_telemetry)
         if stop_requested:
             summary["latest_stop_reason"] = f"signal_{stop_signal}"
             summary["stopped_by_signal"] = stop_signal
@@ -18422,6 +18597,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_main_apply_failure_count", 0)
     summary.setdefault("codex_main_apply_repair_count", 0)
     summary.setdefault("codex_transient_requeue_count", 0)
+    runtime_telemetry = RuntimeTelemetry(args.run_id)
+    attach_runtime_telemetry(summary, runtime_telemetry)
 
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
@@ -18459,6 +18636,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             cycle_started = time.time()
             packet: Dict[str, Any] = {}
             vector_claim_report: Dict[str, Any] = {}
+            runtime_telemetry.start_cycle(cycle)
+            runtime_telemetry.transition_cycle_phase(
+                "codex_queue_wait",
+                cycle=cycle,
+                attributes={"worker_id": worker_id},
+            )
             bundle_mode = str(getattr(args, "codex_bundle_mode", "semantic")).strip().lower()
             if bundle_mode == "vector":
                 claimed, queue, status, vector_claim_report = _claim_vector_program_synthesis_batch(
@@ -18487,6 +18670,13 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         policy,
                         execution_mode=execution_mode,
                     )
+
+            runtime_telemetry.transition_cycle_phase(
+                "validation" if claimed else "codex_queue_wait",
+                cycle=cycle,
+                queue_depth=_runtime_queue_depth(queue),
+                attributes={"sample_count": len(claimed), "mode": execution_mode},
+            )
 
             if claimed:
                 packet = create_codex_work_packet(
@@ -18555,6 +18745,28 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                             packet,
                             Path(str(packet["packet_path"])) if packet.get("packet_path") else None,
                         )
+
+                    validation = dict(packet.get("main_apply_validation") or {})
+                    runtime_telemetry.record_instant(
+                        "validation",
+                        cycle=cycle,
+                        unit_count=len(validation.get("commands", []) or []),
+                        queue_depth=_runtime_queue_depth(queue),
+                        attributes={
+                            "status": str(validation.get("status") or "not_run"),
+                            "worker_id": worker_id,
+                        },
+                    )
+                    runtime_telemetry.record_instant(
+                        "merge",
+                        cycle=cycle,
+                        unit_count=int(bool(packet.get("patch_path"))),
+                        queue_depth=_runtime_queue_depth(queue),
+                        attributes={
+                            "status": str(packet.get("main_apply_status") or "not_run"),
+                            "worker_id": worker_id,
+                        },
+                    )
 
             summary["cycles"] = cycle
             summary["heartbeat_at"] = utc_now()
@@ -18680,11 +18892,33 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 args.run_id,
                 event_payload,
             )
+            runtime_telemetry.record_instant(
+                "state_persistence",
+                cycle=cycle,
+                unit_count=1,
+                queue_depth=_runtime_queue_depth(queue),
+                attributes={"status": "summary_checkpoint"},
+            )
+            runtime_telemetry.end_cycle(
+                queue_depth=_runtime_queue_depth(queue),
+            )
+            attach_runtime_telemetry(summary, runtime_telemetry, cycle=cycle)
             save_summary(summary_path, summary)
             sleep_seconds = max(0.1, float(args.poll_seconds))
             if not stop_requested:
-                time.sleep(sleep_seconds)
+                with runtime_telemetry.span(
+                    "codex_queue_wait",
+                    cycle=cycle,
+                    queue_depth=_runtime_queue_depth(queue),
+                    attributes={"worker_id": worker_id},
+                ):
+                    time.sleep(sleep_seconds)
     finally:
+        runtime_telemetry.close_open_spans(
+            status="cancelled" if stop_requested else "finished",
+            queue_depth=_runtime_queue_depth(locals().get("queue")),
+        )
+        attach_runtime_telemetry(summary, runtime_telemetry)
         if stop_requested:
             summary["latest_stop_reason"] = f"signal_{stop_signal}"
             summary["stopped_by_signal"] = stop_signal
