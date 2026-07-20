@@ -37,7 +37,7 @@ common_args=(
   --state-prefix "${STATE_PREFIX}"
   --stale-seconds "${HAMMER_LEANSTRAL_STALE_SECONDS:-1800}"
   --check-interval "${HAMMER_LEANSTRAL_CHECK_INTERVAL:-60}"
-  --daemon-interval "${HAMMER_LEANSTRAL_DAEMON_INTERVAL:-120}"
+  --daemon-interval "${HAMMER_LEANSTRAL_DAEMON_INTERVAL:-15}"
   --max-restarts "${HAMMER_LEANSTRAL_MAX_RESTARTS:-20}"
   --implementation-timeout "${HAMMER_LEANSTRAL_IMPLEMENTATION_TIMEOUT:-3600}"
   --implementation-log-stall-seconds "${HAMMER_LEANSTRAL_LOG_STALL_SECONDS:-900}"
