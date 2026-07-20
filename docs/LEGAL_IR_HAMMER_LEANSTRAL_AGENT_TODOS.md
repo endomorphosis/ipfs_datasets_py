@@ -641,7 +641,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-027 Split validation metrics by LegalIR view family
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: metrics
