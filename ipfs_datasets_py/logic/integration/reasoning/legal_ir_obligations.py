@@ -8,6 +8,12 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from .legal_ir_view_contracts import (
+    LegalIRFieldRequirement,
+    LegalIRViewContract,
+    legal_ir_view_contracts,
+)
+
 
 LEGAL_IR_OBLIGATION_SCHEMA_VERSION = "legal-ir-proof-obligation-v1"
 
@@ -160,6 +166,13 @@ def _has_temporal_signal(formula: Any) -> bool:
     return bool(re.search(r"\b(before|after|within|deadline|not_later_than|until|when)\b", text))
 
 
+def _document_hash(document: Any, sample_id: str) -> str:
+    canonical_hash = getattr(document, "canonical_hash", None)
+    if callable(canonical_hash):
+        return str(canonical_hash())
+    return _stable_hash(_document_mapping(document) or {"sample_id": sample_id})
+
+
 @dataclass(frozen=True)
 class LegalIRProofObligation:
     """One deterministic proof/check obligation over a Legal IR view."""
@@ -222,18 +235,262 @@ def _obligation(
     )
 
 
+def _contract_metadata(
+    contract: LegalIRViewContract,
+    *,
+    document_hash: str,
+    obligation_family: str,
+    coverage_scope: str,
+) -> Dict[str, Any]:
+    """Return the common, source-free metadata for a contract obligation."""
+
+    return {
+        "contract_id": contract.contract_id,
+        "contract_view": contract.view.value,
+        "coverage_scope": coverage_scope,
+        "document_hash": document_hash,
+        "obligation_family": obligation_family,
+        "preservation_rules": list(contract.modality_semantics.preservation_rules),
+        "target_component": contract.target_component,
+    }
+
+
+def _required_field_obligation(
+    *,
+    contract: LegalIRViewContract,
+    requirement: LegalIRFieldRequirement,
+    sample_id: str,
+    document_hash: str,
+    obligation_family: str,
+) -> LegalIRProofObligation:
+    field_atom = _atom(requirement.path, fallback="field")
+    types = ",".join(requirement.value_types)
+    cardinality = "empty_allowed" if requirement.allow_empty else "nonempty"
+    metadata = _contract_metadata(
+        contract,
+        document_hash=document_hash,
+        obligation_family=obligation_family,
+        coverage_scope="required_field",
+    )
+    metadata.update(
+        {
+            "allow_empty": requirement.allow_empty,
+            "allowed_values": list(requirement.allowed_values),
+            "field_aliases": list(requirement.aliases),
+            "required_field": requirement.path,
+            "required_field_types": list(requirement.value_types),
+        }
+    )
+    return _obligation(
+        sample_id=sample_id,
+        formula_id=f"contract:{contract.view.value}:field:{field_atom}",
+        kind=obligation_family,
+        legal_ir_view=contract.target_component,
+        logic_family=contract.modality_semantics.family,
+        statement=(
+            f"contract_required_field_present(contract:{contract.contract_id}, "
+            f"field:{field_atom}, types:{types}, cardinality:{cardinality})"
+        ),
+        premise_hints=(
+            obligation_family,
+            "canonical_contract_required_field",
+            f"contract_field_{contract.view.value}_{field_atom}",
+        ),
+        metadata=metadata,
+    )
+
+
+def _semantic_contract_statement(
+    contract: LegalIRViewContract, obligation_family: str
+) -> str:
+    """Build the deterministic invariant represented by a local family."""
+
+    contract_ref = f"contract:{contract.contract_id}"
+    statements = {
+        "deontic_polarity": (
+            f"prohibition_has_negative_polarity({contract_ref}) and "
+            f"deontic_operator_preserves_norm_force({contract_ref})"
+        ),
+        "exception_scope_precedence": (
+            f"scoped_exception_precedes_governed_norm({contract_ref}) and "
+            f"exception_order_is_preserved({contract_ref})"
+        ),
+        "frame_role_typing": (
+            f"frame_relation_has_typed_subject_predicate_object({contract_ref}) and "
+            f"frame_role_binding_is_preserved({contract_ref})"
+        ),
+        "temporal_anchor": (
+            f"temporal_constraint_has_explicit_typed_anchor({contract_ref}) and "
+            f"event_order_is_preserved({contract_ref})"
+        ),
+        "cec_lifecycle_transition": (
+            f"cec_transition_references_typed_event_and_fluent({contract_ref}) and "
+            f"lifecycle_effect_and_direction_are_preserved({contract_ref})"
+        ),
+        "knowledge_graph_endpoint_typing": (
+            f"kg_relationship_endpoints_reference_typed_nodes({contract_ref}) and "
+            f"edge_type_and_direction_are_preserved({contract_ref})"
+        ),
+        "external_prover_route_preservation": (
+            f"external_prover_route_preserves_input_formula({contract_ref}) and "
+            f"backend_order_status_and_reconstruction_are_recorded({contract_ref})"
+        ),
+        "decompiler_round_trip_structure": (
+            f"decompiler_round_trip_preserves_typed_structure({contract_ref}) and "
+            f"formula_operator_predicate_arguments_conditions_exceptions_match({contract_ref})"
+        ),
+    }
+    if obligation_family in statements:
+        return statements[obligation_family]
+    rules = ",".join(contract.modality_semantics.preservation_rules)
+    return (
+        f"contract_semantics_preserved({contract_ref}, "
+        f"family:{_atom(obligation_family)}, rules:{rules})"
+    )
+
+
+def _semantic_contract_obligation(
+    *,
+    contract: LegalIRViewContract,
+    sample_id: str,
+    document_hash: str,
+    obligation_family: str,
+) -> LegalIRProofObligation:
+    return _obligation(
+        sample_id=sample_id,
+        formula_id=f"contract:{contract.view.value}:semantics",
+        kind=obligation_family,
+        legal_ir_view=contract.target_component,
+        logic_family=contract.modality_semantics.family,
+        statement=_semantic_contract_statement(contract, obligation_family),
+        premise_hints=(
+            obligation_family,
+            *contract.modality_semantics.preservation_rules,
+        ),
+        metadata=_contract_metadata(
+            contract,
+            document_hash=document_hash,
+            obligation_family=obligation_family,
+            coverage_scope="local_semantics",
+        ),
+    )
+
+
+def _cross_view_contract_obligation(
+    *,
+    contract: LegalIRViewContract,
+    contracts: Sequence[LegalIRViewContract],
+    sample_id: str,
+    document_hash: str,
+    obligation_family: str,
+) -> LegalIRProofObligation:
+    related = tuple(item for item in contracts if item is not contract)
+    related_ids = tuple(item.contract_id for item in related)
+    related_views = tuple(item.view.value for item in related)
+    rules = ",".join(contract.modality_semantics.preservation_rules)
+    peers = ",".join(related_views)
+    metadata = _contract_metadata(
+        contract,
+        document_hash=document_hash,
+        obligation_family=obligation_family,
+        coverage_scope="cross_view_consistency",
+    )
+    metadata.update(
+        {
+            "related_contract_ids": list(related_ids),
+            "related_views": list(related_views),
+        }
+    )
+    return _obligation(
+        sample_id=sample_id,
+        formula_id=f"contract:{contract.view.value}:cross-view",
+        kind=obligation_family,
+        legal_ir_view=contract.target_component,
+        logic_family=contract.modality_semantics.family,
+        statement=(
+            f"cross_view_projection_consistent(contract:{contract.contract_id}, "
+            f"views:{peers}, preserves:{rules})"
+        ),
+        premise_hints=(
+            obligation_family,
+            "canonical_formula_identity_across_views",
+            "identifier_only_provenance_across_views",
+            *contract.modality_semantics.preservation_rules,
+        ),
+        metadata=metadata,
+    )
+
+
+def generate_legal_ir_contract_coverage_obligations(
+    sample_or_document: Any,
+) -> List[LegalIRProofObligation]:
+    """Expand every canonical view contract into deterministic obligations.
+
+    Required fields are emitted individually so coverage can identify the exact
+    missing slot.  Every remaining local family and every cross-view family is
+    also emitted.  The expansion depends only on the immutable registry and
+    stable sample/document identifiers; no legal source text is copied into an
+    obligation.
+    """
+
+    document = _document(sample_or_document)
+    sample_id = _sample_id(sample_or_document)
+    document_hash = _document_hash(document, sample_id)
+    contracts = legal_ir_view_contracts()
+    obligations: List[LegalIRProofObligation] = []
+
+    for contract in contracts:
+        required_families = tuple(
+            family
+            for family in contract.obligation_families
+            if family.endswith("_required_fields")
+        )
+        for obligation_family in required_families:
+            obligations.extend(
+                _required_field_obligation(
+                    contract=contract,
+                    requirement=requirement,
+                    sample_id=sample_id,
+                    document_hash=document_hash,
+                    obligation_family=obligation_family,
+                )
+                for requirement in contract.required_fields
+            )
+
+        for obligation_family in contract.obligation_families:
+            if obligation_family in required_families:
+                continue
+            obligations.append(
+                _semantic_contract_obligation(
+                    contract=contract,
+                    sample_id=sample_id,
+                    document_hash=document_hash,
+                    obligation_family=obligation_family,
+                )
+            )
+
+        for obligation_family in contract.cross_view_obligation_families:
+            obligations.append(
+                _cross_view_contract_obligation(
+                    contract=contract,
+                    contracts=contracts,
+                    sample_id=sample_id,
+                    document_hash=document_hash,
+                    obligation_family=obligation_family,
+                )
+            )
+
+    return obligations
+
+
 def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIRProofObligation]:
-    """Return deterministic obligations for modal/deontic/frame/TDFOL/KG views."""
+    """Return deterministic formula and canonical-contract obligations."""
 
     document = _document(sample_or_document)
     sample_id = _sample_id(sample_or_document)
     obligations: List[LegalIRProofObligation] = []
     formulas = _formulas(document)
-    document_hash = str(
-        getattr(document, "canonical_hash", lambda: "")()
-        if callable(getattr(document, "canonical_hash", None))
-        else _stable_hash(_document_mapping(document) or {"sample_id": sample_id})
-    )
+    document_hash = _document_hash(document, sample_id)
 
     if not formulas:
         obligations.append(
@@ -249,6 +506,10 @@ def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIR
             )
         )
         return obligations
+
+    obligations.extend(
+        generate_legal_ir_contract_coverage_obligations(sample_or_document)
+    )
 
     for index, formula in enumerate(formulas, start=1):
         formula_id = _formula_id(formula, index)
@@ -458,5 +719,6 @@ def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIR
 __all__ = [
     "LEGAL_IR_OBLIGATION_SCHEMA_VERSION",
     "LegalIRProofObligation",
+    "generate_legal_ir_contract_coverage_obligations",
     "generate_legal_ir_proof_obligations",
 ]
