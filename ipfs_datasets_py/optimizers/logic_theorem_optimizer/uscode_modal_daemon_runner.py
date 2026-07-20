@@ -9,6 +9,7 @@ validation rows that already have sample-memory entries in the current state.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import inspect
 import json
@@ -98,6 +99,15 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry impor
     RuntimeTelemetry,
     attach_runtime_telemetry,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator import (
+    SNAPSHOT_EVALUATION_SCHEMA_VERSION,
+    EvaluationSnapshot,
+    SnapshotBackpressureTimeout,
+    SnapshotBoundary,
+    SnapshotEvaluator,
+    SnapshotVersions,
+    canonical_holdout_version,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     LeanstralTodoProjectionConfig,
     ModalOptimizationRun,
@@ -154,6 +164,10 @@ DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE = "periodic"
 DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE = "periodic"
 DEFAULT_AUTOENCODER_SAMPLE_MEMORY_PROBE_MODE = "periodic"
 DEFAULT_AUTOENCODER_TODO_SUPERVISOR_MODE = "starved"
+DEFAULT_SNAPSHOT_EVALUATION_QUEUE_CAPACITY = 2
+DEFAULT_SNAPSHOT_EVALUATION_MAX_LAG = 2
+DEFAULT_SNAPSHOT_EVALUATION_MAX_AGE_SECONDS = 300.0
+DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS = 600.0
 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
 DEFAULT_AUTOENCODER_INTROSPECTION_MODE = "off"
 DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES = 4
@@ -1335,6 +1349,91 @@ def autoencoder_canonical_state_hash(state: ModalAutoencoderTrainingState) -> st
     """Return the canonical hash exported in disagreement packets."""
 
     return hashlib.sha256(state.to_json().encode("utf-8")).hexdigest()
+
+
+def build_autoencoder_evaluation_snapshot(
+    state: ModalAutoencoderTrainingState,
+    *,
+    sequence: int,
+    compiler_version: str,
+    holdout_sample_ids: Sequence[str],
+    validation_mode: str,
+    schema_version: str = AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+    metadata: Optional[Mapping[str, Any]] = None,
+) -> EvaluationSnapshot:
+    """Serialize trainer state at a boundary for asynchronous evaluation.
+
+    The canonical ``to_json`` bytes are copied into the snapshot, so neither a
+    later SGD update nor a caller mutation can change what the worker observes.
+    Holdout contents are not retained in the identity; the ordered sample IDs
+    and validation mode form the version used by the result acceptance guard.
+    """
+
+    state_json = state.to_json()
+    return EvaluationSnapshot.from_state_json(
+        state_json,
+        sequence=sequence,
+        compiler_version=compiler_version,
+        holdout_version=canonical_holdout_version(
+            holdout_sample_ids,
+            validation_mode=validation_mode,
+        ),
+        schema_version=schema_version,
+        metadata=metadata,
+    )
+
+
+def autoencoder_for_evaluation_snapshot(
+    snapshot: EvaluationSnapshot,
+    template: AdaptiveModalAutoencoder,
+) -> AdaptiveModalAutoencoder:
+    """Build a CPU evaluator from serialized state and trainer configuration.
+
+    Constructor configuration is copied by value, while caches and the CUDA
+    backend are intentionally not shared.  This preserves the invariant that
+    the training object is the only owner of CUDA state.
+    """
+
+    signature = inspect.signature(AdaptiveModalAutoencoder.__init__)
+    kwargs: Dict[str, Any] = {
+        "state": ModalAutoencoderTrainingState.from_dict(snapshot.state_json()),
+        "compute_device": "cpu",
+    }
+    for name, parameter in signature.parameters.items():
+        if name in {"self", "state", "compute_device"}:
+            continue
+        if name == "modal_families":
+            kwargs[name] = tuple(template.modal_families)
+        elif name == "feature_codec":
+            # The deterministic codec carries parser resources that are costly
+            # to duplicate, but evaluation methods do not mutate its contract.
+            kwargs[name] = template.feature_codec
+        elif hasattr(template, name):
+            kwargs[name] = copy.deepcopy(getattr(template, name))
+        elif parameter.default is inspect.Parameter.empty:
+            raise ValueError(f"cannot clone required autoencoder setting {name}")
+    return AdaptiveModalAutoencoder(**kwargs)
+
+
+def matching_snapshot_versions(
+    state: ModalAutoencoderTrainingState,
+    *,
+    compiler_version: str,
+    holdout_sample_ids: Sequence[str],
+    validation_mode: str,
+    schema_version: str = AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+) -> SnapshotVersions:
+    """Return the exact versions expected at the current trainer boundary."""
+
+    return SnapshotVersions(
+        state_version=autoencoder_canonical_state_hash(state),
+        compiler_version=compiler_version,
+        holdout_version=canonical_holdout_version(
+            holdout_sample_ids,
+            validation_mode=validation_mode,
+        ),
+        schema_version=schema_version,
+    )
 
 
 def _compiler_commit(root: Path) -> str:
@@ -13992,6 +14091,39 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         default=0,
         help="Stop after this many completed cycles; zero is duration-only.",
     )
+    parser.add_argument(
+        "--snapshot-evaluation-enabled",
+        type=parse_bool_flag,
+        default=True,
+        help=(
+            "Evaluate immutable autoencoder state snapshots on a CPU worker while "
+            "the single trainer continues its cycle."
+        ),
+    )
+    parser.add_argument(
+        "--snapshot-evaluation-queue-capacity",
+        type=int,
+        default=DEFAULT_SNAPSHOT_EVALUATION_QUEUE_CAPACITY,
+        help="Maximum unevaluated immutable snapshots retained by the worker queue.",
+    )
+    parser.add_argument(
+        "--snapshot-evaluation-max-lag",
+        type=int,
+        default=DEFAULT_SNAPSHOT_EVALUATION_MAX_LAG,
+        help="Maximum outstanding snapshot-boundary lag before training pauses.",
+    )
+    parser.add_argument(
+        "--snapshot-evaluation-max-age-seconds",
+        type=float,
+        default=DEFAULT_SNAPSHOT_EVALUATION_MAX_AGE_SECONDS,
+        help="Maximum age of outstanding evaluation evidence before training pauses.",
+    )
+    parser.add_argument(
+        "--snapshot-evaluation-backpressure-timeout-seconds",
+        type=float,
+        default=DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS,
+        help="Fail the daemon if stale evaluation evidence does not drain in time.",
+    )
     parser.add_argument("--train-count", type=int, default=4)
     parser.add_argument("--validation-count", type=int, default=4)
     parser.add_argument(
@@ -16292,6 +16424,97 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             getattr(args, "autoencoder_feature_logit_clip", 24.0)
         ),
     )
+    snapshot_evaluation_enabled = bool(
+        getattr(args, "snapshot_evaluation_enabled", True)
+    )
+    snapshot_evaluation_jobs: Dict[str, Sequence[Any]] = {}
+    snapshot_evaluation_jobs_lock = threading.Lock()
+
+    def evaluate_immutable_snapshot(
+        snapshot: EvaluationSnapshot,
+    ) -> Mapping[str, Any]:
+        with snapshot_evaluation_jobs_lock:
+            rows = snapshot_evaluation_jobs.pop(snapshot.snapshot_id, ())
+        if not rows:
+            raise ValueError(
+                f"holdout rows unavailable for snapshot {snapshot.snapshot_id}"
+            )
+        evaluator_autoencoder = autoencoder_for_evaluation_snapshot(
+            snapshot,
+            autoencoder,
+        )
+        evaluation = evaluate_autoencoder_with_bounded_metric_bridges(
+            evaluator_autoencoder,
+            rows,
+            legal_ir_bridge_names=metric_bridge_adapters,
+            legal_ir_evaluate_provers=bridge_evaluate_provers,
+            legal_ir_parallel_workers=bridge_parallel_workers,
+            max_bridge_sample_text_chars=int(
+                getattr(
+                    args,
+                    "autoencoder_metric_bridge_max_sample_text_chars",
+                    DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+                )
+                or 0
+            ),
+            use_sample_memory=False,
+        )
+        return {
+            "evaluation": evaluation.to_dict(),
+            "holdout_sample_count": len(rows),
+        }
+
+    snapshot_evaluator: Optional[SnapshotEvaluator] = None
+    if snapshot_evaluation_enabled:
+        snapshot_evaluator = SnapshotEvaluator(
+            evaluate_immutable_snapshot,
+            queue_capacity=max(
+                1,
+                int(
+                    getattr(
+                        args,
+                        "snapshot_evaluation_queue_capacity",
+                        DEFAULT_SNAPSHOT_EVALUATION_QUEUE_CAPACITY,
+                    )
+                    or 1
+                ),
+            ),
+            max_evidence_lag=max(
+                1,
+                int(
+                    getattr(
+                        args,
+                        "snapshot_evaluation_max_lag",
+                        DEFAULT_SNAPSHOT_EVALUATION_MAX_LAG,
+                    )
+                    or 1
+                ),
+            ),
+            max_evidence_age_seconds=max(
+                0.0,
+                float(
+                    getattr(
+                        args,
+                        "snapshot_evaluation_max_age_seconds",
+                        DEFAULT_SNAPSHOT_EVALUATION_MAX_AGE_SECONDS,
+                    )
+                    or 0.0
+                ),
+            ),
+            name=f"{args.run_id}-snapshot-evaluator",
+        )
+    summary["snapshot_evaluation_enabled"] = snapshot_evaluation_enabled
+    summary["snapshot_evaluation_schema_version"] = (
+        SNAPSHOT_EVALUATION_SCHEMA_VERSION
+    )
+    summary["snapshot_evaluator"] = (
+        snapshot_evaluator.summary()
+        if snapshot_evaluator is not None
+        else {
+            "enabled": False,
+            "schema_version": SNAPSHOT_EVALUATION_SCHEMA_VERSION,
+        }
+    )
     summary["autoencoder_feature_family_logit_scale"] = float(
         getattr(args, "autoencoder_feature_family_logit_scale", 1.0)
     )
@@ -16644,6 +16867,49 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary["latest_stop_reason"] = "max_cycles"
                 break
             cycle = int(summary.get("cycles", 0)) + 1
+            if snapshot_evaluator is not None:
+                try:
+                    snapshot_backpressure_wait = (
+                        snapshot_evaluator.before_training_step(
+                            next_sequence=cycle,
+                            timeout=max(
+                                0.0,
+                                float(
+                                    getattr(
+                                        args,
+                                        "snapshot_evaluation_backpressure_timeout_seconds",
+                                        DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS,
+                                    )
+                                    or 0.0
+                                ),
+                            ),
+                        )
+                    )
+                except SnapshotBackpressureTimeout as exc:
+                    summary["latest_stop_reason"] = "snapshot_evaluation_backpressure_timeout"
+                    summary["snapshot_evaluation_backpressure_error"] = str(exc)
+                    summary["snapshot_evaluator"] = snapshot_evaluator.summary()
+                    append_event(
+                        log_path,
+                        args.run_id,
+                        {
+                            "cycle": cycle,
+                            "event": "snapshot_evaluation_backpressure_timeout",
+                            "error": str(exc),
+                        },
+                    )
+                    save_summary(summary_path, summary)
+                    break
+                if snapshot_backpressure_wait > 0.001:
+                    append_event(
+                        log_path,
+                        args.run_id,
+                        {
+                            "cycle": cycle,
+                            "event": "snapshot_evaluation_backpressure_released",
+                            "wait_seconds": round(snapshot_backpressure_wait, 6),
+                        },
+                    )
             cycle_started = time.time()
             cycle_phase_timings: Dict[str, float] = {}
             active_phase = {"name": "", "started_at": cycle_started}
@@ -16825,6 +17091,48 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if validation_canary_samples
                 else "rotating_holdout"
             )
+            if snapshot_evaluator is not None:
+                expected_snapshot_versions = matching_snapshot_versions(
+                    autoencoder.state,
+                    compiler_version=evaluation_compiler_commit,
+                    holdout_sample_ids=[
+                        str(getattr(sample, "sample_id", "") or "")
+                        for sample in acceptance_validation_samples
+                    ],
+                    validation_mode=validation_mode,
+                )
+                for snapshot_result in snapshot_evaluator.poll_results():
+                    accepted = snapshot_evaluator.accept_result(
+                        snapshot_result,
+                        expected_snapshot_versions,
+                        expected_sequence=snapshot_result.sequence,
+                    )
+                    promotion = (
+                        snapshot_evaluator.promote_at_boundary(
+                            SnapshotBoundary(
+                                sequence=snapshot_result.sequence,
+                                versions=expected_snapshot_versions,
+                            )
+                        )
+                        if accepted
+                        else None
+                    )
+                    event = {
+                        "accepted": accepted,
+                        "cycle": cycle,
+                        "event": "snapshot_evaluation_result",
+                        "promotion": (
+                            promotion.to_dict() if promotion is not None else None
+                        ),
+                        "result": snapshot_result.to_dict(),
+                    }
+                    append_event(log_path, args.run_id, event)
+                    if promotion is not None and promotion.promoted:
+                        summary["latest_promoted_snapshot_evaluation"] = (
+                            snapshot_result.to_dict()
+                        )
+                        summary["latest_promoted_snapshot_boundary_cycle"] = cycle
+                summary["snapshot_evaluator"] = snapshot_evaluator.summary()
             audited_train_samples = _budgeted_audit_samples(
                 train_samples,
                 rollout_control,
@@ -17658,6 +17966,47 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 leanstral_rule_gap_projection,
                 leanstral_direct_guidance_projection,
             )
+            if snapshot_evaluator is not None:
+                evaluation_snapshot = build_autoencoder_evaluation_snapshot(
+                    autoencoder.state,
+                    sequence=cycle,
+                    compiler_version=evaluation_compiler_commit,
+                    holdout_sample_ids=[
+                        str(getattr(sample, "sample_id", "") or "")
+                        for sample in acceptance_validation_samples
+                    ],
+                    validation_mode=validation_mode,
+                    metadata={
+                        "cycle": cycle,
+                        "validation_mode": validation_mode,
+                    },
+                )
+                with snapshot_evaluation_jobs_lock:
+                    snapshot_evaluation_jobs[evaluation_snapshot.snapshot_id] = tuple(
+                        copy.deepcopy(list(acceptance_validation_samples))
+                    )
+                coalesced_drops = snapshot_evaluator.publish(evaluation_snapshot)
+                if coalesced_drops:
+                    with snapshot_evaluation_jobs_lock:
+                        for dropped in coalesced_drops:
+                            snapshot_evaluation_jobs.pop(
+                                dropped.dropped_snapshot_id,
+                                None,
+                            )
+                summary["latest_published_snapshot"] = evaluation_snapshot.to_dict()
+                summary["snapshot_evaluator"] = snapshot_evaluator.summary()
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "coalesced_drops": [
+                            drop.to_dict() for drop in coalesced_drops
+                        ],
+                        "cycle": cycle,
+                        "event": "snapshot_evaluation_published",
+                        "snapshot": evaluation_snapshot.to_dict(),
+                    },
+                )
             mark_cycle_phase("state_save")
             autoencoder.state.save_json(state_path)
             run.save_json(run_json_path)
@@ -18556,6 +18905,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 append_event(log_path, args.run_id, test_result)
                 save_summary(summary_path, summary)
     finally:
+        if snapshot_evaluator is not None:
+            # Shutdown must not extend a bounded daemon run by an unbounded
+            # holdout evaluation.  The worker is daemonized; pending work is
+            # cancelled explicitly and therefore remains visible in telemetry.
+            snapshot_evaluator.close(wait=False, cancel_pending=True)
+            summary["snapshot_evaluator"] = snapshot_evaluator.summary()
+            with snapshot_evaluation_jobs_lock:
+                snapshot_evaluation_jobs.clear()
         runtime_telemetry.close_open_spans(
             status="cancelled" if stop_requested else "finished",
             queue_depth=_runtime_queue_depth(supervisor.queue),

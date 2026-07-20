@@ -256,6 +256,14 @@ __all__ = [
     'get_global_resource_scheduler',
     'configure_global_resource_scheduler',
     'acquire_resource_lease',
+    # Asynchronous immutable state evaluation
+    'SnapshotVersions',
+    'EvaluationSnapshot',
+    'SnapshotEvaluationResult',
+    'SnapshotBoundary',
+    'SnapshotEvaluator',
+    'SnapshotBackpressureTimeout',
+    'canonical_holdout_version',
 ]
 
 __version__ = '0.1.0'
@@ -320,6 +328,18 @@ def _enforce_export_version_gate(name: str, current_version: str | None = None) 
 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
+    if name in (
+        'SnapshotVersions',
+        'EvaluationSnapshot',
+        'SnapshotEvaluationResult',
+        'SnapshotBoundary',
+        'SnapshotEvaluator',
+        'SnapshotBackpressureTimeout',
+        'canonical_holdout_version',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import snapshot_evaluator
+
+        return getattr(snapshot_evaluator, name)
     if name in (
         'ResourceLane',
         'LaneReservation',
