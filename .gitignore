@@ -117,6 +117,7 @@ nl_test_output/
 nl_test_output_docs/
 *.tar.gz
 *.jsonl
+!tests/fixtures/legal_ir/hammer_failure_replay.jsonl
 *.jsonld
 ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/
 ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets
