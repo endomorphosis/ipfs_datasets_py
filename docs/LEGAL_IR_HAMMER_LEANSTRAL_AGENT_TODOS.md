@@ -592,7 +592,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-025 Split failed hammer goals into smaller Leanstral-guided subgoals
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P1
 - Track: leanstral
