@@ -1,373 +1,355 @@
 # Legal IR Hammer/Leanstral Operator Runbook
 
-This runbook operates the expanded hammer/Leanstral optimization path for the
-legal text compiler, decompiler, multi-view LegalIR metrics, autoencoder, and
-Codex repair loop. The safety rule is simple: model output may propose work,
-but deterministic verification authorizes trusted training signal, and a
-supervised fixed-canary gate authorizes representation promotion.
+This runbook covers the production rollout of the parallel legal-text compiler,
+decompiler, Hammer/Lean reconstruction, Leanstral audit, autoencoder, and Codex
+repair pipeline. Run all commands from the `ipfs_datasets_py` repository root.
 
-Run commands from the `ipfs_datasets_py` repository root. Paths below are
-repository-relative unless stated otherwise.
+The only production sequence is:
 
-## Trust Boundaries
+1. `short_smoke` — 600 seconds;
+2. `one_hour_hparam` — six 600-second trials (3,600 seconds total);
+3. `eight_hour_canary` — 28,800 seconds with the selected configuration; and
+4. `twenty_four_hour_production` — 86,400 seconds with that same configuration.
 
-Do not collapse these four artifact classes into one "guidance" label:
+The launcher refuses different durations. Each completed prefix is gated before
+the next process starts. A missing, partial, reordered, duplicated, or malformed
+snapshot blocks promotion. The production decision additionally requires the
+complete four-stage sequence.
 
-| Artifact class | How to identify it | Authority and permitted use |
+## Trust boundaries
+
+Keep these artifacts separate throughout operation and incident handling:
+
+| Artifact | Authority | Permitted use |
 | --- | --- | --- |
-| Deterministic compiler/decompiler repair | Version-controlled changes under `ipfs_datasets_py/logic` or the deterministic integration layer, with a focused test and fixed-canary evidence | Executable implementation. It may be merged only after its task validation and rollout guardrails pass. A Codex patch is still only a candidate repair until those checks pass. |
-| Trusted hammer/Leanstral guidance | A `HammerGuidanceArtifact` or verified candidate whose `trusted` state is backed by deterministic syntax, provenance, KG shape, backend proof, and configured reconstruction checks | May feed the trusted feature bus, autoencoder feature training, and bounded Codex TODO projection. Trust applies to the verified structured facts, not to the original generated prose or proof text. |
-| Autoencoder-learned representation export | Schema `legal-ir-stable-autoencoder-feature-export-v1`, with an `export_id`, stable feature summaries, view-family weights, and `sample_memory_included: false` | Inert promotion input, not proof and not executable compiler behavior. It becomes activatable deterministic IR guidance only through a successful `legal-ir-learned-guidance-promotion-v1` report with complete fixed-canary and rollback evidence. |
-| Untrusted Leanstral draft | Strict candidate JSON emitted before verification, including rejected candidates and free-form source model output | Proposal only. Never use as ground truth, a reconstruction target, a theorem, a compiler repair, or direct autoencoder training signal. Preserve it only for bounded audit/provenance needs. |
+| Deterministic compiler/decompiler patch | A version-controlled change with focused tests and frozen-canary evidence | Candidate executable repair. It is accepted only after validation and rollout gates pass. |
+| Trusted Hammer/Leanstral guidance | Structured guidance that passed syntax, provenance, anti-copy, proof, and configured Lean reconstruction checks | May enter the trusted feature bus, bounded autoencoder training, and Codex TODO projection. |
+| Stable autoencoder export | `legal-ir-stable-autoencoder-feature-export-v1`, source-free and with `sample_memory_included: false` | Inert candidate guidance. It is not a theorem or executable compiler behavior. |
+| Promoted learned guidance | `legal-ir-learned-guidance-promotion-v1` tied to a complete fixed canary and rollback metadata | May be activated only while its reviewed rollout evidence remains valid. |
+| Untrusted Leanstral draft | Candidate JSON or free-form model output before deterministic verification | Audit input only. Never use it as ground truth, a proof, a reconstruction target, or autoencoder training signal. |
 
-A verified Leanstral candidate does not retroactively make its raw draft
-trusted. The verifier emits a separate structured guidance artifact containing
-the facts that passed. Likewise, an autoencoder export can be stable and
-source-free without being eligible for promotion.
+Verification creates a new trusted structured artifact; it does not make raw
+draft text trusted. A stable representation export likewise remains inert until
+the independent promotion gate accepts it.
 
-## End-to-End Workflow
+## Preflight
 
-The normal operator sequence is:
+Use a clean, dedicated rollout host. The launcher checks for managed optimizer
+processes before the smoke stage and after every stage. Any surviving
+`uscode_modal_daemon_runner`, hparam helper, or legal-IR smoke process fails the
+rollout as an orphan; the launcher never adopts or kills it automatically.
 
-1. Stop stale optimizer processes and confirm the checkout and taskboard are
-   safe to use.
-2. Parse the taskboard and inspect the dependency frontier.
-3. Let the implementation supervisor finish dependency-ready deterministic
-   tasks; validate and commit each prerequisite before dispatching dependents.
-4. Dry-run, then execute one smoke cycle.
-5. Inspect per-view metrics, hammer health, trust counts, TODO productivity, and
-   the learned-representation promotion report. The smoke wrapper gates the
-   resulting summary.
-6. Run the one-hour hyperparameter sweep. Each trial is gated before selection.
-7. Allow the selected configuration to enter the 24-hour run only when all
-   gates pass; monitor the pipeline and final summary.
-8. Activate only promoted guidance records whose report remains tied to the
-   reviewed fixed canary and contains usable rollback metadata.
-
-Any failed gate requires the operator to keep the workflow in canary-only
-operation. Do not override a failure by copying a `promoted: true` flag into a
-summary: the rollout gate recomputes metric direction and regression from
-baseline and candidate values.
-
-## Stop Active Runs
-
-Stop any existing legal-IR optimizer processes before changing rollout
-settings or starting a replacement run:
+Inspect processes first:
 
 ```bash
-pkill -TERM -f 'legal-ir|uscode_modal|run_leanstral|logic_theorem_optimizer|modal_autoencoder' || true
-pgrep -af 'legal-ir|uscode_modal|run_leanstral|logic_theorem_optimizer|modal_autoencoder' || true
+pgrep -af 'uscode_modal_daemon_runner|run_hparam_then_8h|run_hammer_leanstral_smoke' || true
 ```
 
-Only the `pgrep` command itself should remain. This broad stop command is for a
-host dedicated to this optimizer. On a shared host, inspect `pgrep` output and
-terminate only the run IDs owned by this workflow.
+On a dedicated host, stop a known prior rollout gracefully and verify it exits:
 
-## Preflight and Taskboard Validation
+```bash
+pkill -TERM -f '<exact-prior-rollout-id>'
+pgrep -af '<exact-prior-rollout-id>' || true
+```
 
-The implementation supervisor accepts only `todo`, `in_progress`, `blocked`,
-and `completed`. Every task must have outputs, validation, and acceptance text,
-and every dependency must resolve to another task ID in the same board. Run the
-same fail-closed check used by the taskboard validation:
+Do not use a broad `pkill` on a shared machine. Resolve each PID and run ID
+before signaling it. Escalate to `KILL` only after logs and state are preserved
+and the process has failed to honor `TERM` within its configured grace period.
+
+Validate the taskboard and dependencies with the same parser used by the
+implementation daemon:
 
 ```bash
 PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. \
   /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -c \
-  "from pathlib import Path; from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import parse_task_file; tasks=parse_task_file(Path('docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md')); ids={task.task_id for task in tasks}; assert len(tasks)>=34, len(tasks); assert all(task.acceptance and task.validation and task.outputs for task in tasks); assert all(dep in ids for task in tasks for dep in task.depends_on); assert not [task for task in tasks if task.status not in {'todo','completed','in_progress','blocked'}]; print('parsed', len(tasks), 'tasks')"
+  "from pathlib import Path; from ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon import parse_task_file; tasks=parse_task_file(Path('docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md')); ids={task.task_id for task in tasks}; assert len(tasks)>=53; assert all(task.acceptance and task.validation and task.outputs for task in tasks); assert all(dep in ids for task in tasks for dep in task.depends_on); print('parsed', len(tasks), 'tasks')"
 ```
 
-Then check the wrapper and repository state:
+Then verify the checkout, supervisor, Python environment, free disk space, and
+available accelerators:
 
 ```bash
-scripts/ops/legal_ir/hammer_leanstral_supervisor.sh status
 git status --short
-```
-
-`start` deliberately refuses a dirty checkout. Implementation worktrees are
-created from `HEAD`, so completed prerequisites must be validated and committed
-before dependent tasks are dispatched. Do not manually mark a task completed;
-the implementation daemon owns lifecycle status updates after validation and
-merge.
-
-## Supervisor Handoff
-
-Use the repository-local lifecycle wrapper for normal operation:
-
-```bash
 scripts/ops/legal_ir/hammer_leanstral_supervisor.sh status
-scripts/ops/legal_ir/hammer_leanstral_supervisor.sh once
-scripts/ops/legal_ir/hammer_leanstral_supervisor.sh start
-scripts/ops/legal_ir/hammer_leanstral_supervisor.sh stop
+.venv-cuda/bin/python -c 'import torch; print(torch.__version__, torch.cuda.is_available())'
+df -h workspace
 ```
 
-`once` performs reconciliation only and does not start implementation. `start`
-runs the implementation supervisor in the background. The wrapper reports its
-state directory and log path; defaults are under
-`workspace/hammer-leanstral-supervisor/`.
+Do not start a rollout from an unexplained dirty checkout. Record the baseline
+commit (`git rev-parse HEAD`), host identity, CUDA/driver version, operator,
+rollout ID, and any documented degraded backend before allocating resources.
 
-The implementation daemon can also run one bounded foreground reconciliation:
+## Dry run and identifiers
+
+Choose one globally unique rollout ID and inspect all derived paths:
 
 ```bash
-PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. \
-  .venv-cuda/bin/python -m \
-  ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon \
-  --once \
-  --todo-path docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md \
-  --state-dir workspace/hammer-leanstral-supervisor \
-  --state-prefix hammer_leanstral \
-  --task-prefix '## PORTAL-'
+BASE_RUN_ID=legal-ir-hammer-leanstral-rollout-$(date -u +%Y%m%dT%H%M%SZ)
+scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh \
+  --dry-run --base-run-id "${BASE_RUN_ID}"
 ```
 
-Keep legal-IR implementation and tests in `ipfs_datasets_py`. Keep reusable
-daemon routing, worker lifecycle, and generic task parser changes in
-`ipfs_accelerate_py`.
+The dry run does not create evidence or start a process. Confirm these values:
 
-## Smoke Run
+- `stage_sequence` lists the four stages in the required order;
+- `smoke_seconds=600`, `hparam_seconds=3600`, `canary_seconds=28800`, and
+  `final_seconds=86400`;
+- representation promotion and complete evidence are required;
+- Hammer guidance and trusted autoencoder training arguments are enabled; and
+- snapshot, gate evidence, and production summary paths use the intended ID.
 
-First inspect the exact command and strict representation-gate settings:
+The default output set is:
+
+```text
+workspace/test-logs/<rollout-id>-rollout-snapshots.json
+workspace/test-logs/<rollout-id>-rollout-gate.json
+workspace/test-logs/<rollout-id>-rollout-evidence/
+workspace/test-logs/<rollout-id>-best-24h-autoencoder.summary
+```
+
+Use `--snapshot-path` and `--evidence-output` when evidence must live on a
+separate durable volume. The launcher refuses to overwrite an existing
+manifest or evidence directory. Reusing an ID is not a resume mechanism; gate
+an existing manifest or begin a new rollout with a new ID.
+
+## Run the rollout
+
+Start the full sequence in a persistent operator session:
+
+```bash
+BASE_RUN_ID=legal-ir-hammer-leanstral-rollout-<timestamp> \
+CODEX_SCOPE_WORKERS=2 \
+AUTOENCODER_DEVICE=cuda \
+scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh
+```
+
+Defaults use six ten-minute trials. `TRIAL_SECONDS` and `TRIAL_COUNT` may be
+redistributed only when their product is exactly 3,600 seconds and the count is
+between one and six; the standard six-by-ten-minute search is preferred for
+comparability. Smoke, canary, and production durations cannot be changed.
+
+The launcher performs these transitions:
+
+```text
+smoke summary -> prefix gate
+  -> all hparam trial gates -> aggregate hparam snapshot -> prefix gate
+  -> selected-config canary summary -> prefix gate
+  -> same-config production summary -> complete gate
+```
+
+The hparam helper’s selected, expanded argument array is retained by the
+launcher. The production process changes only the run ID and duration from the
+canary invocation; it does not silently repeat the search or select a new
+configuration.
+
+The process exits nonzero at the first failed command or gate. It does not
+continue to collect “more evidence” after a failed promotion decision.
+
+### Standalone smoke diagnosis
+
+The integrated launcher always owns the promotion smoke. For focused diagnosis
+without beginning the rollout, use the smoke wrapper separately:
 
 ```bash
 scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh --dry-run
-```
-
-Then run one guarded hammer/Leanstral, autoencoder, and Codex cycle:
-
-```bash
 scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh
 ```
 
-The defaults are one cycle with a ten-minute limit. If `codex` is unavailable,
-the wrapper uses `packet_only` mode; generated repair packets are not executed
-and remain candidates for later review.
-
-To re-run only the gate against an existing summary:
+A standalone smoke is diagnostic and cannot be substituted into a production
+manifest. To recheck its legacy summary gate:
 
 ```bash
 scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh \
   --gate-only \
-  --summary-path workspace/test-logs/<run-id>-autoencoder.summary
+  --summary-path workspace/test-logs/<smoke-run-id>-autoencoder.summary
 ```
 
-The wrapper defaults to requiring a representation promotion report, a
-successful promotion, complete evidence, and zero regression for each
-promotion-specific metric. Disabling one of these requirements is a diagnostic
-or legacy-compatibility action, not a production promotion:
+Disabling representation promotion, successful promotion, or complete canary
+evidence is permitted only for legacy diagnosis. Such a result remains
+canary-only and cannot authorize a later stage.
+
+## Monitoring
+
+In another terminal, watch processes, disk, GPU health, the pipeline log, and
+manifest creation. Use the exact rollout ID to avoid observing another run:
 
 ```bash
-GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION=false \
-  scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh \
-  --gate-only --summary-path workspace/test-logs/<summary>.summary
+pgrep -af '<rollout-id>'
+watch -n 30 nvidia-smi
+watch -n 30 df -h workspace
+tail -F workspace/test-logs/<pipeline-log>
 ```
 
-Record any such override with the run evidence and keep the result canary-only.
-
-## Hyperparameter Sweep and 24-Hour Run
-
-Dry-run the full command before allocating resources:
+The legacy helper monitor can inspect the hparam/canary portion:
 
 ```bash
-scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh --dry-run
+scripts/ops/logic/watch_hparam8h_pipeline.sh <rollout-id>
 ```
 
-Run the default six ten-minute trials followed by a 24-hour optimizer loop:
+Treat these conditions as an incident, not as ordinary slow progress:
+
+- no summary modification or completed cycle beyond the configured watchdog
+  interval;
+- a managed child absent while its stage is active, or present after it exits;
+- increasing queue-lag p95, a permanently claimed TODO, or a queue that grows
+  without accepted patches;
+- a nonzero child exit, fatal stop reason, OOM, swap pressure, or repeated
+  transient execution failure;
+- trusted guidance with no corresponding trusted-feature-bus autoencoder
+  receipt; or
+- a changed fixed-canary identity, source digest, baseline revision, or sample
+  set during a rollout.
+
+Preserve logs and snapshots before terminating an unhealthy run. Never edit a
+live summary to make a gate pass.
+
+## Snapshot and gate evidence
+
+The manifest schema is `legal-ir-hammer-leanstral-rollout-v1`. It contains the
+rollout ID and an ordered `snapshots` array. Each snapshot embeds the source
+summary and adds the stage contract:
+
+- exact `stage`, `duration_seconds`, `snapshot_complete`, and successful
+  `status`;
+- `managed_processes` with name, PID, exit status, exit code, and explicit
+  `orphaned: false`;
+- per-family semantic, provenance, anti-copy, Hammer proof, Lean
+  reconstruction, process-lifecycle, and queue-lag evidence;
+- `trusted_feedback` counts and matching source/autoencoder digests;
+- integer `accepted_patches` and positive `wall_clock_seconds`;
+- queue-lag p95; and
+- rollback artifact path, SHA-256, baseline revision, and restorability.
+
+The hparam snapshot is aggregate evidence: quality and trusted-feedback
+selection come from the winning gated trial, while accepted-patch and queue
+telemetry cover all trial summaries. The gate compares accepted patches per
+wall-clock hour, never raw totals from runs of different duration.
+
+Every raw stage summary is copied into the rollout evidence directory before
+the manifest is atomically replaced. Existing rollback artifacts are never
+overwritten. A copied artifact’s digest, the recorded digest, and the manifest
+must continue to agree.
+
+Inspect the compact decision after each prefix and the final decision after
+production:
 
 ```bash
-scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh
+jq '{rollout_id, stages: [.snapshots[].stage]}' \
+  workspace/test-logs/<rollout-id>-rollout-snapshots.json
+jq . workspace/test-logs/<rollout-id>-rollout-evidence/eight_hour_canary-gate.json
+jq . workspace/test-logs/<rollout-id>-rollout-gate.json
 ```
 
-Explicitly setting the defaults is useful in an operator record:
+Both process exit code `0` and JSON `"accepted": true` are required.
+
+Recheck a complete manifest without starting work:
 
 ```bash
-BASE_RUN_ID=legal-ir-hammer-leanstral-hparam24h-<timestamp> \
-TRIAL_SECONDS=600 \
-TRIAL_COUNT=6 \
-FINAL_SECONDS=86400 \
-CODEX_SCOPE_WORKERS=2 \
-scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh
+scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh \
+  --gate-only \
+  --snapshot-path workspace/test-logs/<rollout-id>-rollout-snapshots.json \
+  --evidence-output workspace/test-logs/<rollout-id>-rollout-gate.recheck.json
 ```
 
-The script delegates to `scripts/ops/logic/run_hparam_then_8h.sh`, changes the
-final label to `24h`, supplies hammer/Leanstral daemon arguments, and installs
-the strict rollout gate for both trial selection and the final run. The final
-summary defaults to:
-
-```text
-workspace/test-logs/<base-run-id>-best-24h-autoencoder.summary
-```
-
-Monitor a named pipeline in a second terminal:
+For incident diagnosis, a strict ordered prefix can be rechecked explicitly:
 
 ```bash
-scripts/ops/logic/watch_hparam8h_pipeline.sh <base-run-id>
+scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh \
+  --gate-only --allow-prefix \
+  --snapshot-path workspace/test-logs/<rollout-id>-rollout-snapshots.json \
+  --evidence-output workspace/test-logs/<rollout-id>-prefix-gate.recheck.json
 ```
 
-The watchdog reports stale summaries, missing processes, no-progress overruns,
-and successful final-cycle verification. Its state and logs live under
-`workspace/test-logs/`.
+`--allow-prefix` authorizes only the next named stage reported by the gate. It
+never authorizes production from an incomplete sequence.
 
-## Inspect the Run Summary
+## Promotion checklist
 
-The canonical evidence is the JSON summary passed to the rollout gate. At
-minimum, inspect these groups before promotion:
+Before acknowledging any prefix promotion, verify:
 
-- Run health: `status`, `cycles`, `latest_stop_reason`, child exit codes.
-- Deterministic IR: `latest_legal_ir_view_family_validation`,
-  `latest_legal_ir_view_family_macro_score`, contract coverage and contract
-  failure counts.
-- Hammer: `latest_daemon_hammer_guidance`, proof success, reconstruction
-  success, backend health, and trusted-guidance count.
-- Source-copy safety: `latest_compiler_ir_source_copy_reward_hack_penalty` and
-  per-view source-copy penalty.
-- Repair productivity: `program_synthesis_seeded`, deduped, pending, claimed,
-  and completed counts.
-- Representation promotion:
-  `latest_legal_ir_learned_guidance_promotion` or another report carrying
-  schema `legal-ir-learned-guidance-promotion-v1`.
+- all snapshots through the current stage are present once, in order, complete,
+  successful, and have the exact duration;
+- every LegalIR family has no hard semantic, provenance, anti-copy, Hammer
+  proof, Lean reconstruction, process-lifecycle, or queue-lag regression;
+- compiler/decompiler CE and cosine metrics are paired against the same frozen
+  sample set, rather than hidden behind a macro average;
+- source-copy penalty has not increased and no copied source span, raw draft,
+  proof prose, decoded embedding, or sample memory entered learned guidance;
+- trusted guidance count is positive, the autoencoder received it, and source
+  and receipt digests match;
+- managed children exited zero and no matching process remains alive;
+- queue-lag p95 is within the absolute bound and has not regressed;
+- accepted patches per wall-clock hour has not regressed from the preceding
+  stage;
+- rollback artifact paths exist, SHA-256 digests match, baseline revisions are
+  recorded, and every record is restorable; and
+- learned guidance remains linked to its fixed canary, export ID, promotion ID,
+  activation key, rollback ID, and disable action.
 
-Use the gate itself for a normalized pass/fail report. For strict standalone
-inspection, include the same promotion requirements used by the wrappers:
+Warnings require review but do not override a failure. Never promote using only
+aggregate similarity, total TODOs, or total accepted patches.
 
-```bash
-.venv-cuda/bin/python -m scripts.ops.legal_ir.hammer_leanstral_rollout_gate gate \
-  --summary-path workspace/test-logs/<run-id>-autoencoder.summary \
-  --require-representation-promotion \
-  --require-successful-representation-promotion \
-  --require-complete-representation-evidence \
-  --max-per-view-ir-metric-regression 0 \
-  --max-symbolic-validity-regression 0 \
-  --max-hammer-proof-rate-regression 0 \
-  --max-reconstruction-rate-regression 0 \
-  --max-source-copy-penalty-regression 0 \
-  --max-todo-productivity-regression 0
-```
+## Failure triage
 
-Exit code `0` and `"accepted": true` are both required. Warnings still require
-operator review; they do not authorize bypassing a blocked promotion.
-
-## Per-View Metrics
-
-Review metrics separately for `deontic`, `frame_logic`, `tdfol`, `kg`, `cec`,
-`external_provers`, and `decompiler`. A macro score can hide a regression in a
-single view and is never sufficient promotion evidence.
-
-| Metric | Preferred direction | Meaning |
-| --- | --- | --- |
-| `ir_cross_entropy_loss` | Lower | Deterministic compiler/decompiler IR loss |
-| `ir_cosine_similarity` | Higher | Deterministic IR embedding agreement |
-| `autoencoder_cross_entropy_loss` | Lower | Learned view-family prediction loss |
-| `autoencoder_cosine_similarity` | Higher | Learned representation similarity |
-| `symbolic_validity_success_rate` | Higher | Fraction satisfying deterministic symbolic checks |
-| `hammer_proof_success_rate` | Higher | Fraction of submitted obligations proved |
-| `reconstruction_success_rate` | Higher | Fraction reconstructed into the configured trusted native form |
-| `source_copy_penalty` | Lower | Evidence of source-copy reward hacking |
-
-The gate normalizes legacy aliases such as
-`hammer_reconstruction_success_rate`, `structural_validity`, and
-`source_copy_reward_hack_penalty`, but new evidence should use the canonical
-names above.
-
-The older aggregate fields remain useful for diagnosis:
-`best_validation_ce`, `latest_validation_ce`, `best_validation_cosine`,
-`latest_validation_cosine`, `best_validation_ir_ce`,
-`latest_compiler_ir_ce`, `best_validation_ir_cosine`, and
-`latest_compiler_ir_cosine`. Promotion decisions must use the paired per-view
-baseline and candidate values, not aggregates alone.
-
-## Representation Promotion Checklist
-
-Treat a stable feature export as a candidate. Before activating any generated
-guidance record, verify all of the following:
-
-- The export schema is `legal-ir-stable-autoencoder-feature-export-v1`,
-  `sample_memory_included` is `false`, and excluded categories cover raw source
-  text, source spans, token features, sample identifiers, and sample memory.
-- The promotion schema is `legal-ir-learned-guidance-promotion-v1`, status is
-  `promoted`, `promotion_allowed` is true, and `block_reasons` is empty.
-- `canary_evidence.canary_id` is non-empty, `fixed_sample_set` is true, and the
-  baseline and candidate use the same sample set.
-- Every represented view family has both baseline and candidate values for all
-  eight metrics. Check all seven families for a full-family rollout.
-- The gate independently reports no per-view IR, symbolic-validity, hammer,
-  reconstruction, source-copy, or TODO-productivity regression beyond the
-  explicitly approved tolerance.
-- Each guidance record has a canonical `contract_id`, `view_family`, bounded
-  `repair_lane_suggestions`, confidence, canary metric evidence, `export_id` or
-  `source_export_id`, and `promotion_id`.
-- Each record says `source: stable_autoencoder_feature_promotion`; no raw
-  Leanstral text, proof prose, copied legal span, decoded embedding, or
-  sample-specific memory is present.
-- `rollback_metadata` includes an activation key, rollback ID, source export,
-  previous promotion where applicable, and the disable action
-  `remove_promoted_guidance_records`.
-- TODO generation productivity does not regress; a representation that hides
-  actionable verified failures is not promotable merely because similarity
-  improved.
-
-If any item is absent, keep the export inert and rerun the producer or fixed
-canary. Do not synthesize missing evidence by hand.
-
-## Rollout Gate Behavior and Triage
-
-The gate rejects, among other conditions:
-
-- failed summaries, fatal stop reasons, and non-zero child exit codes;
-- validation or compiler-IR CE/cosine regression beyond configured tolerances;
-- excessive absolute source-copy penalties;
-- missing or unsuccessful representation promotion when strict mode is active;
-- missing canary identity, incomplete per-family evidence, declared or
-  recomputed metric regressions, and reduced TODO productivity;
-- missing hammer cycle telemetry or unexpected hammer runtime failures;
-- stalled TODO generation after the configured minimum cycles; and
-- fatal backend availability when availability is explicitly required.
-
-Common corrective actions:
-
-| Failure family | Operator action |
+| Gate failure | Required action |
 | --- | --- |
-| `missing_representation_*` or `representation_canary_*_missing` | Keep canary-only; regenerate a complete stable export and paired fixed-canary promotion report. |
-| `representation_*_regression` | Do not promote; inspect the named view and metric, repair or retrain, then rerun the identical canary. |
-| `representation_promotion_blocked` | Read `block_reasons`; fix the producer condition rather than changing the serialized status. |
-| `source_copy_*` | Quarantine the candidate/export and inspect source-span leakage and decompiler structure. Similarity gains do not offset this failure. |
-| `missing_hammer_cycle` or hammer runtime failure | Inspect `latest_daemon_hammer_guidance`, worker logs, timeouts, and backend translations. |
-| `todo_generation_stalled` or productivity regression | Inspect recurring-failure clustering, dedupe counts, queue caps, allowed paths, and Codex execution mode. |
-| Backend unavailable warning | Continue only in documented degraded mode, or provision the backend and repeat the run if that backend is required for the target contracts. |
+| Missing/incomplete/reordered stage or duration mismatch | Stop. Recover the original complete artifact if available; otherwise start a new rollout ID from smoke. Do not manufacture a snapshot. |
+| Orphaned, running-as-exited, or nonzero managed process | Preserve logs, stop the exact PID, reconcile its state, and restart from a new rollout ID. |
+| Semantic or per-family IR regression | Inspect the named family, contract, mutation, and frozen samples; repair or retrain, then restart at smoke. |
+| Provenance or anti-copy regression | Quarantine the candidate and audit source spans, citations, feature-bus exclusions, and decompiler structure. Similarity gains cannot compensate. |
+| Hammer proof or Lean reconstruction regression | Inspect obligation generation, backend translation, proof receipts, native reconstruction, and backend health. |
+| Trusted-feedback count/digest failure | Inspect the guidance artifact, trusted feature bus, autoencoder training report, rejected/duplicate IDs, and configuration fingerprint. |
+| Queue lag failure | Inspect claimed-item age, worker health, queue caps, batching, lock contention, and transient retries before changing parallelism. |
+| Accepted patches/hour regression | Compare matched wall-clock rates, validation rejection, dedupe, main-apply rollback, and worker contention. Raw totals are not comparable. |
+| Rollback evidence missing or digest mismatch | Do not promote. Preserve the directory read-only and investigate tampering, truncation, or storage failure. |
 
-Unavailable solvers may be represented as degraded backend health rather than a
-crash. They become gate-fatal when the operator supplies
-`--require-available-hammer-backend`. A proof from an available external
-backend is still evidence, not automatically a trusted native proof; configured
-reconstruction requirements remain in force.
+Unavailable proof backends may be warning-only for contracts that do not require
+them. When backend availability is required, use the strict backend option and
+treat unavailability as fatal. An external proof still requires the configured
+trusted Lean reconstruction before it becomes training evidence.
 
-## Rollback
+## Rollback and incident preservation
 
-If a promoted representation later fails a canary or production check:
+If a prefix or production check fails:
 
-1. Stop the affected optimizer run.
-2. Identify the exact `promotion_id`, `activation_key`, `rollback_id`, and
-   `previous_promotion_id` from `rollback_metadata`.
-3. Apply the recorded `remove_promoted_guidance_records` disable action through
-   the deployment-specific guidance registry and restore `canary_only` mode.
-4. Preserve the failed summary, export, promotion report, and gate output for
-   audit. Do not delete or rewrite the evidence.
-5. Re-run the fixed canary after rollback and require the strict gate to pass
-   before resuming the longer pipeline.
+1. stop the exact rollout process gracefully and verify no managed process
+   remains;
+2. make the manifest, gate JSON, stage summary copies, runner logs, TODO queue,
+   model state, and promotion/export records read-only or copy them to durable
+   incident storage;
+3. verify every stage copy before using it:
 
-There is no generic runbook command that may guess which active registry to
-mutate. If the deployment has not wired an activation registry, a promotion
-report is review evidence only and must remain inactive.
+   ```bash
+   sha256sum workspace/test-logs/<rollout-id>-rollout-evidence/*.summary.json
+   jq '.snapshots[] | {stage, rollback_evidence}' \
+     workspace/test-logs/<rollout-id>-rollout-snapshots.json
+   ```
 
-## Parallelism Knobs
+4. record the failed stage, stop reason, host, PID set, current revision, and
+   the exact first gate failure;
+5. disable the exact promoted guidance activation key using its recorded
+   `remove_promoted_guidance_records` action and restore `canary_only` mode;
+6. restore compiler/model/queue state only through the deployment’s reviewed
+   rollback procedure, using the recorded baseline revision and artifact—not a
+   guessed “latest good” file; and
+7. rerun validation and begin a fresh four-stage rollout from smoke.
 
-Use these environment variables to tune utilization:
+Do not delete failed evidence, rewrite the manifest, reuse a rollout ID, skip to
+canary, or mark an orphan as exited. If an activation registry is not wired,
+promotion reports are review evidence only and must remain inactive.
 
-- `CODEX_PARALLEL_SCOPES`: comma-separated AST/write scopes or `all`.
-- `CODEX_SCOPE_WORKERS`: Codex workers per scope.
-- `AUTOENCODER_BRIDGE_WORKERS`: bridge/prover evaluation workers.
-- `DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS`: hammer backend workers.
-- `LEANSTRAL_AUDIT_BATCH_SIZE`: Leanstral audit batch size.
-- `LEANSTRAL_AUDIT_BATCH_USE_MESH`: enable or disable p2p mesh batching.
+## Parallelism controls
 
-Raise Codex workers until validation failures or main-apply contention begin to
-increase. Raise hammer and bridge workers only when those phases dominate cycle
-time. Parallelism never changes allowed paths, trust requirements, or gate
-thresholds.
+Use the production profile emitted by the autotuner as the starting point. The
+primary controls are:
+
+- `CODEX_PARALLEL_SCOPES` and `CODEX_SCOPE_WORKERS` for isolated Codex work;
+- `AUTOENCODER_BRIDGE_WORKERS` for bridge/prover evaluation;
+- `DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS` for Hammer backends; and
+- `LEANSTRAL_AUDIT_BATCH_SIZE` and `LEANSTRAL_AUDIT_BATCH_USE_MESH` for audit
+  batching.
+
+Change resource knobs only between complete rollout attempts, record the
+profile, and start again from smoke. Higher utilization is not a promotion
+criterion. Queue lag, process lifecycle, accepted patches per hour, per-family
+quality, provenance, and trust boundaries remain authoritative.
