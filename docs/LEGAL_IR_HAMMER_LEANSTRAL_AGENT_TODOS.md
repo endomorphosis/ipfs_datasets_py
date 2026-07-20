@@ -690,7 +690,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-029 Cluster recurring verified failures into bounded Codex TODOs
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: codex-supervisor
