@@ -51898,6 +51898,141 @@ def test_decompiler_reconstructs_packet_000638_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000641_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "25 U.S.C. 41. Special agents and commissioners. "
+                    "The President may appoint special agents and commissioners "
+                    "to investigate Indian affairs and report on the conduct "
+                    "of officers of Indian Affairs."
+                ),
+                predicate="special_agents_commissioners_indian_affairs",
+            ),
+            {
+                "special_agent_appointment",
+                "indian_affairs_commissioner_authority",
+                "indian_affairs_investigation",
+            },
+            {"deontic->conditional_normative", "deontic->deontic"},
+            "uscode_indian_affairs_special_agent_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "16 U.S.C. 450ss-1. National and international monuments "
+                    "and memorials. The Secretary shall administer the "
+                    "national and international monuments and memorials under "
+                    "this subchapter."
+                ),
+                predicate="national_international_monument_memorial_administration",
+                conditions=["under this subchapter"],
+            ),
+            {
+                "monument_memorial_administration",
+                "national_international_memorial_resource",
+            },
+            {"frame->deontic", "frame->frame"},
+            "uscode_monument_memorial_administration_surface",
+        ),
+        (
+            _single_formula_document(
+                family="temporal",
+                symbol="F",
+                label="future",
+                text=(
+                    "42 U.S.C. 15029. Authorization of appropriations. "
+                    "Except as described in subsection (b), there are "
+                    "authorized to be appropriated for funding for State "
+                    "allotments under section 15022 of this title $76,000,000 "
+                    "for fiscal year 2001."
+                ),
+                predicate="developmental_disability_state_allotment_funding",
+                conditions=["except as described in subsection (b)"],
+            ),
+            {
+                "appropriation_authorization",
+                "developmental_disability_state_allotment",
+                "fiscal_year_allotment",
+                "state_program_allotment_authority",
+            },
+            {"temporal->temporal", "temporal->deontic"},
+            "uscode_developmental_disability_state_allotment_surface",
+        ),
+        (
+            _single_formula_document(
+                family="temporal",
+                symbol="F",
+                label="future",
+                text=(
+                    "16 U.S.C. 3315. Annual report. The Council shall submit "
+                    "an annual report on coordinated management of salmon and "
+                    "steelhead conservation and enhancement under this "
+                    "subchapter."
+                ),
+                predicate="salmon_steelhead_coordinated_management_report",
+                conditions=["under this subchapter"],
+            ),
+            {
+                "annual_report",
+                "coordinated_salmon_steelhead_management",
+                "report_duty",
+                "salmon_steelhead_conservation",
+            },
+            {"temporal->temporal", "temporal->deontic"},
+            "uscode_salmon_steelhead_management_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": sorted(expected_pairs),
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "deontic.ir",
+                    "modal.frame_logic",
+                ],
+            }
+        ]
+
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert slot_texts["guided_typed_ir_semantic_reconstruction"]
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

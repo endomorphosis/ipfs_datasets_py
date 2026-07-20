@@ -317,6 +317,19 @@ _PACKET_000638_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "university_research_program",
     }
 )
+_PACKET_000641_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "coordinated_salmon_steelhead_management",
+        "developmental_disability_state_allotment",
+        "indian_affairs_commissioner_authority",
+        "indian_affairs_investigation",
+        "monument_memorial_administration",
+        "national_international_memorial_resource",
+        "salmon_steelhead_conservation",
+        "special_agent_appointment",
+        "state_developmental_disability_program",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -918,6 +931,8 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("findings and declaration", "congressional_findings_declaration"),
     ("congress finds and declares", "congressional_findings_declaration"),
     ("national and international monuments and memorials", "monument_memorial_administration"),
+    ("national and international monuments", "national_international_memorial_resource"),
+    ("international monuments and memorials", "national_international_memorial_resource"),
     ("national monuments and memorials", "monument_memorial_administration"),
     ("international monuments and memorials", "monument_memorial_administration"),
     ("national park", "national_park_resource"),
@@ -1005,6 +1020,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("shall make allotments", "state_program_allotment_authority"),
     ("make allotments", "state_program_allotment_authority"),
     ("state allotments", "state_program_allotment_authority"),
+    ("funding for state allotments", "developmental_disability_state_allotment"),
+    ("developmental disabilities", "state_developmental_disability_program"),
+    ("state councils on developmental disabilities", "state_developmental_disability_program"),
     ("allotments to eligible states", "state_child_care_allotment"),
     ("allotments to enable the states", "state_child_care_allotment"),
     ("states to establish programs", "state_child_care_program"),
@@ -1118,6 +1136,12 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("make purchases through general services administration", "government_purchasing_authority"),
     ("general services administration", "government_purchasing_authority"),
     ("federal alcohol laws", "federal_alcohol_law_equal_treatment"),
+    ("special agents and commissioners", "special_agent_appointment"),
+    ("officers of indian affairs", "indian_affairs_commissioner_authority"),
+    ("investigate indian affairs", "indian_affairs_investigation"),
+    ("salmon and steelhead conservation", "salmon_steelhead_conservation"),
+    ("salmon and steelhead", "salmon_steelhead_conservation"),
+    ("coordinated management of salmon and steelhead", "coordinated_salmon_steelhead_management"),
     ("equal treatment under federal alcohol laws", "federal_alcohol_law_equal_treatment"),
     ("indian tribes under federal alcohol laws", "federal_alcohol_law_equal_treatment"),
     (
@@ -6339,8 +6363,29 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
     ):
         add("appropriation_authorization")
         add("uscode_appropriation_authorization_record")
+    if re.search(r"\bfiscal\s+years?\b", normalized) and re.search(
+        r"\b(?:allotments?|appropriat(?:e|ed|ion|ions))\b",
+        normalized,
+    ):
+        add("fiscal_year_allotment")
     if re.search(r"\bnational\s+military\s+parks?\b", normalized):
         add("national_military_park_resource")
+    if re.search(
+        r"\b(?:national\s+and\s+international\s+monuments?\s+and\s+memorials?|"
+        r"international\s+monuments?\s+and\s+memorials?)\b",
+        normalized,
+    ):
+        add("monument_memorial_administration")
+        add("national_international_memorial_resource")
+    if re.search(
+        r"\b(?:special\s+agents?\s+and\s+commissioners?|"
+        r"officers?\s+of\s+indian\s+affairs|indian\s+affairs)\b",
+        normalized,
+    ) and re.search(r"\b(?:appoint|appointed|agents?|commissioners?)\b", normalized):
+        add("special_agent_appointment")
+        add("indian_affairs_commissioner_authority")
+    if re.search(r"\binvestigat(?:e|ion|ing)\b.{0,80}\bindian\s+affairs\b", normalized):
+        add("indian_affairs_investigation")
     if re.search(r"\bnational\s+security\s+act\s+of\s+1947\b", normalized):
         add("national_security_act_reclassification")
     if re.search(
@@ -15494,6 +15539,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         *_PACKET_000630_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000633_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000638_USCODE_RECONSTRUCTION_ATOMS,
+        *_PACKET_000641_USCODE_RECONSTRUCTION_ATOMS,
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -15674,6 +15720,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000641_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in {
             "congressional_member_compensation_allowance",
             "national_military_park_resource",
@@ -15747,11 +15797,15 @@ def _typed_decompiler_semantic_atom_target_families(
             add("epistemic")
         if normalized_atom in {
             "code_supplement_distribution",
+            "coordinated_salmon_steelhead_management",
             "congressional_report_duty",
+            "developmental_disability_state_allotment",
             "juvenile_delinquency_prevention",
             "juvenile_justice_program",
             "juvenile_justice_system_improvement",
             "justice_system_improvement",
+            "salmon_steelhead_conservation",
+            "state_developmental_disability_program",
             "nutrition_monitoring_program",
             "state_water_pollution_revolving_fund",
             "treatment_works_construction_assistance",
@@ -17959,6 +18013,19 @@ def _typed_decompiler_target_surface_profiles(
     ) and re.search(r"\b(?:limitation\s+(?:of|on)\s+fees?|fees?)\b", lowered):
         add("uscode_national_park_fee_limitation_surface")
     if re.search(
+        r"\b(?:national\s+and\s+international\s+monuments?\s+and\s+memorials?|"
+        r"international\s+monuments?\s+and\s+memorials?|"
+        r"national\s+monuments?\s+and\s+memorials?)\b",
+        lowered,
+    ):
+        add("uscode_monument_memorial_administration_surface")
+    if re.search(
+        r"\b(?:special\s+agents?\s+and\s+commissioners?|"
+        r"officers?\s+of\s+indian\s+affairs|indian\s+affairs)\b",
+        lowered,
+    ) and re.search(r"\b(?:agents?|commissioners?|appoint|appointed)\b", lowered):
+        add("uscode_indian_affairs_special_agent_surface")
+    if re.search(
         r"\b(?:preservation\s+of\s+friendly\s+foreign\s+relations|"
         r"friendly\s+foreign\s+relations)\b",
         lowered,
@@ -18005,6 +18072,15 @@ def _typed_decompiler_target_surface_profiles(
     ) and re.search(r"\b(?:secretary|states?|children|child\s+care)\b", lowered):
         add("uscode_child_care_state_allotment_surface")
     if re.search(
+        r"\b(?:funding\s+for\s+state\s+allotments?|state\s+allotments?|"
+        r"authorized\s+to\s+be\s+appropriated|authorization\s+of\s+appropriations)\b",
+        lowered,
+    ) and re.search(
+        r"\b(?:developmental\s+disabilit(?:y|ies)|fiscal\s+year|state\s+allotments?)\b",
+        lowered,
+    ):
+        add("uscode_developmental_disability_state_allotment_surface")
+    if re.search(
         r"\b(?:coast\s+guard\s+child\s+care|"
         r"coast\s+guard\s+family\s+support,\s+child\s+care,\s+and\s+housing|"
         r"family\s+support,\s+child\s+care,\s+and\s+housing)\b",
@@ -18019,6 +18095,12 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_water_pollution_revolving_fund_surface")
+    if re.search(
+        r"\b(?:salmon\s+and\s+steelhead|steelhead\s+and\s+salmon|"
+        r"coordinated\s+management\s+of\s+salmon\s+and\s+steelhead)\b",
+        lowered,
+    ):
+        add("uscode_salmon_steelhead_management_surface")
     if re.search(
         r"\b(?:adverse\s+actions?|suspension|removal)\b",
         lowered,
