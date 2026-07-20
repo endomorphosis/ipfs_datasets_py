@@ -37,9 +37,13 @@ import pyarrow.parquet as pq
 from huggingface_hub import HfFileSystem
 
 from ipfs_datasets_py.logic.integration.reasoning import (
+    LEGAL_IR_CONTRACT_TELEMETRY_SCHEMA_VERSION,
     LegalIRHammerConfig,
+    attach_legal_ir_contract_telemetry,
+    collect_legal_ir_contract_telemetry,
     generate_legal_ir_proof_obligations,
     run_legal_ir_hammer,
+    summarize_legal_ir_contract_telemetry,
 )
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
@@ -4480,6 +4484,15 @@ def run_daemon_hammer_guidance_cycle(
     )
     selected_samples = list(samples)[:max_samples] if max_samples else []
     sample_ids = [_daemon_hammer_sample_id(sample) for sample in selected_samples]
+    contract_telemetry_records = [
+        collect_legal_ir_contract_telemetry(sample) for sample in selected_samples
+    ]
+    contract_telemetry_by_sample = {
+        record.sample_id: record for record in contract_telemetry_records
+    }
+    contract_telemetry_summary = summarize_legal_ir_contract_telemetry(
+        contract_telemetry_records
+    )
     output_path = daemon_hammer_guidance_artifact_path(args, root=root, cycle=cycle)
     result: Dict[str, Any] = {
         "artifact_paths": [],
@@ -4498,6 +4511,10 @@ def run_daemon_hammer_guidance_cycle(
         "schema_version": DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION,
         "status": "not_run",
         "trusted_hammer_guidance_count": 0,
+        "legal_ir_contract_telemetry": [
+            record.to_dict() for record in contract_telemetry_records
+        ],
+        **contract_telemetry_summary,
     }
     loaded_guidance = _daemon_hammer_loaded_guidance(
         args=args,
@@ -4549,7 +4566,26 @@ def run_daemon_hammer_guidance_cycle(
         except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             result["cache_error"] = f"{type(exc).__name__}: {str(exc)[:240]}"
 
-    hammer_artifacts: List[Dict[str, Any]] = list(cached_artifacts)
+    hammer_artifacts: List[Dict[str, Any]] = []
+    for cached_artifact in cached_artifacts:
+        cached_metadata = dict(cached_artifact.get("metadata") or {})
+        embedded_telemetry = dict(
+            cached_artifact.get("legal_ir_contract_telemetry") or {}
+        )
+        cached_sample_id = str(
+            embedded_telemetry.get("sample_id")
+            or cached_metadata.get("sample_id")
+            or ""
+        )
+        telemetry = contract_telemetry_by_sample.get(cached_sample_id)
+        if telemetry is None and len(contract_telemetry_records) == 1:
+            telemetry = contract_telemetry_records[0]
+        if telemetry is None:
+            hammer_artifacts.append(cached_artifact)
+        else:
+            hammer_artifacts.extend(
+                attach_legal_ir_contract_telemetry([cached_artifact], telemetry)
+            )
     hammer_reports: List[Dict[str, Any]] = [
         dict(item)
         for item in result.get("hammer_reports", []) or []
@@ -4596,8 +4632,19 @@ def run_daemon_hammer_guidance_cycle(
             citation = _daemon_hammer_sample_citation(sample)
             if citation:
                 report_dict.setdefault("citation", citation)
+            sample_artifacts = _daemon_hammer_report_artifacts(report)
+            telemetry = contract_telemetry_by_sample.get(sample_id)
+            if telemetry is not None:
+                sample_artifacts = attach_legal_ir_contract_telemetry(
+                    sample_artifacts, telemetry
+                )
+            report_dict["artifacts"] = sample_artifacts
+            if telemetry is not None:
+                report_dict["legal_ir_contract_telemetry"] = (
+                    telemetry.guidance_projection()
+                )
             hammer_reports.append(report_dict)
-            hammer_artifacts.extend(_daemon_hammer_report_artifacts(report))
+            hammer_artifacts.extend(sample_artifacts)
 
     combined_guidance = [
         *list(loaded_guidance.get("guidance_items", []) or []),
@@ -4728,6 +4775,22 @@ def update_daemon_hammer_guidance_summary(
     summary["hammer_guidance_artifact_count"] = int(
         hammer_metrics.get("hammer_artifact_count", report.get("hammer_artifact_count", 0))
         or 0
+    )
+    summary["contract_telemetry_schema_version"] = str(
+        report.get("contract_telemetry_schema_version")
+        or LEGAL_IR_CONTRACT_TELEMETRY_SCHEMA_VERSION
+    )
+    summary["legal_ir_contract_coverage"] = float(
+        report.get("legal_ir_contract_coverage", 0.0) or 0.0
+    )
+    summary["legal_ir_contract_failure_counts"] = dict(
+        report.get("legal_ir_contract_failure_counts") or {}
+    )
+    summary["legal_ir_contract_view_family_gaps"] = dict(
+        report.get("legal_ir_contract_view_family_gaps") or {}
+    )
+    summary["latest_legal_ir_contract_telemetry"] = list(
+        report.get("legal_ir_contract_telemetry") or []
     )
     for key in (
         "hammer_guidance_artifact_count",
@@ -12768,6 +12831,10 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "bridge_loss_samples": 0,
         "bridge_loss_signals": 0,
         "bridge_metric_failures": 0,
+        "contract_telemetry_schema_version": LEGAL_IR_CONTRACT_TELEMETRY_SCHEMA_VERSION,
+        "legal_ir_contract_coverage": 0.0,
+        "legal_ir_contract_failure_counts": {},
+        "legal_ir_contract_view_family_gaps": {},
         "cycles": 0,
         "codex_program_synthesis_execution_mode": "queued_for_external_codex_worker",
         "dataset_id": HF_USCODE_DATASET_ID,
