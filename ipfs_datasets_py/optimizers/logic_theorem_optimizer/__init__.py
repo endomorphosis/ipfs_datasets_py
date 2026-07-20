@@ -129,6 +129,11 @@ __all__ = [
     'build_decompiler_structural_learning_target',
     'build_trusted_hammer_leanstral_feature_bus',
     'trusted_hammer_leanstral_feature_bus',
+    'TrustedFeedbackTrainer',
+    'TrustedFeedbackTrainerConfig',
+    'TrustedFeedbackUpdateReport',
+    'apply_trusted_feedback_weight_updates',
+    'train_trusted_feedback',
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
@@ -745,6 +750,18 @@ def __getattr__(name):
             'symbolic_validity_penalty': symbolic_validity_penalty,
             'trusted_hammer_leanstral_feature_bus': trusted_hammer_leanstral_feature_bus,
         }[name]
+    elif name in (
+        'TrustedFeedbackTrainer',
+        'TrustedFeedbackTrainerConfig',
+        'TrustedFeedbackUpdateReport',
+        'apply_trusted_feedback_weight_updates',
+        'train_trusted_feedback',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            trusted_feedback_trainer,
+        )
+
+        return getattr(trusted_feedback_trainer, name)
     elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
             ModalProverRouteResult,
