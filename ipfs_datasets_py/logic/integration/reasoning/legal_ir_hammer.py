@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from .hammer import HammerBackendRunner, HammerGoal, HammerPipeline, HammerPremise, KernelVerifier
@@ -24,6 +24,16 @@ from .legal_ir_hammer_translation import (
     reconstruction_receipt_from_hammer_result,
     translation_records_from_hammer_result,
 )
+from .legal_ir_proof_router import (
+    DEFAULT_STAGE_BUDGETS,
+    LEGAL_IR_PROOF_ROUTER_SCHEMA_VERSION,
+    LegalIRProofRouteResult,
+    LegalIRProofRouter,
+    ProofRouteRunner,
+    ProofRouteStage,
+    ProofRoutingPolicy,
+    ProofTrustLevel,
+)
 
 
 LEGAL_IR_HAMMER_REPORT_SCHEMA_VERSION = "legal-ir-hammer-report-v1"
@@ -39,6 +49,13 @@ class LegalIRHammerConfig:
     verify_reconstruction: bool = False
     trusted_requires_reconstruction: bool = False
     max_obligations: int = 0
+    staged_routing: bool = True
+    required_trust_level: str = ""
+    total_timeout_seconds: Optional[float] = None
+    deterministic_timeout_seconds: float = 0.25
+    native_logic_timeout_seconds: float = 2.0
+    reconstruction_timeout_seconds: float = 10.0
+    enabled_proof_routes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -55,6 +72,13 @@ class LegalIRHammerReport:
     metadata: Dict[str, Any] = field(default_factory=dict)
     translation_records: List[HammerTranslationRecord] = field(default_factory=list)
     reconstruction_receipts: List[HammerReconstructionReceipt] = field(default_factory=list)
+    route_results: List[LegalIRProofRouteResult] = field(default_factory=list)
+
+    @property
+    def proof_routing_results(self) -> List[LegalIRProofRouteResult]:
+        """Compatibility alias emphasizing that records are per proof."""
+
+        return self.route_results
 
     @property
     def proof_success_rate(self) -> float:
@@ -80,6 +104,7 @@ class LegalIRHammerReport:
             "reconstruction_receipts": [
                 receipt.to_dict() for receipt in self.reconstruction_receipts
             ],
+            "route_results": [result.to_dict() for result in self.route_results],
             "schema_version": self.schema_version,
             "translation_records": [
                 record.to_dict() for record in self.translation_records
@@ -99,11 +124,15 @@ class LegalIRHammerRunner:
         backends: Optional[Sequence[HammerBackendRunner]] = None,
         kernel_verifier: Optional[KernelVerifier] = None,
         pipeline: Optional[HammerPipeline] = None,
+        proof_router: Optional[LegalIRProofRouter] = None,
+        route_runners: Optional[Mapping[str, ProofRouteRunner]] = None,
     ) -> None:
         self.config = config or LegalIRHammerConfig()
         self.backends = list(backends) if backends is not None else None
         self.kernel_verifier = kernel_verifier
         self.pipeline = pipeline
+        self.proof_router = proof_router
+        self.route_runners = dict(route_runners or {})
 
     def prove(
         self,
@@ -130,7 +159,9 @@ class LegalIRHammerRunner:
                 theorem_registry=theorem_registry,
             )
         )
-        if self.pipeline is not None:
+        if self.proof_router is not None:
+            pipeline = self.proof_router.pipeline
+        elif self.pipeline is not None:
             pipeline = self.pipeline
         else:
             contract_telemetry = collect_legal_ir_contract_telemetry(sample_or_document)
@@ -150,6 +181,15 @@ class LegalIRHammerRunner:
         artifacts: List[HammerGuidanceArtifact] = []
         translation_records: List[HammerTranslationRecord] = []
         reconstruction_receipts: List[HammerReconstructionReceipt] = []
+        route_results: List[LegalIRProofRouteResult] = []
+        proof_router = self.proof_router
+        if proof_router is None and self.config.staged_routing:
+            policy = self._routing_policy()
+            proof_router = LegalIRProofRouter(
+                pipeline,
+                policy=policy,
+                route_runners=self.route_runners,
+            )
         for obligation in resolved_obligations:
             goal = HammerGoal(
                 statement=obligation.statement,
@@ -167,7 +207,17 @@ class LegalIRHammerRunner:
                     **dict(obligation.metadata),
                 },
             )
-            result = pipeline.prove(goal, resolved_premises)
+            if proof_router is not None:
+                route_result = proof_router.route(
+                    obligation,
+                    goal,
+                    resolved_premises,
+                    sample_or_document=sample_or_document,
+                )
+                result = route_result.hammer_result
+                route_results.append(route_result)
+            else:
+                result = pipeline.prove(goal, resolved_premises)
             candidate_metadata = {
                 "legal_ir_view": obligation.legal_ir_view,
                 "logic_family": obligation.logic_family,
@@ -184,6 +234,36 @@ class LegalIRHammerRunner:
                 candidate_metadata=candidate_metadata,
                 trusted_requires_reconstruction=self.config.trusted_requires_reconstruction,
             )
+            if proof_router is not None:
+                artifact = replace(
+                    artifact,
+                    proved=route_result.proved,
+                    trusted=route_result.trust_satisfied,
+                    failure_reason="" if route_result.proved else route_result.status.value,
+                    rejection_reasons=(
+                        artifact.rejection_reasons
+                        if route_result.trust_satisfied
+                        else sorted(
+                            set(
+                                [
+                                    *artifact.rejection_reasons,
+                                    (
+                                        "required_trust_not_obtained"
+                                        if route_result.proved
+                                        else route_result.status.value
+                                    ),
+                                ]
+                            )
+                        )
+                    ),
+                    metadata={
+                        **artifact.metadata,
+                        "proof_route_schema_version": LEGAL_IR_PROOF_ROUTER_SCHEMA_VERSION,
+                        "proof_route_status": route_result.status.value,
+                        "proof_route_stop_reason": route_result.stop_reason,
+                        "proof_route_trust_level": route_result.trust_level.name.lower(),
+                    },
+                )
             records = translation_records_from_hammer_result(
                 result,
                 obligation_id=obligation.obligation_id,
@@ -212,6 +292,7 @@ class LegalIRHammerRunner:
             elapsed_seconds=time.time() - start,
             translation_records=translation_records,
             reconstruction_receipts=reconstruction_receipts,
+            route_results=route_results,
             metadata={
                 "backend_health": backend_health_summary,
                 "reconstruction_receipt_count": len(reconstruction_receipts),
@@ -224,7 +305,36 @@ class LegalIRHammerRunner:
                 "translation_record_count": len(translation_records),
                 "translation_schema_version": LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION,
                 "verify_reconstruction": self.config.verify_reconstruction,
+                "proof_route_count": len(route_results),
+                "proof_router_schema_version": LEGAL_IR_PROOF_ROUTER_SCHEMA_VERSION,
+                "proof_routing_enabled": bool(proof_router is not None),
+                "proof_route_stage_order": [stage.value for stage in ProofRouteStage],
             },
+        )
+
+    def _routing_policy(self) -> ProofRoutingPolicy:
+        required = self.config.required_trust_level or (
+            "kernel"
+            if self.config.trusted_requires_reconstruction or self.config.verify_reconstruction
+            else "backend"
+        )
+        budgets = dict(DEFAULT_STAGE_BUDGETS)
+        budgets.update(
+            {
+                ProofRouteStage.DETERMINISTIC: self.config.deterministic_timeout_seconds,
+                ProofRouteStage.NATIVE_LOGIC: self.config.native_logic_timeout_seconds,
+                ProofRouteStage.SMT_ATP: self.config.timeout_seconds,
+                ProofRouteStage.LEAN_RECONSTRUCTION: self.config.reconstruction_timeout_seconds,
+            }
+        )
+        total = self.config.total_timeout_seconds
+        if total is None:
+            total = sum(budgets.values())
+        return ProofRoutingPolicy(
+            required_trust=ProofTrustLevel.parse(required),
+            total_timeout_seconds=total,
+            stage_timeout_seconds=budgets,
+            enabled_routes=self.config.enabled_proof_routes,
         )
 
     def _as_obligation(
@@ -268,11 +378,15 @@ def run_legal_ir_hammer(
     config: Optional[LegalIRHammerConfig] = None,
     backends: Optional[Sequence[HammerBackendRunner]] = None,
     kernel_verifier: Optional[KernelVerifier] = None,
+    proof_router: Optional[LegalIRProofRouter] = None,
+    route_runners: Optional[Mapping[str, ProofRouteRunner]] = None,
 ) -> LegalIRHammerReport:
     return LegalIRHammerRunner(
         config=config,
         backends=backends,
         kernel_verifier=kernel_verifier,
+        proof_router=proof_router,
+        route_runners=route_runners,
     ).prove(
         sample_or_document,
         obligations=obligations,
@@ -288,5 +402,9 @@ __all__ = [
     "LegalIRHammerRunner",
     "HammerReconstructionReceipt",
     "HammerTranslationRecord",
+    "LegalIRProofRouteResult",
+    "LegalIRProofRouter",
+    "ProofRoutingPolicy",
+    "ProofTrustLevel",
     "run_legal_ir_hammer",
 ]

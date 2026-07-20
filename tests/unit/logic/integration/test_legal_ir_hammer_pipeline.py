@@ -100,6 +100,14 @@ def test_legal_ir_hammer_runner_emits_trusted_guidance_for_obligations() -> None
     assert any("compiler_ir_cross_entropy_loss" in artifact.target_metrics for artifact in report.artifacts)
     assert all(artifact.selected_premises for artifact in report.artifacts)
     assert all(artifact.to_leanstral_guidance_item()["accepted"] for artifact in report.artifacts)
+    assert len(report.route_results) == report.obligation_count
+    assert payload["metadata"]["proof_routing_enabled"] is True
+    assert payload["metadata"]["proof_route_stage_order"] == [
+        "deterministic",
+        "native_logic",
+        "smt_atp",
+        "lean_reconstruction",
+    ]
 
 
 def test_legal_ir_hammer_runner_can_require_kernel_verified_reconstruction() -> None:
@@ -132,4 +140,3 @@ def test_legal_ir_hammer_runner_can_require_kernel_verified_reconstruction() -> 
     assert len(calls) == 2
     assert all(artifact.proof_checked for artifact in report.artifacts)
     assert all(artifact.reconstruction_status == "verified" for artifact in report.artifacts)
-
