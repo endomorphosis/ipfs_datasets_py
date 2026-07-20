@@ -21,6 +21,10 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence
 from ipfs_datasets_py.logic.integration.reasoning.legal_ir_obligations import (
     generate_legal_ir_proof_obligations,
 )
+from ipfs_datasets_py.logic.integration.reasoning.legal_ir_view_contracts import (
+    legal_ir_view_contract,
+    legal_ir_view_contracts,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     LegalSample,
 )
@@ -40,12 +44,39 @@ from .leanstral_theorems import (
 LEANSTRAL_PROPOSAL_SCHEMA_VERSION = "legal-ir-leanstral-proposal-v1"
 LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION = "legal-ir-leanstral-draft-guidance-v1"
 LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION = "legal-ir-leanstral-hammer-candidate-v1"
+LEANSTRAL_FAILURE_BRANCH_PROMPT_SCHEMA_VERSION = "legal-ir-leanstral-failure-branch-prompt-v1"
+LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION = "legal-ir-leanstral-failure-branch-response-v1"
 _LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION = "legal-ir-leanstral-drafted-logic-v1"
 _LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES = 6
 _LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS = 240
 _LEANSTRAL_PROOF_FORBIDDEN = re.compile(
     r"\b(?:admit|axiom|import|namespace|noncomputable|run_tac|set_option|sorry|theorem|unsafe)\b",
     re.IGNORECASE,
+)
+_LEANSTRAL_FREEFORM_PROOF = re.compile(
+    r"(?:^|\s)(?:apply|assumption|by|decide|exact|intro|omega|rfl|simp|solve|tauto)(?:\s|$|\[)",
+    re.IGNORECASE,
+)
+_LEANSTRAL_TYPED_ATOM = re.compile(r"[A-Za-z_][A-Za-z0-9_.:-]*\s*\(")
+_LEANSTRAL_TYPED_CONNECTOR = re.compile(
+    r"\s*(?:and|iff|implies|or|unless|until|when|->|<->|∧|∨)\s*",
+    re.IGNORECASE,
+)
+_LEANSTRAL_KG_TYPED_SHAPE = re.compile(
+    r"\bsubject\s*[:(].*\bpredicate\s*[:(].*\bobject\s*[:(].+",
+    re.IGNORECASE,
+)
+_LEANSTRAL_ALLOWED_FAILURE_MODES = frozenset(
+    {
+        "backend_error",
+        "hammer_proof_failed",
+        "hammer_unproved",
+        "reconstruction_failed",
+        "syntax_rejected",
+        "timed_out",
+        "unknown",
+        "unsupported",
+    }
 )
 _SAFE_LEAN_IDENTIFIER = re.compile(r"[^A-Za-z0-9_]+")
 _ALLOWED_RULE_HINT_ACTIONS = frozenset(
@@ -579,6 +610,53 @@ class LeanstralProofValidation:
             if self.python_patch_validation
             else None,
             "reasons": list(self.reasons),
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralFailureBranchCandidateValidation:
+    """Strict boundary result for one failure-subtree repair candidate."""
+
+    accepted: bool
+    candidate: Optional[Dict[str, Any]] = None
+    reasons: Sequence[str] = field(default_factory=tuple)
+    obligation_id: str = ""
+    contract_id: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "accepted": bool(self.accepted),
+            "candidate": dict(self.candidate) if self.candidate is not None else None,
+            "contract_id": self.contract_id,
+            "obligation_id": self.obligation_id,
+            "reasons": list(self.reasons),
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralFailureBranchSanitization:
+    """All-or-nothing sanitization result for one Leanstral JSON response."""
+
+    accepted: bool
+    candidates: Sequence[Dict[str, Any]] = field(default_factory=tuple)
+    reasons: Sequence[str] = field(default_factory=tuple)
+    validations: Sequence[LeanstralFailureBranchCandidateValidation] = field(
+        default_factory=tuple
+    )
+    schema_version: str = LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION
+
+    @property
+    def rejected_count(self) -> int:
+        return sum(1 for item in self.validations if not item.accepted)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "accepted": bool(self.accepted),
+            "candidates": [dict(item) for item in self.candidates],
+            "reasons": list(self.reasons),
+            "rejected_count": self.rejected_count,
+            "schema_version": self.schema_version,
+            "validations": [item.to_dict() for item in self.validations],
         }
 
 
@@ -1213,16 +1291,42 @@ def _proposal_rejection_reasons(
         if len(candidate_text) > _LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS:
             reasons.append("drafted_logic_candidate_too_large")
             break
+        if _drafted_logic_candidate_copies_source_span(candidate_text, task.source_span):
+            reasons.append("drafted_logic_candidate_copies_source_span")
+            reasons.append("source_copy")
+            break
+        typed_reason = _typed_logic_rejection_reason(candidate_text)
+        if typed_reason:
+            reasons.append(typed_reason)
+            break
         proof_obligation_ids = _string_sequence(
             candidate.get("proof_obligation_ids")
             or candidate.get("proof_obligation_id")
             or candidate.get("obligation_id")
         )
+        if not proof_obligation_ids:
+            reasons.append("missing_obligation_id")
+            break
         if accepted_obligation_ids and any(
             obligation_id not in accepted_obligation_ids
             for obligation_id in proof_obligation_ids
         ):
             reasons.append("unknown_drafted_logic_proof_obligation_id")
+            break
+        matching_obligations = [
+            obligation
+            for obligation in _legal_ir_proof_obligations(task)
+            if str(obligation.get("obligation_id") or "") in proof_obligation_ids
+        ]
+        expected_contract_ids = {
+            _obligation_contract_id(obligation) for obligation in matching_obligations
+        }
+        expected_contract_ids.discard("")
+        supplied_contract_id = str(candidate.get("contract_id") or "").strip()
+        if not supplied_contract_id or (
+            expected_contract_ids and supplied_contract_id not in expected_contract_ids
+        ):
+            reasons.append("unknown_contract_id")
             break
         for key in (
             "compiler_surface",
@@ -1236,9 +1340,6 @@ def _proposal_rejection_reasons(
                 reasons.append(f"missing_drafted_logic_{key}")
                 break
         if reasons and str(reasons[-1]).startswith("missing_drafted_logic_"):
-            break
-        if _drafted_logic_candidate_copies_source_span(candidate_text, task.source_span):
-            reasons.append("drafted_logic_candidate_copies_source_span")
             break
     return reasons
 
@@ -1312,6 +1413,479 @@ def _optional_bool(value: Any, default: bool = False) -> bool:
     return default
 
 
+def _obligation_contract_id(obligation: Mapping[str, Any]) -> str:
+    """Resolve the registry-owned contract ID without accepting model aliases."""
+
+    metadata = obligation.get("metadata")
+    if isinstance(metadata, Mapping):
+        contract_id = str(metadata.get("contract_id") or "").strip()
+        if contract_id:
+            return contract_id
+    view = str(obligation.get("legal_ir_view") or "").strip()
+    if not view:
+        return ""
+    try:
+        return legal_ir_view_contract(view).contract_id
+    except (KeyError, TypeError, ValueError):
+        return ""
+
+
+def _as_failure_mapping(value: Any) -> Dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        converted = to_dict()
+        if isinstance(converted, Mapping):
+            return dict(converted)
+    if isinstance(value, str):
+        return {"obligation_id": value}
+    return {}
+
+
+def _failure_sequence(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    artifacts = getattr(value, "artifacts", None)
+    if artifacts is not None:
+        return list(artifacts)
+    if isinstance(value, Mapping) and isinstance(value.get("artifacts"), Sequence):
+        return list(value["artifacts"])
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return list(value)
+    return [value]
+
+
+def _is_failed_hammer_item(item: Mapping[str, Any]) -> bool:
+    """Treat explicit successful/trusted artifacts as non-failures."""
+
+    if item.get("trusted") is True:
+        return False
+    if item.get("proved") is True and not item.get("failure_reason") and not item.get(
+        "rejection_reasons"
+    ):
+        return False
+    return True
+
+
+def _normalized_failure_mode(value: Any) -> str:
+    text = _feature_key_part(value or "hammer_unproved")
+    aliases = {
+        "backend_timeout": "timed_out",
+        "error": "backend_error",
+        "failed": "hammer_proof_failed",
+        "failure": "hammer_proof_failed",
+        "native_reconstruction_not_verified": "reconstruction_failed",
+        "timeout": "timed_out",
+        "timed_out": "timed_out",
+        "unproved": "hammer_unproved",
+    }
+    text = aliases.get(text, text)
+    return text if text in _LEANSTRAL_ALLOWED_FAILURE_MODES else "unknown"
+
+
+def _failed_obligation_branches(
+    task: LegalIRLeanTask,
+    failures: Any = None,
+    *,
+    failed_obligation_ids: Sequence[str] = (),
+) -> list[Dict[str, Any]]:
+    obligations = {
+        str(item.get("obligation_id") or ""): dict(item)
+        for item in _legal_ir_proof_obligations(task)
+        if str(item.get("obligation_id") or "")
+    }
+    failure_by_id: Dict[str, Dict[str, Any]] = {}
+    for raw in _failure_sequence(failures):
+        item = _as_failure_mapping(raw)
+        if not item or not _is_failed_hammer_item(item):
+            continue
+        ids = _string_sequence(
+            item.get("proof_obligation_ids")
+            or item.get("proof_obligation_id")
+            or item.get("obligation_id")
+        )
+        for obligation_id in ids:
+            failure_by_id.setdefault(obligation_id, item)
+    for obligation_id in _string_sequence(failed_obligation_ids):
+        failure_by_id.setdefault(obligation_id, {"obligation_id": obligation_id})
+
+    branches: list[Dict[str, Any]] = []
+    for obligation_id in sorted(failure_by_id):
+        obligation = obligations.get(obligation_id)
+        if obligation is None:
+            continue
+        failure = failure_by_id[obligation_id]
+        statement = str(obligation.get("statement") or "")
+        branches.append(
+            {
+                "contract_id": _obligation_contract_id(obligation),
+                "expected_failure_mode": _normalized_failure_mode(
+                    failure.get("failure_reason")
+                    or next(iter(_string_sequence(failure.get("rejection_reasons"))), "")
+                    or failure.get("reconstruction_status")
+                ),
+                "logic_family": str(obligation.get("logic_family") or ""),
+                "obligation_id": obligation_id,
+                "premise_hints": _string_sequence(obligation.get("premise_hints")),
+                "statement": statement,
+                "statement_sha256": hashlib.sha256(statement.encode("utf-8")).hexdigest(),
+                "target_view": str(obligation.get("legal_ir_view") or ""),
+            }
+        )
+    return branches
+
+
+def build_leanstral_failure_branch_prompt(
+    task: LegalIRLeanTask,
+    failures: Any = None,
+    *,
+    failed_obligation_ids: Sequence[str] = (),
+) -> str:
+    """Build a source-free prompt scoped exclusively to failed obligations.
+
+    Hammer reports, guidance-artifact mappings, and explicit obligation IDs are
+    accepted.  Successful artifacts and unknown IDs are deliberately omitted.
+    The emitted contract IDs always come from the deterministic task obligation
+    and canonical registry, never from failure metadata supplied by a model.
+    """
+
+    branches = _failed_obligation_branches(
+        task, failures, failed_obligation_ids=failed_obligation_ids
+    )
+    example = branches[0] if branches else {}
+    obligation_id = str(example.get("obligation_id") or "")
+    candidate_shape = {
+        "candidate": "obligation(actor:Entity, action:Action) unless exception(condition:Condition)",
+        "compiler_surface": str(example.get("target_view") or ""),
+        "confidence": 0.0,
+        "contract_id": str(example.get("contract_id") or ""),
+        "expected_failure_mode": str(example.get("expected_failure_mode") or "hammer_unproved"),
+        "logic_family": str(example.get("logic_family") or "modal"),
+        "premise_hints": list(example.get("premise_hints") or []),
+        "proof_obligation_id": obligation_id,
+        "proof_obligation_ids": [obligation_id] if obligation_id else [],
+        "repair_scope": "failed_obligation_subtree",
+        "schema_version": LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
+        "source_copy_policy": "reject_full_span_copy",
+        "source_copy_rejected": False,
+        "target_view": str(example.get("target_view") or ""),
+    }
+    payload = {
+        "candidate_shape": candidate_shape,
+        "failed_obligation_subtrees": branches,
+        "instructions": [
+            "Return one strict JSON object only; do not use Markdown fences or prose.",
+            "Repair only the listed failed_obligation_subtrees; do not restate or repair successful obligations.",
+            "Return candidates as typed Legal IR expressions, never Lean tactics, proof text, or natural-language advice.",
+            "Each candidate must bind exactly one listed proof_obligation_id and use only that branch's premise_hints.",
+            "Copy contract_id, logic_family, target_view, and compiler_surface exactly from the failed branch.",
+            "Do not copy, quote, paraphrase, or reconstruct the legal source span.",
+            "Do not invent contract IDs, obligation IDs, premise hints, theorem statements, or source text.",
+            "Use the candidate_shape fields exactly; additional candidate fields are rejected.",
+        ],
+        "response_shape": {
+            "candidates": [candidate_shape] if branches else [],
+            "schema_version": LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION,
+            "target_modal_ir_hash": task.modal_ir_hash,
+            "task_id": task.task_id,
+        },
+        "schema_version": LEANSTRAL_FAILURE_BRANCH_PROMPT_SCHEMA_VERSION,
+        "target_modal_ir_hash": task.modal_ir_hash,
+        "task_id": task.task_id,
+    }
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True)
+
+
+_STRICT_FAILURE_CANDIDATE_FIELDS = frozenset(
+    {
+        "candidate",
+        "compiler_surface",
+        "confidence",
+        "contract_id",
+        "expected_failure_mode",
+        "logic_family",
+        "premise_hints",
+        "proof_obligation_id",
+        "proof_obligation_ids",
+        "repair_scope",
+        "schema_version",
+        "source_copy_policy",
+        "source_copy_rejected",
+        "target_view",
+    }
+)
+
+
+def _typed_logic_rejection_reason(candidate_text: str) -> str:
+    text = str(candidate_text or "").strip()
+    if _LEANSTRAL_FREEFORM_PROOF.search(text) or _LEANSTRAL_PROOF_FORBIDDEN.search(text):
+        return "freeform_proof_text"
+    if "\n" in text or text.endswith(".") or len(text.split()) > 32:
+        return "untyped_logic"
+    if text.count("(") != text.count(")"):
+        return "untyped_logic"
+    if _LEANSTRAL_KG_TYPED_SHAPE.fullmatch(text):
+        return ""
+    if not _is_typed_logic_expression(text):
+        return "untyped_logic"
+    return ""
+
+
+def _is_typed_logic_expression(text: str) -> bool:
+    """Recognize a compact sequence of balanced predicate applications."""
+
+    position = 0
+    length = len(text)
+    while position < length:
+        negated = re.match(r"not\s+", text[position:], re.IGNORECASE)
+        if negated:
+            position += negated.end()
+        atom = _LEANSTRAL_TYPED_ATOM.match(text, position)
+        if atom is None:
+            return False
+        head = text[position : atom.end()].split("(", 1)[0].strip().lower()
+        if head in {"advice", "explanation", "proof", "text"}:
+            return False
+        depth = 1
+        position = atom.end()
+        while position < length and depth:
+            if text[position] == "(":
+                depth += 1
+            elif text[position] == ")":
+                depth -= 1
+            position += 1
+        if depth:
+            return False
+        if position == length:
+            return True
+        connector = _LEANSTRAL_TYPED_CONNECTOR.match(text, position)
+        if connector is None or connector.end() == position:
+            return False
+        position = connector.end()
+    return position == length
+
+
+def validate_leanstral_failure_branch_candidate(
+    task: LegalIRLeanTask,
+    candidate: Any,
+    failures: Any = None,
+    *,
+    failed_obligation_ids: Sequence[str] = (),
+) -> LeanstralFailureBranchCandidateValidation:
+    """Validate and canonicalize one candidate at the model trust boundary."""
+
+    if not isinstance(candidate, Mapping):
+        return LeanstralFailureBranchCandidateValidation(
+            accepted=False, reasons=("candidate_must_be_json_object",)
+        )
+    raw = dict(candidate)
+    reasons: list[str] = []
+    unknown_fields = sorted(set(raw) - _STRICT_FAILURE_CANDIDATE_FIELDS)
+    if unknown_fields:
+        reasons.append("unknown_candidate_fields")
+    for key in sorted(_STRICT_FAILURE_CANDIDATE_FIELDS):
+        if key not in raw:
+            reasons.append(f"missing_{key}")
+
+    obligation_id = str(raw.get("proof_obligation_id") or "").strip()
+    plural_ids = raw.get("proof_obligation_ids")
+    if (
+        not isinstance(plural_ids, Sequence)
+        or isinstance(plural_ids, (str, bytes))
+        or len(plural_ids) != 1
+        or not isinstance(plural_ids[0], str)
+        or plural_ids[0].strip() != obligation_id
+    ):
+        reasons.append("missing_obligation_id" if not obligation_id else "invalid_obligation_scope")
+
+    branches = {
+        item["obligation_id"]: item
+        for item in _failed_obligation_branches(
+            task, failures, failed_obligation_ids=failed_obligation_ids
+        )
+    }
+    branch = branches.get(obligation_id)
+    if not obligation_id:
+        if "missing_obligation_id" not in reasons:
+            reasons.append("missing_obligation_id")
+    elif branch is None:
+        reasons.append("unknown_or_nonfailed_obligation_id")
+
+    contract_id = str(raw.get("contract_id") or "").strip()
+    known_contract_ids = {contract.contract_id for contract in legal_ir_view_contracts()}
+    if not contract_id:
+        reasons.append("missing_contract_id")
+    elif contract_id not in known_contract_ids:
+        reasons.append("unknown_contract_id")
+    if branch is not None and contract_id != str(branch.get("contract_id") or ""):
+        reasons.append("contract_id_mismatch")
+
+    candidate_text = raw.get("candidate")
+    if not isinstance(candidate_text, str) or not candidate_text.strip():
+        reasons.append("missing_candidate")
+        candidate_text = ""
+    elif len(candidate_text) > _LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS:
+        reasons.append("candidate_too_large")
+    else:
+        typed_reason = _typed_logic_rejection_reason(candidate_text)
+        if typed_reason:
+            reasons.append(typed_reason)
+        if _drafted_logic_candidate_copies_source_span(candidate_text, task.source_span):
+            reasons.append("source_copy")
+
+    hints = raw.get("premise_hints")
+    valid_hints = (
+        isinstance(hints, Sequence)
+        and not isinstance(hints, (str, bytes))
+        and bool(hints)
+        and all(isinstance(item, str) and item.strip() for item in hints)
+        and len(set(hints)) == len(hints)
+    )
+    if not valid_hints:
+        reasons.append("missing_premise_hints")
+    elif branch is not None and not set(hints).issubset(set(branch["premise_hints"])):
+        reasons.append("unknown_premise_hint")
+
+    if raw.get("schema_version") != LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION:
+        reasons.append("unexpected_candidate_schema_version")
+    if raw.get("repair_scope") != "failed_obligation_subtree":
+        reasons.append("invalid_repair_scope")
+    if raw.get("source_copy_policy") != "reject_full_span_copy":
+        reasons.append("invalid_source_copy_policy")
+    if raw.get("source_copy_rejected") is not False:
+        reasons.append("source_copy_rejected")
+    confidence = raw.get("confidence")
+    if (
+        isinstance(confidence, bool)
+        or not isinstance(confidence, (int, float))
+        or not 0.0 <= float(confidence) <= 1.0
+    ):
+        reasons.append("invalid_confidence")
+    failure_mode = raw.get("expected_failure_mode")
+    if failure_mode not in _LEANSTRAL_ALLOWED_FAILURE_MODES:
+        reasons.append("invalid_expected_failure_mode")
+    elif branch is not None and failure_mode != branch.get("expected_failure_mode"):
+        reasons.append("expected_failure_mode_mismatch")
+
+    if branch is not None:
+        for key, branch_key in (
+            ("logic_family", "logic_family"),
+            ("target_view", "target_view"),
+            ("compiler_surface", "target_view"),
+        ):
+            if raw.get(key) != branch.get(branch_key):
+                reasons.append(f"{key}_mismatch")
+
+    reasons = list(dict.fromkeys(reasons))
+    sanitized = None
+    if not reasons:
+        sanitized = {
+            key: list(value) if key in {"premise_hints", "proof_obligation_ids"} else value
+            for key, value in sorted(raw.items())
+        }
+    return LeanstralFailureBranchCandidateValidation(
+        accepted=not reasons,
+        candidate=sanitized,
+        reasons=tuple(reasons),
+        obligation_id=obligation_id,
+        contract_id=contract_id,
+    )
+
+
+def _strict_json_pairs(pairs: Sequence[tuple[str, Any]]) -> Dict[str, Any]:
+    result: Dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_json_constant(value: str) -> Any:
+    raise ValueError(f"non-finite JSON number: {value}")
+
+
+def sanitize_leanstral_failure_branch_candidates(
+    task: LegalIRLeanTask,
+    response: Any,
+    failures: Any = None,
+    *,
+    failed_obligation_ids: Sequence[str] = (),
+) -> LeanstralFailureBranchSanitization:
+    """Parse strict JSON and reject the entire response if any item is unsafe."""
+
+    parsed = response
+    if isinstance(response, (str, bytes)):
+        raw_text = response.decode("utf-8", errors="replace") if isinstance(response, bytes) else response
+        if raw_text != raw_text.strip() or raw_text.lstrip().startswith("```"):
+            return LeanstralFailureBranchSanitization(
+                accepted=False, reasons=("response_must_be_strict_json",)
+            )
+        try:
+            parsed = json.loads(
+                raw_text,
+                object_pairs_hook=_strict_json_pairs,
+                parse_constant=_reject_nonfinite_json_constant,
+            )
+        except (json.JSONDecodeError, ValueError):
+            reason = (
+                "freeform_proof_text"
+                if _LEANSTRAL_FREEFORM_PROOF.search(raw_text)
+                else "response_must_be_strict_json"
+            )
+            return LeanstralFailureBranchSanitization(accepted=False, reasons=(reason,))
+    if not isinstance(parsed, Mapping):
+        return LeanstralFailureBranchSanitization(
+            accepted=False, reasons=("response_must_be_json_object",)
+        )
+    allowed_response_fields = {
+        "candidates",
+        "schema_version",
+        "target_modal_ir_hash",
+        "task_id",
+    }
+    response_reasons: list[str] = []
+    if set(parsed) - allowed_response_fields:
+        response_reasons.append("unknown_response_fields")
+    if parsed.get("schema_version") != LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION:
+        response_reasons.append("unexpected_response_schema_version")
+    if parsed.get("task_id") != task.task_id:
+        response_reasons.append("task_id_mismatch")
+    if parsed.get("target_modal_ir_hash") != task.modal_ir_hash:
+        response_reasons.append("modal_ir_hash_mismatch")
+    candidates = parsed.get("candidates")
+    if not isinstance(candidates, Sequence) or isinstance(candidates, (str, bytes)):
+        response_reasons.append("candidates_must_be_json_array")
+        candidates = []
+    elif not candidates:
+        response_reasons.append("missing_candidates")
+    elif len(candidates) > _LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES:
+        response_reasons.append("too_many_candidates")
+
+    validations = tuple(
+        validate_leanstral_failure_branch_candidate(
+            task,
+            item,
+            failures,
+            failed_obligation_ids=failed_obligation_ids,
+        )
+        for item in candidates[:_LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES]
+    )
+    reasons = list(response_reasons)
+    reasons.extend(reason for item in validations for reason in item.reasons)
+    reasons = list(dict.fromkeys(reasons))
+    accepted = bool(validations) and not reasons
+    return LeanstralFailureBranchSanitization(
+        accepted=accepted,
+        candidates=tuple(
+            item.candidate for item in validations if accepted and item.candidate is not None
+        ),
+        reasons=tuple(reasons),
+        validations=validations,
+    )
+
+
 def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         return ()
@@ -1366,15 +1940,27 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             or item.get("failure_reason")
             or "unknown"
         )
+        supplied_contract_id = str(item.get("contract_id") or "").strip()
+        if supplied_contract_id:
+            contract_id = supplied_contract_id
+        else:
+            try:
+                contract_id = legal_ir_view_contract(target_view).contract_id
+            except (KeyError, TypeError, ValueError):
+                contract_id = ""
         payload: Dict[str, Any] = {
             "candidate": candidate_text,
             "compiler_surface": compiler_surface,
+            "contract_id": contract_id,
             "expected_failure_mode": expected_failure_mode,
             "guidance_only": True,
             "intended_use": "guidance_only",
             "logic_family": logic_family,
             "premise_hints": premise_hints,
             "proof_obligation_ids": proof_obligation_ids,
+            "repair_scope": str(
+                item.get("repair_scope") or "failed_obligation_subtree"
+            ).strip(),
             "schema_version": LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
             "source_copy_policy": "reject_full_span_copy",
             "source_copy_rejected": _optional_bool(
@@ -1507,6 +2093,11 @@ def _first_proof_obligation_value(task: LegalIRLeanTask, key: str, fallback: str
     if not obligations:
         return fallback
     return str(obligations[0].get(key) or fallback).strip()
+
+
+def _first_proof_obligation_contract_id(task: LegalIRLeanTask) -> str:
+    obligations = _legal_ir_proof_obligations(task)
+    return _obligation_contract_id(obligations[0]) if obligations else ""
 
 
 def _leanstral_guidance_features(
@@ -1696,6 +2287,10 @@ def _drafted_logic_candidate_copies_source_span(
 ) -> bool:
     candidate = _plain_text_tokens(candidate_text)
     source = _plain_text_tokens(source_span)
+    if not candidate or not source:
+        return False
+    if candidate == source:
+        return True
     if len(candidate) < 40 or len(source) < 40:
         return False
     if candidate in source:
@@ -1836,12 +2431,14 @@ def _leanstral_prompt(task: LegalIRLeanTask) -> str:
             "candidate": "obligation(actor, action) unless exception_condition",
             "compiler_surface": "task.compiler_change_spec.target_component",
             "confidence": 0.0,
+            "contract_id": _first_proof_obligation_contract_id(task),
             "expected_failure_mode": "hammer_unproved | syntax_rejected | reconstruction_failed | source_copy_rejected | unknown",
             "intended_use": "guidance_only",
             "logic_family": "deontic",
             "premise_hints": _first_proof_obligation_hints(task),
             "proof_obligation_id": _first_proof_obligation_id(task),
             "proof_obligation_ids": [_first_proof_obligation_id(task)] if _first_proof_obligation_id(task) else [],
+            "repair_scope": "failed_obligation_subtree",
             "schema_version": LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
             "source_copy_policy": "reject_full_span_copy",
             "source_copy_rejected": False,
@@ -1901,12 +2498,16 @@ def __getattr__(name: str) -> Any:
 
 __all__ = [
     "LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION",
+    "LEANSTRAL_FAILURE_BRANCH_PROMPT_SCHEMA_VERSION",
+    "LEANSTRAL_FAILURE_BRANCH_RESPONSE_SCHEMA_VERSION",
     "LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION",
     "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
     "CompilerChangeSpec",
     "LegalIRLeanTask",
     "LeanstralConfig",
     "LeanstralDraftGuidance",
+    "LeanstralFailureBranchCandidateValidation",
+    "LeanstralFailureBranchSanitization",
     "LeanstralMetricComparison",
     "LeanstralProjectedChangeValidation",
     "LeanstralProjectedChangeValidator",
@@ -1921,10 +2522,13 @@ __all__ = [
     "PythonPatchProposal",
     "PythonPatchValidation",
     "compare_leanstral_holdout_pareto",
+    "build_leanstral_failure_branch_prompt",
     "leanstral_draft_guidance",
     "merge_leanstral_guidance_into_compiler_guidance",
+    "sanitize_leanstral_failure_branch_candidates",
     "validate_leanstral_projected_change",
     "validate_leanstral_proposal",
+    "validate_leanstral_failure_branch_candidate",
     "validate_python_patch_proposal",
     "verify_leanstral_audit",
 ]

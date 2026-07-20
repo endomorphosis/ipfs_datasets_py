@@ -56,9 +56,16 @@ from .leanstral_audit import (
     validate_leanstral_audit_response,
 )
 from .leanstral import (
+    LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
     LegalIRLeanTask,
+    LeanstralFailureBranchCandidateValidation,
+    LeanstralFailureBranchSanitization,
     LeanstralProposal,
     _drafted_logic_candidate_copies_source_span,
+    _obligation_contract_id,
+    _typed_logic_rejection_reason,
+    sanitize_leanstral_failure_branch_candidates,
+    validate_leanstral_failure_branch_candidate,
 )
 from .leanstral_theorems import generate_legal_semantics_theorem_registry
 from .lean_runtime import resolve_lean_executable
@@ -444,6 +451,7 @@ class LeanstralHammerCandidateVerifier:
         checks: List[LeanstralLocalCheck] = []
         if self.config.run_syntax_check:
             checks.append(_check_hammer_candidate_syntax(candidate))
+            checks.append(_check_hammer_candidate_contract(task, candidate))
         if self.config.run_provenance_check:
             checks.append(_check_hammer_candidate_provenance(task, candidate))
         if self.config.run_graph_check:
@@ -1335,10 +1343,13 @@ _REQUIRED_HAMMER_CANDIDATE_FIELDS = (
     "candidate",
     "compiler_surface",
     "confidence",
+    "contract_id",
     "expected_failure_mode",
     "logic_family",
     "premise_hints",
     "proof_obligation_ids",
+    "repair_scope",
+    "schema_version",
     "source_copy_policy",
     "source_copy_rejected",
     "target_view",
@@ -1353,6 +1364,10 @@ def _check_hammer_candidate_syntax(candidate: Mapping[str, Any]) -> LeanstralLoc
             reasons.append(f"missing_drafted_logic_{field_name}")
     if not str(candidate.get("candidate") or "").strip():
         reasons.append("missing_drafted_logic_candidate")
+    else:
+        typed_reason = _typed_logic_rejection_reason(str(candidate.get("candidate") or ""))
+        if typed_reason:
+            reasons.append(typed_reason)
     if not _string_sequence(candidate.get("proof_obligation_ids")):
         reasons.append("missing_drafted_logic_proof_obligation_ids")
     if not _string_sequence(candidate.get("premise_hints")):
@@ -1368,6 +1383,10 @@ def _check_hammer_candidate_syntax(candidate: Mapping[str, Any]) -> LeanstralLoc
         confidence = 0.0
     if confidence < 0.0 or confidence > 1.0:
         reasons.append("invalid_drafted_logic_confidence")
+    if candidate.get("schema_version") != LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION:
+        reasons.append("unexpected_drafted_logic_schema_version")
+    if candidate.get("repair_scope") != "failed_obligation_subtree":
+        reasons.append("invalid_repair_scope")
     return _cheap_check(
         "leanstral_hammer_candidate_syntax",
         started,
@@ -1375,6 +1394,36 @@ def _check_hammer_candidate_syntax(candidate: Mapping[str, Any]) -> LeanstralLoc
         {
             "logic_family": str(candidate.get("logic_family") or ""),
             "target_view": str(candidate.get("target_view") or ""),
+        },
+    )
+
+
+def _check_hammer_candidate_contract(
+    task: LegalIRLeanTask,
+    candidate: Mapping[str, Any],
+) -> LeanstralLocalCheck:
+    started = time.time()
+    reasons: List[str] = []
+    contract_id = str(candidate.get("contract_id") or "").strip()
+    selected = _candidate_obligations(task, candidate)
+    if not contract_id:
+        reasons.append("missing_contract_id")
+    elif not selected:
+        reasons.append("missing_matching_proof_obligation")
+    else:
+        expected_ids = {_obligation_contract_id(item) for item in selected}
+        expected_ids.discard("")
+        if not expected_ids or contract_id not in expected_ids:
+            reasons.append("unknown_contract_id")
+    return _cheap_check(
+        "leanstral_hammer_candidate_contract",
+        started,
+        reasons,
+        {
+            "contract_id": contract_id,
+            "obligation_ids": [
+                str(item.get("obligation_id") or "") for item in selected
+            ],
         },
     )
 
@@ -1921,6 +1970,8 @@ __all__ = [
     "LeanstralHammerCandidateVerifier",
     "LeanstralHammerVerificationReport",
     "LeanstralHammerVerifierConfig",
+    "LeanstralFailureBranchCandidateValidation",
+    "LeanstralFailureBranchSanitization",
     "LeanstralCompilerCheck",
     "LeanstralLocalCheck",
     "LeanstralSourceSpanCheck",
@@ -1928,4 +1979,6 @@ __all__ = [
     "LeanstralVerifierConfig",
     "verify_leanstral_hammer_candidates",
     "verify_leanstral_audit",
+    "sanitize_leanstral_failure_branch_candidates",
+    "validate_leanstral_failure_branch_candidate",
 ]
