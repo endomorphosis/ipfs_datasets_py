@@ -73,6 +73,17 @@ from .legal_ir_premises import (
     default_legal_ir_premises,
     export_legal_ir_premises,
 )
+from .legal_ir_premise_selection import (
+    LEGAL_IR_PREMISE_SELECTION_SCHEMA_VERSION,
+    LegalIRPremiseKind,
+    LegalIRPremiseRanker,
+    LegalIRPremiseScore,
+    LegalIRPremiseSelector,
+    RankedLegalIRPremise,
+    rank_legal_ir_premises,
+    score_legal_ir_premises,
+    select_legal_ir_premises,
+)
 from .legal_ir_verified_gap_repairs import (
     LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION,
     LegalIRVerifiedGapRepair,
@@ -143,6 +154,15 @@ __all__ = [
     'LEGAL_IR_PREMISE_LIBRARY_VERSION',
     'default_legal_ir_premises',
     'export_legal_ir_premises',
+    'LEGAL_IR_PREMISE_SELECTION_SCHEMA_VERSION',
+    'LegalIRPremiseKind',
+    'LegalIRPremiseRanker',
+    'LegalIRPremiseScore',
+    'LegalIRPremiseSelector',
+    'RankedLegalIRPremise',
+    'rank_legal_ir_premises',
+    'score_legal_ir_premises',
+    'select_legal_ir_premises',
     'LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION',
     'LegalIRVerifiedGapRepair',
     'generate_verified_legal_ir_gap_repairs',

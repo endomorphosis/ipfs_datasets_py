@@ -57,6 +57,19 @@ def _atom(value: Any, *, fallback: str = "unknown") -> str:
     return text or fallback
 
 
+def _verified(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {
+        "accepted",
+        "checked",
+        "proved",
+        "trusted",
+        "true",
+        "verified",
+    }
+
+
 def _document(sample_or_document: Any) -> Any:
     return _get(sample_or_document, "modal_ir", sample_or_document)
 
@@ -129,6 +142,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="modal",
             source_module="legal_ir_premise_library",
             weight=1.4,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "modal_operator_well_formed",
@@ -137,6 +151,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="modal",
             source_module="legal_ir_premise_library",
             weight=1.3,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "predicate_signature_has_arity",
@@ -145,6 +160,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="frame",
             source_module="legal_ir_premise_library",
             weight=1.2,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "deontic_norm_polarity_supported",
@@ -153,6 +169,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="deontic",
             source_module="legal_ir_premise_library",
             weight=1.5,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "exception_scope_precedence",
@@ -161,6 +178,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="conditional_normative",
             source_module="legal_ir_premise_library",
             weight=1.5,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "defeasible_priority_orders_exceptions",
@@ -169,6 +187,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="conditional_normative",
             source_module="legal_ir_premise_library",
             weight=1.35,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "temporal_conditions_have_event_order",
@@ -177,6 +196,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="temporal",
             source_module="legal_ir_premise_library",
             weight=1.3,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "kg_edges_are_typed",
@@ -185,6 +205,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="frame",
             source_module="legal_ir_premise_library",
             weight=1.25,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "frame_role_bindings_are_preserved",
@@ -193,6 +214,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="frame",
             source_module="legal_ir_premise_library",
             weight=1.25,
+            metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
             "decompiler_preserves_modal_signature",
@@ -201,6 +223,7 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             logic_family="modal",
             source_module="legal_ir_premise_library",
             weight=1.3,
+            metadata={"premise_kind": "theorem_template"},
         ),
     ]
 
@@ -223,6 +246,21 @@ def premises_from_obligations(obligations: Iterable[LegalIRProofObligation]) -> 
                     "obligation_id": obligation.obligation_id,
                     "obligation_kind": obligation.kind,
                     "formula_id": obligation.formula_id,
+                    "obligation_family": str(
+                        obligation.metadata.get("obligation_family") or obligation.kind
+                    ),
+                    "premise_kind": "sample_local_assumption",
+                    "sample_id": obligation.sample_id,
+                    **{
+                        key: obligation.metadata[key]
+                        for key in (
+                            "contract_id",
+                            "contract_view",
+                            "document_hash",
+                            "required_field",
+                        )
+                        if key in obligation.metadata
+                    },
                 },
             )
         )
@@ -241,6 +279,14 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
         symbol = _atom(_get(operator, "symbol") or _as_mapping(operator).get("symbol"), fallback="operator")
         predicate_name = _atom(_get(predicate, "name") or _as_mapping(predicate).get("name"), fallback="predicate")
         arguments = _sequence(_get(predicate, "arguments") or _as_mapping(predicate).get("arguments", []))
+        provenance = _as_mapping(_get(formula, "provenance") or _as_mapping(formula).get("provenance", {}))
+        provenance_id = str(
+            provenance.get("source_id")
+            or provenance.get("provenance_id")
+            or provenance.get("source_cid")
+            or ""
+        ).strip()
+        citation = str(provenance.get("citation") or "").strip()
         view = "deontic.ir" if family == "deontic" or symbol in {"shall", "must", "may", "shall_not", "may_not"} else "modal.frame_logic"
         premises.append(
             _premise(
@@ -254,9 +300,19 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
                 source_module="legal_ir_document",
                 weight=1.2,
                 metadata={
+                    "contract_fields": [
+                        "formula_id",
+                        "operator",
+                        "predicate",
+                        "arguments",
+                        "provenance_ids",
+                    ],
+                    "citation_hash": _stable_hash(citation) if citation else "",
                     "formula_id": formula_id,
                     "operator_symbol": symbol,
+                    "premise_kind": "compiler_fact",
                     "predicate_name": predicate_name,
+                    "provenance_hash": _stable_hash(provenance_id) if provenance_id else "",
                 },
             )
         )
@@ -270,7 +326,13 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
                     logic_family="conditional_normative",
                     source_module="legal_ir_document",
                     weight=1.25,
-                    metadata={"formula_id": formula_id, "exception_count": len(exceptions)},
+                    metadata={
+                        "contract_fields": ["exceptions"],
+                        "exception_count": len(exceptions),
+                        "formula_id": formula_id,
+                        "premise_kind": "compiler_fact",
+                        "provenance_hash": _stable_hash(provenance_id) if provenance_id else "",
+                    },
                 )
             )
     return premises
@@ -286,6 +348,25 @@ def premises_from_theorem_registry(registry: Any) -> List[HammerPremise]:
             return []
     data = _as_mapping(registry)
     raw_theorems = data.get("theorems", []) if data else _sequence(registry)
+    registry_hash = str(data.get("registry_hash") or "")
+    registry_verified = any(
+        _verified(data.get(key))
+        for key in (
+            "accepted",
+            "kernel_verified",
+            "proof_checked",
+            "proof_status",
+            "trust_status",
+            "trusted",
+            "verification_status",
+            "verified",
+        )
+    )
+    verified_theorem_ids = {
+        str(item)
+        for item in _sequence(data.get("verified_theorem_ids"))
+        if str(item)
+    }
     premises: List[HammerPremise] = []
     for index, theorem in enumerate(_sequence(raw_theorems), start=1):
         theorem_map = _as_mapping(theorem)
@@ -298,6 +379,34 @@ def premises_from_theorem_registry(registry: Any) -> List[HammerPremise]:
         statement = str(theorem_map.get("statement") or theorem_map.get("formula") or "")
         if not statement:
             continue
+        theorem_id = str(theorem_map.get("theorem_id") or name)
+        verified = (
+            registry_verified
+            or theorem_id in verified_theorem_ids
+            or any(
+                _verified(theorem_map.get(key))
+                for key in (
+                    "accepted",
+                    "kernel_verified",
+                    "proof_checked",
+                    "proof_status",
+                    "status",
+                    "trust_status",
+                    "trusted",
+                    "verification_status",
+                    "verified",
+                )
+            )
+        )
+        evidence = _as_mapping(theorem_map.get("evidence"))
+        citation = str(evidence.get("citation") or theorem_map.get("citation") or "").strip()
+        provenance_hash = str(
+            theorem_map.get("provenance_hash")
+            or theorem_map.get("source_span_hash")
+            or evidence.get("source_span_hash")
+            or evidence.get("sourceSpanHash")
+            or ""
+        ).strip()
         premises.append(
             _premise(
                 name,
@@ -307,8 +416,19 @@ def premises_from_theorem_registry(registry: Any) -> List[HammerPremise]:
                 source_module="legal_ir_theorem_registry",
                 weight=float(theorem_map.get("weight", 1.0) or 1.0),
                 metadata={
-                    "theorem_id": str(theorem_map.get("theorem_id") or name),
-                    "registry_hash": _stable_hash(theorem_map)[:16],
+                    "category": str(theorem_map.get("category") or ""),
+                    "citation_hash": _stable_hash(citation) if citation else "",
+                    "evidence_hash": str(theorem_map.get("evidence_hash") or ""),
+                    "formula_id": str(theorem_map.get("formula_id") or ""),
+                    "premise_kind": (
+                        "verified_leanstral_theorem" if verified else "leanstral_theorem"
+                    ),
+                    "provenance_hash": provenance_hash,
+                    "registry_hash": registry_hash or _stable_hash(theorem_map)[:16],
+                    "template_id": str(theorem_map.get("template_id") or ""),
+                    "theorem_id": theorem_id,
+                    "verification_status": "verified" if verified else "unverified",
+                    "verified": verified,
                 },
             )
         )
