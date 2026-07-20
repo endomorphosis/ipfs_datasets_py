@@ -667,7 +667,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-028 Add adversarial source-copy reward-hacking fixtures
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: validation
