@@ -3942,7 +3942,7 @@ def test_codex_target_metric_validation_accepts_weighted_tradeoff() -> None:
             "embedding_cosine_similarity": 0.5069,
             "legal_ir_multiview_cosine_loss": 0.24995,
             "reconstruction_loss": 0.3983,
-            "source_copy_reward_hack_penalty": 0.2006,
+            "source_copy_reward_hack_penalty": 0.1994,
             "source_decompiled_text_token_loss": 0.55004,
             "structural_text_reconstruction_loss": 0.5545,
         },
@@ -3959,12 +3959,10 @@ def test_codex_target_metric_validation_accepts_weighted_tradeoff() -> None:
     assert report["objective_delta"] > 0.0
     assert report["regressed_metrics"] == []
     assert report["raw_regressed_metrics"] == [
-        "source_copy_reward_hack_penalty",
         "source_decompiled_text_token_loss",
         "structural_text_reconstruction_loss",
     ]
     assert report["tolerated_regressed_metrics"] == [
-        "source_copy_reward_hack_penalty",
         "source_decompiled_text_token_loss",
         "structural_text_reconstruction_loss",
     ]

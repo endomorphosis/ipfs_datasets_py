@@ -48,6 +48,7 @@ MODAL_AUTOENCODER_STATE_SCHEMA_VERSION = "modal-autoencoder-state-v1"
 MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION = "modal-autoencoder-low-rank-v1"
 MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
 MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
+HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION = "legal-ir-hammer-guidance-metrics-v1"
 PROJECTION_DEADBAND_MODES = frozenset({"off", "shadow", "enforce"})
 PROJECTION_DEADBAND_CE_REGRESSION_KEYS = frozenset(
     {"cross_entropy_excess_loss", "cross_entropy_loss"}
@@ -56,6 +57,10 @@ PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS = (
     "embedding_cosine_similarity",
     "reconstruction_loss",
     "legal_ir:*",
+    "hammer_*",
+    "source_copy*",
+    "source_copy_*",
+    "symbolic_validity*",
 )
 PROJECTION_PRESCREEN_MODES = frozenset({"off", "shadow", "enforce"})
 
@@ -4408,6 +4413,8 @@ class AdaptiveModalAutoencoder:
             "candidate_count": len(items),
             "duplicate_count": 0,
             "guidance_ids": [],
+            "hammer_guidance_count": 0,
+            "hammer_metrics": hammer_guidance_metric_block(items),
             "missing_sample_count": 0,
             "sample_aware_update_count": 0,
             "schema_version": "legal-ir-leanstral-autoencoder-training-v1",
@@ -4468,6 +4475,8 @@ class AdaptiveModalAutoencoder:
                     learning_rate=step,
                 )
             )
+            if self._leanstral_guidance_is_hammer_item(item):
+                report["hammer_guidance_count"] += 1
             self.state.applied_leanstral_guidance_ids.append(guidance_id)
             applied_ids.add(guidance_id)
             report["guidance_ids"].append(guidance_id)
@@ -4484,6 +4493,14 @@ class AdaptiveModalAutoencoder:
         )
         report["guidance_ids"] = report["guidance_ids"][:64]
         report["target_view_counts"] = dict(sorted(report["target_view_counts"].items()))
+        if isinstance(report.get("hammer_metrics"), Mapping):
+            report["hammer_guidance_count"] = int(
+                dict(report["hammer_metrics"]).get(
+                    "hammer_artifact_count",
+                    report["hammer_guidance_count"],
+                )
+                or 0
+            )
         return report
 
     def _leanstral_guidance_items(self, guidance: Any) -> List[Mapping[str, Any]]:
@@ -4497,10 +4514,31 @@ class AdaptiveModalAutoencoder:
                 "guidance",
                 "latest_leanstral_guidance",
                 "external_guidance",
+                "hammer_guidance_artifacts",
+                "verified_guidance",
             ):
                 value = guidance.get(key)
                 if value is not None:
                     nested.extend(self._leanstral_guidance_items(value))
+            candidate_results = guidance.get("candidate_results")
+            if isinstance(candidate_results, Sequence) and not isinstance(
+                candidate_results,
+                (bytes, bytearray, str),
+            ):
+                for candidate_result in candidate_results:
+                    if not isinstance(candidate_result, Mapping):
+                        continue
+                    for key in ("verified_guidance", "hammer_guidance_artifacts"):
+                        value = candidate_result.get(key)
+                        if value is not None:
+                            nested.extend(self._leanstral_guidance_items(value))
+                    hammer_report = candidate_result.get("hammer_report")
+                    if isinstance(hammer_report, Mapping):
+                        nested.extend(
+                            self._leanstral_guidance_items(
+                                hammer_report.get("artifacts")
+                            )
+                        )
             for key in (
                 "guidance_items",
                 "items",
@@ -4569,10 +4607,21 @@ class AdaptiveModalAutoencoder:
             return True
         source = str(item.get("source") or "").strip().lower()
         return source in {
+            "hammer_verified_guidance",
             "leanstral_direct_guidance_projection_v1",
             "leanstral_shadow_proof",
             "leanstral_verified_guidance",
         }
+
+    def _leanstral_guidance_is_hammer_item(self, item: Mapping[str, Any]) -> bool:
+        source = str(item.get("source") or "").strip().lower()
+        return (
+            source == "hammer_verified_guidance"
+            or bool(item.get("backend_statuses"))
+            or bool(item.get("selected_premises"))
+            or bool(item.get("reconstruction_status"))
+            or str(item.get("schema_version") or "").startswith("legal-ir-hammer-")
+        )
 
     def _leanstral_guidance_target_distribution(
         self,
@@ -4606,12 +4655,18 @@ class AdaptiveModalAutoencoder:
             bump(_legal_ir_timeout_view_for_bridge_name(text), weight)
 
         for key, weight in (
+            ("legal_ir_view", 0.80),
             ("target_component", 0.70),
+            ("target_view", 0.55),
             ("compiler_surface", 0.35),
             ("program_synthesis_scope", 0.30),
             ("action", 0.20),
         ):
             bump_hint(item.get(key), weight)
+        if item.get("proved") is True or item.get("proof_checked") is True:
+            bump_hint(item.get("legal_ir_view") or item.get("target_component"), 0.30)
+        if str(item.get("reconstruction_status") or "").lower() == "verified":
+            bump_hint(item.get("legal_ir_view") or item.get("target_component"), 0.20)
 
         for metric in self._leanstral_sequence(item.get("target_metrics")):
             bump_hint(metric, 0.18)
@@ -4645,6 +4700,14 @@ class AdaptiveModalAutoencoder:
         if proof_ids:
             bump("TDFOL.prover", 0.12 * min(3, len(proof_ids)))
             bump("external_provers.router", 0.08 * min(3, len(proof_ids)))
+        if item.get("obligation_id"):
+            bump("external_provers.router", 0.08)
+        for premise_view in self._leanstral_sequence(item.get("premise_views")):
+            bump_hint(premise_view, 0.12)
+        for backend_status in self._leanstral_sequence(item.get("backend_statuses")):
+            status_text = str(backend_status).lower()
+            if "proved" in status_text or "verified" in status_text:
+                bump("external_provers.router", 0.10)
 
         for candidate in self._leanstral_sequence(item.get("drafted_logic_candidates")):
             if not isinstance(candidate, Mapping):
@@ -4668,8 +4731,20 @@ class AdaptiveModalAutoencoder:
                 else:
                     bump_hint(family, 0.35 * confidence)
             bump_hint(candidate.get("compiler_surface"), 0.20 * confidence)
-            if candidate.get("proof_obligation_id"):
+            bump_hint(candidate.get("target_view"), 0.35 * confidence)
+            for metric in self._leanstral_sequence(candidate.get("target_metrics")):
+                bump_hint(metric, 0.08 * confidence)
+            for premise_hint in self._leanstral_sequence(candidate.get("premise_hints")):
+                hint_text = str(premise_hint).lower()
+                if "exception" in hint_text or "deontic" in hint_text:
+                    bump("deontic.ir", 0.12 * confidence)
+                if "temporal" in hint_text or "event" in hint_text:
+                    bump("TDFOL.prover", 0.10 * confidence)
+                if "kg" in hint_text or "graph" in hint_text:
+                    bump("knowledge_graphs.neo4j_compat", 0.10 * confidence)
+            if candidate.get("proof_obligation_id") or candidate.get("proof_obligation_ids"):
                 bump("TDFOL.prover", 0.10 * confidence)
+                bump("external_provers.router", 0.06 * confidence)
 
         return _normalized_distribution(scores)
 
@@ -4703,6 +4778,34 @@ class AdaptiveModalAutoencoder:
             atom = _feature_atom(item.get(key), max_tokens=5)
             if atom:
                 keys.append(f"leanstral:{key}:{atom}")
+        for key in ("legal_ir_view", "target_view"):
+            atom = _feature_atom(item.get(key), max_tokens=5)
+            if atom:
+                keys.append(f"hammer:target-view:{atom}")
+        obligation_id = _feature_atom(item.get("obligation_id"), max_tokens=8)
+        if obligation_id:
+            keys.append(f"hammer:obligation:{obligation_id}")
+        for premise in self._leanstral_sequence(item.get("selected_premises"))[:12]:
+            atom = _feature_atom(premise, max_tokens=8)
+            if atom:
+                keys.append(f"hammer:selected-premise:{atom}")
+        for view in self._leanstral_sequence(item.get("premise_views"))[:8]:
+            atom = _feature_atom(view, max_tokens=5)
+            if atom:
+                keys.append(f"hammer:premise-view:{atom}")
+        backend_statuses = item.get("backend_statuses")
+        if isinstance(backend_statuses, Mapping):
+            for backend, status in sorted(backend_statuses.items()):
+                backend_atom = _feature_atom(backend, max_tokens=3)
+                status_atom = _feature_atom(status, max_tokens=3)
+                if backend_atom and status_atom:
+                    keys.append(f"hammer:backend-status:{backend_atom}:{status_atom}")
+        reconstruction = _feature_atom(item.get("reconstruction_status"), max_tokens=5)
+        if reconstruction:
+            keys.append(f"hammer:reconstruction-status:{reconstruction}")
+        failure = _feature_atom(item.get("failure_reason"), max_tokens=5)
+        if failure:
+            keys.append(f"hammer:failure-reason:{failure}")
         for candidate in self._leanstral_sequence(item.get("drafted_logic_candidates")):
             if not isinstance(candidate, Mapping):
                 continue
@@ -4712,6 +4815,20 @@ class AdaptiveModalAutoencoder:
             )
             if family:
                 keys.append(f"leanstral:logic-family:{family}")
+            target_view = _feature_atom(candidate.get("target_view"), max_tokens=5)
+            if target_view:
+                keys.append(f"hammer:candidate-target-view:{target_view}")
+            failure_mode = _feature_atom(candidate.get("expected_failure_mode"), max_tokens=5)
+            if failure_mode:
+                keys.append(f"hammer:candidate-failure-mode:{failure_mode}")
+            for premise_hint in self._leanstral_sequence(candidate.get("premise_hints"))[:8]:
+                atom = _feature_atom(premise_hint, max_tokens=8)
+                if atom:
+                    keys.append(f"hammer:candidate-premise-hint:{atom}")
+            for proof_id in self._leanstral_sequence(candidate.get("proof_obligation_ids"))[:8]:
+                atom = _feature_atom(proof_id, max_tokens=8)
+                if atom:
+                    keys.append(f"hammer:candidate-proof-obligation:{atom}")
         for proof_id in self._leanstral_sequence(item.get("proof_obligation_ids"))[:8]:
             atom = _feature_atom(proof_id, max_tokens=8)
             if atom:
@@ -24002,8 +24119,37 @@ def _source_decompiled_text_losses_from_targets(
         source_decompiled_token_loss = _float_or_zero(
             losses.get("structural_text_reconstruction_loss")
         )
+    structural_round_trip_loss = _float_or_zero(
+        losses.get("structural_text_reconstruction_loss")
+    )
+    if structural_round_trip_loss <= 0.0:
+        structural_round_trip_loss = source_decompiled_token_loss
+    source_copy_guardrail_loss = _float_or_zero(
+        losses.get("source_copy_reward_hack_penalty")
+    )
+    if source_copy_guardrail_loss <= 0.0:
+        source_copy_ratio = losses.get("source_copy_loss")
+        if source_copy_ratio is None:
+            source_copy_ratio = losses.get("source_span_copy_ratio")
+        if source_copy_ratio is not None:
+            source_copy_guardrail_loss = max(
+                0.0,
+                _float_or_zero(source_copy_ratio) - 0.65,
+            )
 
     return {
+        "round_trip_source_copy_guardrail_loss": max(
+            0.0,
+            source_copy_guardrail_loss,
+        ),
+        "round_trip_structural_reconstruction_loss": max(
+            0.0,
+            structural_round_trip_loss,
+        ),
+        "source_copy_reward_hack_penalty": max(
+            0.0,
+            source_copy_guardrail_loss,
+        ),
         "source_decompiled_text_embedding_cosine_loss": max(
             0.0,
             source_decompiled_cosine_loss,
@@ -26177,6 +26323,269 @@ def _float_or_zero(value: Any) -> float:
         return 0.0
 
 
+def _normalize_hammer_guidance_metric_item(item: Any) -> Dict[str, Any]:
+    if item is None:
+        return {}
+    if hasattr(item, "to_dict") and callable(getattr(item, "to_dict")):
+        try:
+            item = item.to_dict()
+        except (TypeError, ValueError):
+            return {}
+    if isinstance(item, Mapping):
+        return {str(key): value for key, value in dict(item).items()}
+    return {}
+
+
+def _hammer_guidance_metric_items(value: Any) -> List[Mapping[str, Any]]:
+    if value is None:
+        return []
+    normalized = _normalize_hammer_guidance_metric_item(value)
+    if isinstance(value, Mapping) or normalized:
+        source = normalized if normalized else dict(value)
+        nested: List[Mapping[str, Any]] = []
+        for key in (
+            "artifacts",
+            "hammer_guidance_artifacts",
+            "verified_guidance",
+            "leanstral_guidance",
+            "guidance",
+            "guidance_items",
+            "items",
+        ):
+            if key in source:
+                nested.extend(_hammer_guidance_metric_items(source.get(key)))
+        candidate_results = source.get("candidate_results")
+        if isinstance(candidate_results, Sequence) and not isinstance(
+            candidate_results,
+            (bytes, bytearray, str),
+        ):
+            for candidate_result in candidate_results:
+                if not isinstance(candidate_result, Mapping):
+                    continue
+                nested.extend(
+                    _hammer_guidance_metric_items(
+                        candidate_result.get("verified_guidance")
+                    )
+                )
+                nested.extend(
+                    _hammer_guidance_metric_items(
+                        candidate_result.get("hammer_guidance_artifacts")
+                    )
+                )
+                hammer_report = candidate_result.get("hammer_report")
+                if isinstance(hammer_report, Mapping):
+                    nested.extend(
+                        _hammer_guidance_metric_items(hammer_report.get("artifacts"))
+                    )
+        if nested:
+            return nested
+        if _is_hammer_guidance_metric_item(source):
+            return [source]
+        return []
+    if isinstance(value, Sequence) and not isinstance(
+        value,
+        (bytes, bytearray, str),
+    ):
+        items: List[Mapping[str, Any]] = []
+        for item in value:
+            items.extend(_hammer_guidance_metric_items(item))
+        return items
+    return []
+
+
+def _is_hammer_guidance_metric_item(item: Mapping[str, Any]) -> bool:
+    source = str(item.get("source") or "").strip().lower()
+    schema_version = str(item.get("schema_version") or "").strip().lower()
+    return (
+        source == "hammer_verified_guidance"
+        or schema_version.startswith("legal-ir-hammer-")
+        or bool(item.get("backend_statuses"))
+        or bool(item.get("selected_premises"))
+        or bool(item.get("reconstruction_status"))
+        or "proof_checked" in item
+        or "proved" in item
+    )
+
+
+def _hammer_guidance_truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    text = str(value or "").strip().lower()
+    return text in {"1", "true", "yes", "y", "verified", "proved", "success"}
+
+
+def _hammer_guidance_reconstruction_verified(item: Mapping[str, Any]) -> bool:
+    if _hammer_guidance_truthy(item.get("proof_checked")):
+        return True
+    status = str(item.get("reconstruction_status") or "").strip().lower()
+    return status in {"checked", "proof_checked", "reconstructed", "success", "verified"}
+
+
+def _hammer_guidance_source_copy_rejected(item: Mapping[str, Any]) -> bool:
+    for key in (
+        "copy_source_span_rejected",
+        "copied_source_span_rejected",
+        "source_copy_rejected",
+        "source_copy_penalty",
+    ):
+        value = item.get(key)
+        if isinstance(value, (int, float)) and float(value) > 0.0:
+            return True
+        if _hammer_guidance_truthy(value):
+            return True
+    reasons = item.get("rejection_reasons")
+    if isinstance(reasons, Sequence) and not isinstance(
+        reasons,
+        (bytes, bytearray, str),
+    ):
+        return any("copy" in str(reason).lower() for reason in reasons)
+    return "copy" in str(item.get("failure_reason") or "").lower()
+
+
+def _hammer_metric_view_key(value: Any) -> str:
+    text = str(value or "").strip()
+    return text or "unknown"
+
+
+def _hammer_metric_suffix(value: Any) -> str:
+    try:
+        return _feature_atom(value, max_tokens=8) or "unknown"
+    except NameError:
+        return re.sub(r"[^a-z0-9]+", "_", str(value or "").lower()).strip("_") or "unknown"
+
+
+def hammer_guidance_metric_block(guidance: Any) -> Dict[str, Any]:
+    """Return aggregate proof and guardrail metrics for hammer guidance artifacts."""
+
+    items = _hammer_guidance_metric_items(guidance)
+    artifact_count = len(items)
+    proved_count = 0
+    trusted_count = 0
+    reconstruction_success_count = 0
+    premise_hit_count = 0
+    source_copy_rejected_count = 0
+    backend_unavailable_count = 0
+    view_counts: Dict[str, int] = {}
+    view_proved: Dict[str, int] = {}
+    view_trusted: Dict[str, int] = {}
+    view_reconstructed: Dict[str, int] = {}
+    for item in items:
+        view = _hammer_metric_view_key(
+            item.get("legal_ir_view")
+            or item.get("target_view")
+            or item.get("target_component")
+        )
+        view_counts[view] = view_counts.get(view, 0) + 1
+        proved = _hammer_guidance_truthy(item.get("proved"))
+        trusted = _hammer_guidance_truthy(item.get("trusted"))
+        reconstructed = _hammer_guidance_reconstruction_verified(item)
+        if proved:
+            proved_count += 1
+            view_proved[view] = view_proved.get(view, 0) + 1
+        if trusted:
+            trusted_count += 1
+            view_trusted[view] = view_trusted.get(view, 0) + 1
+        if reconstructed:
+            reconstruction_success_count += 1
+            view_reconstructed[view] = view_reconstructed.get(view, 0) + 1
+        selected_premises = item.get("selected_premises")
+        if isinstance(selected_premises, Sequence) and not isinstance(
+            selected_premises,
+            (bytes, bytearray, str),
+        ) and any(str(premise).strip() for premise in selected_premises):
+            premise_hit_count += 1
+        if _hammer_guidance_source_copy_rejected(item):
+            source_copy_rejected_count += 1
+        backend_statuses = item.get("backend_statuses")
+        if isinstance(backend_statuses, Mapping):
+            statuses = [
+                str(status).strip().lower()
+                for status in backend_statuses.values()
+                if str(status).strip()
+            ]
+            if statuses and all(status == "unavailable" for status in statuses):
+                backend_unavailable_count += 1
+
+    denominator = max(1, artifact_count)
+    proof_success_rate = proved_count / denominator
+    trusted_success_rate = trusted_count / denominator
+    reconstruction_success_rate = reconstruction_success_count / denominator
+    premise_hit_rate = premise_hit_count / denominator
+    source_copy_penalty = source_copy_rejected_count / denominator
+    backend_unavailable_ratio = backend_unavailable_count / denominator
+    symbolic_validity_success_rate = trusted_success_rate
+    symbolic_validity_penalty_value = 1.0 - symbolic_validity_success_rate
+    per_view: Dict[str, Dict[str, Any]] = {}
+    numeric_view_metrics: Dict[str, float] = {}
+    for view, count in sorted(view_counts.items()):
+        view_denominator = max(1, count)
+        proof_rate = view_proved.get(view, 0) / view_denominator
+        trusted_rate = view_trusted.get(view, 0) / view_denominator
+        reconstruction_rate = view_reconstructed.get(view, 0) / view_denominator
+        suffix = _hammer_metric_suffix(view)
+        per_view[view] = {
+            "artifact_count": count,
+            "hammer_proof_failure_ratio": round(1.0 - proof_rate, 12),
+            "hammer_proof_success_rate": round(proof_rate, 12),
+            "hammer_reconstruction_success_rate": round(reconstruction_rate, 12),
+            "symbolic_validity_penalty": round(1.0 - trusted_rate, 12),
+            "symbolic_validity_success_rate": round(trusted_rate, 12),
+        }
+        numeric_view_metrics[f"hammer_{suffix}_proof_success_rate"] = proof_rate
+        numeric_view_metrics[f"hammer_{suffix}_proof_failure_ratio"] = 1.0 - proof_rate
+        numeric_view_metrics[f"symbolic_validity_{suffix}_success_rate"] = trusted_rate
+        numeric_view_metrics[f"symbolic_validity_{suffix}_penalty"] = 1.0 - trusted_rate
+
+    metrics: Dict[str, Any] = {
+        "hammer_artifact_count": artifact_count,
+        "hammer_backend_unavailable_count": backend_unavailable_count,
+        "hammer_backend_unavailable_ratio": round(backend_unavailable_ratio, 12),
+        "hammer_metric_group_count": 6,
+        "hammer_premise_selection_hit_count": premise_hit_count,
+        "hammer_premise_selection_hit_rate": round(premise_hit_rate, 12),
+        "hammer_proof_failure_count": artifact_count - proved_count,
+        "hammer_proof_failure_ratio": round(1.0 - proof_success_rate, 12),
+        "hammer_proof_success_rate": round(proof_success_rate, 12),
+        "hammer_proved_count": proved_count,
+        "hammer_reconstruction_success_count": reconstruction_success_count,
+        "hammer_reconstruction_success_rate": round(reconstruction_success_rate, 12),
+        "hammer_source_copy_rejected_count": source_copy_rejected_count,
+        "hammer_source_copy_penalty": round(source_copy_penalty, 12),
+        "hammer_trusted_success_rate": round(trusted_success_rate, 12),
+        "round_trip_reconstruction_success_rate": round(
+            reconstruction_success_rate,
+            12,
+        ),
+        "schema_version": HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION,
+        "source_copy_penalty": round(source_copy_penalty, 12),
+        "symbolic_validity_by_view": per_view,
+        "symbolic_validity_penalty": round(symbolic_validity_penalty_value, 12),
+        "symbolic_validity_success_rate": round(symbolic_validity_success_rate, 12),
+        "trusted_hammer_guidance_count": trusted_count,
+    }
+    metrics.update(
+        {key: round(value, 12) for key, value in sorted(numeric_view_metrics.items())}
+    )
+    return metrics
+
+
+def _metric_higher_is_better(name: str) -> bool:
+    normalized = str(name or "")
+    return (
+        normalized in {
+            "hammer_premise_selection_hit_rate",
+            "hammer_proof_success_rate",
+            "hammer_reconstruction_success_rate",
+            "hammer_trusted_success_rate",
+            "round_trip_reconstruction_success_rate",
+            "symbolic_validity_success_rate",
+        }
+        or normalized.endswith("_success_rate")
+        or normalized.endswith("_similarity")
+        or normalized.endswith("_score")
+    ) and not normalized.endswith("_loss")
+
+
 def _evaluation_improved_for_training(
     before: AutoencoderEvaluation,
     after: AutoencoderEvaluation,
@@ -26279,6 +26688,24 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
     component += min(1.0, values.get("legal_ir_view_family_cosine_gap_loss", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_proof_failure_ratio", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_graph_failure_penalty", 0.0))
+    component += min(1.0, values.get("hammer_proof_failure_ratio", 0.0))
+    component += min(1.0, values.get("hammer_backend_unavailable_ratio", 0.0))
+    component += min(1.0, values.get("hammer_source_copy_penalty", 0.0))
+    component += min(1.0, values.get("round_trip_source_copy_guardrail_loss", 0.0))
+    component += min(1.0, values.get("round_trip_structural_reconstruction_loss", 0.0))
+    component += min(1.0, values.get("source_copy_penalty", 0.0))
+    component += min(1.0, values.get("source_copy_reward_hack_penalty", 0.0))
+    component += min(1.0, values.get("symbolic_validity_penalty", 0.0))
+    for success_name in (
+        "hammer_premise_selection_hit_rate",
+        "hammer_proof_success_rate",
+        "hammer_reconstruction_success_rate",
+        "hammer_trusted_success_rate",
+        "round_trip_reconstruction_success_rate",
+        "symbolic_validity_success_rate",
+    ):
+        if success_name in values:
+            component += min(1.0, max(0.0, 1.0 - values[success_name]))
     detail = 0.0
     for name, value in values.items():
         if name in {
@@ -26292,6 +26719,20 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
             "legal_ir_view_family_cosine_gap_loss",
             "legal_ir_multiview_proof_failure_ratio",
             "legal_ir_multiview_graph_failure_penalty",
+            "hammer_backend_unavailable_ratio",
+            "hammer_premise_selection_hit_rate",
+            "hammer_proof_failure_ratio",
+            "hammer_proof_success_rate",
+            "hammer_reconstruction_success_rate",
+            "hammer_source_copy_penalty",
+            "hammer_trusted_success_rate",
+            "round_trip_reconstruction_success_rate",
+            "round_trip_source_copy_guardrail_loss",
+            "round_trip_structural_reconstruction_loss",
+            "source_copy_penalty",
+            "source_copy_reward_hack_penalty",
+            "symbolic_validity_penalty",
+            "symbolic_validity_success_rate",
         }:
             continue
         if name.endswith("_entropy_loss"):
@@ -26345,8 +26786,15 @@ def _evaluation_regressions_for_training(
         regressions["cross_entropy_excess_loss"] = cross_entropy_regression
     for name in sorted(set(before.legal_ir_losses) | set(after.legal_ir_losses)):
         regression = (
-            float(after.legal_ir_losses.get(name, 0.0))
-            - float(before.legal_ir_losses.get(name, 0.0))
+            (
+                float(before.legal_ir_losses.get(name, 0.0))
+                - float(after.legal_ir_losses.get(name, 0.0))
+            )
+            if _metric_higher_is_better(name)
+            else (
+                float(after.legal_ir_losses.get(name, 0.0))
+                - float(before.legal_ir_losses.get(name, 0.0))
+            )
         )
         if regression > max(0.0, float(max_legal_ir_loss_regression)):
             regressions[f"legal_ir:{name}"] = regression
@@ -26884,6 +27332,7 @@ __all__ = [
     "CodexCallDecision",
     "CodexCallGateConfig",
     "COMPILER_ACTIONABLE_FEATURE_GROUPS",
+    "HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
     "MODAL_AUTOENCODER_LOW_RANK_BASIS",
     "MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK",
@@ -26900,6 +27349,7 @@ __all__ = [
     "distribution_entropy_loss",
     "evaluate_modal_prover_compilation",
     "frame_ranking_loss",
+    "hammer_guidance_metric_block",
     "mse_loss",
     "symbolic_validity_penalty",
 ]

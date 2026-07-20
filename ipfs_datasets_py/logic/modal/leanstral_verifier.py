@@ -21,6 +21,15 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from ipfs_datasets_py.logic.common import ProofCache
+from ipfs_datasets_py.logic.integration.reasoning.hammer import (
+    HammerBackendRunner,
+    KernelVerifier,
+)
+from ipfs_datasets_py.logic.integration.reasoning.legal_ir_hammer import (
+    LegalIRHammerConfig,
+    LegalIRHammerReport,
+    LegalIRHammerRunner,
+)
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     LegalSample,
@@ -46,6 +55,11 @@ from .leanstral_audit import (
     LeanstralAuditValidation,
     validate_leanstral_audit_response,
 )
+from .leanstral import (
+    LegalIRLeanTask,
+    LeanstralProposal,
+    _drafted_logic_candidate_copies_source_span,
+)
 from .leanstral_theorems import generate_legal_semantics_theorem_registry
 from .lean_runtime import resolve_lean_executable
 from .kg_bridge import modal_ir_to_neo4j_graph_data
@@ -53,6 +67,7 @@ from .kg_bridge import modal_ir_to_neo4j_graph_data
 
 LEANSTRAL_VERIFIER_SCHEMA_VERSION = "legal-ir-leanstral-verifier-v1"
 LEANSTRAL_LEAN_CACHE_SCHEMA_VERSION = "legal-ir-lean-registry-cache-v1"
+LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION = "legal-ir-leanstral-hammer-verifier-v1"
 
 
 class LeanstralVerificationOutcome(str, Enum):
@@ -257,6 +272,254 @@ class LeanstralAuditVerificationResult:
             "source_span_checks": [check.to_dict() for check in self.source_span_checks],
             "verified_by": list(self.verified_by),
         }
+
+
+@dataclass(frozen=True)
+class LeanstralHammerVerifierConfig:
+    """Controls deterministic and hammer checks for drafted logic candidates."""
+
+    hammer_config: LegalIRHammerConfig = field(default_factory=LegalIRHammerConfig)
+    require_hammer_proof: bool = True
+    run_syntax_check: bool = True
+    run_provenance_check: bool = True
+    run_graph_check: bool = True
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "hammer_config": asdict(self.hammer_config),
+            "require_hammer_proof": bool(self.require_hammer_proof),
+            "run_graph_check": bool(self.run_graph_check),
+            "run_provenance_check": bool(self.run_provenance_check),
+            "run_syntax_check": bool(self.run_syntax_check),
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralHammerCandidateResult:
+    """Verification result for one Leanstral drafted logic candidate."""
+
+    candidate_index: int
+    candidate: Mapping[str, Any]
+    accepted: bool
+    trusted: bool
+    reasons: Sequence[str] = field(default_factory=tuple)
+    deterministic_checks: Sequence[LeanstralLocalCheck] = field(default_factory=tuple)
+    hammer_report: Optional[LegalIRHammerReport] = None
+    verified_guidance: Sequence[Mapping[str, Any]] = field(default_factory=tuple)
+    schema_version: str = LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "accepted": bool(self.accepted),
+            "candidate": _json_ready(self.candidate),
+            "candidate_index": int(self.candidate_index),
+            "deterministic_checks": [
+                check.to_dict() for check in self.deterministic_checks
+            ],
+            "hammer_report": self.hammer_report.to_dict()
+            if self.hammer_report is not None
+            else None,
+            "reasons": list(self.reasons),
+            "schema_version": self.schema_version,
+            "trusted": bool(self.trusted),
+            "verified_guidance": [_json_ready(item) for item in self.verified_guidance],
+        }
+
+
+@dataclass(frozen=True)
+class LeanstralHammerVerificationReport:
+    """Batch verification report for Leanstral drafted logic candidates."""
+
+    task_id: str
+    proposal_task_id: str
+    accepted: bool
+    trusted: bool
+    candidate_results: Sequence[LeanstralHammerCandidateResult] = field(default_factory=tuple)
+    reasons: Sequence[str] = field(default_factory=tuple)
+    schema_version: str = LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION
+
+    @property
+    def candidate_count(self) -> int:
+        return len(self.candidate_results)
+
+    @property
+    def trusted_candidate_count(self) -> int:
+        return sum(1 for result in self.candidate_results if result.trusted)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "accepted": bool(self.accepted),
+            "candidate_count": self.candidate_count,
+            "candidate_results": [
+                result.to_dict() for result in self.candidate_results
+            ],
+            "proposal_task_id": self.proposal_task_id,
+            "reasons": list(self.reasons),
+            "schema_version": self.schema_version,
+            "task_id": self.task_id,
+            "trusted": bool(self.trusted),
+            "trusted_candidate_count": self.trusted_candidate_count,
+        }
+
+
+class LeanstralHammerCandidateVerifier:
+    """Verify Leanstral drafted candidates before they become reward signal."""
+
+    def __init__(
+        self,
+        config: Optional[LeanstralHammerVerifierConfig] = None,
+        *,
+        backends: Optional[Sequence[HammerBackendRunner]] = None,
+        kernel_verifier: Optional[KernelVerifier] = None,
+    ) -> None:
+        self.config = config or LeanstralHammerVerifierConfig()
+        self.backends = list(backends) if backends is not None else None
+        self.kernel_verifier = kernel_verifier
+
+    def verify(
+        self,
+        task: LegalIRLeanTask,
+        proposal: Optional[LeanstralProposal],
+        *,
+        sample_or_document: Any = None,
+    ) -> LeanstralHammerVerificationReport:
+        if proposal is None:
+            return LeanstralHammerVerificationReport(
+                task_id=task.task_id,
+                proposal_task_id="",
+                accepted=False,
+                trusted=False,
+                reasons=("invalid_leanstral_proposal",),
+            )
+        if proposal.task_id != task.task_id:
+            return LeanstralHammerVerificationReport(
+                task_id=task.task_id,
+                proposal_task_id=proposal.task_id,
+                accepted=False,
+                trusted=False,
+                reasons=("task_id_mismatch",),
+            )
+        results = [
+            self._verify_candidate(
+                task,
+                candidate,
+                index=index,
+                sample_or_document=sample_or_document,
+            )
+            for index, candidate in enumerate(proposal.drafted_logic_candidates, start=1)
+        ]
+        if not results:
+            return LeanstralHammerVerificationReport(
+                task_id=task.task_id,
+                proposal_task_id=proposal.task_id,
+                accepted=False,
+                trusted=False,
+                reasons=("missing_drafted_logic_candidates",),
+            )
+        reasons = tuple(
+            dict.fromkeys(
+                reason
+                for result in results
+                for reason in result.reasons
+                if reason
+            )
+        )
+        return LeanstralHammerVerificationReport(
+            task_id=task.task_id,
+            proposal_task_id=proposal.task_id,
+            accepted=all(result.accepted for result in results),
+            trusted=all(result.trusted for result in results),
+            candidate_results=tuple(results),
+            reasons=reasons,
+        )
+
+    def _verify_candidate(
+        self,
+        task: LegalIRLeanTask,
+        candidate: Mapping[str, Any],
+        *,
+        index: int,
+        sample_or_document: Any = None,
+    ) -> LeanstralHammerCandidateResult:
+        checks: List[LeanstralLocalCheck] = []
+        if self.config.run_syntax_check:
+            checks.append(_check_hammer_candidate_syntax(candidate))
+        if self.config.run_provenance_check:
+            checks.append(_check_hammer_candidate_provenance(task, candidate))
+        if self.config.run_graph_check:
+            checks.append(_check_hammer_candidate_graph_shape(candidate))
+        deterministic_reasons = tuple(
+            dict.fromkeys(
+                reason
+                for check in checks
+                if check.status == LeanstralVerificationOutcome.REJECTED
+                for reason in str(check.error_message or "").split(";")
+                if reason
+            )
+        )
+        if deterministic_reasons:
+            return LeanstralHammerCandidateResult(
+                candidate_index=index,
+                candidate=dict(candidate),
+                accepted=False,
+                trusted=False,
+                reasons=deterministic_reasons,
+                deterministic_checks=tuple(checks),
+            )
+
+        selected_obligations = _candidate_obligations(task, candidate)
+        if not selected_obligations:
+            return LeanstralHammerCandidateResult(
+                candidate_index=index,
+                candidate=dict(candidate),
+                accepted=False,
+                trusted=False,
+                reasons=("missing_matching_proof_obligation",),
+                deterministic_checks=tuple(checks),
+            )
+
+        hammer_report = LegalIRHammerRunner(
+            config=self.config.hammer_config,
+            backends=self.backends,
+            kernel_verifier=self.kernel_verifier,
+        ).prove(
+            sample_or_document or {},
+            obligations=selected_obligations,
+            extra_candidate_metadata={
+                "drafted_logic_candidates": [dict(candidate)],
+                "target_metrics": _string_sequence(candidate.get("target_metrics"))
+                or _string_sequence(candidate.get("target_metric")),
+            },
+        )
+        hammer_reasons = tuple(
+            dict.fromkeys(
+                reason
+                for artifact in hammer_report.artifacts
+                for reason in (
+                    *artifact.rejection_reasons,
+                    artifact.failure_reason,
+                )
+                if reason
+            )
+        )
+        proof_accepted = (
+            hammer_report.trusted_count == hammer_report.obligation_count
+            if self.config.require_hammer_proof
+            else True
+        )
+        trusted_guidance = tuple(
+            artifact.to_dict() for artifact in hammer_report.artifacts if artifact.trusted
+        )
+        return LeanstralHammerCandidateResult(
+            candidate_index=index,
+            candidate=dict(candidate),
+            accepted=proof_accepted,
+            trusted=proof_accepted,
+            reasons=() if proof_accepted else hammer_reasons or ("hammer_proof_failed",),
+            deterministic_checks=tuple(checks),
+            hammer_report=hammer_report,
+            verified_guidance=trusted_guidance,
+        )
 
 
 class LeanstralAuditVerifier:
@@ -1050,6 +1313,168 @@ def verify_leanstral_audit(
     ).verify(request, response, examples=examples)
 
 
+def verify_leanstral_hammer_candidates(
+    task: LegalIRLeanTask,
+    proposal: Optional[LeanstralProposal],
+    *,
+    sample_or_document: Any = None,
+    config: Optional[LeanstralHammerVerifierConfig] = None,
+    backends: Optional[Sequence[HammerBackendRunner]] = None,
+    kernel_verifier: Optional[KernelVerifier] = None,
+) -> LeanstralHammerVerificationReport:
+    """Verify Leanstral drafted logic candidates through deterministic checks and hammer."""
+
+    return LeanstralHammerCandidateVerifier(
+        config=config,
+        backends=backends,
+        kernel_verifier=kernel_verifier,
+    ).verify(task, proposal, sample_or_document=sample_or_document)
+
+
+_REQUIRED_HAMMER_CANDIDATE_FIELDS = (
+    "candidate",
+    "compiler_surface",
+    "confidence",
+    "expected_failure_mode",
+    "logic_family",
+    "premise_hints",
+    "proof_obligation_ids",
+    "source_copy_policy",
+    "source_copy_rejected",
+    "target_view",
+)
+
+
+def _check_hammer_candidate_syntax(candidate: Mapping[str, Any]) -> LeanstralLocalCheck:
+    started = time.time()
+    reasons: List[str] = []
+    for field_name in _REQUIRED_HAMMER_CANDIDATE_FIELDS:
+        if field_name not in candidate:
+            reasons.append(f"missing_drafted_logic_{field_name}")
+    if not str(candidate.get("candidate") or "").strip():
+        reasons.append("missing_drafted_logic_candidate")
+    if not _string_sequence(candidate.get("proof_obligation_ids")):
+        reasons.append("missing_drafted_logic_proof_obligation_ids")
+    if not _string_sequence(candidate.get("premise_hints")):
+        reasons.append("missing_drafted_logic_premise_hints")
+    if str(candidate.get("source_copy_policy") or "") != "reject_full_span_copy":
+        reasons.append("invalid_source_copy_policy")
+    if _bool_value(candidate.get("source_copy_rejected")):
+        reasons.append("source_copy_rejected")
+    try:
+        confidence = float(candidate.get("confidence"))
+    except (TypeError, ValueError):
+        reasons.append("invalid_drafted_logic_confidence")
+        confidence = 0.0
+    if confidence < 0.0 or confidence > 1.0:
+        reasons.append("invalid_drafted_logic_confidence")
+    return _cheap_check(
+        "leanstral_hammer_candidate_syntax",
+        started,
+        reasons,
+        {
+            "logic_family": str(candidate.get("logic_family") or ""),
+            "target_view": str(candidate.get("target_view") or ""),
+        },
+    )
+
+
+def _check_hammer_candidate_provenance(
+    task: LegalIRLeanTask,
+    candidate: Mapping[str, Any],
+) -> LeanstralLocalCheck:
+    started = time.time()
+    reasons: List[str] = []
+    source_span_hash = hashlib.sha256(str(task.source_span or "").encode("utf-8")).hexdigest()
+    candidate_hash = str(candidate.get("source_span_hash") or "").strip()
+    if candidate_hash and candidate_hash != source_span_hash:
+        reasons.append("source_span_hash_mismatch")
+    candidate_text = str(candidate.get("candidate") or "")
+    if _drafted_logic_candidate_copies_source_span(candidate_text, task.source_span):
+        reasons.append("drafted_logic_candidate_copies_source_span")
+    return _cheap_check(
+        "leanstral_hammer_candidate_provenance",
+        started,
+        reasons,
+        {
+            "source_span_hash": source_span_hash,
+            "source_span_hash_supplied": bool(candidate_hash),
+        },
+    )
+
+
+def _check_hammer_candidate_graph_shape(candidate: Mapping[str, Any]) -> LeanstralLocalCheck:
+    started = time.time()
+    reasons: List[str] = []
+    target_view = str(candidate.get("target_view") or candidate.get("legal_ir_view") or "")
+    candidate_text = str(candidate.get("candidate") or "").lower()
+    kg_target = "knowledge_graph" in target_view or "neo4j" in target_view
+    if kg_target:
+        has_subject = "subject:" in candidate_text or "subject(" in candidate_text
+        has_predicate = "predicate:" in candidate_text or "predicate(" in candidate_text
+        has_object = "object:" in candidate_text or "object(" in candidate_text
+        if not (has_subject and has_predicate and has_object):
+            reasons.append("invalid_kg_candidate_shape")
+    return _cheap_check(
+        "leanstral_hammer_candidate_graph",
+        started,
+        reasons,
+        {"target_view": target_view, "kg_target": kg_target},
+    )
+
+
+def _candidate_obligations(
+    task: LegalIRLeanTask,
+    candidate: Mapping[str, Any],
+) -> Sequence[Mapping[str, Any]]:
+    obligations = [
+        dict(item)
+        for item in (task.proof_obligations or ())
+        if isinstance(item, Mapping)
+    ]
+    wanted = set(
+        _string_sequence(
+            candidate.get("proof_obligation_ids")
+            or candidate.get("proof_obligation_id")
+            or candidate.get("obligation_id")
+        )
+    )
+    if not wanted:
+        return ()
+    return tuple(
+        obligation
+        for obligation in obligations
+        if str(obligation.get("obligation_id") or "") in wanted
+    )
+
+
+def _string_sequence(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, (str, bytes)):
+        values: Sequence[Any] = (value,)
+    elif isinstance(value, Sequence):
+        values = value
+    else:
+        values = (value,)
+    result: list[str] = []
+    seen: set[str] = set()
+    for item in values:
+        text = str(item or "").strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
+def _bool_value(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    text = str(value or "").strip().lower()
+    return text in {"1", "true", "yes", "y"}
+
+
 def _normalize_reference_example(
     example: LegalSample | Mapping[str, Any],
 ) -> Dict[str, Any]:
@@ -1488,13 +1913,19 @@ def _is_cheap_check(check: LeanstralLocalCheck) -> bool:
 
 
 __all__ = [
+    "LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION",
     "LEANSTRAL_VERIFIER_SCHEMA_VERSION",
     "LeanstralAuditVerificationResult",
     "LeanstralAuditVerifier",
+    "LeanstralHammerCandidateResult",
+    "LeanstralHammerCandidateVerifier",
+    "LeanstralHammerVerificationReport",
+    "LeanstralHammerVerifierConfig",
     "LeanstralCompilerCheck",
     "LeanstralLocalCheck",
     "LeanstralSourceSpanCheck",
     "LeanstralVerificationOutcome",
     "LeanstralVerifierConfig",
+    "verify_leanstral_hammer_candidates",
     "verify_leanstral_audit",
 ]

@@ -29,6 +29,7 @@ from ipfs_datasets_py.logic.modal import (
     LeanstralVerifierConfig,
     aggregate_verified_audits,
     build_leanstral_audit_work_items,
+    leanstral_llm_router_health,
     leanstral_rule_gap_report_to_json,
     load_leanstral_audit_disagreements,
 )
@@ -332,6 +333,7 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
                 report,
             )
     summary_payload = summary.to_dict()
+    summary_payload["llm_router_health"] = leanstral_llm_router_health()
     summary_payload["snapshot_selection"] = snapshot_selection
     summary_payload["verified_report_publication"] = publication
     print(json.dumps(summary_payload, ensure_ascii=True, sort_keys=True))
@@ -562,6 +564,11 @@ def verify_worker_audit_outputs(
         if entry is None:
             continue
         response = entry.response
+        hammer_verification = (
+            entry.validation.get("hammer_verification")
+            if isinstance(entry.validation, Mapping)
+            else None
+        )
         verification = verifier.verify(
             item.request,
             response,
@@ -575,11 +582,13 @@ def verify_worker_audit_outputs(
             "request": item.request.to_dict(),
             "response": response.to_dict(),
             "verification": verification.to_dict(),
+            "hammer_verification": hammer_verification,
             "work_key": item.work_key,
         }
         verification_records.append(record)
         report_inputs.append(
             {
+                "hammer_verification": hammer_verification,
                 "request": item.request.to_dict(),
                 "request_id": item.request.request_id,
                 "response": response,

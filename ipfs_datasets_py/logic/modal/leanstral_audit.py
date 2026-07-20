@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import errno
+import importlib
 import json
 import math
 import os
@@ -110,6 +111,114 @@ ISSUE_AUDIT_CLASSIFICATIONS = frozenset(
 
 LLMGenerateFn = Callable[..., str]
 LLMGenerateBatchFn = Callable[..., Sequence[str]]
+LEANSTRAL_LLM_ROUTER_DEFAULT_MODULES = (
+    "ipfs_accelerate_py.llm_router",
+    "ipfs_datasets_py.llm_router",
+)
+
+
+def resolve_leanstral_llm_router(
+    preferred_modules: Optional[Sequence[str]] = None,
+) -> tuple[Any, Dict[str, Any]]:
+    """Resolve the Leanstral LLM router, preferring ipfs_accelerate_py."""
+
+    explicit = str(os.environ.get("IPFS_DATASETS_LEANSTRAL_LLM_ROUTER_MODULE") or "").strip()
+    ordered: List[str] = []
+    if explicit:
+        ordered.append(explicit)
+    ordered.extend(str(item) for item in (preferred_modules or LEANSTRAL_LLM_ROUTER_DEFAULT_MODULES))
+    seen: set[str] = set()
+    attempts: List[Dict[str, str]] = []
+    for module_name in ordered:
+        name = str(module_name or "").strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        try:
+            module = importlib.import_module(name)
+        except Exception as exc:
+            attempts.append(
+                {
+                    "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+                    "module": name,
+                }
+            )
+            continue
+        if not callable(getattr(module, "generate_text", None)):
+            attempts.append({"error": "missing_generate_text", "module": name})
+            continue
+        return module, leanstral_llm_router_health(module, attempts=attempts)
+    raise ImportError(
+        "No usable Leanstral LLM router found: "
+        + json.dumps(attempts, ensure_ascii=True, sort_keys=True)
+    )
+
+
+def leanstral_llm_router_health(
+    router: Any = None,
+    *,
+    attempts: Sequence[Mapping[str, Any]] = (),
+) -> Dict[str, Any]:
+    """Return lightweight router availability metadata for audit summaries."""
+
+    if router is None:
+        try:
+            router, metadata = resolve_leanstral_llm_router()
+            return metadata
+        except Exception as exc:
+            return {
+                "attempts": [dict(item) for item in attempts],
+                "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+                "module": "",
+                "router": "unavailable",
+                "status": "unavailable",
+            }
+    module_name = str(getattr(router, "__name__", "") or "")
+    router_name = module_name.rsplit(".", 1)[0] if module_name.endswith(".llm_router") else module_name
+    return {
+        "attempts": [dict(item) for item in attempts],
+        "generate_text_available": callable(getattr(router, "generate_text", None)),
+        "generate_text_batch_available": callable(
+            getattr(router, "generate_text_batch", None)
+        ),
+        "module": module_name,
+        "router": router_name,
+        "status": "available",
+        "trace_available": callable(getattr(router, "get_last_generation_trace", None)),
+    }
+
+
+def _leanstral_router_reason(metadata: Mapping[str, Any], mode: str) -> tuple[str, ...]:
+    router_name = str(metadata.get("router") or metadata.get("module") or "unknown").strip()
+    safe_name = router_name.replace(":", "_") or "unknown"
+    return (
+        f"llm_router:{safe_name}",
+        f"llm_router_mode:{str(mode or 'single').strip() or 'single'}",
+    )
+
+
+def _leanstral_router_trace_reasons(
+    trace_getter: Optional[Callable[[], Mapping[str, Any]]],
+    provider_name: str,
+) -> tuple[str, ...]:
+    if trace_getter is None:
+        return ("llm_router_trace:unavailable",)
+    try:
+        trace = trace_getter()
+    except Exception as exc:
+        return (f"llm_router_trace_error:{type(exc).__name__}",)
+    if not isinstance(trace, Mapping):
+        return ("llm_router_trace:invalid",)
+    effective_provider = str(trace.get("effective_provider_name") or "").strip()
+    if effective_provider:
+        allowed = _allowed_effective_provider_identities(provider_name)
+        if _canonical_provider_identity(effective_provider) not in allowed:
+            raise RuntimeError(
+                "unexpected_effective_provider:"
+                f"{effective_provider}:expected:{provider_name}"
+            )
+        return (f"llm_router_effective_provider:{effective_provider}",)
+    return ("llm_router_trace:empty",)
 
 
 LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION = "legal-ir-leanstral-audit-worker-v1"
@@ -675,11 +784,15 @@ class LeanstralAuditResult:
     raw_response: str = ""
     generation_attempts: int = 0
     repair_reasons: Sequence[str] = field(default_factory=tuple)
+    hammer_verification: Optional[Mapping[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "cache_hit": self.cache_hit,
             "generation_attempts": int(self.generation_attempts),
+            "hammer_verification": _json_ready(self.hammer_verification)
+            if self.hammer_verification
+            else None,
             "llm_called": self.llm_called,
             "raw_response": self.raw_response,
             "repair_reasons": list(self.repair_reasons),
@@ -1052,11 +1165,22 @@ class LeanstralAuditRunner:
 
         generate = self.llm_generate
         trace_getter = None
+        router_metadata: Dict[str, Any] = {}
+        repair_reasons: tuple[str, ...] = ()
         if generate is None:
-            from ipfs_datasets_py import llm_router
-
+            llm_router, router_metadata = resolve_leanstral_llm_router()
             generate = llm_router.generate_text
-            trace_getter = llm_router.get_last_generation_trace
+            trace_getter = getattr(llm_router, "get_last_generation_trace", None)
+            repair_reasons = _merge_reasons(
+                repair_reasons,
+                _leanstral_router_reason(router_metadata, "single"),
+            )
+        else:
+            router_metadata = {"router": "injected_generate", "status": "available"}
+            repair_reasons = _merge_reasons(
+                repair_reasons,
+                _leanstral_router_reason(router_metadata, "single"),
+            )
         response = None
         raw_response = ""
         validation = LeanstralAuditValidation(
@@ -1065,7 +1189,6 @@ class LeanstralAuditRunner:
             reasons=("leanstral_audit_not_called",),
             cache_key=request.cache_key,
         )
-        repair_reasons: tuple[str, ...] = ()
         generation_attempts = 0
         for repair_attempt in range(self.config.bounded_validation_repair_retries() + 1):
             prompt_payload = _leanstral_audit_prompt_text(
@@ -1089,15 +1212,10 @@ class LeanstralAuditRunner:
                 timeout=float(self.config.timeout_seconds),
             )
             generation_attempts += 1
-            if trace_getter is not None:
-                trace = trace_getter()
-                effective_provider = str(trace.get("effective_provider_name") or "").strip()
-                allowed = _allowed_effective_provider_identities(provider_name)
-                if effective_provider and _canonical_provider_identity(effective_provider) not in allowed:
-                    raise RuntimeError(
-                        "unexpected_effective_provider:"
-                        f"{effective_provider}:expected:{provider_name}"
-                    )
+            repair_reasons = _merge_reasons(
+                repair_reasons,
+                _leanstral_router_trace_reasons(trace_getter, provider_name),
+            )
             response = parse_leanstral_audit_response(raw_response)
             response, normalization_reasons = normalize_leanstral_audit_response_for_request(
                 request,
@@ -1161,11 +1279,23 @@ class LeanstralAuditRunner:
             ]
         generate_batch = self.llm_generate_batch
         trace_getter = None
+        batch_repair_reasons: tuple[str, ...] = ()
         if generate_batch is None:
-            from ipfs_datasets_py import llm_router
-
+            llm_router, router_metadata = resolve_leanstral_llm_router()
             generate_batch = getattr(llm_router, "generate_text_batch", None)
-            trace_getter = llm_router.get_last_generation_trace
+            trace_getter = getattr(llm_router, "get_last_generation_trace", None)
+            batch_repair_reasons = _merge_reasons(
+                batch_repair_reasons,
+                _leanstral_router_reason(router_metadata, "mesh_batch" if use_mesh else "batch"),
+            )
+        else:
+            batch_repair_reasons = _merge_reasons(
+                batch_repair_reasons,
+                _leanstral_router_reason(
+                    {"router": "injected_batch", "status": "available"},
+                    "mesh_batch" if use_mesh else "batch",
+                ),
+            )
         if generate_batch is None:
             return [
                 self.run(
@@ -1211,14 +1341,15 @@ class LeanstralAuditRunner:
                 f"{len(raw_responses)} responses for {len(request_list)} requests"
             )
         if trace_getter is not None:
-            trace = trace_getter()
-            effective_provider = str(trace.get("effective_provider_name") or "").strip()
-            allowed = _allowed_effective_provider_identities(provider_name)
-            if effective_provider and _canonical_provider_identity(effective_provider) not in allowed:
-                raise RuntimeError(
-                    "unexpected_effective_provider:"
-                    f"{effective_provider}:expected:{provider_name}"
-                )
+            batch_repair_reasons = _merge_reasons(
+                batch_repair_reasons,
+                _leanstral_router_trace_reasons(trace_getter, provider_name),
+            )
+        else:
+            batch_repair_reasons = _merge_reasons(
+                batch_repair_reasons,
+                _leanstral_router_trace_reasons(None, provider_name),
+            )
 
         results: List[LeanstralAuditResult] = []
         for request, raw_response in zip(request_list, raw_responses):
@@ -1228,7 +1359,10 @@ class LeanstralAuditRunner:
                 response,
             )
             validation = validate_leanstral_audit_response(request, response)
-            repair_reasons = _merge_reasons(normalization_reasons, validation.reasons)
+            repair_reasons = _merge_reasons(
+                _merge_reasons(batch_repair_reasons, normalization_reasons),
+                validation.reasons,
+            )
             if response is not None and self.config.cache_writes_enabled:
                 self.cache.put(request, response, validation)
             results.append(
@@ -3707,6 +3841,7 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
         )
         normalized: Dict[str, Any] = {
             "candidate": candidate_text,
+            "guidance_only": True,
             "intended_use": "guidance_only",
             "logic_family": logic_family or "legal_ir",
             "schema_version": LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION,
@@ -3715,14 +3850,29 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             "compiler_surface",
             "evidence_id",
             "example_id",
+            "expected_failure_mode",
             "proof_obligation_id",
             "request_id",
+            "source_copy_policy",
             "source_span_hash",
+            "target_component",
             "target_metric",
+            "target_view",
         ):
             text = str(item.get(key) or "").strip()
             if text:
                 normalized[key] = text[:140].rstrip()
+        if "source_copy_rejected" in item:
+            raw_rejected = item.get("source_copy_rejected")
+            normalized["source_copy_rejected"] = (
+                raw_rejected
+                if isinstance(raw_rejected, bool)
+                else str(raw_rejected).strip().lower() in {"1", "true", "yes", "y"}
+            )
+        for key in ("premise_hints", "proof_obligation_ids", "target_metrics"):
+            values = _string_tuple(item.get(key))
+            if values:
+                normalized[key] = list(values[:12])
         rationale = str(item.get("rationale") or "").strip()
         if rationale:
             normalized["rationale"] = rationale[:140].rstrip()
@@ -3805,9 +3955,11 @@ __all__ = [
     "build_leanstral_audit_work_items",
     "cache_entry_is_current",
     "canonical_sha256",
+    "leanstral_llm_router_health",
     "load_leanstral_audit_checkpoint",
     "load_leanstral_audit_disagreements",
     "parse_leanstral_audit_response",
+    "resolve_leanstral_llm_router",
     "validate_leanstral_audit_response",
     "write_leanstral_audit_checkpoint",
 ]

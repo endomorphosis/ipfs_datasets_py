@@ -36,6 +36,11 @@ from typing import AbstractSet, Any, Callable, Dict, Iterator, List, Mapping, Op
 import pyarrow.parquet as pq
 from huggingface_hub import HfFileSystem
 
+from ipfs_datasets_py.logic.integration.reasoning import (
+    LegalIRHammerConfig,
+    generate_legal_ir_proof_obligations,
+    run_legal_ir_hammer,
+)
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     IntrospectionPacketExportConfig,
@@ -59,10 +64,12 @@ from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
     AutoencoderEvaluation,
+    HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION,
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
     evaluate_modal_prover_compilation,
+    hammer_guidance_metric_block,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import (
     build_modal_supervisor_health_report,
@@ -129,6 +136,12 @@ DEFAULT_AUTOENCODER_INTROSPECTION_MODE = "off"
 DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES = 4
 DEFAULT_AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES = 0
 AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION = "legal-ir-daemon-metrics-v2"
+DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION = "legal-ir-daemon-hammer-guidance-cycle-v1"
+DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_SAMPLES_PER_CYCLE = 2
+DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_OBLIGATIONS_PER_SAMPLE = 8
+DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_PREMISES = 128
+DEFAULT_DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS = 1.0
+DEFAULT_DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS = 2
 AUTOENCODER_CANONICAL_WARM_START_ENV = "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START"
 AUTOENCODER_CANONICAL_WARM_START_STATE_ENV = (
     "IPFS_DATASETS_AUTOENCODER_CANONICAL_WARM_START_STATE"
@@ -340,7 +353,7 @@ CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV = (
     "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS"
 )
 DEFAULT_CODEX_TARGET_METRIC_TIMEOUT_SECONDS = 300.0
-CODEX_TARGET_METRIC_TRADEOFF_POLICY_VERSION = "target-metric-tradeoff-v1"
+CODEX_TARGET_METRIC_TRADEOFF_POLICY_VERSION = "target-metric-tradeoff-v2-hard-hammer-guardrails"
 BRIDGE_IR_REPORT_CACHE_MAX = 4096
 LEGAL_IR_METRIC_DISK_CACHE_VERSION = "legal-ir-metric-disk-cache-v1"
 LEGAL_IR_METRIC_DISK_CACHE_DIR_ENV = "IPFS_DATASETS_LEGAL_IR_METRIC_CACHE_DIR"
@@ -363,7 +376,7 @@ _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
-_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v8"
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v9"
 _COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v3"
 _COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v8"
@@ -376,8 +389,16 @@ CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
 COMPILER_IR_METRIC_ALIASES = {
     "cosine_similarity": "compiler_ir_cosine_similarity",
     "cross_entropy_loss": "compiler_ir_cross_entropy_loss",
+    "hammer_premise_selection_hit_rate": "compiler_ir_hammer_premise_selection_hit_rate",
+    "hammer_proof_failure_ratio": "compiler_ir_hammer_proof_failure_ratio",
+    "hammer_proof_success_rate": "compiler_ir_hammer_proof_success_rate",
+    "hammer_reconstruction_success_rate": (
+        "compiler_ir_hammer_reconstruction_success_rate"
+    ),
+    "hammer_source_copy_penalty": "compiler_ir_hammer_source_copy_penalty",
     "modal_span_coverage_loss": "compiler_ir_modal_span_coverage_loss",
     "reconstruction_loss": "compiler_ir_reconstruction_loss",
+    "source_copy_penalty": "compiler_ir_source_copy_penalty",
     "source_copy_reward_hack_penalty": "compiler_ir_source_copy_reward_hack_penalty",
     "source_decompiled_text_embedding_cosine_loss": (
         "compiler_ir_source_decompiled_text_embedding_cosine_loss"
@@ -387,6 +408,7 @@ COMPILER_IR_METRIC_ALIASES = {
         "compiler_ir_structural_text_reconstruction_loss"
     ),
     "symbolic_validity_penalty": "compiler_ir_symbolic_validity_penalty",
+    "symbolic_validity_success_rate": "compiler_ir_symbolic_validity_success_rate",
     "text_reconstruction_loss": "compiler_ir_text_reconstruction_loss",
 }
 
@@ -2861,6 +2883,15 @@ def compiler_ir_metric_block(
             for route, _ in guidance_todo_routes.most_common(12)
             if guidance_todo_route_examples.get(route)
         }
+    hammer_metrics = hammer_guidance_metric_block(precomputed_guidance)
+    if int(hammer_metrics.get("hammer_artifact_count", 0) or 0) > 0:
+        block["hammer_guidance_metric_schema_version"] = (
+            HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION
+        )
+        block["hammer_guidance_metrics"] = hammer_metrics
+        for name, value in hammer_metrics.items():
+            if isinstance(value, (int, float)):
+                block[name] = round(float(value), 9)
     if sample_metric_records:
         block["sample_metric_records"] = sample_metric_records
         block["worst_source_decompiled_text_records"] = (
@@ -3913,8 +3944,78 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
             guidance_items,
             config=config,
         )
+        hammer_failure_todos: List[ModalTodo] = []
+        hammer_failure_projection: Dict[str, Any] = {
+            "deduped_count": 0,
+            "enabled": True,
+            "generated_count": 0,
+            "min_support": 2,
+            "seeded_count": 0,
+            "seeded_todo_ids": [],
+            "status": "not_run",
+        }
+        if projection.seed_block_reasons:
+            hammer_failure_projection["seed_block_reasons"] = list(
+                projection.seed_block_reasons
+            )
+            hammer_failure_projection["status"] = "seed_gate_blocked"
+        else:
+            hammer_failure_todos = hammer_failure_projection_todos(
+                guidance_items,
+                policy=supervisor.policy,
+                min_support=2,
+                max_todos_per_cycle=max(
+                    0,
+                    int(getattr(args, "autoencoder_max_todos_per_cycle", 0) or 0),
+                )
+                or 5,
+                max_todos_per_scope=max(
+                    1,
+                    int(
+                        getattr(
+                            args,
+                            "leanstral_direct_guidance_max_todos_per_scope",
+                            getattr(args, "leanstral_rule_gap_max_todos_per_scope", 2),
+                        )
+                        or 2
+                    ),
+                ),
+            )
+            before_ids = {todo.todo_id for todo in supervisor.queue.all()}
+            added_count = supervisor.queue.add_many(hammer_failure_todos)
+            seeded_todo_ids = [
+                todo.todo_id
+                for todo in hammer_failure_todos
+                if todo.todo_id not in before_ids and supervisor.queue.get(todo.todo_id)
+            ]
+            hammer_failure_projection.update(
+                {
+                    "deduped_count": max(0, len(hammer_failure_todos) - added_count),
+                    "generated_count": len(hammer_failure_todos),
+                    "seeded_count": added_count,
+                    "seeded_todo_ids": seeded_todo_ids,
+                    "status": "projected"
+                    if hammer_failure_todos
+                    else "no_recurring_failures",
+                }
+            )
         supervisor.queue.save_jsonl(queue_path)
     result.update(projection.to_dict())
+    result["hammer_failure_projection"] = hammer_failure_projection
+    if hammer_failure_projection.get("seeded_count"):
+        result["seeded_count"] = int(result.get("seeded_count", 0) or 0) + int(
+            hammer_failure_projection.get("seeded_count", 0) or 0
+        )
+        result["seeded_todo_ids"] = _hammer_projection_unique_strings(
+            [
+                *list(result.get("seeded_todo_ids", []) or []),
+                *list(hammer_failure_projection.get("seeded_todo_ids", []) or []),
+            ]
+        )
+    if hammer_failure_projection.get("deduped_count"):
+        result["deduped_count"] = int(result.get("deduped_count", 0) or 0) + int(
+            hammer_failure_projection.get("deduped_count", 0) or 0
+        )
     result["feedback_backfill"] = dict(backfill_report)
     if bool(getattr(args, "leanstral_direct_guidance_train_autoencoder", True)):
         if autoencoder is None:
@@ -4079,9 +4180,11 @@ def _leanstral_guidance_items_from_payload(value: Any) -> List[Dict[str, Any]]:
     payload = dict(value)
     if (
         payload.get("schema_version") == "legal-ir-leanstral-draft-guidance-v1"
+        or str(payload.get("schema_version") or "").startswith("legal-ir-hammer-")
         or payload.get("guidance_id")
         and (
             "drafted_logic_candidates" in payload
+            or payload.get("source") == "hammer_verified_guidance"
             or payload.get("source") == "leanstral_shadow_proof"
         )
     ):
@@ -4100,11 +4203,543 @@ def _leanstral_guidance_items_from_payload(value: Any) -> List[Dict[str, Any]]:
         nested_items = payload.get(key)
         if nested_items:
             items.extend(_leanstral_guidance_items_from_payload(nested_items))
+    for key in ("hammer_guidance_artifacts", "verified_guidance"):
+        nested_items = payload.get(key)
+        if nested_items:
+            items.extend(_leanstral_guidance_items_from_payload(nested_items))
+    candidate_results = payload.get("candidate_results")
+    if isinstance(candidate_results, Sequence) and not isinstance(
+        candidate_results,
+        (str, bytes),
+    ):
+        for candidate_result in candidate_results:
+            if not isinstance(candidate_result, Mapping):
+                continue
+            items.extend(
+                _leanstral_guidance_items_from_payload(
+                    candidate_result.get("verified_guidance")
+                )
+            )
+            hammer_report = candidate_result.get("hammer_report")
+            if isinstance(hammer_report, Mapping):
+                items.extend(
+                    _leanstral_guidance_items_from_payload(
+                        hammer_report.get("artifacts")
+                    )
+                )
     for key in ("compiler_guidance", "leanstral_shadow"):
         nested = payload.get(key)
         if isinstance(nested, Mapping):
             items.extend(_leanstral_guidance_items_from_payload(nested))
     return items
+
+
+def daemon_hammer_guidance_artifact_path(
+    args: argparse.Namespace,
+    *,
+    root: Path,
+    cycle: int,
+) -> Path:
+    """Return the per-cycle hammer guidance artifact path used by the daemon."""
+
+    explicit = str(getattr(args, "daemon_hammer_guidance_output_dir", "") or "").strip()
+    output_dir = Path(explicit).expanduser() if explicit else root / "workspace" / "legal-ir-hammer-guidance"
+    if not output_dir.is_absolute():
+        output_dir = root / output_dir
+    run_id = str(getattr(args, "run_id", "default") or "default")
+    safe_run_id = re.sub(r"[^A-Za-z0-9_.-]+", "-", run_id).strip("-") or "default"
+    return output_dir / f"{safe_run_id}.cycle-{max(0, int(cycle)):06d}.hammer-guidance.json"
+
+
+def _daemon_hammer_config_payload(args: argparse.Namespace) -> Dict[str, Any]:
+    return {
+        "max_obligations": max(
+            0,
+            int(
+                getattr(
+                    args,
+                    "daemon_hammer_guidance_max_obligations_per_sample",
+                    DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_OBLIGATIONS_PER_SAMPLE,
+                )
+                or 0
+            ),
+        ),
+        "max_premises": max(
+            1,
+            int(
+                getattr(
+                    args,
+                    "daemon_hammer_guidance_max_premises",
+                    DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_PREMISES,
+                )
+                or DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_PREMISES
+            ),
+        ),
+        "parallel_workers": max(
+            1,
+            int(
+                getattr(
+                    args,
+                    "daemon_hammer_guidance_parallel_workers",
+                    DEFAULT_DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS,
+                )
+                or DEFAULT_DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS
+            ),
+        ),
+        "timeout_seconds": max(
+            0.001,
+            float(
+                getattr(
+                    args,
+                    "daemon_hammer_guidance_timeout_seconds",
+                    DEFAULT_DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS,
+                )
+                or DEFAULT_DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS
+            ),
+        ),
+        "trusted_requires_reconstruction": bool(
+            getattr(args, "daemon_hammer_guidance_trusted_requires_reconstruction", False)
+        ),
+        "verify_reconstruction": bool(
+            getattr(args, "daemon_hammer_guidance_verify_reconstruction", False)
+        ),
+    }
+
+
+def _daemon_hammer_config(args: argparse.Namespace) -> LegalIRHammerConfig:
+    payload = _daemon_hammer_config_payload(args)
+    return LegalIRHammerConfig(
+        max_obligations=int(payload["max_obligations"]),
+        max_premises=int(payload["max_premises"]),
+        parallel_workers=int(payload["parallel_workers"]),
+        timeout_seconds=float(payload["timeout_seconds"]),
+        trusted_requires_reconstruction=bool(payload["trusted_requires_reconstruction"]),
+        verify_reconstruction=bool(payload["verify_reconstruction"]),
+    )
+
+
+def _daemon_hammer_sample_id(sample: Any) -> str:
+    if isinstance(sample, Mapping):
+        return str(sample.get("sample_id") or sample.get("id") or "").strip()
+    return str(getattr(sample, "sample_id", "") or "").strip()
+
+
+def _daemon_hammer_sample_citation(sample: Any) -> str:
+    if isinstance(sample, Mapping):
+        return str(
+            sample.get("citation")
+            or sample.get("citation_text")
+            or sample.get("normalized_citation")
+            or ""
+        ).strip()
+    return str(
+        getattr(sample, "citation", "")
+        or getattr(sample, "citation_text", "")
+        or getattr(sample, "normalized_citation", "")
+        or ""
+    ).strip()
+
+
+def _daemon_hammer_report_dict(report: Any) -> Dict[str, Any]:
+    if isinstance(report, Mapping):
+        return dict(report)
+    to_dict = getattr(report, "to_dict", None)
+    if callable(to_dict):
+        payload = to_dict()
+        return dict(payload) if isinstance(payload, Mapping) else {}
+    return {}
+
+
+def _daemon_hammer_report_artifacts(report: Any) -> List[Dict[str, Any]]:
+    report_dict = _daemon_hammer_report_dict(report)
+    artifacts = report_dict.get("artifacts")
+    if isinstance(artifacts, Sequence) and not isinstance(artifacts, (str, bytes)):
+        return [dict(item) for item in artifacts if isinstance(item, Mapping)]
+    raw_artifacts = getattr(report, "artifacts", None)
+    if isinstance(raw_artifacts, Sequence) and not isinstance(raw_artifacts, (str, bytes)):
+        results: List[Dict[str, Any]] = []
+        for artifact in raw_artifacts:
+            if isinstance(artifact, Mapping):
+                results.append(dict(artifact))
+                continue
+            to_dict = getattr(artifact, "to_dict", None)
+            if callable(to_dict):
+                payload = to_dict()
+                if isinstance(payload, Mapping):
+                    results.append(dict(payload))
+        return results
+    return []
+
+
+def _leanstral_hammer_candidate_count(value: Any) -> int:
+    if isinstance(value, Mapping):
+        count = 0
+        candidates = value.get("drafted_logic_candidates")
+        if isinstance(candidates, Sequence) and not isinstance(candidates, (str, bytes)):
+            count += sum(1 for item in candidates if isinstance(item, Mapping))
+        for key in (
+            "candidate_results",
+            "compiler_guidance",
+            "external_guidance",
+            "guidance",
+            "guidance_items",
+            "hammer_guidance_artifacts",
+            "items",
+            "leanstral_guidance",
+            "latest_leanstral_guidance",
+            "verified_guidance",
+        ):
+            nested = value.get(key)
+            if nested:
+                count += _leanstral_hammer_candidate_count(nested)
+        hammer_report = value.get("hammer_report")
+        if isinstance(hammer_report, Mapping):
+            count += _leanstral_hammer_candidate_count(hammer_report.get("artifacts"))
+        return count
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return sum(_leanstral_hammer_candidate_count(item) for item in value)
+    return 0
+
+
+def _daemon_hammer_cache_payload_compatible(
+    payload: Mapping[str, Any],
+    *,
+    config_payload: Mapping[str, Any],
+    sample_ids: Sequence[str],
+) -> bool:
+    return (
+        str(payload.get("schema_version") or "")
+        == DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION
+        and list(payload.get("sample_ids", []) or []) == list(sample_ids)
+        and dict(payload.get("hammer_config") or {}) == dict(config_payload)
+    )
+
+
+def _daemon_hammer_loaded_guidance(
+    *,
+    args: argparse.Namespace,
+    root: Path,
+    artifact_paths: Sequence[str | Path],
+) -> Dict[str, Any]:
+    paths = leanstral_direct_guidance_paths(
+        args,
+        root=root,
+        artifact_paths=artifact_paths,
+    )
+    if not paths:
+        return {
+            "artifact_count": 0,
+            "candidate_count": 0,
+            "guidance_count": 0,
+            "guidance_items": [],
+            "paths": [],
+            "status": "skipped_no_guidance_paths",
+        }
+    loaded = load_leanstral_direct_guidance_artifacts(paths)
+    items = [
+        dict(item)
+        for item in loaded.get("guidance_items", []) or []
+        if isinstance(item, Mapping)
+    ]
+    candidate_count = _leanstral_hammer_candidate_count(items)
+    status = "drafts_loaded" if candidate_count else "skipped_no_drafted_candidates"
+    if int(loaded.get("artifact_count", 0) or 0) <= 0:
+        status = "skipped_no_guidance_artifacts"
+    return {
+        **dict(loaded),
+        "candidate_count": int(candidate_count),
+        "guidance_items": items,
+        "status": status,
+    }
+
+
+def run_daemon_hammer_guidance_cycle(
+    *,
+    args: argparse.Namespace,
+    root: Path,
+    cycle: int,
+    samples: Sequence[Any],
+    autoencoder: Optional[AdaptiveModalAutoencoder] = None,
+    samples_by_id: Optional[Mapping[str, Any]] = None,
+    artifact_paths: Optional[Sequence[str | Path]] = None,
+) -> Dict[str, Any]:
+    """Run the daemon-local hammer guidance phase with fail-closed skip records."""
+
+    enabled = bool(getattr(args, "daemon_hammer_guidance_enabled", True))
+    config_payload = _daemon_hammer_config_payload(args)
+    max_samples = max(
+        0,
+        int(
+            getattr(
+                args,
+                "daemon_hammer_guidance_max_samples_per_cycle",
+                DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_SAMPLES_PER_CYCLE,
+            )
+            or 0
+        ),
+    )
+    selected_samples = list(samples)[:max_samples] if max_samples else []
+    sample_ids = [_daemon_hammer_sample_id(sample) for sample in selected_samples]
+    output_path = daemon_hammer_guidance_artifact_path(args, root=root, cycle=cycle)
+    result: Dict[str, Any] = {
+        "artifact_paths": [],
+        "cache_hit": False,
+        "cycle": int(cycle),
+        "enabled": enabled,
+        "hammer_artifact_count": 0,
+        "hammer_config": config_payload,
+        "hammer_projected_todo_count": 0,
+        "hammer_reports": [],
+        "leanstral_hammer_candidate_count": 0,
+        "obligation_count": 0,
+        "output_path": str(output_path),
+        "sample_count": len(selected_samples),
+        "sample_ids": sample_ids,
+        "schema_version": DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION,
+        "status": "not_run",
+        "trusted_hammer_guidance_count": 0,
+    }
+    loaded_guidance = _daemon_hammer_loaded_guidance(
+        args=args,
+        root=root,
+        artifact_paths=list(artifact_paths or []),
+    )
+    result["leanstral_drafting"] = {
+        "artifact_count": int(loaded_guidance.get("artifact_count", 0) or 0),
+        "candidate_count": int(loaded_guidance.get("candidate_count", 0) or 0),
+        "guidance_count": int(loaded_guidance.get("guidance_count", 0) or 0),
+        "path_count": len(loaded_guidance.get("paths", []) or []),
+        "paths": list(loaded_guidance.get("paths", []) or []),
+        "status": str(loaded_guidance.get("status") or "not_run"),
+    }
+    result["leanstral_hammer_candidate_count"] = int(
+        loaded_guidance.get("candidate_count", 0) or 0
+    )
+    if not enabled:
+        result["status"] = "disabled"
+        result["hammer_metrics"] = hammer_guidance_metric_block(
+            loaded_guidance.get("guidance_items", [])
+        )
+        return result
+    if not selected_samples:
+        result["status"] = "skipped_no_samples"
+        result["hammer_metrics"] = hammer_guidance_metric_block(
+            loaded_guidance.get("guidance_items", [])
+        )
+        return result
+
+    cache_enabled = bool(getattr(args, "daemon_hammer_guidance_cache_enabled", True))
+    cached_artifacts: List[Dict[str, Any]] = []
+    if cache_enabled and output_path.is_file():
+        try:
+            cached_payload = json.loads(output_path.read_text(encoding="utf-8"))
+            if isinstance(cached_payload, Mapping) and _daemon_hammer_cache_payload_compatible(
+                cached_payload,
+                config_payload=config_payload,
+                sample_ids=sample_ids,
+            ):
+                cached_artifacts = [
+                    dict(item)
+                    for item in cached_payload.get("hammer_guidance_artifacts", []) or []
+                    if isinstance(item, Mapping)
+                ]
+                result.update(dict(cached_payload))
+                result["cache_hit"] = True
+                result["status"] = "cache_hit"
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            result["cache_error"] = f"{type(exc).__name__}: {str(exc)[:240]}"
+
+    hammer_artifacts: List[Dict[str, Any]] = list(cached_artifacts)
+    hammer_reports: List[Dict[str, Any]] = [
+        dict(item)
+        for item in result.get("hammer_reports", []) or []
+        if isinstance(item, Mapping)
+    ] if result.get("cache_hit") else []
+    obligation_failures: List[Dict[str, Any]] = []
+    hammer_failures: List[Dict[str, Any]] = []
+    if not result.get("cache_hit"):
+        hammer_config = _daemon_hammer_config(args)
+        for sample in selected_samples:
+            sample_id = _daemon_hammer_sample_id(sample)
+            try:
+                obligations = generate_legal_ir_proof_obligations(sample)
+            except (KeyError, TypeError, ValueError, RuntimeError) as exc:
+                obligation_failures.append(
+                    {
+                        "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+                        "sample_id": sample_id,
+                    }
+                )
+                obligations = []
+            if hammer_config.max_obligations > 0:
+                obligations = obligations[: hammer_config.max_obligations]
+            result["obligation_count"] = int(result.get("obligation_count", 0) or 0) + len(obligations)
+            if not obligations:
+                continue
+            try:
+                report = run_legal_ir_hammer(
+                    sample,
+                    obligations=obligations,
+                    config=hammer_config,
+                )
+            except (OSError, KeyError, TypeError, ValueError, RuntimeError) as exc:
+                hammer_failures.append(
+                    {
+                        "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+                        "sample_id": sample_id,
+                    }
+                )
+                continue
+            report_dict = _daemon_hammer_report_dict(report)
+            if sample_id:
+                report_dict.setdefault("sample_id", sample_id)
+            citation = _daemon_hammer_sample_citation(sample)
+            if citation:
+                report_dict.setdefault("citation", citation)
+            hammer_reports.append(report_dict)
+            hammer_artifacts.extend(_daemon_hammer_report_artifacts(report))
+
+    combined_guidance = [
+        *list(loaded_guidance.get("guidance_items", []) or []),
+        *hammer_artifacts,
+    ]
+    hammer_metrics = hammer_guidance_metric_block(combined_guidance)
+    result.update(
+        {
+            "artifact_paths": [str(output_path)] if hammer_artifacts else [],
+            "hammer_artifact_count": len(hammer_artifacts),
+            "hammer_guidance_artifacts": hammer_artifacts,
+            "hammer_guidance_metric_schema_version": HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION,
+            "hammer_metrics": hammer_metrics,
+            "hammer_reports": hammer_reports[:16],
+            "obligation_failure_count": len(obligation_failures),
+            "obligation_failures": obligation_failures[:16],
+            "runtime_failure_count": len(hammer_failures),
+            "runtime_failures": hammer_failures[:16],
+            "trusted_hammer_guidance_count": int(
+                hammer_metrics.get("trusted_hammer_guidance_count", 0) or 0
+            ),
+        }
+    )
+    if not result.get("cache_hit"):
+        result["status"] = "completed" if hammer_artifacts else "completed_no_hammer_artifacts"
+        persisted = {
+            key: value
+            for key, value in result.items()
+            if key
+            not in {
+                "leanstral_drafting",
+            }
+        }
+        persisted["leanstral_drafting"] = dict(result.get("leanstral_drafting") or {})
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(
+                json.dumps(persisted, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            result["artifact_paths"] = []
+            result["persist_error"] = f"{type(exc).__name__}: {str(exc)[:240]}"
+            result["status"] = "completed_persist_failed"
+
+    training_enabled = bool(getattr(args, "daemon_hammer_guidance_train_autoencoder", True))
+    result["autoencoder_training"] = {
+        "enabled": training_enabled,
+        "status": "not_run",
+    }
+    if training_enabled:
+        if autoencoder is None:
+            result["autoencoder_training"] = {
+                "enabled": True,
+                "status": "missing_autoencoder",
+            }
+        else:
+            sample_lookup = dict(samples_by_id or {})
+            for sample in selected_samples:
+                sample_id = _daemon_hammer_sample_id(sample)
+                if sample_id:
+                    sample_lookup.setdefault(sample_id, sample)
+            result["autoencoder_training"] = autoencoder.apply_leanstral_guidance(
+                combined_guidance,
+                samples_by_id=sample_lookup,
+                learning_rate=float(
+                    getattr(args, "daemon_hammer_guidance_learning_rate", 0.03)
+                    or 0.0
+                ),
+                allow_global_updates=bool(
+                    getattr(args, "daemon_hammer_guidance_train_missing_samples", False)
+                ),
+                max_items=max(
+                    0,
+                    int(getattr(args, "daemon_hammer_guidance_max_training_items", 64) or 64),
+                ),
+                require_trusted=True,
+            )
+    return result
+
+
+def _hammer_projected_count_from_projection(projection: Mapping[str, Any]) -> int:
+    count = 0
+    sources = projection.get("projection_sources")
+    if isinstance(sources, Sequence) and not isinstance(sources, (str, bytes)):
+        for source in sources:
+            if isinstance(source, Mapping):
+                count += _hammer_projected_count_from_projection(source)
+    failure_projection = projection.get("hammer_failure_projection")
+    if isinstance(failure_projection, Mapping):
+        count += int(failure_projection.get("seeded_count", 0) or 0)
+    return count
+
+
+def update_daemon_hammer_guidance_summary(
+    summary: Dict[str, Any],
+    cycle_report: Mapping[str, Any],
+    *,
+    projection: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Expose hammer/Leanstral cycle telemetry under stable daemon keys."""
+
+    report = dict(cycle_report or {})
+    projection = dict(projection or {})
+    hammer_metrics = dict(report.get("hammer_metrics") or {})
+    hammer_projected_todo_count = _hammer_projected_count_from_projection(projection)
+    if hammer_projected_todo_count <= 0:
+        hammer_projected_todo_count = int(report.get("hammer_projected_todo_count", 0) or 0)
+    report["hammer_projected_todo_count"] = hammer_projected_todo_count
+    summary["latest_daemon_hammer_guidance"] = report
+    summary["hammer_proof_success_rate"] = float(
+        hammer_metrics.get("hammer_proof_success_rate", 0.0) or 0.0
+    )
+    summary["hammer_reconstruction_success_rate"] = float(
+        hammer_metrics.get("hammer_reconstruction_success_rate", 0.0) or 0.0
+    )
+    summary["leanstral_hammer_candidate_count"] = int(
+        report.get("leanstral_hammer_candidate_count", 0) or 0
+    )
+    summary["trusted_hammer_guidance_count"] = int(
+        hammer_metrics.get(
+            "trusted_hammer_guidance_count",
+            report.get("trusted_hammer_guidance_count", 0),
+        )
+        or 0
+    )
+    summary["hammer_projected_todo_count"] = int(hammer_projected_todo_count)
+    summary["hammer_guidance_artifact_count"] = int(
+        hammer_metrics.get("hammer_artifact_count", report.get("hammer_artifact_count", 0))
+        or 0
+    )
+    for key in (
+        "hammer_guidance_artifact_count",
+        "hammer_projected_todo_count",
+        "leanstral_hammer_candidate_count",
+        "trusted_hammer_guidance_count",
+    ):
+        total_key = f"{key}_total"
+        summary[total_key] = int(summary.get(total_key, 0) or 0) + int(
+            summary.get(key, 0) or 0
+        )
+    return summary
 
 
 def project_verified_leanstral_rule_gaps_into_queue(
@@ -4976,6 +5611,384 @@ def fast_program_synthesis_bootstrap_todos(
                 metadata=metadata,
             )
         )
+    return todos
+
+
+def _hammer_projection_unique_strings(values: Any) -> List[str]:
+    if values is None:
+        return []
+    if isinstance(values, Sequence) and not isinstance(values, (bytes, bytearray, str)):
+        raw_values = values
+    else:
+        raw_values = [values]
+    return list(dict.fromkeys(str(value).strip() for value in raw_values if str(value).strip()))
+
+
+def _hammer_projection_normalize_item(value: Any) -> Dict[str, Any]:
+    if value is None:
+        return {}
+    if hasattr(value, "to_dict") and callable(getattr(value, "to_dict")):
+        try:
+            value = value.to_dict()
+        except (TypeError, ValueError):
+            return {}
+    if isinstance(value, Mapping):
+        return {str(key): item for key, item in dict(value).items()}
+    return {}
+
+
+def _hammer_projection_items(value: Any) -> List[Mapping[str, Any]]:
+    normalized = _hammer_projection_normalize_item(value)
+    if normalized:
+        nested: List[Mapping[str, Any]] = []
+        for key in (
+            "artifacts",
+            "hammer_guidance_artifacts",
+            "verified_guidance",
+            "guidance_items",
+            "items",
+        ):
+            if key in normalized:
+                nested.extend(_hammer_projection_items(normalized.get(key)))
+        candidate_results = normalized.get("candidate_results")
+        if isinstance(candidate_results, Sequence) and not isinstance(
+            candidate_results,
+            (bytes, bytearray, str),
+        ):
+            for candidate_result in candidate_results:
+                if not isinstance(candidate_result, Mapping):
+                    continue
+                nested.extend(_hammer_projection_items(candidate_result.get("verified_guidance")))
+                nested.extend(
+                    _hammer_projection_items(
+                        candidate_result.get("hammer_guidance_artifacts")
+                    )
+                )
+                hammer_report = candidate_result.get("hammer_report")
+                if isinstance(hammer_report, Mapping):
+                    nested.extend(_hammer_projection_items(hammer_report.get("artifacts")))
+        if nested:
+            return nested
+        if _hammer_projection_is_hammer_item(normalized):
+            return [normalized]
+        return []
+    if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
+        items: List[Mapping[str, Any]] = []
+        for item in value:
+            items.extend(_hammer_projection_items(item))
+        return items
+    return []
+
+
+def _hammer_projection_is_hammer_item(item: Mapping[str, Any]) -> bool:
+    schema_version = str(item.get("schema_version") or "").strip().lower()
+    source = str(item.get("source") or "").strip().lower()
+    return (
+        schema_version.startswith("legal-ir-hammer-")
+        or source == "hammer_verified_guidance"
+        or bool(item.get("backend_statuses"))
+        or "proved" in item
+        or "proof_checked" in item
+    )
+
+
+def _hammer_projection_metadata(item: Mapping[str, Any]) -> Dict[str, Any]:
+    metadata = item.get("metadata")
+    return dict(metadata) if isinstance(metadata, Mapping) else {}
+
+
+def _hammer_projection_truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"1", "true", "yes", "y", "verified"}
+
+
+def _hammer_projection_failure_reason(item: Mapping[str, Any]) -> str:
+    rejection_reasons = _hammer_projection_unique_strings(item.get("rejection_reasons"))
+    if any("copy" in reason.lower() for reason in rejection_reasons):
+        return "source_copy_rejected"
+    failure_reason = str(item.get("failure_reason") or "").strip()
+    if failure_reason:
+        return re.sub(r"[^a-z0-9_]+", "_", failure_reason.lower()).strip("_")
+    reconstruction_status = str(item.get("reconstruction_status") or "").strip().lower()
+    if _hammer_projection_truthy(item.get("proved")) and reconstruction_status not in {
+        "",
+        "checked",
+        "proof_checked",
+        "reconstructed",
+        "success",
+        "verified",
+    }:
+        return "reconstruction_failed"
+    backend_statuses = item.get("backend_statuses")
+    if isinstance(backend_statuses, Mapping):
+        statuses = [
+            str(status).strip().lower()
+            for status in backend_statuses.values()
+            if str(status).strip()
+        ]
+        if statuses and all(status == "unavailable" for status in statuses):
+            return "backend_unavailable"
+    if not _hammer_projection_truthy(item.get("proved")):
+        return "hammer_unproved"
+    if not _hammer_projection_truthy(item.get("trusted")):
+        return "untrusted_hammer_guidance"
+    return ""
+
+
+def _hammer_projection_route_for_view(view: str) -> tuple[str, str]:
+    normalized = str(view or "").lower()
+    if "deontic" in normalized:
+        return "repair_deontic_bridge_quality_gate", "deontic.ir"
+    if "tdfol" in normalized or "fol" in normalized:
+        return "repair_tdfol_bridge_parse", "TDFOL.prover"
+    if "cec" in normalized or "event" in normalized:
+        return "repair_cec_dcec_bridge", "CEC.native"
+    if "knowledge_graph" in normalized or "neo4j" in normalized or "kg" in normalized:
+        return "repair_multiview_legal_ir_graph_projection", "knowledge_graphs.neo4j_compat"
+    if "external" in normalized or "prover" in normalized:
+        return "repair_external_prover_router", "external_provers.router"
+    return "repair_flogic_ontology_constraints", "modal.frame_logic"
+
+
+def _hammer_projection_scope_for_target(target_component: str) -> str:
+    scope = str(logic_optimizer_scope_for_component(target_component) or "").strip()
+    if scope:
+        return scope
+    normalized = str(target_component or "").lower()
+    if "deontic" in normalized:
+        return "deontic"
+    if "tdfol" in normalized or "fol" in normalized:
+        return "tdfol"
+    if "cec" in normalized:
+        return "cec"
+    if "knowledge_graph" in normalized or "neo4j" in normalized:
+        return "knowledge_graphs"
+    if "external" in normalized or "prover" in normalized:
+        return "external_provers"
+    if "decompiler" in normalized:
+        return "ir_decompiler"
+    return "frame_logic"
+
+
+def _hammer_projection_allowed_paths(
+    *,
+    action: str,
+    target_component: str,
+) -> List[str]:
+    paths = [
+        *CODEX_TARGET_FILE_HINTS.get(target_component, []),
+        *CODEX_ACTION_FILE_HINTS.get(action, []),
+    ]
+    return _hammer_projection_unique_strings(paths)[:8]
+
+
+def _hammer_projection_todo_id(dedupe_signature: str) -> str:
+    digest = hashlib.sha256(str(dedupe_signature or "").encode("utf-8")).hexdigest()
+    return f"hammer-failure-{digest[:20]}"
+
+
+def _hammer_projection_target_metrics(
+    *,
+    action: str,
+    failure_reason: str,
+    scope: str,
+    target_component: str,
+) -> List[str]:
+    metrics = [
+        "hammer_proof_success_rate",
+        "hammer_proof_failure_ratio",
+        "hammer_reconstruction_success_rate",
+        "symbolic_validity_penalty",
+    ]
+    if failure_reason == "source_copy_rejected":
+        metrics.extend(["hammer_source_copy_penalty", "source_copy_penalty"])
+    if target_component == "knowledge_graphs.neo4j_compat":
+        metrics.append("legal_ir_multiview_graph_failure_penalty")
+    if target_component == "external_provers.router":
+        metrics.append("legal_ir_multiview_proof_failure_ratio")
+    metrics.extend(_compiler_guidance_target_metrics(action, scope))
+    return _hammer_projection_unique_strings(metrics)
+
+
+def hammer_failure_projection_todos(
+    guidance: Any,
+    *,
+    policy: Optional[ModalOptimizerPolicy] = None,
+    min_support: int = 2,
+    max_todos_per_cycle: int = 5,
+    max_todos_per_scope: int = 2,
+) -> List[ModalTodo]:
+    """Create bounded Codex TODOs from repeated hammer-verified failures."""
+
+    resolved_policy = policy or ModalOptimizerPolicy()
+    groups: Dict[tuple[str, str, str], List[Mapping[str, Any]]] = {}
+    for item in _hammer_projection_items(guidance):
+        reason = _hammer_projection_failure_reason(item)
+        if not reason:
+            continue
+        metadata = _hammer_projection_metadata(item)
+        view = str(
+            item.get("legal_ir_view")
+            or item.get("target_view")
+            or item.get("target_component")
+            or metadata.get("legal_ir_view")
+            or "modal.frame_logic"
+        ).strip()
+        obligation_kind = str(
+            item.get("obligation_kind")
+            or metadata.get("obligation_kind")
+            or item.get("logic_family")
+            or "legal_ir_obligation"
+        ).strip()
+        action, target_component = _hammer_projection_route_for_view(view)
+        scope = _hammer_projection_scope_for_target(target_component)
+        groups.setdefault((scope, reason, obligation_kind), []).append(item)
+
+    todos: List[ModalTodo] = []
+    scope_counts: Counter[str] = Counter()
+    for (scope, reason, obligation_kind), items in sorted(
+        groups.items(),
+        key=lambda entry: (-len(entry[1]), entry[0]),
+    ):
+        support_count = len(items)
+        if support_count < max(1, int(min_support)):
+            continue
+        if len(todos) >= max(0, int(max_todos_per_cycle)):
+            break
+        if scope_counts[scope] >= max(1, int(max_todos_per_scope)):
+            continue
+        representative = items[0]
+        view = str(
+            representative.get("legal_ir_view")
+            or representative.get("target_view")
+            or representative.get("target_component")
+            or "modal.frame_logic"
+        ).strip()
+        action, target_component = _hammer_projection_route_for_view(view)
+        allowed_paths = _hammer_projection_allowed_paths(
+            action=action,
+            target_component=target_component,
+        )
+        if not allowed_paths:
+            continue
+        sample_ids = _hammer_projection_unique_strings(
+            [
+                item.get("sample_id") or _hammer_projection_metadata(item).get("sample_id")
+                for item in items
+            ]
+        )
+        citations = _hammer_projection_unique_strings(
+            [
+                item.get("citation") or _hammer_projection_metadata(item).get("citation")
+                for item in items
+            ]
+        )
+        proof_obligation_ids = _hammer_projection_unique_strings(
+            [
+                proof_id
+                for item in items
+                for proof_id in _hammer_projection_unique_strings(
+                    item.get("proof_obligation_ids") or item.get("obligation_id")
+                )
+            ]
+        )
+        failure_examples = [
+            {
+                "failure_reason": reason,
+                "guidance_id": str(item.get("guidance_id") or ""),
+                "legal_ir_view": str(
+                    item.get("legal_ir_view")
+                    or item.get("target_view")
+                    or item.get("target_component")
+                    or ""
+                ),
+                "obligation_id": str(item.get("obligation_id") or ""),
+                "reconstruction_status": str(item.get("reconstruction_status") or ""),
+                "sample_id": str(
+                    item.get("sample_id")
+                    or _hammer_projection_metadata(item).get("sample_id")
+                    or ""
+                ),
+                "winner_backend": str(item.get("winner_backend") or ""),
+            }
+            for item in items[:8]
+        ]
+        dedupe_payload = {
+            "obligation_kind": obligation_kind,
+            "reason": reason,
+            "scope": scope,
+            "source": "hammer_failure_projection_v1",
+            "target_component": target_component,
+        }
+        dedupe_signature = "hammer-failure:" + hashlib.sha256(
+            json.dumps(dedupe_payload, ensure_ascii=True, sort_keys=True).encode(
+                "utf-8"
+            )
+        ).hexdigest()[:20]
+        target_metrics = _hammer_projection_target_metrics(
+            action=action,
+            failure_reason=reason,
+            scope=scope,
+            target_component=target_component,
+        )
+        validation_commands = _compiler_guidance_validation_commands(scope)
+        validation_commands = _hammer_projection_unique_strings(
+            [
+                *validation_commands,
+                (
+                    f"{sys.executable} -m pytest -q "
+                    "tests/unit/logic/integration/test_legal_ir_hammer_pipeline.py"
+                ),
+            ]
+        )
+        metadata = {
+            **resolved_policy.metadata_for(
+                action=action,
+                loss_name="hammer_verified_failure",
+            ),
+            "allowed_paths": allowed_paths,
+            "dedupe_signature": dedupe_signature,
+            "expected_failure_mode": reason,
+            "failure_reason": reason,
+            "hammer_failure_examples": failure_examples,
+            "hammer_failure_group_key": f"{scope}:{reason}:{obligation_kind}",
+            "hammer_projection": True,
+            "leanstral_projection": True,
+            "owned_ast_scope": scope,
+            "program_synthesis_scope": scope,
+            "proof_obligation_ids": proof_obligation_ids,
+            "semantic_bundle_key": dedupe_signature,
+            "source": "hammer_failure_projection_v1",
+            "support_count": support_count,
+            "target_component": target_component,
+            "target_metrics": target_metrics,
+            "validation_commands": validation_commands,
+            "validation_set": {
+                "allowed_paths": allowed_paths,
+                "expected_failure_mode": reason,
+                "held_out_compiler_ir_metrics": target_metrics,
+                "proof_obligation_ids": proof_obligation_ids,
+                "target_file_lane": scope,
+            },
+        }
+        todos.append(
+            ModalTodo(
+                todo_id=_hammer_projection_todo_id(dedupe_signature),
+                action=action,
+                objective=(
+                    "Repair repeated hammer-verified Legal IR failure "
+                    f"{reason!r} for {target_component} obligations."
+                ),
+                sample_ids=sample_ids,
+                citations=citations,
+                loss_name="hammer_verified_failure",
+                loss_value=round(float(support_count), 12),
+                priority=round(80.0 + float(support_count), 6),
+                metadata=metadata,
+            )
+        )
+        scope_counts[scope] += 1
     return todos
 
 
@@ -8000,6 +9013,74 @@ def build_paired_daemon_commands(
         ).lower(),
         "--leanstral-direct-guidance-max-training-items",
         str(getattr(args, "leanstral_direct_guidance_max_training_items", 64)),
+        "--daemon-hammer-guidance-enabled",
+        str(getattr(args, "daemon_hammer_guidance_enabled", True)).lower(),
+        "--daemon-hammer-guidance-cache-enabled",
+        str(getattr(args, "daemon_hammer_guidance_cache_enabled", True)).lower(),
+        "--daemon-hammer-guidance-output-dir",
+        str(getattr(args, "daemon_hammer_guidance_output_dir", "")),
+        "--daemon-hammer-guidance-max-samples-per-cycle",
+        str(
+            getattr(
+                args,
+                "daemon_hammer_guidance_max_samples_per_cycle",
+                DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_SAMPLES_PER_CYCLE,
+            )
+        ),
+        "--daemon-hammer-guidance-max-obligations-per-sample",
+        str(
+            getattr(
+                args,
+                "daemon_hammer_guidance_max_obligations_per_sample",
+                DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_OBLIGATIONS_PER_SAMPLE,
+            )
+        ),
+        "--daemon-hammer-guidance-max-premises",
+        str(
+            getattr(
+                args,
+                "daemon_hammer_guidance_max_premises",
+                DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_PREMISES,
+            )
+        ),
+        "--daemon-hammer-guidance-timeout-seconds",
+        str(
+            getattr(
+                args,
+                "daemon_hammer_guidance_timeout_seconds",
+                DEFAULT_DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS,
+            )
+        ),
+        "--daemon-hammer-guidance-parallel-workers",
+        str(
+            getattr(
+                args,
+                "daemon_hammer_guidance_parallel_workers",
+                DEFAULT_DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS,
+            )
+        ),
+        "--daemon-hammer-guidance-verify-reconstruction",
+        str(
+            getattr(args, "daemon_hammer_guidance_verify_reconstruction", False)
+        ).lower(),
+        "--daemon-hammer-guidance-trusted-requires-reconstruction",
+        str(
+            getattr(
+                args,
+                "daemon_hammer_guidance_trusted_requires_reconstruction",
+                False,
+            )
+        ).lower(),
+        "--daemon-hammer-guidance-train-autoencoder",
+        str(getattr(args, "daemon_hammer_guidance_train_autoencoder", True)).lower(),
+        "--daemon-hammer-guidance-learning-rate",
+        str(getattr(args, "daemon_hammer_guidance_learning_rate", 0.03)),
+        "--daemon-hammer-guidance-train-missing-samples",
+        str(
+            getattr(args, "daemon_hammer_guidance_train_missing_samples", False)
+        ).lower(),
+        "--daemon-hammer-guidance-max-training-items",
+        str(getattr(args, "daemon_hammer_guidance_max_training_items", 64)),
         "--autoencoder-target-scope-filters",
         str(getattr(args, "autoencoder_target_scope_filters", "")),
         "--autoencoder-require-prover-confirmation",
@@ -9646,9 +10727,12 @@ import json
 import sys
 
 from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
+from ipfs_datasets_py.logic.integration.reasoning import LegalIRHammerConfig, run_legal_ir_hammer
 from ipfs_datasets_py.logic.modal import DeterministicModalLogicCodec, ModalLogicCodecConfig
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import hammer_guidance_metric_block
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
+    _add_compiler_ir_metric_aliases,
     bridge_ir_metric_block,
     compiler_ir_metric_block,
 )
@@ -9695,6 +10779,53 @@ for metric_name, source_key in canonical_map.items():
     if isinstance(value, (int, float)):
         metrics[metric_name] = float(value)
 target_metrics = list(payload.get("target_metrics") or [])
+hammer_requested = any(
+    str(metric).startswith(("hammer_", "compiler_ir_hammer_"))
+    or "symbolic_validity" in str(metric)
+    or str(metric) in {
+        "compiler_ir_source_copy_penalty",
+        "hammer_source_copy_penalty",
+        "source_copy_penalty",
+    }
+    for metric in target_metrics
+)
+if hammer_requested:
+    hammer_artifacts = []
+    hammer_reports = []
+    for sample in samples:
+        try:
+            report = run_legal_ir_hammer(
+                sample,
+                config=LegalIRHammerConfig(
+                    max_obligations=4,
+                    max_premises=64,
+                    parallel_workers=1,
+                    timeout_seconds=2.0,
+                    verify_reconstruction=False,
+                ),
+            ).to_dict()
+        except Exception as exc:
+            report = {
+                "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+                "status": "failed",
+            }
+        hammer_reports.append(report)
+        for artifact in report.get("artifacts", []) or []:
+            if isinstance(artifact, dict):
+                hammer_artifacts.append(artifact)
+    hammer_metrics = hammer_guidance_metric_block(
+        {"hammer_guidance_artifacts": hammer_artifacts}
+    )
+    for key, value in hammer_metrics.items():
+        if isinstance(value, (int, float)):
+            metrics[str(key)] = float(value)
+    compiler["hammer_guidance_metrics"] = hammer_metrics
+    compiler["hammer_reports"] = hammer_reports[:8]
+metrics = {
+    str(key): float(value)
+    for key, value in _add_compiler_ir_metric_aliases(metrics).items()
+    if isinstance(value, (int, float))
+}
 selected = {
     metric: metrics[metric]
     for metric in target_metrics
@@ -9848,6 +10979,7 @@ def _codex_target_metric_validation_report(
     improved_metrics: List[str] = []
     raw_regressed_metrics: List[str] = []
     hard_regressed_metrics: List[str] = []
+    hard_guardrail_metrics: List[str] = []
     tolerated_regressed_metrics: List[str] = []
     missing_metrics: List[str] = []
     objective_delta = 0.0
@@ -9870,11 +11002,16 @@ def _codex_target_metric_validation_report(
         metric_deltas[metric_name] = round(delta, 9)
         metric_weights[metric_name] = round(weight, 6)
         weighted_metric_deltas[metric_name] = round(weighted_delta, 9)
+        hard_guardrail = _codex_target_metric_is_hard_guardrail(metric_name)
+        if hard_guardrail:
+            hard_guardrail_metrics.append(metric_name)
         if delta > 0.0:
             improved_metrics.append(metric_name)
         elif delta < 0.0:
             raw_regressed_metrics.append(metric_name)
-            if abs(delta) <= deadband:
+            if hard_guardrail:
+                hard_regressed_metrics.append(metric_name)
+            elif abs(delta) <= deadband:
                 tolerated_regressed_metrics.append(metric_name)
             else:
                 hard_regressed_metrics.append(metric_name)
@@ -9898,6 +11035,7 @@ def _codex_target_metric_validation_report(
         "before": dict(before),
         "deadband_by_metric": deadband_by_metric,
         "gate_policy": CODEX_TARGET_METRIC_TRADEOFF_POLICY_VERSION,
+        "hard_guardrail_metrics": hard_guardrail_metrics,
         "hard_regressed_metrics": hard_regressed_metrics,
         "improved_metrics": improved_metrics,
         "metric_deltas": metric_deltas,
@@ -9913,10 +11051,37 @@ def _codex_target_metric_validation_report(
     }
 
 
+def _codex_target_metric_is_hard_guardrail(metric_name: str) -> bool:
+    """Return true when a metric cannot be traded off against cosmetic gains."""
+
+    normalized = str(metric_name)
+    lower = normalized.lower()
+    if "source_copy" in lower or "copy_reward_hack" in lower:
+        return True
+    if "symbolic_validity" in lower:
+        return True
+    if lower.startswith("hammer_") or "_hammer_" in lower:
+        return True
+    if lower.startswith("compiler_ir_hammer_"):
+        return True
+    if lower in {
+        "legal_ir_multiview_graph_failure_penalty",
+        "legal_ir_multiview_proof_failure_ratio",
+    }:
+        return True
+    if lower.startswith(("deontic_", "tdfol_", "cec_", "external_prover_")) and (
+        "failure" in lower or "validity" in lower or "proof" in lower
+    ):
+        return True
+    return False
+
+
 def _codex_target_metric_deadband(metric_name: str) -> float:
     """Return the tolerated negative delta for noisy target metrics."""
 
     normalized = str(metric_name)
+    if _codex_target_metric_is_hard_guardrail(normalized):
+        return 0.0
     if normalized in {
         "source_decompiled_text_token_loss",
         "structural_text_reconstruction_loss",
@@ -9953,6 +11118,8 @@ def _codex_target_metric_weight(metric_name: str) -> float:
     """Return the weighted objective contribution for a target metric."""
 
     normalized = str(metric_name)
+    if _codex_target_metric_is_hard_guardrail(normalized):
+        return 6.0
     if normalized in {
         "cross_entropy_loss",
         "compiler_ir_cross_entropy_loss",
@@ -12014,6 +13181,92 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=64,
         help="Maximum direct Leanstral guidance records applied to autoencoder training per cycle.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-enabled",
+        type=parse_bool_flag,
+        default=True,
+        help="Run the bounded per-cycle Legal IR hammer guidance phase.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-cache-enabled",
+        type=parse_bool_flag,
+        default=True,
+        help="Reuse a matching per-cycle hammer guidance artifact when present.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-output-dir",
+        default="",
+        help=(
+            "Directory for per-cycle hammer guidance artifacts. Defaults to "
+            "workspace/legal-ir-hammer-guidance."
+        ),
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-max-samples-per-cycle",
+        type=int,
+        default=DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_SAMPLES_PER_CYCLE,
+        help="Maximum validation samples checked by the daemon hammer phase per cycle.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-max-obligations-per-sample",
+        type=int,
+        default=DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_OBLIGATIONS_PER_SAMPLE,
+        help="Maximum proof obligations sent to hammer backends per sample.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-max-premises",
+        type=int,
+        default=DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_PREMISES,
+        help="Maximum selected premises per hammer goal.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-timeout-seconds",
+        type=float,
+        default=DEFAULT_DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS,
+        help="Per-backend timeout for daemon hammer guidance checks.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-parallel-workers",
+        type=int,
+        default=DEFAULT_DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS,
+        help="Parallel solver workers used by the daemon hammer phase.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-verify-reconstruction",
+        type=parse_bool_flag,
+        default=False,
+        help="Ask the hammer phase to run native proof reconstruction when configured.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-trusted-requires-reconstruction",
+        type=parse_bool_flag,
+        default=False,
+        help="Require proof reconstruction before hammer guidance becomes trusted.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-train-autoencoder",
+        type=parse_bool_flag,
+        default=True,
+        help="Apply trusted daemon hammer guidance to the autoencoder each cycle.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-learning-rate",
+        type=float,
+        default=0.03,
+        help="Learning rate for trusted daemon hammer guidance updates.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-train-missing-samples",
+        type=parse_bool_flag,
+        default=False,
+        help="Allow daemon hammer guidance to update global logits without a current sample match.",
+    )
+    parser.add_argument(
+        "--daemon-hammer-guidance-max-training-items",
+        type=int,
+        default=64,
+        help="Maximum daemon hammer guidance records applied to autoencoder training per cycle.",
     )
     parser.add_argument(
         "--autoencoder-target-scope-filters",
@@ -15021,6 +16274,30 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     rollout_control=rollout_control,
                     summary_path=summary_path,
                 )
+            mark_cycle_phase(
+                "hammer_guidance_cycle",
+                sample_count=len(acceptance_validation_samples),
+            )
+            daemon_hammer_guidance_cycle = run_daemon_hammer_guidance_cycle(
+                args=args,
+                root=root,
+                cycle=cycle,
+                samples=acceptance_validation_samples,
+                autoencoder=autoencoder,
+                samples_by_id={
+                    sample.sample_id: sample
+                    for sample in [*train_samples, *acceptance_validation_samples]
+                },
+                artifact_paths=[
+                    str(path)
+                    for path in introspection_export.get("paths", []) or []
+                    if str(path)
+                ],
+            )
+            summary["active_cycle_hammer_guidance"] = dict(
+                daemon_hammer_guidance_cycle
+            )
+            save_summary(summary_path, summary)
             guidance_todo_candidates_by_kind = {
                 "activation": compiler_guidance_activation_todos(
                     guidance_distillation,
@@ -15147,9 +16424,20 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     root=root,
                     supervisor=supervisor,
                     artifact_paths=[
-                        str(path)
-                        for path in introspection_export.get("paths", []) or []
-                        if str(path)
+                        *[
+                            str(path)
+                            for path in introspection_export.get("paths", []) or []
+                            if str(path)
+                        ],
+                        *[
+                            str(path)
+                            for path in daemon_hammer_guidance_cycle.get(
+                                "artifact_paths",
+                                [],
+                            )
+                            or []
+                            if str(path)
+                        ],
                     ],
                     autoencoder=autoencoder,
                     samples_by_id={
@@ -15667,6 +16955,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 summary.get("program_synthesis_preinsert_deduped", 0)
             ) + int(summary.get("program_synthesis_semantic_deduped", 0))
             update_leanstral_projection_summary(summary, leanstral_projection)
+            update_daemon_hammer_guidance_summary(
+                summary,
+                daemon_hammer_guidance_cycle,
+                projection=leanstral_projection,
+            )
             bridge_loss_failures = sum(step.bridge_loss_failure_count for step in run.steps)
             bridge_loss_samples = sum(step.bridge_loss_sample_count for step in run.steps)
             bridge_loss_signals = sum(step.bridge_loss_signal_count for step in run.steps)
@@ -15949,6 +17242,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "compiler_ir_guidance_scope_hints": guidance_scope_hints,
                     "compiler_ir_train": compiler_ir_train,
                     "compiler_ir_validation": compiler_ir_validation,
+                    "daemon_hammer_guidance": daemon_hammer_guidance_cycle,
                     "compiler_ir_validation_comparable_to_previous_cycle": bool(
                         compiler_ir_validation_comparable
                     ),

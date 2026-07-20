@@ -65,7 +65,7 @@ extract_final_run_id() {
     echo ""
     return
   fi
-  grep -Eo 'starting final 8h run_id=[^ ]+' "${PIPELINE_LOG}" | tail -n 1 | sed 's/^starting final 8h run_id=//' || true
+  grep -Eo 'starting final [^ ]+ run_id=[^ ]+' "${PIPELINE_LOG}" | tail -n 1 | sed 's/^starting final [^ ]\+ run_id=//' || true
 }
 
 pipeline_pid() {
@@ -110,7 +110,7 @@ has_failure_signature() {
 
 has_success_signature() {
   [[ -f "${PIPELINE_LOG}" ]] || return 1
-  if grep -q '\[pipeline\] completed final 8h run_id=' "${PIPELINE_LOG}"; then
+  if grep -Eq '\[pipeline\] completed final [^ ]+ run_id=' "${PIPELINE_LOG}"; then
     return 0
   fi
   return 1
@@ -129,7 +129,7 @@ while true; do
 
   if has_success_signature; then
     log_line "pipeline_reported_success"
-    write_state "completed" "succeeded" "pipeline_completed_final_8h" "" true
+    write_state "completed" "succeeded" "pipeline_completed_final_run" "" true
     exit 0
   fi
 

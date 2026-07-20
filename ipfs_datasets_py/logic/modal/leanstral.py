@@ -18,6 +18,9 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence
 
+from ipfs_datasets_py.logic.integration.reasoning.legal_ir_obligations import (
+    generate_legal_ir_proof_obligations,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     LegalSample,
 )
@@ -36,6 +39,7 @@ from .leanstral_theorems import (
 
 LEANSTRAL_PROPOSAL_SCHEMA_VERSION = "legal-ir-leanstral-proposal-v1"
 LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION = "legal-ir-leanstral-draft-guidance-v1"
+LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION = "legal-ir-leanstral-hammer-candidate-v1"
 _LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION = "legal-ir-leanstral-drafted-logic-v1"
 _LEANSTRAL_DRAFTED_LOGIC_MAX_CANDIDATES = 6
 _LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS = 240
@@ -361,6 +365,7 @@ class LegalIRLeanTask:
     projection_evidence: Optional[Dict[str, Any]] = None
     compiler_change_spec: Optional[Dict[str, Any]] = None
     theorem_registry: Optional[Dict[str, Any]] = None
+    proof_obligations: Optional[Sequence[Dict[str, Any]]] = None
 
     @classmethod
     def from_sample(
@@ -392,6 +397,7 @@ class LegalIRLeanTask:
         modal_formula = formula.to_dict()
         modal_ir_hash = sample.modal_ir.canonical_hash()
         theorem_registry = generate_legal_semantics_theorem_registry(sample)
+        proof_obligations = generate_legal_ir_proof_obligations(sample)
         target_statement = _well_formed_target_statement(modal_formula, source_span=span)
         projection_evidence = ProjectionEvidence.from_sample(
             sample,
@@ -407,6 +413,14 @@ class LegalIRLeanTask:
             "sample_id": sample.sample_id,
             "target_statement": target_statement,
             "theorem_registry_hash": theorem_registry.registry_hash,
+            "proof_obligation_hash": hashlib.sha256(
+                json.dumps(
+                    [obligation.to_dict() for obligation in proof_obligations],
+                    ensure_ascii=True,
+                    sort_keys=True,
+                    default=str,
+                ).encode("utf-8")
+            ).hexdigest()[:16],
         }
         task_id = "leanstral-" + hashlib.sha256(
             json.dumps(task_payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
@@ -424,6 +438,7 @@ class LegalIRLeanTask:
             projection_evidence=projection_evidence.to_dict(),
             compiler_change_spec=compiler_change_spec.to_dict(),
             theorem_registry=theorem_registry.to_dict(),
+            proof_obligations=tuple(obligation.to_dict() for obligation in proof_obligations),
         )
 
     @property
@@ -1188,6 +1203,8 @@ def _proposal_rejection_reasons(
             reasons.append("rule_hint_target_component_mismatch")
             break
     theorem_ids = set(_theorem_registry_ids(task.theorem_registry))
+    obligation_ids = set(_legal_ir_proof_obligation_ids(task))
+    accepted_obligation_ids = theorem_ids | obligation_ids
     for candidate in proposal.drafted_logic_candidates:
         candidate_text = str(candidate.get("candidate") or "").strip()
         if not candidate_text:
@@ -1196,9 +1213,29 @@ def _proposal_rejection_reasons(
         if len(candidate_text) > _LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS:
             reasons.append("drafted_logic_candidate_too_large")
             break
-        proof_obligation_id = str(candidate.get("proof_obligation_id") or "").strip()
-        if proof_obligation_id and theorem_ids and proof_obligation_id not in theorem_ids:
+        proof_obligation_ids = _string_sequence(
+            candidate.get("proof_obligation_ids")
+            or candidate.get("proof_obligation_id")
+            or candidate.get("obligation_id")
+        )
+        if accepted_obligation_ids and any(
+            obligation_id not in accepted_obligation_ids
+            for obligation_id in proof_obligation_ids
+        ):
             reasons.append("unknown_drafted_logic_proof_obligation_id")
+            break
+        for key in (
+            "compiler_surface",
+            "expected_failure_mode",
+            "logic_family",
+            "premise_hints",
+            "source_copy_policy",
+            "target_view",
+        ):
+            if key not in candidate:
+                reasons.append(f"missing_drafted_logic_{key}")
+                break
+        if reasons and str(reasons[-1]).startswith("missing_drafted_logic_"):
             break
         if _drafted_logic_candidate_copies_source_span(candidate_text, task.source_span):
             reasons.append("drafted_logic_candidate_copies_source_span")
@@ -1262,6 +1299,19 @@ def _mapping_sequence(value: Any) -> Sequence[Mapping[str, Any]]:
     return tuple(dict(item) for item in value if isinstance(item, Mapping))
 
 
+def _optional_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "y"}:
+        return True
+    if text in {"0", "false", "no", "n"}:
+        return False
+    return default
+
+
 def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         return ()
@@ -1281,23 +1331,65 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             candidate_text = candidate_text[:_LEANSTRAL_DRAFTED_LOGIC_MAX_TEXT_CHARS].rstrip()
         if not candidate_text:
             continue
+        logic_family = _feature_key_part(
+            item.get("logic_family")
+            or item.get("family")
+            or item.get("view")
+            or "legal_ir"
+        )
+        proof_obligation_ids = _string_sequence(
+            item.get("proof_obligation_ids")
+            or item.get("proof_obligation_id")
+            or item.get("obligation_id")
+        )
+        premise_hints = _string_sequence(
+            item.get("premise_hints")
+            or item.get("selected_premises")
+            or item.get("premises")
+        )
+        target_view = _feature_key_part(
+            item.get("target_view")
+            or item.get("legal_ir_view")
+            or item.get("target_component")
+            or item.get("compiler_surface")
+            or logic_family
+        )
+        compiler_surface = _feature_key_part(
+            item.get("compiler_surface")
+            or item.get("target_component")
+            or item.get("target_view")
+            or target_view
+        )
+        expected_failure_mode = _feature_key_part(
+            item.get("expected_failure_mode")
+            or item.get("failure_mode")
+            or item.get("failure_reason")
+            or "unknown"
+        )
         payload: Dict[str, Any] = {
             "candidate": candidate_text,
+            "compiler_surface": compiler_surface,
+            "expected_failure_mode": expected_failure_mode,
             "guidance_only": True,
             "intended_use": "guidance_only",
-            "logic_family": _feature_key_part(
-                item.get("logic_family")
-                or item.get("family")
-                or item.get("view")
-                or "legal_ir"
+            "logic_family": logic_family,
+            "premise_hints": premise_hints,
+            "proof_obligation_ids": proof_obligation_ids,
+            "schema_version": LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
+            "source_copy_policy": "reject_full_span_copy",
+            "source_copy_rejected": _optional_bool(
+                item.get("source_copy_rejected")
+                if "source_copy_rejected" in item
+                else item.get("copy_source_span_rejected"),
+                default=False,
             ),
-            "schema_version": _LEANSTRAL_DRAFTED_LOGIC_SCHEMA_VERSION,
+            "target_view": target_view,
         }
+        if proof_obligation_ids:
+            payload["proof_obligation_id"] = proof_obligation_ids[0]
         for key in (
-            "compiler_surface",
             "evidence_id",
             "example_id",
-            "proof_obligation_id",
             "request_id",
             "source_span_hash",
             "target_component",
@@ -1307,6 +1399,9 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             text = str(item.get(key) or "").strip()
             if text:
                 payload[key] = text[:140].rstrip()
+        target_metrics = _string_sequence(item.get("target_metrics"))
+        if target_metrics:
+            payload["target_metrics"] = target_metrics[:8]
         rationale = str(item.get("rationale") or "").strip()
         if rationale:
             payload["rationale"] = rationale[:140].rstrip()
@@ -1316,11 +1411,14 @@ def _drafted_logic_candidates(value: Any) -> Sequence[Dict[str, Any]]:
             confidence = float("nan")
         if confidence == confidence and confidence not in (float("inf"), float("-inf")):
             payload["confidence"] = max(0.0, min(1.0, confidence))
+        else:
+            payload["confidence"] = 0.0
         identity = json.dumps(
             {
                 "candidate": payload.get("candidate"),
                 "logic_family": payload.get("logic_family"),
-                "proof_obligation_id": payload.get("proof_obligation_id"),
+                "proof_obligation_ids": payload.get("proof_obligation_ids"),
+                "target_view": payload.get("target_view"),
             },
             ensure_ascii=True,
             sort_keys=True,
@@ -1371,9 +1469,44 @@ def _theorem_registry_ids(registry: Optional[Mapping[str, Any]]) -> list[str]:
     )
 
 
+def _legal_ir_proof_obligations(task: "LegalIRLeanTask") -> list[Mapping[str, Any]]:
+    raw_obligations = task.proof_obligations or ()
+    if not isinstance(raw_obligations, Sequence) or isinstance(raw_obligations, (str, bytes)):
+        return []
+    return [dict(item) for item in raw_obligations if isinstance(item, Mapping)]
+
+
+def _legal_ir_proof_obligation_ids(task: "LegalIRLeanTask") -> list[str]:
+    return _unique_string_values(
+        obligation.get("obligation_id")
+        for obligation in _legal_ir_proof_obligations(task)
+    )
+
+
 def _first_theorem_id(task: LegalIRLeanTask) -> str:
     ids = _theorem_registry_ids(task.theorem_registry)
     return ids[0] if ids else ""
+
+
+def _first_proof_obligation_id(task: LegalIRLeanTask) -> str:
+    ids = _legal_ir_proof_obligation_ids(task)
+    if ids:
+        return ids[0]
+    return _first_theorem_id(task)
+
+
+def _first_proof_obligation_hints(task: LegalIRLeanTask) -> list[str]:
+    obligations = _legal_ir_proof_obligations(task)
+    if not obligations:
+        return []
+    return _string_sequence(obligations[0].get("premise_hints"))
+
+
+def _first_proof_obligation_value(task: LegalIRLeanTask, key: str, fallback: str = "") -> str:
+    obligations = _legal_ir_proof_obligations(task)
+    if not obligations:
+        return fallback
+    return str(obligations[0].get(key) or fallback).strip()
 
 
 def _leanstral_guidance_features(
@@ -1389,6 +1522,10 @@ def _leanstral_guidance_features(
 ) -> tuple[list[Dict[str, Any]], Dict[str, list[str]]]:
     feature_groups: Dict[str, list[str]] = {
         "leanstral_drafted_logic": [],
+        "leanstral_hammer_failure_modes": [],
+        "leanstral_hammer_obligations": [],
+        "leanstral_hammer_premise_hints": [],
+        "leanstral_hammer_target_views": [],
         "leanstral_rule_hints": [],
         "leanstral_target_metrics": [],
         "leanstral_theorem_templates": [],
@@ -1418,6 +1555,52 @@ def _leanstral_guidance_features(
                 "source": "leanstral_drafted_logic",
             }
         )
+        for obligation_id in _string_sequence(
+            candidate.get("proof_obligation_ids")
+            or candidate.get("proof_obligation_id")
+            or candidate.get("obligation_id")
+        )[:4]:
+            obligation_feature = f"leanstral:hammer_obligation:{_feature_key_part(obligation_id)}"
+            feature_groups["leanstral_hammer_obligations"].append(obligation_feature)
+            features.append(
+                {
+                    "feature": obligation_feature,
+                    "score": round(0.7 * score, 12),
+                    "source": "leanstral_hammer_obligation",
+                }
+            )
+        target_view = _feature_key_part(candidate.get("target_view") or candidate.get("legal_ir_view"))
+        if target_view != "unknown":
+            target_view_feature = f"leanstral:hammer_target_view:{target_view}"
+            feature_groups["leanstral_hammer_target_views"].append(target_view_feature)
+            features.append(
+                {
+                    "feature": target_view_feature,
+                    "score": round(0.65 * score, 12),
+                    "source": "leanstral_hammer_target_view",
+                }
+            )
+        failure_mode = _feature_key_part(candidate.get("expected_failure_mode"))
+        if failure_mode != "unknown":
+            failure_feature = f"leanstral:hammer_failure_mode:{failure_mode}"
+            feature_groups["leanstral_hammer_failure_modes"].append(failure_feature)
+            features.append(
+                {
+                    "feature": failure_feature,
+                    "score": round(0.55 * score, 12),
+                    "source": "leanstral_hammer_failure_mode",
+                }
+            )
+        for premise_hint in _string_sequence(candidate.get("premise_hints"))[:6]:
+            premise_feature = f"leanstral:hammer_premise_hint:{_feature_key_part(premise_hint)}"
+            feature_groups["leanstral_hammer_premise_hints"].append(premise_feature)
+            features.append(
+                {
+                    "feature": premise_feature,
+                    "score": round(0.5 * score, 12),
+                    "source": "leanstral_hammer_premise_hint",
+                }
+            )
 
     for hint in deterministic_rule_hints:
         hint_action = _feature_key_part(hint.get("action") or "rule_hint")
@@ -1644,6 +1827,7 @@ def _leanstral_prompt(task: LegalIRLeanTask) -> str:
             "Rule hints are review-only and must be grounded in the supplied modal IR and source span.",
             "Optionally include drafted_logic_candidates as guidance-only compact frame/modal/deontic/TDFOL/KG/CEC/prover logic.",
             "Drafted logic candidates must use abstract predicates, slots, symbols, hashes, or theorem IDs; do not copy full source text spans.",
+            "Every drafted_logic_candidate must cite Legal IR proof_obligation_ids when available and include premise_hints, target_view, logic_family, compiler_surface, expected_failure_mode, confidence, and source-copy metadata.",
             "When compiler_change_spec.patchable is false, do not propose a code change.",
             "When compiler_change_spec.patchable is true, rule hints may only target its allowed_paths and target_component.",
             "Set compiler_change_spec_id to task.compiler_change_spec.spec_id exactly.",
@@ -1652,9 +1836,16 @@ def _leanstral_prompt(task: LegalIRLeanTask) -> str:
             "candidate": "obligation(actor, action) unless exception_condition",
             "compiler_surface": "task.compiler_change_spec.target_component",
             "confidence": 0.0,
+            "expected_failure_mode": "hammer_unproved | syntax_rejected | reconstruction_failed | source_copy_rejected | unknown",
             "intended_use": "guidance_only",
             "logic_family": "deontic",
-            "proof_obligation_id": _first_theorem_id(task),
+            "premise_hints": _first_proof_obligation_hints(task),
+            "proof_obligation_id": _first_proof_obligation_id(task),
+            "proof_obligation_ids": [_first_proof_obligation_id(task)] if _first_proof_obligation_id(task) else [],
+            "schema_version": LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
+            "source_copy_policy": "reject_full_span_copy",
+            "source_copy_rejected": False,
+            "target_view": _first_proof_obligation_value(task, "legal_ir_view", "modal.frame_logic"),
         },
         "proposal_schema_version": LEANSTRAL_PROPOSAL_SCHEMA_VERSION,
         "python_patch_shape": {
@@ -1710,6 +1901,7 @@ def __getattr__(name: str) -> Any:
 
 __all__ = [
     "LEANSTRAL_DRAFT_GUIDANCE_SCHEMA_VERSION",
+    "LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION",
     "LEANSTRAL_PROPOSAL_SCHEMA_VERSION",
     "CompilerChangeSpec",
     "LegalIRLeanTask",

@@ -19,6 +19,8 @@ WATCHDOG_PID_FILE="${LOG_DIR}/${RUN_ID}.watchdog-supervisor.pid"
 LEANSTRAL_AUDIT_PID_FILE="${LOG_DIR}/${RUN_ID}.leanstral-audit.pid"
 ARGS_FILE="${LOG_DIR}/${RUN_ID}.args"
 STATE_FILE="${LOG_DIR}/${RUN_ID}.canonical-watchdog.state.json"
+LIFECYCLE_FILE="${LOG_DIR}/${RUN_ID}.lifecycle.env"
+RESTART_COUNT_FILE="${LOG_DIR}/${RUN_ID}.canonical-watchdog.restarts"
 PIPELINE_LOG="${LOG_DIR}/${RUN_ID}.pipeline.log"
 WATCHDOG_LOG="${LOG_DIR}/${RUN_ID}.canonical-watchdog.launch.log"
 LEANSTRAL_AUDIT_LOG="${LOG_DIR}/${RUN_ID}.leanstral-audit.log"
@@ -36,6 +38,19 @@ if [[ -f "${ARGS_FILE}" ]]; then
   echo "args_file=${ARGS_FILE}"
 else
   echo "args_file=missing"
+fi
+
+if [[ -f "${LIFECYCLE_FILE}" ]]; then
+  echo "lifecycle_file=${LIFECYCLE_FILE}"
+  sed -n '1,10p' "${LIFECYCLE_FILE}"
+else
+  echo "lifecycle_file=missing"
+fi
+
+if [[ -f "${RESTART_COUNT_FILE}" ]]; then
+  echo "supervisor_restart_count=$(sed -n '1p' "${RESTART_COUNT_FILE}")"
+else
+  echo "supervisor_restart_count=0"
 fi
 
 if [[ -f "${PID_FILE}" ]]; then

@@ -537,35 +537,9 @@ class SubprocessHammerBackendRunner:
 def default_hammer_backends() -> List[HammerBackendRunner]:
     """Return conservative local ATP/SMT backend runners."""
 
-    return [
-        SubprocessHammerBackendRunner(
-            name="z3",
-            executable="z3",
-            problem_format="smt-lib",
-            suffix=".smt2",
-        ),
-        SubprocessHammerBackendRunner(
-            name="cvc5",
-            executable="cvc5",
-            problem_format="smt-lib",
-            args=["--lang", "smt2"],
-            suffix=".smt2",
-        ),
-        SubprocessHammerBackendRunner(
-            name="vampire",
-            executable="vampire",
-            problem_format="tptp-fof",
-            args=["-t", "10", "--proof"],
-            suffix=".p",
-        ),
-        SubprocessHammerBackendRunner(
-            name="e_prover",
-            executable="eprover",
-            problem_format="tptp-fof",
-            args=["--auto", "--proof-object"],
-            suffix=".p",
-        ),
-    ]
+    from .hammer_backends import default_hammer_subprocess_backends
+
+    return default_hammer_subprocess_backends()
 
 
 class HammerProofReconstructor:

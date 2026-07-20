@@ -46,6 +46,7 @@ TRIAL_SECONDS="${TRIAL_SECONDS:-600}"
 TRIAL_COUNT="${TRIAL_COUNT:-6}"
 TOTAL_TRIAL_SECONDS=$((TRIAL_SECONDS * TRIAL_COUNT))
 FINAL_SECONDS="${FINAL_SECONDS:-$((8 * 60 * 60))}"
+FINAL_RUN_LABEL="${FINAL_RUN_LABEL:-8h}"
 SWEEP_LOOP_ROLE="${SWEEP_LOOP_ROLE:-autoencoder}"
 SWEEP_TEST_EVERY_CYCLES="${SWEEP_TEST_EVERY_CYCLES:-48}"
 FINAL_TEST_EVERY_CYCLES="${FINAL_TEST_EVERY_CYCLES:-96}"
@@ -142,6 +143,13 @@ COMMON_ARGS=(
   --bridge-evaluate-provers "${BRIDGE_EVALUATE_PROVERS}"
 )
 
+EXTRA_DAEMON_ARGS_ARRAY=()
+if [[ -n "${EXTRA_DAEMON_ARGS:-}" ]]; then
+  # Rollout wrappers pass plain CLI tokens here; paths used by these runs do not contain spaces.
+  read -r -a EXTRA_DAEMON_ARGS_ARRAY <<< "${EXTRA_DAEMON_ARGS}"
+  COMMON_ARGS+=("${EXTRA_DAEMON_ARGS_ARRAY[@]}")
+fi
+
 PAIRED_ARGS=(
   --paired-poll-seconds 1
   --paired-grace-seconds 20
@@ -177,6 +185,7 @@ echo "[pipeline] codex_model=${CODEX_MODEL}"
 echo "[pipeline] sweep_loop_role=${SWEEP_LOOP_ROLE}"
 echo "[pipeline] hyperparam_budget_seconds=${TOTAL_TRIAL_SECONDS}"
 echo "[pipeline] final_run_seconds=${FINAL_SECONDS}"
+echo "[pipeline] final_run_label=${FINAL_RUN_LABEL}"
 echo "[pipeline] autoencoder_device=${AUTOENCODER_DEVICE}"
 echo "[pipeline] bridge_loss_adapters=${BRIDGE_LOSS_ADAPTERS}"
 echo "[pipeline] bridge_evaluate_provers=${BRIDGE_EVALUATE_PROVERS}"
@@ -197,6 +206,7 @@ echo "[pipeline] codex_parallel_scopes=${CODEX_PARALLEL_SCOPES}"
 echo "[pipeline] codex_scope_workers=${CODEX_SCOPE_WORKERS}"
 echo "[pipeline] codex_vector_min_bundle_size=${CODEX_VECTOR_MIN_BUNDLE_SIZE}"
 echo "[pipeline] codex_vector_max_bundle_wait_seconds=${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS}"
+echo "[pipeline] extra_daemon_arg_count=${#EXTRA_DAEMON_ARGS_ARRAY[@]}"
 
 best_run_id=""
 best_cfg=""
@@ -447,7 +457,7 @@ fi
 
 echo "[pipeline] best_trial=${best_run_id} cfg=${best_cfg} ce=${best_ce} cos=${best_cos} score=${best_score} selection_bucket=${best_selection_bucket}"
 
-final_run_id="${BASE_RUN_ID}-best-8h"
+final_run_id="${BASE_RUN_ID}-best-${FINAL_RUN_LABEL}"
 lr=""
 ce=""
 rec=""
@@ -535,7 +545,7 @@ for kv in ${best_cfg}; do
   esac
 done
 
-echo "[pipeline] starting final 8h run_id=${final_run_id}"
+echo "[pipeline] starting final ${FINAL_RUN_LABEL} run_id=${final_run_id}"
 final_args=(
   --loop-role paired
   --run-id "${final_run_id}"
@@ -623,7 +633,7 @@ PY
 )"
     if [[ "${recovered}" == "1" ]]; then
       echo "[pipeline] recovered_final_nonzero_exit run_id=${final_run_id} code=${final_exit_code} cycles=${final_cycles} best_validation_ce=${final_best_ce} stop_reason=${final_stop_reason:-unknown}"
-      echo "[pipeline] completed final 8h run_id=${final_run_id}"
+      echo "[pipeline] completed final ${FINAL_RUN_LABEL} run_id=${final_run_id}"
       exit 0
     fi
     echo "[pipeline] final_nonzero_exit_unrecovered run_id=${final_run_id} code=${final_exit_code} cycles=${final_cycles} best_validation_ce=${final_best_ce}"
@@ -633,4 +643,4 @@ PY
   exit "${final_exit_code}"
 fi
 
-echo "[pipeline] completed final 8h run_id=${final_run_id}"
+echo "[pipeline] completed final ${FINAL_RUN_LABEL} run_id=${final_run_id}"

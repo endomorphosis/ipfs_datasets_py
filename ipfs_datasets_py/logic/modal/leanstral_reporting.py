@@ -24,6 +24,7 @@ from .leanstral_audit import (
 )
 from .leanstral_verifier import (
     LeanstralAuditVerificationResult,
+    LeanstralHammerVerificationReport,
     LeanstralVerificationOutcome,
 )
 
@@ -246,6 +247,11 @@ class LeanstralRuleGapEvidence:
     proof_obligation_ids: Sequence[str]
     affected_ir_families: Sequence[str]
     drafted_logic_candidates: Sequence[Dict[str, Any]] = field(default_factory=tuple)
+    hammer_guidance_artifacts: Sequence[Dict[str, Any]] = field(default_factory=tuple)
+    hammer_backend_health: Mapping[str, Any] = field(default_factory=dict)
+    hammer_proof_status: Mapping[str, Any] = field(default_factory=dict)
+    hammer_reconstruction_status: Mapping[str, Any] = field(default_factory=dict)
+    codex_projection: Mapping[str, Any] = field(default_factory=dict)
     examples: Sequence[Dict[str, Any]] = field(default_factory=tuple)
     metric_attribution: Mapping[str, Any] = field(default_factory=dict)
     reasons: Sequence[str] = field(default_factory=tuple)
@@ -260,7 +266,16 @@ class LeanstralRuleGapEvidence:
                 dict(candidate) for candidate in self.drafted_logic_candidates
             ],
             "evidence_id": self.evidence_id,
+            "codex_projection": _json_ready(self.codex_projection),
             "examples": [dict(example) for example in self.examples],
+            "hammer_backend_health": _json_ready(self.hammer_backend_health),
+            "hammer_guidance_artifacts": [
+                dict(artifact) for artifact in self.hammer_guidance_artifacts
+            ],
+            "hammer_proof_status": _json_ready(self.hammer_proof_status),
+            "hammer_reconstruction_status": _json_ready(
+                self.hammer_reconstruction_status
+            ),
             "metric_attribution": _json_ready(self.metric_attribution),
             "proof_obligation_ids": list(self.proof_obligation_ids),
             "reasons": list(self.reasons),
@@ -498,6 +513,7 @@ class _AuditRecord:
     verification: Any
     request_id: str = ""
     request: Mapping[str, Any] = field(default_factory=dict)
+    hammer_verification: Any = None
 
 
 def build_leanstral_rule_gap_report(
@@ -1094,13 +1110,22 @@ def _drafted_logic_candidates_from_metadata(
         "confidence",
         "evidence_id",
         "example_id",
+        "expected_failure_mode",
         "guidance_only",
         "intended_use",
         "logic_family",
+        "premise_hints",
         "proof_obligation_id",
+        "proof_obligation_ids",
         "request_id",
+        "schema_version",
+        "source_copy_policy",
+        "source_copy_rejected",
         "source_span_hash",
+        "target_component",
         "target_metric",
+        "target_metrics",
+        "target_view",
     }
     for item in raw:
         if not isinstance(item, Mapping):
@@ -1452,13 +1477,28 @@ def _coerce_audit_record(item: Any) -> _AuditRecord:
         isinstance(item, list) and not isinstance(item, (str, bytes))
     ):
         values = list(item)
-        if len(values) >= 3:
+        if len(values) >= 4:
             request_id = str(getattr(values[0], "request_id", "") or "")
             return _AuditRecord(
                 _coerce_response(values[1]),
                 values[2],
                 request_id=request_id,
                 request=_coerce_request_payload(values[0]),
+                hammer_verification=values[3],
+            )
+        if len(values) == 3 and _coerce_response(values[1]) is not None:
+            request_id = str(getattr(values[0], "request_id", "") or "")
+            return _AuditRecord(
+                _coerce_response(values[1]),
+                values[2],
+                request_id=request_id,
+                request=_coerce_request_payload(values[0]),
+            )
+        if len(values) == 3:
+            return _AuditRecord(
+                _coerce_response(values[0]),
+                values[1],
+                hammer_verification=values[2],
             )
         if len(values) == 2:
             return _AuditRecord(_coerce_response(values[0]), values[1])
@@ -1474,17 +1514,33 @@ def _coerce_audit_record(item: Any) -> _AuditRecord:
             or item.get("verifier_result")
             or item.get("result")
         )
+        hammer_verification = (
+            item.get("hammer_verification")
+            or item.get("hammer_verification_report")
+            or item.get("leanstral_hammer_verification")
+            or item.get("hammer_report")
+        )
         request_id = str(item.get("request_id", "")).strip()
         return _AuditRecord(
             response,
             verification,
             request_id=request_id,
             request=_coerce_request_payload(item.get("request") or {}),
+            hammer_verification=hammer_verification,
         )
     response = _coerce_response(getattr(item, "response", None))
     verification = getattr(item, "verification", None) or getattr(item, "verification_result", None)
     request_id = str(getattr(item, "request_id", "") or "").strip()
-    return _AuditRecord(response, verification, request_id=request_id)
+    hammer_verification = (
+        getattr(item, "hammer_verification", None)
+        or getattr(item, "hammer_verification_report", None)
+    )
+    return _AuditRecord(
+        response,
+        verification,
+        request_id=request_id,
+        hammer_verification=hammer_verification,
+    )
 
 
 def _coerce_response(value: Any) -> Optional[LeanstralAuditResponse]:
@@ -1553,6 +1609,156 @@ def _verification_verified_by(value: Any) -> Sequence[str]:
     return _dedupe_strings(str(name) for name in verified_by or () if str(name).strip())
 
 
+def _hammer_payload(value: Any) -> Dict[str, Any]:
+    if isinstance(value, LeanstralHammerVerificationReport):
+        return value.to_dict()
+    if hasattr(value, "to_dict"):
+        payload = value.to_dict()
+        return dict(payload) if isinstance(payload, Mapping) else {}
+    if isinstance(value, Mapping):
+        return dict(value)
+    return {}
+
+
+def _hammer_guidance_artifacts_from_value(
+    value: Any,
+    *,
+    max_artifacts: int = 12,
+) -> List[Dict[str, Any]]:
+    payload = _hammer_payload(value)
+    raw_artifacts: List[Mapping[str, Any]] = []
+    for key in ("hammer_guidance_artifacts", "verified_guidance", "guidance_artifacts"):
+        raw = payload.get(key)
+        if isinstance(raw, Sequence) and not isinstance(raw, (str, bytes, bytearray)):
+            raw_artifacts.extend(item for item in raw if isinstance(item, Mapping))
+    for candidate in payload.get("candidate_results", []) or []:
+        if not isinstance(candidate, Mapping):
+            continue
+        verified = candidate.get("verified_guidance")
+        if isinstance(verified, Sequence) and not isinstance(verified, (str, bytes, bytearray)):
+            raw_artifacts.extend(item for item in verified if isinstance(item, Mapping))
+        hammer_report = candidate.get("hammer_report")
+        if isinstance(hammer_report, Mapping):
+            artifacts = hammer_report.get("artifacts")
+            if isinstance(artifacts, Sequence) and not isinstance(artifacts, (str, bytes, bytearray)):
+                raw_artifacts.extend(
+                    item
+                    for item in artifacts
+                    if isinstance(item, Mapping) and bool(item.get("trusted"))
+                )
+    artifacts: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw_artifacts:
+        artifact = _json_ready(dict(item))
+        if not isinstance(artifact, Mapping):
+            continue
+        artifact = dict(artifact)
+        digest = canonical_sha256(artifact)
+        artifact.setdefault("artifact_sha256", digest)
+        key = str(artifact.get("guidance_id") or digest)
+        if key in seen:
+            continue
+        seen.add(key)
+        artifacts.append(artifact)
+        if len(artifacts) >= max_artifacts:
+            break
+    return artifacts
+
+
+def _hammer_backend_health_from_value(value: Any) -> Dict[str, Any]:
+    payload = _hammer_payload(value)
+    direct = payload.get("hammer_backend_health") or payload.get("backend_health")
+    if isinstance(direct, Mapping):
+        return _json_ready(dict(direct))
+    for candidate in payload.get("candidate_results", []) or []:
+        if not isinstance(candidate, Mapping):
+            continue
+        hammer_report = candidate.get("hammer_report")
+        if not isinstance(hammer_report, Mapping):
+            continue
+        metadata = hammer_report.get("metadata")
+        if isinstance(metadata, Mapping) and isinstance(metadata.get("backend_health"), Mapping):
+            return _json_ready(dict(metadata["backend_health"]))
+    return {}
+
+
+def _hammer_proof_status_from_value(value: Any) -> Dict[str, Any]:
+    payload = _hammer_payload(value)
+    if not payload:
+        return {}
+    candidate_results = [
+        item for item in payload.get("candidate_results", []) or [] if isinstance(item, Mapping)
+    ]
+    proof_reports = [
+        item.get("hammer_report")
+        for item in candidate_results
+        if isinstance(item.get("hammer_report"), Mapping)
+    ]
+    obligation_count = sum(int(report.get("obligation_count", 0) or 0) for report in proof_reports)
+    proved_count = sum(int(report.get("proved_count", 0) or 0) for report in proof_reports)
+    trusted_count = sum(int(report.get("trusted_count", 0) or 0) for report in proof_reports)
+    return {
+        "accepted": bool(payload.get("accepted")),
+        "candidate_count": int(payload.get("candidate_count", len(candidate_results)) or 0),
+        "obligation_count": obligation_count,
+        "proved_count": proved_count,
+        "proof_success_rate": round(proved_count / obligation_count, 12)
+        if obligation_count
+        else 0.0,
+        "trusted": bool(payload.get("trusted")),
+        "trusted_count": trusted_count,
+        "trusted_success_rate": round(trusted_count / obligation_count, 12)
+        if obligation_count
+        else 0.0,
+    }
+
+
+def _hammer_reconstruction_status_from_value(value: Any) -> Dict[str, Any]:
+    artifacts = _hammer_guidance_artifacts_from_value(value)
+    statuses = _dedupe_strings(
+        str(artifact.get("reconstruction_status") or "")
+        for artifact in artifacts
+        if str(artifact.get("reconstruction_status") or "").strip()
+    )
+    checked = sum(1 for artifact in artifacts if bool(artifact.get("proof_checked")))
+    return {
+        "proof_checked_count": checked,
+        "reconstruction_statuses": list(statuses),
+        "trusted_artifact_count": len(artifacts),
+    }
+
+
+def _hammer_codex_projection_from_artifacts(
+    artifacts: Sequence[Mapping[str, Any]],
+    *,
+    fallback_reasons: Sequence[str] = (),
+) -> Dict[str, Any]:
+    if not artifacts:
+        return {}
+    return {
+        "guidance_ids": _dedupe_strings(
+            str(artifact.get("guidance_id") or "") for artifact in artifacts
+        ),
+        "projection_source": "hammer_verified_guidance",
+        "proof_obligation_ids": _dedupe_strings(
+            obligation_id
+            for artifact in artifacts
+            for obligation_id in _sequence_values(artifact.get("proof_obligation_ids"))
+        ),
+        "reasons": list(_dedupe_strings(fallback_reasons)),
+        "target_components": _dedupe_strings(
+            str(artifact.get("target_component") or artifact.get("legal_ir_view") or "")
+            for artifact in artifacts
+        ),
+        "target_metrics": _dedupe_strings(
+            metric
+            for artifact in artifacts
+            for metric in _sequence_values(artifact.get("target_metrics"))
+        ),
+        "trusted_guidance_count": len(artifacts),
+    }
+
+
 def _record_request_id(record: _AuditRecord) -> str:
     if record.request_id:
         return record.request_id
@@ -1600,6 +1806,8 @@ def _evidence_from_record(
     evidence_id = "leanstral-evidence-" + hashlib.sha256(
         json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()[:16]
+    hammer_artifacts = _hammer_guidance_artifacts_from_value(record.hammer_verification)
+    hammer_reasons = _verification_reasons(record.hammer_verification)
     return LeanstralRuleGapEvidence(
         evidence_id=evidence_id,
         role=role,
@@ -1616,9 +1824,24 @@ def _evidence_from_record(
                 audit_evidence_id=evidence_id,
             )
         ),
+        hammer_guidance_artifacts=tuple(hammer_artifacts),
+        hammer_backend_health=_hammer_backend_health_from_value(record.hammer_verification),
+        hammer_proof_status=_hammer_proof_status_from_value(record.hammer_verification),
+        hammer_reconstruction_status=_hammer_reconstruction_status_from_value(
+            record.hammer_verification
+        ),
+        codex_projection=_hammer_codex_projection_from_artifacts(
+            hammer_artifacts,
+            fallback_reasons=hammer_reasons,
+        ),
         examples=tuple(_examples_from_record(record)[:max_examples]),
         metric_attribution=_metric_attribution_from_record(record),
-        reasons=_verification_reasons(record.verification),
+        reasons=_dedupe_strings(
+            [
+                *_verification_reasons(record.verification),
+                *hammer_reasons,
+            ]
+        ),
         verified_by=_verification_verified_by(record.verification),
     )
 
@@ -1660,12 +1883,28 @@ def _drafted_logic_candidates_from_response(
             "compiler_surface",
             "evidence_id",
             "example_id",
+            "expected_failure_mode",
+            "schema_version",
+            "source_copy_policy",
             "source_span_hash",
+            "target_component",
             "target_metric",
+            "target_view",
         ):
             text = _bounded_string(item.get(key), 140)
             if text:
                 payload[key] = text
+        if "source_copy_rejected" in item:
+            raw_rejected = item.get("source_copy_rejected")
+            payload["source_copy_rejected"] = (
+                raw_rejected
+                if isinstance(raw_rejected, bool)
+                else str(raw_rejected).strip().lower() in {"1", "true", "yes", "y"}
+            )
+        for key in ("premise_hints", "proof_obligation_ids", "target_metrics"):
+            values = _dedupe_strings(_sequence_values(item.get(key)))[:12]
+            if values:
+                payload[key] = values
         confidence = _finite_float(item.get("confidence"))
         if confidence:
             payload["confidence"] = confidence

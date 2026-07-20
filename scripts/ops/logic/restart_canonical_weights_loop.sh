@@ -9,6 +9,7 @@ LOG_DIR="${ROOT_DIR}/workspace/test-logs"
 PIPELINE_LOG="${LOG_DIR}/${BASE_RUN_ID}.pipeline.log"
 PID_FILE="${LOG_DIR}/${BASE_RUN_ID}.pid"
 ARGS_SNAPSHOT="${LOG_DIR}/${BASE_RUN_ID}.args"
+LIFECYCLE_FILE="${LOG_DIR}/${BASE_RUN_ID}.lifecycle.env"
 if [[ -n "${PYTHON_BIN:-}" ]]; then
   PYTHON_BIN="${PYTHON_BIN}"
 elif [[ -x "${ROOT_DIR}/.venv-cuda/bin/python" ]] && \
@@ -105,6 +106,19 @@ CMD=(
   --leanstral-rule-gap-max-todos-per-scope "${LEANSTRAL_RULE_GAP_MAX_TODOS_PER_SCOPE:-2}"
   --leanstral-rule-gap-require-executor-available "${LEANSTRAL_RULE_GAP_REQUIRE_EXECUTOR_AVAILABLE:-true}"
   --leanstral-rule-gap-max-report-age-seconds "${LEANSTRAL_RULE_GAP_MAX_REPORT_AGE_SECONDS:-604800}"
+  --leanstral-direct-guidance-projection-enabled "${LEANSTRAL_DIRECT_GUIDANCE_PROJECTION_ENABLED:-true}"
+  --leanstral-direct-guidance-require-executor-available "${LEANSTRAL_DIRECT_GUIDANCE_REQUIRE_EXECUTOR_AVAILABLE:-false}"
+  --leanstral-direct-guidance-train-autoencoder "${LEANSTRAL_DIRECT_GUIDANCE_TRAIN_AUTOENCODER:-true}"
+  --leanstral-direct-guidance-max-training-items "${LEANSTRAL_DIRECT_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
+  --daemon-hammer-guidance-enabled "${DAEMON_HAMMER_GUIDANCE_ENABLED:-true}"
+  --daemon-hammer-guidance-cache-enabled "${DAEMON_HAMMER_GUIDANCE_CACHE_ENABLED:-true}"
+  --daemon-hammer-guidance-max-samples-per-cycle "${DAEMON_HAMMER_GUIDANCE_MAX_SAMPLES_PER_CYCLE:-2}"
+  --daemon-hammer-guidance-max-obligations-per-sample "${DAEMON_HAMMER_GUIDANCE_MAX_OBLIGATIONS_PER_SAMPLE:-8}"
+  --daemon-hammer-guidance-max-premises "${DAEMON_HAMMER_GUIDANCE_MAX_PREMISES:-64}"
+  --daemon-hammer-guidance-timeout-seconds "${DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS:-5}"
+  --daemon-hammer-guidance-parallel-workers "${DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS:-2}"
+  --daemon-hammer-guidance-train-autoencoder "${DAEMON_HAMMER_GUIDANCE_TRAIN_AUTOENCODER:-true}"
+  --daemon-hammer-guidance-max-training-items "${DAEMON_HAMMER_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
   --autoencoder-target-scope-filters "${AUTOENCODER_TARGET_SCOPE_FILTERS:-}"
   --autoencoder-require-prover-confirmation "${AUTOENCODER_REQUIRE_PROVER_CONFIRMATION:-true}"
   --bridge-loss-adapters "${BRIDGE_LOSS_ADAPTERS:-modal_frame_logic,deontic_norms,fol_tdfol,cec_dcec,external_prover_router,zkp_attestation}"
@@ -141,6 +155,7 @@ CMD=(
   --codex-target-file-lane-lock-scopes "${CODEX_TARGET_FILE_LANE_LOCK_SCOPES:-all}"
   --paired-poll-seconds "${PAIRED_POLL_SECONDS:-5}"
   --paired-grace-seconds "${PAIRED_GRACE_SECONDS:-300}"
+  --paired-supervisor-backend "${PAIRED_SUPERVISOR_BACKEND:-accelerate_style}"
 )
 
 MAX_CYCLES_VALUE="${MAX_CYCLES:-0}"
@@ -150,6 +165,18 @@ fi
 
 printf '%s\n' "${CMD[@]}" > "${ARGS_SNAPSHOT}"
 log_line "saved_args_snapshot path=${ARGS_SNAPSHOT}"
+
+STARTED_EPOCH="$(date +%s)"
+DURATION_VALUE="${DURATION_SECONDS:-28800}"
+DEADLINE_EPOCH=$((STARTED_EPOCH + DURATION_VALUE))
+cat > "${LIFECYCLE_FILE}.tmp" <<EOF
+RUN_ID=${BASE_RUN_ID}
+STARTED_EPOCH=${STARTED_EPOCH}
+DEADLINE_EPOCH=${DEADLINE_EPOCH}
+DURATION_SECONDS=${DURATION_VALUE}
+EOF
+mv "${LIFECYCLE_FILE}.tmp" "${LIFECYCLE_FILE}"
+log_line "saved_lifecycle path=${LIFECYCLE_FILE} deadline_epoch=${DEADLINE_EPOCH}"
 
 log_line "starting_canonical_weights_loop run_id=${BASE_RUN_ID}"
 setsid "${CMD[@]}" > "${PIPELINE_LOG}" 2>&1 &
