@@ -500,7 +500,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-021 Emit deterministic compiler/decompiler contract telemetry
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P1
 - Track: compiler-telemetry
