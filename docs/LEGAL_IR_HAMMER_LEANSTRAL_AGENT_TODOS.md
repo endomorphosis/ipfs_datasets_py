@@ -844,7 +844,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-034 Refresh operator workflow for the expanded hammer/Leanstral plan
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P1
 - Track: docs
