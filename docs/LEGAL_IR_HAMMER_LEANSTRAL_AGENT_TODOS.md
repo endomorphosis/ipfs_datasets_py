@@ -12,6 +12,44 @@ Parser contract:
 
 Objective: integrate a hammer-style theorem proving bridge and Leanstral guidance into the legal text compiler/decompiler, autoencoder, and Codex loop without treating unverified language-model output as trusted reward signal.
 
+Operator contract:
+
+- This board is the supervisor's dependency source of truth. A dependency must name another task in this file; task lifecycle values are limited to `todo`, `in_progress`, `blocked`, and `completed`.
+- `Outputs` names the concrete implementation or documentation artifacts owned by a task. `Validation` is the executable, semicolon-delimited command set the supervisor must pass before merge. Do not infer completion from advisory JSON or from an artifact merely being present.
+- The expanded optimization targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, each retain their own focused output and validation contract below. PORTAL-LIR-HAMMER-034 is the final operator handoff and depends on the supervised representation rollout gate.
+- A generated patch, learned export, or model draft is never promoted merely because its producer task completed. Runtime trust and rollout evidence remain mandatory.
+
+Artifact and authority lanes:
+
+| Lane | Task families | Operator classification |
+| --- | --- | --- |
+| Deterministic compiler/decompiler repairs | PORTAL-LIR-HAMMER-012/013, 019-025, 030/031 | Version-controlled implementation candidates. They become deployable only after their focused validation and fixed-canary rollout gates pass. |
+| Trusted hammer/Leanstral guidance | PORTAL-LIR-HAMMER-001-011, 014-016, 022-026 | Structured facts accepted by deterministic validators and configured proof/reconstruction policy. Only these verified facts may reach the feature bus or bounded repair projection. |
+| Autoencoder-learned representation exports | PORTAL-LIR-HAMMER-009/010, 026/027, 032/033 | Source-free, sample-memory-free stable feature summaries. Exports are inert until a supervised promotion report passes per-view fixed-canary and rollback checks. |
+| Untrusted Leanstral drafts | PORTAL-LIR-HAMMER-006/007, 015, 024/025 | Proposals only. Raw drafts, free-form proof text, and rejected candidates are never proof, ground truth, compiler repairs, or direct training targets. |
+
+Expanded optimization target manifest:
+
+| Target | Concrete output focus | Focused validation |
+| --- | --- | --- |
+| 019 canonical contracts | Contract registry and contract tests | `test_legal_ir_view_contracts.py` |
+| 020 obligation coverage | Contract-derived obligations | `test_legal_ir_obligation_contract_coverage.py` |
+| 021 contract telemetry | Per-view deterministic telemetry and daemon summary integration | `test_legal_ir_contract_telemetry.py` |
+| 022 premise ranking | Contract/failure-aware deterministic selector | `test_legal_ir_premise_selection.py` |
+| 023 translation receipts | Typed SMT/TPTP/Lean translation and reconstruction receipts | `test_legal_ir_hammer_translation.py` plus pipeline regression |
+| 024 candidate sanitizer | Failure-branch prompts and strict rejection paths | `test_leanstral_failure_branch_candidates.py` plus schema regression |
+| 025 bounded subgoals | Deterministic failed-obligation decomposition | `test_legal_ir_subgoal_decomposition.py` |
+| 026 trusted feature bus | Bounded verified guidance ingestion | `test_modal_autoencoder_trusted_feature_bus.py` plus hammer guidance regression |
+| 027 per-view metrics | Seven-family IR, learned, proof, reconstruction, and copy metrics | `test_legal_ir_view_family_metrics.py` plus objective regression |
+| 028 adversarial guardrails | Source-copy fixtures and deterministic/learned rejection tests | Both `test_source_copy_reward_hack_*` suites |
+| 029 repair clustering | Recurrence-aware bounded Codex TODOs | `test_hammer_failure_clustering_todos.py` plus projection regression |
+| 030 compiler repairs | Clustered deterministic compiler lane fixes | Clustered and baseline verified-gap repair tests |
+| 031 decompiler repairs | Deterministic round-trip preservation fixes | Clustered and baseline decompiler round-trip tests |
+| 032 learned export promotion | Stable feature export and deterministic guidance promotion | Learned-guidance promotion plus per-view metric tests |
+| 033 supervised rollout | Fail-closed smoke, hparam, and 24-hour promotion gates | Representation rollout plus baseline rollout-gate tests |
+
+The manifest is an operator index. The full paths and commands in each task's `Outputs` and `Validation` fields are authoritative for the supervisor.
+
 ## PORTAL-LIR-HAMMER-001 Define hammer guidance artifact schema
 
 - Status: completed
@@ -439,7 +477,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 {
   "phase": "handoff",
   "scope": "operator_docs",
-  "example_supervisor_command": "PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon --todo docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md --task-prefix '## PORTAL-'"
+  "example_supervisor_command": "PYTHONPATH=/home/barberb/portland-laws.github.io/ipfs_accelerate_py:. /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_daemon --once --todo-path docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md --state-dir workspace/hammer-leanstral-supervisor --state-prefix hammer_leanstral --task-prefix '## PORTAL-'"
 }
 ```
 
