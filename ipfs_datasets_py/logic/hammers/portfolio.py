@@ -23,7 +23,10 @@ Pipeline
    text to its own temporary file, and runs every permitted attempt through
    :func:`run_bounded_solver_process` under a
    :class:`concurrent.futures.ThreadPoolExecutor` bounded by
-   ``policy.max_parallel_processes`` (the process-count budget).
+   ``policy.max_parallel_processes`` (the local process-count budget), while
+   a host-global parent lease and one child lease per solver prevent this
+   nested pool from oversubscribing other Hammer, Lean, validation, or Codex
+   processes.
 3. Each attempt's raw process outcome is parsed into an untrusted
    :class:`~.models.SolverVerdict` (never a "proved"/"verified" claim beyond
    what the raw solver output actually said) and recorded as a
@@ -71,6 +74,16 @@ import time
 from dataclasses import asdict, dataclass, field
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
+    GlobalResourceScheduler,
+    LeaseCancelledError,
+    LeaseTimeoutError,
+    ResourceLane,
+    ResourceLease,
+    ResourceLeaseToken,
+    get_global_resource_scheduler,
+)
 
 from .corpus import compute_content_digest
 from .models import (
@@ -128,6 +141,28 @@ _POLL_INTERVAL_SECONDS = 0.05
 #: Bounded timeout (seconds) for the ``--version`` metadata probe run once
 #: per resolved executable.
 _VERSION_PROBE_TIMEOUT_SECONDS = 5.0
+
+
+class _PortfolioCancellationSignal:
+    """Local race cancellation combined with caller-owned cancellation."""
+
+    def __init__(self, external: Optional[threading.Event]) -> None:
+        self._local = threading.Event()
+        self._external = external
+
+    def is_set(self) -> bool:
+        return self._local.is_set() or bool(
+            self._external is not None and self._external.is_set()
+        )
+
+    def set(self) -> None:
+        self._local.set()
+
+    def wait(self, timeout: Optional[float] = None) -> bool:
+        if self.is_set():
+            return True
+        self._local.wait(timeout)
+        return self.is_set()
 
 
 # ---------------------------------------------------------------------------
@@ -499,6 +534,8 @@ class PortfolioRunResult:
             completing (as opposed to running to a timeout or a genuine
             verdict) because another attempt reached a conclusive verdict
             first.
+        resource_telemetry: Source-free global scheduler capacity, saturation,
+            and wait-time telemetry captured for this portfolio run.
     """
 
     schema_version: str = SCHEMA_VERSION
@@ -507,6 +544,7 @@ class PortfolioRunResult:
     evidence: Dict[str, SolverAttemptEvidence] = field(default_factory=dict)
     denied: List[Dict[str, str]] = field(default_factory=list)
     cancelled_attempt_ids: List[str] = field(default_factory=list)
+    resource_telemetry: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -516,6 +554,7 @@ class PortfolioRunResult:
             "evidence": {k: v.to_dict() for k, v in self.evidence.items()},
             "denied": [dict(entry) for entry in self.denied],
             "cancelled_attempt_ids": list(self.cancelled_attempt_ids),
+            "resource_telemetry": dict(self.resource_telemetry),
         }
 
     @classmethod
@@ -538,6 +577,7 @@ class PortfolioRunResult:
             evidence=evidence,
             denied=[dict(entry) for entry in data.get("denied", [])],
             cancelled_attempt_ids=list(data.get("cancelled_attempt_ids", [])),
+            resource_telemetry=dict(data.get("resource_telemetry") or {}),
         )
 
 
@@ -558,7 +598,9 @@ class SolverPortfolio:
     can exercise the full orchestration (parallelism, the process-count
     budget, cancellation) deterministically without needing real solver
     binaries installed; production callers should leave both at their
-    defaults.
+    defaults.  ``resource_scheduler`` defaults to the one host-global
+    process-safe scheduler; callers that already hold a Hammer request lease
+    can pass it to :meth:`run` as ``parent_lease``.
     """
 
     def __init__(
@@ -569,6 +611,9 @@ class SolverPortfolio:
             [List[str]], SolverProcessOutcome
         ] = run_bounded_solver_process,
         version_prober: Callable[[str, Any], Optional[str]] = _probe_solver_version,
+        resource_scheduler: Optional[GlobalResourceScheduler] = None,
+        resource_lane: str = ResourceLane.HAMMER_LEAN.value,
+        resource_wait_timeout_seconds: Optional[float] = None,
     ) -> None:
         policy.validate()
         self.policy = policy
@@ -576,6 +621,16 @@ class SolverPortfolio:
         self._version_prober = version_prober
         self._version_cache: Dict[str, Optional[str]] = {}
         self._version_cache_lock = threading.Lock()
+        # Every default-constructed portfolio facade points at the same
+        # process-safe state file, including portfolios created by unrelated
+        # Hammer request processes.
+        self.resource_scheduler = resource_scheduler or get_global_resource_scheduler()
+        self.resource_lane = str(resource_lane).strip()
+        if not self.resource_lane:
+            raise ValueError("resource_lane must be non-empty")
+        if resource_wait_timeout_seconds is not None and resource_wait_timeout_seconds < 0:
+            raise ValueError("resource_wait_timeout_seconds cannot be negative")
+        self.resource_wait_timeout_seconds = resource_wait_timeout_seconds
 
     def resolve_attempts(
         self, attempts: Sequence[PortfolioAttemptSpec]
@@ -658,12 +713,20 @@ class SolverPortfolio:
         return version
 
     def run(
-        self, request_id: str, attempts: Sequence[PortfolioAttemptSpec]
+        self,
+        request_id: str,
+        attempts: Sequence[PortfolioAttemptSpec],
+        *,
+        parent_lease: Optional[ResourceLease | ResourceLeaseToken] = None,
+        cancel_event: Optional[threading.Event] = None,
     ) -> PortfolioRunResult:
         """Execute every policy-permitted entry of ``attempts`` in parallel,
         bounded by ``policy.max_parallel_processes`` concurrently-running
         subprocesses, honoring per-solver time/CPU/memory budgets and the
-        portfolio's cancellation-on-first-conclusive-verdict policy.
+        portfolio's cancellation-on-first-conclusive-verdict policy.  The
+        portfolio obtains one resource envelope, and every solver consumes a
+        child lease inside that envelope rather than being charged globally a
+        second time.
         """
 
         _require_nonempty_str(request_id, field_name="request_id", owner="SolverPortfolio.run")
@@ -672,38 +735,62 @@ class SolverPortfolio:
         if not permitted:
             return PortfolioRunResult(request_id=request_id, denied=denied)
 
-        cancel_event = threading.Event()
+        portfolio_cancel_event = _PortfolioCancellationSignal(cancel_event)
         records: List[SolverAttemptRecord] = []
         evidence: Dict[str, SolverAttemptEvidence] = {}
         cancelled_ids: List[str] = []
 
-        with TemporaryDirectory(prefix="itp_hammer_portfolio_") as tmp_dir:
-            work_items = []
-            for index, (spec, executable_path) in enumerate(permitted):
-                budget = self.policy.budget_for(spec.solver_name)
-                attempt_id = (
-                    f"{request_id}:{spec.translation.translation_id}:"
-                    f"{spec.solver_name}:{index}"
-                )
-                work_items.append((spec, executable_path, budget, attempt_id, tmp_dir))
+        max_workers = min(
+            len(permitted), max(1, int(self.policy.max_parallel_processes))
+        )
+        budgets = [self.policy.budget_for(spec.solver_name) for spec, _ in permitted]
+        concurrent_memory = sum(
+            sorted((int(budget.memory_mb or 0) for budget in budgets), reverse=True)[
+                :max_workers
+            ]
+        )
+        telemetry_before = self.resource_scheduler.snapshot()
+        with self.resource_scheduler.acquire(
+            self.resource_lane,
+            cpu_slots=max_workers,
+            memory_mb=concurrent_memory,
+            parent_lease=parent_lease,
+            timeout=self.resource_wait_timeout_seconds,
+            cancel_event=portfolio_cancel_event,
+            request_id=request_id,
+        ) as portfolio_lease:
+            with TemporaryDirectory(prefix="itp_hammer_portfolio_") as tmp_dir:
+                work_items = []
+                for index, (spec, executable_path) in enumerate(permitted):
+                    budget = self.policy.budget_for(spec.solver_name)
+                    attempt_id = (
+                        f"{request_id}:{spec.translation.translation_id}:"
+                        f"{spec.solver_name}:{index}"
+                    )
+                    work_items.append((spec, executable_path, budget, attempt_id, tmp_dir))
 
-            max_workers = max(1, int(self.policy.max_parallel_processes))
-            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [
-                    executor.submit(self._run_one, request_id, item, cancel_event)
-                    for item in work_items
-                ]
-                for future in concurrent.futures.as_completed(futures):
-                    attempt_id, record, attempt_evidence, was_cancelled = future.result()
-                    records.append(record)
-                    evidence[attempt_id] = attempt_evidence
-                    if was_cancelled:
-                        cancelled_ids.append(attempt_id)
-                    if (
-                        self.policy.cancel_on_first_conclusive
-                        and record.verdict in _CONCLUSIVE_VERDICTS
-                    ):
-                        cancel_event.set()
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [
+                        executor.submit(
+                            self._run_one,
+                            request_id,
+                            item,
+                            portfolio_cancel_event,
+                            portfolio_lease.token,
+                        )
+                        for item in work_items
+                    ]
+                    for future in concurrent.futures.as_completed(futures):
+                        attempt_id, record, attempt_evidence, was_cancelled = future.result()
+                        records.append(record)
+                        evidence[attempt_id] = attempt_evidence
+                        if was_cancelled:
+                            cancelled_ids.append(attempt_id)
+                        if (
+                            self.policy.cancel_on_first_conclusive
+                            and record.verdict in _CONCLUSIVE_VERDICTS
+                        ):
+                            portfolio_cancel_event.set()
 
         records.sort(key=lambda r: r.attempt_id)
         return PortfolioRunResult(
@@ -712,13 +799,21 @@ class SolverPortfolio:
             evidence=evidence,
             denied=denied,
             cancelled_attempt_ids=sorted(cancelled_ids),
+            resource_telemetry={
+                "lane": self.resource_lane,
+                "portfolio_cpu_slots": max_workers,
+                "portfolio_memory_mb": concurrent_memory,
+                "wait_time_seconds_before": telemetry_before["wait_time_seconds"],
+                "scheduler": self.resource_scheduler.snapshot(),
+            },
         )
 
     def _run_one(
         self,
         request_id: str,
         item: Tuple[PortfolioAttemptSpec, str, SolverBudget, str, str],
-        cancel_event: threading.Event,
+        cancel_event: _PortfolioCancellationSignal,
+        portfolio_lease: ResourceLeaseToken,
     ) -> Tuple[str, SolverAttemptRecord, SolverAttemptEvidence, bool]:
         spec, executable_path, budget, attempt_id, tmp_dir = item
         translation = spec.translation
@@ -742,10 +837,38 @@ class SolverPortfolio:
         command = self.policy.build_command(
             spec.solver_name, executable_path, input_path, budget
         )
-        solver_version = self._solver_version(executable_path, spec.solver_name)
+        solver_version: Optional[str] = None
 
         started_at = _utcnow()
-        outcome = self._process_runner(command, budget=budget, cancel_event=cancel_event)
+        solver_lease: Optional[ResourceLease] = None
+        try:
+            solver_lease = self.resource_scheduler.acquire(
+                self.resource_lane,
+                cpu_slots=1,
+                memory_mb=int(budget.memory_mb or 0),
+                parent_lease=portfolio_lease,
+                timeout=self.resource_wait_timeout_seconds,
+                cancel_event=cancel_event,
+                request_id=attempt_id,
+            )
+        except LeaseCancelledError:
+            outcome = SolverProcessOutcome(command=command, cancelled=True)
+        except LeaseTimeoutError as exc:
+            outcome = SolverProcessOutcome(command=command, error=str(exc))
+        else:
+            with solver_lease:
+                lease_cancellation = solver_lease.combined_cancellation_signal(cancel_event)
+                if lease_cancellation.is_set():
+                    outcome = SolverProcessOutcome(command=command, cancelled=True)
+                else:
+                    # Version discovery also launches the solver executable
+                    # and therefore belongs inside this child-process lease.
+                    solver_version = self._solver_version(executable_path, spec.solver_name)
+                    outcome = self._process_runner(
+                        command,
+                        budget=budget,
+                        cancel_event=lease_cancellation,
+                    )
         finished_at = _utcnow()
 
         raw_output_digest = compute_content_digest(
@@ -779,6 +902,10 @@ class SolverPortfolio:
             resource_usage["max_rss_mb"] = outcome.max_rss_mb
         if outcome.cancelled:
             resource_usage["cancelled"] = True
+        if solver_lease is not None:
+            resource_usage["global_lease_wait_seconds"] = solver_lease.wait_seconds
+            resource_usage["global_lease_cpu_slots"] = solver_lease.cpu_slots
+            resource_usage["global_lease_memory_mb"] = solver_lease.memory_mb
 
         record = SolverAttemptRecord(
             attempt_id=attempt_id,

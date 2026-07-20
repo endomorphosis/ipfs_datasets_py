@@ -246,6 +246,16 @@ __all__ = [
     'proof_trace_to_json',
     'write_proof_trace_json',
     'serialize_dataclass_like',
+    # Global nested-process resource scheduling
+    'ResourceLane',
+    'LaneReservation',
+    'ResourceSchedulerConfig',
+    'ResourceLeaseToken',
+    'ResourceLease',
+    'GlobalResourceScheduler',
+    'get_global_resource_scheduler',
+    'configure_global_resource_scheduler',
+    'acquire_resource_lease',
 ]
 
 __version__ = '0.1.0'
@@ -310,6 +320,20 @@ def _enforce_export_version_gate(name: str, current_version: str | None = None) 
 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
+    if name in (
+        'ResourceLane',
+        'LaneReservation',
+        'ResourceSchedulerConfig',
+        'ResourceLeaseToken',
+        'ResourceLease',
+        'GlobalResourceScheduler',
+        'get_global_resource_scheduler',
+        'configure_global_resource_scheduler',
+        'acquire_resource_lease',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler
+
+        return getattr(resource_scheduler, name)
     if name in (
         'LogicTheoremOptimizerError',
         'OptimizerError',
