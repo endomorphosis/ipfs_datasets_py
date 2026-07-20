@@ -734,7 +734,7 @@ Objective: integrate a hammer-style theorem proving bridge and Leanstral guidanc
 
 ## PORTAL-LIR-HAMMER-031 Repair deterministic decompiler round-trip preservation
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: decompiler
