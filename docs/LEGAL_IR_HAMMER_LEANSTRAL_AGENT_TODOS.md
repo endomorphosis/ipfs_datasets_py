@@ -1107,7 +1107,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-050 Add conflict-aware Codex scope scheduling and merge serialization
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P1
 - Track: codex-runtime
