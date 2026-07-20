@@ -16,6 +16,14 @@ from .legal_ir_premise_selection import (
     LEGAL_IR_PREMISE_SELECTION_SCHEMA_VERSION,
     LegalIRPremiseSelector,
 )
+from .legal_ir_hammer_translation import (
+    LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION,
+    LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION,
+    HammerReconstructionReceipt,
+    HammerTranslationRecord,
+    reconstruction_receipt_from_hammer_result,
+    translation_records_from_hammer_result,
+)
 
 
 LEGAL_IR_HAMMER_REPORT_SCHEMA_VERSION = "legal-ir-hammer-report-v1"
@@ -45,6 +53,8 @@ class LegalIRHammerReport:
     elapsed_seconds: float
     schema_version: str = LEGAL_IR_HAMMER_REPORT_SCHEMA_VERSION
     metadata: Dict[str, Any] = field(default_factory=dict)
+    translation_records: List[HammerTranslationRecord] = field(default_factory=list)
+    reconstruction_receipts: List[HammerReconstructionReceipt] = field(default_factory=list)
 
     @property
     def proof_success_rate(self) -> float:
@@ -67,7 +77,13 @@ class LegalIRHammerReport:
             "premise_count": int(self.premise_count),
             "proof_success_rate": round(self.proof_success_rate, 12),
             "proved_count": int(self.proved_count),
+            "reconstruction_receipts": [
+                receipt.to_dict() for receipt in self.reconstruction_receipts
+            ],
             "schema_version": self.schema_version,
+            "translation_records": [
+                record.to_dict() for record in self.translation_records
+            ],
             "trusted_count": int(self.trusted_count),
             "trusted_success_rate": round(self.trusted_success_rate, 12),
         }
@@ -132,6 +148,8 @@ class LegalIRHammerRunner:
         backend_health = backend_health_for_runners(pipeline.backends)
         backend_health_summary = hammer_backend_health_summary(backend_health)
         artifacts: List[HammerGuidanceArtifact] = []
+        translation_records: List[HammerTranslationRecord] = []
+        reconstruction_receipts: List[HammerReconstructionReceipt] = []
         for obligation in resolved_obligations:
             goal = HammerGoal(
                 statement=obligation.statement,
@@ -161,13 +179,27 @@ class LegalIRHammerRunner:
                 **dict(obligation.metadata),
                 **dict(extra_candidate_metadata or {}),
             }
-            artifacts.append(
-                HammerGuidanceArtifact.from_hammer_result(
-                    result,
-                    candidate_metadata=candidate_metadata,
-                    trusted_requires_reconstruction=self.config.trusted_requires_reconstruction,
-                )
+            artifact = HammerGuidanceArtifact.from_hammer_result(
+                result,
+                candidate_metadata=candidate_metadata,
+                trusted_requires_reconstruction=self.config.trusted_requires_reconstruction,
             )
+            records = translation_records_from_hammer_result(
+                result,
+                obligation_id=obligation.obligation_id,
+                input_formula_id=obligation.formula_id,
+            )
+            receipt = reconstruction_receipt_from_hammer_result(
+                result,
+                translation_records=records,
+                obligation_id=obligation.obligation_id,
+                input_formula_id=obligation.formula_id,
+                trusted_requires_reconstruction=self.config.trusted_requires_reconstruction,
+                trusted=artifact.trusted,
+            )
+            artifacts.append(artifact)
+            translation_records.extend(records)
+            reconstruction_receipts.append(receipt)
 
         proved_count = sum(1 for artifact in artifacts if artifact.proved)
         trusted_count = sum(1 for artifact in artifacts if artifact.trusted)
@@ -178,11 +210,19 @@ class LegalIRHammerRunner:
             proved_count=proved_count,
             trusted_count=trusted_count,
             elapsed_seconds=time.time() - start,
+            translation_records=translation_records,
+            reconstruction_receipts=reconstruction_receipts,
             metadata={
                 "backend_health": backend_health_summary,
+                "reconstruction_receipt_count": len(reconstruction_receipts),
+                "reconstruction_receipt_schema_version": (
+                    LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION
+                ),
                 "max_premises": self.config.max_premises,
                 "premise_selection_schema_version": LEGAL_IR_PREMISE_SELECTION_SCHEMA_VERSION,
                 "timeout_seconds": self.config.timeout_seconds,
+                "translation_record_count": len(translation_records),
+                "translation_schema_version": LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION,
                 "verify_reconstruction": self.config.verify_reconstruction,
             },
         )
@@ -246,5 +286,7 @@ __all__ = [
     "LegalIRHammerConfig",
     "LegalIRHammerReport",
     "LegalIRHammerRunner",
+    "HammerReconstructionReceipt",
+    "HammerTranslationRecord",
     "run_legal_ir_hammer",
 ]
