@@ -51721,6 +51721,139 @@ def test_decompiler_reconstructs_packet_000633_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000638_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "50 U.S.C. 2823. University-based defense nuclear policy "
+                    "collaboration program. The Administrator shall carry out "
+                    "a program under which the Administrator establishes a "
+                    "policy research consortium of institutions of higher "
+                    "education."
+                ),
+                predicate="administrator_policy_research_consortium_program",
+            ),
+            {
+                "defense_nuclear_policy_collaboration",
+                "policy_research_consortium",
+                "university_policy_research_consortium",
+            },
+            {"deontic->deontic", "deontic->conditional_normative", "deontic->frame"},
+            "uscode_defense_policy_research_consortium_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 11921. Statement of purpose. The purpose of "
+                    "this subchapter is to reaffirm the principle that decent "
+                    "affordable shelter is a basic necessity, and the general "
+                    "welfare of the Nation and the health and living standards "
+                    "of its people require affordable housing."
+                ),
+                predicate="affordable_housing_statement_of_purpose",
+            ),
+            {
+                "affordable_housing_supply",
+                "basic_shelter_necessity",
+                "health_living_standard_welfare",
+            },
+            {"frame->frame", "frame->deontic", "frame->conditional_normative"},
+            "uscode_affordable_housing_purpose_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "42 U.S.C. 9858a. The Secretary shall make funds available "
+                    "to participating jurisdictions for investment to increase "
+                    "the number of families served with decent, safe, sanitary, "
+                    "and affordable housing and expand the long-term supply of "
+                    "affordable housing."
+                ),
+                predicate="secretary_housing_investment_authority",
+            ),
+            {
+                "affordable_housing_supply",
+                "housing_family_service_investment",
+                "long_term_housing_supply",
+            },
+            {"deontic->deontic", "deontic->conditional_normative", "deontic->frame"},
+            "uscode_affordable_housing_purpose_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "15 U.S.C. 2806. Relationship of statutory provisions. "
+                    "Nothing in this chapter shall be construed to limit, "
+                    "restrict, or circumvent any payment or fee remedy under "
+                    "another law."
+                ),
+                predicate="statutory_relationship_payment_fee_remedy",
+            ),
+            {
+                "implementation_noninterference",
+                "legal_relationship_noninterference",
+                "payment_or_fee_remedy",
+            },
+            {"deontic->deontic", "deontic->conditional_normative", "deontic->frame"},
+            "uscode_statutory_relationship_noninterference_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": sorted(expected_pairs),
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "deontic.ir",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "deontic.ir",
+                    "modal.frame_logic",
+                ],
+            }
+        ]
+
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert slot_texts["guided_typed_ir_semantic_reconstruction"]
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

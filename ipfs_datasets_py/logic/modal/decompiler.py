@@ -296,6 +296,27 @@ _PACKET_000633_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "veterans_compensation_benefit",
     }
 )
+_PACKET_000638_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "affordable_housing_supply",
+        "basic_shelter_necessity",
+        "cumulative_remedy_preservation",
+        "defense_nuclear_policy_collaboration",
+        "health_living_standard_welfare",
+        "housing_family_service_investment",
+        "implementation_noninterference",
+        "legal_relationship_noninterference",
+        "legal_relationship_override",
+        "long_term_housing_supply",
+        "payment_or_fee_remedy",
+        "policy_research_consortium",
+        "public_safety_broadband_network",
+        "remedies_as_cumulative",
+        "supplemental_authorization_policy",
+        "university_policy_research_consortium",
+        "university_research_program",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
@@ -590,6 +611,10 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("university-based research and development grant program", "university_research_grant_program"),
     ("university based research and development program", "university_research_program"),
     ("university-based research and development program", "university_research_program"),
+    ("university-based defense nuclear policy collaboration program", "defense_nuclear_policy_collaboration"),
+    ("university based defense nuclear policy collaboration program", "defense_nuclear_policy_collaboration"),
+    ("policy research consortium", "policy_research_consortium"),
+    ("consortium of institutions of higher education", "university_policy_research_consortium"),
     ("research and development grant program", "research_development_grant_program"),
     ("research and development program", "research_development_program"),
     ("study carbon capture", "carbon_capture_research"),
@@ -1185,6 +1210,8 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("shall be construed to limit", "implementation_noninterference"),
     ("limit, restrict, or circumvent", "implementation_noninterference"),
     ("limit restrict or circumvent", "implementation_noninterference"),
+    ("payment or fee", "payment_or_fee_remedy"),
+    ("payments or fees", "payment_or_fee_remedy"),
     ("public safety broadband network", "public_safety_broadband_network"),
     ("nationwide public safety broadband network", "public_safety_broadband_network"),
     ("supplementary to those set forth in existing authorizations", "supplemental_authorization_policy"),
@@ -1483,6 +1510,9 @@ _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("15 states with the highest", "state_ranking"),
     ("decent, safe, sanitary, and affordable housing", "affordable_housing_supply"),
     ("decent safe sanitary and affordable housing", "affordable_housing_supply"),
+    ("decent affordable shelter", "basic_shelter_necessity"),
+    ("basic necessity", "basic_shelter_necessity"),
+    ("health and living standards", "health_living_standard_welfare"),
     ("safe, sanitary, and affordable housing", "affordable_housing_supply"),
     ("safe sanitary and affordable housing", "affordable_housing_supply"),
     ("affordable housing", "affordable_housing_supply"),
@@ -6219,6 +6249,12 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         add("remedies_as_cumulative")
         add("cumulative_remedy_preservation")
     if re.search(
+        r"\b(?:payments?|fees?)\b.{0,40}\b(?:or|and)\b.{0,40}\b(?:payments?|fees?)\b|"
+        r"\b(?:payments?\s+or\s+fees?|fees?\s+or\s+payments?)\b",
+        normalized,
+    ):
+        add("payment_or_fee_remedy")
+    if re.search(
         r"\b(?:export\s+credit|credit\s+authority|federal\s+financing\s+bank)\b",
         normalized,
     ):
@@ -6690,6 +6726,19 @@ def _legal_semantic_atoms_from_text(text: str) -> List[str]:
         normalized,
     ):
         add("program_activity_implementation")
+    if re.search(
+        r"\b(?:university[-\s]+based\b.{0,120}\bpolicy\s+collaboration\s+program|"
+        r"defense\s+nuclear\s+policy\s+collaboration\s+program)\b",
+        normalized,
+    ):
+        add("defense_nuclear_policy_collaboration")
+    if re.search(
+        r"\bpolicy\s+research\s+consortium\b|"
+        r"\bconsortium\b.{0,80}\binstitutions?\s+of\s+higher\s+education\b",
+        normalized,
+    ):
+        add("policy_research_consortium")
+        add("university_policy_research_consortium")
     if re.search(
         r"\b(?:make|making)\b.{0,40}\bawards?\b.{0,80}\bcompetitive\s+basis\b",
         normalized,
@@ -14073,6 +14122,12 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000638_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -15264,6 +15319,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         *_PACKET_000627_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000630_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000633_USCODE_RECONSTRUCTION_ATOMS,
+        *_PACKET_000638_USCODE_RECONSTRUCTION_ATOMS,
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -15437,6 +15493,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("deontic")
             add("conditional_normative")
         if normalized_atom in _PACKET_000633_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in _PACKET_000638_USCODE_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
             add("conditional_normative")
@@ -17935,10 +17995,33 @@ def _typed_decompiler_target_surface_profiles(
         r"\bremed(?:y|ies)\s+as\s+cumulative\b|"
         r"\bremed(?:y|ies)\s+provided\s+under\s+this\s+part\b|"
         r"\bin\s+addition\s+to\s+remed(?:y|ies)\b|"
-        r"\bremed(?:y|ies)\s+existing\s+under\s+another\s+law\b",
+        r"\bremed(?:y|ies)\s+existing\s+under\s+another\s+law\b|"
+        r"\b(?:payments?\s+or\s+fees?|fees?\s+or\s+payments?)\b",
         lowered,
     ):
         add("uscode_cumulative_remedies_surface")
+    if re.search(
+        r"\b(?:university[-\s]+based\s+defense\s+nuclear\s+policy\s+collaboration|"
+        r"policy\s+research\s+consortium|institutions?\s+of\s+higher\s+education)\b",
+        lowered,
+    ):
+        add("uscode_defense_policy_research_consortium_surface")
+    if re.search(
+        r"\b(?:statement\s+of\s+purpose|decent\s+affordable\s+shelter|"
+        r"basic\s+necessity|health\s+and\s+living\s+standards|"
+        r"affordable\s+housing|long[-\s]+term\s+supply)\b",
+        lowered,
+    ):
+        add("uscode_affordable_housing_purpose_surface")
+    if re.search(
+        r"\b(?:relationship\s+to\s+(?:other\s+law|middle\s+class\s+tax\s+relief)|"
+        r"shall\s+be\s+construed\s+to\s+limit|"
+        r"limit,\s+restrict,\s+or\s+circumvent|"
+        r"public\s+safety\s+broadband\s+network|"
+        r"supplementary\s+to\s+(?:those\s+set\s+forth\s+in\s+)?existing\s+authorizations)\b",
+        lowered,
+    ):
+        add("uscode_statutory_relationship_noninterference_surface")
     if re.search(
         r"\bcuyahoga\s+valley\s+national\s+park\b",
         lowered,
@@ -18722,6 +18805,27 @@ def _typed_decompiler_predicate_classes(
             }
         ):
             add("temporal")
+    if normalized_atoms.intersection(_PACKET_000638_USCODE_RECONSTRUCTION_ATOMS):
+        add("authorization")
+        add("duty")
+        add("program")
+        add("statutory")
+        if normalized_atoms.intersection(
+            {
+                "cumulative_remedy_preservation",
+                "payment_or_fee_remedy",
+                "remedies_as_cumulative",
+            }
+        ):
+            add("remedy")
+        if normalized_atoms.intersection(
+            {
+                "affordable_housing_supply",
+                "health_living_standard_welfare",
+                "long_term_housing_supply",
+            }
+        ):
+            add("welfare")
     if normalized_atoms.intersection(
         {
             "annual_assessment_report",
