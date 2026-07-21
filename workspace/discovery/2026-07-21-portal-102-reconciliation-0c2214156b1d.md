@@ -38,6 +38,38 @@ reviewable commits or follow-up tasks, rerun the supervisor reconciliation pass,
 and verify that either the candidate merge count decreases or the dirty
 worktree cleanup skip count decreases.
 
+## Resolution Outcome
+
+Resolved on 2026-07-21 by merging current `main` into the sampled worktree
+`implementation/portal-lir-hammer-059-attempt-3-1784616584` and deliberately
+preserving the newer `main` implementations for:
+
+- `ipfs_datasets_py/logic/integration/reasoning/__init__.py`
+- `ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer.py`
+- `ipfs_datasets_py/logic/integration/reasoning/legal_ir_hammer_coverage.py`
+
+The isolated merge resolution was committed as
+`44c2acff2` (`PORTAL-102: reconcile hammer coverage merge conflict`). The
+supervisor reconciliation pass then merged the branch into `main` as
+`537ab613d` and removed the stale worktree and branch.
+
+Supervisor evidence from
+`workspace/hammer-leanstral-supervisor/hammer_leanstral_supervisor_events.jsonl`:
+
+- Before repair at `2026-07-21T07:24:12.945714+00:00`:
+  `candidate_count=1`, `processed_count=1`, `reconciled_count=0`,
+  `preflight_blocked_count=1`.
+- After repair at `2026-07-21T07:28:54.221977+00:00`:
+  `candidate_count=1`, `processed_count=1`, `reconciled_count=1`,
+  `preflight_blocked_count=0`, `cleanup_count=1`.
+
+Validation:
+
+- `python -m pytest tests/unit/logic/integration/test_legal_ir_hammer_coverage.py -q`
+  passed with 6 tests.
+- `test -f /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/discovery/2026-07-21-portal-102-reconciliation-0c2214156b1d.md`
+  passed.
+
 ## Reconciliation Plan
 
 Work surface: `1` candidates, `1` sampled records.
