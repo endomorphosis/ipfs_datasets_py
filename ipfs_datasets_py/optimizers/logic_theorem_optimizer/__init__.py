@@ -189,6 +189,29 @@ __all__ = [
     'TrustedNegativeCandidate',
     'minimize_legal_ir_counterexample',
     'run_legal_ir_metamorphic_fuzzing',
+    'DECOMPILER_HALLUCINATION',
+    'DEFAULT_LEGAL_IR_FAMILY_DIFFICULTY',
+    'DEFAULT_NEGATIVE_FAMILY_DIFFICULTY',
+    'HARD_NEGATIVE_FAMILIES',
+    'INVERTED_MODALITY',
+    'LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION',
+    'LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION',
+    'NEAR_MISS_CLAUSE',
+    'SOURCE_COPY_SPAN',
+    'STALE_AMENDMENT',
+    'SWAPPED_ACTOR',
+    'VERIFIED_COUNTEREXAMPLE',
+    'WRONG_CITATION',
+    'HardNegativeEffectReport',
+    'LegalIRHardNegativeConfig',
+    'LegalIRHardNegativeCurriculum',
+    'LegalIRHardNegativeCurriculumBuilder',
+    'LegalIRHardNegativeCurriculumStage',
+    'LegalIRHardNegativeExample',
+    'RejectedHardNegative',
+    'build_legal_ir_hard_negative_curriculum',
+    'hard_negative_training_effect_gate',
+    'prove_hard_negatives_reduce_false_positive_semantic_equivalence',
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
@@ -1073,6 +1096,36 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_fuzzing, name)
+    elif name in (
+        'DECOMPILER_HALLUCINATION',
+        'DEFAULT_LEGAL_IR_FAMILY_DIFFICULTY',
+        'DEFAULT_NEGATIVE_FAMILY_DIFFICULTY',
+        'HARD_NEGATIVE_FAMILIES',
+        'INVERTED_MODALITY',
+        'LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION',
+        'LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION',
+        'NEAR_MISS_CLAUSE',
+        'SOURCE_COPY_SPAN',
+        'STALE_AMENDMENT',
+        'SWAPPED_ACTOR',
+        'VERIFIED_COUNTEREXAMPLE',
+        'WRONG_CITATION',
+        'HardNegativeEffectReport',
+        'LegalIRHardNegativeConfig',
+        'LegalIRHardNegativeCurriculum',
+        'LegalIRHardNegativeCurriculumBuilder',
+        'LegalIRHardNegativeCurriculumStage',
+        'LegalIRHardNegativeExample',
+        'RejectedHardNegative',
+        'build_legal_ir_hard_negative_curriculum',
+        'hard_negative_training_effect_gate',
+        'prove_hard_negatives_reduce_false_positive_semantic_equivalence',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_hard_negatives,
+        )
+
+        return getattr(legal_ir_hard_negatives, name)
     elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
             ModalProverRouteResult,

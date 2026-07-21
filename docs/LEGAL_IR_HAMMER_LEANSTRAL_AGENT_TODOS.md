@@ -1542,8 +1542,8 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-078 Train with verified hard-negative curricula
 
-- Status: todo
-- Completion: 0
+- Status: completed
+- Completion: 100
 - Priority: P0
 - Track: autoencoder-objective
 - Depends on: PORTAL-LIR-HAMMER-057, PORTAL-LIR-HAMMER-077
