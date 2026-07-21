@@ -1242,7 +1242,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-058 Add constrained per-family objective balancing
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: autoencoder-objective
