@@ -1272,7 +1272,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-060 Route Leanstral only to informative unresolved gaps
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P1
 - Track: leanstral-policy
