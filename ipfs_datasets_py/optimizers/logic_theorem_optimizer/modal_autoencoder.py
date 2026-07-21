@@ -3650,6 +3650,8 @@ class AdaptiveModalAutoencoder:
         self._legal_ir_loss_target_cache: Dict[str, Dict[str, float]] = {}
         self._legal_ir_view_target_cache: Dict[str, Dict[str, float]] = {}
         self._legal_ir_view_family_candidates_cache: Optional[tuple[str, ...]] = None
+        self._cuda_resident_projection_state: Any = None
+        self._cuda_residency_reports: List[Dict[str, Any]] = []
 
     def evaluate(
         self,
@@ -5316,35 +5318,65 @@ class AdaptiveModalAutoencoder:
         dropped_label_count = 0
 
         if step > 0.0 and record_limit > 0 and not configuration_mismatch:
-            for record in records[:record_limit]:
-                if record.record_id in applied_ids:
-                    duplicate_count += 1
-                    continue
-                family = _proof_feedback_record_family(record)
-                targets = _proof_auxiliary_targets(record)
-                record_updated = False
-                for head in PROOF_AUXILIARY_HEAD_NAMES:
-                    labels = targets[head]
-                    updated, dropped = self._update_proof_auxiliary_head(
-                        head,
-                        family,
-                        labels,
-                        learning_rate=step,
+            cuda_proof_update: Optional[Dict[str, Any]] = None
+            if self.compute_backend == "torch_cuda":
+                try:
+                    from .modal_autoencoder_cuda import (
+                        apply_cuda_resident_proof_updates,
                     )
-                    dropped_label_count += dropped
-                    if updated:
-                        updated_head_counts[head] += 1
-                        record_updated = True
-                if not record_updated:
-                    continue
-                self.state.applied_proof_feedback_ids.append(record.record_id)
-                self.state.applied_proof_feedback_ids = (
-                    self.state.applied_proof_feedback_ids[
-                        -PROOF_AUXILIARY_MAX_APPLIED_RECORD_IDS:
-                    ]
+
+                    cuda_proof_update = apply_cuda_resident_proof_updates(
+                        self,
+                        records,
+                        applied_ids=applied_ids,
+                        learning_rate=step,
+                        record_limit=record_limit,
+                        head_names=PROOF_AUXILIARY_HEAD_NAMES,
+                        family_for_record=_proof_feedback_record_family,
+                        targets_for_record=_proof_auxiliary_targets,
+                        max_applied_record_ids=PROOF_AUXILIARY_MAX_APPLIED_RECORD_IDS,
+                    )
+                except Exception:
+                    cuda_proof_update = None
+            if cuda_proof_update is not None:
+                applied_records = list(cuda_proof_update["applied_records"])
+                duplicate_count = int(cuda_proof_update["duplicate_count"])
+                dropped_label_count = int(cuda_proof_update["dropped_label_count"])
+                updated_head_counts = dict(cuda_proof_update["updated_head_counts"])
+                self._cuda_residency_reports.append(
+                    dict(cuda_proof_update.get("report", {}))
                 )
-                applied_ids.add(record.record_id)
-                applied_records.append(record)
+                self._cuda_residency_reports = self._cuda_residency_reports[-256:]
+            else:
+                for record in records[:record_limit]:
+                    if record.record_id in applied_ids:
+                        duplicate_count += 1
+                        continue
+                    family = _proof_feedback_record_family(record)
+                    targets = _proof_auxiliary_targets(record)
+                    record_updated = False
+                    for head in PROOF_AUXILIARY_HEAD_NAMES:
+                        labels = targets[head]
+                        updated, dropped = self._update_proof_auxiliary_head(
+                            head,
+                            family,
+                            labels,
+                            learning_rate=step,
+                        )
+                        dropped_label_count += dropped
+                        if updated:
+                            updated_head_counts[head] += 1
+                            record_updated = True
+                    if not record_updated:
+                        continue
+                    self.state.applied_proof_feedback_ids.append(record.record_id)
+                    self.state.applied_proof_feedback_ids = (
+                        self.state.applied_proof_feedback_ids[
+                            -PROOF_AUXILIARY_MAX_APPLIED_RECORD_IDS:
+                        ]
+                    )
+                    applied_ids.add(record.record_id)
+                    applied_records.append(record)
 
         if applied_records and not self.state.proof_feedback_version_fingerprint:
             self.state.proof_feedback_version_fingerprint = expected_fingerprint
@@ -6210,6 +6242,7 @@ class AdaptiveModalAutoencoder:
         accepted improvement must come from reusable feature embeddings/logits.
         """
         started_at = time.time()
+        self._cuda_residency_reports = []
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         target_samples = validation_list or sample_list
@@ -6269,19 +6302,20 @@ class AdaptiveModalAutoencoder:
         normalized_update_backend = str(projection_update_backend or "auto").strip().lower()
         if normalized_update_backend in {"", "auto"}:
             normalized_update_backend = (
-                "python_sparse_batch"
+                "cuda_resident"
                 if self.compute_backend == "torch_cuda"
                 else "native"
             )
         if normalized_update_backend not in {
+            "cuda_resident",
             "native",
             "legacy",
             "legacy_device",
             "python_sparse_batch",
         }:
             raise ValueError(
-                "projection_update_backend must be auto, native, legacy_device, "
-                "or python_sparse_batch"
+                "projection_update_backend must be auto, cuda_resident, native, "
+                "legacy_device, or python_sparse_batch"
             )
 
         bridge_names = tuple(
@@ -7137,6 +7171,11 @@ class AdaptiveModalAutoencoder:
 
         restore_projection_state(best_state)
         projection_profile = profiler.summarize() if profiler is not None else {}
+        cuda_residency = {
+            "enabled": normalized_update_backend == "cuda_resident",
+            "reports": list(self._cuda_residency_reports[-64:]),
+            "schema_version": "modal-autoencoder-cuda-residency-v1",
+        }
         emit_progress(
             "finished",
             accepted_epochs=accepted_epochs,
@@ -7160,6 +7199,7 @@ class AdaptiveModalAutoencoder:
             ),
             "projection_profile": projection_profile,
             "projection_profile_enabled": profiler is not None,
+            "projection_cuda_residency": cuda_residency,
             "projection_update_backend": normalized_update_backend,
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
@@ -7197,6 +7237,41 @@ class AdaptiveModalAutoencoder:
         sample_list = list(samples)
         target_tuple = tuple(str(target) for target in update_targets)
         normalized_backend = str(update_backend or "native").strip().lower()
+        if normalized_backend == "cuda_resident":
+            def legacy_apply() -> None:
+                self._apply_projection_update_batch(
+                    sample_list,
+                    update_targets=target_tuple,
+                    learning_rate=learning_rate,
+                    l2_regularization=l2_regularization,
+                    profiler=profiler,
+                    update_backend="native",
+                )
+
+            try:
+                from .modal_autoencoder_cuda import (
+                    apply_cuda_resident_projection_update,
+                )
+
+                report = apply_cuda_resident_projection_update(
+                    self,
+                    sample_list,
+                    update_targets=target_tuple,
+                    learning_rate=learning_rate,
+                    l2_regularization=l2_regularization,
+                    profiler=profiler,
+                    legacy_apply=legacy_apply,
+                )
+                self._cuda_residency_reports.append(report.to_dict())
+                self._cuda_residency_reports = self._cuda_residency_reports[-256:]
+                if report.applied:
+                    return
+                if profiler is not None:
+                    profiler.count("cuda_resident_deterministic_fallback_count")
+            except Exception:
+                if profiler is not None:
+                    profiler.count("cuda_resident_deterministic_fallback_count")
+            normalized_backend = "native"
         use_sparse_python = normalized_backend == "python_sparse_batch"
         if profiler is not None:
             profiler.count("projection_update_batch_count", 1)
@@ -23482,13 +23557,32 @@ class AdaptiveModalAutoencoder:
             for raw_error, direction_value in zip(error, directional_error)
         ]
 
-    def compute_backend_metadata(self) -> Dict[str, str]:
+    def compute_backend_metadata(self) -> Dict[str, Any]:
         """Return the active vector math backend used by this autoencoder."""
-        return {
+        metadata: Dict[str, Any] = {
             "autoencoder_compute_backend": self.compute_backend,
             "autoencoder_compute_device": str(self.compute_device or "python"),
             "autoencoder_compute_device_request": self.compute_device_request,
         }
+        if self._cuda_residency_reports:
+            latest = dict(self._cuda_residency_reports[-1])
+            metadata.update(
+                {
+                    "autoencoder_cuda_residency_admitted": str(
+                        bool(latest.get("admitted", False))
+                    ).lower(),
+                    "autoencoder_cuda_residency_applied": str(
+                        bool(latest.get("applied", False))
+                    ).lower(),
+                    "autoencoder_cuda_residency_fallback_reason": str(
+                        latest.get("fallback_reason", "")
+                    ),
+                    "autoencoder_cuda_residency_report_count": str(
+                        len(self._cuda_residency_reports)
+                    ),
+                }
+            )
+        return metadata
 
     def _embedding_metrics(
         self,
