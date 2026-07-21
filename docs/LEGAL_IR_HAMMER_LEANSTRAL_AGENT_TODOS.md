@@ -1437,7 +1437,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-071 Balance Codex generation, isolated validation, and merge capacity
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: codex-runtime
