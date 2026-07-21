@@ -131,6 +131,134 @@ LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION = (
 MULTI_SEED_PROMOTION_SCHEMA_VERSION = (
     "legal-ir-hammer-leanstral-multi-seed-promotion-v1"
 )
+EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION = (
+    "legal-ir-hammer-leanstral-external-validity-promotion-v1"
+)
+
+LEGAL_IR_EVAL_SPLITS_SCHEMA_VERSION = "legal-ir-eval-splits-v1"
+LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION = (
+    "legal-ir-semantic-equivalence-metrics-v1"
+)
+LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION = "legal-ir-typed-grammar-decoder-v1"
+LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION = "legal-ir-uncertainty-v1"
+LEGAL_IR_FUZZING_SCHEMA_VERSION = "legal-ir-metamorphic-differential-fuzzing-v1"
+LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION = "legal-ir-hard-negative-effect-v1"
+LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION = "legal-ir-hard-negative-curriculum-v1"
+LEGAL_IR_SCHEMA_EVOLUTION_SCHEMA_VERSION = "legal-ir-schema-evolution-v1"
+LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION = "legal-ir-premise-security-v1"
+LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION = (
+    "legal-ir-external-benchmark-report-v1"
+)
+LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION = "legal-ir-drift-monitor-v1"
+LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION = (
+    "legal-ir-learned-guidance-rollback-v1"
+)
+LEGAL_SOURCE_TEXT_DATA_RULE = "legal_source_text_is_data_not_instructions"
+EXTERNAL_BENCHMARK_HARD_GUARDRAIL = "external_benchmark_never_training_data"
+PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL = "learned_guidance_is_reversible"
+
+EXTERNAL_VALIDITY_REQUIRED_DOMAINS = (
+    "leak_free_splits",
+    "semantic_metrics",
+    "typed_decoding",
+    "uncertainty",
+    "fuzzing",
+    "hard_negatives",
+    "multi_seed_statistics",
+    "schema_compatibility",
+    "poisoning_defenses",
+    "external_benchmark_scores",
+    "rollback_readiness",
+)
+
+SEMANTIC_EQUIVALENCE_REQUIRED_METRICS = (
+    "structural_equivalence",
+    "obligation_equivalence",
+    "counterexample_equivalence",
+    "graph_isomorphism",
+    "temporal_window_agreement",
+    "decompiler_round_trip_preservation",
+    "proof_obligation_delta_score",
+)
+
+EXTERNAL_VALIDITY_EVIDENCE_ALIASES = {
+    "leak_free_splits": (
+        "leak_free_splits",
+        "eval_splits",
+        "split_guard",
+        "split_manifest",
+        "latest_legal_ir_eval_splits",
+    ),
+    "semantic_metrics": (
+        "semantic_metrics",
+        "semantic_equivalence",
+        "semantic_equivalence_report",
+        "latest_legal_ir_semantic_metrics",
+    ),
+    "typed_decoding": (
+        "typed_decoding",
+        "typed_decoder",
+        "grammar_decoder",
+        "grammar_validation",
+        "latest_legal_ir_typed_decoding",
+    ),
+    "uncertainty": (
+        "uncertainty",
+        "uncertainty_report",
+        "latest_legal_ir_uncertainty",
+    ),
+    "fuzzing": (
+        "fuzzing",
+        "fuzzing_report",
+        "metamorphic_fuzzing",
+        "latest_legal_ir_fuzzing",
+    ),
+    "hard_negatives": (
+        "hard_negatives",
+        "hard_negative_effect",
+        "hard_negative_curriculum",
+        "latest_legal_ir_hard_negatives",
+    ),
+    "multi_seed_statistics": (
+        "multi_seed_statistics",
+        "multi_seed_statistical_promotion",
+        "multi_seed_promotion_evidence",
+        "latest_multi_seed_statistical_promotion",
+    ),
+    "schema_compatibility": (
+        "schema_compatibility",
+        "schema_evolution",
+        "schema_compatibility_report",
+        "latest_legal_ir_schema_compatibility",
+    ),
+    "poisoning_defenses": (
+        "poisoning_defenses",
+        "premise_security",
+        "prompt_and_premise_security",
+        "prompt_and_premise_poisoning_defense",
+    ),
+    "external_benchmark_scores": (
+        "external_benchmark_scores",
+        "external_benchmark_report",
+        "external_validity",
+        "latest_external_benchmark_report",
+    ),
+    "rollback_readiness": (
+        "rollback_readiness",
+        "drift_monitor",
+        "production_drift_report",
+        "rollback_evidence",
+        "latest_legal_ir_drift_monitor",
+    ),
+}
+
+EXTERNAL_VALIDITY_BINDING_FIELDS = (
+    "promotion_id",
+    "compiler_commit",
+    "source_export_id",
+    "fixed_canary_id",
+    "split_manifest_digest",
+)
 
 MULTI_SEED_PROMOTION_METRICS = (
     "learned_quality",
@@ -280,6 +408,26 @@ class MultiSeedPromotionConfig:
 
     def spec_by_metric(self) -> dict[str, MultiSeedMetricSpec]:
         return {spec.canonical_name: spec for spec in self.metric_specs}
+
+
+@dataclass(frozen=True)
+class ExternalValidityPromotionConfig:
+    """Fail-closed policy for the final external-validity promotion gate."""
+
+    required_domains: tuple[str, ...] = EXTERNAL_VALIDITY_REQUIRED_DOMAINS
+    required_binding_fields: tuple[str, ...] = EXTERNAL_VALIDITY_BINDING_FIELDS
+    min_semantic_score: float = 1.0
+    min_typed_decoding_success_rate: float = 1.0
+    max_typed_decoding_source_copy_penalty: float = 0.0
+    min_fuzzing_mutation_count: int = 1
+    min_trusted_negative_count: int = 1
+    min_hard_negative_false_positive_reduction: float = 0.05
+    min_external_validity_score: float = 1.0
+    min_external_packet_count: int = 1
+    require_external_benchmark_separate_from_canary: bool = True
+    require_multi_seed_statistics: bool = True
+    require_schema_reusable: bool = True
+    require_poisoning_hard_rule: bool = True
 
 
 @dataclass
@@ -1206,6 +1354,28 @@ def write_rollout_evidence(path: str | Path, payload: Mapping[str, Any]) -> None
         raise
 
 
+def write_text_artifact(path: str | Path, text: str) -> None:
+    """Atomically persist a UTF-8 text artifact."""
+
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{destination.name}.", dir=str(destination.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
+            if not text.endswith("\n"):
+                handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, destination)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise
+
+
 def snapshot_sha256(path: str | Path) -> str:
     """Return a streaming SHA-256 digest for operator rollback evidence."""
 
@@ -1250,6 +1420,816 @@ def rollout_gate(summary: Mapping[str, Any], config: RolloutGateConfig | None = 
         warnings=warnings,
         metrics=metrics,
     )
+
+
+def external_validity_promotion_gate(
+    payload: Mapping[str, Any],
+    config: ExternalValidityPromotionConfig | None = None,
+) -> RolloutGateResult:
+    """Gate the final Hammer/Leanstral promotion on external validity evidence.
+
+    The external-validity gate is intentionally a binder over persisted reports.
+    It does not trust a single headline flag: each evidence domain must expose
+    the schema, status, metrics, and cross-artifact identifiers needed to prove
+    that the candidate was evaluated leak-free and can be rolled back.
+    """
+
+    cfg = config or ExternalValidityPromotionConfig()
+    failures: list[str] = []
+    warnings: list[str] = []
+    metrics: dict[str, Any] = {
+        "schema_version": EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION,
+        "required_domains": list(cfg.required_domains),
+        "required_binding_fields": list(cfg.required_binding_fields),
+    }
+
+    schema = str(payload.get("schema_version") or "").strip()
+    if schema and schema != EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION:
+        failures.append(f"external_validity_schema_mismatch:{schema}")
+    metrics["input_schema_version"] = schema
+
+    evidence_packets: dict[str, Mapping[str, Any]] = {}
+    domain_metrics: dict[str, Any] = {}
+    domain_status: dict[str, bool] = {}
+    for domain in cfg.required_domains:
+        packet_path, packet = _external_validity_packet(payload, domain)
+        domain_entry: dict[str, Any] = {"present": packet is not None}
+        if packet_path:
+            domain_entry["evidence_path"] = packet_path
+        if packet is None:
+            failures.append(f"external_validity_evidence_missing:{domain}")
+            domain_status[domain] = False
+            domain_metrics[domain] = domain_entry
+            continue
+        evidence_packets[domain] = packet
+        domain_failures, domain_warnings, domain_details = _external_domain_failures(
+            domain,
+            packet,
+            cfg,
+        )
+        failures.extend(domain_failures)
+        warnings.extend(domain_warnings)
+        domain_entry.update(domain_details)
+        domain_status[domain] = not domain_failures
+        domain_metrics[domain] = domain_entry
+
+    binding_metrics, binding_failures = _external_validity_binding_failures(
+        payload,
+        evidence_packets,
+        cfg,
+    )
+    failures.extend(binding_failures)
+    metrics["evidence_domains"] = domain_metrics
+    metrics["domain_status"] = domain_status
+    metrics["bindings"] = binding_metrics
+    metrics["evidence_complete"] = all(domain_status.get(domain) for domain in cfg.required_domains)
+
+    return RolloutGateResult(
+        accepted=not failures,
+        failures=list(dict.fromkeys(failures)),
+        warnings=list(dict.fromkeys(warnings)),
+        metrics=metrics,
+    )
+
+
+def render_external_validity_report(
+    result: RolloutGateResult,
+    *,
+    title: str = "Hammer/Leanstral External Validity Promotion Gate",
+) -> str:
+    """Render a concise Markdown promotion report for operator review."""
+
+    metrics = result.metrics
+    lines = [
+        f"# {title}",
+        "",
+        f"- Schema: `{metrics.get('schema_version', EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION)}`",
+        f"- Decision: `{'accepted' if result.accepted else 'blocked'}`",
+        f"- Evidence complete: `{bool(metrics.get('evidence_complete'))}`",
+        f"- Failure count: `{len(result.failures)}`",
+        "",
+        "## Evidence Domains",
+        "",
+        "| Domain | Status | Key Evidence |",
+        "| --- | --- | --- |",
+    ]
+    domains = metrics.get("evidence_domains")
+    if isinstance(domains, Mapping):
+        for domain in EXTERNAL_VALIDITY_REQUIRED_DOMAINS:
+            entry = domains.get(domain)
+            if not isinstance(entry, Mapping):
+                continue
+            status = "passed" if metrics.get("domain_status", {}).get(domain) else "blocked"
+            detail = _external_report_detail(domain, entry)
+            lines.append(f"| `{domain}` | `{status}` | {detail} |")
+    lines.extend(["", "## Bindings", ""])
+    bindings = metrics.get("bindings")
+    if isinstance(bindings, Mapping):
+        for field in EXTERNAL_VALIDITY_BINDING_FIELDS:
+            values = bindings.get(field)
+            if isinstance(values, Mapping):
+                canonical = values.get("canonical")
+                sources = values.get("sources")
+                source_count = len(sources) if isinstance(sources, Mapping) else 0
+                lines.append(
+                    f"- `{field}`: `{canonical or 'missing'}` from `{source_count}` source(s)"
+                )
+    if result.failures:
+        lines.extend(["", "## Failures", ""])
+        lines.extend(f"- `{failure}`" for failure in result.failures)
+    if result.warnings:
+        lines.extend(["", "## Warnings", ""])
+        lines.extend(f"- `{warning}`" for warning in result.warnings)
+    lines.extend(
+        [
+            "",
+            "## Gate Contract",
+            "",
+            "Promotion fails closed unless the evidence envelope binds leak-free splits, semantic metrics, typed decoding, uncertainty, fuzzing, hard negatives, multi-seed statistics, schema compatibility, poisoning defenses, external benchmark scores, and rollback readiness.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _external_validity_packet(
+    payload: Mapping[str, Any],
+    domain: str,
+) -> tuple[str, Mapping[str, Any] | None]:
+    evidence = payload.get("evidence")
+    aliases = EXTERNAL_VALIDITY_EVIDENCE_ALIASES.get(domain, (domain,))
+    containers: tuple[tuple[str, Mapping[str, Any]], ...] = (("", payload),)
+    if isinstance(evidence, Mapping):
+        containers = (("evidence", evidence),) + containers
+    for prefix, container in containers:
+        for key in aliases:
+            value = container.get(key)
+            if isinstance(value, Mapping):
+                return f"{prefix + '.' if prefix else ''}{key}", value
+    schemas = _external_domain_schema_versions(domain)
+    for path, value in _walk(payload):
+        if not isinstance(value, Mapping):
+            continue
+        schema = _schema_version(value)
+        schema_id = str(value.get("schema_version_id") or "").strip()
+        if schema in schemas or schema_id in schemas:
+            return path, value
+    return "", None
+
+
+def _external_domain_failures(
+    domain: str,
+    packet: Mapping[str, Any],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    if domain == "leak_free_splits":
+        return _leak_free_split_failures(packet)
+    if domain == "semantic_metrics":
+        return _semantic_metric_failures(packet, cfg)
+    if domain == "typed_decoding":
+        return _typed_decoding_failures(packet, cfg)
+    if domain == "uncertainty":
+        return _uncertainty_failures(packet)
+    if domain == "fuzzing":
+        return _fuzzing_failures(packet, cfg)
+    if domain == "hard_negatives":
+        return _hard_negative_failures(packet, cfg)
+    if domain == "multi_seed_statistics":
+        result = multi_seed_promotion_gate(packet)
+        return (
+            [f"multi_seed_statistics:{failure}" for failure in result.failures],
+            list(result.warnings),
+            {
+                "schema_version": _schema_version(packet),
+                "accepted": result.accepted,
+                "metrics": result.metrics,
+            },
+        )
+    if domain == "schema_compatibility":
+        return _schema_compatibility_failures(packet, cfg)
+    if domain == "poisoning_defenses":
+        return _poisoning_defense_failures(packet, cfg)
+    if domain == "external_benchmark_scores":
+        return _external_benchmark_failures(packet, cfg)
+    if domain == "rollback_readiness":
+        return _rollback_readiness_failures(packet)
+    return [f"external_validity_unknown_domain:{domain}"], [], {
+        "schema_version": _schema_version(packet)
+    }
+
+
+def _leak_free_split_failures(
+    packet: Mapping[str, Any],
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures = _schema_failures("leak_free_splits", packet, (LEGAL_IR_EVAL_SPLITS_SCHEMA_VERSION,))
+    failures.extend(_status_failures("leak_free_splits", packet))
+    split_guard = split_guard_from_payload(packet)
+    details: dict[str, Any] = {"schema_version": _schema_version(packet)}
+    if split_guard is not None:
+        details["split_guard"] = split_guard.to_dict()
+    if split_guard_blocks_operation(packet, REPRESENTATION_PROMOTION_OPERATION):
+        failures.append("leak_free_splits:representation_promotion_blocked")
+    leakage_count = _first_finite(
+        packet,
+        (
+            "leakage_count",
+            "protected_split_leakage_count",
+            "cross_split_leakage_count",
+            "duplicate_leakage_count",
+        ),
+    )
+    if leakage_count is not None:
+        details["leakage_count"] = leakage_count
+        if leakage_count > 0:
+            failures.append(f"leak_free_splits:leakage_detected:{leakage_count:g}")
+    for key in ("leaks", "leakage", "violations", "split_leaks"):
+        value = packet.get(key)
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            details[f"{key}_count"] = len(value)
+            if value:
+                failures.append(f"leak_free_splits:{key}_present:{len(value)}")
+    allowed = packet.get("operation_allowed", packet.get("representation_promotion_allowed"))
+    if allowed is False:
+        failures.append("leak_free_splits:operation_not_authorized")
+    return failures, [], details
+
+
+def _semantic_metric_failures(
+    packet: Mapping[str, Any],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures = _schema_failures(
+        "semantic_metrics",
+        packet,
+        (LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION,),
+    )
+    failures.extend(_status_failures("semantic_metrics", packet))
+    values = _semantic_scores(packet)
+    details: dict[str, Any] = {
+        "schema_version": _schema_version(packet),
+        "scores": dict(sorted(values.items())),
+    }
+    for metric in SEMANTIC_EQUIVALENCE_REQUIRED_METRICS:
+        value = values.get(metric)
+        if value is None:
+            failures.append(f"semantic_metrics:metric_missing:{metric}")
+        elif value + 1.0e-12 < cfg.min_semantic_score:
+            failures.append(
+                f"semantic_metrics:metric_below_threshold:{metric}:"
+                f"{value:g}<{cfg.min_semantic_score:g}"
+            )
+    return failures, [], details
+
+
+def _typed_decoding_failures(
+    packet: Mapping[str, Any],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures = _schema_failures(
+        "typed_decoding",
+        packet,
+        (LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION,),
+    )
+    failures.extend(_status_failures("typed_decoding", packet))
+    metrics = packet.get("metrics") if isinstance(packet.get("metrics"), Mapping) else {}
+    success = _first_finite(
+        packet,
+        (
+            "legal_ir_grammar_syntactic_validity_success_rate",
+            "syntactic_validity_success_rate",
+            "typed_decode_success_rate",
+            "accepted_rate",
+        ),
+    )
+    if success is None and isinstance(metrics, Mapping):
+        success = _first_finite(
+            metrics,
+            (
+                "legal_ir_grammar_syntactic_validity_success_rate",
+                "syntactic_validity_success_rate",
+                "typed_decode_success_rate",
+                "accepted_rate",
+            ),
+        )
+    source_copy = _first_finite(
+        packet,
+        (
+            "legal_ir_grammar_source_copy_placeholder_penalty",
+            "source_copy_placeholder_penalty",
+            "source_copy_penalty",
+        ),
+    )
+    if source_copy is None and isinstance(metrics, Mapping):
+        source_copy = _first_finite(
+            metrics,
+            (
+                "legal_ir_grammar_source_copy_placeholder_penalty",
+                "source_copy_placeholder_penalty",
+                "source_copy_penalty",
+            ),
+        )
+    rejection_count = _first_finite(
+        packet,
+        ("rejection_count", "legal_ir_grammar_rejection_count", "invalid_count"),
+    )
+    if rejection_count is None and isinstance(metrics, Mapping):
+        rejection_count = _first_finite(
+            metrics,
+            ("rejection_count", "legal_ir_grammar_rejection_count", "invalid_count"),
+        )
+    details = {
+        "schema_version": _schema_version(packet),
+        "success_rate": success,
+        "source_copy_penalty": source_copy,
+        "rejection_count": rejection_count,
+    }
+    if success is None:
+        failures.append("typed_decoding:success_rate_missing")
+    elif success + 1.0e-12 < cfg.min_typed_decoding_success_rate:
+        failures.append(
+            "typed_decoding:success_rate_below_threshold:"
+            f"{success:g}<{cfg.min_typed_decoding_success_rate:g}"
+        )
+    if source_copy is None:
+        failures.append("typed_decoding:source_copy_penalty_missing")
+    elif source_copy > cfg.max_typed_decoding_source_copy_penalty + 1.0e-12:
+        failures.append(
+            "typed_decoding:source_copy_penalty:"
+            f"{source_copy:g}>{cfg.max_typed_decoding_source_copy_penalty:g}"
+        )
+    if rejection_count is not None and rejection_count > 0:
+        failures.append(f"typed_decoding:rejections_present:{rejection_count:g}")
+    return failures, [], details
+
+
+def _uncertainty_failures(
+    packet: Mapping[str, Any],
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures = _schema_failures("uncertainty", packet, (LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION,))
+    failures.extend(_status_failures("uncertainty", packet))
+    block_reasons = _string_sequence(packet.get("block_reasons"))
+    failed_families = _string_sequence(packet.get("failed_families"))
+    unsupported = _string_sequence(packet.get("unsupported_guidance_ids"))
+    if block_reasons:
+        failures.append("uncertainty:block_reasons:" + ",".join(block_reasons))
+    if failed_families:
+        failures.append("uncertainty:failed_families:" + ",".join(failed_families))
+    if unsupported:
+        failures.append("uncertainty:unsupported_guidance:" + ",".join(unsupported))
+    return failures, [], {
+        "schema_version": _schema_version(packet),
+        "block_reasons": block_reasons,
+        "failed_families": failed_families,
+        "unsupported_guidance_ids": unsupported,
+    }
+
+
+def _fuzzing_failures(
+    packet: Mapping[str, Any],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures = _schema_failures("fuzzing", packet, (LEGAL_IR_FUZZING_SCHEMA_VERSION,))
+    failures.extend(_status_failures("fuzzing", packet))
+    mutation_count = _first_finite(packet, ("mutation_count", "metamorphic_mutation_count"))
+    trusted_negative_count = _first_finite(
+        packet,
+        ("trusted_negative_count", "trusted_negative_candidate_count"),
+    )
+    failed_mutations = _string_sequence(packet.get("failed_mutation_ids"))
+    if mutation_count is None or mutation_count < cfg.min_fuzzing_mutation_count:
+        failures.append(
+            "fuzzing:mutation_count:"
+            f"{0 if mutation_count is None else mutation_count:g}<"
+            f"{cfg.min_fuzzing_mutation_count}"
+        )
+    if trusted_negative_count is None or trusted_negative_count < cfg.min_trusted_negative_count:
+        failures.append(
+            "fuzzing:trusted_negative_count:"
+            f"{0 if trusted_negative_count is None else trusted_negative_count:g}<"
+            f"{cfg.min_trusted_negative_count}"
+        )
+    if failed_mutations:
+        failures.append("fuzzing:failed_mutations:" + ",".join(failed_mutations))
+    return failures, [], {
+        "schema_version": _schema_version(packet),
+        "mutation_count": mutation_count,
+        "trusted_negative_count": trusted_negative_count,
+        "failed_mutation_ids": failed_mutations,
+    }
+
+
+def _hard_negative_failures(
+    packet: Mapping[str, Any],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures = _schema_failures(
+        "hard_negatives",
+        packet,
+        (LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION, LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION),
+    )
+    failures.extend(_status_failures("hard_negatives", packet))
+    reduction = _first_finite(packet, ("false_positive_reduction", "semantic_false_positive_reduction"))
+    negative_count = _first_finite(packet, ("negative_example_count", "accepted_count"))
+    trusted_positive_count = _first_finite(packet, ("trusted_positive_count",))
+    if packet.get("hard_negative_guard_passed") is False:
+        failures.append("hard_negatives:hard_negative_guard_failed")
+    if packet.get("trusted_positive_guard_passed") is False:
+        failures.append("hard_negatives:trusted_positive_guard_failed")
+    if reduction is None:
+        failures.append("hard_negatives:false_positive_reduction_missing")
+    elif reduction + 1.0e-12 < cfg.min_hard_negative_false_positive_reduction:
+        failures.append(
+            "hard_negatives:false_positive_reduction_below_threshold:"
+            f"{reduction:g}<{cfg.min_hard_negative_false_positive_reduction:g}"
+        )
+    if negative_count is None or negative_count <= 0:
+        failures.append("hard_negatives:negative_examples_missing")
+    if trusted_positive_count is None or trusted_positive_count <= 0:
+        failures.append("hard_negatives:trusted_positive_evidence_missing")
+    return failures, [], {
+        "schema_version": _schema_version(packet),
+        "false_positive_reduction": reduction,
+        "negative_example_count": negative_count,
+        "trusted_positive_count": trusted_positive_count,
+    }
+
+
+def _schema_compatibility_failures(
+    packet: Mapping[str, Any],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures: list[str] = []
+    schema_id = str(packet.get("schema_version_id") or "").strip()
+    schema = _schema_version(packet)
+    if schema_id and schema_id != LEGAL_IR_SCHEMA_EVOLUTION_SCHEMA_VERSION:
+        failures.append(f"schema_compatibility:schema_version_id_mismatch:{schema_id}")
+    elif not schema_id and schema != LEGAL_IR_SCHEMA_EVOLUTION_SCHEMA_VERSION:
+        failures.append(f"schema_compatibility:schema_mismatch:{schema or 'missing'}")
+    failures.extend(_status_failures("schema_compatibility", packet))
+    reusable = packet.get("reusable")
+    compatibility = str(packet.get("compatibility") or "").strip()
+    issues = packet.get("issues")
+    issue_count = len(issues) if isinstance(issues, Sequence) and not isinstance(issues, (str, bytes, bytearray)) else None
+    if cfg.require_schema_reusable and reusable is not True:
+        failures.append("schema_compatibility:not_reusable")
+    if compatibility and compatibility != "compatible":
+        failures.append(f"schema_compatibility:not_compatible:{compatibility}")
+    if isinstance(issues, Sequence) and not isinstance(issues, (str, bytes, bytearray)):
+        for index, issue in enumerate(issues):
+            if not isinstance(issue, Mapping):
+                continue
+            severity = str(issue.get("severity") or "").strip().lower()
+            if severity == "error":
+                code = str(issue.get("code") or index)
+                failures.append(f"schema_compatibility:error_issue:{code}")
+    return failures, [], {
+        "schema_version": schema,
+        "schema_version_id": schema_id,
+        "compatibility": compatibility,
+        "reusable": reusable,
+        "issue_count": issue_count,
+    }
+
+
+def _poisoning_defense_failures(
+    packet: Mapping[str, Any],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures = _schema_failures(
+        "poisoning_defenses",
+        packet,
+        (LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION,),
+    )
+    failures.extend(_status_failures("poisoning_defenses", packet))
+    hard_rule = _first_string(
+        packet,
+        ("hard_rule", "legal_source_text_rule", "data_rule"),
+    )
+    if not hard_rule:
+        hard_rule = _find_string_value(packet, LEGAL_SOURCE_TEXT_DATA_RULE)
+    if cfg.require_poisoning_hard_rule and hard_rule != LEGAL_SOURCE_TEXT_DATA_RULE:
+        failures.append(
+            "poisoning_defenses:hard_rule_missing:"
+            f"{hard_rule or 'missing'}"
+        )
+    if packet.get("poisoned_payloads_rejected") is False:
+        failures.append("poisoning_defenses:poisoned_payloads_not_rejected")
+    if packet.get("blocks_training") is False:
+        failures.append("poisoning_defenses:does_not_block_training")
+    if packet.get("blocks_promotion") is False:
+        failures.append("poisoning_defenses:does_not_block_promotion")
+    rejected_count = _first_finite(packet, ("rejected_count", "poisoned_rejected_count"))
+    tested = _string_sequence(packet.get("tested_poisoning_families"))
+    if rejected_count is None and not tested and packet.get("poisoned_payloads_rejected") is not True:
+        failures.append("poisoning_defenses:rejection_evidence_missing")
+    return failures, [], {
+        "schema_version": _schema_version(packet),
+        "hard_rule": hard_rule,
+        "rejected_count": rejected_count,
+        "tested_poisoning_families": tested,
+    }
+
+
+def _external_benchmark_failures(
+    packet: Mapping[str, Any],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures = _schema_failures(
+        "external_benchmark_scores",
+        packet,
+        (LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION,),
+    )
+    failures.extend(_status_failures("external_benchmark_scores", packet))
+    external = packet.get("external_validity")
+    if not isinstance(external, Mapping):
+        external = packet
+    score = _first_finite(external, ("external_validity_score", "score", "accepted_rate"))
+    packet_count = _first_finite(external, ("packet_count", "sample_count", "evaluated_count"))
+    failed_packets = _string_sequence(external.get("failed_packet_ids"))
+    hard_guardrail = str(packet.get("hard_guardrail") or "").strip()
+    separate = packet.get("separate_from_internal_canary_metrics")
+    if score is None:
+        failures.append("external_benchmark_scores:score_missing")
+    elif score + 1.0e-12 < cfg.min_external_validity_score:
+        failures.append(
+            "external_benchmark_scores:score_below_threshold:"
+            f"{score:g}<{cfg.min_external_validity_score:g}"
+        )
+    if packet_count is None or packet_count < cfg.min_external_packet_count:
+        failures.append(
+            "external_benchmark_scores:packet_count:"
+            f"{0 if packet_count is None else packet_count:g}<"
+            f"{cfg.min_external_packet_count}"
+        )
+    if failed_packets:
+        failures.append("external_benchmark_scores:failed_packets:" + ",".join(failed_packets))
+    if hard_guardrail and hard_guardrail != EXTERNAL_BENCHMARK_HARD_GUARDRAIL:
+        failures.append(f"external_benchmark_scores:hard_guardrail_mismatch:{hard_guardrail}")
+    elif not hard_guardrail:
+        failures.append("external_benchmark_scores:hard_guardrail_missing")
+    if cfg.require_external_benchmark_separate_from_canary and separate is not True:
+        failures.append("external_benchmark_scores:not_separate_from_internal_canary")
+    return failures, [], {
+        "schema_version": _schema_version(packet),
+        "external_validity_score": score,
+        "packet_count": packet_count,
+        "failed_packet_ids": failed_packets,
+        "separate_from_internal_canary_metrics": separate,
+    }
+
+
+def _rollback_readiness_failures(
+    packet: Mapping[str, Any],
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures: list[str] = []
+    schema = _schema_version(packet)
+    schema_id = str(packet.get("schema_version_id") or "").strip()
+    if schema not in {
+        LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION,
+        LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION,
+        "",
+    } and schema_id != LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION:
+        failures.append(f"rollback_readiness:schema_mismatch:{schema}")
+    status = str(packet.get("status") or "").strip().lower()
+    accepted = packet.get("accepted")
+    hard_guardrail = str(packet.get("hard_guardrail") or "").strip()
+    rollback_decision = packet.get("rollback_decision")
+    rollback_required: Any = packet.get("rollback_required")
+    if isinstance(rollback_decision, Mapping):
+        rollback_required = rollback_decision.get("rollback_required", rollback_required)
+    if hard_guardrail and hard_guardrail != PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL:
+        failures.append(f"rollback_readiness:hard_guardrail_mismatch:{hard_guardrail}")
+    if accepted is False or status in {"rollback_required", "blocked", "failed"}:
+        failures.append(f"rollback_readiness:drift_monitor_blocked:{status or accepted}")
+    if rollback_required is True:
+        failures.append("rollback_readiness:rollback_already_required")
+    rollback_metadata = packet.get("rollback_metadata")
+    if not isinstance(rollback_metadata, Mapping):
+        rollback_metadata = packet.get("rollback_evidence")
+    if not isinstance(rollback_metadata, Mapping):
+        rollback_metadata = {}
+    rollback_id = str(rollback_metadata.get("rollback_id") or packet.get("rollback_id") or "").strip()
+    disable_action = str(
+        rollback_metadata.get("disable_action")
+        or packet.get("disable_action")
+        or ""
+    ).strip()
+    restorable = (
+        rollback_metadata.get("restorable") is True
+        or packet.get("restorable") is True
+        or bool(disable_action)
+    )
+    if not rollback_id:
+        failures.append("rollback_readiness:rollback_id_missing")
+    if not (disable_action or restorable):
+        failures.append("rollback_readiness:disable_or_restore_action_missing")
+    return failures, [], {
+        "schema_version": schema,
+        "status": status,
+        "accepted": accepted,
+        "rollback_required": rollback_required,
+        "rollback_id": rollback_id,
+        "disable_action": disable_action,
+        "restorable": restorable,
+    }
+
+
+def _external_validity_binding_failures(
+    payload: Mapping[str, Any],
+    evidence_packets: Mapping[str, Mapping[str, Any]],
+    cfg: ExternalValidityPromotionConfig,
+) -> tuple[dict[str, Any], list[str]]:
+    failures: list[str] = []
+    metrics: dict[str, Any] = {}
+    envelope_bindings = payload.get("evidence_bindings")
+    if not isinstance(envelope_bindings, Mapping):
+        envelope_bindings = payload.get("bindings")
+    if not isinstance(envelope_bindings, Mapping):
+        envelope_bindings = {}
+    for field in cfg.required_binding_fields:
+        sources: dict[str, str] = {}
+        expected = _binding_value(field, envelope_bindings)
+        root_value = _binding_value(field, payload)
+        if expected:
+            sources["evidence_bindings"] = expected
+        if root_value:
+            sources["root"] = root_value
+        for domain, packet in evidence_packets.items():
+            value = _binding_value(field, packet)
+            if value:
+                sources[domain] = value
+        normalized = {source: _normalize_binding_value(field, value) for source, value in sources.items()}
+        unique_values = sorted(set(normalized.values()))
+        canonical = unique_values[0] if len(unique_values) == 1 else ""
+        metrics[field] = {
+            "canonical": canonical,
+            "sources": dict(sorted(normalized.items())),
+        }
+        if not expected and not root_value:
+            failures.append(f"external_validity_binding_missing:{field}")
+        if len(unique_values) > 1:
+            failures.append(
+                f"external_validity_binding_mismatch:{field}:"
+                + ",".join(f"{source}={value}" for source, value in sorted(normalized.items()))
+            )
+    return metrics, failures
+
+
+def _schema_failures(
+    domain: str,
+    packet: Mapping[str, Any],
+    allowed: Sequence[str],
+) -> list[str]:
+    schema = _schema_version(packet)
+    if schema not in set(allowed):
+        return [f"{domain}:schema_mismatch:{schema or 'missing'}"]
+    return []
+
+
+def _status_failures(domain: str, packet: Mapping[str, Any]) -> list[str]:
+    failures: list[str] = []
+    status = str(packet.get("status") or "").strip().lower()
+    accepted = packet.get("accepted")
+    passed = packet.get("passed")
+    promotion_allowed = packet.get("promotion_allowed")
+    reusable = packet.get("reusable")
+    if status in {"blocked", "failed", "rejected", "rollback_required"}:
+        failures.append(f"{domain}:status_blocked:{status}")
+    if accepted is False:
+        failures.append(f"{domain}:accepted_false")
+    if passed is False:
+        failures.append(f"{domain}:passed_false")
+    if promotion_allowed is False:
+        failures.append(f"{domain}:promotion_allowed_false")
+    if reusable is False:
+        failures.append(f"{domain}:reusable_false")
+    for key in ("failures", "block_reasons", "failed_packet_ids", "missing_guardrail_evidence"):
+        items = _string_sequence(packet.get(key))
+        if items:
+            failures.append(f"{domain}:{key}:" + ",".join(items))
+    return failures
+
+
+def _semantic_scores(packet: Mapping[str, Any]) -> dict[str, float]:
+    result: dict[str, float] = {}
+    containers: list[Mapping[str, Any]] = [packet]
+    for key in ("scores", "metric_scores", "minimum_scores"):
+        value = packet.get(key)
+        if isinstance(value, Mapping):
+            containers.append(value)
+    families = packet.get("family_results")
+    if isinstance(families, Mapping):
+        for value in families.values():
+            if isinstance(value, Mapping):
+                scores = value.get("scores")
+                if isinstance(scores, Mapping):
+                    containers.append(scores)
+    for container in containers:
+        for metric in SEMANTIC_EQUIVALENCE_REQUIRED_METRICS:
+            number = _finite_float(container.get(metric))
+            if number is not None:
+                result[metric] = min(number, result.get(metric, number))
+    return result
+
+
+def _external_domain_schema_versions(domain: str) -> tuple[str, ...]:
+    if domain == "hard_negatives":
+        return (LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION, LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION)
+    if domain == "rollback_readiness":
+        return (LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION, LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION)
+    mapping = {
+        "leak_free_splits": LEGAL_IR_EVAL_SPLITS_SCHEMA_VERSION,
+        "semantic_metrics": LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION,
+        "typed_decoding": LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION,
+        "uncertainty": LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION,
+        "fuzzing": LEGAL_IR_FUZZING_SCHEMA_VERSION,
+        "multi_seed_statistics": MULTI_SEED_PROMOTION_SCHEMA_VERSION,
+        "schema_compatibility": LEGAL_IR_SCHEMA_EVOLUTION_SCHEMA_VERSION,
+        "poisoning_defenses": LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION,
+        "external_benchmark_scores": LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION,
+    }
+    value = mapping.get(domain)
+    return (value,) if value else ()
+
+
+def _external_report_detail(domain: str, entry: Mapping[str, Any]) -> str:
+    if not entry.get("present"):
+        return "`missing`"
+    if domain == "external_benchmark_scores":
+        return f"`score={entry.get('external_validity_score')}, packets={entry.get('packet_count')}`"
+    if domain == "multi_seed_statistics":
+        metrics = entry.get("metrics")
+        if isinstance(metrics, Mapping):
+            seed_set = metrics.get("seed_set")
+            return f"`seeds={len(seed_set) if isinstance(seed_set, Sequence) else 0}`"
+    for key in (
+        "schema_version",
+        "success_rate",
+        "mutation_count",
+        "false_positive_reduction",
+        "rollback_id",
+        "hard_rule",
+    ):
+        value = entry.get(key)
+        if value not in (None, "", []):
+            return f"`{key}={value}`"
+    return "`present`"
+
+
+def _schema_version(packet: Mapping[str, Any]) -> str:
+    return str(packet.get("schema_version") or "").strip()
+
+
+def _first_string(payload: Mapping[str, Any], keys: Sequence[str]) -> str:
+    for key in keys:
+        value = payload.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def _find_string_value(payload: Mapping[str, Any], wanted: str) -> str:
+    for _path, value in _walk(payload):
+        if str(value).strip() == wanted:
+            return wanted
+    return ""
+
+
+def _binding_value(field: str, payload: Mapping[str, Any]) -> str:
+    aliases = {
+        "promotion_id": ("promotion_id", "active_promotion_id"),
+        "compiler_commit": ("compiler_commit", "selected_compiler_commit", "git_revision"),
+        "source_export_id": ("source_export_id", "learned_export_id", "export_id"),
+        "fixed_canary_id": ("fixed_canary_id", "canary_id", "validation_canary_id"),
+        "split_manifest_digest": (
+            "split_manifest_digest",
+            "split_manifest_sha256",
+            "split_guard_digest",
+            "manifest_digest",
+        ),
+    }.get(field, (field,))
+    value = _first_string(payload, aliases)
+    if value:
+        return value
+    if field == "source_export_id":
+        learned_export = payload.get("learned_export")
+        if isinstance(learned_export, Mapping):
+            return _first_string(learned_export, ("export_id", "source_export_id"))
+    if field == "fixed_canary_id":
+        fixed_binding = payload.get("fixed_canary_binding")
+        if isinstance(fixed_binding, Mapping):
+            return _first_string(fixed_binding, ("canary_id", "fixed_canary_id"))
+    return ""
+
+
+def _normalize_binding_value(field: str, value: str) -> str:
+    text = str(value or "").strip()
+    if field == "split_manifest_digest":
+        return _normalized_digest_ref(text) if _valid_digest_ref(text) else text
+    return text
 
 
 def _multi_seed_rollout_failures(
@@ -2735,6 +3715,39 @@ def build_parser() -> argparse.ArgumentParser:
         help="Require multi-seed statistical evidence in the final production snapshot",
     )
     staged_parser.set_defaults(func=_cmd_staged_gate)
+
+    external_parser = subparsers.add_parser(
+        "external-validity-gate",
+        help="Gate final promotion on bound external-validity evidence",
+    )
+    external_parser.add_argument("--evidence-path", "--summary-path", required=True, type=Path)
+    external_parser.add_argument(
+        "--evidence-output",
+        type=Path,
+        help="Atomically store the complete external-validity decision JSON",
+    )
+    external_parser.add_argument(
+        "--report-output",
+        type=Path,
+        help="Atomically store a Markdown external-validity promotion report",
+    )
+    external_parser.add_argument("--min-semantic-score", type=float, default=1.0)
+    external_parser.add_argument("--min-typed-decoding-success-rate", type=float, default=1.0)
+    external_parser.add_argument(
+        "--max-typed-decoding-source-copy-penalty",
+        type=float,
+        default=0.0,
+    )
+    external_parser.add_argument("--min-fuzzing-mutation-count", type=int, default=1)
+    external_parser.add_argument("--min-trusted-negative-count", type=int, default=1)
+    external_parser.add_argument(
+        "--min-hard-negative-false-positive-reduction",
+        type=float,
+        default=0.05,
+    )
+    external_parser.add_argument("--min-external-validity-score", type=float, default=1.0)
+    external_parser.add_argument("--min-external-packet-count", type=int, default=1)
+    external_parser.set_defaults(func=_cmd_external_validity_gate)
     return parser
 
 
@@ -2854,6 +3867,49 @@ def _cmd_staged_gate(args: argparse.Namespace) -> int:
         decision["snapshot_sha256"] = snapshot_sha256(snapshot_path)
     if args.evidence_output is not None:
         write_rollout_evidence(args.evidence_output, decision)
+    print(json.dumps(decision, indent=2, sort_keys=True))
+    return 0 if result.accepted else 1
+
+
+def _cmd_external_validity_gate(args: argparse.Namespace) -> int:
+    try:
+        payload = load_summary(args.evidence_path)
+        result = external_validity_promotion_gate(
+            payload,
+            ExternalValidityPromotionConfig(
+                min_semantic_score=args.min_semantic_score,
+                min_typed_decoding_success_rate=(
+                    args.min_typed_decoding_success_rate
+                ),
+                max_typed_decoding_source_copy_penalty=(
+                    args.max_typed_decoding_source_copy_penalty
+                ),
+                min_fuzzing_mutation_count=args.min_fuzzing_mutation_count,
+                min_trusted_negative_count=args.min_trusted_negative_count,
+                min_hard_negative_false_positive_reduction=(
+                    args.min_hard_negative_false_positive_reduction
+                ),
+                min_external_validity_score=args.min_external_validity_score,
+                min_external_packet_count=args.min_external_packet_count,
+            ),
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        result = RolloutGateResult(
+            accepted=False,
+            failures=[
+                f"external_validity_evidence_unreadable:{type(exc).__name__}:{exc}"
+            ],
+            metrics={"schema_version": EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION},
+        )
+    decision = result.to_dict()
+    decision["schema_version"] = EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION
+    decision["evidence_path"] = str(args.evidence_path)
+    if args.evidence_path.is_file():
+        decision["evidence_sha256"] = snapshot_sha256(args.evidence_path)
+    if args.evidence_output is not None:
+        write_rollout_evidence(args.evidence_output, decision)
+    if args.report_output is not None:
+        write_text_artifact(args.report_output, render_external_validity_report(result))
     print(json.dumps(decision, indent=2, sort_keys=True))
     return 0 if result.accepted else 1
 
