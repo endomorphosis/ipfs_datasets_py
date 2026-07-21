@@ -1512,8 +1512,8 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-076 Calibrate uncertainty and abstention for learned guidance
 
-- Status: todo
-- Completion: 0
+- Status: completed
+- Completion: 100
 - Priority: P1
 - Track: evaluation-integrity
 - Depends on: PORTAL-LIR-HAMMER-055, PORTAL-LIR-HAMMER-073, PORTAL-LIR-HAMMER-075

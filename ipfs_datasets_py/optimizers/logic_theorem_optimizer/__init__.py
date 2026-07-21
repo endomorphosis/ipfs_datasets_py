@@ -172,6 +172,15 @@ __all__ = [
     'external_benchmark_split_manifest',
     'load_external_expert_benchmark_packets',
     'require_external_benchmark_evaluation_only',
+    'LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION',
+    'ROUTE_CODEX_TODO',
+    'ROUTE_HAMMER_LEANSTRAL_AUDIT',
+    'LegalIRFamilyUncertaintyResult',
+    'LegalIRUncertaintyConfig',
+    'LegalIRUncertaintyReport',
+    'evaluate_legal_ir_uncertainty',
+    'legal_ir_uncertainty_promotion_gate',
+    'route_learned_guidance_by_uncertainty',
     'ConstrainedLegalIRDecode',
     'LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION',
     'LEGAL_IR_GRAMMAR_FAMILIES',
@@ -1088,6 +1097,22 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_external_benchmark, name)
+    elif name in (
+        'LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION',
+        'ROUTE_CODEX_TODO',
+        'ROUTE_HAMMER_LEANSTRAL_AUDIT',
+        'LegalIRFamilyUncertaintyResult',
+        'LegalIRUncertaintyConfig',
+        'LegalIRUncertaintyReport',
+        'evaluate_legal_ir_uncertainty',
+        'legal_ir_uncertainty_promotion_gate',
+        'route_learned_guidance_by_uncertainty',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_uncertainty,
+        )
+
+        return getattr(legal_ir_uncertainty, name)
     elif name in (
         'ConstrainedLegalIRDecode',
         'LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION',

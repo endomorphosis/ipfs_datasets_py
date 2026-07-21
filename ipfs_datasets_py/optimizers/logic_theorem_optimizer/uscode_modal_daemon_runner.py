@@ -110,6 +110,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits im
     REPRESENTATION_PROMOTION_OPERATION,
     split_guard_blocks_operation,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_uncertainty import (
+    LegalIRUncertaintyConfig,
+    route_learned_guidance_by_uncertainty,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.parallelism_autotuner import (
     AdaptivePipelineParallelismController,
     AdaptivePipelineSignals,
@@ -5052,6 +5056,10 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
             ),
             "status": "not_run",
         },
+        "uncertainty_routing": {
+            "enabled": True,
+            "status": "not_run",
+        },
     }
     if not result["enabled"]:
         result["status"] = "disabled"
@@ -5086,6 +5094,30 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
         return result
 
     result["report_loaded"] = True
+    hammer_guidance_items = [
+        item for item in guidance_items if _hammer_projection_is_hammer_item(item)
+    ]
+    learned_guidance_items = [
+        item for item in guidance_items if not _hammer_projection_is_hammer_item(item)
+    ]
+    uncertainty_routing = route_learned_guidance_by_uncertainty(
+        learned_guidance_items,
+        config=LegalIRUncertaintyConfig(),
+    )
+    codex_guidance_items = [
+        *hammer_guidance_items,
+        *list(uncertainty_routing["codex_guidance_items"]),
+    ]
+    audit_guidance_items = list(uncertainty_routing["audit_guidance_items"])
+    result["uncertainty_routing"] = {
+        **dict(uncertainty_routing["report"]),
+        "audit_guidance_count": len(audit_guidance_items),
+        "codex_guidance_count": len(codex_guidance_items),
+        "enabled": True,
+        "hammer_verified_guidance_bypass_count": len(hammer_guidance_items),
+        "learned_guidance_count": len(learned_guidance_items),
+        "status": "routed",
+    }
     config = LeanstralTodoProjectionConfig(
         max_audits_per_cycle=max(
             0,
@@ -5130,7 +5162,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
         supervisor.queue = latest_queue
         backfill_report = supervisor.backfill_leanstral_patch_feedback_evidence()
         projection = supervisor.seed_program_synthesis_from_leanstral_guidance(
-            guidance_items,
+            codex_guidance_items,
             config=config,
         )
         hammer_failure_todos: List[ModalTodo] = []
@@ -5150,7 +5182,7 @@ def project_verified_leanstral_guidance_artifacts_into_queue(
             hammer_failure_projection["status"] = "seed_gate_blocked"
         else:
             hammer_failure_todos = hammer_failure_projection_todos(
-                guidance_items,
+                codex_guidance_items,
                 policy=supervisor.policy,
                 min_support=2,
                 max_todos_per_cycle=max(
