@@ -197,6 +197,15 @@ class LegalIRLearnedGuidancePromotion(_SerializableMapping):
     block_reasons: tuple[str, ...]
     canary_evidence: LegalIRFixedCanaryEvidence
     rollback_metadata: Mapping[str, Any]
+    learned_export: Mapping[str, Any] = field(default_factory=dict)
+    compiler_commit: str = ""
+    proof_receipts: tuple[Mapping[str, Any], ...] = ()
+    causal_evidence: Mapping[str, Any] = field(default_factory=dict)
+    source_copy_checks: Mapping[str, Any] = field(default_factory=dict)
+    activation_state: Mapping[str, Any] = field(default_factory=dict)
+    fixed_canary_binding: Mapping[str, Any] = field(default_factory=dict)
+    eligible_snapshot_id: str = ""
+    report_artifact_path: str = ""
     candidate_record_count: int = 0
     schema_version: str = LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION
 
@@ -205,22 +214,66 @@ class LegalIRLearnedGuidancePromotion(_SerializableMapping):
         return self.promoted
 
     @property
+    def report_outcome(self) -> str:
+        if self.promoted:
+            return "success"
+        no_candidate_reasons = {
+            "missing_view_family_weights",
+            "no_canonical_contracts_resolved",
+            "no_guidance_records_met_promotion_threshold",
+            "no_stable_learned_features",
+        }
+        if self.candidate_record_count <= 0 and any(
+            reason in no_candidate_reasons for reason in self.block_reasons
+        ):
+            return "no_candidate"
+        return "rejection"
+
+    @property
     def status(self) -> str:
-        return "promoted" if self.promoted else "blocked"
+        if self.promoted:
+            return "promoted"
+        return self.report_outcome
 
     def to_dict(self) -> dict[str, Any]:
         records = [record.to_dict() for record in self.records]
+        proof_receipts = _canonical_json_value(self.proof_receipts)
         return {
+            "activation_state": _canonical_json_value(self.activation_state),
             "block_reasons": list(self.block_reasons),
             "canary_evidence": self.canary_evidence.to_dict(),
             "candidate_record_count": self.candidate_record_count,
+            "causal_evidence": _canonical_json_value(self.causal_evidence),
+            "compiler_commit": self.compiler_commit,
+            "eligible_snapshot_id": self.eligible_snapshot_id,
+            "fixed_canary_binding": _canonical_json_value(
+                self.fixed_canary_binding
+            ),
             "guidance_records": records,
+            "learned_export": _canonical_json_value(self.learned_export),
+            "learned_export_id": self.source_export_id,
+            "learned_export_sha256": str(
+                self.learned_export.get("sha256")
+                or self.learned_export.get("export_sha256")
+                or ""
+            ),
+            "proof_receipt_ids": [
+                str(receipt.get("receipt_id") or receipt.get("id") or "")
+                for receipt in proof_receipts
+                if isinstance(receipt, Mapping)
+                and str(receipt.get("receipt_id") or receipt.get("id") or "")
+            ],
+            "proof_receipts": proof_receipts,
             "promoted": self.promoted,
             "promotion_allowed": self.promotion_allowed,
             "promotion_id": self.promotion_id,
+            "promotion_report_outcome": self.report_outcome,
+            "report_artifact_path": self.report_artifact_path,
+            "report_outcome": self.report_outcome,
             "records": records,
             "rollback_metadata": _canonical_json_value(self.rollback_metadata),
             "schema_version": self.schema_version,
+            "source_copy_checks": _canonical_json_value(self.source_copy_checks),
             "source_export_id": self.source_export_id,
             "status": self.status,
         }
@@ -591,6 +644,13 @@ def promote_learned_autoencoder_guidance(
     baseline_canary_metrics: Mapping[str, Any] | Any = None,
     candidate_canary_metrics: Mapping[str, Any] | Any = None,
     fixed_canary_id: str = "",
+    compiler_commit: str = "",
+    proof_receipts: Sequence[Mapping[str, Any]] | None = None,
+    causal_evidence: Mapping[str, Any] | None = None,
+    source_copy_checks: Mapping[str, Any] | None = None,
+    activation_state: Mapping[str, Any] | None = None,
+    eligible_snapshot_id: str = "",
+    report_artifact_path: str = "",
     metric_tolerance: float = 0.0,
     min_confidence: float = 0.0,
     previous_promotion_id: str = "",
@@ -610,6 +670,7 @@ def promote_learned_autoencoder_guidance(
         min_sample_support=min_sample_support,
     )
     export_id = str(export.get("export_id") or "")
+    export_binding = _learned_export_binding(export)
     stable_features, unsafe_feature_count = _stable_features(export)
     family_weights = _view_family_weights(export)
     contracts = _selected_contracts(export, family_weights)
@@ -626,12 +687,26 @@ def promote_learned_autoencoder_guidance(
         required_families=required_families,
         metric_tolerance=metric_tolerance,
     )
+    normalized_receipts = _proof_receipts(export, proof_receipts)
+    resolved_compiler_commit = str(
+        compiler_commit
+        or export.get("compiler_commit")
+        or _as_mapping(baseline_canary_metrics).get("compiler_commit")
+        or _as_mapping(candidate_canary_metrics).get("compiler_commit")
+        or ""
+    ).strip()
 
     block_reasons: list[str] = []
     if str(export.get("schema_version") or "") != (
         LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION
     ):
         block_reasons.append("unsupported_stable_feature_export_schema")
+    if not export_id:
+        block_reasons.append("learned_export_id_missing")
+    if not resolved_compiler_commit:
+        block_reasons.append("compiler_commit_missing")
+    if not normalized_receipts:
+        block_reasons.append("proof_receipts_missing")
     if bool(export.get("sample_memory_included")):
         block_reasons.append("sample_memory_features_present")
     if unsafe_feature_count:
@@ -657,10 +732,16 @@ def promote_learned_autoencoder_guidance(
 
     candidate_descriptor = {
         "canary_evidence_id": canary.evidence_id,
+        "compiler_commit": resolved_compiler_commit,
         "contract_ids": [contract.contract_id for contract in contracts],
         "export_id": export_id,
+        "export_sha256": export_binding.get("sha256", ""),
         "family_weights": family_weights,
         "features": stable_features,
+        "proof_receipt_ids": [
+            str(receipt.get("receipt_id") or receipt.get("id") or "")
+            for receipt in normalized_receipts
+        ],
     }
     promotion_id = "lir-guidance-promotion-" + _stable_hash(candidate_descriptor)[:24]
     rollback_metadata = _rollback_metadata(
@@ -733,6 +814,34 @@ def promote_learned_autoencoder_guidance(
         block_reasons.append("no_guidance_records_met_promotion_threshold")
     block_reasons = list(dict.fromkeys(block_reasons))
     promoted = not block_reasons
+    fixed_canary_binding = {
+        "canary_id": canary.canary_id,
+        "evidence_id": canary.evidence_id,
+        "fixed_sample_set": canary.fixed_sample_set,
+        "guardrails_passed": canary.guardrails_passed,
+        "metric_tolerance": canary.metric_tolerance,
+        "schema_version": canary.schema_version,
+    }
+    resolved_source_copy_checks = _source_copy_check_report(
+        export,
+        stable_features=stable_features,
+        unsafe_feature_count=unsafe_feature_count,
+        canary=canary,
+        overrides=source_copy_checks,
+    )
+    resolved_causal_evidence = _causal_evidence_report(
+        canary=canary,
+        family_weights=family_weights,
+        compiler_commit=resolved_compiler_commit,
+        proof_receipts=normalized_receipts,
+        overrides=causal_evidence,
+    )
+    resolved_activation_state = _activation_state_report(
+        promoted=promoted,
+        promotion_id=promotion_id,
+        block_reasons=block_reasons,
+        overrides=activation_state,
+    )
     return LegalIRLearnedGuidancePromotion(
         promotion_id=promotion_id,
         source_export_id=export_id,
@@ -745,6 +854,15 @@ def promote_learned_autoencoder_guidance(
             "activation_allowed": promoted,
             "block_reasons": block_reasons,
         },
+        learned_export=export_binding,
+        compiler_commit=resolved_compiler_commit,
+        proof_receipts=tuple(normalized_receipts),
+        causal_evidence=resolved_causal_evidence,
+        source_copy_checks=resolved_source_copy_checks,
+        activation_state=resolved_activation_state,
+        fixed_canary_binding=fixed_canary_binding,
+        eligible_snapshot_id=str(eligible_snapshot_id or "").strip(),
+        report_artifact_path=str(report_artifact_path or "").strip(),
         candidate_record_count=len(candidate_records),
     )
 
@@ -996,6 +1114,190 @@ def _rollback_metadata(
         "schema_version": LEGAL_IR_LEARNED_GUIDANCE_ROLLBACK_SCHEMA_VERSION,
         "source_export_id": source_export_id,
     }
+
+
+def _learned_export_binding(export: Mapping[str, Any]) -> dict[str, Any]:
+    payload = _canonical_export_payload(export)
+    export_id = str(export.get("export_id") or "")
+    artifact_path = str(
+        export.get("artifact_path")
+        or export.get("export_path")
+        or export.get("path")
+        or ""
+    ).strip()
+    stable_features = export.get("stable_features")
+    feature_count = (
+        len(stable_features)
+        if isinstance(stable_features, Sequence)
+        and not isinstance(stable_features, (str, bytes, bytearray))
+        else int(_finite_nonnegative(export.get("feature_count")))
+    )
+    return {
+        "artifact_path": artifact_path,
+        "export_id": export_id,
+        "feature_count": feature_count,
+        "model_state_id": str(export.get("model_state_id") or ""),
+        "sample_count": int(_finite_nonnegative(export.get("sample_count"))),
+        "sample_memory_included": bool(export.get("sample_memory_included")),
+        "schema_version": str(export.get("schema_version") or ""),
+        "sha256": _stable_hash(payload),
+    }
+
+
+def _canonical_export_payload(export: Mapping[str, Any]) -> dict[str, Any]:
+    payload = _canonical_json_value(export)
+    if isinstance(payload, dict):
+        for key in (
+            "stable_features",
+            "contract_feature_atoms",
+            "repair_lane_feature_atoms",
+            "proof_receipts",
+            "reconstruction_receipts",
+            "hammer_receipts",
+            "trusted_proof_receipts",
+        ):
+            value = payload.get(key)
+            if isinstance(value, list):
+                payload[key] = sorted(
+                    value,
+                    key=lambda item: json.dumps(
+                        item,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        ensure_ascii=True,
+                    ),
+                )
+    return payload if isinstance(payload, dict) else {}
+
+
+def _proof_receipts(
+    export: Mapping[str, Any],
+    explicit: Sequence[Mapping[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    raw: Any = explicit
+    if raw is None:
+        for key in (
+            "proof_receipts",
+            "reconstruction_receipts",
+            "hammer_receipts",
+            "trusted_proof_receipts",
+        ):
+            value = export.get(key)
+            if isinstance(value, Sequence) and not isinstance(
+                value, (str, bytes, bytearray)
+            ):
+                raw = value
+                break
+    if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes, bytearray)):
+        return []
+    receipts: list[dict[str, Any]] = []
+    for index, receipt in enumerate(raw):
+        item = _as_mapping(receipt)
+        receipt_id = str(
+            item.get("receipt_id")
+            or item.get("id")
+            or item.get("proof_id")
+            or item.get("reconstruction_receipt_id")
+            or ""
+        ).strip()
+        canonical = _canonical_json_value(item)
+        if not receipt_id:
+            receipt_id = "lir-proof-receipt-" + _stable_hash(
+                {"index": index, "receipt": canonical}
+            )[:24]
+        receipts.append(
+            {
+                **canonical,
+                "receipt_id": receipt_id,
+                "trusted": item.get("trusted") is not False,
+            }
+        )
+    deduped = {str(item["receipt_id"]): item for item in receipts}
+    return [deduped[key] for key in sorted(deduped)]
+
+
+def _source_copy_check_report(
+    export: Mapping[str, Any],
+    *,
+    stable_features: Sequence[Mapping[str, Any]],
+    unsafe_feature_count: int,
+    canary: LegalIRFixedCanaryEvidence,
+    overrides: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    checked_paths = [
+        path
+        for path in (
+            str(export.get("artifact_path") or export.get("export_path") or ""),
+            str(export.get("source_copy_audit_path") or ""),
+        )
+        if path
+    ]
+    report = {
+        "checked_paths": checked_paths,
+        "forbidden_feature_marker_count": int(unsafe_feature_count),
+        "guardrails_passed": (
+            int(unsafe_feature_count) == 0
+            and not bool(export.get("sample_memory_included"))
+            and not canary.source_copy_regressions
+        ),
+        "sample_memory_included": bool(export.get("sample_memory_included")),
+        "source_copy_policy": "hash_only",
+        "source_copy_regressions": list(canary.source_copy_regressions),
+        "stable_feature_count": len(stable_features),
+        "unsafe_feature_count": int(unsafe_feature_count),
+    }
+    if overrides:
+        report.update(_canonical_json_value(overrides))
+    return report
+
+
+def _causal_evidence_report(
+    *,
+    canary: LegalIRFixedCanaryEvidence,
+    family_weights: Mapping[str, float],
+    compiler_commit: str,
+    proof_receipts: Sequence[Mapping[str, Any]],
+    overrides: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    deltas = {
+        family: dict(values.get("deltas", {}))
+        for family, values in canary.family_metrics.items()
+        if isinstance(values, Mapping)
+    }
+    report = {
+        "compiler_commit_bound": bool(compiler_commit),
+        "fixed_canary_evidence_id": canary.evidence_id,
+        "family_metric_deltas": _canonical_json_value(deltas),
+        "learned_path_responsive": bool(deltas),
+        "metric_lineage_complete": bool(deltas) and canary.fixed_sample_set,
+        "proof_receipt_count": len(proof_receipts),
+        "view_family_weights": {
+            str(key): round(float(value), 12)
+            for key, value in sorted(family_weights.items())
+        },
+    }
+    if overrides:
+        report.update(_canonical_json_value(overrides))
+    return report
+
+
+def _activation_state_report(
+    *,
+    promoted: bool,
+    promotion_id: str,
+    block_reasons: Sequence[str],
+    overrides: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    state = {
+        "activation_allowed": promoted,
+        "active": promoted,
+        "active_promotion_id": promotion_id if promoted else "",
+        "block_reasons": list(block_reasons),
+        "state": "activated" if promoted else "blocked",
+    }
+    if overrides:
+        state.update(_canonical_json_value(overrides))
+    return state
 
 
 def _family_metric_mapping(payload: Mapping[str, Any]) -> dict[str, dict[str, float]]:
