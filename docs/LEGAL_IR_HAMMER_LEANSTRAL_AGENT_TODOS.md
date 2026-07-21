@@ -1298,7 +1298,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-062 Profile and optimize CUDA projection training
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: cuda-runtime
