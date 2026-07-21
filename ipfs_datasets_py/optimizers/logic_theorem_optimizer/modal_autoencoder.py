@@ -10,6 +10,7 @@ import re
 import signal
 import threading
 import time
+from contextlib import nullcontext
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -27,6 +28,7 @@ from typing import (
 
 from .legal_samples import LegalSample, build_us_code_sample, stable_mock_embedding
 from .modal_registry import ModalLogicFamily
+from .projection_profiler import ProjectionProfiler
 
 _LEGAL_IR_TARGET_CACHE_MAX = 2048
 _LEGAL_IR_TARGET_CACHE_LOCK = threading.Lock()
@@ -6199,6 +6201,8 @@ class AdaptiveModalAutoencoder:
         precomputed_holdout_evaluation: Optional[AutoencoderEvaluation] = None,
         precomputed_training_evaluation: Optional[AutoencoderEvaluation] = None,
         progress_callback: Optional[Callable[[Mapping[str, Any]], None]] = None,
+        projection_profiler: Optional[ProjectionProfiler] = None,
+        projection_update_backend: str = "auto",
     ) -> Dict[str, Any]:
         """Train feature-level weights with rollback on holdout regression.
 
@@ -6232,6 +6236,53 @@ class AdaptiveModalAutoencoder:
                 progress_callback(progress)
             except Exception:
                 pass
+
+        profiler = projection_profiler
+        if (
+            profiler is not None
+            and profiler.cuda_synchronizer is None
+            and self._torch is not None
+            and self.compute_backend == "torch_cuda"
+            and hasattr(self._torch, "cuda")
+            and hasattr(self._torch.cuda, "synchronize")
+        ):
+            profiler.cuda_synchronizer = self._torch.cuda.synchronize
+
+        def profile_phase(
+            cost_family: str,
+            *,
+            stage: str,
+            legal_family: str = "",
+            feature_head: str = "",
+            metadata: Optional[Mapping[str, Any]] = None,
+        ):
+            if profiler is None:
+                return nullcontext()
+            return profiler.phase(
+                cost_family,
+                stage=stage,
+                legal_family=legal_family,
+                feature_head=feature_head,
+                metadata=metadata,
+            )
+
+        normalized_update_backend = str(projection_update_backend or "auto").strip().lower()
+        if normalized_update_backend in {"", "auto"}:
+            normalized_update_backend = (
+                "python_sparse_batch"
+                if self.compute_backend == "torch_cuda"
+                else "native"
+            )
+        if normalized_update_backend not in {
+            "native",
+            "legacy",
+            "legacy_device",
+            "python_sparse_batch",
+        }:
+            raise ValueError(
+                "projection_update_backend must be auto, native, legacy_device, "
+                "or python_sparse_batch"
+            )
 
         bridge_names = tuple(
             str(name).strip()
@@ -6282,11 +6333,36 @@ class AdaptiveModalAutoencoder:
             stage: str,
         ) -> AutoencoderEvaluation:
             row_list = list(rows)
+            if profiler is not None and self.compute_backend.startswith("torch"):
+                profiler.transfer(
+                    stage=f"{stage}:metric_input",
+                    legal_family="aggregate",
+                    count=max(1, len(row_list)),
+                    bytes_moved=sum(
+                        len(getattr(sample, "embedding_vector", ()) or ()) * 8
+                        for sample in row_list
+                    ),
+                )
+            metric_cost_family = (
+                "kernel" if self.compute_backend.startswith("torch") else "python_loop"
+            )
             if bridge_sample_cap is None and not bridge_text_cap:
-                return self.evaluate(row_list, **evaluation_kwargs)
+                with profile_phase(
+                    metric_cost_family,
+                    stage=stage,
+                    legal_family="aggregate",
+                    metadata={"sample_count": len(row_list)},
+                ):
+                    return self.evaluate(row_list, **evaluation_kwargs)
             bridge_rows = projection_bridge_samples(row_list)
             if not bridge_rows:
-                return self.evaluate(row_list, **base_evaluation_kwargs)
+                with profile_phase(
+                    metric_cost_family,
+                    stage=stage,
+                    legal_family="aggregate",
+                    metadata={"sample_count": len(row_list)},
+                ):
+                    return self.evaluate(row_list, **base_evaluation_kwargs)
             emit_progress(
                 f"{stage}_bridge_evaluation",
                 bridge_sample_count=len(bridge_rows),
@@ -6298,9 +6374,21 @@ class AdaptiveModalAutoencoder:
                 full_sample_count=len(row_list),
                 sample_count=len(row_list),
             )
-            bridge = self.evaluate(bridge_rows, **evaluation_kwargs)
+            with profile_phase(
+                metric_cost_family,
+                stage=f"{stage}:bridge",
+                legal_family="aggregate",
+                metadata={"sample_count": len(bridge_rows)},
+            ):
+                bridge = self.evaluate(bridge_rows, **evaluation_kwargs)
             self.alias_cached_legal_ir_targets(row_list, bridge_rows)
-            base = self.evaluate(row_list, **base_evaluation_kwargs)
+            with profile_phase(
+                metric_cost_family,
+                stage=f"{stage}:base",
+                legal_family="aggregate",
+                metadata={"sample_count": len(row_list)},
+            ):
+                base = self.evaluate(row_list, **base_evaluation_kwargs)
             return replace(
                 base,
                 legal_ir_target_count=bridge.legal_ir_target_count,
@@ -6465,11 +6553,17 @@ class AdaptiveModalAutoencoder:
                 epoch=epoch,
                 hard_example_fraction=hard_fraction,
             )
-            update_samples = self._select_hard_examples_for_projection(
-                sample_list,
-                hard_example_fraction=hard_fraction,
-                objective_weights=objective_weights,
-            )
+            with profile_phase(
+                "python_loop",
+                stage="hard_example_selection",
+                legal_family="aggregate",
+                metadata={"sample_count": len(sample_list)},
+            ):
+                update_samples = self._select_hard_examples_for_projection(
+                    sample_list,
+                    hard_example_fraction=hard_fraction,
+                    objective_weights=objective_weights,
+                )
             prescreen_before: Optional[AutoencoderEvaluation] = None
             if effective_prescreen_mode != "off" and update_samples:
                 emit_progress(
@@ -6478,10 +6572,20 @@ class AdaptiveModalAutoencoder:
                     sample_count=len(update_samples),
                     top_k=prescreen_top_k,
                 )
-                prescreen_before = self.evaluate(
-                    update_samples,
-                    **base_evaluation_kwargs,
-                )
+                with profile_phase(
+                    (
+                        "kernel"
+                        if self.compute_backend.startswith("torch")
+                        else "python_loop"
+                    ),
+                    stage="projection_prescreen_baseline",
+                    legal_family="aggregate",
+                    metadata={"sample_count": len(update_samples)},
+                ):
+                    prescreen_before = self.evaluate(
+                        update_samples,
+                        **base_evaluation_kwargs,
+                    )
 
             for update_name, update_targets in candidate_updates:
                 if timed_out():
@@ -6708,31 +6812,14 @@ class AdaptiveModalAutoencoder:
                         update=update_name,
                     )
                     restore_projection_state(epoch_before_state)
-                    for sample in update_samples:
-                        if "family_logits" in update_targets:
-                            self._nudge_family_logits(
-                                sample,
-                                learning_rate=effective_learning_rate,
-                                update_sample_memory=False,
-                            )
-                        if "decoded_embedding" in update_targets:
-                            self._nudge_decoded_embedding(
-                                sample,
-                                learning_rate=effective_learning_rate,
-                                update_sample_memory=False,
-                            )
-                        if "legal_ir_view_logits" in update_targets:
-                            self._nudge_legal_ir_view_logits(
-                                sample,
-                                learning_rate=effective_learning_rate,
-                                update_sample_memory=False,
-                            )
-                        if "legal_ir_view_global_logits" in update_targets:
-                            self._nudge_legal_ir_view_global_logits(
-                                sample,
-                                learning_rate=effective_learning_rate,
-                            )
-                    self._regularize_feature_state(l2_regularization)
+                    self._apply_projection_update_batch(
+                        update_samples,
+                        update_targets=update_targets,
+                        learning_rate=effective_learning_rate,
+                        l2_regularization=l2_regularization,
+                        profiler=profiler,
+                        update_backend=normalized_update_backend,
+                    )
                     prescreen_report: Dict[str, Any] = {
                         "effective_mode": effective_prescreen_mode,
                         "enabled": effective_prescreen_mode != "off",
@@ -6751,10 +6838,20 @@ class AdaptiveModalAutoencoder:
                             top_k=prescreen_top_k,
                             update=update_name,
                         )
-                        prescreen_after = self.evaluate(
-                            update_samples,
-                            **base_evaluation_kwargs,
-                        )
+                        with profile_phase(
+                            (
+                                "kernel"
+                                if self.compute_backend.startswith("torch")
+                                else "python_loop"
+                            ),
+                            stage="projection_prescreen_evaluation",
+                            legal_family="aggregate",
+                            metadata={"sample_count": len(update_samples)},
+                        ):
+                            prescreen_after = self.evaluate(
+                                update_samples,
+                                **base_evaluation_kwargs,
+                            )
                         before_prescreen_objective = _evaluation_objective_for_training(
                             prescreen_before,
                             **objective_weights,
@@ -7039,6 +7136,7 @@ class AdaptiveModalAutoencoder:
             )
 
         restore_projection_state(best_state)
+        projection_profile = profiler.summarize() if profiler is not None else {}
         emit_progress(
             "finished",
             accepted_epochs=accepted_epochs,
@@ -7060,6 +7158,9 @@ class AdaptiveModalAutoencoder:
             "projection_prescreen_summary": _projection_prescreen_summary(
                 epoch_reports
             ),
+            "projection_profile": projection_profile,
+            "projection_profile_enabled": profiler is not None,
+            "projection_update_backend": normalized_update_backend,
             "rejection_summary": _projection_rejection_summary(epoch_reports),
             "sample_memory_used": False,
             "legal_ir_bridge_max_samples": bridge_sample_cap,
@@ -7074,6 +7175,135 @@ class AdaptiveModalAutoencoder:
             "stopped_reason": projection_stopped_reason,
             "validation_sample_count": len(target_samples),
         }
+
+    def _apply_projection_update_batch(
+        self,
+        samples: Sequence[LegalSample],
+        *,
+        update_targets: Sequence[str],
+        learning_rate: float,
+        l2_regularization: float,
+        profiler: Optional[ProjectionProfiler] = None,
+        update_backend: str = "native",
+    ) -> None:
+        """Apply compatible projection updates as one guarded optimizer batch.
+
+        The sample-outer/head-inner order matches the legacy line-search loop,
+        so deterministic state updates remain comparable.  On CUDA requests,
+        ``python_sparse_batch`` keeps the tiny sparse optimizer arithmetic on
+        the host while dense metric evaluation can still use torch/CUDA; this
+        removes repeated small tensor transfers and their implicit sync points.
+        """
+        sample_list = list(samples)
+        target_tuple = tuple(str(target) for target in update_targets)
+        normalized_backend = str(update_backend or "native").strip().lower()
+        use_sparse_python = normalized_backend == "python_sparse_batch"
+        if profiler is not None:
+            profiler.count("projection_update_batch_count", 1)
+            profiler.count("projection_update_sample_count", len(sample_list))
+            profiler.count("projection_update_head_count", len(target_tuple))
+            if self.compute_backend == "torch_cuda":
+                if use_sparse_python:
+                    profiler.count("redundant_cuda_update_sync_avoided_count", 1)
+                    profiler.count(
+                        "host_device_transfer_avoided_count",
+                        max(1, len(sample_list) * max(1, len(target_tuple))),
+                    )
+                else:
+                    profiler.transfer(
+                        stage="projection_update_batch",
+                        legal_family="aggregate",
+                        count=max(1, len(sample_list) * max(1, len(target_tuple))),
+                        bytes_moved=sum(
+                            len(getattr(sample, "embedding_vector", ()) or ()) * 8
+                            for sample in sample_list
+                        ),
+                    )
+
+        old_torch = self._torch
+        old_device = self.compute_device
+        if use_sparse_python:
+            self._torch = None
+            self.compute_device = None
+        try:
+            phase_context = (
+                profiler.phase(
+                    "optimizer",
+                    stage="projection_update_batch",
+                    legal_family="aggregate",
+                    feature_head="+".join(target_tuple),
+                    metadata={
+                        "learning_rate": float(learning_rate),
+                        "sample_count": len(sample_list),
+                        "update_backend": normalized_backend,
+                        "update_targets": list(target_tuple),
+                    },
+                )
+                if profiler is not None
+                else nullcontext()
+            )
+            with phase_context:
+                for sample in sample_list:
+                    legal_family = (
+                        _target_family(sample)
+                        if profiler is not None
+                        else ""
+                    )
+                    for update_target in target_tuple:
+                        head_context = (
+                            profiler.phase(
+                                "feature_head",
+                                stage="projection_update_head",
+                                legal_family=legal_family,
+                                feature_head=update_target,
+                            )
+                            if profiler is not None
+                            else nullcontext()
+                        )
+                        with head_context:
+                            if update_target == "family_logits":
+                                self._nudge_family_logits(
+                                    sample,
+                                    learning_rate=learning_rate,
+                                    update_sample_memory=False,
+                                )
+                            elif update_target == "decoded_embedding":
+                                self._nudge_decoded_embedding(
+                                    sample,
+                                    learning_rate=learning_rate,
+                                    update_sample_memory=False,
+                                )
+                            elif update_target == "legal_ir_view_logits":
+                                self._nudge_legal_ir_view_logits(
+                                    sample,
+                                    learning_rate=learning_rate,
+                                    update_sample_memory=False,
+                                )
+                            elif update_target == "legal_ir_view_global_logits":
+                                self._nudge_legal_ir_view_global_logits(
+                                    sample,
+                                    learning_rate=learning_rate,
+                                )
+                            else:
+                                raise ValueError(
+                                    f"unknown projection update target: {update_target}"
+                                )
+                if l2_regularization:
+                    regularize_context = (
+                        profiler.phase(
+                            "optimizer",
+                            stage="projection_l2_regularization",
+                            legal_family="aggregate",
+                        )
+                        if profiler is not None
+                        else nullcontext()
+                    )
+                    with regularize_context:
+                        self._regularize_feature_state(l2_regularization)
+        finally:
+            if use_sparse_python:
+                self._torch = old_torch
+                self.compute_device = old_device
 
     def _select_hard_examples_for_projection(
         self,
