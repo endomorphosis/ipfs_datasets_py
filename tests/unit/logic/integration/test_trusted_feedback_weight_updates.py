@@ -168,6 +168,11 @@ def test_production_updates_apply_accepted_hammer_and_verified_leanstral(samples
     assert report.applied_count == 2
     assert report.accounted_count == report.candidate_count == 2
     assert report.write_to_autoencoder_weights is True
+    assert report.trainable_legal_ir_head_norms["finite"] is True
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is True
+    assert report.update_norms_by_head["legal_ir_view_logits"] > 0.0
+    assert report.update_norms_by_head["feature_legal_ir_view_logits"] > 0.0
+    assert report.head_family_update_norms["compiler_facing_legal_ir_view"] > 0.0
     assert report["skipped_stale_count"] == 0
     assert autoencoder.state.applied_leanstral_guidance_ids == [
         "feedback-hammer-applied",
@@ -243,6 +248,9 @@ def test_all_required_skip_counters_are_explicit_and_weights_are_unchanged(sampl
     assert payload["skipped_untrusted_count"] == 1
     assert payload["skipped_missing_sample_count"] == 1
     assert payload["skipped_guardrail_blocked_count"] == 2
+    assert payload["trainable_legal_ir_head_norms"]["nonzero_update"] is False
+    assert payload["update_norms_by_head"] == {}
+    assert payload["gradient_norms_by_head"] == {}
     assert autoencoder.state.to_dict() == before
 
 
@@ -271,6 +279,8 @@ def test_production_enablement_and_passing_ablation_are_both_required(samples) -
     assert failed_ablation.block_reasons == {"heldout_ablation_not_passed": 1}
     assert disabled.write_to_autoencoder_weights is False
     assert failed_ablation.write_to_autoencoder_weights is False
+    assert disabled.trainable_legal_ir_head_norms["nonzero_update"] is False
+    assert failed_ablation.trainable_legal_ir_head_norms["nonzero_update"] is False
     assert autoencoder.state.to_dict() == before
 
 
@@ -305,6 +315,9 @@ def test_content_addressed_proof_feedback_updates_primary_and_auxiliary_heads(sa
     )
 
     assert report.applied_count == 1
+    assert report.trainable_legal_ir_head_norms["finite"] is True
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is True
+    assert report.update_norms_by_head["proof_auxiliary_head_logits"] > 0.0
     assert autoencoder.state.applied_leanstral_guidance_ids == [record.record_id]
     assert autoencoder.state.applied_proof_feedback_ids == [record.record_id]
     assert autoencoder.state.proof_auxiliary_head_logits

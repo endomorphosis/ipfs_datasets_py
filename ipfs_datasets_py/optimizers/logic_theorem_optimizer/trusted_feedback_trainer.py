@@ -38,6 +38,7 @@ from ...logic.integration.reasoning.legal_ir_proof_feedback import (
 from .modal_autoencoder import (
     AdaptiveModalAutoencoder,
     build_trusted_hammer_leanstral_feature_bus,
+    legal_ir_trainable_head_delta_norm_report,
 )
 
 
@@ -126,6 +127,13 @@ class TrustedFeedbackUpdateReport(_SerializableMapping):
     invalid_count: int = 0
     limit_skipped_count: int = 0
     applied_feedback_ids: tuple[str, ...] = ()
+    gradient_norms_by_family: Mapping[str, float] = field(default_factory=dict)
+    gradient_norms_by_head: Mapping[str, float] = field(default_factory=dict)
+    head_family_gradient_norms: Mapping[str, float] = field(default_factory=dict)
+    head_family_update_norms: Mapping[str, float] = field(default_factory=dict)
+    trainable_legal_ir_head_norms: Mapping[str, Any] = field(default_factory=dict)
+    update_norms_by_family: Mapping[str, float] = field(default_factory=dict)
+    update_norms_by_head: Mapping[str, float] = field(default_factory=dict)
     block_reasons: Mapping[str, int] = field(default_factory=dict)
     ablation_evidence: Mapping[str, Any] = field(default_factory=dict)
     production_weight_writes_enabled: bool = False
@@ -165,6 +173,14 @@ class TrustedFeedbackUpdateReport(_SerializableMapping):
             "candidate_count": self.candidate_count,
             "duplicate_count": self.duplicate_count,
             "guardrail_blocked_count": self.guardrail_blocked_count,
+            "gradient_norms_by_family": dict(sorted(self.gradient_norms_by_family.items())),
+            "gradient_norms_by_head": dict(sorted(self.gradient_norms_by_head.items())),
+            "head_family_gradient_norms": dict(
+                sorted(self.head_family_gradient_norms.items())
+            ),
+            "head_family_update_norms": dict(
+                sorted(self.head_family_update_norms.items())
+            ),
             "holdout_count": self.holdout_count,
             "invalid_count": self.invalid_count,
             "limit_skipped_count": self.limit_skipped_count,
@@ -179,7 +195,12 @@ class TrustedFeedbackUpdateReport(_SerializableMapping):
             "skipped_untrusted_count": self.untrusted_count,
             "stale_count": self.stale_count,
             "status": self.status,
+            "trainable_legal_ir_head_norms": _json_ready(
+                self.trainable_legal_ir_head_norms
+            ),
             "untrusted_count": self.untrusted_count,
+            "update_norms_by_family": dict(sorted(self.update_norms_by_family.items())),
+            "update_norms_by_head": dict(sorted(self.update_norms_by_head.items())),
             "write_to_autoencoder_weights": self.write_to_autoencoder_weights,
         }
 
@@ -248,6 +269,7 @@ class TrustedFeedbackTrainer:
         }
         reasons: dict[str, int] = {}
         applied: list[str] = []
+        update_norm_reports: list[Mapping[str, Any]] = []
 
         def block(counter: str, reason: str) -> None:
             counts[counter] += 1
@@ -349,6 +371,13 @@ class TrustedFeedbackTrainer:
                             self.autoencoder.state = snapshot
                             block("guardrail_blocked_count", "proof_head_update_rejected")
                             continue
+                    update_norm_reports.append(
+                        legal_ir_trainable_head_delta_norm_report(
+                            snapshot,
+                            self.autoencoder.state,
+                            learning_rate=step,
+                        )
+                    )
                 except Exception:
                     # The snapshot makes each receipt atomic even when a
                     # custom autoencoder implementation raises unexpectedly.
@@ -362,6 +391,7 @@ class TrustedFeedbackTrainer:
         return TrustedFeedbackUpdateReport(
             candidate_count=len(items),
             applied_feedback_ids=tuple(applied),
+            **_aggregate_update_norm_reports(update_norm_reports, learning_rate=step),
             block_reasons=reasons,
             ablation_evidence=ablation,
             production_weight_writes_enabled=enabled,
@@ -411,6 +441,97 @@ def apply_trusted_feedback_weight_updates(
 
 
 train_trusted_feedback = apply_trusted_feedback_weight_updates
+
+
+def _aggregate_update_norm_reports(
+    reports: Sequence[Mapping[str, Any]],
+    *,
+    learning_rate: float,
+) -> dict[str, Any]:
+    update_head_squares: dict[str, float] = {}
+    update_family_squares: dict[str, float] = {}
+    update_head_family_squares: dict[str, float] = {}
+    scalar_counts: dict[str, int] = {}
+    finite = True
+
+    def add_square(target: dict[str, float], key: str, value: Any) -> None:
+        nonlocal finite
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            finite = False
+            return
+        if not math.isfinite(number):
+            finite = False
+            return
+        if number <= 0.0:
+            return
+        target[key] = target.get(key, 0.0) + (number * number)
+
+    for report in reports:
+        finite = finite and bool(report.get("finite", True))
+        for head, norm in dict(report.get("update_norms_by_head", {}) or {}).items():
+            add_square(update_head_squares, str(head), norm)
+        for family, norm in dict(report.get("update_norms_by_family", {}) or {}).items():
+            add_square(update_family_squares, str(family), norm)
+        for family, norm in dict(report.get("head_family_update_norms", {}) or {}).items():
+            add_square(update_head_family_squares, str(family), norm)
+        for head, count in dict(report.get("scalar_update_counts_by_head", {}) or {}).items():
+            try:
+                scalar_counts[str(head)] = scalar_counts.get(str(head), 0) + int(count)
+            except (TypeError, ValueError):
+                finite = False
+
+    update_norms_by_head = _sqrt_norms(update_head_squares)
+    update_norms_by_family = _sqrt_norms(update_family_squares)
+    head_family_update_norms = _sqrt_norms(update_head_family_squares)
+    step = abs(float(learning_rate)) if math.isfinite(float(learning_rate)) else 0.0
+    gradient_norms_by_head = _divide_norms(update_norms_by_head, step)
+    gradient_norms_by_family = _divide_norms(update_norms_by_family, step)
+    head_family_gradient_norms = _divide_norms(head_family_update_norms, step)
+    total_update_norm = math.sqrt(sum(update_head_squares.values()))
+    total_gradient_norm = total_update_norm / step if step > 0.0 else 0.0
+    norm_report = {
+        "applied_update_report_count": len(reports),
+        "finite": bool(finite),
+        "gradient_norm": round(total_gradient_norm, 12),
+        "gradient_norms_by_family": gradient_norms_by_family,
+        "gradient_norms_by_head": gradient_norms_by_head,
+        "head_family_gradient_norms": head_family_gradient_norms,
+        "head_family_update_norms": head_family_update_norms,
+        "learning_rate": float(learning_rate),
+        "nonzero_gradient": bool(total_gradient_norm > 0.0),
+        "nonzero_update": bool(total_update_norm > 0.0),
+        "scalar_update_counts_by_head": dict(sorted(scalar_counts.items())),
+        "update_norm": round(total_update_norm, 12),
+        "update_norms_by_family": update_norms_by_family,
+        "update_norms_by_head": update_norms_by_head,
+    }
+    return {
+        "gradient_norms_by_family": gradient_norms_by_family,
+        "gradient_norms_by_head": gradient_norms_by_head,
+        "head_family_gradient_norms": head_family_gradient_norms,
+        "head_family_update_norms": head_family_update_norms,
+        "trainable_legal_ir_head_norms": norm_report,
+        "update_norms_by_family": update_norms_by_family,
+        "update_norms_by_head": update_norms_by_head,
+    }
+
+
+def _sqrt_norms(squares: Mapping[str, float]) -> dict[str, float]:
+    return {
+        key: round(math.sqrt(max(0.0, float(value))), 12)
+        for key, value in sorted(squares.items())
+    }
+
+
+def _divide_norms(norms: Mapping[str, float], denominator: float) -> dict[str, float]:
+    if denominator <= 0.0:
+        return {key: 0.0 for key in sorted(norms)}
+    return {
+        key: round(float(value) / denominator, 12)
+        for key, value in sorted(norms.items())
+    }
 
 
 def _coerce_versions(value: Any) -> Optional[ProofFeedbackVersions]:
