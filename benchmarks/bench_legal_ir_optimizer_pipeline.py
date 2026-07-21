@@ -333,6 +333,14 @@ def aggregate_pipeline_summaries(
     gpu = [_ratio(value) for value in resource_values("gpu_utilization_percent")]
     cpu_values = [value for value in cpu if value is not None]
     gpu_values = [value for value in gpu if value is not None]
+    gpu_telemetry_known = any(
+        item.get("gpu_telemetry_available") is True
+        or _finite(item.get("gpu_utilization_percent")) is not None
+        or _finite(item.get("gpu_memory_percent")) is not None
+        or _finite(item.get("gpu_memory_used_bytes")) is not None
+        or (_finite(item.get("gpu_device_count")) or 0.0) > 0.0
+        for item in resources
+    )
     memory_percent = resource_values("memory_percent")
     memory_bytes = resource_values("memory_used_bytes")
     swap_percent = resource_values("swap_percent")
@@ -367,6 +375,7 @@ def aggregate_pipeline_summaries(
         gpu_utilization_average=statistics.fmean(gpu_values) if gpu_values else 0.0,
         gpu_utilization_peak=max(gpu_values, default=0.0),
         gpu_memory_percent_peak=max(gpu_memory_percent, default=0.0),
+        gpu_telemetry_known=gpu_telemetry_known,
         memory_percent_peak=max(memory_percent, default=0.0),
         memory_used_bytes_peak=int(max(memory_bytes, default=0.0)),
         swap_percent_peak=max(swap_percent, default=0.0),
