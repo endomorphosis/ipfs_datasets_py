@@ -772,6 +772,8 @@ def test_worker_rechecks_cache_after_provider_disabled_checkpoint(tmp_path) -> N
     assert second.cache_hit_count == 1
     assert second.completed_count == 1
     assert second.results[0].status == "cache_hit"
+    assert second.audit_policy_report["cached_count"] == 1
+    assert second.audit_policy_report["selected_count"] == 0
 
 
 def test_worker_retries_timeouts_and_reports_labs_unavailable(tmp_path) -> None:

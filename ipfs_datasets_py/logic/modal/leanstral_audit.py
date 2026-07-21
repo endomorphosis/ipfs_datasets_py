@@ -323,6 +323,17 @@ class LeanstralAuditWorkerConfig:
     batch_max_workers: int = 0
     batch_use_mesh: bool = True
     prompt_payload_mode: str = "rendered_full"
+    audit_policy_enabled: bool = True
+    audit_policy_min_recurrence: int = 2
+    audit_policy_high_formal_severity: float = 0.85
+    audit_policy_high_uncertainty: float = 0.40
+    audit_policy_min_heldout_impact: float = 0.12
+    audit_policy_min_mean_normalized_score: float = 0.05
+    audit_policy_min_rank_score: float = 0.24
+    audit_policy_max_selected_per_family: int = 4
+    audit_policy_max_total_selected: int = 0
+    audit_policy_exhausted_families: Sequence[str] = field(default_factory=tuple)
+    audit_policy_exhausted_semantic_signatures: Sequence[str] = field(default_factory=tuple)
 
     def bounded_concurrency(self) -> int:
         return max(1, int(self.max_concurrency or 1))
@@ -427,6 +438,32 @@ class LeanstralAuditWorkerConfig:
             cache_dir=self.cache_dir,
             validation_repair_retries=self.bounded_validation_repair_retries(),
             prompt_payload_mode=self.normalized_prompt_payload_mode(),
+        )
+
+    def audit_policy_config(self) -> Any:
+        from .leanstral_audit_policy import LeanstralAuditPolicyConfig
+
+        return LeanstralAuditPolicyConfig(
+            enabled=bool(self.audit_policy_enabled),
+            min_recurrence=max(1, int(self.audit_policy_min_recurrence or 1)),
+            high_formal_severity=float(self.audit_policy_high_formal_severity),
+            high_uncertainty=float(self.audit_policy_high_uncertainty),
+            min_heldout_impact=float(self.audit_policy_min_heldout_impact),
+            min_mean_normalized_score=float(
+                self.audit_policy_min_mean_normalized_score
+            ),
+            min_rank_score=float(self.audit_policy_min_rank_score),
+            max_selected_per_family=max(
+                0, int(self.audit_policy_max_selected_per_family or 0)
+            ),
+            max_total_selected=max(
+                0, int(self.audit_policy_max_total_selected or 0)
+            ),
+            exhausted_families=tuple(self.audit_policy_exhausted_families or ()),
+            exhausted_semantic_signatures=tuple(
+                self.audit_policy_exhausted_semantic_signatures or ()
+            ),
+            expected_state_hash=str(self.expected_state_hash or ""),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -1124,10 +1161,12 @@ class LeanstralAuditWorkerSummary:
     unavailable_count: int = 0
     cancelled_count: int = 0
     batch_telemetry: Mapping[str, Any] = field(default_factory=dict)
+    audit_policy_report: Mapping[str, Any] = field(default_factory=dict)
     runtime_seconds: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "audit_policy_report": _json_ready_mapping(self.audit_policy_report),
             "cache_hit_count": int(self.cache_hit_count),
             "batch_telemetry": _json_ready_mapping(self.batch_telemetry),
             "cancelled_count": int(self.cancelled_count),
@@ -1688,7 +1727,7 @@ class LeanstralAuditWorker:
             self.config.checkpoint_path,
             source_digest=source_digest,
         )
-        items, stale_rejections = build_leanstral_audit_work_items(
+        items, stale_rejections, audit_policy_report = plan_leanstral_audit_work_items(
             records,
             config=self.config,
         )
@@ -1704,10 +1743,63 @@ class LeanstralAuditWorker:
             )
         pending = [item for item in items if item.work_key not in completed_keys]
         skipped = len(items) - len(pending)
+        cached_results: List[LeanstralAuditWorkResult] = []
+        cached_candidate_ids: List[str] = []
+        provider_pending: List[LeanstralAuditWorkItem] = []
+        for item in pending:
+            cached = self.runner.cache.get_accepted_entry(item.request)
+            if cached is None:
+                provider_pending.append(item)
+                continue
+            cached_results.append(
+                _work_result(
+                    item,
+                    status="cache_hit",
+                    attempts=0,
+                    reasons=("cache_hit",),
+                    cache_hit=True,
+                    llm_called=False,
+                    response_hash=cached.response_hash,
+                    validation=validate_leanstral_audit_response(
+                        item.request,
+                        cached.response,
+                    ),
+                    elapsed=0.0,
+                )
+            )
+            cluster_payload = _json_ready_mapping(item.cluster)
+            policy_payload = cluster_payload.get("leanstral_audit_policy")
+            policy_mapping = (
+                dict(policy_payload) if isinstance(policy_payload, Mapping) else {}
+            )
+            cached_candidate_id = str(
+                policy_mapping.get("candidate_id")
+                or cluster_payload.get("cluster_id")
+                or ""
+            )
+            if cached_candidate_id:
+                cached_candidate_ids.append(cached_candidate_id)
+        if cached_candidate_ids:
+            from .leanstral_audit_policy import leanstral_policy_report_with_cache_hits
+
+            audit_policy_report = leanstral_policy_report_with_cache_hits(
+                _leanstral_policy_report_from_mapping(audit_policy_report),
+                cached_candidate_ids,
+            ).to_dict()
         semaphore = anyio_runtime.Semaphore(self.config.bounded_concurrency())
         checkpoint_state = checkpoint
         checkpoint_lock = anyio_runtime.Lock()
-        results: List[LeanstralAuditWorkResult] = []
+        results: List[LeanstralAuditWorkResult] = list(cached_results)
+        for result in cached_results:
+            checkpoint_state = checkpoint_state.with_result(
+                result,
+                source_digest=source_digest,
+            )
+        if cached_results:
+            write_leanstral_audit_checkpoint(
+                self.config.checkpoint_path,
+                checkpoint_state,
+            )
 
         async def run_many(
             batch: Sequence[LeanstralAuditWorkItem],
@@ -1752,7 +1844,7 @@ class LeanstralAuditWorker:
             self._active_batch_scheduler = scheduler
         try:
             enqueue_now = time.monotonic()
-            for item in pending:
+            for item in provider_pending:
                 scheduler.enqueue(
                     item,
                     model=self.config.model,
@@ -1837,6 +1929,7 @@ class LeanstralAuditWorker:
             unavailable_count=sum(1 for result in all_results if result.status == "unavailable"),
             cancelled_count=sum(1 for result in all_results if result.status == "cancelled"),
             batch_telemetry=scheduler.telemetry_snapshot(),
+            audit_policy_report=audit_policy_report,
             runtime_seconds=runtime,
         )
 
@@ -2298,13 +2391,35 @@ def build_leanstral_audit_work_items(
 ) -> tuple[List[LeanstralAuditWorkItem], List[Dict[str, Any]]]:
     """Cluster and deduplicate records into content-addressed audit work."""
 
+    items, stale_rejections, _policy_report = plan_leanstral_audit_work_items(
+        records,
+        config=config,
+    )
+    return items, stale_rejections
+
+
+def plan_leanstral_audit_work_items(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    config: Optional[LeanstralAuditWorkerConfig] = None,
+) -> tuple[List[LeanstralAuditWorkItem], List[Dict[str, Any]], Mapping[str, Any]]:
+    """Cluster records, apply the audit policy, and build selected work."""
+
     cfg = config or LeanstralAuditWorkerConfig()
     if not records:
-        return [], []
+        from .leanstral_audit_policy import (
+            LeanstralAuditPolicyReport,
+        )
+
+        return [], [], LeanstralAuditPolicyReport(decisions=()).to_dict()
     from .introspection_analysis import (
         IntrospectionAnalysisConfig,
         IntrospectionAnalysisSchemaError,
         analyze_introspection_disagreements,
+    )
+    from .leanstral_audit_policy import (
+        policy_decision_by_candidate_id,
+        select_informative_leanstral_audit_clusters,
     )
 
     stale_rejections: List[Dict[str, Any]] = []
@@ -2324,26 +2439,50 @@ def build_leanstral_audit_work_items(
             continue
         filtered_records.append(dict(record))
     if not filtered_records:
-        return [], stale_rejections
+        policy_report = select_informative_leanstral_audit_clusters(
+            (),
+            config=cfg.audit_policy_config(),
+        )
+        return [], stale_rejections, policy_report.to_dict()
     try:
         analysis = analyze_introspection_disagreements(
             filtered_records,
             config=IntrospectionAnalysisConfig(max_gaps_per_cluster=50),
         )
     except IntrospectionAnalysisSchemaError as exc:
-        return [], stale_rejections + [
-            {
-                "reason": "analysis_schema_error",
-                "message": str(exc),
-            }
-        ]
+        policy_report = select_informative_leanstral_audit_clusters(
+            (),
+            config=cfg.audit_policy_config(),
+        )
+        return (
+            [],
+            stale_rejections
+            + [
+                {
+                    "reason": "analysis_schema_error",
+                    "message": str(exc),
+                }
+            ],
+            policy_report.to_dict(),
+        )
     record_index: Dict[str, Dict[str, Any]] = {
         str(record.get("evidence_id") or ""): dict(record)
         for record in filtered_records
         if str(record.get("evidence_id") or "")
     }
+    policy_report = select_informative_leanstral_audit_clusters(
+        analysis.clusters,
+        records_by_evidence_id=record_index,
+        config=cfg.audit_policy_config(),
+    )
+    policy_decisions = policy_decision_by_candidate_id(policy_report)
+    selected_cluster_ids = set(policy_report.selected_candidate_ids)
     items_by_key: Dict[str, LeanstralAuditWorkItem] = {}
     for cluster in analysis.clusters:
+        cluster_payload = cluster.to_dict(include_gaps=True)
+        cluster_id = str(cluster_payload.get("cluster_id") or "")
+        if cluster_id not in selected_cluster_ids:
+            continue
         cluster_records = [
             record_index[evidence_id]
             for evidence_id in cluster.evidence_ids
@@ -2383,7 +2522,14 @@ def build_leanstral_audit_work_items(
                 semantic_signature=semantic_signature,
                 state_hashes=state_hashes,
                 source_record_hashes=source_record_hashes,
-                cluster=cluster.to_dict(include_gaps=True),
+                cluster={
+                    **cluster_payload,
+                    "leanstral_audit_policy": (
+                        policy_decisions[cluster_id].to_dict()
+                        if cluster_id in policy_decisions
+                        else {}
+                    ),
+                },
             ),
         )
     items = sorted(
@@ -2398,7 +2544,7 @@ def build_leanstral_audit_work_items(
     max_work_items = cfg.bounded_max_work_items()
     if max_work_items:
         items = items[:max_work_items]
-    return items, stale_rejections
+    return items, stale_rejections, policy_report.to_dict()
 
 
 def load_leanstral_audit_checkpoint(
@@ -4183,6 +4329,43 @@ def _json_ready_mapping(value: Any) -> Dict[str, Any]:
     return dict(normalized) if isinstance(normalized, Mapping) else {}
 
 
+def _leanstral_policy_report_from_mapping(value: Mapping[str, Any]) -> Any:
+    from .leanstral_audit_policy import (
+        LeanstralAuditPolicyConfig,
+        LeanstralAuditPolicyDecision,
+        LeanstralAuditPolicyOutcome,
+        LeanstralAuditPolicyReport,
+    )
+
+    data = dict(value) if isinstance(value, Mapping) else {}
+    config_data = data.get("config")
+    cfg = (
+        LeanstralAuditPolicyConfig(**dict(config_data))
+        if isinstance(config_data, Mapping)
+        else LeanstralAuditPolicyConfig()
+    )
+    decisions = []
+    for item in data.get("decisions", []) or []:
+        if not isinstance(item, Mapping):
+            continue
+        item_data = dict(item)
+        outcome = item_data.get("outcome", LeanstralAuditPolicyOutcome.SKIPPED.value)
+        item_data["outcome"] = (
+            outcome
+            if isinstance(outcome, LeanstralAuditPolicyOutcome)
+            else LeanstralAuditPolicyOutcome(str(outcome))
+        )
+        item_data.pop("selected", None)
+        decisions.append(LeanstralAuditPolicyDecision(**item_data))
+    return LeanstralAuditPolicyReport(
+        decisions=tuple(decisions),
+        config=cfg,
+        source_cluster_count=int(data.get("source_cluster_count") or len(decisions)),
+        selected_candidate_ids=_string_tuple(data.get("selected_candidate_ids")),
+        family_selection_counts=dict(data.get("family_selection_counts") or {}),
+    )
+
+
 def _json_ready(value: Any) -> Any:
     if hasattr(value, "to_dict") and callable(value.to_dict):
         return _json_ready(value.to_dict())
@@ -4394,6 +4577,7 @@ __all__ = [
     "load_leanstral_audit_checkpoint",
     "load_leanstral_audit_disagreements",
     "parse_leanstral_audit_response",
+    "plan_leanstral_audit_work_items",
     "prepare_leanstral_subgoal_audits",
     "resolve_leanstral_llm_router",
     "validate_leanstral_audit_response",
