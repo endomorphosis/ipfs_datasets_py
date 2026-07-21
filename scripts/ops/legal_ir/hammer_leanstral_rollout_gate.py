@@ -134,6 +134,9 @@ MULTI_SEED_PROMOTION_SCHEMA_VERSION = (
 EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION = (
     "legal-ir-hammer-leanstral-external-validity-promotion-v1"
 )
+COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION = (
+    "legal-ir-hammer-leanstral-compiler-system-promotion-v1"
+)
 
 LEGAL_IR_EVAL_SPLITS_SCHEMA_VERSION = "legal-ir-eval-splits-v1"
 LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION = (
@@ -258,6 +261,126 @@ EXTERNAL_VALIDITY_BINDING_FIELDS = (
     "source_export_id",
     "fixed_canary_id",
     "split_manifest_digest",
+)
+
+COMPILER_SYSTEM_REQUIRED_DOMAINS = (
+    "evaluation_integrity",
+    "external_validity",
+    "compiler_source_maps",
+    "symbols",
+    "citations",
+    "temporal_authority",
+    "ambiguity",
+    "pass_management",
+    "backend_conformance",
+    "reproducible_builds",
+    "incremental_compilation",
+    "semantic_diffs",
+    "proof_carrying_artifacts",
+    "diagnostics",
+    "apis",
+    "interoperability",
+    "conformance_evidence",
+    "rollback_readiness",
+)
+
+COMPILER_SYSTEM_DOMAIN_SCHEMA_VERSIONS = {
+    "compiler_source_maps": ("legal-ir-source-map-v1",),
+    "symbols": ("legal-ir-symbol-table-v1",),
+    "citations": ("legal-ir-citation-linker-v1",),
+    "temporal_authority": ("legal-ir-temporal-authority-v1",),
+    "ambiguity": ("legal-ir-ambiguity-v1",),
+    "pass_management": ("legal-ir-pass-manager-v1", "legal-ir-pass-replay-v1"),
+    "backend_conformance": ("legal-ir-backend-conformance-v1",),
+    "reproducible_builds": ("legal-ir-build-manifest-v1",),
+    "incremental_compilation": ("legal-ir-incremental-compiler-v1",),
+    "semantic_diffs": ("legal-ir-semantic-diff-v1",),
+    "proof_carrying_artifacts": ("legal-ir-proof-carrying-artifact-v1",),
+    "diagnostics": ("legal-ir-diagnostics-v1",),
+    "apis": ("legal-ir-compiler-api-v1",),
+    "interoperability": (
+        "legal-ir-interop-v1",
+        "legal-ir-interop-round-trip-v1",
+    ),
+}
+
+COMPILER_SYSTEM_DOMAIN_ALIASES = {
+    "evaluation_integrity": (
+        "evaluation_integrity",
+        "eval_integrity",
+        "split_guard",
+        "leak_free_splits",
+        "multi_seed_statistics",
+    ),
+    "external_validity": (
+        "external_validity",
+        "external_validity_promotion",
+        "external_validity_gate",
+    ),
+    "compiler_source_maps": (
+        "compiler_source_maps",
+        "source_maps",
+        "source_map",
+        "legal_ir_source_maps",
+    ),
+    "symbols": ("symbols", "symbol_table", "legal_ir_symbols"),
+    "citations": ("citations", "citation_graph", "citation_linker"),
+    "temporal_authority": (
+        "temporal_authority",
+        "temporal_context",
+        "authority_windows",
+    ),
+    "ambiguity": ("ambiguity", "ambiguity_report", "ambiguity_policy"),
+    "pass_management": ("pass_management", "pass_manager", "pass_replay"),
+    "backend_conformance": (
+        "backend_conformance",
+        "backend_conformance_report",
+        "legal_ir_backend_conformance",
+    ),
+    "reproducible_builds": (
+        "reproducible_builds",
+        "build_manifest",
+        "reproducibility",
+    ),
+    "incremental_compilation": (
+        "incremental_compilation",
+        "incremental_compiler",
+        "incremental_snapshot",
+    ),
+    "semantic_diffs": ("semantic_diffs", "semantic_diff", "semantic_diff_report"),
+    "proof_carrying_artifacts": (
+        "proof_carrying_artifacts",
+        "proof_carrying_artifact",
+        "proof_artifact",
+    ),
+    "diagnostics": ("diagnostics", "diagnostic_report", "lsp_diagnostics"),
+    "apis": ("apis", "api", "compiler_api", "cli_api"),
+    "interoperability": ("interoperability", "interop", "standards_interop"),
+    "conformance_evidence": (
+        "conformance_evidence",
+        "compiler_conformance",
+        "compiler_conformance_report",
+    ),
+    "rollback_readiness": (
+        "rollback_readiness",
+        "rollback_evidence",
+        "rollback",
+        "drift_monitor",
+    ),
+}
+
+COMPILER_SYSTEM_REQUIRED_CONFORMANCE_CAPABILITIES = (
+    "compile",
+    "proof-carrying artifacts",
+    "decompile",
+    "semantic diff",
+    "diagnostics",
+    "reproducibility",
+    "external benchmark isolation",
+    "hard negatives",
+    "source maps",
+    "backend conformance",
+    "CLI/API behavior",
 )
 
 MULTI_SEED_PROMOTION_METRICS = (
@@ -428,6 +551,22 @@ class ExternalValidityPromotionConfig:
     require_multi_seed_statistics: bool = True
     require_schema_reusable: bool = True
     require_poisoning_hard_rule: bool = True
+
+
+@dataclass(frozen=True)
+class CompilerSystemPromotionConfig:
+    """Fail-closed policy for final compiler-system promotion."""
+
+    required_domains: tuple[str, ...] = COMPILER_SYSTEM_REQUIRED_DOMAINS
+    required_conformance_capabilities: tuple[str, ...] = (
+        COMPILER_SYSTEM_REQUIRED_CONFORMANCE_CAPABILITIES
+    )
+    required_binding_fields: tuple[str, ...] = EXTERNAL_VALIDITY_BINDING_FIELDS
+    require_staged_rollout: bool = True
+    require_external_validity: bool = True
+    require_conformance_report: bool = True
+    require_rollback_readiness: bool = True
+    verify_rollback_artifacts: bool = False
 
 
 @dataclass
@@ -1550,6 +1689,699 @@ def render_external_validity_report(
         ]
     )
     return "\n".join(lines)
+
+
+def compiler_system_promotion_gate(
+    payload: Mapping[str, Any],
+    config: CompilerSystemPromotionConfig | None = None,
+) -> RolloutGateResult:
+    """Promote only when every compiler-system gate is complete and reversible."""
+
+    cfg = config or CompilerSystemPromotionConfig()
+    failures: list[str] = []
+    warnings: list[str] = []
+    metrics: dict[str, Any] = {
+        "schema_version": COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION,
+        "required_domains": list(cfg.required_domains),
+        "required_binding_fields": list(cfg.required_binding_fields),
+    }
+
+    schema = str(payload.get("schema_version") or "").strip()
+    if schema and schema != COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION:
+        failures.append(f"compiler_system_schema_mismatch:{schema}")
+    metrics["input_schema_version"] = schema
+
+    staged_result = _compiler_system_staged_result(payload, cfg)
+    external_result = _compiler_system_external_validity_result(payload, cfg)
+    domain_metrics: dict[str, Any] = {}
+    domain_status: dict[str, bool] = {}
+    evidence_packets: dict[str, Mapping[str, Any]] = {}
+
+    if staged_result is not None:
+        metrics["staged_rollout"] = staged_result.metrics
+        failures.extend(f"staged_rollout:{failure}" for failure in staged_result.failures)
+        warnings.extend(f"staged_rollout:{warning}" for warning in staged_result.warnings)
+    elif cfg.require_staged_rollout:
+        failures.append("staged_rollout_evidence_missing")
+    if external_result is not None:
+        metrics["external_validity"] = external_result.metrics
+        failures.extend(
+            f"external_validity:{failure}" for failure in external_result.failures
+        )
+        warnings.extend(
+            f"external_validity:{warning}" for warning in external_result.warnings
+        )
+    elif cfg.require_external_validity:
+        failures.append("external_validity_promotion_evidence_missing")
+
+    for domain in cfg.required_domains:
+        packet_path, packet = _compiler_system_domain_packet(payload, domain)
+        entry: dict[str, Any] = {
+            "present": packet is not None,
+        }
+        if packet_path:
+            entry["evidence_path"] = packet_path
+        if packet is None and domain == "external_validity" and external_result is not None:
+            entry.update(
+                {
+                    "present": True,
+                    "accepted": external_result.accepted,
+                    "schema_version": EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION,
+                }
+            )
+            domain_status[domain] = external_result.accepted
+            domain_metrics[domain] = entry
+            continue
+        if packet is None and domain == "rollback_readiness":
+            packet = _compiler_system_rollback_packet_from_subgates(
+                staged_result,
+                external_result,
+            )
+            if packet is not None:
+                packet_path = "subgate.rollback_readiness"
+                entry["present"] = True
+                entry["evidence_path"] = packet_path
+        if packet is None:
+            failures.append(f"compiler_system_evidence_missing:{domain}")
+            domain_status[domain] = False
+            domain_metrics[domain] = entry
+            continue
+        evidence_packets[domain] = packet
+        domain_failures, domain_warnings, details = _compiler_system_domain_failures(
+            domain,
+            packet,
+            cfg,
+            staged_result=staged_result,
+            external_result=external_result,
+        )
+        failures.extend(domain_failures)
+        warnings.extend(domain_warnings)
+        entry.update(details)
+        domain_status[domain] = not domain_failures
+        domain_metrics[domain] = entry
+
+    binding_metrics, binding_failures = _compiler_system_binding_failures(
+        payload,
+        evidence_packets,
+        cfg,
+    )
+    failures.extend(binding_failures)
+    metrics["evidence_domains"] = domain_metrics
+    metrics["domain_status"] = domain_status
+    metrics["bindings"] = binding_metrics
+    metrics["evidence_complete"] = all(
+        domain_status.get(domain) for domain in cfg.required_domains
+    )
+    metrics["rollback_ready"] = bool(domain_status.get("rollback_readiness"))
+    metrics["promotion_decision"] = "accepted" if not failures else "blocked"
+
+    return RolloutGateResult(
+        accepted=not failures,
+        failures=list(dict.fromkeys(failures)),
+        warnings=list(dict.fromkeys(warnings)),
+        metrics=metrics,
+    )
+
+
+def render_compiler_system_promotion_report(
+    result: RolloutGateResult,
+    *,
+    title: str = "Hammer/Leanstral LegalIR Compiler System Promotion",
+) -> str:
+    """Render the final promotion decision as an operator-facing report."""
+
+    metrics = result.metrics
+    lines = [
+        f"# {title}",
+        "",
+        f"- Schema: `{metrics.get('schema_version', COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION)}`",
+        f"- Decision: `{'accepted' if result.accepted else 'blocked'}`",
+        f"- Evidence complete: `{bool(metrics.get('evidence_complete'))}`",
+        f"- Rollback ready: `{bool(metrics.get('rollback_ready'))}`",
+        f"- Failure count: `{len(result.failures)}`",
+        "",
+        "## Promotion Domains",
+        "",
+        "| Domain | Status | Evidence |",
+        "| --- | --- | --- |",
+    ]
+    domains = metrics.get("evidence_domains")
+    statuses = metrics.get("domain_status")
+    if isinstance(domains, Mapping):
+        for domain in COMPILER_SYSTEM_REQUIRED_DOMAINS:
+            entry = domains.get(domain)
+            if not isinstance(entry, Mapping):
+                continue
+            passed = isinstance(statuses, Mapping) and statuses.get(domain) is True
+            lines.append(
+                f"| `{domain}` | `{'passed' if passed else 'blocked'}` | "
+                f"{_compiler_system_report_detail(domain, entry)} |"
+            )
+    lines.extend(["", "## Required Conformance Capabilities", ""])
+    conformance = (
+        domains.get("conformance_evidence")
+        if isinstance(domains, Mapping)
+        else None
+    )
+    capabilities = (
+        conformance.get("capabilities")
+        if isinstance(conformance, Mapping)
+        else None
+    )
+    for capability in COMPILER_SYSTEM_REQUIRED_CONFORMANCE_CAPABILITIES:
+        status = "unknown"
+        if isinstance(capabilities, Mapping):
+            status = "passed" if capabilities.get(capability) is True else "blocked"
+        lines.append(f"- `{capability}`: `{status}`")
+    bindings = metrics.get("bindings")
+    if isinstance(bindings, Mapping):
+        lines.extend(["", "## Evidence Bindings", ""])
+        for field in EXTERNAL_VALIDITY_BINDING_FIELDS:
+            values = bindings.get(field)
+            if not isinstance(values, Mapping):
+                continue
+            canonical = values.get("canonical")
+            sources = values.get("sources")
+            source_count = len(sources) if isinstance(sources, Mapping) else 0
+            lines.append(
+                f"- `{field}`: `{canonical or 'missing'}` from `{source_count}` source(s)"
+            )
+    if result.failures:
+        lines.extend(["", "## Promotion Blockers", ""])
+        lines.extend(f"- `{failure}`" for failure in result.failures)
+    if result.warnings:
+        lines.extend(["", "## Warnings", ""])
+        lines.extend(f"- `{warning}`" for warning in result.warnings)
+    lines.extend(
+        [
+            "",
+            "## Rollback Contract",
+            "",
+            "Promotion is allowed only when the same evidence envelope proves complete conformance and an operator can disable or restore the promoted compiler system from recorded rollback metadata.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _compiler_system_staged_result(
+    payload: Mapping[str, Any],
+    cfg: CompilerSystemPromotionConfig,
+) -> RolloutGateResult | None:
+    packet = _first_mapping_value(
+        payload,
+        (
+            "staged_rollout",
+            "staged_rollout_evidence",
+            "rollout_stages",
+            "snapshot_manifest",
+        ),
+    )
+    if packet is None:
+        raw = payload.get("snapshots", payload.get("stages"))
+        if isinstance(raw, Sequence) and not isinstance(raw, (str, bytes, bytearray)):
+            packet = {"snapshots": raw}
+    if packet is None:
+        return None
+    if _looks_like_gate_decision(packet, STAGED_ROLLOUT_SCHEMA_VERSION):
+        return _rollout_result_from_decision(packet)
+    return staged_rollout_gate(
+        packet,
+        StagedRolloutConfig(
+            require_all_stages=True,
+            require_multi_seed_statistical_promotion=True,
+            verify_rollback_artifacts=cfg.verify_rollback_artifacts,
+        ),
+    )
+
+
+def _compiler_system_external_validity_result(
+    payload: Mapping[str, Any],
+    cfg: CompilerSystemPromotionConfig,
+) -> RolloutGateResult | None:
+    packet = _first_mapping_value(
+        payload,
+        (
+            "external_validity",
+            "external_validity_promotion",
+            "external_validity_gate",
+            "external_validity_evidence",
+        ),
+    )
+    if packet is None and str(payload.get("schema_version") or "") == EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION:
+        packet = payload
+    if packet is None:
+        return None
+    if _looks_like_gate_decision(packet, EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION):
+        return _rollout_result_from_decision(packet)
+    return external_validity_promotion_gate(packet)
+
+
+def _compiler_system_domain_packet(
+    payload: Mapping[str, Any],
+    domain: str,
+) -> tuple[str, Mapping[str, Any] | None]:
+    evidence = payload.get("evidence")
+    aliases = COMPILER_SYSTEM_DOMAIN_ALIASES.get(domain, (domain,))
+    containers: tuple[tuple[str, Mapping[str, Any]], ...] = (("", payload),)
+    if isinstance(evidence, Mapping):
+        containers = (("evidence", evidence),) + containers
+    for prefix, container in containers:
+        for key in aliases:
+            value = container.get(key)
+            if isinstance(value, Mapping):
+                return f"{prefix + '.' if prefix else ''}{key}", value
+    allowed = set(COMPILER_SYSTEM_DOMAIN_SCHEMA_VERSIONS.get(domain, ()))
+    if domain == "external_validity":
+        allowed.add(EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION)
+    for path, value in _walk(payload):
+        if not isinstance(value, Mapping):
+            continue
+        schema = _schema_version(value)
+        schema_id = str(value.get("schema_version_id") or "").strip()
+        if schema in allowed or schema_id in allowed:
+            return path, value
+    return "", None
+
+
+def _compiler_system_domain_failures(
+    domain: str,
+    packet: Mapping[str, Any],
+    cfg: CompilerSystemPromotionConfig,
+    *,
+    staged_result: RolloutGateResult | None,
+    external_result: RolloutGateResult | None,
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    failures: list[str] = []
+    warnings: list[str] = []
+    details: dict[str, Any] = {"schema_version": _schema_version(packet)}
+    failures.extend(_compiler_system_generic_status_failures(domain, packet))
+
+    if domain == "evaluation_integrity":
+        if staged_result is not None and not staged_result.accepted:
+            failures.append("evaluation_integrity:staged_rollout_blocked")
+        if external_result is not None:
+            external_domains = external_result.metrics.get("domain_status")
+            if isinstance(external_domains, Mapping):
+                for required in (
+                    "leak_free_splits",
+                    "multi_seed_statistics",
+                    "hard_negatives",
+                ):
+                    if external_domains.get(required) is not True:
+                        failures.append(
+                            f"evaluation_integrity:external_domain_blocked:{required}"
+                        )
+        leak_free = packet.get("leak_free_splits") is True or packet.get("leakage_count") in (0, 0.0)
+        fixed_canary = packet.get("fixed_canary") is True or packet.get("fixed_sample_set") is True
+        multi_seed = packet.get("multi_seed") is True or packet.get("multi_seed_statistics") is True
+        if not leak_free:
+            failures.append("evaluation_integrity:leak_free_split_evidence_missing")
+        if not fixed_canary:
+            failures.append("evaluation_integrity:fixed_canary_evidence_missing")
+        if not multi_seed:
+            failures.append("evaluation_integrity:multi_seed_evidence_missing")
+        details.update(
+            {
+                "leak_free_splits": leak_free,
+                "fixed_canary": fixed_canary,
+                "multi_seed": multi_seed,
+            }
+        )
+        return failures, warnings, details
+
+    if domain == "external_validity":
+        if external_result is not None and not external_result.accepted:
+            failures.append("external_validity:promotion_gate_blocked")
+        if packet.get("accepted") is False:
+            failures.append("external_validity:accepted_false")
+        details["accepted"] = packet.get("accepted", external_result.accepted if external_result else None)
+        return failures, warnings, details
+
+    expected_schemas = COMPILER_SYSTEM_DOMAIN_SCHEMA_VERSIONS.get(domain, ())
+    if expected_schemas and _schema_version(packet) not in expected_schemas:
+        schema_id = str(packet.get("schema_version_id") or "").strip()
+        if schema_id not in expected_schemas:
+            failures.append(
+                f"{domain}:schema_mismatch:{_schema_version(packet) or schema_id or 'missing'}"
+            )
+
+    if domain == "compiler_source_maps":
+        valid = _truthy_path(packet, ("valid", "source_map_validation.valid", "traceability_complete"))
+        if not valid:
+            failures.append("compiler_source_maps:traceability_not_validated")
+        details["traceability_complete"] = valid
+    elif domain == "symbols":
+        unresolved = _first_finite(
+            packet,
+            ("unresolved_count", "unresolved_symbol_count", "error_count"),
+        )
+        if unresolved is None:
+            unresolved = 0.0 if _truthy_path(packet, ("valid", "resolved", "allowed_for_use")) else None
+        if unresolved is None or unresolved > 0:
+            failures.append(
+                f"symbols:unresolved_symbols:{'missing' if unresolved is None else f'{unresolved:g}'}"
+            )
+        details["unresolved_count"] = unresolved
+    elif domain == "citations":
+        unresolved = _first_finite(
+            packet,
+            ("unresolved_count", "unresolved_citation_count", "ambiguous_count"),
+        )
+        if unresolved is None:
+            unresolved = 0.0 if _truthy_path(packet, ("valid", "resolved", "allowed_for_use")) else None
+        if unresolved is None or unresolved > 0:
+            failures.append(
+                f"citations:unresolved_or_ambiguous:{'missing' if unresolved is None else f'{unresolved:g}'}"
+            )
+        details["unresolved_count"] = unresolved
+    elif domain == "temporal_authority":
+        complete = _truthy_path(packet, ("authority_complete", "valid", "accepted"))
+        if not complete:
+            failures.append("temporal_authority:authority_not_complete")
+        for key in ("open_conflict_count", "expired_authority_count", "unresolved_count"):
+            value = _finite_float(packet.get(key))
+            if value is not None and value > 0:
+                failures.append(f"temporal_authority:{key}:{value:g}")
+        details["authority_complete"] = complete
+    elif domain == "ambiguity":
+        unresolved = _first_finite(packet, ("unresolved_count", "unresolved_ambiguity_count"))
+        if unresolved is None:
+            unresolved = 0.0 if _truthy_path(packet, ("resolved", "all_resolved", "accepted")) else None
+        if unresolved is None or unresolved > 0:
+            failures.append(
+                f"ambiguity:unresolved:{'missing' if unresolved is None else f'{unresolved:g}'}"
+            )
+        if packet.get("learned_label_allowed") is True:
+            failures.append("ambiguity:learned_label_allowed")
+        details["unresolved_count"] = unresolved
+    elif domain == "pass_management":
+        if not _truthy_path(packet, ("deterministic_order", "deterministic_output_order", "valid")):
+            failures.append("pass_management:deterministic_order_missing")
+        if packet.get("source_map_preserved") is False:
+            failures.append("pass_management:source_map_not_preserved")
+        details["deterministic_order"] = _truthy_path(packet, ("deterministic_order", "deterministic_output_order", "valid"))
+    elif domain == "backend_conformance":
+        allowed = packet.get("promotion_allowed")
+        if allowed is not True and not _truthy_path(packet, ("accepted", "valid")):
+            failures.append("backend_conformance:promotion_not_allowed")
+        details["promotion_allowed"] = allowed
+    elif domain == "reproducible_builds":
+        reproducible = _truthy_path(packet, ("reproducible", "deterministic", "valid"))
+        digest = _first_summary_string(
+            packet,
+            ("build_digest", "compile_digest", "manifest_digest", "sha256"),
+        )
+        if not reproducible:
+            failures.append("reproducible_builds:not_reproducible")
+        if not digest:
+            failures.append("reproducible_builds:digest_missing")
+        details.update({"reproducible": reproducible, "digest_present": bool(digest)})
+    elif domain == "incremental_compilation":
+        correct = _truthy_path(packet, ("cache_correct", "invalidation_valid", "successful", "valid"))
+        if not correct:
+            failures.append("incremental_compilation:cache_or_invalidation_not_valid")
+        details["cache_correct"] = correct
+    elif domain == "semantic_diffs":
+        available = _truthy_path(packet, ("available", "valid", "classified", "accepted"))
+        unclassified = _first_finite(packet, ("unclassified_change_count", "unclassified_changes"))
+        if not available:
+            failures.append("semantic_diffs:not_available")
+        if unclassified is not None and unclassified > 0:
+            failures.append(f"semantic_diffs:unclassified_changes:{unclassified:g}")
+        details["available"] = available
+    elif domain == "proof_carrying_artifacts":
+        valid = _truthy_path(packet, ("valid", "proof_checked", "trusted", "accepted"))
+        if not valid:
+            failures.append("proof_carrying_artifacts:not_validated")
+        if packet.get("trusted") is False or packet.get("native_reconstruction_verified") is False:
+            failures.append("proof_carrying_artifacts:trust_or_reconstruction_missing")
+        details["valid"] = valid
+    elif domain == "diagnostics":
+        error_count = _first_finite(packet, ("error_count", "errors"))
+        lsp_ready = _truthy_path(packet, ("lsp_ready", "lsp_diagnostics_ready", "valid", "accepted"))
+        if not lsp_ready:
+            failures.append("diagnostics:lsp_not_ready")
+        if error_count is not None and error_count > 0:
+            failures.append(f"diagnostics:open_errors:{error_count:g}")
+        details.update({"lsp_ready": lsp_ready, "error_count": error_count})
+    elif domain == "apis":
+        parity = _truthy_path(packet, ("cli_api_parity", "daemon_free", "valid", "accepted"))
+        if not parity:
+            failures.append("apis:cli_api_parity_missing")
+        details["cli_api_parity"] = parity
+    elif domain == "interoperability":
+        conformant = _truthy_path(packet, ("round_trip_conformant", "conformant", "valid", "accepted"))
+        explicit_loss = _truthy_path(packet, ("loss_markers_explicit", "unsupported_diagnostics_explicit", "loss_explicit"))
+        if not conformant:
+            failures.append("interoperability:round_trip_not_conformant")
+        if not explicit_loss:
+            failures.append("interoperability:loss_markers_not_explicit")
+        details.update({"round_trip_conformant": conformant, "loss_markers_explicit": explicit_loss})
+    elif domain == "conformance_evidence":
+        conformance_failures, conformance_details = _compiler_conformance_failures(
+            packet,
+            cfg,
+        )
+        failures.extend(conformance_failures)
+        details.update(conformance_details)
+    elif domain == "rollback_readiness":
+        rollback_failures, rollback_details = _compiler_system_rollback_failures(packet)
+        failures.extend(rollback_failures)
+        details.update(rollback_details)
+    return failures, warnings, details
+
+
+def _compiler_conformance_failures(
+    packet: Mapping[str, Any],
+    cfg: CompilerSystemPromotionConfig,
+) -> tuple[list[str], dict[str, Any]]:
+    failures: list[str] = []
+    capabilities = _compiler_conformance_capability_status(packet)
+    details: dict[str, Any] = {"capabilities": capabilities}
+    for capability in cfg.required_conformance_capabilities:
+        if capabilities.get(capability) is not True:
+            failures.append(f"conformance_evidence:capability_missing:{capability}")
+    failed = _string_sequence(packet.get("failed_capabilities"))
+    if failed:
+        failures.append("conformance_evidence:failed_capabilities:" + ",".join(failed))
+    if packet.get("conformance_suite_passed") is False or packet.get("passed") is False:
+        failures.append("conformance_evidence:suite_not_passed")
+    report_path = _first_summary_string(packet, ("report_path", "artifact_path", "path"))
+    details["report_path"] = report_path
+    if cfg.require_conformance_report and not report_path and not capabilities:
+        failures.append("conformance_evidence:report_missing")
+    return failures, details
+
+
+def _compiler_conformance_capability_status(packet: Mapping[str, Any]) -> dict[str, bool]:
+    result: dict[str, bool] = {}
+    raw = packet.get("required_capabilities", packet.get("capabilities"))
+    if isinstance(raw, Mapping):
+        for capability in COMPILER_SYSTEM_REQUIRED_CONFORMANCE_CAPABILITIES:
+            value = raw.get(capability)
+            if isinstance(value, Mapping):
+                status = str(value.get("status") or "").strip().lower()
+                result[capability] = (
+                    value.get("passed") is True
+                    or value.get("required") is True
+                    or status in {"passed", "implemented", "required", "accepted"}
+                ) and value.get("failed") is not True
+            elif isinstance(value, bool):
+                result[capability] = value
+            elif value is not None:
+                result[capability] = str(value).strip().lower() in {
+                    "passed",
+                    "implemented",
+                    "required",
+                    "accepted",
+                }
+    elif isinstance(raw, Sequence) and not isinstance(raw, (str, bytes, bytearray)):
+        seen = {str(item) for item in raw}
+        for capability in COMPILER_SYSTEM_REQUIRED_CONFORMANCE_CAPABILITIES:
+            result[capability] = capability in seen
+    report_text = str(packet.get("report_text") or packet.get("markdown") or "")
+    if not report_text:
+        report_path = _first_summary_string(packet, ("report_path", "artifact_path", "path"))
+        if report_path:
+            try:
+                candidate = Path(report_path)
+                if candidate.is_file():
+                    report_text = candidate.read_text(encoding="utf-8")
+            except OSError:
+                report_text = ""
+    if report_text:
+        for capability in COMPILER_SYSTEM_REQUIRED_CONFORMANCE_CAPABILITIES:
+            if capability in report_text and "No failed capabilities" in report_text:
+                result.setdefault(capability, True)
+    return result
+
+
+def _compiler_system_rollback_failures(
+    packet: Mapping[str, Any],
+) -> tuple[list[str], dict[str, Any]]:
+    failures: list[str] = []
+    rollback_id = _first_summary_string(
+        packet,
+        ("rollback_id", "rollback_metadata.rollback_id"),
+    )
+    disable_action = _first_summary_string(
+        packet,
+        ("disable_action", "rollback_metadata.disable_action"),
+    )
+    restorable = (
+        packet.get("restorable") is True
+        or _truthy_path(packet, ("rollback_metadata.restorable",))
+        or bool(disable_action)
+    )
+    if not rollback_id:
+        failures.append("rollback_readiness:rollback_id_missing")
+    if not restorable:
+        failures.append("rollback_readiness:not_restorable")
+    if packet.get("rollback_required") is True:
+        failures.append("rollback_readiness:rollback_already_required")
+    return failures, {
+        "rollback_id": rollback_id,
+        "disable_action": disable_action,
+        "restorable": restorable,
+    }
+
+
+def _compiler_system_rollback_packet_from_subgates(
+    staged_result: RolloutGateResult | None,
+    external_result: RolloutGateResult | None,
+) -> Mapping[str, Any] | None:
+    external_domains = (
+        external_result.metrics.get("evidence_domains")
+        if external_result is not None
+        else None
+    )
+    if isinstance(external_domains, Mapping):
+        rollback = external_domains.get("rollback_readiness")
+        if isinstance(rollback, Mapping):
+            return rollback
+    if staged_result is None:
+        return None
+    rollback = staged_result.metrics.get("rollback_evidence")
+    if not isinstance(rollback, Mapping) or not rollback:
+        return None
+    return {
+        "rollback_id": "staged-rollout-rollback",
+        "restorable": True,
+        "stage_rollback_evidence": rollback,
+    }
+
+
+def _compiler_system_binding_failures(
+    payload: Mapping[str, Any],
+    evidence_packets: Mapping[str, Mapping[str, Any]],
+    cfg: CompilerSystemPromotionConfig,
+) -> tuple[dict[str, Any], list[str]]:
+    relevant = {
+        domain: packet
+        for domain, packet in evidence_packets.items()
+        if domain
+        in {
+            "evaluation_integrity",
+            "external_validity",
+            "conformance_evidence",
+            "rollback_readiness",
+        }
+    }
+    return _external_validity_binding_failures(
+        payload,
+        relevant,
+        ExternalValidityPromotionConfig(
+            required_binding_fields=cfg.required_binding_fields
+        ),
+    )
+
+
+def _compiler_system_generic_status_failures(
+    domain: str,
+    packet: Mapping[str, Any],
+) -> list[str]:
+    failures = _status_failures(domain, packet)
+    for key in ("missing_evidence", "missing_capabilities", "open_blockers"):
+        items = _string_sequence(packet.get(key))
+        if items:
+            failures.append(f"{domain}:{key}:" + ",".join(items))
+    return failures
+
+
+def _compiler_system_report_detail(domain: str, entry: Mapping[str, Any]) -> str:
+    if not entry.get("present"):
+        return "`missing`"
+    for key in (
+        "schema_version",
+        "promotion_allowed",
+        "traceability_complete",
+        "unresolved_count",
+        "authority_complete",
+        "rollback_id",
+        "report_path",
+    ):
+        value = entry.get(key)
+        if value not in (None, "", []):
+            return f"`{key}={value}`"
+    return "`present`"
+
+
+def _first_mapping_value(
+    payload: Mapping[str, Any],
+    keys: Sequence[str],
+) -> Mapping[str, Any] | None:
+    for key in keys:
+        value = payload.get(key)
+        if isinstance(value, Mapping):
+            return value
+    return None
+
+
+def _looks_like_gate_decision(
+    packet: Mapping[str, Any],
+    schema_version: str,
+) -> bool:
+    return (
+        "accepted" in packet
+        and "metrics" in packet
+        and str(packet.get("schema_version") or "") == schema_version
+    )
+
+
+def _rollout_result_from_decision(packet: Mapping[str, Any]) -> RolloutGateResult:
+    metrics = packet.get("metrics")
+    failures = _string_sequence(packet.get("failures"))
+    warnings = _string_sequence(packet.get("warnings"))
+    return RolloutGateResult(
+        accepted=packet.get("accepted") is True and not failures,
+        failures=failures,
+        warnings=warnings,
+        metrics=dict(metrics) if isinstance(metrics, Mapping) else {},
+    )
+
+
+def _truthy_path(payload: Mapping[str, Any], paths: Sequence[str]) -> bool:
+    for path in paths:
+        current: Any = payload
+        for part in path.split("."):
+            if not isinstance(current, Mapping):
+                current = None
+                break
+            current = current.get(part)
+        if current is True:
+            return True
+        if isinstance(current, str) and current.strip().lower() in {
+            "true",
+            "valid",
+            "passed",
+            "accepted",
+            "complete",
+            "conformant",
+            "succeeded",
+        }:
+            return True
+    return False
 
 
 def _external_validity_packet(
@@ -3748,6 +4580,31 @@ def build_parser() -> argparse.ArgumentParser:
     external_parser.add_argument("--min-external-validity-score", type=float, default=1.0)
     external_parser.add_argument("--min-external-packet-count", type=int, default=1)
     external_parser.set_defaults(func=_cmd_external_validity_gate)
+
+    system_parser = subparsers.add_parser(
+        "compiler-system-promotion-gate",
+        help="Run the final LegalIR compiler-system promotion gate",
+    )
+    system_parser.add_argument(
+        "--evidence-path", "--summary-path", required=True, type=Path
+    )
+    system_parser.add_argument(
+        "--evidence-output",
+        type=Path,
+        help="Atomically store the complete compiler-system decision JSON",
+    )
+    system_parser.add_argument(
+        "--report-output",
+        type=Path,
+        help="Atomically store a Markdown compiler-system promotion report",
+    )
+    system_parser.add_argument(
+        "--verify-rollback-artifacts",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Require rollback paths to exist and match their recorded SHA-256",
+    )
+    system_parser.set_defaults(func=_cmd_compiler_system_promotion_gate)
     return parser
 
 
@@ -3910,6 +4767,39 @@ def _cmd_external_validity_gate(args: argparse.Namespace) -> int:
         write_rollout_evidence(args.evidence_output, decision)
     if args.report_output is not None:
         write_text_artifact(args.report_output, render_external_validity_report(result))
+    print(json.dumps(decision, indent=2, sort_keys=True))
+    return 0 if result.accepted else 1
+
+
+def _cmd_compiler_system_promotion_gate(args: argparse.Namespace) -> int:
+    try:
+        payload = load_summary(args.evidence_path)
+        result = compiler_system_promotion_gate(
+            payload,
+            CompilerSystemPromotionConfig(
+                verify_rollback_artifacts=args.verify_rollback_artifacts,
+            ),
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        result = RolloutGateResult(
+            accepted=False,
+            failures=[
+                f"compiler_system_evidence_unreadable:{type(exc).__name__}:{exc}"
+            ],
+            metrics={"schema_version": COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION},
+        )
+    decision = result.to_dict()
+    decision["schema_version"] = COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION
+    decision["evidence_path"] = str(args.evidence_path)
+    if args.evidence_path.is_file():
+        decision["evidence_sha256"] = snapshot_sha256(args.evidence_path)
+    if args.evidence_output is not None:
+        write_rollout_evidence(args.evidence_output, decision)
+    if args.report_output is not None:
+        write_text_artifact(
+            args.report_output,
+            render_compiler_system_promotion_report(result),
+        )
     print(json.dumps(decision, indent=2, sort_keys=True))
     return 0 if result.accepted else 1
 
