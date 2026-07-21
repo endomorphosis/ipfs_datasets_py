@@ -170,6 +170,25 @@ __all__ = [
     'grammar_rejection_reason_names',
     'infer_legal_ir_grammar_family',
     'validate_legal_ir_candidate',
+    'LEGAL_IR_FUZZING_SCHEMA_VERSION',
+    'LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION',
+    'SEMANTICS_CHANGING',
+    'SEMANTICS_PRESERVING',
+    'TARGET_DECOMPILER',
+    'TARGET_DETERMINISTIC_IR',
+    'TARGET_LEARNED_IR',
+    'TARGET_OBLIGATIONS',
+    'TARGET_TEXT',
+    'FUZZING_TARGETS',
+    'LegalIRFuzzer',
+    'LegalIRFuzzingConfig',
+    'LegalIRFuzzingReport',
+    'LegalIRFuzzingResult',
+    'LegalIRMutation',
+    'LegalIRSurfaceBundle',
+    'TrustedNegativeCandidate',
+    'minimize_legal_ir_counterexample',
+    'run_legal_ir_metamorphic_fuzzing',
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
@@ -1028,6 +1047,32 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_grammar_decoder, name)
+    elif name in (
+        'FUZZING_TARGETS',
+        'LEGAL_IR_FUZZING_SCHEMA_VERSION',
+        'LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION',
+        'SEMANTICS_CHANGING',
+        'SEMANTICS_PRESERVING',
+        'TARGET_DECOMPILER',
+        'TARGET_DETERMINISTIC_IR',
+        'TARGET_LEARNED_IR',
+        'TARGET_OBLIGATIONS',
+        'TARGET_TEXT',
+        'LegalIRFuzzer',
+        'LegalIRFuzzingConfig',
+        'LegalIRFuzzingReport',
+        'LegalIRFuzzingResult',
+        'LegalIRMutation',
+        'LegalIRSurfaceBundle',
+        'TrustedNegativeCandidate',
+        'minimize_legal_ir_counterexample',
+        'run_legal_ir_metamorphic_fuzzing',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_fuzzing,
+        )
+
+        return getattr(legal_ir_fuzzing, name)
     elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
             ModalProverRouteResult,
