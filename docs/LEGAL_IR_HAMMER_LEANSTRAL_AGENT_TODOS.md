@@ -1227,7 +1227,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-057 Measure causal efficacy of trusted Hammer and Leanstral feedback
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: proof-feedback
