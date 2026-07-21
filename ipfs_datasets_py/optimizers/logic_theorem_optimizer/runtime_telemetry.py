@@ -15,6 +15,8 @@ from __future__ import annotations
 import hashlib
 import math
 import os
+import shutil
+import subprocess
 import threading
 import time
 import uuid
@@ -243,8 +245,22 @@ class ResourceSnapshot:
     swap_percent: Optional[float] = None
     gpu_utilization_percent: Optional[float] = None
     gpu_memory_used_bytes: Optional[int] = None
+    gpu_memory_total_bytes: Optional[int] = None
     gpu_memory_percent: Optional[float] = None
     gpu_device_count: int = 0
+    gpu_telemetry_available: bool = False
+    cuda_available: Optional[bool] = None
+    process_gpu_memory_used_bytes: Optional[int] = None
+    children_gpu_memory_used_bytes: Optional[int] = None
+    trainer_gpu_memory_used_bytes: Optional[int] = None
+    leanstral_gpu_memory_used_bytes: Optional[int] = None
+    unified_memory_used_bytes: Optional[int] = None
+    unified_memory_percent: Optional[float] = None
+    process_unified_memory_used_bytes: Optional[int] = None
+    children_unified_memory_used_bytes: Optional[int] = None
+    trainer_unified_memory_used_bytes: Optional[int] = None
+    leanstral_unified_memory_used_bytes: Optional[int] = None
+    gpu_processes: Sequence[Mapping[str, Any]] = ()
     child_process_count: int = 0
     queue_depth: int = 0
     collector_status: str = "ok"
@@ -262,16 +278,241 @@ class ResourceSnapshot:
             "swap_percent": self.swap_percent,
             "gpu_utilization_percent": self.gpu_utilization_percent,
             "gpu_memory_used_bytes": self.gpu_memory_used_bytes,
+            "gpu_memory_total_bytes": self.gpu_memory_total_bytes,
             "gpu_memory_percent": self.gpu_memory_percent,
             "gpu_device_count": self.gpu_device_count,
+            "gpu_telemetry_available": self.gpu_telemetry_available,
+            "cuda_available": self.cuda_available,
+            "process_gpu_memory_used_bytes": self.process_gpu_memory_used_bytes,
+            "children_gpu_memory_used_bytes": self.children_gpu_memory_used_bytes,
+            "trainer_gpu_memory_used_bytes": self.trainer_gpu_memory_used_bytes,
+            "leanstral_gpu_memory_used_bytes": self.leanstral_gpu_memory_used_bytes,
+            "unified_memory_used_bytes": self.unified_memory_used_bytes,
+            "unified_memory_percent": self.unified_memory_percent,
+            "process_unified_memory_used_bytes": self.process_unified_memory_used_bytes,
+            "children_unified_memory_used_bytes": self.children_unified_memory_used_bytes,
+            "trainer_unified_memory_used_bytes": self.trainer_unified_memory_used_bytes,
+            "leanstral_unified_memory_used_bytes": self.leanstral_unified_memory_used_bytes,
+            "gpu_processes": [dict(item) for item in self.gpu_processes],
             "child_process_count": self.child_process_count,
             "queue_depth": self.queue_depth,
             "collector_status": self.collector_status,
         }
 
 
-def _gpu_snapshot() -> tuple[Optional[float], Optional[int], Optional[float], int, str]:
-    """Read NVML if available, without invoking or waiting for a subprocess."""
+def _bounded_percent(numerator: Optional[int], denominator: Optional[int]) -> Optional[float]:
+    if numerator is None or denominator is None or denominator <= 0:
+        return None
+    return round(max(0.0, min(100.0, 100.0 * numerator / denominator)), 3)
+
+
+def _process_details(pid: int, current_pid: int) -> tuple[str, Optional[int]]:
+    role = ""
+    rss: Optional[int] = None
+    try:
+        import psutil  # type: ignore[import-not-found]
+
+        process = psutil.Process(pid)
+        try:
+            rss = int(process.memory_info().rss)
+        except Exception:
+            rss = None
+        command = " ".join(process.cmdline()).lower()
+        name = process.name().lower()
+        marker = f"{name} {command}"
+        if "leanstral" in marker:
+            role = "leanstral"
+        elif any(
+            item in marker
+            for item in (
+                "projection_training",
+                "trusted_feedback_trainer",
+                "trainer",
+                "train",
+                "autoencoder",
+            )
+        ):
+            role = "trainer"
+        elif pid == current_pid:
+            role = "current"
+        else:
+            try:
+                parents = {parent.pid for parent in process.parents()}
+            except Exception:
+                parents = set()
+            role = "child" if current_pid in parents else "external"
+    except Exception:
+        role = "current" if pid == current_pid else "external"
+    configured_role = os.environ.get("IPFS_DATASETS_LEGAL_IR_PROCESS_ROLE", "").strip().lower()
+    if configured_role and pid == current_pid:
+        role = configured_role[:64]
+    return role, rss
+
+
+def _process_record(
+    *,
+    pid: int,
+    gpu_memory_used_bytes: Optional[int],
+    source: str,
+    current_pid: int,
+) -> dict[str, Any]:
+    role, rss = _process_details(pid, current_pid)
+    unified = None
+    if rss is not None or gpu_memory_used_bytes is not None:
+        unified = int(rss or 0) + int(gpu_memory_used_bytes or 0)
+    return {
+        "pid": int(pid),
+        "role": role,
+        "gpu_memory_used_bytes": gpu_memory_used_bytes,
+        "unified_memory_used_bytes": unified,
+        "source": source,
+    }
+
+
+def _merge_process_records(records: Sequence[Mapping[str, Any]]) -> tuple[dict[str, Any], ...]:
+    by_pid: dict[int, dict[str, Any]] = {}
+    role_rank = {"trainer": 5, "leanstral": 5, "current": 4, "child": 3, "external": 1}
+    for raw in records:
+        try:
+            pid = int(raw["pid"])
+        except Exception:
+            continue
+        merged = by_pid.setdefault(
+            pid,
+            {
+                "pid": pid,
+                "role": str(raw.get("role") or "external"),
+                "gpu_memory_used_bytes": None,
+                "unified_memory_used_bytes": None,
+                "source": "",
+            },
+        )
+        role = str(raw.get("role") or "external")
+        if role_rank.get(role, 0) > role_rank.get(str(merged.get("role")), 0):
+            merged["role"] = role
+        for field in ("gpu_memory_used_bytes", "unified_memory_used_bytes"):
+            value = raw.get(field)
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                merged[field] = max(int(value), int(merged[field] or 0))
+        sources = {item for item in str(merged.get("source") or "").split("+") if item}
+        source = str(raw.get("source") or "")
+        if source:
+            sources.add(source)
+        merged["source"] = "+".join(sorted(sources))
+    return tuple(dict(item) for item in sorted(by_pid.values(), key=lambda item: item["pid"]))
+
+
+def _aggregate_process_field(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    field: str,
+    role: Optional[str] = None,
+) -> Optional[int]:
+    if not records:
+        return None
+    values = []
+    for record in records:
+        if role is not None and record.get("role") != role:
+            continue
+        value = record.get(field)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            values.append(int(value))
+    return sum(values) if values else 0
+
+
+def _torch_gpu_snapshot(current_pid: int) -> dict[str, Any]:
+    status = "torch_unavailable"
+    try:
+        import torch  # type: ignore[import-not-found]
+    except Exception:
+        return {"statuses": [status]}
+
+    try:
+        cuda = getattr(torch, "cuda", None)
+        available = bool(cuda is not None and cuda.is_available())
+        count = int(cuda.device_count()) if available else 0
+        if not available or count <= 0:
+            return {
+                "statuses": ["torch_cuda_unavailable"],
+                "cuda_available": False,
+                "gpu_device_count": 0,
+            }
+        memory_used = 0
+        memory_reserved = 0
+        memory_total = 0
+        for index in range(count):
+            try:
+                memory_used += int(cuda.memory_allocated(index))
+            except Exception:
+                pass
+            try:
+                memory_reserved += int(cuda.memory_reserved(index))
+            except Exception:
+                pass
+            try:
+                properties = cuda.get_device_properties(index)
+                memory_total += int(getattr(properties, "total_memory", 0) or 0)
+            except Exception:
+                pass
+        process_memory = memory_reserved if memory_reserved else memory_used
+        records = []
+        if process_memory:
+            records.append(
+                _process_record(
+                    pid=current_pid,
+                    gpu_memory_used_bytes=process_memory,
+                    source="torch",
+                    current_pid=current_pid,
+                )
+            )
+        return {
+            "statuses": ["torch_cuda_ok"],
+            "cuda_available": True,
+            "gpu_device_count": count,
+            "gpu_memory_used_bytes": process_memory,
+            "gpu_memory_total_bytes": memory_total or None,
+            "processes": records,
+        }
+    except Exception:
+        return {"statuses": ["torch_collector_error"]}
+
+
+def _nvml_processes(pynvml: Any, handle: Any, current_pid: int) -> list[dict[str, Any]]:
+    for method_name in (
+        "nvmlDeviceGetComputeRunningProcesses_v3",
+        "nvmlDeviceGetComputeRunningProcesses_v2",
+        "nvmlDeviceGetComputeRunningProcesses",
+    ):
+        method = getattr(pynvml, method_name, None)
+        if method is None:
+            continue
+        try:
+            raw_processes = method(handle)
+        except Exception:
+            continue
+        result = []
+        for process in raw_processes or ():
+            pid = int(getattr(process, "pid", 0) or 0)
+            if pid <= 0:
+                continue
+            used = getattr(process, "usedGpuMemory", None)
+            if used is None:
+                used = getattr(process, "usedGpuCcProtectedMemory", None)
+            used_bytes = None if used is None else max(0, int(used))
+            result.append(
+                _process_record(
+                    pid=pid,
+                    gpu_memory_used_bytes=used_bytes,
+                    source="nvml",
+                    current_pid=current_pid,
+                )
+            )
+        return result
+    return []
+
+
+def _nvml_gpu_snapshot(current_pid: int) -> dict[str, Any]:
+    """Read NVML if available."""
 
     pynvml: Any = None
     initialized = False
@@ -284,6 +525,7 @@ def _gpu_snapshot() -> tuple[Optional[float], Optional[int], Optional[float], in
         utilizations: list[float] = []
         memory_used = 0
         memory_total = 0
+        processes: list[dict[str, Any]] = []
         for index in range(count):
             handle = pynvml.nvmlDeviceGetHandleByIndex(index)
             utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
@@ -291,15 +533,20 @@ def _gpu_snapshot() -> tuple[Optional[float], Optional[int], Optional[float], in
             utilizations.append(float(utilization.gpu))
             memory_used += int(memory.used)
             memory_total += int(memory.total)
-        result = (
-            round(sum(utilizations) / len(utilizations), 3) if utilizations else None,
-            memory_used if count else None,
-            round(100.0 * memory_used / memory_total, 3) if memory_total else None,
-            count,
-            "ok" if count else "gpu_unavailable",
-        )
+            processes.extend(_nvml_processes(pynvml, handle, current_pid))
+        result = {
+            "statuses": ["nvml_ok" if count else "nvml_no_devices"],
+            "cuda_available": True if count else None,
+            "gpu_device_count": count,
+            "gpu_utilization_percent": (
+                round(sum(utilizations) / len(utilizations), 3) if utilizations else None
+            ),
+            "gpu_memory_used_bytes": memory_used if count else None,
+            "gpu_memory_total_bytes": memory_total if memory_total else None,
+            "processes": processes,
+        }
     except Exception:
-        result = (None, None, None, 0, "gpu_unavailable")
+        result = {"statuses": ["nvml_unavailable"]}
     finally:
         if initialized:
             try:
@@ -309,12 +556,205 @@ def _gpu_snapshot() -> tuple[Optional[float], Optional[int], Optional[float], in
     return result
 
 
+def _nvidia_smi_gpu_snapshot(current_pid: int) -> dict[str, Any]:
+    executable = shutil.which("nvidia-smi")
+    if not executable:
+        return {"statuses": ["nvidia_smi_unavailable"]}
+    statuses: list[str] = []
+    result: dict[str, Any] = {}
+    try:
+        completed = subprocess.run(
+            [
+                executable,
+                "--query-gpu=utilization.gpu,memory.used,memory.total",
+                "--format=csv,noheader,nounits",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=0.75,
+        )
+        utilizations: list[float] = []
+        memory_used = 0
+        memory_total = 0
+        count = 0
+        for line in completed.stdout.splitlines():
+            parts = [part.strip() for part in line.split(",")]
+            if len(parts) < 3:
+                continue
+            utilizations.append(float(parts[0]))
+            memory_used += int(float(parts[1]) * 1024 * 1024)
+            memory_total += int(float(parts[2]) * 1024 * 1024)
+            count += 1
+        statuses.append("nvidia_smi_ok" if count else "nvidia_smi_no_devices")
+        result.update(
+            {
+                "cuda_available": True if count else None,
+                "gpu_device_count": count,
+                "gpu_utilization_percent": (
+                    round(sum(utilizations) / len(utilizations), 3) if utilizations else None
+                ),
+                "gpu_memory_used_bytes": memory_used if count else None,
+                "gpu_memory_total_bytes": memory_total if memory_total else None,
+            }
+        )
+    except Exception:
+        statuses.append("nvidia_smi_gpu_query_error")
+
+    try:
+        completed = subprocess.run(
+            [
+                executable,
+                "--query-compute-apps=pid,used_memory",
+                "--format=csv,noheader,nounits",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=0.75,
+        )
+        processes = []
+        for line in completed.stdout.splitlines():
+            parts = [part.strip() for part in line.split(",")]
+            if len(parts) < 2 or not parts[0]:
+                continue
+            processes.append(
+                _process_record(
+                    pid=int(parts[0]),
+                    gpu_memory_used_bytes=int(float(parts[1]) * 1024 * 1024),
+                    source="nvidia-smi",
+                    current_pid=current_pid,
+                )
+            )
+        result["processes"] = processes
+        statuses.append("nvidia_smi_process_ok")
+    except Exception:
+        statuses.append("nvidia_smi_process_query_unavailable")
+    result["statuses"] = statuses
+    return result
+
+
+def _gpu_snapshot(
+    *,
+    host_memory_used_bytes: Optional[int],
+    host_memory_total_bytes: Optional[int],
+    current_pid: Optional[int] = None,
+) -> dict[str, Any]:
+    """Collect CUDA/GPU facts from independent collectors and merge known values."""
+
+    pid = int(current_pid if current_pid is not None else os.getpid())
+    collector_results = (
+        _torch_gpu_snapshot(pid),
+        _nvml_gpu_snapshot(pid),
+        _nvidia_smi_gpu_snapshot(pid),
+    )
+    statuses: list[str] = []
+    processes: list[Mapping[str, Any]] = []
+    device_count = 0
+    cuda_available: Optional[bool] = None
+    gpu_utilization: list[float] = []
+    memory_used_values: list[int] = []
+    memory_total_values: list[int] = []
+    for result in collector_results:
+        statuses.extend(str(item) for item in result.get("statuses", ()) if item)
+        if result.get("cuda_available") is True:
+            cuda_available = True
+        elif cuda_available is None and result.get("cuda_available") is False:
+            cuda_available = False
+        if isinstance(result.get("gpu_device_count"), int):
+            device_count = max(device_count, int(result["gpu_device_count"]))
+        if isinstance(result.get("gpu_utilization_percent"), (int, float)):
+            gpu_utilization.append(float(result["gpu_utilization_percent"]))
+        if isinstance(result.get("gpu_memory_used_bytes"), int):
+            memory_used_values.append(int(result["gpu_memory_used_bytes"]))
+        if isinstance(result.get("gpu_memory_total_bytes"), int):
+            memory_total_values.append(int(result["gpu_memory_total_bytes"]))
+        if isinstance(result.get("processes"), Sequence):
+            processes.extend(result["processes"])
+
+    merged_processes = _merge_process_records(processes)
+    gpu_memory_used = max(memory_used_values) if memory_used_values else None
+    gpu_memory_total = max(memory_total_values) if memory_total_values else None
+    if gpu_memory_used is None:
+        process_gpu_values = [
+            int(record["gpu_memory_used_bytes"])
+            for record in merged_processes
+            if isinstance(record.get("gpu_memory_used_bytes"), int)
+        ]
+        gpu_memory_used = sum(process_gpu_values) if process_gpu_values else None
+    gpu_available = bool(
+        device_count > 0
+        or cuda_available is True
+        or gpu_utilization
+        or memory_used_values
+        or memory_total_values
+        or merged_processes
+    )
+    if cuda_available is None and gpu_available:
+        cuda_available = True
+
+    unified_used = host_memory_used_bytes
+    if unified_used is None:
+        unified_values = [
+            int(record["unified_memory_used_bytes"])
+            for record in merged_processes
+            if isinstance(record.get("unified_memory_used_bytes"), int)
+        ]
+        unified_used = sum(unified_values) if unified_values else None
+
+    status = ",".join(dict.fromkeys(statuses))
+    if not gpu_available and cuda_available is not True:
+        status = f"{status},gpu_unavailable" if status else "gpu_unavailable"
+    return {
+        "gpu_utilization_percent": (
+            round(sum(gpu_utilization) / len(gpu_utilization), 3)
+            if gpu_utilization
+            else None
+        ),
+        "gpu_memory_used_bytes": gpu_memory_used,
+        "gpu_memory_total_bytes": gpu_memory_total,
+        "gpu_memory_percent": _bounded_percent(gpu_memory_used, gpu_memory_total),
+        "gpu_device_count": device_count,
+        "gpu_telemetry_available": gpu_available,
+        "cuda_available": cuda_available,
+        "process_gpu_memory_used_bytes": _aggregate_process_field(
+            merged_processes, field="gpu_memory_used_bytes", role="current"
+        ),
+        "children_gpu_memory_used_bytes": _aggregate_process_field(
+            merged_processes, field="gpu_memory_used_bytes", role="child"
+        ),
+        "trainer_gpu_memory_used_bytes": _aggregate_process_field(
+            merged_processes, field="gpu_memory_used_bytes", role="trainer"
+        ),
+        "leanstral_gpu_memory_used_bytes": _aggregate_process_field(
+            merged_processes, field="gpu_memory_used_bytes", role="leanstral"
+        ),
+        "unified_memory_used_bytes": unified_used,
+        "unified_memory_percent": _bounded_percent(unified_used, host_memory_total_bytes),
+        "process_unified_memory_used_bytes": _aggregate_process_field(
+            merged_processes, field="unified_memory_used_bytes", role="current"
+        ),
+        "children_unified_memory_used_bytes": _aggregate_process_field(
+            merged_processes, field="unified_memory_used_bytes", role="child"
+        ),
+        "trainer_unified_memory_used_bytes": _aggregate_process_field(
+            merged_processes, field="unified_memory_used_bytes", role="trainer"
+        ),
+        "leanstral_unified_memory_used_bytes": _aggregate_process_field(
+            merged_processes, field="unified_memory_used_bytes", role="leanstral"
+        ),
+        "gpu_processes": merged_processes,
+        "collector_status": status or "ok",
+    }
+
+
 def collect_resource_snapshot(*, queue_depth: int = 0) -> ResourceSnapshot:
     """Collect CPU, memory, swap, GPU, process, child, and queue measurements."""
 
     cpu_percent: Optional[float] = None
     process_cpu_percent: Optional[float] = None
     memory_used_bytes: Optional[int] = None
+    memory_total_bytes: Optional[int] = None
     memory_percent: Optional[float] = None
     process_memory_bytes: Optional[int] = None
     swap_used_bytes: Optional[int] = None
@@ -330,6 +770,7 @@ def collect_resource_snapshot(*, queue_depth: int = 0) -> ResourceSnapshot:
         cpu_percent = round(float(psutil.cpu_percent(interval=None)), 3)
         process_cpu_percent = round(float(process.cpu_percent(interval=None)), 3)
         memory_used_bytes = int(memory.used)
+        memory_total_bytes = int(memory.total)
         memory_percent = round(float(memory.percent), 3)
         process_memory_bytes = int(process.memory_info().rss)
         swap_used_bytes = int(swap.used)
@@ -338,8 +779,12 @@ def collect_resource_snapshot(*, queue_depth: int = 0) -> ResourceSnapshot:
     except Exception:
         status_parts.append("psutil_unavailable")
 
-    gpu_util, gpu_memory, gpu_memory_percent, gpu_count, gpu_status = _gpu_snapshot()
-    if gpu_status != "ok":
+    gpu = _gpu_snapshot(
+        host_memory_used_bytes=memory_used_bytes,
+        host_memory_total_bytes=memory_total_bytes,
+    )
+    gpu_status = str(gpu.pop("collector_status", ""))
+    if gpu_status and gpu_status != "ok":
         status_parts.append(gpu_status)
     return ResourceSnapshot(
         captured_at=_utc_now(),
@@ -350,10 +795,7 @@ def collect_resource_snapshot(*, queue_depth: int = 0) -> ResourceSnapshot:
         process_memory_bytes=process_memory_bytes,
         swap_used_bytes=swap_used_bytes,
         swap_percent=swap_percent,
-        gpu_utilization_percent=gpu_util,
-        gpu_memory_used_bytes=gpu_memory,
-        gpu_memory_percent=gpu_memory_percent,
-        gpu_device_count=gpu_count,
+        **gpu,
         child_process_count=child_process_count,
         queue_depth=max(0, int(queue_depth or 0)),
         collector_status=",".join(status_parts) if status_parts else "ok",
@@ -482,8 +924,11 @@ class RuntimeTelemetry:
                 swap_percent=None,
                 gpu_utilization_percent=None,
                 gpu_memory_used_bytes=None,
+                gpu_memory_total_bytes=None,
                 gpu_memory_percent=None,
                 gpu_device_count=0,
+                gpu_telemetry_available=False,
+                cuda_available=None,
                 child_process_count=0,
                 queue_depth=max(0, int(queue_depth)),
                 collector_status="collector_error",
@@ -850,8 +1295,19 @@ def _summarize_resources(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]
         "swap_percent",
         "gpu_utilization_percent",
         "gpu_memory_used_bytes",
+        "gpu_memory_total_bytes",
         "gpu_memory_percent",
         "gpu_device_count",
+        "process_gpu_memory_used_bytes",
+        "children_gpu_memory_used_bytes",
+        "trainer_gpu_memory_used_bytes",
+        "leanstral_gpu_memory_used_bytes",
+        "unified_memory_used_bytes",
+        "unified_memory_percent",
+        "process_unified_memory_used_bytes",
+        "children_unified_memory_used_bytes",
+        "trainer_unified_memory_used_bytes",
+        "leanstral_unified_memory_used_bytes",
         "child_process_count",
         "queue_depth",
     )
@@ -864,6 +1320,24 @@ def _summarize_resources(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]
         ]
         summary[f"{field}_average"] = round(sum(values) / len(values), 3) if values else None
         summary[f"{field}_peak"] = round(max(values), 3) if values else None
+    summary["gpu_telemetry_available"] = any(
+        record.get("gpu_telemetry_available") is True for record in records
+    )
+    summary["cuda_available"] = (
+        True
+        if any(record.get("cuda_available") is True for record in records)
+        else False
+        if records and all(record.get("cuda_available") is False for record in records)
+        else None
+    )
+    summary["collector_statuses"] = sorted(
+        {
+            status
+            for record in records
+            for status in str(record.get("collector_status") or "").split(",")
+            if status
+        }
+    )
     summary["latest"] = dict(records[-1]) if records else None
     return summary
 

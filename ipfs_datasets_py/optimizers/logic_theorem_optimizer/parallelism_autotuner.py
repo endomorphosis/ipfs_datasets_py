@@ -317,6 +317,7 @@ class PipelineBenchmarkMetrics:
     warm_cache_hit_rate: float
     quality_metrics: Mapping[str, float]
     sample_count: int = 0
+    gpu_telemetry_known: bool = True
 
     def __post_init__(self) -> None:
         nonnegative = (
@@ -334,6 +335,8 @@ class PipelineBenchmarkMetrics:
             "cold_cache_hit_rate", "warm_cache_hit_rate", "transient_failure_rate",
         ):
             _ratio(getattr(self, name), name=name)
+        if not isinstance(self.gpu_telemetry_known, bool):
+            raise ValueError("gpu_telemetry_known must be a bool")
         for name in (
             "memory_used_bytes_peak", "swap_used_bytes_peak", "child_process_count_peak",
             "queue_depth_peak", "sample_count",
@@ -545,6 +548,8 @@ class ParallelismAutotuner:
             failures.append("swap_percent_peak_exceeded")
         if trial.gpu_memory_percent_peak > bounds.max_gpu_memory_percent:
             failures.append("gpu_memory_percent_peak_exceeded")
+        if not trial.gpu_telemetry_known:
+            failures.append("gpu_telemetry_unknown")
         if trial.memory_percent_peak > 100.0 or trial.swap_percent_peak > 100.0:
             failures.append("invalid_host_resource_percentage")
         if trial.child_process_count_peak > bounds.max_child_processes:
