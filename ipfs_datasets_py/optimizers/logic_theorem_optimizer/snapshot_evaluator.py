@@ -249,6 +249,173 @@ EvaluationResult = SnapshotEvaluationResult
 
 
 @dataclass(frozen=True, slots=True)
+class SnapshotShardEvidence:
+    """One version-tagged shard of production snapshot evidence.
+
+    Production evaluation is assembled from independent train, validation,
+    compiler, proof, and promotion shards.  Each shard carries the full version
+    tuple so aggregation cannot accidentally mix state, compiler, schema, or
+    holdout evidence across snapshot boundaries.
+    """
+
+    sequence: int
+    versions: SnapshotVersions
+    role: str
+    family: str = "all"
+    metrics: Mapping[str, Any] = field(default_factory=dict)
+    shard_id: str = ""
+    created_at: str = field(default_factory=_utc_now)
+
+    def __post_init__(self) -> None:
+        if int(self.sequence) < 0:
+            raise ValueError("sequence must be non-negative")
+        role = str(self.role or "").strip()
+        family = str(self.family or "all").strip() or "all"
+        if not role:
+            raise ValueError("role must be non-empty")
+        object.__setattr__(self, "role", role)
+        object.__setattr__(self, "family", family)
+        object.__setattr__(self, "metrics", _frozen_mapping(self.metrics))
+        if not self.shard_id:
+            safe_role = role.replace(":", "_")
+            safe_family = family.replace(":", "_")
+            object.__setattr__(
+                self,
+                "shard_id",
+                f"{self.sequence}:{self.versions.state_version}:{safe_role}:{safe_family}",
+            )
+
+    @property
+    def snapshot_id(self) -> str:
+        return f"{self.sequence}:{self.versions.state_version}"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "created_at": self.created_at,
+            "family": self.family,
+            "metrics": copy.deepcopy(dict(self.metrics)),
+            "role": self.role,
+            "sequence": self.sequence,
+            "shard_id": self.shard_id,
+            "snapshot_id": self.snapshot_id,
+            "versions": self.versions.to_dict(),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SnapshotShardAggregate:
+    """Version-safe aggregate assembled from matching shard evidence only."""
+
+    sequence: int
+    versions: SnapshotVersions
+    shards: tuple[SnapshotShardEvidence, ...]
+    required_roles: tuple[str, ...] = ()
+    required_families: tuple[str, ...] = ()
+    rejected_shards: tuple[ResultRejection, ...] = ()
+
+    @property
+    def snapshot_id(self) -> str:
+        return f"{self.sequence}:{self.versions.state_version}"
+
+    @property
+    def roles_present(self) -> tuple[str, ...]:
+        return tuple(sorted({shard.role for shard in self.shards}))
+
+    @property
+    def families_present(self) -> tuple[str, ...]:
+        return tuple(sorted({shard.family for shard in self.shards}))
+
+    @property
+    def missing_roles(self) -> tuple[str, ...]:
+        present = set(self.roles_present)
+        return tuple(role for role in self.required_roles if role not in present)
+
+    @property
+    def missing_families(self) -> tuple[str, ...]:
+        if not self.required_families:
+            return ()
+        present = {
+            shard.family
+            for shard in self.shards
+            if shard.family != "all" and shard.role in set(self.required_roles or self.roles_present)
+        }
+        return tuple(family for family in self.required_families if family not in present)
+
+    @property
+    def complete(self) -> bool:
+        return not self.missing_roles and not self.missing_families
+
+    def metrics_by_role(self) -> Dict[str, Dict[str, Any]]:
+        grouped: Dict[str, Dict[str, Any]] = {}
+        for shard in self.shards:
+            grouped.setdefault(shard.role, {})[shard.family] = copy.deepcopy(
+                dict(shard.metrics)
+            )
+        return grouped
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "complete": self.complete,
+            "families_present": list(self.families_present),
+            "metrics_by_role": self.metrics_by_role(),
+            "missing_families": list(self.missing_families),
+            "missing_roles": list(self.missing_roles),
+            "rejected_shard_count": len(self.rejected_shards),
+            "rejected_shards": [item.to_dict() for item in self.rejected_shards],
+            "required_families": list(self.required_families),
+            "required_roles": list(self.required_roles),
+            "roles_present": list(self.roles_present),
+            "sequence": self.sequence,
+            "shard_count": len(self.shards),
+            "shards": [shard.to_dict() for shard in self.shards],
+            "snapshot_id": self.snapshot_id,
+            "versions": self.versions.to_dict(),
+        }
+
+
+def aggregate_matching_snapshot_shards(
+    shards: Iterable[SnapshotShardEvidence],
+    expected_versions: SnapshotVersions,
+    *,
+    expected_sequence: int,
+    required_roles: Sequence[str] = (),
+    required_families: Sequence[str] = (),
+) -> SnapshotShardAggregate:
+    """Aggregate only shards matching the exact snapshot boundary.
+
+    Mismatched shards are returned as explicit rejections.  They never
+    contribute to role/family completeness or promotion metrics.
+    """
+
+    accepted: list[SnapshotShardEvidence] = []
+    rejected: list[ResultRejection] = []
+    for shard in shards:
+        mismatch_fields = shard.versions.mismatch_fields(expected_versions)
+        if shard.sequence != int(expected_sequence):
+            mismatch_fields = (*mismatch_fields, "sequence")
+        if mismatch_fields:
+            rejected.append(
+                ResultRejection(
+                    snapshot_id=shard.snapshot_id,
+                    reason="version_mismatch",
+                    mismatch_fields=tuple(mismatch_fields),
+                )
+            )
+            continue
+        accepted.append(shard)
+    return SnapshotShardAggregate(
+        sequence=int(expected_sequence),
+        versions=expected_versions,
+        shards=tuple(accepted),
+        required_roles=tuple(str(role) for role in required_roles if str(role)),
+        required_families=tuple(
+            str(family) for family in required_families if str(family)
+        ),
+        rejected_shards=tuple(rejected),
+    )
+
+
+@dataclass(frozen=True, slots=True)
 class SnapshotDrop:
     dropped_snapshot_id: str
     dropped_sequence: int
@@ -630,6 +797,7 @@ class SnapshotEvaluator:
         with self._condition:
             self._accepted.pop(snapshot_id, None)
             self._stats["promoted"] += 1
+            self._stats["latest_promoted_sequence"] = boundary.sequence
             self._condition.notify_all()
         return PromotionDecision(True, "promoted_at_snapshot_boundary", snapshot_id)
 
@@ -740,6 +908,37 @@ class SnapshotEvaluator:
                 if outstanding
                 else 0.0
             )
+            worker_alive = bool(self._worker and self._worker.is_alive())
+            queue_depth = len(self._pending)
+            outstanding_count = len(outstanding)
+            ready_result_count = len(self._results)
+            accepted_result_count = len(self._accepted)
+            health = {
+                "alive": worker_alive,
+                "backpressured": bool(
+                    outstanding
+                    and self.backpressure_reason(
+                        next_sequence=max(item.sequence for item in outstanding) + 1
+                    )
+                ),
+                "closed": self._closed,
+                "failed_evaluations": int(stats.get("failed", 0)),
+                "healthy": (worker_alive or self._closed) and not self._stop_requested,
+                "inflight": self._inflight is not None,
+                "oldest_outstanding_age_seconds": round(oldest_age, 6),
+                "outstanding_count": outstanding_count,
+                "queue_depth": queue_depth,
+                "ready_result_count": ready_result_count,
+            }
+            promotion_state = {
+                "accepted_result_count": accepted_result_count,
+                "complete": int(stats.get("promoted", 0)) > 0,
+                "latest_promoted_sequence": int(
+                    stats.get("latest_promoted_sequence", -1)
+                ),
+                "promoted_result_count": int(stats.get("promoted", 0)),
+                "ready_result_count": ready_result_count,
+            }
             return {
                 "accepted_results": int(stats.get("accepted", 0)),
                 "backpressure_timeouts": int(stats.get("backpressure_timeouts", 0)),
@@ -750,8 +949,10 @@ class SnapshotEvaluator:
                 "backpressure_waits": int(stats.get("backpressure_waits", 0)),
                 "closed": self._closed,
                 "completed_evaluations": int(stats.get("completed", 0)),
+                "dropped_work_count": len(self._drops),
                 "dropped_snapshot_count": len(self._drops),
                 "dropped_snapshots": [item.to_dict() for item in self._drops],
+                "evaluator_health": health,
                 "failed_evaluations": int(stats.get("failed", 0)),
                 "inflight_snapshot_id": (
                     self._inflight.snapshot_id if self._inflight is not None else ""
@@ -759,16 +960,19 @@ class SnapshotEvaluator:
                 "max_evidence_age_seconds": self.max_evidence_age_seconds,
                 "max_evidence_lag": self.max_evidence_lag,
                 "oldest_outstanding_age_seconds": round(oldest_age, 6),
-                "outstanding_count": len(outstanding),
-                "pending_count": len(self._pending),
+                "outstanding_count": outstanding_count,
+                "pending_count": queue_depth,
                 "promoted_results": int(stats.get("promoted", 0)),
                 "published_snapshots": int(stats.get("published", 0)),
+                "queue_depth": queue_depth,
                 "queue_capacity": self.queue_capacity,
-                "ready_result_count": len(self._results),
+                "ready_result_count": ready_result_count,
                 "rejected_result_count": len(self._rejections),
                 "rejected_results": [item.to_dict() for item in self._rejections],
                 "schema_version": SNAPSHOT_EVALUATION_SCHEMA_VERSION,
-                "worker_alive": bool(self._worker and self._worker.is_alive()),
+                "snapshot_complete_promotion_state": promotion_state,
+                "staleness_seconds": round(oldest_age, 6),
+                "worker_alive": worker_alive,
             }
 
 
@@ -791,7 +995,10 @@ __all__ = [
     "SnapshotEvaluationResult",
     "SnapshotEvaluator",
     "SnapshotEvaluatorClosed",
+    "SnapshotShardAggregate",
+    "SnapshotShardEvidence",
     "SnapshotVersions",
     "StateSnapshot",
+    "aggregate_matching_snapshot_shards",
     "canonical_holdout_version",
 ]
