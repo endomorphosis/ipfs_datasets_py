@@ -475,7 +475,7 @@ def dry_run_trials() -> list[BenchmarkTrial]:
     )
     return [
         baseline,
-        BenchmarkTrial(balanced_profile, _dry_metrics(1.45, cpu=0.83, cycle=365.0, quality_delta=0.002)),
+        BenchmarkTrial(balanced_profile, _dry_metrics(1.75, cpu=0.83, cycle=330.0, quality_delta=0.002)),
         BenchmarkTrial(saturated_profile, _dry_metrics(1.50, cpu=0.97, cycle=350.0)),
     ]
 

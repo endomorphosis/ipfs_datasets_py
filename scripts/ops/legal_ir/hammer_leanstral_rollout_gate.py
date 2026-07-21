@@ -159,6 +159,7 @@ class StagedRolloutConfig:
     require_managed_process_evidence: bool = True
     require_trusted_feedback: bool = True
     require_rollback_evidence: bool = True
+    require_promotion_lineage: bool = True
     require_representation_promotion_reports: bool = True
     require_successful_representation_promotion: bool = False
     require_complete_representation_evidence: bool = True
@@ -167,6 +168,9 @@ class StagedRolloutConfig:
     max_queue_lag_p95_seconds: float = 120.0
     max_queue_lag_regression: float = 0.0
     max_accepted_patches_per_hour_regression: float = 0.0
+    min_projection_p95_reduction: float = 0.40
+    min_task_to_accepted_patch_rate_improvement: float = 0.20
+    min_state_to_merged_patch_lag_reduction: float = 0.25
     required_families: tuple[str, ...] = LEGAL_IR_VIEW_FAMILIES
     required_guardrails: tuple[str, ...] = STAGED_HARD_GUARDRAILS
 
@@ -252,6 +256,7 @@ def staged_rollout_gate(
     rates: dict[str, float] = {}
     queue_lags: dict[str, float] = {}
     rollback: dict[str, dict[str, Any]] = {}
+    lineage: dict[str, dict[str, Any]] = {}
     previous_rate: float | None = None
     previous_queue_lag: float | None = None
 
@@ -293,6 +298,12 @@ def staged_rollout_gate(
         failures.extend(_family_guardrail_failures(snapshot, stage_label, cfg))
         failures.extend(_trusted_feedback_failures(snapshot, stage_label, cfg))
         failures.extend(_representation_snapshot_failures(snapshot, stage_label, cfg))
+        lineage_value, lineage_failures = _promotion_lineage_evidence(
+            snapshot, stage_label, cfg
+        )
+        failures.extend(lineage_failures)
+        if lineage_value is not None:
+            lineage[stage_label] = lineage_value
 
         queue_lag = _stage_queue_lag(snapshot)
         if queue_lag is None:
@@ -342,6 +353,14 @@ def staged_rollout_gate(
         if rollback_value is not None:
             rollback[stage_label] = rollback_value
 
+        if index == expected_count - 1:
+            threshold_metrics, threshold_failures = _promotion_threshold_failures(
+                snapshot, stage_label, cfg
+            )
+            failures.extend(threshold_failures)
+            if threshold_metrics:
+                metrics["promotion_thresholds"] = threshold_metrics
+
     next_stage = (
         STAGED_ROLLOUT_STAGES[len(items)].name
         if len(items) < expected_count
@@ -355,6 +374,7 @@ def staged_rollout_gate(
             "accepted_patches_per_wall_clock_hour": rates,
             "queue_lag_p95_seconds": queue_lags,
             "rollback_evidence": rollback,
+            "promotion_lineage": lineage,
             "trusted_feedback_reached_autoencoder": not any(
                 item.startswith("trusted_feedback_") for item in failures
             ) and bool(items),
@@ -670,6 +690,267 @@ def _validated_rollback_evidence(
         "baseline_revision": revision,
         "restorable": True,
     }, []
+
+
+def _promotion_lineage_evidence(
+    snapshot: Mapping[str, Any],
+    stage: str,
+    cfg: StagedRolloutConfig,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    value = snapshot.get("promotion_lineage", snapshot.get("lineage"))
+    if not isinstance(value, Mapping):
+        return None, [f"promotion_lineage_missing:{stage}"] if cfg.require_promotion_lineage else []
+
+    rollout_id = str(value.get("rollout_id") or value.get("run_id") or "").strip()
+    lineage_stage = str(value.get("stage") or value.get("stage_name") or "").strip()
+    baseline_digest = str(
+        value.get("baseline_digest") or value.get("baseline_sha256") or ""
+    ).strip()
+    input_digest = str(
+        value.get("input_digest")
+        or value.get("summary_digest")
+        or value.get("snapshot_input_digest")
+        or ""
+    ).strip()
+    output_digest = str(
+        value.get("output_digest")
+        or value.get("snapshot_digest")
+        or value.get("evidence_digest")
+        or ""
+    ).strip()
+    revision = str(
+        value.get("promotion_revision")
+        or value.get("compiler_commit")
+        or value.get("git_revision")
+        or value.get("revision")
+        or ""
+    ).strip()
+    produced_by = str(
+        value.get("produced_by")
+        or value.get("producer")
+        or value.get("tool")
+        or ""
+    ).strip()
+
+    failures: list[str] = []
+    if not rollout_id:
+        failures.append(f"promotion_lineage_incomplete:{stage}:rollout_id")
+    if lineage_stage and lineage_stage != stage:
+        failures.append(
+            f"promotion_lineage_stage_mismatch:{stage}:{lineage_stage}"
+        )
+    if not lineage_stage:
+        failures.append(f"promotion_lineage_incomplete:{stage}:stage")
+    for name, digest in (
+        ("baseline_digest", baseline_digest),
+        ("input_digest", input_digest),
+        ("output_digest", output_digest),
+    ):
+        if not _valid_digest_ref(digest):
+            failures.append(f"promotion_lineage_incomplete:{stage}:{name}")
+    if not revision:
+        failures.append(f"promotion_lineage_incomplete:{stage}:promotion_revision")
+    if not produced_by:
+        failures.append(f"promotion_lineage_incomplete:{stage}:produced_by")
+    if failures:
+        return None, failures
+    return {
+        "rollout_id": rollout_id,
+        "stage": stage,
+        "baseline_digest": _normalized_digest_ref(baseline_digest),
+        "input_digest": _normalized_digest_ref(input_digest),
+        "output_digest": _normalized_digest_ref(output_digest),
+        "promotion_revision": revision,
+        "produced_by": produced_by,
+    }, []
+
+
+def _promotion_threshold_failures(
+    snapshot: Mapping[str, Any],
+    stage: str,
+    cfg: StagedRolloutConfig,
+) -> tuple[dict[str, Any], list[str]]:
+    container = snapshot.get("promotion_thresholds")
+    if not isinstance(container, Mapping):
+        container = snapshot.get("promotion_efficacy")
+    if not isinstance(container, Mapping):
+        container = snapshot
+
+    checks = (
+        (
+            "projection_p95_reduction",
+            "projection_p95_seconds",
+            (
+                "projection_p95_reduction",
+                "projection_p95_relative_reduction",
+                "projection_p95_relative_improvement",
+                "projection_p95_seconds_relative_reduction",
+            ),
+            (
+                "baseline_projection_p95_seconds",
+                "cold_projection_p95_seconds",
+                "before_projection_p95_seconds",
+                "control_projection_p95_seconds",
+            ),
+            (
+                "candidate_projection_p95_seconds",
+                "warm_projection_p95_seconds",
+                "promoted_projection_p95_seconds",
+                "after_projection_p95_seconds",
+                "projection_p95_seconds",
+            ),
+            cfg.min_projection_p95_reduction,
+            "reduction",
+        ),
+        (
+            "task_to_accepted_patch_rate_improvement",
+            "task_to_accepted_patch_rate",
+            (
+                "task_to_accepted_patch_rate_improvement",
+                "task_to_accepted_patch_rate_relative_improvement",
+            ),
+            (
+                "baseline_task_to_accepted_patch_rate",
+                "before_task_to_accepted_patch_rate",
+                "control_task_to_accepted_patch_rate",
+            ),
+            (
+                "candidate_task_to_accepted_patch_rate",
+                "promoted_task_to_accepted_patch_rate",
+                "after_task_to_accepted_patch_rate",
+            ),
+            cfg.min_task_to_accepted_patch_rate_improvement,
+            "improvement",
+        ),
+        (
+            "state_to_merged_patch_lag_reduction",
+            "state_to_merged_patch_lag_seconds",
+            (
+                "state_to_merged_patch_lag_reduction",
+                "state_to_merged_patch_lag_relative_reduction",
+                "state_to_merged_patch_lag_relative_improvement",
+                "state_to_accepted_patch_lag_reduction",
+                "state_to_accepted_patch_lag_relative_reduction",
+                "state_to_accepted_patch_lag_relative_improvement",
+            ),
+            (
+                "baseline_state_to_merged_patch_lag_seconds",
+                "before_state_to_merged_patch_lag_seconds",
+                "control_state_to_merged_patch_lag_seconds",
+            ),
+            (
+                "candidate_state_to_merged_patch_lag_seconds",
+                "promoted_state_to_merged_patch_lag_seconds",
+                "after_state_to_merged_patch_lag_seconds",
+                "state_to_merged_patch_lag_seconds",
+            ),
+            cfg.min_state_to_merged_patch_lag_reduction,
+            "reduction",
+        ),
+    )
+
+    metrics: dict[str, Any] = {}
+    failures: list[str] = []
+    for (
+        metric_name,
+        pair_name,
+        observed_keys,
+        before_keys,
+        after_keys,
+        minimum,
+        direction,
+    ) in checks:
+        before, after = _paired_threshold_values(
+            container,
+            pair_name,
+            before_keys,
+            after_keys,
+        )
+        if before is not None and after is not None:
+            if before <= 0.0 or after < 0.0:
+                failures.append(
+                    f"{metric_name}_invalid:{stage}:{before:g}->{after:g}"
+                )
+                continue
+            observed = (after - before) / before
+            if direction == "reduction":
+                observed = (before - after) / before
+            metrics[metric_name] = {
+                "baseline": before,
+                "candidate": after,
+                "observed": round(observed, 12),
+                "required": minimum,
+            }
+        else:
+            observed = _threshold_observed_value(container, pair_name, observed_keys)
+            if observed is None:
+                failures.append(f"{metric_name}_missing:{stage}")
+                continue
+            metrics[metric_name] = {
+                "observed": round(observed, 12),
+                "required": minimum,
+            }
+        if observed + 1.0e-12 < minimum:
+            failures.append(
+                f"{metric_name}_below_threshold:{stage}:"
+                f"{observed:g}<{minimum:g}"
+            )
+    return metrics, failures
+
+
+def _paired_threshold_values(
+    container: Mapping[str, Any],
+    pair_name: str,
+    before_keys: Sequence[str],
+    after_keys: Sequence[str],
+) -> tuple[float | None, float | None]:
+    paired = container.get(pair_name)
+    if isinstance(paired, Mapping):
+        before = _first_finite(
+            paired,
+            ("baseline", "before", "control", "fixed_baseline", "cold"),
+        )
+        after = _first_finite(
+            paired,
+            ("candidate", "after", "promoted", "selected", "warm"),
+        )
+        if before is not None or after is not None:
+            return before, after
+    return _first_finite(container, before_keys), _first_finite(container, after_keys)
+
+
+def _threshold_observed_value(
+    container: Mapping[str, Any],
+    pair_name: str,
+    observed_keys: Sequence[str],
+) -> float | None:
+    paired = container.get(pair_name)
+    if isinstance(paired, Mapping):
+        observed = _first_finite(
+            paired,
+            (
+                "observed",
+                "relative_improvement",
+                "relative_reduction",
+                "improvement",
+                "reduction",
+            ),
+        )
+        if observed is not None:
+            return observed
+    return _first_finite(container, observed_keys)
+
+
+def _normalized_digest_ref(value: str) -> str:
+    text = str(value or "").strip().lower()
+    return text if text.startswith("sha256:") else f"sha256:{text}"
+
+
+def _valid_digest_ref(value: str) -> bool:
+    text = str(value or "").strip().lower()
+    if text.startswith("sha256:"):
+        text = text[7:]
+    return _valid_sha256(text)
 
 
 def write_rollout_evidence(path: str | Path, payload: Mapping[str, Any]) -> None:
@@ -1838,6 +2119,13 @@ def build_parser() -> argparse.ArgumentParser:
     staged_parser.add_argument(
         "--max-accepted-patches-per-hour-regression", type=float, default=0.0
     )
+    staged_parser.add_argument("--min-projection-p95-reduction", type=float, default=0.40)
+    staged_parser.add_argument(
+        "--min-task-to-accepted-patch-rate-improvement", type=float, default=0.20
+    )
+    staged_parser.add_argument(
+        "--min-state-to-merged-patch-lag-reduction", type=float, default=0.25
+    )
     staged_parser.add_argument(
         "--verify-rollback-artifacts",
         action=argparse.BooleanOptionalAction,
@@ -1908,6 +2196,13 @@ def _cmd_staged_gate(args: argparse.Namespace) -> int:
                 max_queue_lag_regression=args.max_queue_lag_regression,
                 max_accepted_patches_per_hour_regression=(
                     args.max_accepted_patches_per_hour_regression
+                ),
+                min_projection_p95_reduction=args.min_projection_p95_reduction,
+                min_task_to_accepted_patch_rate_improvement=(
+                    args.min_task_to_accepted_patch_rate_improvement
+                ),
+                min_state_to_merged_patch_lag_reduction=(
+                    args.min_state_to_merged_patch_lag_reduction
                 ),
             ),
         )

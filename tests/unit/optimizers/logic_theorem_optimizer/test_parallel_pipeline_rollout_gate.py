@@ -81,6 +81,29 @@ def _clean_snapshots() -> list[dict[str, Any]]:
                     "source_digest": digest,
                     "autoencoder_source_digest": digest,
                 },
+                "promotion_lineage": {
+                    "rollout_id": "unit-rollout",
+                    "stage": stage,
+                    "baseline_digest": f"sha256:{index:064x}",
+                    "input_digest": f"sha256:{index + 10:064x}",
+                    "output_digest": f"sha256:{index + 20:064x}",
+                    "promotion_revision": f"revision-{index}",
+                    "produced_by": "unit-test",
+                },
+                "promotion_thresholds": {
+                    "projection_p95_seconds": {
+                        "baseline": 100.0,
+                        "candidate": 55.0,
+                    },
+                    "task_to_accepted_patch_rate": {
+                        "baseline": 0.50,
+                        "candidate": 0.62,
+                    },
+                    "state_to_merged_patch_lag_seconds": {
+                        "baseline": 1000.0,
+                        "candidate": 700.0,
+                    },
+                },
                 # Every stage sustains twelve accepted patches per measured hour.
                 "accepted_patches": 2 * index * duration_seconds // 600 // index,
                 "wall_clock_seconds": duration_seconds,
@@ -294,6 +317,52 @@ def test_observed_queue_lag_regression_is_a_hard_failure() -> None:
         result,
         "queue_lag_regression:twenty_four_hour_production",
     )
+
+
+@pytest.mark.parametrize(
+    ("mutate", "failure_prefix"),
+    [
+        (
+            lambda snapshots: snapshots[1].pop("promotion_lineage"),
+            "promotion_lineage_missing:one_hour_hparam",
+        ),
+        (
+            lambda snapshots: snapshots[2]["promotion_lineage"].update(
+                output_digest="sha256:not-a-digest"
+            ),
+            "promotion_lineage_incomplete:eight_hour_canary:output_digest",
+        ),
+        (
+            lambda snapshots: snapshots[3]["promotion_thresholds"][
+                "projection_p95_seconds"
+            ].update(candidate=61.0),
+            "projection_p95_reduction_below_threshold:twenty_four_hour_production",
+        ),
+        (
+            lambda snapshots: snapshots[3]["promotion_thresholds"][
+                "task_to_accepted_patch_rate"
+            ].update(candidate=0.59),
+            "task_to_accepted_patch_rate_improvement_below_threshold:twenty_four_hour_production",
+        ),
+        (
+            lambda snapshots: snapshots[3]["promotion_thresholds"][
+                "state_to_merged_patch_lag_seconds"
+            ].update(candidate=760.0),
+            "state_to_merged_patch_lag_reduction_below_threshold:twenty_four_hour_production",
+        ),
+    ],
+)
+def test_staged_rollout_requires_promotion_lineage_and_final_improvement_thresholds(
+    mutate: Callable[[list[dict[str, Any]]], object],
+    failure_prefix: str,
+) -> None:
+    snapshots = _clean_snapshots()
+    mutate(snapshots)
+
+    result = staged_rollout_gate(snapshots)
+
+    assert result.accepted is False
+    assert _failure_has(result, failure_prefix)
 
 
 @pytest.mark.parametrize(

@@ -436,6 +436,143 @@ def finite(value):
         return None
     return result if math.isfinite(result) else None
 
+def input_digest_for(paths):
+    hasher = hashlib.sha256()
+    for path in paths:
+        try:
+            data = path.read_bytes()
+        except OSError:
+            continue
+        hasher.update(str(path).encode("utf-8"))
+        hasher.update(b"\0")
+        hasher.update(data)
+        hasher.update(b"\0")
+    return hasher.hexdigest()
+
+def first_number_from(container, keys):
+    if not isinstance(container, dict):
+        return None
+    for key in keys:
+        value = finite(container.get(key))
+        if value is not None:
+            return value
+    return None
+
+def threshold_pair(container, name, before_keys, after_keys, observed_keys=()):
+    if not isinstance(container, dict):
+        return None
+    existing = container.get(name)
+    if isinstance(existing, dict):
+        return existing
+    before = first_number_from(container, before_keys)
+    after = first_number_from(container, after_keys)
+    if before is not None and after is not None:
+        return {"baseline": before, "candidate": after}
+    observed = first_number_from(container, observed_keys)
+    if observed is not None:
+        return {"observed": observed}
+    return None
+
+def collect_promotion_thresholds(primary, summaries):
+    explicit = first_mapping(
+        primary.get("promotion_thresholds"),
+        primary.get("promotion_efficacy"),
+        primary.get("rollout_promotion_thresholds"),
+    )
+    containers = [explicit, primary]
+    for summary in summaries:
+        containers.extend(
+            [
+                summary.get("promotion_thresholds"),
+                summary.get("promotion_efficacy"),
+                summary.get("rollout_decision_summary"),
+                summary.get("projection_profiler"),
+                summary.get("projection_profile"),
+                summary.get("latest_projection_profile"),
+                summary,
+            ]
+        )
+    containers = [item for item in containers if isinstance(item, dict)]
+    result = {}
+    for container in containers:
+        projection = threshold_pair(
+            container,
+            "projection_p95_seconds",
+            (
+                "baseline_projection_p95_seconds",
+                "baseline_warm_p95_projection_seconds",
+                "cold_projection_p95_seconds",
+                "before_projection_p95_seconds",
+                "control_projection_p95_seconds",
+            ),
+            (
+                "candidate_projection_p95_seconds",
+                "optimized_warm_p95_projection_seconds",
+                "warm_projection_p95_seconds",
+                "promoted_projection_p95_seconds",
+                "after_projection_p95_seconds",
+            ),
+            (
+                "projection_p95_reduction",
+                "projection_p95_relative_reduction",
+                "projection_p95_relative_improvement",
+            ),
+        )
+        if projection is not None and "projection_p95_seconds" not in result:
+            result["projection_p95_seconds"] = projection
+        task_rate = threshold_pair(
+            container,
+            "task_to_accepted_patch_rate",
+            (
+                "baseline_task_to_accepted_patch_rate",
+                "before_task_to_accepted_patch_rate",
+                "control_task_to_accepted_patch_rate",
+            ),
+            (
+                "candidate_task_to_accepted_patch_rate",
+                "promoted_task_to_accepted_patch_rate",
+                "after_task_to_accepted_patch_rate",
+            ),
+            (
+                "task_to_accepted_patch_rate_improvement",
+                "task_to_accepted_patch_rate_relative_improvement",
+            ),
+        )
+        if task_rate is not None and "task_to_accepted_patch_rate" not in result:
+            result["task_to_accepted_patch_rate"] = task_rate
+        state_lag = threshold_pair(
+            container,
+            "state_to_merged_patch_lag_seconds",
+            (
+                "baseline_state_to_merged_patch_lag_seconds",
+                "before_state_to_merged_patch_lag_seconds",
+                "control_state_to_merged_patch_lag_seconds",
+                "baseline_state_to_accepted_patch_lag",
+                "before_state_to_accepted_patch_lag",
+                "control_state_to_accepted_patch_lag",
+            ),
+            (
+                "candidate_state_to_merged_patch_lag_seconds",
+                "promoted_state_to_merged_patch_lag_seconds",
+                "after_state_to_merged_patch_lag_seconds",
+                "candidate_state_to_accepted_patch_lag",
+                "promoted_state_to_accepted_patch_lag",
+                "after_state_to_accepted_patch_lag",
+            ),
+            (
+                "state_to_merged_patch_lag_reduction",
+                "state_to_merged_patch_lag_relative_reduction",
+                "state_to_merged_patch_lag_relative_improvement",
+                "state_to_accepted_patch_lag_relative_reduction",
+                "state_to_accepted_patch_lag_relative_improvement",
+            ),
+        )
+        if state_lag is not None and "state_to_merged_patch_lag_seconds" not in result:
+            result["state_to_merged_patch_lag_seconds"] = state_lag
+        if len(result) == 3:
+            break
+    return result
+
 def paired_regression(values, higher=(), lower=()):
     if not isinstance(values, dict):
         return None
@@ -460,6 +597,7 @@ def paired_regression(values, higher=(), lower=()):
 
 previous_queue = None
 previous_provenance_coverage = None
+previous_output_digest = None
 if manifest_path.exists():
     try:
         previous_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -471,6 +609,11 @@ if manifest_path.exists():
             previous_provenance_coverage = finite(
                 previous_snapshots[-1].get("legal_ir_contract_coverage")
             )
+            previous_lineage = previous_snapshots[-1].get("promotion_lineage")
+            if isinstance(previous_lineage, dict):
+                previous_output_digest = str(
+                    previous_lineage.get("output_digest") or ""
+                ).removeprefix("sha256:")
     except (OSError, json.JSONDecodeError, AttributeError):
         previous_queue = None
 
@@ -638,6 +781,11 @@ summary_success = (
     and snapshot_complete
 )
 normalized_status = "succeeded" if summary_success else "incomplete"
+input_digest = input_digest_for(summary_paths)
+baseline_digest = previous_output_digest or hashlib.sha256(
+    f"{rollout_id}:baseline:{revision}".encode("utf-8")
+).hexdigest()
+promotion_thresholds = collect_promotion_thresholds(primary, summaries)
 snapshot = dict(primary)
 snapshot.update(
     {
@@ -673,6 +821,16 @@ snapshot.update(
             "baseline_revision": revision,
             "restorable": True,
         },
+        "promotion_lineage": {
+            "rollout_id": rollout_id,
+            "stage": stage,
+            "baseline_digest": f"sha256:{baseline_digest}",
+            "input_digest": f"sha256:{input_digest}",
+            "output_digest": f"sha256:{artifact_digest}",
+            "promotion_revision": revision,
+            "produced_by": "scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh",
+        },
+        "promotion_thresholds": promotion_thresholds,
         "source_summaries": [str(path) for path in summary_paths],
     }
 )
