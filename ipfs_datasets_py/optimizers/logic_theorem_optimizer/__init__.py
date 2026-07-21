@@ -156,6 +156,20 @@ __all__ = [
     'evaluate_legal_ir_semantic_equivalence',
     'semantic_equivalence_from_metrics',
     'semantic_equivalence_promotion_gate',
+    'ConstrainedLegalIRDecode',
+    'LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION',
+    'LEGAL_IR_GRAMMAR_FAMILIES',
+    'LegalIRGrammarDecoder',
+    'LegalIRGrammarRejection',
+    'LegalIRGrammarValidation',
+    'LegalIRProductionSpec',
+    'canonical_legal_ir_grammar_family',
+    'constrained_legal_ir_decode',
+    'default_legal_ir_production_specs',
+    'grammar_metrics_from_validation',
+    'grammar_rejection_reason_names',
+    'infer_legal_ir_grammar_family',
+    'validate_legal_ir_candidate',
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
@@ -993,6 +1007,27 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_semantic_metrics, name)
+    elif name in (
+        'ConstrainedLegalIRDecode',
+        'LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION',
+        'LEGAL_IR_GRAMMAR_FAMILIES',
+        'LegalIRGrammarDecoder',
+        'LegalIRGrammarRejection',
+        'LegalIRGrammarValidation',
+        'LegalIRProductionSpec',
+        'canonical_legal_ir_grammar_family',
+        'constrained_legal_ir_decode',
+        'default_legal_ir_production_specs',
+        'grammar_metrics_from_validation',
+        'grammar_rejection_reason_names',
+        'infer_legal_ir_grammar_family',
+        'validate_legal_ir_candidate',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_grammar_decoder,
+        )
+
+        return getattr(legal_ir_grammar_decoder, name)
     elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
             ModalProverRouteResult,
