@@ -785,6 +785,72 @@ class IncrementalValidationReport:
         )
 
     @property
+    def transient_failure_check_ids(self) -> tuple[str, ...]:
+        return tuple(
+            check_id
+            for check_id in self.plan.required_check_ids
+            if check_id in self.results and self.results[check_id].transient_failures > 0
+        )
+
+    @property
+    def transient_rescued_check_ids(self) -> tuple[str, ...]:
+        return tuple(
+            check_id
+            for check_id in self.transient_failure_check_ids
+            if self.results[check_id].accepted
+        )
+
+    @property
+    def transient_unresolved_check_ids(self) -> tuple[str, ...]:
+        return tuple(
+            check_id
+            for check_id in self.transient_failure_check_ids
+            if not self.results[check_id].accepted
+        )
+
+    @property
+    def semantic_failure_check_ids(self) -> tuple[str, ...]:
+        non_semantic_errors = {
+            "required_check_not_registered",
+            "registered_check_identity_mismatch",
+        }
+        values: list[str] = []
+        for check_id in self.failed_check_ids:
+            result = self.results[check_id]
+            if result.transient_failures > 0:
+                continue
+            if result.error in non_semantic_errors or result.error.startswith("executor_error:"):
+                continue
+            values.append(check_id)
+        return tuple(values)
+
+    @property
+    def semantic_statistics_update_allowed(self) -> bool:
+        return not self.transient_unresolved_check_ids and not (
+            set(self.failed_check_ids) - set(self.semantic_failure_check_ids)
+        )
+
+    @property
+    def semantic_statistics_delta(self) -> Mapping[str, Any]:
+        return MappingProxyType(
+            {
+                "accepted": self.accepted,
+                "accepted_check_count": sum(
+                    1 for check_id in self.plan.required_check_ids
+                    if check_id in self.results and self.results[check_id].accepted
+                ),
+                "deterministic_semantic_failure_count": len(self.semantic_failure_check_ids),
+                "poison_semantic_statistics": False,
+                "semantic_failure_check_ids": list(self.semantic_failure_check_ids),
+                "transient_rescued_check_count": len(self.transient_rescued_check_ids),
+                "transient_rescued_check_ids": list(self.transient_rescued_check_ids),
+                "transient_unresolved_check_count": len(self.transient_unresolved_check_ids),
+                "transient_unresolved_check_ids": list(self.transient_unresolved_check_ids),
+                "update_allowed": self.semantic_statistics_update_allowed,
+            }
+        )
+
+    @property
     def promotion_gates_complete(self) -> bool:
         if not self.plan.boundary.requires_complete_promotion_gates:
             return True
@@ -811,6 +877,11 @@ class IncrementalValidationReport:
             "promotion_gates_complete": self.promotion_gates_complete,
             "results": {key: result.to_dict() for key, result in self.results.items()},
             "schema_version": self.schema_version,
+            "semantic_statistics_delta": _plain(self.semantic_statistics_delta),
+            "semantic_statistics_update_allowed": self.semantic_statistics_update_allowed,
+            "transient_failure_check_ids": list(self.transient_failure_check_ids),
+            "transient_rescued_check_ids": list(self.transient_rescued_check_ids),
+            "transient_unresolved_check_ids": list(self.transient_unresolved_check_ids),
         }
         if include_report_id:
             value["report_id"] = self.report_id

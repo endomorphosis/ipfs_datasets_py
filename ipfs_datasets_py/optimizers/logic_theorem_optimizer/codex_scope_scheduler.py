@@ -312,6 +312,9 @@ class CodexScopeTask:
     explicit_paths: tuple[str, ...] = ()
     symbols: tuple[str, ...] = ()
     validation_commands: tuple[str, ...] = ()
+    readiness_verified: bool = True
+    readiness_evidence: tuple[str, ...] = ()
+    ready_blockers: tuple[str, ...] = ()
     evidence: Mapping[str, Any] = field(default_factory=dict, compare=False)
 
     def __post_init__(self) -> None:
@@ -328,6 +331,9 @@ class CodexScopeTask:
         object.__setattr__(self, "explicit_paths", _paths(self.explicit_paths))
         object.__setattr__(self, "symbols", _identifiers(self.symbols))
         object.__setattr__(self, "validation_commands", _identifiers(self.validation_commands))
+        object.__setattr__(self, "readiness_verified", bool(self.readiness_verified))
+        object.__setattr__(self, "readiness_evidence", _identifiers(self.readiness_evidence))
+        object.__setattr__(self, "ready_blockers", _identifiers(self.ready_blockers))
         object.__setattr__(self, "evidence", MappingProxyType(dict(_json_safe(self.evidence))))
 
     @classmethod
@@ -378,6 +384,40 @@ class CodexScopeTask:
             "sample_ids": data.get("sample_ids") or (),
             "target_component": metadata.get("target_component"),
         }
+        status = str(
+            data.get("status") or metadata.get("status") or data.get("queue_status") or ""
+        ).strip().lower()
+        explicit_ready = (
+            data.get("readiness_verified")
+            if "readiness_verified" in data
+            else data.get("verified_ready")
+            if "verified_ready" in data
+            else metadata.get("readiness_verified")
+            if "readiness_verified" in metadata
+            else metadata.get("verified_ready")
+            if "verified_ready" in metadata
+            else None
+        )
+        blocked_by = _identifiers(
+            data.get("ready_blockers")
+            or data.get("blockers")
+            or metadata.get("ready_blockers")
+            or metadata.get("blockers")
+        )
+        readiness_evidence = _identifiers(
+            data.get("readiness_evidence")
+            or data.get("ready_evidence")
+            or metadata.get("readiness_evidence")
+            or metadata.get("ready_evidence")
+            or data.get("depends_on_satisfied_by")
+            or metadata.get("depends_on_satisfied_by")
+        )
+        if explicit_ready is None:
+            ready = status not in {"blocked", "waiting", "held", "failed", "done", "completed"}
+        else:
+            ready = bool(explicit_ready)
+        if blocked_by:
+            ready = False
         return cls(
             task_id=str(task_id or ""),
             scope=str(scope or ""),
@@ -390,6 +430,9 @@ class CodexScopeTask:
             validation_commands=_identifiers(
                 data.get("validation_commands") or metadata.get("validation_commands")
             ),
+            readiness_verified=ready,
+            readiness_evidence=readiness_evidence,
+            ready_blockers=blocked_by,
             evidence=evidence,
         )
 
@@ -435,6 +478,8 @@ class ScopeEvidenceBundle:
     write_set: PredictedWriteSet
     priority: float
     validation_commands: tuple[str, ...] = ()
+    readiness_verified: bool = True
+    ready_blockers: tuple[str, ...] = ()
     schema_version: str = CODEX_SCOPE_BUNDLE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -445,6 +490,16 @@ class ScopeEvidenceBundle:
             raise ValueError("correlated evidence cannot cross ownership scopes")
         object.__setattr__(self, "scope", scope)
         object.__setattr__(self, "validation_commands", _identifiers(self.validation_commands))
+        blockers = tuple(
+            blocker for task in self.tasks for blocker in task.ready_blockers
+        )
+        object.__setattr__(self, "ready_blockers", _identifiers((*self.ready_blockers, *blockers)))
+        object.__setattr__(
+            self,
+            "readiness_verified",
+            bool(self.readiness_verified)
+            and all(task.readiness_verified and not task.ready_blockers for task in self.tasks),
+        )
 
     @property
     def task_ids(self) -> tuple[str, ...]:
@@ -458,6 +513,8 @@ class ScopeEvidenceBundle:
             "schema_version": self.schema_version,
             "scope": self.scope,
             "task_ids": list(self.task_ids),
+            "readiness_verified": self.readiness_verified,
+            "ready_blockers": list(self.ready_blockers),
             "validation_commands": list(self.validation_commands),
             "write_set": self.write_set.to_dict(),
         }
@@ -586,6 +643,426 @@ class SchedulerOutcome:
     apply_conflict: bool = False
     memory_pressure: bool = False
     transient_failure: bool = False
+
+
+def _finite_non_negative(name: str, value: float) -> float:
+    value = float(value)
+    if not math.isfinite(value) or value < 0.0:
+        raise ValueError(f"{name} must be finite and non-negative")
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class CodexServiceRates:
+    """Measured downstream service rates used to size Codex generation.
+
+    ``generation_patches_per_hour_per_worker`` is the expected accepted-candidate
+    production rate from one Codex worker before validation and merge.  The
+    validation and merge rates are aggregate capacities for the shared isolated
+    validation pool and serialized main-apply path.
+    """
+
+    generation_patches_per_hour_per_worker: float = 1.0
+    validation_patches_per_hour: float = 4.0
+    merge_patches_per_hour: float = 2.0
+    validation_utilization_target: float = 0.80
+    merge_utilization_target: float = 0.80
+
+    def __post_init__(self) -> None:
+        for name in (
+            "generation_patches_per_hour_per_worker",
+            "validation_patches_per_hour",
+            "merge_patches_per_hour",
+        ):
+            object.__setattr__(self, name, _finite_non_negative(name, getattr(self, name)))
+        for name in ("validation_utilization_target", "merge_utilization_target"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value) or value <= 0.0 or value > 1.0:
+                raise ValueError(f"{name} must be finite and in (0, 1]")
+            object.__setattr__(self, name, value)
+
+    @classmethod
+    def from_mapping(cls, value: Optional[Mapping[str, Any]]) -> "CodexServiceRates":
+        data = dict(value or {})
+        return cls(
+            generation_patches_per_hour_per_worker=float(
+                data.get(
+                    "generation_patches_per_hour_per_worker",
+                    data.get("generation_service_rate_per_hour", data.get("generation_rate", 1.0)),
+                )
+                or 0.0
+            ),
+            validation_patches_per_hour=float(
+                data.get(
+                    "validation_patches_per_hour",
+                    data.get("validation_service_rate_per_hour", data.get("validation_rate", 4.0)),
+                )
+                or 0.0
+            ),
+            merge_patches_per_hour=float(
+                data.get(
+                    "merge_patches_per_hour",
+                    data.get("merge_service_rate_per_hour", data.get("merge_rate", 2.0)),
+                )
+                or 0.0
+            ),
+            validation_utilization_target=float(
+                data.get("validation_utilization_target", data.get("validation_utilization", 0.80))
+                or 0.0
+            ),
+            merge_utilization_target=float(
+                data.get("merge_utilization_target", data.get("merge_utilization", 0.80)) or 0.0
+            ),
+        )
+
+    def worker_capacity(self, requested_workers: int) -> tuple[int, tuple[str, ...]]:
+        requested = max(0, min(MAX_INITIAL_CODEX_WORKERS, int(requested_workers)))
+        if requested == 0:
+            return 0, ("no_workers_requested",)
+        reasons: list[str] = []
+        generation_rate = self.generation_patches_per_hour_per_worker
+        if generation_rate <= 0.0:
+            return 0, ("generation_service_rate_unavailable",)
+
+        validation_capacity = math.floor(
+            (self.validation_patches_per_hour * self.validation_utilization_target)
+            / generation_rate
+        )
+        merge_capacity = math.floor(
+            (self.merge_patches_per_hour * self.merge_utilization_target) / generation_rate
+        )
+        if validation_capacity < requested:
+            reasons.append("validation_service_rate_bottleneck")
+        if merge_capacity < requested:
+            reasons.append("merge_service_rate_bottleneck")
+        effective = min(requested, int(validation_capacity), int(merge_capacity))
+        if effective <= 0:
+            reasons.append("downstream_service_rate_saturated")
+            effective = 0
+        if not reasons:
+            reasons.append("service_rates_healthy")
+        return effective, tuple(dict.fromkeys(reasons))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "generation_patches_per_hour_per_worker": self.generation_patches_per_hour_per_worker,
+            "merge_patches_per_hour": self.merge_patches_per_hour,
+            "merge_utilization_target": self.merge_utilization_target,
+            "validation_patches_per_hour": self.validation_patches_per_hour,
+            "validation_utilization_target": self.validation_utilization_target,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CodexFlowControlSignals:
+    """Queue and conflict pressure that can pause new Codex generation."""
+
+    ready_depth: int = 0
+    validation_backlog: int = 0
+    merge_backlog: int = 0
+    predicted_conflict_count: int = 0
+    conflict_growth_rate: float = 0.0
+    validation_backlog_pause_threshold: int = 8
+    merge_backlog_pause_threshold: int = 4
+    conflict_growth_pause_threshold: float = 0.25
+
+    def __post_init__(self) -> None:
+        for name in (
+            "ready_depth",
+            "validation_backlog",
+            "merge_backlog",
+            "predicted_conflict_count",
+            "validation_backlog_pause_threshold",
+            "merge_backlog_pause_threshold",
+        ):
+            object.__setattr__(self, name, max(0, int(getattr(self, name))))
+        for name in ("conflict_growth_rate", "conflict_growth_pause_threshold"):
+            object.__setattr__(self, name, _finite_non_negative(name, getattr(self, name)))
+
+    @classmethod
+    def from_mapping(cls, value: Optional[Mapping[str, Any]]) -> "CodexFlowControlSignals":
+        data = dict(value or {})
+        return cls(
+            ready_depth=int(data.get("ready_depth", data.get("verified_ready_depth", 0)) or 0),
+            validation_backlog=int(
+                data.get("validation_backlog", data.get("isolated_validation_backlog", 0)) or 0
+            ),
+            merge_backlog=int(data.get("merge_backlog", data.get("main_apply_backlog", 0)) or 0),
+            predicted_conflict_count=int(
+                data.get("predicted_conflict_count", data.get("conflict_count", 0)) or 0
+            ),
+            conflict_growth_rate=float(
+                data.get("conflict_growth_rate", data.get("apply_conflict_growth_rate", 0.0))
+                or 0.0
+            ),
+            validation_backlog_pause_threshold=int(
+                data.get("validation_backlog_pause_threshold", 8) or 8
+            ),
+            merge_backlog_pause_threshold=int(data.get("merge_backlog_pause_threshold", 4) or 4),
+            conflict_growth_pause_threshold=float(
+                data.get("conflict_growth_pause_threshold", 0.25) or 0.25
+            ),
+        )
+
+    def pause_reasons(self) -> tuple[str, ...]:
+        reasons: list[str] = []
+        if self.ready_depth <= 0:
+            reasons.append("no_verified_ready_work")
+        if self.validation_backlog >= self.validation_backlog_pause_threshold:
+            reasons.append("validation_backlog")
+        if self.merge_backlog >= self.merge_backlog_pause_threshold:
+            reasons.append("merge_backlog")
+        if self.conflict_growth_rate >= self.conflict_growth_pause_threshold:
+            reasons.append("conflict_growth")
+        return tuple(reasons)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "conflict_growth_pause_threshold": self.conflict_growth_pause_threshold,
+            "conflict_growth_rate": self.conflict_growth_rate,
+            "merge_backlog": self.merge_backlog,
+            "merge_backlog_pause_threshold": self.merge_backlog_pause_threshold,
+            "predicted_conflict_count": self.predicted_conflict_count,
+            "ready_depth": self.ready_depth,
+            "validation_backlog": self.validation_backlog,
+            "validation_backlog_pause_threshold": self.validation_backlog_pause_threshold,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CodexFlowControlDecision:
+    """Admission decision for the generation/validation/merge pipeline."""
+
+    requested_workers: int
+    effective_workers: int
+    paused: bool
+    reasons: tuple[str, ...]
+    signals: CodexFlowControlSignals
+    service_rates: CodexServiceRates
+    primary_throughput_metric: str = "accepted_next_cycle_confirmed_patches_per_hour"
+    accepted_next_cycle_confirmed_patches_per_hour: float = 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted_next_cycle_confirmed_patches_per_hour": round(
+                self.accepted_next_cycle_confirmed_patches_per_hour, 9
+            ),
+            "effective_workers": self.effective_workers,
+            "paused": self.paused,
+            "primary_throughput_metric": self.primary_throughput_metric,
+            "reasons": list(self.reasons),
+            "requested_workers": self.requested_workers,
+            "service_rates": self.service_rates.to_dict(),
+            "signals": self.signals.to_dict(),
+        }
+
+
+@dataclass(slots=True)
+class CodexPatchThroughputLedger:
+    """Windowed counters where next-cycle confirmation is the only reward metric."""
+
+    started_at_monotonic: float = field(default_factory=time.monotonic)
+    claimed_tasks: int = 0
+    generated_diffs: int = 0
+    validation_accepted: int = 0
+    merged_patches: int = 0
+    next_cycle_confirmed_patches: int = 0
+
+    def record(
+        self,
+        *,
+        claimed_tasks: int = 0,
+        generated_diffs: int = 0,
+        validation_accepted: int = 0,
+        merged_patches: int = 0,
+        next_cycle_confirmed_patches: int = 0,
+    ) -> None:
+        for name, value in (
+            ("claimed_tasks", claimed_tasks),
+            ("generated_diffs", generated_diffs),
+            ("validation_accepted", validation_accepted),
+            ("merged_patches", merged_patches),
+            ("next_cycle_confirmed_patches", next_cycle_confirmed_patches),
+        ):
+            setattr(self, name, int(getattr(self, name)) + max(0, int(value)))
+
+    def accepted_next_cycle_confirmed_patches_per_hour(
+        self, *, wall_clock_seconds: Optional[float] = None
+    ) -> float:
+        elapsed = (
+            _finite_non_negative("wall_clock_seconds", wall_clock_seconds)
+            if wall_clock_seconds is not None
+            else max(0.0, time.monotonic() - self.started_at_monotonic)
+        )
+        if elapsed <= 0.0:
+            return 0.0
+        return float(self.next_cycle_confirmed_patches) / (elapsed / 3600.0)
+
+    def to_dict(self, *, wall_clock_seconds: Optional[float] = None) -> dict[str, Any]:
+        primary = self.accepted_next_cycle_confirmed_patches_per_hour(
+            wall_clock_seconds=wall_clock_seconds
+        )
+        return {
+            "accepted_next_cycle_confirmed_patches_per_hour": round(primary, 9),
+            "claimed_tasks": self.claimed_tasks,
+            "generated_diffs": self.generated_diffs,
+            "merged_patches": self.merged_patches,
+            "next_cycle_confirmed_patches": self.next_cycle_confirmed_patches,
+            "primary_throughput_metric": "accepted_next_cycle_confirmed_patches_per_hour",
+            "validation_accepted": self.validation_accepted,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CodexFlowControlledSchedule:
+    """Combined flow-control and conflict-aware scope schedule."""
+
+    scope_plan: ScopeSchedulePlan
+    flow_decision: CodexFlowControlDecision
+
+    @property
+    def assignments(self) -> tuple[ScopeAssignment, ...]:
+        return self.scope_plan.assignments
+
+    @property
+    def deferred(self) -> Mapping[str, str]:
+        return self.scope_plan.deferred
+
+    @property
+    def worker_count(self) -> int:
+        return len(self.assignments)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "assignments": [assignment.to_dict() for assignment in self.assignments],
+            "deferred": dict(self.deferred),
+            "flow_decision": self.flow_decision.to_dict(),
+            "scope_plan": self.scope_plan.to_dict(),
+            "worker_count": self.worker_count,
+        }
+
+
+class CodexValidationMergeFlowController:
+    """Balance Codex generation against validation and serialized merge capacity."""
+
+    def __init__(
+        self,
+        *,
+        max_workers: int = MAX_INITIAL_CODEX_WORKERS,
+        bundler: Optional[ScopeEvidenceBundler] = None,
+        throughput_ledger: Optional[CodexPatchThroughputLedger] = None,
+    ) -> None:
+        if not 1 <= int(max_workers) <= MAX_INITIAL_CODEX_WORKERS:
+            raise ValueError("flow controller max_workers must be between one and four")
+        self.max_workers = int(max_workers)
+        self.bundler = bundler or ScopeEvidenceBundler()
+        self.throughput_ledger = throughput_ledger or CodexPatchThroughputLedger()
+
+    def decide(
+        self,
+        *,
+        signals: CodexFlowControlSignals | Mapping[str, Any] | None = None,
+        service_rates: CodexServiceRates | Mapping[str, Any] | None = None,
+        requested_workers: Optional[int] = None,
+        wall_clock_seconds: Optional[float] = None,
+    ) -> CodexFlowControlDecision:
+        flow_signals = (
+            signals
+            if isinstance(signals, CodexFlowControlSignals)
+            else CodexFlowControlSignals.from_mapping(signals)
+        )
+        rates = (
+            service_rates
+            if isinstance(service_rates, CodexServiceRates)
+            else CodexServiceRates.from_mapping(service_rates)
+        )
+        requested = min(
+            self.max_workers,
+            MAX_INITIAL_CODEX_WORKERS,
+            max(0, int(requested_workers if requested_workers is not None else self.max_workers)),
+        )
+        pause_reasons = list(flow_signals.pause_reasons())
+        service_capacity, service_reasons = rates.worker_capacity(requested)
+        ready_capacity = min(service_capacity, flow_signals.ready_depth)
+        capacity_reasons: list[str] = []
+        if flow_signals.ready_depth < service_capacity:
+            capacity_reasons.append("ready_depth_bottleneck")
+        reasons = [*pause_reasons, *capacity_reasons, *service_reasons]
+        paused = bool(pause_reasons) or ready_capacity <= 0
+        if ready_capacity <= 0 and "downstream_service_rate_saturated" not in reasons:
+            reasons.append("generation_paused")
+        effective = 0 if paused else ready_capacity
+        return CodexFlowControlDecision(
+            requested_workers=requested,
+            effective_workers=effective,
+            paused=paused,
+            reasons=tuple(dict.fromkeys(reasons)),
+            signals=flow_signals,
+            service_rates=rates,
+            accepted_next_cycle_confirmed_patches_per_hour=(
+                self.throughput_ledger.accepted_next_cycle_confirmed_patches_per_hour(
+                    wall_clock_seconds=wall_clock_seconds
+                )
+            ),
+        )
+
+    def schedule(
+        self,
+        tasks: Iterable[CodexScopeTask | Mapping[str, Any] | Any],
+        *,
+        active_write_sets: Iterable[PredictedWriteSet | Mapping[str, Any] | Sequence[str]] = (),
+        signals: CodexFlowControlSignals | Mapping[str, Any] | None = None,
+        service_rates: CodexServiceRates | Mapping[str, Any] | None = None,
+        worker_prefix: str = "codex",
+        wall_clock_seconds: Optional[float] = None,
+    ) -> CodexFlowControlledSchedule:
+        normalized = [CodexScopeTask.from_value(task) for task in tasks]
+        inferred_ready_depth = sum(
+            1 for task in normalized if task.readiness_verified and not task.ready_blockers
+        )
+        if isinstance(signals, CodexFlowControlSignals):
+            flow_signals = signals
+            if flow_signals.ready_depth == 0 and inferred_ready_depth:
+                flow_signals = replace(flow_signals, ready_depth=inferred_ready_depth)
+        else:
+            raw_signals = dict(signals or {})
+            raw_signals.setdefault("ready_depth", inferred_ready_depth)
+            flow_signals = CodexFlowControlSignals.from_mapping(raw_signals)
+        decision = self.decide(
+            signals=flow_signals,
+            service_rates=service_rates,
+            requested_workers=self.max_workers,
+            wall_clock_seconds=wall_clock_seconds,
+        )
+        if decision.effective_workers <= 0:
+            bundles = self.bundler.bundle(normalized)
+            reason = decision.reasons[0] if decision.reasons else "generation_paused"
+            deferred = {
+                bundle.bundle_id: (
+                    "readiness_not_verified" if not bundle.readiness_verified else reason
+                )
+                for bundle in bundles
+            }
+            worker_decision = WorkerDecision(
+                requested_workers=decision.requested_workers,
+                effective_workers=0,
+                reasons=decision.reasons,
+                signals=SchedulerSignals(),
+            )
+            return CodexFlowControlledSchedule(
+                ScopeSchedulePlan((), deferred, worker_decision),
+                decision,
+            )
+        scheduler = CodexScopeScheduler(
+            max_workers=max(1, decision.effective_workers),
+            bundler=self.bundler,
+        )
+        plan = scheduler.schedule(
+            normalized,
+            active_write_sets=active_write_sets,
+            worker_prefix=worker_prefix,
+        )
+        return CodexFlowControlledSchedule(plan, decision)
 
 
 class AdaptiveWorkerController:
@@ -777,6 +1254,9 @@ class CodexScopeScheduler:
         selected_scopes: set[str] = set()
         deferred: dict[str, str] = {}
         for bundle in bundles:
+            if not bundle.readiness_verified:
+                deferred[bundle.bundle_id] = "readiness_not_verified"
+                continue
             if len(selected) >= limit:
                 deferred[bundle.bundle_id] = "worker_limit"
                 continue
@@ -1071,10 +1551,16 @@ __all__ = [
     "AdaptiveWorkerController",
     "AdaptiveCodexWorkerController",
     "CodexOwnershipScope",
+    "CodexFlowControlledSchedule",
+    "CodexFlowControlDecision",
+    "CodexFlowControlSignals",
+    "CodexPatchThroughputLedger",
+    "CodexServiceRates",
     "CodexScopeAssignment",
     "CodexScopeScheduler",
     "CodexScopeTask",
     "CodexTask",
+    "CodexValidationMergeFlowController",
     "ConflictAwareMergeSerializer",
     "ConflictAwareCodexScheduler",
     "IsolatedValidationExecutor",
