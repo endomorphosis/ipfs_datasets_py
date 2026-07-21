@@ -45,12 +45,65 @@ def _promotion() -> dict[str, object]:
         "promotion_allowed": True,
         "promotion_id": "lir-guidance-promotion-test",
         "block_reasons": [],
+        "compiler_commit": "compiler-commit-test",
+        "learned_export_id": "lir-feature-export-test",
+        "source_export_id": "lir-feature-export-test",
+        "learned_export_sha256": "a" * 64,
+        "learned_export": {
+            "export_id": "lir-feature-export-test",
+            "model_state_id": "state-test",
+            "sample_count": 8,
+            "feature_count": 2,
+            "sample_memory_included": False,
+            "schema_version": "legal-ir-stable-autoencoder-feature-export-v1",
+            "sha256": "a" * 64,
+        },
+        "proof_receipt_ids": ["proof-receipt-test"],
+        "proof_receipts": [
+            {
+                "receipt_id": "proof-receipt-test",
+                "trusted": True,
+                "checker": "lean-kernel",
+            }
+        ],
+        "causal_evidence": {
+            "fixed_canary_evidence_id": "lir-canary-evidence-test",
+            "learned_path_responsive": True,
+            "metric_lineage_complete": True,
+        },
+        "source_copy_checks": {
+            "guardrails_passed": True,
+            "sample_memory_included": False,
+            "unsafe_feature_count": 0,
+            "source_copy_regressions": [],
+        },
+        "activation_state": {
+            "activation_allowed": True,
+            "active": True,
+            "active_promotion_id": "lir-guidance-promotion-test",
+            "state": "activated",
+        },
+        "fixed_canary_binding": {
+            "canary_id": "fixed-canary-test",
+            "evidence_id": "lir-canary-evidence-test",
+            "fixed_sample_set": True,
+            "guardrails_passed": True,
+        },
+        "rollback_metadata": {
+            "activation_allowed": True,
+            "activation_key": "lir-guidance-promotion-test",
+            "canary_evidence_id": "lir-canary-evidence-test",
+            "rollback_id": "lir-guidance-rollback-test",
+            "schema_version": "legal-ir-learned-guidance-rollback-v1",
+            "source_export_id": "lir-feature-export-test",
+        },
         "guidance_records": [
             {"view_family": family, "target_component": f"test.{family}"}
             for family in LEGAL_IR_VIEW_FAMILIES
         ],
         "canary_evidence": {
             "canary_id": "fixed-canary-test",
+            "evidence_id": "lir-canary-evidence-test",
             "fixed_sample_set": True,
             "guardrails_passed": True,
             "missing_guardrail_evidence": [],

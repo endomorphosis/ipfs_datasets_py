@@ -116,6 +116,12 @@ HAMMER_ALLOWED_STATUSES = frozenset(
 
 
 STAGED_ROLLOUT_SCHEMA_VERSION = "legal-ir-hammer-leanstral-rollout-v1"
+LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION = (
+    "legal-ir-learned-guidance-promotion-v1"
+)
+LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION = (
+    "legal-ir-stable-autoencoder-feature-export-v1"
+)
 
 
 @dataclass(frozen=True)
@@ -153,6 +159,9 @@ class StagedRolloutConfig:
     require_managed_process_evidence: bool = True
     require_trusted_feedback: bool = True
     require_rollback_evidence: bool = True
+    require_representation_promotion_reports: bool = True
+    require_successful_representation_promotion: bool = False
+    require_complete_representation_evidence: bool = True
     verify_rollback_artifacts: bool = False
     duration_tolerance_seconds: float = 0.0
     max_queue_lag_p95_seconds: float = 120.0
@@ -283,6 +292,7 @@ def staged_rollout_gate(
         failures.extend(_managed_process_failures(snapshot, stage_label, cfg))
         failures.extend(_family_guardrail_failures(snapshot, stage_label, cfg))
         failures.extend(_trusted_feedback_failures(snapshot, stage_label, cfg))
+        failures.extend(_representation_snapshot_failures(snapshot, stage_label, cfg))
 
         queue_lag = _stage_queue_lag(snapshot)
         if queue_lag is None:
@@ -567,6 +577,57 @@ def _trusted_feedback_failures(
     return []
 
 
+def _representation_snapshot_failures(
+    snapshot: Mapping[str, Any],
+    stage: str,
+    cfg: StagedRolloutConfig,
+) -> list[str]:
+    if not cfg.require_representation_promotion_reports:
+        return []
+    if not _representation_snapshot_is_eligible(snapshot):
+        return []
+    metrics: dict[str, Any] = {}
+    warnings: list[str] = []
+    failures = _representation_promotion_failures(
+        snapshot,
+        RolloutGateConfig(
+            require_representation_promotion=True,
+            require_successful_representation_promotion=(
+                cfg.require_successful_representation_promotion
+            ),
+            require_complete_representation_evidence=(
+                cfg.require_complete_representation_evidence
+            ),
+        ),
+        metrics,
+        warnings,
+    )
+    return [f"{failure}:{stage}" for failure in failures]
+
+
+def _representation_snapshot_is_eligible(snapshot: Mapping[str, Any]) -> bool:
+    if snapshot.get("representation_promotion_eligible") is True:
+        return True
+    if snapshot.get("eligible_legal_ir_learned_guidance_snapshot") is True:
+        return True
+    if _representation_promotion_report(snapshot)[1] is not None:
+        return True
+    for key in (
+        "latest_legal_ir_stable_feature_export",
+        "legal_ir_stable_feature_export",
+        "stable_legal_ir_feature_export",
+        "learned_export",
+        "source_export_id",
+        "learned_export_id",
+    ):
+        value = snapshot.get(key)
+        if isinstance(value, Mapping) and value:
+            return True
+        if isinstance(value, str) and value.strip():
+            return True
+    return False
+
+
 def _stage_queue_lag(snapshot: Mapping[str, Any]) -> float | None:
     value = snapshot.get("queue_lag")
     if isinstance(value, Mapping):
@@ -794,11 +855,37 @@ def _representation_promotion_failures(
     block_reasons = _string_sequence(report.get("block_reasons"))
     if block_reasons:
         metrics["representation_promotion_block_reasons"] = block_reasons
-
-    require_success = (
-        cfg.require_representation_promotion
-        or cfg.require_successful_representation_promotion
-    )
+    require_success = cfg.require_successful_representation_promotion
+    schema = str(report.get("schema_version") or "").strip()
+    metrics["representation_promotion_schema_version"] = schema
+    if (
+        (promoted or require_success or cfg.require_complete_representation_evidence)
+        and schema != LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION
+    ):
+        failures.append(
+            "representation_promotion_schema_mismatch:"
+            f"{schema or 'missing'}"
+        )
+    report_outcome = str(
+        report.get("report_outcome")
+        or report.get("promotion_report_outcome")
+        or report.get("outcome")
+        or ""
+    ).strip()
+    if report_outcome:
+        metrics["representation_promotion_report_outcome"] = report_outcome
+    if report_outcome and report_outcome not in {
+        "success",
+        "rejection",
+        "no_candidate",
+    }:
+        failures.append(f"representation_promotion_report_outcome_invalid:{report_outcome}")
+    if promoted and report_outcome and report_outcome != "success":
+        failures.append(
+            f"representation_promotion_outcome_mismatch:{report_outcome}:promoted"
+        )
+    if not promoted and report_outcome == "success":
+        failures.append("representation_promotion_outcome_mismatch:success:not_promoted")
     if require_success and not promoted:
         suffix = ",".join(block_reasons) if block_reasons else "unspecified"
         failures.append(f"representation_promotion_blocked:{suffix}")
@@ -807,7 +894,10 @@ def _representation_promotion_failures(
 
     raw_evidence = report.get("canary_evidence")
     evidence = raw_evidence if isinstance(raw_evidence, Mapping) else None
-    evidence_required = promoted or require_success
+    evidence_required = promoted or require_success or (
+        cfg.require_representation_promotion
+        and cfg.require_complete_representation_evidence
+    )
     if evidence is None:
         if evidence_required:
             failures.append("missing_representation_fixed_canary_evidence")
@@ -823,6 +913,19 @@ def _representation_promotion_failures(
         failures.append("representation_fixed_canary_identity_missing")
     if evidence_required and not fixed_sample_set:
         failures.append("representation_fixed_canary_sample_set_invalid")
+    if cfg.require_complete_representation_evidence or promoted or require_success:
+        failures.extend(
+            _representation_report_binding_failures(
+                summary,
+                report,
+                evidence,
+                promoted=promoted,
+                require_complete=cfg.require_complete_representation_evidence
+                or promoted
+                or require_success,
+                metrics=metrics,
+            )
+        )
 
     raw_family_metrics = evidence.get("family_metrics")
     family_metrics = (
@@ -950,6 +1053,275 @@ def _representation_promotion_report(
         if schema == "legal-ir-learned-guidance-promotion-v1":
             return path, value
     return "", None
+
+
+def _representation_report_binding_failures(
+    summary: Mapping[str, Any],
+    report: Mapping[str, Any],
+    evidence: Mapping[str, Any],
+    *,
+    promoted: bool,
+    require_complete: bool,
+    metrics: dict[str, Any],
+) -> list[str]:
+    failures: list[str] = []
+    promotion_id = str(report.get("promotion_id") or "").strip()
+    source_export_id = str(
+        report.get("source_export_id") or report.get("learned_export_id") or ""
+    ).strip()
+    compiler_commit = str(report.get("compiler_commit") or "").strip()
+    canary_id = str(evidence.get("canary_id") or "").strip()
+    evidence_id = str(evidence.get("evidence_id") or "").strip()
+    metrics["representation_promotion_id"] = promotion_id
+    metrics["representation_source_export_id"] = source_export_id
+    metrics["representation_compiler_commit"] = compiler_commit
+
+    if require_complete and not promotion_id:
+        failures.append("representation_promotion_id_missing")
+
+    learned_export = report.get("learned_export")
+    if not isinstance(learned_export, Mapping):
+        failures.append("representation_learned_export_binding_missing")
+        learned_export = {}
+    else:
+        export_id = str(learned_export.get("export_id") or "").strip()
+        export_schema = str(learned_export.get("schema_version") or "").strip()
+        export_sha = str(
+            learned_export.get("sha256")
+            or learned_export.get("export_sha256")
+            or report.get("learned_export_sha256")
+            or ""
+        ).strip().lower()
+        metrics["representation_learned_export_sha256"] = export_sha
+        if require_complete and not export_id:
+            failures.append("representation_learned_export_id_missing")
+        if source_export_id and export_id and source_export_id != export_id:
+            failures.append(
+                "representation_learned_export_id_mismatch:"
+                f"{source_export_id}!={export_id}"
+            )
+        if require_complete and export_schema != LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION:
+            failures.append(
+                "representation_learned_export_schema_mismatch:"
+                f"{export_schema or 'missing'}"
+            )
+        if require_complete and not _valid_sha256(export_sha):
+            failures.append("representation_learned_export_sha256_missing")
+        if learned_export.get("sample_memory_included") is True:
+            failures.append("representation_learned_export_contains_sample_memory")
+
+    expected_export_id = _first_summary_string(
+        summary,
+        (
+            "source_export_id",
+            "learned_export_id",
+            "latest_legal_ir_stable_feature_export.export_id",
+            "legal_ir_stable_feature_export.export_id",
+            "stable_legal_ir_feature_export.export_id",
+            "learned_export.export_id",
+        ),
+    )
+    if expected_export_id and source_export_id and expected_export_id != source_export_id:
+        failures.append(
+            "representation_promotion_report_stale:source_export_id:"
+            f"{source_export_id}!={expected_export_id}"
+        )
+
+    if require_complete and not compiler_commit:
+        failures.append("representation_compiler_commit_missing")
+    expected_compiler_commit = _first_summary_string(
+        summary,
+        (
+            "compiler_commit",
+            "expected_compiler_commit",
+            "selected_compiler_commit",
+            "snapshot_selection.selected_compiler_commit",
+            "snapshot_selection.compiler_commit",
+            "context.compiler_commit",
+            "latest_compiler_snapshot.compiler_commit",
+        ),
+    )
+    if (
+        expected_compiler_commit
+        and compiler_commit
+        and expected_compiler_commit != compiler_commit
+    ):
+        failures.append(
+            "representation_promotion_report_stale:compiler_commit:"
+            f"{compiler_commit}!={expected_compiler_commit}"
+        )
+
+    fixed_binding = report.get("fixed_canary_binding")
+    if not isinstance(fixed_binding, Mapping):
+        failures.append("representation_fixed_canary_binding_missing")
+    else:
+        bound_canary = str(fixed_binding.get("canary_id") or "").strip()
+        bound_evidence = str(fixed_binding.get("evidence_id") or "").strip()
+        if canary_id and bound_canary and bound_canary != canary_id:
+            failures.append(
+                "representation_fixed_canary_binding_mismatch:"
+                f"{bound_canary}!={canary_id}"
+            )
+        if evidence_id and bound_evidence and bound_evidence != evidence_id:
+            failures.append(
+                "representation_fixed_canary_evidence_mismatch:"
+                f"{bound_evidence}!={evidence_id}"
+            )
+        if require_complete and not bound_canary:
+            failures.append("representation_fixed_canary_binding_id_missing")
+    expected_canary_id = _first_summary_string(
+        summary,
+        (
+            "fixed_canary_id",
+            "validation_canary_id",
+            "frozen_canary.canary_id",
+            "latest_legal_ir_view_family_validation.canary_id",
+            "latest_legal_ir_stable_feature_export.fixed_canary_id",
+        ),
+    )
+    if expected_canary_id and canary_id and expected_canary_id != canary_id:
+        failures.append(
+            "representation_promotion_report_stale:fixed_canary:"
+            f"{canary_id}!={expected_canary_id}"
+        )
+
+    proof_receipts = report.get("proof_receipts")
+    if not isinstance(proof_receipts, Sequence) or isinstance(
+        proof_receipts, (str, bytes, bytearray)
+    ):
+        failures.append("representation_proof_receipts_missing")
+        proof_receipts = ()
+    else:
+        metrics["representation_proof_receipt_count"] = len(proof_receipts)
+        if promoted and not proof_receipts:
+            failures.append("representation_proof_receipts_missing")
+        for index, receipt in enumerate(proof_receipts):
+            if not isinstance(receipt, Mapping):
+                failures.append(f"representation_proof_receipt_invalid:index_{index}")
+                continue
+            receipt_id = str(receipt.get("receipt_id") or receipt.get("id") or "").strip()
+            if require_complete and not receipt_id:
+                failures.append(
+                    f"representation_proof_receipt_id_missing:index_{index}"
+                )
+            if promoted and receipt.get("trusted") is False:
+                failures.append(f"representation_proof_receipt_untrusted:{receipt_id or index}")
+
+    causal = report.get("causal_evidence")
+    if not isinstance(causal, Mapping) or not causal:
+        failures.append("representation_causal_evidence_missing")
+    else:
+        if require_complete and causal.get("fixed_canary_evidence_id") not in {
+            None,
+            "",
+            evidence_id,
+        }:
+            failures.append("representation_causal_evidence_canary_mismatch")
+        if require_complete and causal.get("metric_lineage_complete") is not True:
+            failures.append("representation_causal_metric_lineage_incomplete")
+        if promoted and causal.get("learned_path_responsive") is not True:
+            failures.append("representation_causal_learned_path_unproven")
+
+    source_copy = report.get("source_copy_checks")
+    if not isinstance(source_copy, Mapping) or not source_copy:
+        failures.append("representation_source_copy_checks_missing")
+    else:
+        if promoted and source_copy.get("guardrails_passed") is not True:
+            failures.append("representation_source_copy_checks_failed")
+        if source_copy.get("sample_memory_included") is True:
+            failures.append("representation_source_copy_sample_memory_present")
+        unsafe_count = _first_finite(
+            source_copy,
+            ("unsafe_feature_count", "forbidden_feature_marker_count"),
+        )
+        if unsafe_count is not None and unsafe_count > 0.0:
+            failures.append(
+                f"representation_source_copy_unsafe_features:{unsafe_count:g}"
+            )
+        regressions = _string_sequence(source_copy.get("source_copy_regressions"))
+        if promoted and regressions:
+            failures.append(
+                "representation_source_copy_declared_regression:"
+                + ",".join(regressions)
+            )
+
+    activation = report.get("activation_state")
+    if not isinstance(activation, Mapping) or not activation:
+        failures.append("representation_activation_state_missing")
+    else:
+        allowed = activation.get("activation_allowed")
+        if allowed is not None and bool(allowed) != promoted:
+            failures.append("representation_activation_state_mismatch")
+        active_id = str(activation.get("active_promotion_id") or "").strip()
+        if promoted and promotion_id and active_id and active_id != promotion_id:
+            failures.append(
+                "representation_activation_promotion_id_mismatch:"
+                f"{active_id}!={promotion_id}"
+            )
+        if promoted and not active_id:
+            failures.append("representation_activation_promotion_id_missing")
+
+    rollback = report.get("rollback_metadata")
+    if not isinstance(rollback, Mapping) or not rollback:
+        failures.append("representation_rollback_metadata_missing")
+    else:
+        if require_complete and not str(rollback.get("rollback_id") or "").strip():
+            failures.append("representation_rollback_id_missing")
+        activation_key = str(rollback.get("activation_key") or "").strip()
+        if promotion_id and activation_key and activation_key != promotion_id:
+            failures.append(
+                "representation_rollback_activation_key_mismatch:"
+                f"{activation_key}!={promotion_id}"
+            )
+        rollback_export = str(rollback.get("source_export_id") or "").strip()
+        if source_export_id and rollback_export and rollback_export != source_export_id:
+            failures.append(
+                "representation_rollback_source_export_mismatch:"
+                f"{rollback_export}!={source_export_id}"
+            )
+        rollback_canary = str(rollback.get("canary_evidence_id") or "").strip()
+        if evidence_id and rollback_canary and rollback_canary != evidence_id:
+            failures.append(
+                "representation_rollback_canary_evidence_mismatch:"
+                f"{rollback_canary}!={evidence_id}"
+            )
+
+    report_path = str(report.get("report_artifact_path") or "").strip()
+    expected_report_path = _first_summary_string(
+        summary,
+        (
+            "representation_promotion_report_path",
+            "latest_legal_ir_learned_guidance_promotion_path",
+            "promotion_report_path",
+            "promotion_artifact_path",
+        ),
+    )
+    if expected_report_path and report_path and expected_report_path != report_path:
+        failures.append(
+            "representation_promotion_report_path_mismatch:"
+            f"{report_path}!={expected_report_path}"
+        )
+    if expected_report_path and require_complete and not report_path:
+        failures.append("representation_promotion_report_path_missing")
+
+    snapshot_id = str(report.get("eligible_snapshot_id") or "").strip()
+    expected_snapshot_id = _first_summary_string(
+        summary,
+        (
+            "eligible_snapshot_id",
+            "snapshot_id",
+            "latest_published_snapshot.snapshot_id",
+            "latest_promoted_snapshot_evaluation.snapshot_id",
+        ),
+    )
+    if expected_snapshot_id and snapshot_id and expected_snapshot_id != snapshot_id:
+        failures.append(
+            "representation_promotion_report_stale:snapshot_id:"
+            f"{snapshot_id}!={expected_snapshot_id}"
+        )
+    if expected_snapshot_id and require_complete and not snapshot_id:
+        failures.append("representation_eligible_snapshot_id_missing")
+    return failures
 
 
 def _promotion_was_allowed(report: Mapping[str, Any]) -> bool:
@@ -1166,6 +1538,29 @@ def _productivity_value(value: Any) -> float | None:
         and (number := _finite_float(raw)) is not None
     ]
     return sum(values) if values else None
+
+
+def _first_summary_string(
+    payload: Mapping[str, Any], paths: Sequence[str]
+) -> str:
+    for path in paths:
+        current: Any = payload
+        for part in path.split("."):
+            if not isinstance(current, Mapping):
+                current = None
+                break
+            current = current.get(part)
+        if current is None:
+            continue
+        text = str(current).strip()
+        if text:
+            return text
+    return ""
+
+
+def _valid_sha256(value: str) -> bool:
+    text = str(value or "").strip().lower()
+    return len(text) == 64 and all(char in "0123456789abcdef" for char in text)
 
 
 def _first_finite(

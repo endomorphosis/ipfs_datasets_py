@@ -72,6 +72,17 @@ def _canary(*, copy: float = 0.0, symbolic: float = 1.0) -> dict:
     }
 
 
+def _proof_receipts() -> list[dict]:
+    return [
+        {
+            "receipt_id": "proof-receipt-fixed-canary",
+            "checker": "lean-kernel",
+            "trusted": True,
+            "translation_record_ids": ["translation-a"],
+        }
+    ]
+
+
 def test_stable_autoencoder_export_excludes_memory_and_source_features() -> None:
     state = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample-secret": [0.1, 0.2]},
@@ -111,6 +122,8 @@ def test_promotion_emits_deterministic_contract_guidance_and_rollback() -> None:
         baseline_canary_metrics=baseline,
         candidate_canary_metrics=candidate,
         fixed_canary_id="fixed-canary-2026-07",
+        compiler_commit="compiler-commit-test",
+        proof_receipts=_proof_receipts(),
         previous_promotion_id="lir-guidance-promotion-previous",
     )
     second = promote_learned_autoencoder_guidance(
@@ -118,10 +131,13 @@ def test_promotion_emits_deterministic_contract_guidance_and_rollback() -> None:
         baseline_canary_metrics=baseline,
         candidate_canary_metrics=candidate,
         fixed_canary_id="fixed-canary-2026-07",
+        compiler_commit="compiler-commit-test",
+        proof_receipts=_proof_receipts(),
         previous_promotion_id="lir-guidance-promotion-previous",
     )
 
     assert first.promoted is True
+    assert first.report_outcome == "success"
     assert first.promotion_id == second.promotion_id
     assert [record.guidance_id for record in first.records] == [
         record.guidance_id for record in second.records
@@ -144,6 +160,15 @@ def test_promotion_emits_deterministic_contract_guidance_and_rollback() -> None:
             "lir-guidance-promotion-previous"
         )
         assert payload["source"] == "stable_autoencoder_feature_promotion"
+    report = first.to_dict()
+    assert report["compiler_commit"] == "compiler-commit-test"
+    assert report["learned_export"]["export_id"] == "lir-feature-export-test"
+    assert len(report["learned_export_sha256"]) == 64
+    assert report["proof_receipt_ids"] == ["proof-receipt-fixed-canary"]
+    assert report["fixed_canary_binding"]["canary_id"] == "fixed-canary-2026-07"
+    assert report["causal_evidence"]["metric_lineage_complete"] is True
+    assert report["source_copy_checks"]["guardrails_passed"] is True
+    assert report["activation_state"]["state"] == "activated"
 
 
 @pytest.mark.parametrize(
@@ -163,9 +188,12 @@ def test_promotion_blocks_hard_guardrail_regressions(
         baseline_canary_metrics=_canary(copy=0.0, symbolic=1.0),
         candidate_canary_metrics=candidate,
         fixed_canary_id="fixed-canary-2026-07",
+        compiler_commit="compiler-commit-test",
+        proof_receipts=_proof_receipts(),
     )
 
     assert result.promoted is False
+    assert result.report_outcome == "rejection"
     assert result.records == ()
     assert result.candidate_record_count == 2
     assert reason in result.block_reasons
@@ -196,6 +224,8 @@ def test_promotion_requires_fixed_complete_canary_and_rejects_unsafe_features() 
         export,
         baseline_canary_metrics=baseline,
         candidate_canary_metrics=candidate,
+        compiler_commit="compiler-commit-test",
+        proof_receipts=_proof_receipts(),
     )
 
     assert result.promoted is False
@@ -203,6 +233,24 @@ def test_promotion_requires_fixed_complete_canary_and_rejects_unsafe_features() 
     assert "unsafe_or_unstable_features_present" in result.block_reasons
     assert "fixed_canary_identity_missing_or_mismatched" in result.block_reasons
     assert "fixed_canary_guardrail_evidence_incomplete" in result.block_reasons
+
+
+def test_promotion_report_blocks_activation_when_mandatory_bindings_are_absent() -> None:
+    result = promote_learned_autoencoder_guidance(
+        _stable_export(),
+        baseline_canary_metrics=_canary(),
+        candidate_canary_metrics=_canary(),
+        fixed_canary_id="fixed-canary-2026-07",
+    )
+
+    assert result.promoted is False
+    assert result.report_outcome == "rejection"
+    assert "compiler_commit_missing" in result.block_reasons
+    assert "proof_receipts_missing" in result.block_reasons
+    payload = result.to_dict()
+    assert payload["activation_state"]["activation_allowed"] is False
+    assert payload["learned_export"]["export_id"] == "lir-feature-export-test"
+    assert payload["source_copy_checks"]["guardrails_passed"] is True
 
 
 def test_fixed_canary_evidence_reports_directional_deltas() -> None:
