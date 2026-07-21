@@ -1332,7 +1332,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-064 Activate asynchronous immutable snapshot evaluation in production
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: evaluation-runtime
