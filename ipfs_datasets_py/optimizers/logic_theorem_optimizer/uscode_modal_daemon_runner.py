@@ -92,6 +92,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cac
     configuration_digest as legal_ir_evaluation_configuration_digest,
     sample_content_hash as legal_ir_evaluation_sample_hash,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_artifacts import (
+    LEGAL_IR_ARTIFACT_GRAPH_SCHEMA_VERSION,
+    legal_ir_evaluation_artifact_from_compilation,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
     LEGAL_IR_METRIC_LINEAGE_SCHEMA_VERSION,
     attach_metric_lineage,
@@ -2929,23 +2933,34 @@ def _legal_ir_evaluation_artifact(
         family: dict(result_losses)
         for family in _compiler_ir_result_view_families(result, compiler_guidance)
     }
-    return LegalIREvaluationArtifact(
+    artifact = legal_ir_evaluation_artifact_from_compilation(
         key=key,
-        compiler_artifact=_compiler_ir_metric_result_cache_payload(result),
-        embedding=tuple(
-            float(value)
-            for value in list(getattr(sample, "embedding_vector", ()) or ())
-        ),
-        metrics=result_losses,
-        per_view_metrics=view_metrics,
+        sample=sample,
+        compilation_result=result,
+        compiler_payload=_compiler_ir_metric_result_cache_payload(result),
+        compiler_guidance=compiler_guidance,
+        compilation_seconds=max(0.0, float(compilation_seconds)),
+        producer_namespace="compiler_ir_metric_sample",
         metadata={
+            "artifact_graph_schema_version": LEGAL_IR_ARTIFACT_GRAPH_SCHEMA_VERSION,
+            "consumers": (
+                "unguided",
+                "guided",
+                "train",
+                "validation",
+                "hammer",
+                "leanstral",
+                "promotion",
+            ),
             "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
             "sample_id_hash": hashlib.sha256(
                 str(getattr(sample, "sample_id", "") or "").encode("utf-8")
             ).hexdigest(),
         },
-        compilation_seconds=max(0.0, float(compilation_seconds)),
     )
+    if artifact.metrics == result_losses and artifact.per_view_metrics == view_metrics:
+        return artifact
+    return replace(artifact, metrics=result_losses, per_view_metrics=view_metrics)
 
 
 def compiler_ir_metric_block(
