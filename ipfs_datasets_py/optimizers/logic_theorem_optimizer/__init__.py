@@ -134,6 +134,13 @@ __all__ = [
     'TrustedFeedbackUpdateReport',
     'apply_trusted_feedback_weight_updates',
     'train_trusted_feedback',
+    'ProofFeedbackAblationConfig',
+    'ProofFeedbackAblationReport',
+    'ProofFeedbackAblationArmResult',
+    'run_proof_feedback_ablation',
+    'evaluate_proof_feedback_ablation',
+    'run_trusted_feedback_ablation',
+    'measure_trusted_feedback_causal_efficacy',
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
@@ -928,6 +935,20 @@ def __getattr__(name):
         )
 
         return getattr(trusted_feedback_trainer, name)
+    elif name in (
+        'ProofFeedbackAblationArmResult',
+        'ProofFeedbackAblationConfig',
+        'ProofFeedbackAblationReport',
+        'evaluate_proof_feedback_ablation',
+        'measure_trusted_feedback_causal_efficacy',
+        'run_proof_feedback_ablation',
+        'run_trusted_feedback_ablation',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            proof_feedback_ablation,
+        )
+
+        return getattr(proof_feedback_ablation, name)
     elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
             ModalProverRouteResult,
