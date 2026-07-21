@@ -125,6 +125,7 @@ nl_test_output_docs/
 *.jsonl
 !tests/fixtures/legal_ir/hammer_failure_replay.jsonl
 !tests/fixtures/legal_ir/source_copy_reward_hack_replay.jsonl
+!tests/fixtures/legal_ir/external_expert_benchmark.jsonl
 *.jsonld
 ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/
 ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets

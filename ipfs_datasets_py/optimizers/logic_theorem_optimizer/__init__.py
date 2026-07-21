@@ -156,6 +156,22 @@ __all__ = [
     'evaluate_legal_ir_semantic_equivalence',
     'semantic_equivalence_from_metrics',
     'semantic_equivalence_promotion_gate',
+    'EXTERNAL_BENCHMARK_HARD_GUARDRAIL',
+    'EXTERNAL_EVALUATION_OPERATION',
+    'LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION',
+    'LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION',
+    'DecompilerExpectation',
+    'ExternalBenchmarkCitation',
+    'ExternalBenchmarkPacketResult',
+    'ExternalBenchmarkReport',
+    'ExternalLegalExpertBenchmarkPacket',
+    'LegalIRExternalBenchmarkError',
+    'LegalIRExternalBenchmarkPolicyError',
+    'ProofObligationExpectation',
+    'evaluate_external_legal_expert_benchmark',
+    'external_benchmark_split_manifest',
+    'load_external_expert_benchmark_packets',
+    'require_external_benchmark_evaluation_only',
     'ConstrainedLegalIRDecode',
     'LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION',
     'LEGAL_IR_GRAMMAR_FAMILIES',
@@ -1026,6 +1042,29 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_semantic_metrics, name)
+    elif name in (
+        'EXTERNAL_BENCHMARK_HARD_GUARDRAIL',
+        'EXTERNAL_EVALUATION_OPERATION',
+        'LEGAL_IR_EXTERNAL_BENCHMARK_REPORT_SCHEMA_VERSION',
+        'LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION',
+        'DecompilerExpectation',
+        'ExternalBenchmarkCitation',
+        'ExternalBenchmarkPacketResult',
+        'ExternalBenchmarkReport',
+        'ExternalLegalExpertBenchmarkPacket',
+        'LegalIRExternalBenchmarkError',
+        'LegalIRExternalBenchmarkPolicyError',
+        'ProofObligationExpectation',
+        'evaluate_external_legal_expert_benchmark',
+        'external_benchmark_split_manifest',
+        'load_external_expert_benchmark_packets',
+        'require_external_benchmark_evaluation_only',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_external_benchmark,
+        )
+
+        return getattr(legal_ir_external_benchmark, name)
     elif name in (
         'ConstrainedLegalIRDecode',
         'LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION',
