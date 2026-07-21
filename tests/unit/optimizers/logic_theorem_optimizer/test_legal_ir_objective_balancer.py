@@ -20,6 +20,16 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_objective_bala
     ObjectiveWeightBounds,
     evaluate_constrained_legal_ir_objective,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import (
+    SEMANTIC_EQUIVALENCE_METRICS,
+    STRUCTURAL_EQUIVALENCE,
+)
+
+
+def _semantic_metrics(score: float = 1.0) -> dict[str, float]:
+    values = {metric: score for metric in SEMANTIC_EQUIVALENCE_METRICS}
+    values["proof_obligation_delta"] = 0.0 if score >= 1.0 else 1.0
+    return values
 
 
 def _family_metrics(
@@ -58,6 +68,7 @@ def _family_metrics(
         "source_copy_penalty": copy,
         "structural_text_reconstruction_loss": structural_loss,
         "symbolic_validity_success_rate": proof,
+        **_semantic_metrics(),
     }
 
 
@@ -260,3 +271,28 @@ def test_aliases_and_missing_required_families_fail_closed() -> None:
     )
     assert "temporal:soft_metric_evidence_missing" in report.block_reasons
     assert report.accepted is False
+
+
+def test_semantic_equivalence_is_hard_gate_when_ce_and_cosine_improve() -> None:
+    before = _packet(ce=0.80, compiler_ce=0.86, cosine=0.76, compiler_cosine=0.74)
+    after = _packet(
+        ce=0.30,
+        compiler_ce=0.32,
+        cosine=0.92,
+        compiler_cosine=0.91,
+    )
+    after["view_family_metrics"]["deontic"][STRUCTURAL_EQUIVALENCE] = 0.50
+
+    report = evaluate_constrained_legal_ir_objective(before, after)
+    deontic = report.family_results["deontic"]
+    payload = report.to_dict()
+
+    assert report.accepted is False
+    assert deontic.status == "semantic_equivalence_threshold_failed"
+    assert deontic.semantic_ce_cosine_disagreement is True
+    assert "deontic:semantic_equivalence_threshold_failed" in report.block_reasons
+    assert "deontic:ce_cosine_semantic_disagreement" in report.block_reasons
+    assert payload["semantic_equivalence_gate"]["hard_promotion_gate"] is True
+    assert payload["semantic_equivalence_gate"]["family_results"]["deontic"][
+        "disagreement"
+    ] is True

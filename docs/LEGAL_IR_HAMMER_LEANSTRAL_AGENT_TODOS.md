@@ -1467,8 +1467,8 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-073 Build leakage-resistant LegalIR corpus splits
 
-- Status: todo
-- Completion: 0
+- Status: completed
+- Completion: 100
 - Priority: P0
 - Track: evaluation-integrity
 - Depends on: PORTAL-LIR-HAMMER-054, PORTAL-LIR-HAMMER-072

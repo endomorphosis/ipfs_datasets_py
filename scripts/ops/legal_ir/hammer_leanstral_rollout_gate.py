@@ -13,6 +13,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits import (
+    REPRESENTATION_PROMOTION_OPERATION,
+    split_guard_blocks_operation,
+    split_guard_from_payload,
+)
+
 
 DEFAULT_HARD_GUARDRAIL_METRICS = (
     "compiler_ir_cosine",
@@ -1131,6 +1137,11 @@ def _representation_promotion_failures(
         return failures
 
     metrics["representation_promotion_report_path"] = report_path
+    split_guard = split_guard_from_payload(report)
+    if split_guard is not None:
+        metrics["representation_split_guard"] = split_guard.to_dict()
+    if split_guard_blocks_operation(report, REPRESENTATION_PROMOTION_OPERATION):
+        failures.append("representation_split_guard_blocked")
     promoted = _promotion_was_allowed(report)
     metrics["representation_promotion_allowed"] = promoted
     block_reasons = _string_sequence(report.get("block_reasons"))
