@@ -145,6 +145,25 @@ PROJECTION_DEADBAND_DEFAULT_HARD_GUARDRAILS = (
 )
 PROJECTION_PRESCREEN_MODES = frozenset({"off", "shadow", "enforce"})
 
+LEGAL_IR_TRAINABLE_OBJECTIVE_NORM_SCHEMA_VERSION = (
+    "legal-ir-trainable-objective-head-norms-v1"
+)
+LEGAL_IR_TRAINABLE_HEAD_FIELDS: Mapping[str, str] = {
+    "decompiler_plan_embedding_weights": "decompiler",
+    "decompiler_plan_family_logits": "decompiler",
+    "decompiler_plan_legal_ir_view_logits": "decompiler",
+    "family_semantic_slot_legal_ir_view_logits": "semantic_slot",
+    "feature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+    "legal_ir_view_family_logits": "compiler_facing_legal_ir_view",
+    "legal_ir_view_logits": "compiler_facing_legal_ir_view",
+    "logic_signature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+    "predicate_argument_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+    "proof_auxiliary_head_logits": "proof",
+    "round_trip_signal_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+    "semantic_slot_legal_ir_view_family_logits": "semantic_slot",
+    "semantic_slot_legal_ir_view_logits": "semantic_slot",
+}
+
 
 @dataclass(frozen=True)
 class _CachedLegalIRDocument:
@@ -5283,6 +5302,7 @@ class AdaptiveModalAutoencoder:
         pinned_fingerprint = self.state.proof_feedback_version_fingerprint
         expected_fingerprint = requested_fingerprint or pinned_fingerprint
         protected_before = _proof_protected_objective_fingerprint(self.state)
+        update_before_state = self.state.copy()
         records, filtering = _validated_proof_feedback_records(
             raw_records,
             expected_fingerprint=expected_fingerprint,
@@ -5387,6 +5407,11 @@ class AdaptiveModalAutoencoder:
             abstention_threshold=abstention_threshold,
         )
         protected_after = _proof_protected_objective_fingerprint(self.state)
+        norm_report = legal_ir_trainable_head_delta_norm_report(
+            update_before_state,
+            self.state,
+            learning_rate=step,
+        )
         objective_isolation = {
             "proof_loss_weight_in_primary_objective": 0.0,
             "protected_objectives": list(PROOF_AUXILIARY_PROTECTED_OBJECTIVES),
@@ -5402,7 +5427,17 @@ class AdaptiveModalAutoencoder:
                 "dropped_label_count": dropped_label_count,
                 "duplicate_count": duplicate_count,
                 "eligible_count": len(records),
+                "gradient_norms_by_family": norm_report[
+                    "gradient_norms_by_family"
+                ],
+                "gradient_norms_by_head": norm_report["gradient_norms_by_head"],
                 "head_update_counts": updated_head_counts,
+                "head_family_gradient_norms": norm_report[
+                    "head_family_gradient_norms"
+                ],
+                "head_family_update_norms": norm_report[
+                    "head_family_update_norms"
+                ],
                 "objective_isolation": objective_isolation,
                 "proof_feedback_version_fingerprint": (
                     self.state.proof_feedback_version_fingerprint
@@ -5428,6 +5463,9 @@ class AdaptiveModalAutoencoder:
                     if step <= 0.0 or record_limit <= 0
                     else "no_applicable_feedback"
                 ),
+                "trainable_legal_ir_head_norms": norm_report,
+                "update_norms_by_family": norm_report["update_norms_by_family"],
+                "update_norms_by_head": norm_report["update_norms_by_head"],
             }
         )
         return metrics
@@ -6735,6 +6773,20 @@ class AdaptiveModalAutoencoder:
                                 - best.embedding_cosine_similarity
                             ),
                             "holdout_evaluated": True,
+                            "evaluated_objective": {
+                                "after": _selected_objective_metric_values(
+                                    after,
+                                    objective_weights,
+                                ),
+                                "before": _selected_objective_metric_values(
+                                    best,
+                                    objective_weights,
+                                ),
+                                "selected_metric_names": _selected_objective_metric_names(
+                                    after,
+                                    objective_weights,
+                                ),
+                            },
                             "legal_ir_view_cross_entropy_delta": (
                                 float(
                                     best.legal_ir_losses.get(
@@ -6846,7 +6898,7 @@ class AdaptiveModalAutoencoder:
                         update=update_name,
                     )
                     restore_projection_state(epoch_before_state)
-                    self._apply_projection_update_batch(
+                    update_norm_report = self._apply_projection_update_batch(
                         update_samples,
                         update_targets=update_targets,
                         learning_rate=effective_learning_rate,
@@ -6941,7 +6993,26 @@ class AdaptiveModalAutoencoder:
                         "projection_deadband": {},
                         "projection_prescreen": prescreen_report,
                         "strict_accepted": False,
+                        "gradient_norms_by_family": update_norm_report[
+                            "gradient_norms_by_family"
+                        ],
+                        "gradient_norms_by_head": update_norm_report[
+                            "gradient_norms_by_head"
+                        ],
+                        "head_family_gradient_norms": update_norm_report[
+                            "head_family_gradient_norms"
+                        ],
+                        "head_family_update_norms": update_norm_report[
+                            "head_family_update_norms"
+                        ],
+                        "trainable_legal_ir_head_norms": update_norm_report,
                         "update": update_name,
+                        "update_norms_by_family": update_norm_report[
+                            "update_norms_by_family"
+                        ],
+                        "update_norms_by_head": update_norm_report[
+                            "update_norms_by_head"
+                        ],
                     }
                     if defer_holdout_evaluation:
                         attempt_reports.append(attempt_report)
@@ -7188,6 +7259,14 @@ class AdaptiveModalAutoencoder:
             "compute_backend": self.compute_backend_metadata(),
             "candidate_update_order": [name for name, _targets in candidate_updates],
             "epoch_reports": epoch_reports,
+            "evaluated_objective": {
+                "after": _selected_objective_metric_values(best, objective_weights),
+                "before": _selected_objective_metric_values(before, objective_weights),
+                "selected_metric_names": _selected_objective_metric_names(
+                    best,
+                    objective_weights,
+                ),
+            },
             "elapsed_seconds": round(elapsed_seconds(), 3),
             "effective_max_line_search_attempts": effective_max_line_search_attempts,
             "line_search_attempt_policy": line_search_attempt_policy,
@@ -7225,7 +7304,7 @@ class AdaptiveModalAutoencoder:
         l2_regularization: float,
         profiler: Optional[ProjectionProfiler] = None,
         update_backend: str = "native",
-    ) -> None:
+    ) -> Dict[str, Any]:
         """Apply compatible projection updates as one guarded optimizer batch.
 
         The sample-outer/head-inner order matches the legacy line-search loop,
@@ -7237,6 +7316,7 @@ class AdaptiveModalAutoencoder:
         sample_list = list(samples)
         target_tuple = tuple(str(target) for target in update_targets)
         normalized_backend = str(update_backend or "native").strip().lower()
+        before_state = self.state.copy()
         if normalized_backend == "cuda_resident":
             def legacy_apply() -> None:
                 self._apply_projection_update_batch(
@@ -7265,7 +7345,14 @@ class AdaptiveModalAutoencoder:
                 self._cuda_residency_reports.append(report.to_dict())
                 self._cuda_residency_reports = self._cuda_residency_reports[-256:]
                 if report.applied:
-                    return
+                    norm_report = legal_ir_trainable_head_delta_norm_report(
+                        before_state,
+                        self.state,
+                        learning_rate=learning_rate,
+                    )
+                    norm_report["backend_report"] = report.to_dict()
+                    norm_report["projection_update_backend"] = "cuda_resident"
+                    return norm_report
                 if profiler is not None:
                     profiler.count("cuda_resident_deterministic_fallback_count")
             except Exception:
@@ -7379,6 +7466,13 @@ class AdaptiveModalAutoencoder:
             if use_sparse_python:
                 self._torch = old_torch
                 self.compute_device = old_device
+        norm_report = legal_ir_trainable_head_delta_norm_report(
+            before_state,
+            self.state,
+            learning_rate=learning_rate,
+        )
+        norm_report["projection_update_backend"] = normalized_backend
+        return norm_report
 
     def _select_hard_examples_for_projection(
         self,
@@ -29687,6 +29781,212 @@ def _evaluation_objective_for_training(
     )
 
 
+def legal_ir_trainable_head_delta_norm_report(
+    before: ModalAutoencoderTrainingState,
+    after: ModalAutoencoderTrainingState,
+    *,
+    learning_rate: float,
+) -> Dict[str, Any]:
+    """Return finite gradient/update norms for trainable LegalIR heads.
+
+    The optimizer stores trainable LegalIR parameters in sparse Python maps.
+    This report intentionally compares state snapshots instead of relying on a
+    backend-specific autograd object, so native, CUDA-resident, and guarded
+    trusted-feedback paths expose the same accounting.
+    """
+
+    step = abs(float(learning_rate)) if math.isfinite(float(learning_rate)) else 0.0
+    update_squares_by_head: Dict[str, float] = {}
+    update_squares_by_head_family: Dict[str, float] = {}
+    update_squares_by_family: Dict[str, float] = {}
+    scalar_count_by_head: Dict[str, int] = {}
+    finite = True
+
+    for field_name, head_family in LEGAL_IR_TRAINABLE_HEAD_FIELDS.items():
+        before_values = _flatten_numeric_head_values(getattr(before, field_name, {}))
+        after_values = _flatten_numeric_head_values(getattr(after, field_name, {}))
+        for path in sorted(set(before_values) | set(after_values)):
+            delta = float(after_values.get(path, 0.0)) - float(
+                before_values.get(path, 0.0)
+            )
+            if not math.isfinite(delta):
+                finite = False
+                continue
+            if abs(delta) <= 0.0:
+                continue
+            square = delta * delta
+            family = _trainable_legal_ir_delta_family(field_name, path, head_family)
+            update_squares_by_head[field_name] = (
+                update_squares_by_head.get(field_name, 0.0) + square
+            )
+            update_squares_by_head_family[head_family] = (
+                update_squares_by_head_family.get(head_family, 0.0) + square
+            )
+            update_squares_by_family[family] = (
+                update_squares_by_family.get(family, 0.0) + square
+            )
+            scalar_count_by_head[field_name] = scalar_count_by_head.get(field_name, 0) + 1
+
+    update_norms_by_head = _sqrt_norms(update_squares_by_head)
+    update_norms_by_head_family = _sqrt_norms(update_squares_by_head_family)
+    update_norms_by_family = _sqrt_norms(update_squares_by_family)
+    gradient_norms_by_head = _gradient_norms(update_norms_by_head, step)
+    gradient_norms_by_head_family = _gradient_norms(update_norms_by_head_family, step)
+    gradient_norms_by_family = _gradient_norms(update_norms_by_family, step)
+    total_update_norm = math.sqrt(sum(update_squares_by_head.values()))
+    total_gradient_norm = total_update_norm / step if step > 0.0 else 0.0
+    return {
+        "finite": bool(finite),
+        "gradient_norm": round(total_gradient_norm, 12),
+        "gradient_norms_by_family": gradient_norms_by_family,
+        "gradient_norms_by_head": gradient_norms_by_head,
+        "head_family_gradient_norms": gradient_norms_by_head_family,
+        "head_family_update_norms": update_norms_by_head_family,
+        "learning_rate": float(learning_rate),
+        "nonzero_gradient": bool(total_gradient_norm > 0.0),
+        "nonzero_update": bool(total_update_norm > 0.0),
+        "schema_version": LEGAL_IR_TRAINABLE_OBJECTIVE_NORM_SCHEMA_VERSION,
+        "scalar_update_counts_by_head": dict(sorted(scalar_count_by_head.items())),
+        "trainable_head_families": dict(sorted(LEGAL_IR_TRAINABLE_HEAD_FIELDS.items())),
+        "update_norm": round(total_update_norm, 12),
+        "update_norms_by_family": update_norms_by_family,
+        "update_norms_by_head": update_norms_by_head,
+    }
+
+
+def _flatten_numeric_head_values(value: Any) -> Dict[tuple[str, ...], float]:
+    flattened: Dict[tuple[str, ...], float] = {}
+
+    def visit(child: Any, path: tuple[str, ...]) -> None:
+        if isinstance(child, Mapping):
+            for key, nested in child.items():
+                visit(nested, (*path, str(key)))
+            return
+        if isinstance(child, Sequence) and not isinstance(child, (str, bytes, bytearray)):
+            for index, nested in enumerate(child):
+                visit(nested, (*path, str(index)))
+            return
+        if isinstance(child, (int, float)) and not isinstance(child, bool):
+            number = float(child)
+            flattened[path] = number if math.isfinite(number) else float("nan")
+
+    visit(value, ())
+    return flattened
+
+
+def _sqrt_norms(squares: Mapping[str, float]) -> Dict[str, float]:
+    return {
+        name: round(math.sqrt(max(0.0, float(value))), 12)
+        for name, value in sorted(squares.items())
+    }
+
+
+def _gradient_norms(update_norms: Mapping[str, float], step: float) -> Dict[str, float]:
+    if step <= 0.0:
+        return {name: 0.0 for name in sorted(update_norms)}
+    return {
+        name: round(float(value) / step, 12)
+        for name, value in sorted(update_norms.items())
+    }
+
+
+def _trainable_legal_ir_delta_family(
+    field_name: str,
+    path: tuple[str, ...],
+    head_family: str,
+) -> str:
+    if field_name == "proof_auxiliary_head_logits":
+        if len(path) >= 2 and path[1] != PROOF_AUXILIARY_GLOBAL_CONTEXT:
+            return _proof_auxiliary_family_context(path[1])
+        return "proof"
+    if "decompiler" in field_name:
+        terminal = path[-1] if path else ""
+        family = _legal_ir_view_family_name(terminal)
+        return "decompiler" if family == "other" else family
+    if field_name == "legal_ir_view_logits" and path:
+        return _legal_ir_view_family_name(path[0])
+    if "legal_ir_view" in field_name and path:
+        family = _legal_ir_view_family_name(path[-1])
+        if family != "other":
+            return family
+    if field_name.endswith("_family_logits") and path:
+        family = str(path[-1])
+        if family:
+            return family
+    return head_family
+
+
+def _selected_objective_metric_values(
+    evaluation: AutoencoderEvaluation,
+    objective_weights: Mapping[str, float],
+) -> Dict[str, float]:
+    values: Dict[str, float] = {}
+    if max(0.0, float(objective_weights.get("cross_entropy", 0.0))) > 0.0:
+        values["cross_entropy_excess_loss"] = float(
+            getattr(evaluation, "cross_entropy_excess_loss", evaluation.cross_entropy_loss)
+        )
+    if max(0.0, float(objective_weights.get("reconstruction", 0.0))) > 0.0:
+        values["reconstruction_loss"] = float(evaluation.reconstruction_loss)
+    if max(0.0, float(objective_weights.get("cosine_gap", 0.0))) > 0.0:
+        values["embedding_cosine_gap"] = max(
+            0.0,
+            1.0 - float(evaluation.embedding_cosine_similarity),
+        )
+    if max(0.0, float(objective_weights.get("legal_ir", 0.0))) > 0.0:
+        for name in _legal_ir_selected_metric_names(evaluation.legal_ir_losses):
+            values[f"legal_ir:{name}"] = float(evaluation.legal_ir_losses.get(name, 0.0))
+    return dict(sorted(values.items()))
+
+
+def _selected_objective_metric_names(
+    evaluation: AutoencoderEvaluation,
+    objective_weights: Mapping[str, float],
+) -> List[str]:
+    return list(_selected_objective_metric_values(evaluation, objective_weights))
+
+
+def _legal_ir_selected_metric_names(losses: Mapping[str, float]) -> List[str]:
+    values = {str(name): float(value) for name, value in dict(losses or {}).items()}
+    selected: List[str] = []
+    for name in (
+        "legal_ir_multiview_total_loss",
+        "legal_ir_view_cross_entropy_excess_loss",
+        "legal_ir_view_cross_entropy_loss",
+        "legal_ir_view_family_cross_entropy_excess_loss",
+        "legal_ir_view_family_cross_entropy_loss",
+        "legal_ir_view_family_cosine_gap_loss",
+        "legal_ir_multiview_proof_failure_ratio",
+        "legal_ir_multiview_graph_failure_penalty",
+        "hammer_proof_failure_ratio",
+        "hammer_backend_unavailable_ratio",
+        "hammer_source_copy_penalty",
+        "round_trip_source_copy_guardrail_loss",
+        "round_trip_structural_reconstruction_loss",
+        "source_copy_penalty",
+        "source_copy_reward_hack_penalty",
+        "symbolic_validity_penalty",
+    ):
+        if name in values:
+            selected.append(name)
+    for family in LEGAL_IR_VIEW_FAMILIES:
+        prefix = f"legal_ir_view_family_{family}_"
+        for metric_name in LEGAL_IR_VIEW_FAMILY_METRIC_NAMES:
+            key = f"{prefix}{metric_name}"
+            if key in values:
+                selected.append(key)
+    for success_name in (
+        "hammer_premise_selection_hit_rate",
+        "hammer_proof_success_rate",
+        "hammer_reconstruction_success_rate",
+        "hammer_trusted_success_rate",
+        "round_trip_reconstruction_success_rate",
+        "symbolic_validity_success_rate",
+    ):
+        if success_name in values:
+            selected.append(success_name)
+    return _unique_preserve_order(selected)
+
+
 def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
     """Return a normalized LegalIR objective component.
 
@@ -30544,6 +30844,7 @@ __all__ = [
     "LEGAL_IR_VIEW_FAMILIES",
     "LEGAL_IR_STABLE_FEATURE_EXPORT_MAX_FEATURES",
     "LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION",
+    "LEGAL_IR_TRAINABLE_OBJECTIVE_NORM_SCHEMA_VERSION",
     "LEGAL_IR_VIEW_FAMILY_METRIC_NAMES",
     "LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION",
     "MODAL_AUTOENCODER_ARCHITECTURE_VERSION",
@@ -30581,6 +30882,7 @@ __all__ = [
     "export_stable_learned_ir_features",
     "frame_ranking_loss",
     "hammer_guidance_metric_block",
+    "legal_ir_trainable_head_delta_norm_report",
     "legal_ir_view_family_metric_block",
     "legal_ir_view_family_name",
     "mse_loss",
