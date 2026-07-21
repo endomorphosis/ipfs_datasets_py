@@ -172,6 +172,19 @@ __all__ = [
     'external_benchmark_split_manifest',
     'load_external_expert_benchmark_packets',
     'require_external_benchmark_evaluation_only',
+    'LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION',
+    'LEGAL_IR_DRIFT_ROLLBACK_DECISION_SCHEMA_VERSION',
+    'LEGAL_IR_DRIFT_ROLLBACK_TODO_SCHEMA_VERSION',
+    'PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL',
+    'LegalIRDriftEvent',
+    'LegalIRDriftMonitor',
+    'LegalIRDriftMonitorConfig',
+    'LegalIRDriftReport',
+    'LegalIRRollbackDecision',
+    'LegalIRRollbackTodo',
+    'append_rollback_todos',
+    'monitor_legal_ir_production_drift',
+    'persist_legal_ir_drift_report',
     'LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION',
     'ROUTE_CODEX_TODO',
     'ROUTE_HAMMER_LEANSTRAL_AUDIT',
@@ -1097,6 +1110,26 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_external_benchmark, name)
+    elif name in (
+        'LEGAL_IR_DRIFT_MONITOR_SCHEMA_VERSION',
+        'LEGAL_IR_DRIFT_ROLLBACK_DECISION_SCHEMA_VERSION',
+        'LEGAL_IR_DRIFT_ROLLBACK_TODO_SCHEMA_VERSION',
+        'PRODUCTION_DRIFT_AND_ROLLBACK_HARD_GUARDRAIL',
+        'LegalIRDriftEvent',
+        'LegalIRDriftMonitor',
+        'LegalIRDriftMonitorConfig',
+        'LegalIRDriftReport',
+        'LegalIRRollbackDecision',
+        'LegalIRRollbackTodo',
+        'append_rollback_todos',
+        'monitor_legal_ir_production_drift',
+        'persist_legal_ir_drift_report',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_drift_monitor,
+        )
+
+        return getattr(legal_ir_drift_monitor, name)
     elif name in (
         'LEGAL_IR_UNCERTAINTY_SCHEMA_VERSION',
         'ROUTE_CODEX_TODO',
