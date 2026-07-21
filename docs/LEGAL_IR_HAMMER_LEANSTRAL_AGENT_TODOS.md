@@ -1362,8 +1362,8 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-066 Move disagreement export and checkpoint persistence off the cycle path
 
-- Status: todo
-- Completion: 0
+- Status: completed
+- Completion: 100
 - Priority: P1
 - Track: persistence-runtime
 - Depends on: PORTAL-LIR-HAMMER-035, PORTAL-LIR-HAMMER-065

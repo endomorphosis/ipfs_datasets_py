@@ -57,6 +57,8 @@ from ipfs_datasets_py.logic.modal import (
     export_introspection_packet,
     introspection_export_mode_enabled,
     modal_text_token_similarity,
+    packet_to_json,
+    validate_disagreement_packet,
 )
 from ipfs_datasets_py.logic.modal.codec import stable_mock_embedding
 from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
@@ -131,6 +133,13 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator impo
     aggregate_matching_snapshot_shards,
     canonical_holdout_version,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.async_artifact_writer import (
+    ASYNC_ARTIFACT_WRITER_SCHEMA_VERSION,
+    STATE_DELTA_SCHEMA_VERSION,
+    ArtifactFsyncPolicy,
+    ArtifactWriteFuture,
+    AsyncArtifactWriter,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     LeanstralTodoProjectionConfig,
     ModalOptimizationRun,
@@ -191,6 +200,9 @@ DEFAULT_SNAPSHOT_EVALUATION_QUEUE_CAPACITY = 2
 DEFAULT_SNAPSHOT_EVALUATION_MAX_LAG = 2
 DEFAULT_SNAPSHOT_EVALUATION_MAX_AGE_SECONDS = 300.0
 DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS = 600.0
+DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY = 64
+DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS = 600.0
+DEFAULT_ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES = 4
 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
 DEFAULT_AUTOENCODER_INTROSPECTION_MODE = "off"
 DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES = 4
@@ -2083,6 +2095,7 @@ def _frozen_canary_identity(
 
 def export_canonical_state_disagreement_packets(
     *,
+    artifact_writer: Optional[AsyncArtifactWriter] = None,
     autoencoder: AdaptiveModalAutoencoder,
     compiler_ir_validation: Mapping[str, Any],
     compiler_ir_guided_validation: Mapping[str, Any],
@@ -2097,6 +2110,7 @@ def export_canonical_state_disagreement_packets(
     validation_mode: str,
     evaluate_provers: bool = False,
     top_k: int = 16,
+    wait_for_durable: bool = False,
 ) -> Dict[str, Any]:
     """Export real canonical autoencoder/compiler disagreements for one cycle."""
 
@@ -2221,10 +2235,73 @@ def export_canonical_state_disagreement_packets(
                         "sample_id": sample_id,
                     }
                 )
-    append_report = append_disagreement_packets_jsonl(path, packets)
+    if artifact_writer is None:
+        append_report = append_disagreement_packets_jsonl(path, packets)
+        writer_receipt: Dict[str, Any] = {}
+    else:
+        packet_lines: List[str] = []
+        schema_failures: List[Dict[str, Any]] = []
+        bytes_requested = 0
+        for packet in packets:
+            payload = packet.to_dict()
+            failures = validate_disagreement_packet(payload)
+            if failures:
+                schema_failures.append(
+                    {
+                        "evidence_id": str(payload.get("evidence_id") or ""),
+                        "failures": failures,
+                        "sample_id": str(
+                            (
+                                payload.get("sample_hashes")
+                                if isinstance(payload.get("sample_hashes"), Mapping)
+                                else {}
+                            ).get("sample_id")
+                            or ""
+                        ),
+                    }
+                )
+                continue
+            line = packet_to_json(payload)
+            packet_lines.append(line)
+            bytes_requested += len(line.encode("utf-8")) + 1
+        receipt = artifact_writer.append_jsonl_lines(
+            path,
+            packet_lines,
+            kind="disagreement_batch",
+            dedupe_keys=("evidence_id",),
+            metadata={
+                "cycle": int(cycle),
+                "packet_count": len(packet_lines),
+                "run_id": run_id,
+                "state_hash": state_hash,
+            },
+            wait=wait_for_durable,
+        )
+        if isinstance(receipt, ArtifactWriteFuture):
+            writer_receipt = {}
+            writer_future_id = receipt.job_id
+            bytes_written = 0
+        else:
+            writer_receipt = receipt.to_dict()
+            writer_future_id = receipt.job_id
+            bytes_written = int(receipt.bytes_written)
+        append_report = {
+            "bytes_written": bytes_written,
+            "bytes_requested": int(bytes_requested),
+            "elapsed_seconds": 0.0,
+            "enqueued": True,
+            "packet_count": len(packet_lines),
+            "schema_failure_count": len(schema_failures),
+            "schema_failures": schema_failures[:16],
+            "writer": writer_receipt,
+            "writer_durable": bool(writer_receipt),
+            "writer_future_id": writer_future_id,
+            "writer_waited_for_durable": bool(wait_for_durable),
+        }
     elapsed = round(time.time() - started_at, 6)
     return {
         **append_report,
+        "async_artifact_writer_schema_version": ASYNC_ARTIFACT_WRITER_SCHEMA_VERSION,
         "enabled": True,
         "elapsed_seconds": elapsed,
         "export_failure_count": len(export_failures),
@@ -2242,6 +2319,7 @@ def export_canonical_state_disagreement_packets(
         "shared_sample_analysis_count": len(sample_analysis_cache),
         "shared_sample_analysis_cache_hit_count": sample_analysis_cache_hits,
         "state_hash": state_hash,
+        "writer_receipt": writer_receipt,
     }
 
 
@@ -10925,6 +11003,36 @@ def build_paired_daemon_commands(
                 DEFAULT_AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES,
             )
         ),
+        "--async-artifact-writer-queue-capacity",
+        str(
+            getattr(
+                args,
+                "async_artifact_writer_queue_capacity",
+                DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY,
+            )
+        ),
+        "--async-artifact-writer-backpressure-timeout-seconds",
+        str(
+            getattr(
+                args,
+                "async_artifact_writer_backpressure_timeout_seconds",
+                DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS,
+            )
+        ),
+        "--async-artifact-full-checkpoint-every-n-cycles",
+        str(
+            getattr(
+                args,
+                "async_artifact_full_checkpoint_every_n_cycles",
+                DEFAULT_ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES,
+            )
+        ),
+        "--async-artifact-writer-fsync-data",
+        str(getattr(args, "async_artifact_writer_fsync_data", True)).lower(),
+        "--async-artifact-writer-fsync-directory",
+        str(getattr(args, "async_artifact_writer_fsync_directory", True)).lower(),
+        "--async-artifact-writer-fsync-manifest",
+        str(getattr(args, "async_artifact_writer_fsync_manifest", True)).lower(),
         "--autoencoder-max-audits-per-cycle",
         str(getattr(args, "autoencoder_max_audits_per_cycle", 0)),
         "--autoencoder-max-todos-per-cycle",
@@ -14922,9 +15030,35 @@ def append_event(path: Path, run_id: str, event: Mapping[str, Any]) -> None:
         handle.write(json.dumps(payload, ensure_ascii=True, sort_keys=True) + "\n")
 
 
+_ASYNC_SUMMARY_WRITER = threading.local()
+
+
+@contextmanager
+def async_summary_writer_context(
+    writer: Optional[AsyncArtifactWriter],
+) -> Iterator[None]:
+    previous = getattr(_ASYNC_SUMMARY_WRITER, "writer", None)
+    _ASYNC_SUMMARY_WRITER.writer = writer
+    try:
+        yield
+    finally:
+        _ASYNC_SUMMARY_WRITER.writer = previous
+
+
 def save_summary(summary_path: Path, summary: Dict[str, Any], *, final: bool = False) -> None:
     summary["final"] = final
     summary["updated_at"] = utc_now()
+    writer = getattr(_ASYNC_SUMMARY_WRITER, "writer", None)
+    if isinstance(writer, AsyncArtifactWriter):
+        writer.write_json_atomic(
+            summary_path,
+            summary,
+            kind="summary",
+            indent=2,
+            metadata={"final": bool(final)},
+            wait=bool(final),
+        )
+        return
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
@@ -15300,6 +15434,42 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "--autoencoder-max-audits-per-cycle because it does not increase "
             "the Codex TODO audit budget."
         ),
+    )
+    parser.add_argument(
+        "--async-artifact-writer-queue-capacity",
+        type=int,
+        default=DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY,
+        help="Bounded queue capacity for summary, disagreement, and checkpoint writes.",
+    )
+    parser.add_argument(
+        "--async-artifact-writer-backpressure-timeout-seconds",
+        type=float,
+        default=DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS,
+        help="Maximum time to wait when the artifact writer queue is full.",
+    )
+    parser.add_argument(
+        "--async-artifact-full-checkpoint-every-n-cycles",
+        type=int,
+        default=DEFAULT_ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES,
+        help="Persist a full autoencoder state checkpoint at this cycle cadence.",
+    )
+    parser.add_argument(
+        "--async-artifact-writer-fsync-data",
+        type=parse_bool_flag,
+        default=True,
+        help="Fsync artifact payload bytes before acknowledging writes.",
+    )
+    parser.add_argument(
+        "--async-artifact-writer-fsync-directory",
+        type=parse_bool_flag,
+        default=True,
+        help="Fsync artifact directories after atomic renames and manifest cleanup.",
+    )
+    parser.add_argument(
+        "--async-artifact-writer-fsync-manifest",
+        type=parse_bool_flag,
+        default=True,
+        help="Fsync accepted write manifests before worker acknowledgement.",
     )
     parser.add_argument("--autoencoder-max-audits-per-cycle", type=int, default=0)
     parser.add_argument("--autoencoder-max-todos-per-cycle", type=int, default=0)
@@ -17181,6 +17351,42 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     log_dir.mkdir(parents=True, exist_ok=True)
     queue_dir.mkdir(parents=True, exist_ok=True)
     report_dir.mkdir(parents=True, exist_ok=True)
+    artifact_writer = AsyncArtifactWriter(
+        root / "workspace" / "artifact-writer" / args.run_id,
+        queue_capacity=max(
+            1,
+            int(
+                getattr(
+                    args,
+                    "async_artifact_writer_queue_capacity",
+                    DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY,
+                )
+                or 1
+            ),
+        ),
+        fsync_policy=ArtifactFsyncPolicy(
+            data=bool(getattr(args, "async_artifact_writer_fsync_data", True)),
+            directory=bool(
+                getattr(args, "async_artifact_writer_fsync_directory", True)
+            ),
+            manifest=bool(getattr(args, "async_artifact_writer_fsync_manifest", True)),
+        ),
+        backpressure_timeout_seconds=max(
+            0.0,
+            float(
+                getattr(
+                    args,
+                    "async_artifact_writer_backpressure_timeout_seconds",
+                    DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS,
+                )
+                or 0.0
+            ),
+        ),
+        name=f"{args.run_id}-artifact-writer",
+    )
+    replayed_artifact_receipts = artifact_writer.replay_crash_artifacts()
+    previous_async_summary_writer = getattr(_ASYNC_SUMMARY_WRITER, "writer", None)
+    _ASYNC_SUMMARY_WRITER.writer = artifact_writer
 
     stop_requested = False
     stop_signal: int | None = None
@@ -17207,6 +17413,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         save_summary(summary_path, summary)
     runtime_telemetry = RuntimeTelemetry(args.run_id)
     attach_runtime_telemetry(summary, runtime_telemetry)
+    summary["async_artifact_writer_schema_version"] = (
+        ASYNC_ARTIFACT_WRITER_SCHEMA_VERSION
+    )
+    summary["async_artifact_writer"] = artifact_writer.summary()
+    summary["async_artifact_writer_replayed_receipts"] = [
+        receipt.to_dict() for receipt in replayed_artifact_receipts[:16]
+    ]
+    summary["async_artifact_writer_replayed_count"] = len(
+        replayed_artifact_receipts
+    )
     evaluation_cache = LegalIREvaluationCache(
         log_dir / "legal-ir-evaluation-cache"
     )
@@ -17296,6 +17512,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "reason": enforce_block_reason,
             },
         )
+        artifact_writer.close(wait=True)
+        _ASYNC_SUMMARY_WRITER.writer = previous_async_summary_writer
         return 2
     summary["autoencoder_introspection_enforce_allowed"] = True
     summary["autoencoder_introspection_enforce_block_reason"] = ""
@@ -17320,7 +17538,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             state.merge_generalizable_from(warm_state)
             warm_start["applied"] = True
             summary["warm_start"] = warm_start
-            state.save_json(state_path)
+            artifact_writer.write_state_checkpoint(
+                state_path,
+                state,
+                cycle=int(summary.get("cycles", 0) or 0),
+                full=True,
+                metadata={
+                    "reason": "warm_start",
+                    "run_id": args.run_id,
+                    "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                },
+                wait=True,
+            )
             save_summary(summary_path, summary)
             append_event(
                 log_path,
@@ -18539,6 +18768,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             if autoencoder_introspection_export_due(rollout_control, cycle=cycle):
                 pre_todo_introspection_export = export_canonical_state_disagreement_packets(
+                    artifact_writer=artifact_writer,
                     autoencoder=autoencoder,
                     compiler_ir_validation=compiler_ir_validation,
                     compiler_ir_guided_validation={},
@@ -18925,6 +19155,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 )
             elif autoencoder_introspection_export_due(rollout_control, cycle=cycle):
                 introspection_export = export_canonical_state_disagreement_packets(
+                    artifact_writer=artifact_writer,
                     autoencoder=autoencoder,
                     compiler_ir_validation=compiler_ir_validation,
                     compiler_ir_guided_validation=compiler_ir_guided_validation,
@@ -18940,6 +19171,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     validation_indices=introspection_export_validation_indices,
                     validation_mode=validation_mode,
                     evaluate_provers=bridge_evaluate_provers,
+                    wait_for_durable=bool(
+                        guidance_promotion_gate.get("promotion_allowed", False)
+                    ),
                 )
             else:
                 introspection_export = skipped_introspection_export_report(
@@ -19197,9 +19431,64 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         "snapshot": evaluation_snapshot.to_dict(),
                     },
                 )
-            mark_cycle_phase("state_save")
-            autoencoder.state.save_json(state_path)
+            mark_cycle_phase("state_persistence_enqueue")
+            state_delta_path = queue_dir / f"{args.run_id}.state-deltas.jsonl"
+            state_delta_future = artifact_writer.append_state_delta(
+                state_delta_path,
+                {
+                    "applied_leanstral_guidance_count": len(
+                        autoencoder.state.applied_leanstral_guidance_ids
+                    ),
+                    "applied_todo_count": len(autoencoder.state.applied_todo_ids),
+                    "cycle": int(cycle),
+                    "decoded_embedding_count": len(
+                        autoencoder.state.decoded_embeddings
+                    ),
+                    "family_logit_sample_count": len(
+                        autoencoder.state.family_logits
+                    ),
+                    "run_id": args.run_id,
+                    "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                },
+            )
+            full_checkpoint_every = max(
+                1,
+                int(
+                    getattr(
+                        args,
+                        "async_artifact_full_checkpoint_every_n_cycles",
+                        DEFAULT_ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES,
+                    )
+                    or 1
+                ),
+            )
+            state_checkpoint_future = None
+            if cycle == 1 or cycle % full_checkpoint_every == 0:
+                state_checkpoint_future = artifact_writer.write_state_checkpoint(
+                    state_path,
+                    autoencoder.state,
+                    cycle=cycle,
+                    full=True,
+                    metadata={
+                        "run_id": args.run_id,
+                        "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                    },
+                )
             run.save_json(run_json_path)
+            summary["latest_async_state_persistence"] = {
+                "checkpoint_enqueued": state_checkpoint_future is not None,
+                "checkpoint_future_id": (
+                    state_checkpoint_future.job_id
+                    if state_checkpoint_future is not None
+                    else ""
+                ),
+                "delta_future_id": state_delta_future.job_id,
+                "full_checkpoint_every_n_cycles": full_checkpoint_every,
+                "state_delta_path": str(state_delta_path),
+                "state_path": str(state_path),
+                "state_delta_schema_version": STATE_DELTA_SCHEMA_VERSION,
+            }
+            summary["async_artifact_writer"] = artifact_writer.summary()
             finish_cycle_phase()
 
             train_ce_delta = before_train.cross_entropy_loss - after_train.cross_entropy_loss
@@ -20325,8 +20614,33 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["supervisor_health"] = build_modal_supervisor_health_report(
             summary
         ).to_dict()
+        artifact_drain_timeout = max(
+            0.0,
+            float(
+                getattr(
+                    args,
+                    "async_artifact_writer_backpressure_timeout_seconds",
+                    DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS,
+                )
+                or 0.0
+            ),
+        )
+        artifact_writer_drained = artifact_writer.wait_until_idle(
+            timeout=artifact_drain_timeout
+        )
+        summary["async_artifact_writer_shutdown"] = {
+            "drained": bool(artifact_writer_drained),
+            "timeout_seconds": artifact_drain_timeout,
+        }
+        summary["async_artifact_writer"] = artifact_writer.summary()
         save_summary(summary_path, summary, final=True)
         append_event(log_path, args.run_id, {"event": "run_finished", **summary})
+        artifact_writer.close(
+            wait=artifact_writer_drained,
+            timeout=artifact_drain_timeout,
+            cancel_pending=not artifact_writer_drained,
+        )
+        _ASYNC_SUMMARY_WRITER.writer = previous_async_summary_writer
         for signum, handler in previous_signal_handlers.items():
             signal.signal(signum, handler)
     return 0
