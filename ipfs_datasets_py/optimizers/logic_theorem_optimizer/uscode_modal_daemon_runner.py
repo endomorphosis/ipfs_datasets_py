@@ -105,6 +105,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage
     build_learned_ir_metric_lineage,
     metric_lineage_matches_block,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits import (
+    CODEX_TODO_PROJECTION_OPERATION,
+    REPRESENTATION_PROMOTION_OPERATION,
+    split_guard_blocks_operation,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.parallelism_autotuner import (
     AdaptivePipelineParallelismController,
     AdaptivePipelineSignals,
@@ -7684,6 +7689,8 @@ def hammer_failure_projection_todos(
         Dict[str, Any],
     ] = {}
     for item in _hammer_projection_items(guidance):
+        if split_guard_blocks_operation(item, CODEX_TODO_PROJECTION_OPERATION):
+            continue
         reason = _hammer_projection_failure_reason(item)
         if not _hammer_projection_is_verified_failure(item, reason):
             continue
@@ -8425,7 +8432,9 @@ def compiler_guidance_promotion_gate(
     """Return whether guided compiler IR is safe to promote into deterministic rules."""
     quality_gate = str(canary_block.get("quality_gate") or "inactive")
     applied_count = int(canary_block.get("applied_count", 0) or 0)
-    if applied_count < max(1, int(min_applied_count)):
+    if split_guard_blocks_operation(canary_block, REPRESENTATION_PROMOTION_OPERATION):
+        reason = "split_guard_blocked"
+    elif applied_count < max(1, int(min_applied_count)):
         reason = "insufficient_guidance_samples"
     elif quality_gate == "pass":
         reason = "quality_gate_pass"

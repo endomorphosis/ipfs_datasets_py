@@ -25,6 +25,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler impo
     ResourceLease,
     ResourceSchedulerConfig,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits import (
+    HPARAM_SELECTION_OPERATION,
+    split_guard_blocks_operation,
+)
 
 
 LEGAL_IR_HPARAM_SCHEDULER_SCHEMA_VERSION: Final = "legal-ir-hparam-scheduler-v1"
@@ -128,6 +132,7 @@ class SharedBaseline:
     metric_lineage_id: str
     metrics: Mapping[str, Any] = field(default_factory=dict)
     family_metrics: Mapping[str, Any] = field(default_factory=dict)
+    split_guard: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for name in ("baseline_id", "revision", "dataset_digest", "metric_lineage_id"):
@@ -137,6 +142,7 @@ class SharedBaseline:
             object.__setattr__(self, name, value)
         object.__setattr__(self, "metrics", _immutable_mapping(self.metrics))
         object.__setattr__(self, "family_metrics", _immutable_mapping(self.family_metrics))
+        object.__setattr__(self, "split_guard", _immutable_mapping(self.split_guard))
 
     @property
     def digest(self) -> str:
@@ -160,6 +166,7 @@ class SharedBaseline:
             "metric_lineage_id": self.metric_lineage_id,
             "metrics": dict(self.metrics),
             "family_metrics": dict(self.family_metrics),
+            "split_guard": dict(self.split_guard),
         }
         if include_digest:
             result["baseline_digest"] = self.digest
@@ -307,6 +314,11 @@ class HParamSearchConfig:
     resources: ResourceRequirements = field(default_factory=ResourceRequirements)
 
     def __post_init__(self) -> None:
+        if split_guard_blocks_operation(
+            self.baseline.split_guard,
+            HPARAM_SELECTION_OPERATION,
+        ):
+            raise ValueError("LegalIR split guard blocks hparam selection")
         _int(self.total_budget_seconds, name="total_budget_seconds", minimum=1)
         _int(self.initial_candidate_count, name="initial_candidate_count", minimum=2)
         _int(self.reduction_factor, name="reduction_factor", minimum=2)
