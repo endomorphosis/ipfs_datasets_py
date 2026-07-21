@@ -128,6 +128,47 @@ LEGAL_IR_LEARNED_GUIDANCE_PROMOTION_SCHEMA_VERSION = (
 LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION = (
     "legal-ir-stable-autoencoder-feature-export-v1"
 )
+MULTI_SEED_PROMOTION_SCHEMA_VERSION = (
+    "legal-ir-hammer-leanstral-multi-seed-promotion-v1"
+)
+
+MULTI_SEED_PROMOTION_METRICS = (
+    "learned_quality",
+    "deterministic_compiler_quality",
+    "semantic_equivalence",
+    "proof_validity",
+    "hard_negative_performance",
+    "accepted_patch_rate",
+)
+
+MULTI_SEED_PROMOTION_SUMMARY_KEYS = (
+    "latest_multi_seed_statistical_promotion",
+    "multi_seed_statistical_promotion",
+    "latest_multi_seed_promotion_evidence",
+    "multi_seed_promotion_evidence",
+    "statistical_promotion_evidence",
+)
+
+_MULTI_SEED_METRIC_ALIASES = {
+    "learned_ir_quality": "learned_quality",
+    "learned_representation_quality": "learned_quality",
+    "deterministic_quality": "deterministic_compiler_quality",
+    "compiler_quality": "deterministic_compiler_quality",
+    "compiler_ir_quality": "deterministic_compiler_quality",
+    "deterministic_compiler_ir_quality": "deterministic_compiler_quality",
+    "semantic_equivalence_score": "semantic_equivalence",
+    "semantic_equivalence_rate": "semantic_equivalence",
+    "hammer_proof_validity": "proof_validity",
+    "proof_success_rate": "proof_validity",
+    "proof_validity_rate": "proof_validity",
+    "hard_negative_score": "hard_negative_performance",
+    "hard_negative_false_positive_reduction": "hard_negative_performance",
+    "accepted_patches_per_hour": "accepted_patch_rate",
+    "task_to_accepted_patch_rate": "accepted_patch_rate",
+    "accepted_patch_ratio": "accepted_patch_rate",
+}
+
+_MULTI_SEED_HIGHER_IS_BETTER = frozenset(MULTI_SEED_PROMOTION_METRICS)
 
 
 @dataclass(frozen=True)
@@ -169,6 +210,7 @@ class StagedRolloutConfig:
     require_representation_promotion_reports: bool = True
     require_successful_representation_promotion: bool = False
     require_complete_representation_evidence: bool = True
+    require_multi_seed_statistical_promotion: bool = False
     verify_rollback_artifacts: bool = False
     duration_tolerance_seconds: float = 0.0
     max_queue_lag_p95_seconds: float = 120.0
@@ -204,9 +246,40 @@ class RolloutGateConfig:
     max_reconstruction_rate_regression: float = 0.0
     max_source_copy_penalty_regression: float = 0.0
     max_todo_productivity_regression: float = 0.0
+    require_multi_seed_statistical_promotion: bool = False
     required_representation_metrics: tuple[str, ...] = LEGAL_IR_REPRESENTATION_METRICS
     fatal_stop_reasons: frozenset[str] = DEFAULT_FATAL_STOP_REASONS
     source_copy_keys: tuple[str, ...] = DEFAULT_SOURCE_COPY_KEYS
+
+
+@dataclass(frozen=True)
+class MultiSeedMetricSpec:
+    """Statistical promotion policy for one paired metric."""
+
+    name: str
+    direction: str = "higher"
+    minimum_effect: float = 0.0
+
+    @property
+    def canonical_name(self) -> str:
+        return _canonical_multi_seed_metric(self.name)
+
+
+@dataclass(frozen=True)
+class MultiSeedPromotionConfig:
+    """Fail-closed policy for multi-seed promotion evidence."""
+
+    min_seed_count: int = 3
+    confidence_level: float = 0.95
+    require_paired_seed_sets: bool = True
+    require_effect_variance: bool = True
+    require_failure_family_attribution: bool = True
+    metric_specs: tuple[MultiSeedMetricSpec, ...] = tuple(
+        MultiSeedMetricSpec(name) for name in MULTI_SEED_PROMOTION_METRICS
+    )
+
+    def spec_by_metric(self) -> dict[str, MultiSeedMetricSpec]:
+        return {spec.canonical_name: spec for spec in self.metric_specs}
 
 
 @dataclass
@@ -225,6 +298,145 @@ class RolloutGateResult:
             "metrics": dict(self.metrics),
             "warnings": list(self.warnings),
         }
+
+
+def multi_seed_promotion_gate(
+    payload: Mapping[str, Any],
+    config: MultiSeedPromotionConfig | None = None,
+) -> RolloutGateResult:
+    """Require paired multi-seed confidence intervals for promotion evidence.
+
+    The gate evaluates paired baseline/candidate measurements per seed.  For
+    higher-is-better metrics the effect is ``candidate - baseline``; for
+    lower-is-better metrics the effect is ``baseline - candidate``.  Promotion
+    requires every configured metric to have enough seeds and a lower confidence
+    bound at or above the configured minimum effect.  This makes a single lucky
+    seed and high-variance improvements fail closed even when the mean is good.
+    """
+
+    cfg = config or MultiSeedPromotionConfig()
+    failures: list[str] = []
+    warnings: list[str] = []
+    metrics: dict[str, Any] = {
+        "schema_version": MULTI_SEED_PROMOTION_SCHEMA_VERSION,
+        "confidence_level": cfg.confidence_level,
+        "min_seed_count": cfg.min_seed_count,
+        "required_metrics": [spec.canonical_name for spec in cfg.metric_specs],
+    }
+    evidence_path, evidence = _multi_seed_promotion_evidence(payload)
+    metrics["multi_seed_evidence_present"] = evidence is not None
+    metrics["multi_seed_evidence_path"] = evidence_path
+    if evidence is None:
+        return RolloutGateResult(
+            accepted=False,
+            failures=["missing_multi_seed_statistical_evidence"],
+            warnings=warnings,
+            metrics=metrics,
+        )
+
+    schema = str(evidence.get("schema_version") or "").strip()
+    if schema and schema != MULTI_SEED_PROMOTION_SCHEMA_VERSION:
+        failures.append(f"multi_seed_schema_mismatch:{schema}")
+    evidence_confidence = _finite_float(evidence.get("confidence_level"))
+    confidence_level = evidence_confidence if evidence_confidence is not None else cfg.confidence_level
+    if confidence_level <= 0.0 or confidence_level >= 1.0:
+        failures.append(f"multi_seed_confidence_level_invalid:{confidence_level:g}")
+        confidence_level = cfg.confidence_level
+    metrics["confidence_level"] = confidence_level
+
+    raw_min_seed_count = _finite_float(evidence.get("min_seed_count"))
+    if raw_min_seed_count is not None:
+        min_seed_count = max(cfg.min_seed_count, int(raw_min_seed_count))
+    else:
+        min_seed_count = cfg.min_seed_count
+    metrics["min_seed_count"] = min_seed_count
+
+    metric_payloads = _multi_seed_metric_payloads(evidence)
+    metric_specs = cfg.spec_by_metric()
+    metric_results: dict[str, Any] = {}
+    all_seeds: set[str] = set()
+    all_failure_attribution: dict[str, int] = {}
+
+    required_metric_names = [spec.canonical_name for spec in cfg.metric_specs]
+    for metric_name in required_metric_names:
+        spec = metric_specs.get(metric_name, MultiSeedMetricSpec(metric_name))
+        metric_payload = metric_payloads.get(metric_name)
+        if not isinstance(metric_payload, Mapping):
+            failures.append(f"multi_seed_metric_missing:{metric_name}")
+            continue
+
+        direction = _multi_seed_metric_direction(metric_payload, spec)
+        minimum_effect = _multi_seed_minimum_effect(metric_payload, spec)
+        paired, parse_failures = _multi_seed_paired_effects(metric_payload, direction)
+        failures.extend(f"{failure}:{metric_name}" for failure in parse_failures)
+        seed_ids = [seed for seed, _effect in paired]
+        all_seeds.update(seed_ids)
+        effects = [effect for _seed, effect in paired]
+        sample_count = len(effects)
+        if sample_count < min_seed_count:
+            failures.append(
+                f"multi_seed_metric_seed_count:{metric_name}:"
+                f"{sample_count}<{min_seed_count}"
+            )
+
+        unique_seeds = set(seed_ids)
+        if len(unique_seeds) != sample_count:
+            failures.append(f"multi_seed_metric_duplicate_seed:{metric_name}")
+        if cfg.require_paired_seed_sets:
+            seed_failure = _multi_seed_pairing_failure(metric_payload, unique_seeds)
+            if seed_failure:
+                failures.append(f"{seed_failure}:{metric_name}")
+
+        attribution, attribution_present = _multi_seed_failure_attribution(
+            metric_payload,
+            effects_by_seed=dict(paired),
+        )
+        for family, count in attribution.items():
+            all_failure_attribution[family] = all_failure_attribution.get(family, 0) + count
+        if cfg.require_failure_family_attribution and not attribution_present:
+            failures.append(f"multi_seed_failure_family_attribution_missing:{metric_name}")
+
+        stats = _effect_statistics(effects, confidence_level)
+        metric_result = {
+            "direction": direction,
+            "minimum_effect": minimum_effect,
+            "seed_set": seed_ids,
+            "sample_count": sample_count,
+            "effects": [round(effect, 12) for effect in effects],
+            "effect_size": stats["mean"],
+            "variance": stats["variance"],
+            "standard_error": stats["standard_error"],
+            "confidence_interval": {
+                "level": confidence_level,
+                "lower": stats["ci_lower"],
+                "upper": stats["ci_upper"],
+            },
+            "failure_family_attribution": dict(sorted(attribution.items())),
+        }
+        metric_results[metric_name] = metric_result
+
+        if cfg.require_effect_variance and sample_count >= 2 and stats["variance"] is None:
+            failures.append(f"multi_seed_metric_variance_missing:{metric_name}")
+        lower = stats["ci_lower"]
+        if lower is None:
+            failures.append(f"multi_seed_metric_ci_missing:{metric_name}")
+        elif lower + 1.0e-12 < minimum_effect:
+            failures.append(
+                f"multi_seed_metric_ci_below_threshold:{metric_name}:"
+                f"{lower:g}<{minimum_effect:g}"
+            )
+
+    metrics["multi_seed_metrics"] = metric_results
+    metrics["seed_set"] = sorted(all_seeds, key=_seed_sort_key)
+    metrics["failure_family_attribution"] = dict(sorted(all_failure_attribution.items()))
+    metrics["promotion_id"] = str(evidence.get("promotion_id") or payload.get("promotion_id") or "")
+    metrics["compiler_commit"] = str(evidence.get("compiler_commit") or payload.get("compiler_commit") or "")
+    return RolloutGateResult(
+        accepted=not failures,
+        failures=list(dict.fromkeys(failures)),
+        warnings=warnings,
+        metrics=metrics,
+    )
 
 
 def staged_rollout_gate(
@@ -366,6 +578,10 @@ def staged_rollout_gate(
             failures.extend(threshold_failures)
             if threshold_metrics:
                 metrics["promotion_thresholds"] = threshold_metrics
+            multi_seed_result = _staged_multi_seed_result(snapshot, cfg)
+            if multi_seed_result is not None:
+                metrics["multi_seed_statistical_promotion"] = multi_seed_result.metrics
+                failures.extend(multi_seed_result.failures)
 
     next_stage = (
         STAGED_ROLLOUT_STAGES[len(items)].name
@@ -661,6 +877,16 @@ def _stage_queue_lag(snapshot: Mapping[str, Any]) -> float | None:
         if result is not None:
             return result
     return _first_finite(snapshot, ("queue_lag_p95_seconds", "program_synthesis_queue_lag_p95_seconds"))
+
+
+def _staged_multi_seed_result(
+    snapshot: Mapping[str, Any],
+    cfg: StagedRolloutConfig,
+) -> RolloutGateResult | None:
+    _evidence_path, evidence = _multi_seed_promotion_evidence(snapshot)
+    if not cfg.require_multi_seed_statistical_promotion and evidence is None:
+        return None
+    return multi_seed_promotion_gate(snapshot)
 
 
 def _validated_rollback_evidence(
@@ -1013,6 +1239,7 @@ def rollout_gate(summary: Mapping[str, Any], config: RolloutGateConfig | None = 
     failures.extend(_metric_regression_failures(summary, cfg, metrics))
     failures.extend(_source_copy_failures(summary, cfg, metrics))
     failures.extend(_representation_promotion_failures(summary, cfg, metrics, warnings))
+    failures.extend(_multi_seed_rollout_failures(summary, cfg, metrics, warnings))
     failures.extend(_hammer_cycle_failures(summary, cfg, metrics, warnings))
     failures.extend(_todo_activity_failures(summary, cfg, metrics))
     failures.extend(_backend_availability_failures(summary, cfg, metrics, warnings))
@@ -1023,6 +1250,28 @@ def rollout_gate(summary: Mapping[str, Any], config: RolloutGateConfig | None = 
         warnings=warnings,
         metrics=metrics,
     )
+
+
+def _multi_seed_rollout_failures(
+    summary: Mapping[str, Any],
+    cfg: RolloutGateConfig,
+    metrics: dict[str, Any],
+    warnings: list[str],
+) -> list[str]:
+    evidence_path, evidence = _multi_seed_promotion_evidence(summary)
+    metrics["multi_seed_statistical_promotion_present"] = evidence is not None
+    if evidence_path:
+        metrics["multi_seed_statistical_promotion_path"] = evidence_path
+    if evidence is None and not cfg.require_multi_seed_statistical_promotion:
+        return []
+    result = multi_seed_promotion_gate(summary)
+    metrics["multi_seed_statistical_promotion"] = result.metrics
+    warnings.extend(result.warnings)
+    if result.accepted:
+        return []
+    if not cfg.require_multi_seed_statistical_promotion and evidence is None:
+        return []
+    return result.failures
 
 
 def _fatal_status_failures(summary: Mapping[str, Any], cfg: RolloutGateConfig) -> list[str]:
@@ -1981,6 +2230,322 @@ def _backend_availability_failures(
     return failures
 
 
+def _multi_seed_promotion_evidence(
+    payload: Mapping[str, Any],
+) -> tuple[str, Mapping[str, Any] | None]:
+    for key in MULTI_SEED_PROMOTION_SUMMARY_KEYS:
+        value = payload.get(key)
+        if isinstance(value, Mapping):
+            return key, value
+    if _looks_like_multi_seed_evidence(payload):
+        return "", payload
+    for path, value in _walk(payload):
+        if isinstance(value, Mapping) and _looks_like_multi_seed_evidence(value):
+            return path, value
+    return "", None
+
+
+def _looks_like_multi_seed_evidence(value: Mapping[str, Any]) -> bool:
+    schema = str(value.get("schema_version") or "").strip()
+    if schema == MULTI_SEED_PROMOTION_SCHEMA_VERSION:
+        return True
+    metrics = value.get("metrics", value.get("metric_evidence"))
+    if isinstance(metrics, Mapping):
+        canonical = {
+            _canonical_multi_seed_metric(key)
+            for key in metrics
+            if _canonical_multi_seed_metric(key)
+        }
+        return len(canonical.intersection(MULTI_SEED_PROMOTION_METRICS)) >= 2
+    return False
+
+
+def _multi_seed_metric_payloads(evidence: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    raw_metrics = evidence.get("metrics", evidence.get("metric_evidence"))
+    if not isinstance(raw_metrics, Mapping):
+        raw_metrics = evidence
+    result: dict[str, Mapping[str, Any]] = {}
+    for raw_name, raw_value in raw_metrics.items():
+        metric_name = _canonical_multi_seed_metric(raw_name)
+        if not metric_name or not isinstance(raw_value, Mapping):
+            continue
+        result[metric_name] = raw_value
+    return result
+
+
+def _canonical_multi_seed_metric(value: Any) -> str:
+    text = str(value or "").strip().lower().replace("-", "_")
+    text = _MULTI_SEED_METRIC_ALIASES.get(text, text)
+    return text if text in MULTI_SEED_PROMOTION_METRICS else ""
+
+
+def _multi_seed_metric_direction(
+    payload: Mapping[str, Any],
+    spec: MultiSeedMetricSpec,
+) -> str:
+    raw = str(payload.get("direction") or spec.direction or "higher").strip().lower()
+    if raw in {"lower", "lower_is_better", "decrease", "reduction"}:
+        return "lower"
+    if raw in {"higher", "higher_is_better", "increase", "improvement"}:
+        return "higher"
+    return "higher" if spec.canonical_name in _MULTI_SEED_HIGHER_IS_BETTER else "lower"
+
+
+def _multi_seed_minimum_effect(
+    payload: Mapping[str, Any],
+    spec: MultiSeedMetricSpec,
+) -> float:
+    value = _first_finite(
+        payload,
+        (
+            "minimum_effect",
+            "min_effect",
+            "minimum_ci_lower_bound",
+            "required_effect",
+            "min_improvement",
+        ),
+    )
+    if value is None:
+        max_regression = _first_finite(payload, ("maximum_regression", "max_regression"))
+        if max_regression is not None:
+            return -abs(max_regression)
+    return value if value is not None else spec.minimum_effect
+
+
+def _multi_seed_paired_effects(
+    payload: Mapping[str, Any],
+    direction: str,
+) -> tuple[list[tuple[str, float]], list[str]]:
+    failures: list[str] = []
+    paired: list[tuple[str, float]] = []
+    records = _multi_seed_records(payload)
+    if records:
+        for index, record in enumerate(records):
+            seed = _seed_id(record, index)
+            effect = _record_effect(record, direction)
+            if effect is None:
+                failures.append(f"multi_seed_metric_sample_incomplete:index_{index}")
+                continue
+            paired.append((seed, effect))
+        return paired, failures
+
+    baseline_by_seed = _seed_value_mapping(
+        payload.get("baseline_by_seed")
+        or payload.get("control_by_seed")
+        or payload.get("before_by_seed")
+    )
+    candidate_by_seed = _seed_value_mapping(
+        payload.get("candidate_by_seed")
+        or payload.get("promoted_by_seed")
+        or payload.get("after_by_seed")
+    )
+    if baseline_by_seed or candidate_by_seed:
+        common = sorted(set(baseline_by_seed).intersection(candidate_by_seed), key=_seed_sort_key)
+        missing_baseline = sorted(set(candidate_by_seed).difference(baseline_by_seed), key=_seed_sort_key)
+        missing_candidate = sorted(set(baseline_by_seed).difference(candidate_by_seed), key=_seed_sort_key)
+        if missing_baseline:
+            failures.append("multi_seed_metric_unpaired_baseline:" + ",".join(missing_baseline))
+        if missing_candidate:
+            failures.append("multi_seed_metric_unpaired_candidate:" + ",".join(missing_candidate))
+        for seed in common:
+            before = baseline_by_seed[seed]
+            after = candidate_by_seed[seed]
+            effect = after - before if direction == "higher" else before - after
+            paired.append((seed, effect))
+        return paired, failures
+
+    effects_by_seed = _seed_value_mapping(payload.get("effects_by_seed"))
+    if effects_by_seed:
+        return sorted(effects_by_seed.items(), key=lambda item: _seed_sort_key(item[0])), failures
+    return [], ["multi_seed_metric_samples_missing"]
+
+
+def _multi_seed_records(payload: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    for key in (
+        "seed_results",
+        "seeds",
+        "samples",
+        "runs",
+        "paired_results",
+        "observations",
+    ):
+        value = payload.get(key)
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            return [item for item in value if isinstance(item, Mapping)]
+    return []
+
+
+def _seed_id(record: Mapping[str, Any], index: int) -> str:
+    for key in ("seed", "seed_id", "random_seed", "run_seed"):
+        value = record.get(key)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return f"index_{index}"
+
+
+def _record_effect(record: Mapping[str, Any], direction: str) -> float | None:
+    direct = _finite_float(record.get("effect", record.get("improvement")))
+    if direct is not None:
+        return direct
+    before = _first_finite(record, ("baseline", "control", "before"))
+    after = _first_finite(record, ("candidate", "promoted", "after"))
+    if before is None or after is None:
+        return None
+    return after - before if direction == "higher" else before - after
+
+
+def _seed_value_mapping(value: Any) -> dict[str, float]:
+    result: dict[str, float] = {}
+    if isinstance(value, Mapping):
+        for seed, raw in value.items():
+            number = _finite_float(raw)
+            if number is not None:
+                result[str(seed)] = number
+    return result
+
+
+def _multi_seed_pairing_failure(
+    payload: Mapping[str, Any],
+    observed_seeds: set[str],
+) -> str:
+    declared = _string_seed_set(
+        payload.get("seed_set")
+        or payload.get("seeds_evaluated")
+        or payload.get("configured_seeds")
+    )
+    if not declared:
+        return ""
+    if set(declared) != observed_seeds:
+        return (
+            "multi_seed_metric_seed_set_mismatch:"
+            f"declared={','.join(declared)}:"
+            f"observed={','.join(sorted(observed_seeds, key=_seed_sort_key))}"
+        )
+    return ""
+
+
+def _string_seed_set(value: Any) -> list[str]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        return []
+    result = [str(item).strip() for item in value if str(item).strip()]
+    return sorted(result, key=_seed_sort_key)
+
+
+def _multi_seed_failure_attribution(
+    payload: Mapping[str, Any],
+    *,
+    effects_by_seed: Mapping[str, float],
+) -> tuple[dict[str, int], bool]:
+    attribution: dict[str, int] = {}
+    explicit = payload.get("failure_family_attribution")
+    if isinstance(explicit, Mapping):
+        for family, raw_count in explicit.items():
+            count = _finite_float(raw_count)
+            if count is not None and count > 0:
+                attribution[str(family)] = attribution.get(str(family), 0) + int(count)
+        return attribution, True
+
+    present = False
+    for index, record in enumerate(_multi_seed_records(payload)):
+        seed = _seed_id(record, index)
+        families = _failure_families_from_record(record)
+        if families:
+            present = True
+        elif seed in effects_by_seed and effects_by_seed[seed] >= 0.0:
+            families = ("none",)
+            present = True
+        elif seed in effects_by_seed:
+            families = ("unattributed_regression",)
+        for family in families:
+            attribution[family] = attribution.get(family, 0) + 1
+    return attribution, present
+
+
+def _failure_families_from_record(record: Mapping[str, Any]) -> tuple[str, ...]:
+    for key in (
+        "failure_family",
+        "failure_families",
+        "failure_family_attribution",
+        "family_failures",
+        "failure_attribution",
+        "block_reasons",
+    ):
+        value = record.get(key)
+        if value is None:
+            continue
+        if isinstance(value, Mapping):
+            return tuple(str(family) for family, count in value.items() if count)
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            return tuple(str(item) for item in value if str(item))
+        text = str(value).strip()
+        if text:
+            return (text,)
+    return ()
+
+
+def _effect_statistics(
+    effects: Sequence[float],
+    confidence_level: float,
+) -> dict[str, float | None]:
+    count = len(effects)
+    if count == 0:
+        return {
+            "mean": None,
+            "variance": None,
+            "standard_error": None,
+            "ci_lower": None,
+            "ci_upper": None,
+        }
+    mean = sum(effects) / count
+    variance = (
+        sum((value - mean) ** 2 for value in effects) / (count - 1)
+        if count > 1
+        else None
+    )
+    if count > 1 and variance is not None:
+        standard_error = math.sqrt(variance / count)
+        critical = _t_critical(confidence_level, count - 1)
+        half_width = critical * standard_error
+    else:
+        standard_error = None
+        half_width = 0.0 if count > 1 else None
+    return {
+        "mean": round(mean, 12),
+        "variance": round(variance, 12) if variance is not None else None,
+        "standard_error": round(standard_error, 12) if standard_error is not None else None,
+        "ci_lower": round(mean - half_width, 12) if half_width is not None else None,
+        "ci_upper": round(mean + half_width, 12) if half_width is not None else None,
+    }
+
+
+def _t_critical(confidence_level: float, degrees_of_freedom: int) -> float:
+    # Two-sided Student-t critical values for common promotion confidence levels.
+    table = {
+        0.80: (3.078, 1.886, 1.638, 1.533, 1.476, 1.440, 1.415, 1.397, 1.383, 1.372),
+        0.90: (6.314, 2.920, 2.353, 2.132, 2.015, 1.943, 1.895, 1.860, 1.833, 1.812),
+        0.95: (12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228),
+        0.98: (31.821, 6.965, 4.541, 3.747, 3.365, 3.143, 2.998, 2.896, 2.821, 2.764),
+        0.99: (63.657, 9.925, 5.841, 4.604, 4.032, 3.707, 3.499, 3.355, 3.250, 3.169),
+    }
+    level = min(table, key=lambda candidate: abs(candidate - confidence_level))
+    if degrees_of_freedom <= 0:
+        return math.inf
+    if degrees_of_freedom <= 10:
+        return table[level][degrees_of_freedom - 1]
+    normal = {0.80: 1.282, 0.90: 1.645, 0.95: 1.960, 0.98: 2.326, 0.99: 2.576}[level]
+    # A first-order correction keeps df=11..30 conservative without carrying a
+    # large lookup table in this operator script.
+    return normal + (normal**3 + normal) / (4.0 * degrees_of_freedom)
+
+
+def _seed_sort_key(value: Any) -> tuple[int, int | str]:
+    text = str(value)
+    try:
+        return (0, int(text))
+    except ValueError:
+        return (1, text)
+
+
 def _is_nonzero_exit(value: Any) -> bool:
     if value is None:
         return False
@@ -2105,7 +2670,27 @@ def build_parser() -> argparse.ArgumentParser:
     gate_parser.add_argument("--max-reconstruction-rate-regression", type=float, default=0.0)
     gate_parser.add_argument("--max-source-copy-penalty-regression", type=float, default=0.0)
     gate_parser.add_argument("--max-todo-productivity-regression", type=float, default=0.0)
+    gate_parser.add_argument(
+        "--require-multi-seed-statistical-promotion",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Require paired multi-seed confidence-interval promotion evidence",
+    )
     gate_parser.set_defaults(func=_cmd_gate)
+
+    multi_seed_parser = subparsers.add_parser(
+        "multi-seed-gate",
+        help="Gate paired multi-seed statistical promotion evidence",
+    )
+    multi_seed_parser.add_argument("--evidence-path", "--summary-path", required=True, type=Path)
+    multi_seed_parser.add_argument(
+        "--evidence-output",
+        type=Path,
+        help="Atomically store the complete multi-seed promotion decision",
+    )
+    multi_seed_parser.add_argument("--min-seed-count", type=int, default=3)
+    multi_seed_parser.add_argument("--confidence-level", type=float, default=0.95)
+    multi_seed_parser.set_defaults(func=_cmd_multi_seed_gate)
 
     staged_parser = subparsers.add_parser(
         "staged-gate",
@@ -2142,6 +2727,12 @@ def build_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=False,
         help="Require rollback paths to exist and match their recorded SHA-256",
+    )
+    staged_parser.add_argument(
+        "--require-multi-seed-statistical-promotion",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Require multi-seed statistical evidence in the final production snapshot",
     )
     staged_parser.set_defaults(func=_cmd_staged_gate)
     return parser
@@ -2184,9 +2775,39 @@ def _cmd_gate(args: argparse.Namespace) -> int:
                 args.max_source_copy_penalty_regression
             ),
             max_todo_productivity_regression=args.max_todo_productivity_regression,
+            require_multi_seed_statistical_promotion=(
+                args.require_multi_seed_statistical_promotion
+            ),
         ),
     )
     print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+    return 0 if result.accepted else 1
+
+
+def _cmd_multi_seed_gate(args: argparse.Namespace) -> int:
+    try:
+        payload = load_summary(args.evidence_path)
+        result = multi_seed_promotion_gate(
+            payload,
+            MultiSeedPromotionConfig(
+                min_seed_count=args.min_seed_count,
+                confidence_level=args.confidence_level,
+            ),
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        result = RolloutGateResult(
+            accepted=False,
+            failures=[f"multi_seed_evidence_unreadable:{type(exc).__name__}:{exc}"],
+            metrics={"schema_version": MULTI_SEED_PROMOTION_SCHEMA_VERSION},
+        )
+    decision = result.to_dict()
+    decision["schema_version"] = MULTI_SEED_PROMOTION_SCHEMA_VERSION
+    decision["evidence_path"] = str(args.evidence_path)
+    if args.evidence_path.is_file():
+        decision["evidence_sha256"] = snapshot_sha256(args.evidence_path)
+    if args.evidence_output is not None:
+        write_rollout_evidence(args.evidence_output, decision)
+    print(json.dumps(decision, indent=2, sort_keys=True))
     return 0 if result.accepted else 1
 
 
@@ -2214,6 +2835,9 @@ def _cmd_staged_gate(args: argparse.Namespace) -> int:
                 ),
                 min_state_to_merged_patch_lag_reduction=(
                     args.min_state_to_merged_patch_lag_reduction
+                ),
+                require_multi_seed_statistical_promotion=(
+                    args.require_multi_seed_statistical_promotion
                 ),
             ),
         )
