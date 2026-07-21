@@ -92,6 +92,13 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cac
     configuration_digest as legal_ir_evaluation_configuration_digest,
     sample_content_hash as legal_ir_evaluation_sample_hash,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
+    LEGAL_IR_METRIC_LINEAGE_SCHEMA_VERSION,
+    attach_metric_lineage,
+    build_compiler_ir_metric_lineage,
+    build_learned_ir_metric_lineage,
+    metric_lineage_matches_block,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.codex_scope_scheduler import (
     CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION,
     MAX_INITIAL_CODEX_WORKERS,
@@ -423,7 +430,7 @@ _BRIDGE_IR_REPORT_CACHE: Dict[str, Any] = {}
 _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
-_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v10"
+_COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v11"
 _COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v3"
 _COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v9"
@@ -498,6 +505,70 @@ def _add_compiler_ir_metric_aliases(block: Mapping[str, Any]) -> Dict[str, Any]:
         if isinstance(value, (int, float)):
             aliased[alias_name] = value
     return aliased
+
+
+def _compiler_ir_codec_lineage_identity(codec: Any) -> Dict[str, Any]:
+    return {
+        "config": _metric_cache_object_payload(getattr(codec, "config", None)),
+        "type": f"{codec.__class__.__module__}.{codec.__class__.__qualname__}",
+    }
+
+
+def _compiler_ir_metric_lineage(
+    samples: Sequence[Any],
+    *,
+    codec: Any,
+    guidance_cache_records: Sequence[Mapping[str, Any]] = (),
+    guidance_top_k: int,
+    max_sample_metric_records: int,
+    max_sample_text_chars: int,
+    metric_text_policy: str,
+    sample_timeout_seconds: float,
+    use_autoencoder_guidance: bool,
+    compiler_commit: str,
+    state_hash: str,
+    metric_schema: str,
+    config_hash: str,
+    cache_namespace: str,
+    cache_key: str,
+) -> Any:
+    codec_identity = _compiler_ir_codec_lineage_identity(codec)
+    guidance_payload = _metric_cache_object_payload(list(guidance_cache_records))
+    config_payload = {
+        "codec": codec_identity,
+        "compiler_guidance_cache_policy": _COMPILER_IR_GUIDANCE_CACHE_POLICY,
+        "guidance_diagnostics_version": _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION,
+        "guidance_top_k": int(guidance_top_k),
+        "max_sample_metric_records": int(max_sample_metric_records),
+        "max_sample_text_chars": int(max_sample_text_chars),
+        "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
+        "metric_text_policy": _normalise_compiler_ir_metric_text_policy(
+            metric_text_policy
+        ),
+        "sample_timeout_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
+        "sample_timeout_seconds": round(max(0.0, float(sample_timeout_seconds or 0.0)), 6),
+        "use_autoencoder_guidance": bool(use_autoencoder_guidance),
+    }
+    if config_hash:
+        config_payload["caller_config_hash"] = str(config_hash)
+    target_payload = {
+        "codec": codec_identity,
+        "compiler_guidance": guidance_payload,
+        "metric_profile_version": COMPILER_IR_METRIC_PROFILE_VERSION,
+        "path": "deterministic_compiler_ir",
+        "sample_text_policy": config_payload["metric_text_policy"],
+    }
+    return build_compiler_ir_metric_lineage(
+        samples,
+        codec_identity=codec_identity,
+        state_hash=str(state_hash or "state-independent"),
+        compiler_commit=str(compiler_commit or _compiler_ir_sample_code_fingerprint()),
+        metric_schema=str(metric_schema or AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION),
+        target_payload=target_payload,
+        cache_namespace=cache_namespace,
+        cache_key=cache_key,
+        config_payload=config_payload,
+    )
 
 
 def _metric_disk_cache_enabled() -> bool:
@@ -1831,7 +1902,18 @@ def _family_distribution(distribution: Mapping[str, Any]) -> Dict[str, float]:
     return {family: round(value / total, 9) for family, value in sorted(totals.items())}
 
 
-def learned_ir_metric_block(evaluation: Any) -> Dict[str, Any]:
+def learned_ir_metric_block(
+    evaluation: Any,
+    *,
+    samples: Optional[Sequence[Any]] = None,
+    state_hash: str = "",
+    compiler_commit: str = "compiler-independent",
+    metric_schema: str = AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+    target_hash: str = "",
+    cache_namespace: str = "learned_ir_metric_block",
+    cache_key: str = "not-cached",
+    config_hash: str = "",
+) -> Dict[str, Any]:
     """Return the learned LegalIR-view alignment metrics as a stable block."""
 
     losses = dict(getattr(evaluation, "legal_ir_losses", {}) or {})
@@ -1908,7 +1990,18 @@ def learned_ir_metric_block(evaluation: Any) -> Dict[str, Any]:
     block["view_family_metrics"] = family_block["view_family_metrics"]
     block["view_family_macro_score"] = family_block["macro_score"]
     block.update(family_block["flat_metrics"])
-    return block
+    lineage = build_learned_ir_metric_lineage(
+        evaluation,
+        samples=samples,
+        state_hash=state_hash,
+        compiler_commit=compiler_commit,
+        metric_schema=metric_schema,
+        target_hash=target_hash,
+        cache_namespace=cache_namespace,
+        cache_key=cache_key,
+        config_hash=config_hash,
+    )
+    return attach_metric_lineage(block, lineage)
 
 
 def legal_ir_validation_view_family_metric_block(
@@ -1919,11 +2012,28 @@ def legal_ir_validation_view_family_metric_block(
 ) -> Dict[str, Any]:
     """Return the production validation report split by canonical view family."""
 
-    return legal_ir_view_family_metric_block(
+    block = legal_ir_view_family_metric_block(
         ir_metrics=compiler_ir_validation,
         autoencoder_metrics=autoencoder_validation,
         hammer_guidance=hammer_validation,
     )
+    lineages: Dict[str, Any] = {}
+    compiler_lineage = (
+        compiler_ir_validation.get("metric_lineage")
+        if isinstance(compiler_ir_validation, Mapping)
+        else None
+    )
+    if isinstance(compiler_lineage, Mapping):
+        lineages["deterministic_compiler_ir"] = dict(compiler_lineage)
+    learned_lineage = None
+    if isinstance(autoencoder_validation, Mapping):
+        learned_lineage = autoencoder_validation.get("metric_lineage")
+    if isinstance(learned_lineage, Mapping):
+        lineages["learned_ir"] = dict(learned_lineage)
+    if lineages:
+        block["metric_lineage_schema_version"] = LEGAL_IR_METRIC_LINEAGE_SCHEMA_VERSION
+        block["metric_lineages"] = lineages
+    return block
 
 
 def _guidance_slot_safe_key(value: Any) -> str:
@@ -2452,7 +2562,28 @@ def compiler_ir_metric_block(
         }
         if evaluation_cache is not None:
             empty_block["evaluation_artifact_cache"] = evaluation_cache.summary()
-        return empty_block
+        lineage = _compiler_ir_metric_lineage(
+            sample_list,
+            codec=codec,
+            guidance_cache_records=(),
+            guidance_top_k=guidance_top_k,
+            max_sample_metric_records=max_sample_metric_records,
+            max_sample_text_chars=max_sample_text_chars,
+            metric_text_policy=metric_text_policy,
+            sample_timeout_seconds=sample_timeout_seconds,
+            use_autoencoder_guidance=use_autoencoder_guidance,
+            compiler_commit=compiler_commit,
+            state_hash=state_hash,
+            metric_schema=metric_schema,
+            config_hash=config_hash,
+            cache_namespace=(
+                "legal_ir_evaluation_artifact"
+                if evaluation_cache is not None
+                else "compiler_ir_metric_block"
+            ),
+            cache_key="empty",
+        )
+        return attach_metric_lineage(empty_block, lineage)
 
     started_at = time.time()
     max_sample_text_chars = max(0, int(max_sample_text_chars or 0))
@@ -2553,14 +2684,36 @@ def compiler_ir_metric_block(
             metric_text_policy=metric_text_policy,
             sample_timeout_seconds=sample_timeout_seconds,
         )
+        expected_cached_lineage = _compiler_ir_metric_lineage(
+            sample_list,
+            codec=codec,
+            guidance_cache_records=guidance_cache_records,
+            guidance_top_k=guidance_top_k,
+            max_sample_metric_records=max_sample_metric_records,
+            max_sample_text_chars=max_sample_text_chars,
+            metric_text_policy=metric_text_policy,
+            sample_timeout_seconds=sample_timeout_seconds,
+            use_autoencoder_guidance=use_autoencoder_guidance,
+            compiler_commit=compiler_commit,
+            state_hash=state_hash,
+            metric_schema=metric_schema,
+            config_hash=config_hash,
+            cache_namespace="compiler_ir_metric_block",
+            cache_key=persistent_cache_key,
+        )
         cached_block = _read_metric_disk_cache(
             "compiler_ir_metric_block",
             persistent_cache_key,
         )
-        if cached_block is not None and _compiler_ir_guidance_block_cache_compatible(
-            cached_block,
-            use_autoencoder_guidance=use_autoencoder_guidance,
-        ):
+        cached_block_usable = (
+            cached_block is not None
+            and _compiler_ir_guidance_block_cache_compatible(
+                cached_block,
+                use_autoencoder_guidance=use_autoencoder_guidance,
+            )
+            and metric_lineage_matches_block(cached_block, expected_cached_lineage)
+        )
+        if cached_block_usable:
             cached = dict(cached_block)
             cached["persistent_cache_enabled"] = True
             cached["persistent_cache_hit"] = True
@@ -2589,7 +2742,7 @@ def compiler_ir_metric_block(
             emit_progress(
                 "persistent_cache_stale",
                 cache_key=persistent_cache_key,
-                reason="guided_diagnostics_schema",
+                reason="metric_lineage_or_guided_diagnostics_schema",
             )
         emit_progress("persistent_cache_miss", cache_key=persistent_cache_key)
 
@@ -2646,6 +2799,7 @@ def compiler_ir_metric_block(
     persistent_sample_cache_hits = 0
     persistent_sample_cache_misses = 0
     persistent_sample_timeout_cache_hits = 0
+    sample_cache_lineage_keys: List[str] = []
     guidance_frame_boost_counts: List[float] = []
     guidance_frame_changed_count = 0
     guidance_feature_groups: Counter[str] = Counter()
@@ -2752,6 +2906,7 @@ def compiler_ir_metric_block(
             metric_sample,
             codec=codec,
         )
+        sample_cache_lineage_keys.append(sample_cache_key)
         evaluation_key: Optional[LegalIREvaluationCacheKey] = None
         evaluation_artifact: Optional[LegalIREvaluationArtifact] = None
         if evaluation_cache is not None:
@@ -2766,6 +2921,7 @@ def compiler_ir_metric_block(
                 metric_schema=metric_schema,
                 config_hash=config_hash,
             )
+            sample_cache_lineage_keys[-1] = evaluation_key.digest
             evaluation_artifact = evaluation_cache.get(
                 evaluation_key,
                 role=evaluation_role,
@@ -3351,6 +3507,38 @@ def compiler_ir_metric_block(
             9,
         )
     block = _add_compiler_ir_metric_aliases(block)
+    block_lineage = _compiler_ir_metric_lineage(
+        sample_list,
+        codec=codec,
+        guidance_cache_records=guidance_cache_records,
+        guidance_top_k=guidance_top_k,
+        max_sample_metric_records=max_sample_metric_records,
+        max_sample_text_chars=max_sample_text_chars,
+        metric_text_policy=metric_text_policy,
+        sample_timeout_seconds=sample_timeout_seconds,
+        use_autoencoder_guidance=use_autoencoder_guidance,
+        compiler_commit=compiler_commit,
+        state_hash=state_hash,
+        metric_schema=metric_schema,
+        config_hash=config_hash,
+        cache_namespace=(
+            "legal_ir_evaluation_artifact"
+            if evaluation_cache is not None
+            else "compiler_ir_metric_block"
+            if persistent_cache_key is not None
+            else "compiler_ir_metric_sample"
+        ),
+        cache_key=(
+            persistent_cache_key
+            if persistent_cache_key is not None
+            else hashlib.sha256(
+                _stable_metric_json(sorted(sample_cache_lineage_keys)).encode("utf-8")
+            ).hexdigest()
+            if sample_cache_lineage_keys
+            else "not-cached"
+        ),
+    )
+    block = attach_metric_lineage(block, block_lineage)
     if evaluation_cache is not None:
         block["evaluation_artifact_cache"] = evaluation_cache.summary()
         block["evaluation_artifact_role"] = str(evaluation_role or "unspecified")
@@ -18598,14 +18786,31 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "expected_holdout": True,
                 }
             )
-            learned_ir_before_train = learned_ir_metric_block(before_train)
-            learned_ir_before_validation = learned_ir_metric_block(before_validation)
-            learned_ir_train = learned_ir_metric_block(after_train)
-            learned_ir_validation = learned_ir_metric_block(after_validation)
+            learned_after_state_hash = autoencoder_canonical_state_hash(state)
+            learned_ir_before_train = learned_ir_metric_block(
+                before_train,
+                samples=train_samples,
+                state_hash=baseline_evaluation_state_hash,
+            )
+            learned_ir_before_validation = learned_ir_metric_block(
+                before_validation,
+                samples=acceptance_validation_samples,
+                state_hash=baseline_evaluation_state_hash,
+            )
+            learned_ir_train = learned_ir_metric_block(
+                after_train,
+                samples=train_samples,
+                state_hash=learned_after_state_hash,
+            )
+            learned_ir_validation = learned_ir_metric_block(
+                after_validation,
+                samples=acceptance_validation_samples,
+                state_hash=learned_after_state_hash,
+            )
             legal_ir_view_family_validation = (
                 legal_ir_validation_view_family_metric_block(
                     compiler_ir_validation=compiler_ir_validation,
-                    autoencoder_validation=after_validation,
+                    autoencoder_validation=learned_ir_validation,
                     hammer_validation=dict(
                         daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
                     ),
