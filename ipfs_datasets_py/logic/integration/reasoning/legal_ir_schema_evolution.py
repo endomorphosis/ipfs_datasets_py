@@ -47,6 +47,7 @@ from .legal_ir_rule_distillation import (
     LEGAL_IR_RULE_DISTILLATION_SCHEMA_VERSION,
     LEGAL_IR_RULE_DISTILLATION_TODO_SCHEMA_VERSION,
 )
+from .legal_ir_source_maps import LEGAL_IR_SOURCE_MAP_SCHEMA_VERSION
 from .legal_ir_verified_gap_repairs import (
     LEGAL_IR_CLUSTERED_GAP_REPAIR_SCHEMA_VERSION,
     LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION,
@@ -101,6 +102,7 @@ class LegalIRArtifactFamily(str, Enum):
     COMPILER_OUTPUT = "compiler_output"
     METRIC = "metric"
     PROOF_FEEDBACK = "proof_feedback"
+    SOURCE_MAP = "source_map"
 
 
 class LegalIRSchemaStatus(str, Enum):
@@ -1130,6 +1132,13 @@ _VERSIONS: tuple[LegalIRSchemaVersion, ...] = (
         description="Deterministic modal decompiler repair output.",
     ),
     _version(
+        LEGAL_IR_SOURCE_MAP_SCHEMA_VERSION,
+        LegalIRArtifactFamily.SOURCE_MAP,
+        required=("schema_version", "source_map_id", "sources", "spans", "nodes"),
+        identity=("source_map_id",),
+        description="Lossless LegalIR source map with provenance spans and transform graph.",
+    ),
+    _version(
         LEGAL_IR_VERIFIED_GAP_REPAIR_SCHEMA_VERSION,
         LegalIRArtifactFamily.COMPILER_OUTPUT,
         required=("schema_version", "repair_id", "target_component"),
@@ -1287,6 +1296,8 @@ def _artifact_family(value: LegalIRArtifactFamily | str) -> LegalIRArtifactFamil
         "compiler_repair": LegalIRArtifactFamily.COMPILER_OUTPUT,
         "decompiler_repair": LegalIRArtifactFamily.COMPILER_OUTPUT,
         "metrics": LegalIRArtifactFamily.METRIC,
+        "source_map": LegalIRArtifactFamily.SOURCE_MAP,
+        "source_maps": LegalIRArtifactFamily.SOURCE_MAP,
     }
     if normalized in aliases:
         return aliases[normalized]
@@ -1472,6 +1483,7 @@ __all__ = [
     "LEANSTRAL_METRIC_ATTRIBUTION_SCHEMA_VERSION",
     "LEANSTRAL_PATCH_FEEDBACK_REPORT_SCHEMA_VERSION",
     "LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION",
+    "LEGAL_IR_SOURCE_MAP_SCHEMA_VERSION",
     "LEGAL_IR_TARGET_DISK_CACHE_VERSION",
     "MODAL_COMPILER_REPAIR_SCHEMA_VERSION",
     "MODAL_DECOMPILER_REPAIR_SCHEMA_VERSION",
