@@ -1901,7 +1901,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-102 Resolve 1 preflight-conflicting backlogged worktree merges
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: ops
