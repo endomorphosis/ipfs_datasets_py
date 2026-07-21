@@ -316,6 +316,7 @@ class LeanstralAuditWorkerConfig:
     max_new_tokens: int = 1800
     batch_size: int = 1
     batch_min_size: int = 1
+    batch_queue_max_items: int = 0
     batch_max_wait_seconds: float = 0.05
     batch_token_budget_bucket_size: int = 256
     batch_deadline_bucket_seconds: float = 1.0
@@ -361,6 +362,9 @@ class LeanstralAuditWorkerConfig:
             self.bounded_batch_size(),
             max(1, int(self.batch_min_size or 1)),
         )
+
+    def bounded_batch_queue_max_items(self) -> int:
+        return max(0, int(self.batch_queue_max_items or 0))
 
     def bounded_batch_max_wait_seconds(self) -> float:
         value = float(self.batch_max_wait_seconds or 0.0)
@@ -1822,12 +1826,14 @@ class LeanstralAuditWorker:
         from .leanstral_audit_worker import (
             LeanstralBatchScheduler,
             LeanstralBatchSchedulerConfig,
+            LeanstralQueueBackpressureError,
         )
 
         scheduler = LeanstralBatchScheduler(
             LeanstralBatchSchedulerConfig(
                 min_batch_size=self.config.bounded_batch_min_size(),
                 max_batch_size=self.config.bounded_batch_size(),
+                max_queue_items=self.config.bounded_batch_queue_max_items(),
                 max_wait_seconds=self.config.bounded_batch_max_wait_seconds(),
                 token_budget_bucket_size=(
                     self.config.bounded_batch_token_budget_bucket_size()
@@ -1845,15 +1851,27 @@ class LeanstralAuditWorker:
         try:
             enqueue_now = time.monotonic()
             for item in provider_pending:
-                scheduler.enqueue(
-                    item,
-                    model=self.config.model,
-                    token_budget=self.config.bounded_max_new_tokens(),
-                    deadline_monotonic=enqueue_now + self.config.timeout(),
-                    provider=self.config.provider,
-                    use_mesh=bool(self.config.batch_use_mesh),
-                    now=enqueue_now,
-                )
+                try:
+                    scheduler.enqueue(
+                        item,
+                        model=self.config.model,
+                        token_budget=self.config.bounded_max_new_tokens(),
+                        deadline_monotonic=enqueue_now + self.config.timeout(),
+                        provider=self.config.provider,
+                        use_mesh=bool(self.config.batch_use_mesh),
+                        now=enqueue_now,
+                    )
+                except LeanstralQueueBackpressureError as exc:
+                    results.append(
+                        _work_result(
+                            item,
+                            status="queue_backpressure",
+                            attempts=0,
+                            reasons=(exc.reason,),
+                            elapsed=0.0,
+                        )
+                    )
+                    continue
                 if self.is_cancelled(item.request.request_id):
                     scheduler.cancel(item.request.request_id)
             scheduler.close()
@@ -1908,6 +1926,23 @@ class LeanstralAuditWorker:
             for result in results
             if result.status in {"failed", "timeout", "unavailable"}
         )
+        scheduler.telemetry.verified_audit_count = sum(
+            1
+            for result in all_results
+            if result.validation is not None
+            and result.validation.accepted
+            and result.validation.verified
+        )
+        scheduler.telemetry.estimated_total_tokens = sum(
+            self.config.bounded_max_new_tokens()
+            for result in results
+            if result.llm_called
+        )
+        scheduler.telemetry.cache_value_tokens = sum(
+            self.config.bounded_max_new_tokens()
+            for result in results
+            if result.cache_hit
+        )
         runtime = time.monotonic() - started
         return LeanstralAuditWorkerSummary(
             schema_version=LEANSTRAL_AUDIT_WORKER_SCHEMA_VERSION,
@@ -1918,7 +1953,7 @@ class LeanstralAuditWorker:
             completed_count=sum(1 for result in all_results if result.status in {"accepted", "cache_hit"}),
             cache_hit_count=sum(1 for result in results if result.cache_hit),
             llm_call_count=sum(1 for result in results if result.llm_called),
-            rejected_count=sum(1 for result in all_results if result.status in {"rejected", "provider_disabled", "model_rejected"}),
+            rejected_count=sum(1 for result in all_results if result.status in {"rejected", "provider_disabled", "model_rejected", "queue_backpressure"}),
             failed_count=sum(1 for result in all_results if result.status in {"failed", "timeout"}),
             skipped_checkpoint_count=skipped,
             checkpoint_path=str(self.config.checkpoint_path or ""),

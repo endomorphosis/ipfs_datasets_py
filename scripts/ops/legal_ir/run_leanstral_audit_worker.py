@@ -126,6 +126,12 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Dispatch a compatible group immediately once it reaches this size.",
     )
     parser.add_argument(
+        "--batch-queue-max-items",
+        type=int,
+        default=0,
+        help="Reject cache misses before provider admission once this many items are queued; 0 disables the cap.",
+    )
+    parser.add_argument(
         "--batch-max-wait-seconds",
         type=float,
         default=0.05,
@@ -300,6 +306,7 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
         prompt_payload_mode=args.prompt_payload_mode,
         batch_size=args.batch_size,
         batch_min_size=args.batch_min_size,
+        batch_queue_max_items=args.batch_queue_max_items,
         batch_max_wait_seconds=args.batch_max_wait_seconds,
         batch_token_budget_bucket_size=args.batch_token_budget_bucket_size,
         batch_deadline_bucket_seconds=args.batch_deadline_bucket_seconds,
