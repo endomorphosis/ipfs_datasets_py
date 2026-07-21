@@ -1482,7 +1482,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-074 Add semantic-equivalence metrics beyond CE and cosine
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: evaluation-integrity
