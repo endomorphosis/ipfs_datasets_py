@@ -196,6 +196,15 @@ def test_rollout_scripts_dry_run_include_hammer_leanstral_gates() -> None:
     expected_metrics = hard_guardrail_metrics_csv()
     assert "--daemon-hammer-guidance-enabled true" in smoke.stdout
     assert "--leanstral-direct-guidance-projection-enabled true" in smoke.stdout
+    assert "--leanstral-rule-gap-wait-seconds 180" in smoke.stdout
+    assert "--autoencoder-device cuda" in smoke.stdout
+    assert "--paired-leanstral-worker-enabled true" in smoke.stdout
+    assert "--paired-leanstral-require-cuda true" in smoke.stdout
+    smoke_script = SMOKE_SCRIPT.read_text(encoding="utf-8")
+    assert "integrated_stack_verified" in smoke_script
+    assert "Codex did not claim or execute queue work" in smoke_script
+    assert "autoencoder did not receive Leanstral report in-cycle" in smoke_script
+    assert "Hammer integration verification failed" in smoke_script
     assert f"gate_metrics={expected_metrics}" in smoke.stdout
     assert "summary_path=" in smoke.stdout
     assert "final_seconds=86400" in hparam.stdout

@@ -393,6 +393,10 @@ for idx in "${!CONFIGS[@]}"; do
     echo "[trial] missing summary: ${summary_path}"
     continue
   fi
+  if (( trial_exit_code != 0 )); then
+    echo "[trial] skipped_nonzero_exit run_id=${trial_id} code=${trial_exit_code}"
+    continue
+  fi
 
   run_summary_gate "${summary_path}" "hparam_trial"
 

@@ -10306,6 +10306,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "leanstral_rule_gap_projection_enabled", True)).lower(),
         "--leanstral-rule-gap-report-path",
         str(getattr(args, "leanstral_rule_gap_report_path", "")),
+        "--leanstral-rule-gap-wait-seconds",
+        str(getattr(args, "leanstral_rule_gap_wait_seconds", 0.0)),
         "--leanstral-rule-gap-max-todos-per-scope",
         str(getattr(args, "leanstral_rule_gap_max_todos_per_scope", 2)),
         "--leanstral-rule-gap-require-executor-available",
@@ -14689,6 +14691,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--leanstral-rule-gap-wait-seconds",
+        type=float,
+        default=0.0,
+        help=(
+            "Wait up to this many seconds for the managed Leanstral report "
+            "before projecting rule gaps in the current cycle."
+        ),
+    )
+    parser.add_argument(
         "--leanstral-rule-gap-max-todos-per-scope",
         type=int,
         default=2,
@@ -15857,6 +15868,24 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--paired-poll-seconds", type=float, default=1.0)
     parser.add_argument("--paired-grace-seconds", type=float, default=300.0)
     parser.add_argument(
+        "--paired-leanstral-worker-enabled",
+        type=parse_bool_flag,
+        default=False,
+        help="Run the Leanstral audit watcher as a managed paired child.",
+    )
+    parser.add_argument(
+        "--paired-leanstral-require-cuda",
+        type=parse_bool_flag,
+        default=False,
+        help="Fail the managed Leanstral worker if llama.cpp CUDA is unavailable.",
+    )
+    parser.add_argument(
+        "--paired-leanstral-grace-seconds",
+        type=float,
+        default=900.0,
+        help="Additional bounded time for the managed Leanstral report handoff.",
+    )
+    parser.add_argument(
         "--paired-codex-disable-cuda",
         type=parse_bool_flag,
         default=True,
@@ -16063,6 +16092,19 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     )
     auto_stdout_path = log_dir / f"{paired['autoencoder_run_id']}.orchestrator.stdout.log"
     auto_stderr_path = log_dir / f"{paired['autoencoder_run_id']}.orchestrator.stderr.log"
+    leanstral_enabled = bool(getattr(args, "paired_leanstral_worker_enabled", False))
+    leanstral_run_id = str(paired["autoencoder_run_id"])
+    leanstral_command = [
+        "bash",
+        str(root / "scripts" / "ops" / "legal_ir" / "watch_leanstral_audit_worker.sh"),
+        leanstral_run_id,
+        str(os.getpid()),
+    ]
+    leanstral_stdout_path = log_dir / f"{leanstral_run_id}.leanstral.stdout.log"
+    leanstral_stderr_path = log_dir / f"{leanstral_run_id}.leanstral.stderr.log"
+    leanstral_report_path = (
+        root / "workspace" / "leanstral-audit-worker" / f"{leanstral_run_id}.rule-gaps.json"
+    )
     codex_children = list(paired.get("codex_children") or [])
     if not codex_children:
         codex_children = [
@@ -16101,6 +16143,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "autoencoder_run_id": paired["autoencoder_run_id"],
         "autoencoder_stderr_path": str(auto_stderr_path),
         "autoencoder_stdout_path": str(auto_stdout_path),
+        "leanstral_worker_enabled": leanstral_enabled,
+        "leanstral_command": leanstral_command if leanstral_enabled else [],
+        "leanstral_run_id": leanstral_run_id if leanstral_enabled else None,
+        "leanstral_stdout_path": str(leanstral_stdout_path),
+        "leanstral_stderr_path": str(leanstral_stderr_path),
         "codex_command": list(paired["codex_command"]),
         "codex_children": codex_child_summaries,
         "codex_child_count": len(codex_child_summaries),
@@ -16154,6 +16201,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
 
     started = time.time()
     auto_process: Optional[subprocess.Popen[str]] = None
+    leanstral_process: Optional[subprocess.Popen[str]] = None
+    leanstral_exit_code: Optional[int] = None
     codex_processes: Dict[str, subprocess.Popen[str]] = {}
     auto_exit_code: Optional[int] = None
     codex_exit_codes: Dict[str, Optional[int]] = {
@@ -16182,6 +16231,36 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     "child_run_id": paired["autoencoder_run_id"],
                 },
             )
+
+            if leanstral_enabled:
+                leanstral_stdout = stack.enter_context(
+                    leanstral_stdout_path.open("a", encoding="utf-8")
+                )
+                leanstral_stderr = stack.enter_context(
+                    leanstral_stderr_path.open("a", encoding="utf-8")
+                )
+                leanstral_env = os.environ.copy()
+                if bool(getattr(args, "paired_leanstral_require_cuda", False)):
+                    leanstral_env["LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR"] = "cuda"
+                    leanstral_env["LEANSTRAL_AUDIT_REQUIRE_CUDA"] = "1"
+                leanstral_process = subprocess.Popen(
+                    leanstral_command,
+                    cwd=root,
+                    env=leanstral_env,
+                    stdout=leanstral_stdout,
+                    stderr=leanstral_stderr,
+                    text=True,
+                )
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "event": "paired_child_started",
+                        "child_role": "leanstral",
+                        "child_pid": leanstral_process.pid,
+                        "child_run_id": leanstral_run_id,
+                    },
+                )
 
             launch_delay = max(0.0, float(args.paired_launch_delay_seconds))
             if launch_delay > 0.0:
@@ -16216,9 +16295,20 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 )
 
             poll_seconds = max(0.2, float(args.paired_poll_seconds))
-            max_wait = float(args.duration_seconds) + max(0.0, float(args.paired_grace_seconds))
+            max_wait = (
+                float(args.duration_seconds)
+                + max(0.0, float(args.paired_grace_seconds))
+                + (
+                    max(0.0, float(args.paired_leanstral_grace_seconds))
+                    if leanstral_enabled
+                    else 0.0
+                )
+            )
             while True:
                 auto_exit_code = auto_process.poll()
+                leanstral_exit_code = (
+                    leanstral_process.poll() if leanstral_process is not None else None
+                )
                 codex_exit_codes = {
                     run_id: process.poll()
                     for run_id, process in codex_processes.items()
@@ -16230,10 +16320,19 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 }
                 summary["codex_pid"] = next(iter(summary["codex_pids"].values()), None)
                 summary["autoencoder_exit_code"] = auto_exit_code
+                summary["leanstral_pid"] = (
+                    leanstral_process.pid if leanstral_process is not None else None
+                )
+                summary["leanstral_exit_code"] = leanstral_exit_code
                 summary["codex_exit_codes"] = codex_exit_codes
                 summary["codex_exit_code"] = next(iter(codex_exit_codes.values()), None)
                 summary["child_status"] = {
                     "autoencoder": "running" if auto_exit_code is None else "exited",
+                    "leanstral": (
+                        "disabled"
+                        if not leanstral_enabled
+                        else "running" if leanstral_exit_code is None else "exited"
+                    ),
                     "codex": {
                         run_id: "running" if exit_code is None else "exited"
                         for run_id, exit_code in codex_exit_codes.items()
@@ -16259,7 +16358,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
 
                 if auto_exit_code is not None and all(
                     exit_code is not None for exit_code in codex_exit_codes.values()
-                ):
+                ) and (not leanstral_enabled or leanstral_report_path.is_file()):
+                    break
+                if leanstral_enabled and leanstral_exit_code not in (None, 0):
+                    summary["latest_stop_reason"] = "leanstral_child_failed"
                     break
                 if stop_requested:
                     break
@@ -16270,6 +16372,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     finally:
         process_labels: List[tuple[str, Optional[subprocess.Popen[str]]]] = [
             (str(paired["autoencoder_run_id"]), auto_process),
+            (f"{leanstral_run_id}:leanstral", leanstral_process),
             *[(run_id, process) for run_id, process in codex_processes.items()],
         ]
         for child_run_id, process in process_labels:
@@ -16294,6 +16397,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
 
         if auto_process is not None:
             auto_exit_code = auto_process.poll()
+        if leanstral_process is not None:
+            leanstral_exit_code = leanstral_process.poll()
         codex_exit_codes = {
             run_id: process.poll()
             for run_id, process in codex_processes.items()
@@ -16304,11 +16409,17 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             summary["stopped_by_signal"] = stop_signal
         summary["elapsed_seconds"] = round(time.time() - started, 3)
         summary["autoencoder_exit_code"] = auto_exit_code
+        summary["leanstral_exit_code"] = leanstral_exit_code
         summary["codex_exit_codes"] = codex_exit_codes
         summary["codex_exit_code"] = next(iter(codex_exit_codes.values()), None)
         summary["runner_terminated_children"] = sorted(runner_terminated_children)
         summary["child_status"] = {
             "autoencoder": "running" if auto_exit_code is None else "exited",
+            "leanstral": (
+                "disabled"
+                if not leanstral_enabled
+                else "running" if leanstral_exit_code is None else "exited"
+            ),
             "codex": {
                 run_id: "running" if exit_code is None else "exited"
                 for run_id, exit_code in codex_exit_codes.items()
@@ -16331,6 +16442,21 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             pending_cap=int(getattr(args, "max_program_synthesis_pending", 512) or 512),
         )
         summary["finished_at"] = utc_now()
+        leanstral_stdout_text = ""
+        if leanstral_stdout_path.exists():
+            leanstral_stdout_text = leanstral_stdout_path.read_text(
+                encoding="utf-8", errors="replace"
+            )
+        leanstral_cuda_confirmed = (
+            "llama_cpp_accelerator_resolved" in leanstral_stdout_text
+            and "resolved=cuda" in leanstral_stdout_text
+        )
+        summary["leanstral_worker_health"] = {
+            "cuda_confirmed": leanstral_cuda_confirmed,
+            "exit_code": leanstral_exit_code,
+            "report_path": str(leanstral_report_path),
+            "report_present": leanstral_report_path.is_file(),
+        }
         autoencoder_child_health = paired_autoencoder_child_health(
             log_dir / f"{paired['autoencoder_run_id']}.summary"
         )
@@ -16352,10 +16478,25 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             runner_terminated_children=runner_terminated_children,
             stop_requested=stop_requested,
         )
+        leanstral_success = (
+            not leanstral_enabled
+            or (
+                (
+                    leanstral_exit_code == 0
+                    or f"{leanstral_run_id}:leanstral" in runner_terminated_children
+                )
+                and leanstral_report_path.is_file()
+                and (
+                    not bool(getattr(args, "paired_leanstral_require_cuda", False))
+                    or leanstral_cuda_confirmed
+                )
+            )
+        )
+        summary["leanstral_success"] = leanstral_success
         summary["autoencoder_runner_terminated"] = autoencoder_runner_terminated
         summary["status"] = (
             "succeeded"
-            if autoencoder_success and codex_success
+            if autoencoder_success and codex_success and leanstral_success
             else "failed"
         )
         save_summary(summary_path, summary, final=True)
@@ -16366,6 +16507,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 "event": "paired_runner_finished",
                 "status": summary["status"],
                 "autoencoder_exit_code": auto_exit_code,
+                "leanstral_exit_code": leanstral_exit_code,
                 "codex_exit_codes": codex_exit_codes,
                 "elapsed_seconds": summary["elapsed_seconds"],
                 "runner_terminated_children": sorted(runner_terminated_children),
@@ -16390,7 +16532,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         runner_terminated_children=runner_terminated_children,
         stop_requested=stop_requested,
     )
-    return 0 if autoencoder_success and codex_success else 1
+    leanstral_success = (
+        not leanstral_enabled
+        or bool(summary.get("leanstral_success"))
+    )
+    return 0 if autoencoder_success and codex_success and leanstral_success else 1
 
 
 def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
@@ -18282,6 +18428,33 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     supervisor.queue.save_jsonl(queue_path)
                     queue = supervisor.queue
             mark_cycle_phase("leanstral_rule_gap_projection")
+            leanstral_report_wait_seconds = max(
+                0.0,
+                float(getattr(args, "leanstral_rule_gap_wait_seconds", 0.0) or 0.0),
+            )
+            leanstral_report = leanstral_rule_gap_report_path(args, root=root)
+            leanstral_wait_started = time.monotonic()
+            while (
+                leanstral_report_wait_seconds > 0.0
+                and not leanstral_report.is_file()
+                and (time.monotonic() - leanstral_wait_started)
+                < leanstral_report_wait_seconds
+            ):
+                summary["active_cycle_leanstral_report_wait"] = {
+                    "path": str(leanstral_report),
+                    "status": "waiting",
+                    "waited_seconds": round(time.monotonic() - leanstral_wait_started, 3),
+                    "wait_seconds": leanstral_report_wait_seconds,
+                }
+                save_summary(summary_path, summary)
+                time.sleep(0.5)
+            summary["active_cycle_leanstral_report_wait"] = {
+                "path": str(leanstral_report),
+                "report_present": leanstral_report.is_file(),
+                "status": "ready" if leanstral_report.is_file() else "timed_out",
+                "waited_seconds": round(time.monotonic() - leanstral_wait_started, 3),
+                "wait_seconds": leanstral_report_wait_seconds,
+            }
             leanstral_rule_gap_projection = project_verified_leanstral_rule_gaps_into_queue(
                 args=args,
                 queue_path=queue_path,

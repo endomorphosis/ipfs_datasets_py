@@ -88,6 +88,8 @@ export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_A
 export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-ipfs_accelerate_py}"
 export LEANSTRAL_AUDIT_PROVIDER="${LEANSTRAL_AUDIT_PROVIDER:-leanstral_local}"
 export LEANSTRAL_AUDIT_BATCH_USE_MESH="${LEANSTRAL_AUDIT_BATCH_USE_MESH:-1}"
+export LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR="${LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR:-cuda}"
+export LEANSTRAL_AUDIT_REQUIRE_CUDA="${LEANSTRAL_AUDIT_REQUIRE_CUDA:-1}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
@@ -118,7 +120,7 @@ CMD=(
   --generalizable-projection-max-cross-entropy-regression "${MAX_CROSS_ENTROPY_REGRESSION:-0.0}"
   --generalizable-projection-max-legal-ir-loss-regression "${MAX_LEGAL_IR_LOSS_REGRESSION:-0.01}"
   --autoencoder-hard-guardrail-metrics "${HARD_GUARDRAILS}"
-  --autoencoder-device "${AUTOENCODER_DEVICE:-auto}"
+  --autoencoder-device "${AUTOENCODER_DEVICE:-cuda}"
   --autoencoder-bridge-workers "${AUTOENCODER_BRIDGE_WORKERS:-2}"
   --bridge-loss-adapters "${BRIDGE_LOSS_ADAPTERS:-modal_frame_logic,deontic_norms}"
   --bridge-evaluate-provers "${BRIDGE_EVALUATE_PROVERS:-false}"
@@ -127,6 +129,7 @@ CMD=(
   --autoencoder-max-audits-per-cycle "${AUTOENCODER_MAX_AUDITS_PER_CYCLE:-4}"
   --autoencoder-max-todos-per-cycle "${AUTOENCODER_MAX_TODOS_PER_CYCLE:-8}"
   --leanstral-direct-guidance-projection-enabled true
+  --leanstral-rule-gap-wait-seconds "${LEANSTRAL_RULE_GAP_WAIT_SECONDS:-180}"
   --leanstral-direct-guidance-require-executor-available "${LEANSTRAL_DIRECT_GUIDANCE_REQUIRE_EXECUTOR_AVAILABLE:-false}"
   --leanstral-direct-guidance-train-autoencoder true
   --leanstral-direct-guidance-max-training-items "${LEANSTRAL_DIRECT_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
@@ -140,6 +143,9 @@ CMD=(
   --daemon-hammer-guidance-train-autoencoder true
   --daemon-hammer-guidance-max-training-items "${DAEMON_HAMMER_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
   --paired-supervisor-backend accelerate_style
+  --paired-leanstral-worker-enabled true
+  --paired-leanstral-require-cuda true
+  --paired-leanstral-grace-seconds "${PAIRED_LEANSTRAL_GRACE_SECONDS:-900}"
   --paired-resource-guard auto
   --paired-grace-seconds "${PAIRED_GRACE_SECONDS:-120}"
   --paired-poll-seconds "${PAIRED_POLL_SECONDS:-1}"
@@ -175,7 +181,91 @@ run_gate() {
     --min-cycles-for-todo-gate "${GATE_MIN_CYCLES_FOR_TODO_GATE:-1}"
 }
 
+verify_integrated_stack() {
+  local paired_summary leanstral_log
+  paired_summary="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.summary"
+  leanstral_log="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.leanstral.stdout.log"
+  "${PYTHON_BIN}" - "${SUMMARY_PATH}" "${paired_summary}" <<'PY'
+import json
+import sys
+
+auto_path, paired_path = sys.argv[1:]
+with open(auto_path, "r", encoding="utf-8") as handle:
+    auto = json.load(handle)
+with open(paired_path, "r", encoding="utf-8") as handle:
+    paired = json.load(handle)
+if auto.get("autoencoder_compute_backend") != "torch_cuda":
+    raise SystemExit(
+        "autoencoder CUDA verification failed: "
+        f"backend={auto.get('autoencoder_compute_backend')!r} "
+        f"device={auto.get('autoencoder_compute_device')!r}"
+    )
+health = paired.get("leanstral_worker_health") or {}
+if not health.get("cuda_confirmed"):
+    raise SystemExit(f"Leanstral CUDA verification failed: {health!r}")
+if not health.get("report_present"):
+    raise SystemExit(f"Leanstral report verification failed: {health!r}")
+if not paired.get("leanstral_success"):
+    raise SystemExit("paired supervisor did not accept the Leanstral worker")
+
+hammer = auto.get("active_cycle_hammer_guidance") or {}
+if hammer.get("status") != "completed" or int(hammer.get("hammer_artifact_count") or 0) < 1:
+    raise SystemExit(f"Hammer integration verification failed: {hammer!r}")
+hammer_metrics = hammer.get("hammer_metrics") or {}
+if float(hammer_metrics.get("hammer_backend_unavailable_ratio") or 0.0) >= 1.0:
+    raise SystemExit(f"all Hammer backends were unavailable: {hammer_metrics!r}")
+
+report_path = health.get("report_path")
+with open(report_path, "r", encoding="utf-8") as handle:
+    leanstral_report = json.load(handle)
+if int(leanstral_report.get("source_audit_count") or 0) < 1:
+    raise SystemExit(f"Leanstral did not process an audit: {leanstral_report!r}")
+wait = auto.get("active_cycle_leanstral_report_wait") or {}
+if wait.get("status") != "ready":
+    raise SystemExit(f"autoencoder did not receive Leanstral report in-cycle: {wait!r}")
+projection = auto.get("latest_leanstral_projection") or {}
+sources = projection.get("projection_sources") or []
+if not any(source.get("report_loaded") for source in sources if isinstance(source, dict)):
+    raise SystemExit(f"autoencoder did not load Leanstral report: {projection!r}")
+
+codex_children = paired.get("codex_children") or []
+codex_health = paired.get("program_synthesis_health") or {}
+if not codex_children or int(codex_health.get("codex_worker_summary_count") or 0) < 1:
+    raise SystemExit(f"Codex workers were not supervised: {codex_health!r}")
+if not codex_health.get("codex_executor_available") or not codex_health.get("queue_exists"):
+    raise SystemExit(f"Codex executor/queue unavailable: {codex_health!r}")
+if int(codex_health.get("codex_worker_stale_count") or 0) != 0:
+    raise SystemExit(f"stale Codex workers detected: {codex_health!r}")
+codex_activity = (
+    int(codex_health.get("program_synthesis_claimed") or 0)
+    + int(codex_health.get("program_synthesis_completed") or 0)
+    + int(codex_health.get("codex_claimed_total") or 0)
+    + int(codex_health.get("codex_execution_count") or 0)
+)
+if codex_activity < 1:
+    raise SystemExit(f"Codex did not claim or execute queue work: {codex_health!r}")
+queue_run_id = paired.get("queue_run_id")
+for child in codex_children:
+    child_path = child.get("stdout_path", "").replace(".orchestrator.stdout.log", ".summary")
+    with open(child_path, "r", encoding="utf-8") as handle:
+        child_summary = json.load(handle)
+    if child_summary.get("queue_run_id") != queue_run_id:
+        raise SystemExit(
+            f"Codex queue lineage mismatch: {child_summary.get('queue_run_id')!r} != {queue_run_id!r}"
+        )
+print(
+    "integrated_stack_verified "
+    f"autoencoder={auto.get('autoencoder_compute_device')} "
+    f"hammer_artifacts={hammer.get('hammer_artifact_count')} "
+    f"leanstral=cuda source_audits={leanstral_report.get('source_audit_count')} "
+    f"codex_activity={codex_activity} queue={queue_run_id}"
+)
+PY
+  grep -q 'llama_cpp_accelerator_resolved.*resolved=cuda' "${leanstral_log}"
+}
+
 if [[ "${GATE_ONLY}" == "1" ]]; then
+  verify_integrated_stack
   run_gate
   exit $?
 fi
@@ -193,4 +283,5 @@ if [[ "${DRY_RUN}" == "1" ]]; then
 fi
 
 "${CMD[@]}"
+verify_integrated_stack
 run_gate

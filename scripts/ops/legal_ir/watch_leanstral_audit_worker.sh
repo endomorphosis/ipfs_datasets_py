@@ -39,9 +39,23 @@ LLAMA_CPP_GPU_LAYERS_DEFAULT="0"
 LLAMA_CPP_AUTO_SIZE_DEFAULT="0"
 LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT} --device none --no-op-offload --no-kv-offload"
 LLAMA_CPP_RESOLVED_ACCELERATOR="cpu"
+LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="0"
+
+active_cuda_leanstral_port() {
+  ps -eo args= 2>/dev/null | awk '
+    /[l]lama-server/ && /[Ll]eanstral/ && /--device[ =]CUDA/ {
+      for (i = 1; i <= NF; i++) {
+        if ($i == "--port" && (i + 1) <= NF) { print $(i + 1); exit }
+        if ($i ~ /^--port=/) { sub(/^--port=/, "", $i); print $i; exit }
+      }
+    }
+  '
+}
 
 llama_cpp_cuda_available() {
-  local candidate devices
+  local candidate devices active_port
+  active_port="$(active_cuda_leanstral_port)"
+  [[ -n "${active_port}" ]] && return 0
   local candidates=()
   if [[ -n "${IPFS_ACCELERATE_LLAMA_CPP_CLI:-}" ]]; then
     candidates+=("${IPFS_ACCELERATE_LLAMA_CPP_CLI}")
@@ -112,12 +126,32 @@ configure_llama_cpp_accelerator_defaults() {
 
 configure_llama_cpp_accelerator_defaults
 
+ACTIVE_LEANSTRAL_CUDA_PORT="$(active_cuda_leanstral_port)"
+if [[ -n "${ACTIVE_LEANSTRAL_CUDA_PORT}" && -z "${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL:-}" ]]; then
+  export IPFS_ACCELERATE_LLAMA_CPP_BASE_URL="http://127.0.0.1:${ACTIVE_LEANSTRAL_CUDA_PORT}/v1"
+  export IPFS_ACCELERATE_LLAMA_CPP_PORT="${ACTIVE_LEANSTRAL_CUDA_PORT}"
+  LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="1"
+fi
+
+case "${LEANSTRAL_AUDIT_REQUIRE_CUDA:-0}" in
+  1|true|True|TRUE|yes|Yes|YES|on|On|ON)
+    if [[ "${LLAMA_CPP_RESOLVED_ACCELERATOR}" != "cuda" ]]; then
+      echo "Leanstral CUDA is required but unavailable (resolved=${LLAMA_CPP_RESOLVED_ACCELERATOR})" >&2
+      exit 2
+    fi
+    ;;
+esac
+
 export PYTHONPATH="${ROOT_DIR}:${ROOT_DIR}/../ipfs_accelerate_py${PYTHONPATH:+:${PYTHONPATH}}"
 export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE:-1}"
 export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-ipfs_accelerate_py}"
 export LEANSTRAL_AUDIT_PROVIDER="${LEANSTRAL_AUDIT_PROVIDER:-leanstral_local}"
 export LEANSTRAL_AUDIT_PROVIDER_FALLBACKS="${LEANSTRAL_AUDIT_PROVIDER_FALLBACKS:-llama_cpp_native,mistral_vibe}"
-export IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART="${IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART:-1}"
+if [[ "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER}" == "1" ]]; then
+  export IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART="0"
+else
+  export IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART="${IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART:-1}"
+fi
 export IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL="${IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL:-1}"
 export IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS="${IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS:-900}"
 export IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE="${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}}"
@@ -197,6 +231,10 @@ terminate_process_group_or_pid() {
 kill_leanstral_llama_servers() {
   local reason pid
   reason="${1:-cleanup}"
+  if [[ "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER}" == "1" ]]; then
+    log_line "leanstral_llama_cleanup_skipped reason=${reason} shared_server=1"
+    return 0
+  fi
   case "${LEANSTRAL_AUDIT_KILL_LLAMA_ON_TIMEOUT:-1}" in
     0|false|False|FALSE|no|No|NO|off|Off|OFF)
       return 0
@@ -288,6 +326,10 @@ configure_reference_example_args() {
 llama_cpp_preflight_if_enabled() {
   local provider_chain lower_chain preflight_log
   local preflight_auto_size_args=()
+  if [[ "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER}" == "1" ]]; then
+    log_line "llama_cpp_preflight_reused base_url=${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL}"
+    return 0
+  fi
   case "${LEANSTRAL_AUDIT_LLAMA_CPP_PREFLIGHT:-1}" in
     0|false|False|FALSE|no|No|NO|off|Off|OFF)
       return 0

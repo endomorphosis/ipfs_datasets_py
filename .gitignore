@@ -134,6 +134,7 @@ workspace/logs/
 workspace/test-reports/
 workspace/test-logs/
 workspace/autoencoder-weight-review/
+workspace/legal-ir-hammer-guidance/
 workspace/leanstral-audit-worker/
 workspace/hammer-leanstral-supervisor/
 workspace/hammer-leanstral-worktrees/

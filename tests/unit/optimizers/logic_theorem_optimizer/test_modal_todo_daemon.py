@@ -4768,6 +4768,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         autoencoder_max_todos_per_cycle=4,
         leanstral_rule_gap_projection_enabled=True,
         leanstral_rule_gap_report_path="/tmp/leanstral-rule-gaps.json",
+        leanstral_rule_gap_wait_seconds=45.0,
         leanstral_rule_gap_max_todos_per_scope=2,
         leanstral_rule_gap_require_executor_available=True,
         leanstral_rule_gap_expected_compiler_commit="compiler-sha",
@@ -4943,6 +4944,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert autoencoder_command[autoencoder_command.index("--autoencoder-max-audits-per-cycle") + 1] == "5"
     assert autoencoder_command[autoencoder_command.index("--autoencoder-max-todos-per-cycle") + 1] == "4"
     assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-report-path") + 1] == "/tmp/leanstral-rule-gaps.json"
+    assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-wait-seconds") + 1] == "45.0"
     assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-max-todos-per-scope") + 1] == "2"
     assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-expected-compiler-commit") + 1] == "compiler-sha"
     assert autoencoder_command[autoencoder_command.index("--leanstral-rule-gap-expected-state-hash") + 1] == "state-sha"
@@ -5782,6 +5784,33 @@ def test_paired_supervisor_backend_defaults_to_accelerate_style() -> None:
     )
 
     assert args.paired_supervisor_backend == "accelerate_style"
+    assert args.paired_leanstral_worker_enabled is False
+    assert args.paired_leanstral_require_cuda is False
+    assert args.paired_leanstral_grace_seconds == 900.0
+
+
+def test_paired_supervisor_accepts_managed_cuda_leanstral_worker() -> None:
+    args = runner.build_uscode_modal_daemon_arg_parser().parse_args(
+        [
+            "--run-id",
+            "paired-leanstral-cuda",
+            "--duration-seconds",
+            "1",
+            "--loop-role",
+            "paired",
+            "--paired-leanstral-worker-enabled",
+            "true",
+            "--paired-leanstral-require-cuda",
+            "true",
+            "--autoencoder-device",
+            "cuda",
+        ]
+    )
+
+    assert args.paired_leanstral_worker_enabled is True
+    assert args.paired_leanstral_require_cuda is True
+    assert args.paired_leanstral_grace_seconds == 900.0
+    assert args.autoencoder_device == "cuda"
 
 
 def test_should_run_cycle_tests_treats_nonpositive_cadence_as_disabled() -> None:

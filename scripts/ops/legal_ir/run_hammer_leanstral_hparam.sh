@@ -123,7 +123,9 @@ export RUN_SUMMARY_GATE_MODULE="scripts.ops.legal_ir.hammer_leanstral_rollout_ga
 export RUN_SUMMARY_GATE_ARGS="${REPRESENTATION_PROMOTION_GATE_FLAG} ${SUCCESSFUL_REPRESENTATION_PROMOTION_GATE_FLAG} ${COMPLETE_REPRESENTATION_EVIDENCE_GATE_FLAG} --max-validation-ce-regression ${GATE_MAX_VALIDATION_CE_REGRESSION:-0.02} --max-validation-cosine-regression ${GATE_MAX_VALIDATION_COSINE_REGRESSION:-0.02} --max-compiler-ir-ce-regression ${GATE_MAX_COMPILER_IR_CE_REGRESSION:-0.05} --max-compiler-ir-cosine-regression ${GATE_MAX_COMPILER_IR_COSINE_REGRESSION:-0.05} --max-source-copy-penalty ${GATE_MAX_SOURCE_COPY_PENALTY:-0.35} --max-per-view-ir-metric-regression ${GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION} --max-symbolic-validity-regression ${GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION} --max-hammer-proof-rate-regression ${GATE_MAX_HAMMER_PROOF_RATE_REGRESSION} --max-reconstruction-rate-regression ${GATE_MAX_RECONSTRUCTION_RATE_REGRESSION} --max-source-copy-penalty-regression ${GATE_MAX_SOURCE_COPY_PENALTY_REGRESSION} --max-todo-productivity-regression ${GATE_MAX_TODO_PRODUCTIVITY_REGRESSION} --min-cycles-for-todo-gate ${GATE_MIN_CYCLES_FOR_TODO_GATE:-1}"
 
 export SWEEP_LOOP_ROLE="${SWEEP_LOOP_ROLE:-paired}"
-export AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-auto}"
+export AUTOENCODER_DEVICE="${AUTOENCODER_DEVICE:-cuda}"
+export LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR="${LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR:-cuda}"
+export LEANSTRAL_AUDIT_REQUIRE_CUDA="${LEANSTRAL_AUDIT_REQUIRE_CUDA:-1}"
 export BRIDGE_LOSS_ADAPTERS="${BRIDGE_LOSS_ADAPTERS:-modal_frame_logic,deontic_norms}"
 export BRIDGE_EVALUATE_PROVERS="${BRIDGE_EVALUATE_PROVERS:-false}"
 export CODEX_PARALLEL_SCOPES="${CODEX_PARALLEL_SCOPES:-compiler_parser,compiler_registry,compiler_ambiguity,ir_decompiler,frame_logic,deontic,tdfol,knowledge_graphs,cec,external_provers}"
@@ -134,12 +136,16 @@ export CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECO
 
 HARD_GUARDRAILS="$("${PYTHON_BIN}" -m scripts.ops.legal_ir.hammer_leanstral_rollout_gate guardrail-metrics)"
 EXTRA_ARGS=(
+  --paired-leanstral-worker-enabled true
+  --paired-leanstral-require-cuda true
+  --paired-leanstral-grace-seconds "${PAIRED_LEANSTRAL_GRACE_SECONDS:-900}"
   --autoencoder-hard-guardrail-metrics "${HARD_GUARDRAILS}"
   --autoencoder-introspection-mode "${AUTOENCODER_INTROSPECTION_MODE:-seed}"
   --autoencoder-introspection-every-n-cycles "${AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES:-1}"
   --autoencoder-max-audits-per-cycle "${AUTOENCODER_MAX_AUDITS_PER_CYCLE:-4}"
   --autoencoder-max-todos-per-cycle "${AUTOENCODER_MAX_TODOS_PER_CYCLE:-8}"
   --leanstral-direct-guidance-projection-enabled true
+  --leanstral-rule-gap-wait-seconds "${LEANSTRAL_RULE_GAP_WAIT_SECONDS:-180}"
   --leanstral-direct-guidance-require-executor-available "${LEANSTRAL_DIRECT_GUIDANCE_REQUIRE_EXECUTOR_AVAILABLE:-false}"
   --leanstral-direct-guidance-train-autoencoder true
   --leanstral-direct-guidance-max-training-items "${LEANSTRAL_DIRECT_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
