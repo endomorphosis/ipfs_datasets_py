@@ -1797,8 +1797,8 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-095 Emit proof-carrying LegalIR artifacts
 
-- Status: todo
-- Completion: 0
+- Status: completed
+- Completion: 100
 - Priority: P0
 - Track: formal-verification
 - Depends on: PORTAL-LIR-HAMMER-059, PORTAL-LIR-HAMMER-090, PORTAL-LIR-HAMMER-091, PORTAL-LIR-HAMMER-092
