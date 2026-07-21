@@ -1897,3 +1897,4 @@ The manifest is an operator index. The full paths and commands in each task's `O
 - Outputs: workspace/discovery, docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md
 - Validation: test -f /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/discovery/2026-07-21-portal-101-reconciliation-38278618935d.md
 - Acceptance: Reconciliation guardrail filed this because 1 branch or worktree cleanup candidates are blocked by main_checkout_dirty. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/discovery/2026-07-21-portal-101-reconciliation-38278618935d.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
+- Reconciliation evidence: workspace/discovery/2026-07-21-portal-101-reconciliation-38278618935d.md

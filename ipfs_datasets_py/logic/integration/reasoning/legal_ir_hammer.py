@@ -24,6 +24,10 @@ from .legal_ir_hammer_translation import (
     reconstruction_receipt_from_hammer_result,
     translation_records_from_hammer_result,
 )
+from .legal_ir_hammer_coverage import (
+    LegalIRHammerCoverageReport,
+    build_legal_ir_hammer_coverage_report,
+)
 from .legal_ir_proof_router import (
     DEFAULT_STAGE_BUDGETS,
     LEGAL_IR_PROOF_ROUTER_SCHEMA_VERSION,
@@ -56,6 +60,7 @@ class LegalIRHammerConfig:
     native_logic_timeout_seconds: float = 2.0
     reconstruction_timeout_seconds: float = 10.0
     enabled_proof_routes: tuple[str, ...] = ()
+    enable_coverage_report: bool = True
 
 
 @dataclass(frozen=True)
@@ -73,6 +78,7 @@ class LegalIRHammerReport:
     translation_records: List[HammerTranslationRecord] = field(default_factory=list)
     reconstruction_receipts: List[HammerReconstructionReceipt] = field(default_factory=list)
     route_results: List[LegalIRProofRouteResult] = field(default_factory=list)
+    coverage_report: Optional[LegalIRHammerCoverageReport] = None
 
     @property
     def proof_routing_results(self) -> List[LegalIRProofRouteResult]:
@@ -95,6 +101,9 @@ class LegalIRHammerReport:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "artifacts": [artifact.to_dict() for artifact in self.artifacts],
+            "coverage_report": (
+                self.coverage_report.to_dict() if self.coverage_report is not None else None
+            ),
             "elapsed_seconds": round(float(self.elapsed_seconds), 12),
             "metadata": dict(sorted(self.metadata.items())),
             "obligation_count": int(self.obligation_count),
@@ -283,6 +292,18 @@ class LegalIRHammerRunner:
 
         proved_count = sum(1 for artifact in artifacts if artifact.proved)
         trusted_count = sum(1 for artifact in artifacts if artifact.trusted)
+        coverage_report = (
+            build_legal_ir_hammer_coverage_report(
+                sample_or_document,
+                obligations=resolved_obligations,
+                artifacts=artifacts,
+                translation_records=translation_records,
+                reconstruction_receipts=reconstruction_receipts,
+                route_results=route_results,
+            )
+            if self.config.enable_coverage_report
+            else None
+        )
         return LegalIRHammerReport(
             artifacts=artifacts,
             obligation_count=len(resolved_obligations),
@@ -293,8 +314,18 @@ class LegalIRHammerRunner:
             translation_records=translation_records,
             reconstruction_receipts=reconstruction_receipts,
             route_results=route_results,
+            coverage_report=coverage_report,
             metadata={
                 "backend_health": backend_health_summary,
+                **(
+                    {
+                        "coverage_id": coverage_report.coverage_id,
+                        "coverage_promotion_allowed": coverage_report.promotion_allowed,
+                        "coverage_schema_version": coverage_report.schema_version,
+                    }
+                    if coverage_report is not None
+                    else {}
+                ),
                 "reconstruction_receipt_count": len(reconstruction_receipts),
                 "reconstruction_receipt_schema_version": (
                     LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION
