@@ -608,13 +608,28 @@ from .leanstral_audit import (  # noqa: E402  (intentional late import)
     LeanstralAuditWorkItem,
     LeanstralAuditWorkResult,
 )
+from .leanstral_audit_policy import (  # noqa: E402  (compatibility exports)
+    LEANSTRAL_AUDIT_POLICY_SCHEMA_VERSION,
+    LeanstralAuditPolicyConfig,
+    LeanstralAuditPolicyDecision,
+    LeanstralAuditPolicyOutcome,
+    LeanstralAuditPolicyReport,
+    leanstral_policy_report_with_cache_hits,
+    policy_decision_by_candidate_id,
+    select_informative_leanstral_audit_clusters,
+)
 
 
 __all__ = [
     "LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION",
     "LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION",
+    "LEANSTRAL_AUDIT_POLICY_SCHEMA_VERSION",
     "LeanstralAuditWorker",
     "LeanstralAuditWorkerConfig",
+    "LeanstralAuditPolicyConfig",
+    "LeanstralAuditPolicyDecision",
+    "LeanstralAuditPolicyOutcome",
+    "LeanstralAuditPolicyReport",
     "LeanstralAuditWorkerSummary",
     "LeanstralAuditWorkItem",
     "LeanstralAuditWorkResult",
@@ -625,4 +640,7 @@ __all__ = [
     "LeanstralInferenceBatch",
     "LeanstralScheduledItem",
     "leanstral_batch_metadata",
+    "leanstral_policy_report_with_cache_hits",
+    "policy_decision_by_candidate_id",
+    "select_informative_leanstral_audit_clusters",
 ]

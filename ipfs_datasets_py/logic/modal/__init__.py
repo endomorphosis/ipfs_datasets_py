@@ -134,9 +134,20 @@ from .leanstral_audit import (
     load_leanstral_audit_checkpoint,
     load_leanstral_audit_disagreements,
     parse_leanstral_audit_response,
+    plan_leanstral_audit_work_items,
     resolve_leanstral_llm_router,
     validate_leanstral_audit_response,
     write_leanstral_audit_checkpoint,
+)
+from .leanstral_audit_policy import (
+    LEANSTRAL_AUDIT_POLICY_SCHEMA_VERSION,
+    LeanstralAuditPolicyConfig,
+    LeanstralAuditPolicyDecision,
+    LeanstralAuditPolicyOutcome,
+    LeanstralAuditPolicyReport,
+    leanstral_policy_report_with_cache_hits,
+    policy_decision_by_candidate_id,
+    select_informative_leanstral_audit_clusters,
 )
 from .leanstral_audit_worker import (
     LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION,
