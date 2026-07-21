@@ -24,6 +24,7 @@ from typing import Any, Final
 
 from .hammer import HammerGoal, HammerPremise, PremiseSelection
 from .legal_ir_obligations import LegalIRProofObligation
+from .legal_ir_premise_security import scan_hammer_premise
 from .legal_ir_view_contracts import LegalIRViewContract, legal_ir_view_contract
 
 
@@ -580,10 +581,12 @@ class LegalIRPremiseSelector:
         premises: Sequence[HammerPremise | Mapping[str, Any] | str],
     ) -> list[RankedLegalIRPremise]:
         context = _context(goal, self.contract_telemetry)
-        ranked = [
-            self._score(context, _as_premise(premise, index))
-            for index, premise in enumerate(premises, start=1)
-        ]
+        ranked: list[RankedLegalIRPremise] = []
+        for index, premise in enumerate(premises, start=1):
+            resolved = _as_premise(premise, index)
+            if scan_hammer_premise(resolved).rejected:
+                continue
+            ranked.append(self._score(context, resolved))
         return sorted(
             ranked,
             key=lambda item: (

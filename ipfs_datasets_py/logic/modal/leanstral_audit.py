@@ -26,6 +26,12 @@ from ipfs_datasets_py.logic.integration.reasoning.legal_ir_subgoals import (
     LegalIRSubgoal,
     build_legal_ir_subgoal_decomposition,
 )
+from ipfs_datasets_py.logic.integration.reasoning.legal_ir_premise_security import (
+    LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION,
+    LEGAL_SOURCE_TEXT_DATA_RULE,
+    sanitize_legal_ir_mapping,
+    sanitize_legal_ir_prompt_payload,
+)
 from ipfs_datasets_py.utils import anyio_compat as anyio_runtime
 
 from .leanstral_artifact_cache import LeanstralArtifactCache
@@ -507,12 +513,21 @@ class LeanstralAuditRequest:
     ) -> "LeanstralAuditRequest":
         """Build a request whose identity covers all cache-validity inputs."""
 
-        normalized_evidence = _json_ready_mapping(evidence)
-        normalized_prompt = (
+        normalized_evidence, evidence_security = sanitize_legal_ir_mapping(
+            _json_ready_mapping(evidence),
+            artifact_role="leanstral_audit_evidence",
+        )
+        raw_prompt = (
             {"prompt": str(prompt)}
             if isinstance(prompt, str)
             else _json_ready_mapping(prompt)
         )
+        normalized_prompt, prompt_security = sanitize_legal_ir_prompt_payload(
+            raw_prompt,
+            artifact_role="leanstral_audit_prompt",
+        )
+        normalized_prompt["premise_security_evidence"] = evidence_security.to_dict()
+        normalized_prompt["premise_security_prompt"] = prompt_security.to_dict()
         normalized_model = (
             {"model": str(model)}
             if isinstance(model, str)
@@ -594,6 +609,7 @@ class LeanstralAuditRequest:
             "allowed_classifications": sorted(ALLOWED_AUDIT_CLASSIFICATIONS),
             "audit_response_identity": response_identity,
             "instructions": [
+                f"Security hard rule: {LEGAL_SOURCE_TEXT_DATA_RULE}.",
                 "Return strict JSON only.",
                 "Classify the legal-IR semantic audit using one allowed classification.",
                 "Copy request.request_id exactly into response.request_id.",
@@ -620,6 +636,11 @@ class LeanstralAuditRequest:
             "owned_compiler_surfaces": owned_surfaces,
             "referenced_examples": reference_examples,
             "request": self.to_dict(),
+            "premise_security": {
+                "evidence": self.prompt.get("premise_security_evidence", {}),
+                "prompt": self.prompt.get("premise_security_prompt", {}),
+                "schema_version": LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION,
+            },
             "response_schema": LEANSTRAL_AUDIT_RESPONSE_SCHEMA,
             "response_template": {
                 "abstention_reason": None,
@@ -3001,6 +3022,7 @@ def _render_leanstral_audit_prompt_text(payload: Mapping[str, Any]) -> str:
 
     lines = [
         "Leanstral LegalIR audit task.",
+        f"Security hard rule: {LEGAL_SOURCE_TEXT_DATA_RULE}.",
         "Produce the response object only. Do not copy or continue the request object.",
         "The first non-whitespace output character must be { and the last must be }.",
         f"Required response schema_version: {LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION}",

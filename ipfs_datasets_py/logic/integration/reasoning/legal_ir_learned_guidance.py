@@ -26,6 +26,7 @@ from ....optimizers.logic_theorem_optimizer.modal_autoencoder import (
     legal_ir_view_family_name,
 )
 from .legal_ir_view_contracts import LegalIRViewContract, legal_ir_view_contracts
+from .legal_ir_premise_security import scan_legal_ir_artifact
 
 
 LEGAL_IR_LEARNED_GUIDANCE_SCHEMA_VERSION: Final = "legal-ir-learned-guidance-v1"
@@ -670,6 +671,11 @@ def promote_learned_autoencoder_guidance(
         min_sample_support=min_sample_support,
     )
     export_id = str(export.get("export_id") or "")
+    premise_security = scan_legal_ir_artifact(
+        export,
+        artifact_id=export_id,
+        artifact_role="learned_guidance_promotion",
+    )
     export_binding = _learned_export_binding(export)
     stable_features, unsafe_feature_count = _stable_features(export)
     family_weights = _view_family_weights(export)
@@ -711,6 +717,9 @@ def promote_learned_autoencoder_guidance(
         block_reasons.append("sample_memory_features_present")
     if unsafe_feature_count:
         block_reasons.append("unsafe_or_unstable_features_present")
+    if premise_security.rejected:
+        block_reasons.append("premise_security_rejected")
+        block_reasons.extend(premise_security.rejection_reasons)
     if not stable_features:
         block_reasons.append("no_stable_learned_features")
     if not family_weights:
@@ -829,6 +838,10 @@ def promote_learned_autoencoder_guidance(
         canary=canary,
         overrides=source_copy_checks,
     )
+    resolved_source_copy_checks = {
+        **resolved_source_copy_checks,
+        "premise_security": premise_security.to_dict(),
+    }
     resolved_causal_evidence = _causal_evidence_report(
         canary=canary,
         family_weights=family_weights,

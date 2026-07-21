@@ -16,6 +16,10 @@ from .legal_ir_premise_selection import (
     LEGAL_IR_PREMISE_SELECTION_SCHEMA_VERSION,
     LegalIRPremiseSelector,
 )
+from .legal_ir_premise_security import (
+    LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION,
+    sanitize_hammer_premises,
+)
 from .legal_ir_hammer_translation import (
     LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION,
     LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION,
@@ -168,6 +172,8 @@ class LegalIRHammerRunner:
                 theorem_registry=theorem_registry,
             )
         )
+        premise_security = sanitize_hammer_premises(resolved_premises)
+        resolved_premises = list(premise_security.accepted)
         if self.proof_router is not None:
             pipeline = self.proof_router.pipeline
         elif self.pipeline is not None:
@@ -235,6 +241,14 @@ class LegalIRHammerRunner:
                 "proof_obligation_ids": [obligation.obligation_id],
                 "target_component": obligation.legal_ir_view,
                 "target_metrics": self._target_metrics_for_obligation(obligation),
+                "premise_security": premise_security.to_dict(),
+                "premise_security_rejected": bool(premise_security.rejected),
+                "premise_security_rejection_reasons": list(
+                    premise_security.rejection_reasons
+                ),
+                "premise_security_schema_version": (
+                    LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
+                ),
                 **dict(obligation.metadata),
                 **dict(extra_candidate_metadata or {}),
             }
@@ -244,22 +258,36 @@ class LegalIRHammerRunner:
                 trusted_requires_reconstruction=self.config.trusted_requires_reconstruction,
             )
             if proof_router is not None:
+                security_rejection_reasons = list(premise_security.rejection_reasons)
                 artifact = replace(
                     artifact,
                     proved=route_result.proved,
-                    trusted=route_result.trust_satisfied,
+                    trusted=(
+                        route_result.trust_satisfied
+                        and not bool(premise_security.rejected)
+                    ),
                     failure_reason="" if route_result.proved else route_result.status.value,
                     rejection_reasons=(
-                        artifact.rejection_reasons
-                        if route_result.trust_satisfied
-                        else sorted(
+                        sorted(
                             set(
                                 [
                                     *artifact.rejection_reasons,
-                                    (
-                                        "required_trust_not_obtained"
-                                        if route_result.proved
-                                        else route_result.status.value
+                                    *security_rejection_reasons,
+                                    *(
+                                        ["premise_security_rejected"]
+                                        if premise_security.rejected
+                                        else []
+                                    ),
+                                    *(
+                                        []
+                                        if route_result.trust_satisfied
+                                        else [
+                                            (
+                                                "required_trust_not_obtained"
+                                                if route_result.proved
+                                                else route_result.status.value
+                                            )
+                                        ]
                                     ),
                                 ]
                             )
@@ -332,6 +360,8 @@ class LegalIRHammerRunner:
                 ),
                 "max_premises": self.config.max_premises,
                 "premise_selection_schema_version": LEGAL_IR_PREMISE_SELECTION_SCHEMA_VERSION,
+                "premise_security": premise_security.to_dict(),
+                "premise_security_schema_version": LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION,
                 "timeout_seconds": self.config.timeout_seconds,
                 "translation_record_count": len(translation_records),
                 "translation_schema_version": LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION,

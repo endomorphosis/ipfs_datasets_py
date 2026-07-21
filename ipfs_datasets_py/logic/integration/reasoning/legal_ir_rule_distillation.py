@@ -34,6 +34,11 @@ from .legal_ir_view_contracts import (
     LegalIRViewContract,
     legal_ir_view_contracts,
 )
+from .legal_ir_premise_security import (
+    LegalIRArtifactUse,
+    legal_ir_artifact_allowed_for_use,
+    scan_legal_ir_artifact,
+)
 
 
 LEGAL_IR_RULE_CANDIDATE_SCHEMA_VERSION: Final = (
@@ -552,6 +557,11 @@ def distill_legal_ir_rule_candidates(
     policy = LegalIRRuleDistillationConfig.from_value(config)
     container = _as_mapping(learned_patterns)
     source_id = _source_id(container, learned_patterns)
+    premise_security = scan_legal_ir_artifact(
+        learned_patterns,
+        artifact_id=source_id,
+        artifact_role="rule_distillation",
+    )
     if family_attribution is None:
         family_attribution = (
             family_attributions
@@ -580,11 +590,15 @@ def distill_legal_ir_rule_candidates(
     accepted: list[tuple[LegalIRStablePattern, Mapping[str, Any], LegalIRViewContract, LegalIRRepairLane]] = []
     for index, raw in enumerate(raw_rows):
         pattern_id = str(raw.get("pattern_id") or raw.get("feature_id") or f"pattern-{index}")
-        if unsafe_container:
+        if unsafe_container or premise_security.rejected:
             rejected.append(
                 {
                     "pattern_id": pattern_id,
-                    "reason": "sample_memory_or_source_copy_feature",
+                    "reason": (
+                        "premise_security_rejected"
+                        if premise_security.rejected
+                        else "sample_memory_or_source_copy_feature"
+                    ),
                 }
             )
             continue
@@ -847,6 +861,9 @@ def distill_legal_ir_rule_candidates(
             todos.append(_codex_todo(candidate))
 
     block_reasons: list[str] = []
+    if premise_security.rejected:
+        block_reasons.append("premise_security_rejected")
+        block_reasons.extend(premise_security.rejection_reasons)
     if not raw_rows:
         block_reasons.append("no_learned_patterns")
     if raw_rows and not candidates:
@@ -859,6 +876,7 @@ def distill_legal_ir_rule_candidates(
         "distillation_id": distillation_id,
         "previous_distillation_id": str(previous_distillation_id or ""),
         "restore_mode": "candidate_registry_snapshot",
+        "premise_security": premise_security.to_dict(),
         "rollback_id": "lir-rule-distillation-rollback-"
         + _stable_hash(
             {
@@ -930,7 +948,14 @@ def project_distilled_rules_to_codex_todos(
     """Return TODOs, evaluating patterns first when a receipt is not supplied."""
 
     if isinstance(distillation_or_patterns, LegalIRRuleDistillationResult):
-        return list(distillation_or_patterns.codex_todos)
+        return [
+            todo
+            for todo in distillation_or_patterns.codex_todos
+            if legal_ir_artifact_allowed_for_use(
+                todo.to_dict(),
+                LegalIRArtifactUse.CODEX_TODO,
+            )
+        ]
     return list(
         distill_legal_ir_rule_candidates(
             distillation_or_patterns, **kwargs
@@ -1478,6 +1503,16 @@ def _deterministic_rule(
 
 def _codex_todo(candidate: LegalIRRuleCandidate) -> LegalIRRuleCodexTodo:
     assert candidate.attribution is not None
+    premise_security = scan_legal_ir_artifact(
+        candidate.to_dict(),
+        artifact_id=candidate.candidate_id,
+        artifact_role=LegalIRArtifactUse.CODEX_TODO.value,
+    )
+    if premise_security.rejected:
+        raise ValueError(
+            "poisoned LegalIR rule candidate cannot be projected to Codex TODO: "
+            + ",".join(premise_security.rejection_reasons)
+        )
     descriptor = {
         "attribution": candidate.attribution.to_dict(),
         "candidate_id": candidate.candidate_id,
@@ -1494,6 +1529,7 @@ def _codex_todo(candidate: LegalIRRuleCandidate) -> LegalIRRuleCodexTodo:
         "counterfactual_ids": [item.counterfactual_id for item in candidate.counterfactuals],
         "heldout_compiler_improvement_predicted": True,
         "mutation_ids": [item.mutation_id for item in candidate.mutation_evidence],
+        "premise_security": premise_security.to_dict(),
         "support_count": candidate.support_count,
     }
     return LegalIRRuleCodexTodo(

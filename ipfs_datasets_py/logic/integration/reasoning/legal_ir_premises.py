@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .hammer import HammerPremise
 from .legal_ir_obligations import LegalIRProofObligation, generate_legal_ir_proof_obligations
+from .legal_ir_premise_security import sanitize_hammer_premises
 
 
 LEGAL_IR_PREMISE_LIBRARY_VERSION = "legal-ir-premise-library-v1"
@@ -469,8 +470,9 @@ def export_legal_ir_premises(
         else:
             premises.append(HammerPremise(name=f"extra_premise_{index}", statement=str(premise)))
 
+    secured = sanitize_hammer_premises(premises)
     deduped: Dict[str, HammerPremise] = {}
-    for premise in premises:
+    for premise in secured.accepted:
         if not premise.statement:
             continue
         key = premise.name or _stable_hash(premise.statement)[:16]
