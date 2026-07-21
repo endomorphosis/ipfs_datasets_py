@@ -1857,7 +1857,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-099 Build end-to-end compiler conformance suite
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: compiler-validation
