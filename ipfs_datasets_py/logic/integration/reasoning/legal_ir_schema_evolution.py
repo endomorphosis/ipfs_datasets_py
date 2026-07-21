@@ -47,6 +47,10 @@ from .legal_ir_rule_distillation import (
     LEGAL_IR_RULE_DISTILLATION_SCHEMA_VERSION,
     LEGAL_IR_RULE_DISTILLATION_TODO_SCHEMA_VERSION,
 )
+from .legal_ir_semantic_diff import (
+    LEGAL_IR_SEMANTIC_DIFF_SCHEMA_VERSION,
+    LEGAL_IR_SEMANTIC_DIFF_TODO_SCHEMA_VERSION,
+)
 from .legal_ir_source_maps import LEGAL_IR_SOURCE_MAP_SCHEMA_VERSION
 from .legal_ir_verified_gap_repairs import (
     LEGAL_IR_CLUSTERED_GAP_REPAIR_SCHEMA_VERSION,
@@ -1183,6 +1187,21 @@ _VERSIONS: tuple[LegalIRSchemaVersion, ...] = (
         required=("schema_version", "rollback_id"),
         identity=("rollback_id",),
         description="Rollback recipe for distilled LegalIR rules.",
+    ),
+    _version(
+        LEGAL_IR_SEMANTIC_DIFF_SCHEMA_VERSION,
+        LegalIRArtifactFamily.COMPILER_OUTPUT,
+        required=("schema_version", "diff_id", "before_digest", "after_digest", "changes"),
+        identity=("diff_id",),
+        gates=("compiler.output.training-reuse",),
+        description="Semantic diff and amendment impact report for LegalIR outputs.",
+    ),
+    _version(
+        LEGAL_IR_SEMANTIC_DIFF_TODO_SCHEMA_VERSION,
+        LegalIRArtifactFamily.COMPILER_OUTPUT,
+        required=("schema_version", "todo_id", "change_id"),
+        identity=("todo_id",),
+        description="Codex TODO projection for verified LegalIR semantic diff regressions.",
     ),
     _version(
         LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION,

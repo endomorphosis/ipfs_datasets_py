@@ -1782,8 +1782,8 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-094 Produce semantic diffs and amendment impact analysis
 
-- Status: todo
-- Completion: 0
+- Status: completed
+- Completion: 100
 - Priority: P0
 - Track: compiler-analysis
 - Depends on: PORTAL-LIR-HAMMER-088, PORTAL-LIR-HAMMER-091, PORTAL-LIR-HAMMER-093
