@@ -1287,7 +1287,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-061 Preserve closed-loop repair attribution through the next compiler cycle
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: repair-attribution
