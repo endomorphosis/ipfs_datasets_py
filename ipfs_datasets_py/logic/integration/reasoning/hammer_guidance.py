@@ -8,6 +8,11 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from .hammer import HammerBackendResult, HammerResult, HammerStatus
+from .legal_ir_premise_security import (
+    LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION,
+    LegalIRPoisonReason,
+    legal_ir_security_rejection_reasons,
+)
 
 
 HAMMER_GUIDANCE_SCHEMA_VERSION = "legal-ir-hammer-guidance-v1"
@@ -206,6 +211,15 @@ class HammerGuidanceArtifact:
         if metadata.get("copy_source_span_rejected") or metadata.get("copied_source_span_rejected"):
             trusted = False
             rejection_reasons.append("source_copy_rejected")
+        security_reasons = set(legal_ir_security_rejection_reasons(metadata))
+        for premise in result.premise_selection.selected:
+            security_reasons.update(
+                legal_ir_security_rejection_reasons(premise.metadata or {})
+            )
+        if security_reasons:
+            trusted = False
+            rejection_reasons.extend(sorted(security_reasons))
+            rejection_reasons.append("premise_security_rejected")
 
         selected_premises = [premise.name for premise in result.premise_selection.selected]
         premise_views = sorted(
@@ -248,7 +262,19 @@ class HammerGuidanceArtifact:
             proof_obligation_ids=_string_list(metadata.get("proof_obligation_ids") or obligation_id),
             target_metrics=_string_list(metadata.get("target_metrics")),
             drafted_logic_candidates=drafted_candidates,
-            metadata=dict(metadata),
+            metadata={
+                **dict(metadata),
+                "premise_security_schema_version": (
+                    metadata.get("premise_security_schema_version")
+                    or LEGAL_IR_PREMISE_SECURITY_SCHEMA_VERSION
+                ),
+                "poisoning_rejection_reason_set": sorted(
+                    {
+                        reason.value
+                        for reason in LegalIRPoisonReason
+                    }.intersection(security_reasons)
+                ),
+            },
         )
 
     def to_leanstral_guidance_item(self) -> Dict[str, Any]:

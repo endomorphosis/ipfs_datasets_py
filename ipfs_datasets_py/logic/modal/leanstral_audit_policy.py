@@ -13,6 +13,10 @@ from dataclasses import asdict, dataclass, field, replace
 from enum import Enum
 from typing import Any, Dict, Mapping, Optional, Sequence
 
+from ipfs_datasets_py.logic.integration.reasoning.legal_ir_premise_security import (
+    scan_legal_ir_artifact,
+)
+
 from .introspection_analysis import OWNED_COMPILER_SURFACES
 
 
@@ -221,6 +225,12 @@ def select_informative_leanstral_audit_clusters(
                 reason="policy_disabled",
                 selected_order=selected_total + 1,
             )
+        elif _is_poisoned_audit_candidate(candidate, records):
+            decision = replace(
+                decision,
+                outcome=LeanstralAuditPolicyOutcome.SKIPPED,
+                reason="premise_security_rejected",
+            )
         elif candidate["candidate_id"] in cache_hits:
             decision = replace(
                 decision,
@@ -311,6 +321,30 @@ def select_informative_leanstral_audit_clusters(
         selected_candidate_ids=tuple(selected_ids),
         family_selection_counts=dict(family_counts),
     )
+
+
+def _is_poisoned_audit_candidate(
+    candidate: Mapping[str, Any],
+    records: Mapping[str, Mapping[str, Any]],
+) -> bool:
+    report = scan_legal_ir_artifact(
+        candidate,
+        artifact_id=str(candidate.get("candidate_id") or ""),
+        artifact_role="leanstral_audit_candidate",
+    )
+    if report.rejected:
+        return True
+    for evidence_id in candidate.get("evidence_ids", ()) or ():
+        record = records.get(str(evidence_id))
+        if record is None:
+            continue
+        if scan_legal_ir_artifact(
+            record,
+            artifact_id=str(evidence_id),
+            artifact_role="leanstral_audit_evidence",
+        ).rejected:
+            return True
+    return False
 
 
 def leanstral_policy_report_with_cache_hits(
