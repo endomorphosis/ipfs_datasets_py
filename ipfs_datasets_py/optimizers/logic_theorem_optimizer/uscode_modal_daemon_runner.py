@@ -122,7 +122,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator impo
     SnapshotBackpressureTimeout,
     SnapshotBoundary,
     SnapshotEvaluator,
+    SnapshotShardEvidence,
     SnapshotVersions,
+    aggregate_matching_snapshot_shards,
     canonical_holdout_version,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
@@ -1515,6 +1517,428 @@ def matching_snapshot_versions(
         ),
         schema_version=schema_version,
     )
+
+
+PRODUCTION_SNAPSHOT_REQUIRED_ROLES = (
+    "train",
+    "validation",
+    "compiler",
+    "proof",
+    "promotion",
+)
+
+
+def _sample_legal_ir_families(sample: Any) -> tuple[str, ...]:
+    """Return canonical LegalIR families touched by a sample."""
+
+    candidates: List[Any] = []
+    for name in (
+        "legal_ir_family",
+        "legal_ir_view_family",
+        "view_family",
+        "target_family",
+        "legal_ir_view",
+        "target_view",
+    ):
+        value = getattr(sample, name, None)
+        if value:
+            candidates.append(value)
+    losses = getattr(sample, "losses", None)
+    if isinstance(losses, Mapping):
+        candidates.extend(losses.keys())
+    modal_ir = getattr(sample, "modal_ir", None)
+    if modal_ir is not None:
+        frame_logic = getattr(modal_ir, "frame_logic", None)
+        if frame_logic is not None:
+            triples = getattr(frame_logic, "triples", None)
+            if triples:
+                candidates.append("frame_logic")
+        if getattr(modal_ir, "kg_triples", None):
+            candidates.append("kg")
+        formulas = getattr(modal_ir, "formulas", None)
+        if formulas:
+            candidates.append("deontic")
+    text = str(getattr(sample, "text", "") or "").lower()
+    if text:
+        if any(token in text for token in ("shall", "must", "may", "prohibit")):
+            candidates.append("deontic")
+        if any(token in text for token in ("within", "before", "after", "until")):
+            candidates.append("temporal")
+        if any(token in text for token in ("means", "defined", "includes")):
+            candidates.append("definitions")
+
+    families: List[str] = []
+    for candidate in candidates:
+        if isinstance(candidate, Mapping):
+            iterable = candidate.keys()
+        elif isinstance(candidate, Sequence) and not isinstance(
+            candidate,
+            (bytes, bytearray, str),
+        ):
+            iterable = candidate
+        else:
+            iterable = (candidate,)
+        for item in iterable:
+            family = legal_ir_view_family_name(str(item or ""))
+            if family in LEGAL_IR_VIEW_FAMILIES and family not in families:
+                families.append(family)
+    if not families:
+        families.append("decompiler")
+    return tuple(families)
+
+
+def _family_sharded_rows(rows: Sequence[Any]) -> Dict[str, List[Any]]:
+    by_family: Dict[str, List[Any]] = {family: [] for family in LEGAL_IR_VIEW_FAMILIES}
+    for row in rows:
+        for family in _sample_legal_ir_families(row):
+            by_family.setdefault(family, []).append(row)
+    return {family: items for family, items in by_family.items() if items}
+
+
+def _json_ready_metric_value(value: Any) -> Any:
+    if hasattr(value, "to_dict") and callable(value.to_dict):
+        return value.to_dict()
+    if isinstance(value, Mapping):
+        return {str(key): _json_ready_metric_value(item) for key, item in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray, str)):
+        return [_json_ready_metric_value(item) for item in value]
+    return value
+
+
+def _snapshot_shard(
+    snapshot: EvaluationSnapshot,
+    *,
+    role: str,
+    family: str,
+    metrics: Mapping[str, Any],
+) -> SnapshotShardEvidence:
+    return SnapshotShardEvidence(
+        sequence=snapshot.sequence,
+        versions=snapshot.versions,
+        role=role,
+        family=family,
+        metrics=_json_ready_metric_value(metrics),
+    )
+
+
+def _snapshot_autoencoder_metric(
+    autoencoder: AdaptiveModalAutoencoder,
+    rows: Sequence[Any],
+    *,
+    legal_ir_bridge_names: Sequence[str],
+    legal_ir_evaluate_provers: Optional[bool],
+    legal_ir_parallel_workers: Optional[int],
+    max_bridge_sample_text_chars: int,
+) -> Dict[str, Any]:
+    evaluation = evaluate_autoencoder_with_bounded_metric_bridges(
+        autoencoder,
+        rows,
+        legal_ir_bridge_names=legal_ir_bridge_names,
+        legal_ir_evaluate_provers=legal_ir_evaluate_provers,
+        legal_ir_parallel_workers=legal_ir_parallel_workers,
+        max_bridge_sample_text_chars=max_bridge_sample_text_chars,
+        use_sample_memory=False,
+    )
+    if isinstance(evaluation, AutoencoderEvaluation):
+        return metric_block(evaluation)
+    return _json_ready_metric_value(evaluation)
+
+
+def _snapshot_compiler_metric(
+    rows: Sequence[Any],
+    feature_codec: Any,
+    *,
+    compiler_metric_kwargs: Mapping[str, Any],
+    evaluation_role: str,
+    snapshot: EvaluationSnapshot,
+    autoencoder: Optional[AdaptiveModalAutoencoder] = None,
+    use_autoencoder_guidance: bool = False,
+    compiler_metric_fn: Optional[Callable[..., Mapping[str, Any]]] = None,
+) -> Dict[str, Any]:
+    metric_fn = compiler_metric_fn or compiler_ir_metric_block
+    kwargs = dict(compiler_metric_kwargs)
+    kwargs.setdefault("compiler_commit", snapshot.versions.compiler_version)
+    kwargs.setdefault("metric_schema", snapshot.versions.schema_version)
+    kwargs["evaluation_role"] = evaluation_role
+    kwargs["state_hash"] = snapshot.versions.state_version
+    if autoencoder is not None:
+        kwargs["autoencoder"] = autoencoder
+    if use_autoencoder_guidance:
+        kwargs["use_autoencoder_guidance"] = True
+    return dict(metric_fn(rows, feature_codec, **kwargs))
+
+
+def _snapshot_proof_metric(
+    rows: Sequence[Any],
+    *,
+    proof_metric_fn: Optional[Callable[[Any], Any]] = None,
+) -> Dict[str, Any]:
+    metric_fn = proof_metric_fn or evaluate_modal_prover_compilation
+    attempted = 0
+    valid = 0
+    unavailable = 0
+    errors = 0
+    failed = 0
+    details: List[Any] = []
+    for row in rows:
+        try:
+            signal = metric_fn(row)
+        except (AttributeError, RuntimeError, ValueError) as exc:
+            errors += 1
+            details.append(
+                {
+                    "error": str(exc),
+                    "sample_id": str(getattr(row, "sample_id", "") or ""),
+                    "status": "failed",
+                }
+            )
+            continue
+        payload = _json_ready_metric_value(signal)
+        if isinstance(payload, Mapping):
+            attempted += int(payload.get("attempted_count", 0) or 0)
+            valid += int(payload.get("valid_count", 0) or 0)
+            unavailable += int(payload.get("unavailable_count", 0) or 0)
+            errors += int(payload.get("error_count", 0) or 0)
+            failed += int(payload.get("failed_count", 0) or 0)
+        details.append(payload)
+    return {
+        "attempted_count": attempted,
+        "error_count": errors,
+        "failed_count": failed,
+        "failure_ratio": (
+            round((failed + errors) / attempted, 9) if attempted > 0 else 0.0
+        ),
+        "sample_count": len(rows),
+        "signals": details,
+        "unavailable_count": unavailable,
+        "valid_count": valid,
+    }
+
+
+def evaluate_production_snapshot_bundle(
+    snapshot: EvaluationSnapshot,
+    template_autoencoder: AdaptiveModalAutoencoder,
+    *,
+    train_rows: Sequence[Any],
+    validation_rows: Sequence[Any],
+    validation_mode: str,
+    feature_codec: Any,
+    compiler_metric_kwargs: Optional[Mapping[str, Any]] = None,
+    legal_ir_bridge_names: Sequence[str] = (),
+    legal_ir_evaluate_provers: Optional[bool] = None,
+    legal_ir_parallel_workers: Optional[int] = None,
+    max_bridge_sample_text_chars: int = DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+    compiler_metric_fn: Optional[Callable[..., Mapping[str, Any]]] = None,
+    proof_metric_fn: Optional[Callable[[Any], Any]] = None,
+    plateau_threshold: float = 1.0e-5,
+) -> Dict[str, Any]:
+    """Run production evaluation from one immutable autoencoder snapshot.
+
+    The returned aggregate is assembled from shards that all match
+    ``snapshot.versions``.  It is therefore safe to promote only at the same
+    snapshot boundary and cannot leak newer trainer state into older evidence.
+    """
+
+    evaluator_autoencoder = autoencoder_for_evaluation_snapshot(
+        snapshot,
+        template_autoencoder,
+    )
+    train = list(copy.deepcopy(list(train_rows)))
+    validation = list(copy.deepcopy(list(validation_rows)))
+    shards: List[SnapshotShardEvidence] = []
+
+    train_metric = _snapshot_autoencoder_metric(
+        evaluator_autoencoder,
+        train,
+        legal_ir_bridge_names=legal_ir_bridge_names,
+        legal_ir_evaluate_provers=legal_ir_evaluate_provers,
+        legal_ir_parallel_workers=legal_ir_parallel_workers,
+        max_bridge_sample_text_chars=max_bridge_sample_text_chars,
+    )
+    validation_metric = _snapshot_autoencoder_metric(
+        evaluator_autoencoder,
+        validation,
+        legal_ir_bridge_names=legal_ir_bridge_names,
+        legal_ir_evaluate_provers=legal_ir_evaluate_provers,
+        legal_ir_parallel_workers=legal_ir_parallel_workers,
+        max_bridge_sample_text_chars=max_bridge_sample_text_chars,
+    )
+    shards.append(_snapshot_shard(snapshot, role="train", family="all", metrics=train_metric))
+    shards.append(
+        _snapshot_shard(
+            snapshot,
+            role="validation",
+            family="all",
+            metrics=validation_metric,
+        )
+    )
+    for role, rows, source_metric in (
+        ("train", train, train_metric),
+        ("validation", validation, validation_metric),
+    ):
+        for family, family_rows in _family_sharded_rows(rows).items():
+            family_metric = dict(source_metric)
+            family_metric["family"] = family
+            family_metric["family_sample_count"] = len(family_rows)
+            family_metric["sample_ids"] = [
+                str(getattr(row, "sample_id", "") or "") for row in family_rows
+            ]
+            shards.append(
+                _snapshot_shard(
+                    snapshot,
+                    role=role,
+                    family=family,
+                    metrics=family_metric,
+                )
+            )
+
+    compiler_kwargs = dict(compiler_metric_kwargs or {})
+    compiler_train = _snapshot_compiler_metric(
+        train,
+        feature_codec,
+        compiler_metric_kwargs=compiler_kwargs,
+        evaluation_role="snapshot_compiler_train",
+        snapshot=snapshot,
+        compiler_metric_fn=compiler_metric_fn,
+    )
+    compiler_validation = _snapshot_compiler_metric(
+        validation,
+        feature_codec,
+        compiler_metric_kwargs=compiler_kwargs,
+        evaluation_role="snapshot_compiler_validation",
+        snapshot=snapshot,
+        compiler_metric_fn=compiler_metric_fn,
+    )
+    compiler_guided_train = _snapshot_compiler_metric(
+        train,
+        feature_codec,
+        compiler_metric_kwargs=compiler_kwargs,
+        evaluation_role="snapshot_compiler_guided_train",
+        snapshot=snapshot,
+        autoencoder=evaluator_autoencoder,
+        use_autoencoder_guidance=True,
+        compiler_metric_fn=compiler_metric_fn,
+    )
+    compiler_guided_validation = _snapshot_compiler_metric(
+        validation,
+        feature_codec,
+        compiler_metric_kwargs=compiler_kwargs,
+        evaluation_role="snapshot_compiler_guided_validation",
+        snapshot=snapshot,
+        autoencoder=evaluator_autoencoder,
+        use_autoencoder_guidance=True,
+        compiler_metric_fn=compiler_metric_fn,
+    )
+    compiler_metric = {
+        "guided_train": compiler_guided_train,
+        "guided_validation": compiler_guided_validation,
+        "train": compiler_train,
+        "validation": compiler_validation,
+    }
+    shards.append(
+        _snapshot_shard(snapshot, role="compiler", family="all", metrics=compiler_metric)
+    )
+    for family, family_rows in _family_sharded_rows([*train, *validation]).items():
+        shards.append(
+            _snapshot_shard(
+                snapshot,
+                role="compiler",
+                family=family,
+                metrics={
+                    "family": family,
+                    "sample_count": len(family_rows),
+                    "sample_ids": [
+                        str(getattr(row, "sample_id", "") or "")
+                        for row in family_rows
+                    ],
+                },
+            )
+        )
+
+    proof_metric = _snapshot_proof_metric(validation, proof_metric_fn=proof_metric_fn)
+    shards.append(_snapshot_shard(snapshot, role="proof", family="all", metrics=proof_metric))
+    for family, family_rows in _family_sharded_rows(validation).items():
+        shards.append(
+            _snapshot_shard(
+                snapshot,
+                role="proof",
+                family=family,
+                metrics={
+                    **_snapshot_proof_metric(
+                        family_rows,
+                        proof_metric_fn=proof_metric_fn,
+                    ),
+                    "family": family,
+                },
+            )
+        )
+
+    guidance_canary = compiler_guidance_canary_block(
+        compiler_validation,
+        compiler_guided_validation,
+        plateau_threshold=plateau_threshold,
+    )
+    promotion_gate = compiler_guidance_promotion_gate(guidance_canary)
+    family_validation = legal_ir_validation_view_family_metric_block(
+        compiler_ir_validation=compiler_validation,
+        autoencoder_validation=validation_metric,
+        hammer_validation=proof_metric,
+    )
+    promotion_metric = {
+        "canary": guidance_canary,
+        "gate": promotion_gate,
+        "snapshot_complete": False,
+        "validation_mode": validation_mode,
+        "view_family_validation": family_validation,
+    }
+    shards.append(
+        _snapshot_shard(snapshot, role="promotion", family="all", metrics=promotion_metric)
+    )
+
+    observed_families = tuple(
+        family
+        for family in LEGAL_IR_VIEW_FAMILIES
+        if family in _family_sharded_rows([*train, *validation])
+    )
+    aggregate = aggregate_matching_snapshot_shards(
+        shards,
+        snapshot.versions,
+        expected_sequence=snapshot.sequence,
+        required_roles=PRODUCTION_SNAPSHOT_REQUIRED_ROLES,
+        required_families=observed_families,
+    )
+    promotion_metric["snapshot_complete"] = aggregate.complete
+    shards = [
+        shard
+        for shard in shards
+        if not (shard.role == "promotion" and shard.family == "all")
+    ]
+    shards.append(
+        _snapshot_shard(snapshot, role="promotion", family="all", metrics=promotion_metric)
+    )
+    aggregate = aggregate_matching_snapshot_shards(
+        shards,
+        snapshot.versions,
+        expected_sequence=snapshot.sequence,
+        required_roles=PRODUCTION_SNAPSHOT_REQUIRED_ROLES,
+        required_families=observed_families,
+    )
+    return {
+        "aggregate": aggregate.to_dict(),
+        "compiler": compiler_metric,
+        "holdout_sample_count": len(validation),
+        "production_roles": list(PRODUCTION_SNAPSHOT_REQUIRED_ROLES),
+        "proof": proof_metric,
+        "promotion": promotion_metric,
+        "schema_version": SNAPSHOT_EVALUATION_SCHEMA_VERSION,
+        "shard_count": len(shards),
+        "shards": [shard.to_dict() for shard in shards],
+        "snapshot_complete": aggregate.complete,
+        "train_sample_count": len(train),
+        "validation": validation_metric,
+        "validation_mode": validation_mode,
+        "versions": snapshot.versions.to_dict(),
+    }
 
 
 def _compiler_commit(root: Path) -> str:
@@ -17120,25 +17544,56 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     snapshot_evaluation_enabled = bool(
         getattr(args, "snapshot_evaluation_enabled", True)
     )
-    snapshot_evaluation_jobs: Dict[str, Sequence[Any]] = {}
+    snapshot_evaluation_jobs: Dict[str, Mapping[str, Any]] = {}
     snapshot_evaluation_jobs_lock = threading.Lock()
 
     def evaluate_immutable_snapshot(
         snapshot: EvaluationSnapshot,
     ) -> Mapping[str, Any]:
         with snapshot_evaluation_jobs_lock:
-            rows = snapshot_evaluation_jobs.pop(snapshot.snapshot_id, ())
-        if not rows:
+            job = dict(snapshot_evaluation_jobs.pop(snapshot.snapshot_id, {}) or {})
+        train_rows = list(job.get("train_rows", ()) or ())
+        validation_rows = list(job.get("validation_rows", ()) or ())
+        if not validation_rows:
             raise ValueError(
                 f"holdout rows unavailable for snapshot {snapshot.snapshot_id}"
             )
-        evaluator_autoencoder = autoencoder_for_evaluation_snapshot(
+        compiler_metric_kwargs = {
+            "compiler_commit": snapshot.versions.compiler_version,
+            "evaluation_cache": evaluation_cache,
+            "max_sample_text_chars": int(
+                getattr(
+                    args,
+                    "compiler_ir_metric_max_sample_text_chars",
+                    _default_compiler_ir_metric_max_sample_text_chars(),
+                )
+                or 0
+            ),
+            "metric_schema": snapshot.versions.schema_version,
+            "metric_text_policy": str(
+                getattr(
+                    args,
+                    "compiler_ir_metric_text_policy",
+                    DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY,
+                )
+            ),
+            "sample_timeout_seconds": float(
+                getattr(
+                    args,
+                    "compiler_ir_metric_sample_timeout_seconds",
+                    DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS,
+                )
+                or 0.0
+            ),
+        }
+        return evaluate_production_snapshot_bundle(
             snapshot,
             autoencoder,
-        )
-        evaluation = evaluate_autoencoder_with_bounded_metric_bridges(
-            evaluator_autoencoder,
-            rows,
+            train_rows=train_rows,
+            validation_rows=validation_rows,
+            validation_mode=str(job.get("validation_mode") or "holdout"),
+            feature_codec=feature_codec,
+            compiler_metric_kwargs=compiler_metric_kwargs,
             legal_ir_bridge_names=metric_bridge_adapters,
             legal_ir_evaluate_provers=bridge_evaluate_provers,
             legal_ir_parallel_workers=bridge_parallel_workers,
@@ -17150,12 +17605,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 )
                 or 0
             ),
-            use_sample_memory=False,
+            plateau_threshold=float(
+                getattr(args, "learning_rate_plateau_delta", 1.0e-5)
+            ),
         )
-        return {
-            "evaluation": evaluation.to_dict(),
-            "holdout_sample_count": len(rows),
-        }
 
     snapshot_evaluator: Optional[SnapshotEvaluator] = None
     if snapshot_evaluation_enabled:
@@ -17785,26 +18238,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 else "rotating_holdout"
             )
             if snapshot_evaluator is not None:
-                expected_snapshot_versions = matching_snapshot_versions(
-                    autoencoder.state,
-                    compiler_version=evaluation_compiler_commit,
-                    holdout_sample_ids=[
-                        str(getattr(sample, "sample_id", "") or "")
-                        for sample in acceptance_validation_samples
-                    ],
-                    validation_mode=validation_mode,
-                )
                 for snapshot_result in snapshot_evaluator.poll_results():
                     accepted = snapshot_evaluator.accept_result(
                         snapshot_result,
-                        expected_snapshot_versions,
+                        snapshot_result.versions,
                         expected_sequence=snapshot_result.sequence,
                     )
                     promotion = (
                         snapshot_evaluator.promote_at_boundary(
                             SnapshotBoundary(
                                 sequence=snapshot_result.sequence,
-                                versions=expected_snapshot_versions,
+                                versions=snapshot_result.versions,
                             )
                         )
                         if accepted
@@ -17823,6 +18267,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     if promotion is not None and promotion.promoted:
                         summary["latest_promoted_snapshot_evaluation"] = (
                             snapshot_result.to_dict()
+                        )
+                        summary["latest_promoted_snapshot_complete"] = bool(
+                            (
+                                snapshot_result.metrics.get("aggregate", {})
+                                if isinstance(snapshot_result.metrics, Mapping)
+                                else {}
+                            ).get("complete", False)
                         )
                         summary["latest_promoted_snapshot_boundary_cycle"] = cycle
                 summary["snapshot_evaluator"] = snapshot_evaluator.summary()
@@ -18702,9 +19153,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     },
                 )
                 with snapshot_evaluation_jobs_lock:
-                    snapshot_evaluation_jobs[evaluation_snapshot.snapshot_id] = tuple(
-                        copy.deepcopy(list(acceptance_validation_samples))
-                    )
+                    snapshot_evaluation_jobs[evaluation_snapshot.snapshot_id] = {
+                        "train_rows": tuple(copy.deepcopy(list(train_samples))),
+                        "validation_mode": validation_mode,
+                        "validation_rows": tuple(
+                            copy.deepcopy(list(acceptance_validation_samples))
+                        ),
+                    }
                 coalesced_drops = snapshot_evaluator.publish(evaluation_snapshot)
                 if coalesced_drops:
                     with snapshot_evaluation_jobs_lock:
@@ -19710,6 +20165,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 if promotion is not None and promotion.promoted:
                     summary["latest_promoted_snapshot_evaluation"] = (
                         snapshot_result.to_dict()
+                    )
+                    summary["latest_promoted_snapshot_complete"] = bool(
+                        (
+                            snapshot_result.metrics.get("aggregate", {})
+                            if isinstance(snapshot_result.metrics, Mapping)
+                            else {}
+                        ).get("complete", False)
                     )
                     summary["latest_promoted_snapshot_boundary_cycle"] = int(
                         snapshot_result.sequence
