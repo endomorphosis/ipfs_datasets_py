@@ -1377,7 +1377,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-067 Make CUDA telemetry and unified-memory admission trustworthy
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: resource-runtime
