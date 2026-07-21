@@ -188,6 +188,45 @@ wall-clock hour.
 - No unverified Leanstral assertion or copied source span becomes a learned
   target, proof fact, or deterministic compiler rule.
 
+## Additional Compiler-System And Assurance Gaps
+
+After the first evidence-driven wave, the next risk is that the optimizer can
+improve internal metrics without becoming a dependable compiler/decompiler. The
+system still needs compiler-grade source maps, symbol tables, citation linking,
+temporal authority handling, ambiguity modeling, verified pass management,
+backend conformance, reproducible builds, proof-carrying artifacts, and
+operator-facing diagnostics. Those are not optional product polish; they are the
+boundary between a useful experimental loop and a legal-text compiler whose
+outputs can be inspected, reproduced, and challenged.
+
+The evaluation program also needs stronger external validity. The current
+closed-loop metrics must be defended against leakage, shallow text similarity,
+source-copy reward hacking, prompt/premise poisoning, schema drift, and
+overfitting to the fixed canary. That requires independent benchmark splits,
+semantic-equivalence checks beyond cross entropy and cosine similarity,
+grammar-constrained decoding, calibrated uncertainty, metamorphic fuzzing,
+hard-negative curricula, multi-seed promotion gates, and production drift
+rollback.
+
+## Follow-Up Waves
+
+### Wave F: Evaluation Integrity
+
+Create leakage-resistant corpora, semantic equivalence metrics, typed IR
+decoding, uncertainty calibration, metamorphic/differential fuzzing, hard
+negative curricula, multi-seed promotion gates, schema compatibility checks,
+prompt/premise poisoning defenses, external legal-expert benchmarks, and drift
+rollback monitoring.
+
+### Wave G: Compiler Productization
+
+Add lossless source maps, legal symbol tables, citation and cross-reference
+linking, authority/amendment/repeal/temporal applicability, ambiguity as a
+first-class IR value, a verified pass manager, backend conformance, reproducible
+builds, incremental and parallel compilation, semantic diffs, proof-carrying
+artifacts, diagnostics, APIs, standards interoperability, and an end-to-end
+conformance suite.
+
 The executable work derived from this plan is tracked as
-`PORTAL-LIR-HAMMER-054` through `PORTAL-LIR-HAMMER-072` in
+`PORTAL-LIR-HAMMER-054` through `PORTAL-LIR-HAMMER-100` in
 `docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md`.

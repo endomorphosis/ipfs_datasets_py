@@ -16,7 +16,7 @@ Operator contract:
 
 - This board is the supervisor's dependency source of truth. A dependency must name another task in this file; task lifecycle values are limited to `todo`, `in_progress`, `blocked`, and `completed`.
 - `Outputs` names the concrete implementation or documentation artifacts owned by a task. `Validation` is the executable, semicolon-delimited command set the supervisor must pass before merge. Do not infer completion from advisory JSON or from an artifact merely being present.
-- The representation targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, retain focused output and validation contracts; PORTAL-LIR-HAMMER-034 records their operator handoff. Runtime and proof-feedback targets PORTAL-LIR-HAMMER-035 through PORTAL-LIR-HAMMER-052 form the first performance wave, and PORTAL-LIR-HAMMER-053 is its rollout handoff. The evidence-driven follow-up in `docs/implementation/plans/HAMMER_LEANSTRAL_LEGAL_IR_NEXT_OPTIMIZATION_PLAN.md` is tracked by PORTAL-LIR-HAMMER-054 through PORTAL-LIR-HAMMER-072.
+- The representation targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, retain focused output and validation contracts; PORTAL-LIR-HAMMER-034 records their operator handoff. Runtime and proof-feedback targets PORTAL-LIR-HAMMER-035 through PORTAL-LIR-HAMMER-052 form the first performance wave, and PORTAL-LIR-HAMMER-053 is its rollout handoff. The evidence-driven follow-up in `docs/implementation/plans/HAMMER_LEANSTRAL_LEGAL_IR_NEXT_OPTIMIZATION_PLAN.md` is tracked by PORTAL-LIR-HAMMER-054 through PORTAL-LIR-HAMMER-100.
 - A generated patch, learned export, or model draft is never promoted merely because its producer task completed. Runtime trust and rollout evidence remain mandatory.
 
 Artifact and authority lanes:
@@ -31,6 +31,8 @@ Artifact and authority lanes:
 | Verified proof-feedback supervision | PORTAL-LIR-HAMMER-045-047, 051 | Content-addressed labels and bounded learned updates derived from trusted receipts. Feedback remains version-bound and cannot directly mutate canonical IR. |
 | Parallel production rollout | PORTAL-LIR-HAMMER-053 | Reversible smoke, hparam, canary, and production evidence. Passing implementation tests alone does not authorize production promotion. |
 | Evidence-driven optimization | PORTAL-LIR-HAMMER-054-072 | Metric causality, formal-supervision efficacy, CUDA/runtime optimization, adaptive parallelism, and a second fail-closed rollout. |
+| Evaluation integrity | PORTAL-LIR-HAMMER-073-084 | Leakage-resistant evaluation, semantic-equivalence metrics, uncertainty, fuzzing, hard negatives, multi-seed promotion, schema compatibility, poisoning defenses, external benchmarks, and drift rollback. |
+| Compiler productization | PORTAL-LIR-HAMMER-085-100 | Source maps, symbol tables, citations, temporal authority, ambiguity, pass manager, backend conformance, reproducibility, incremental compilation, semantic diffs, proof-carrying outputs, diagnostics, APIs, interoperability, and final conformance. |
 
 Expanded optimization target manifest:
 
@@ -72,6 +74,8 @@ Evidence-driven follow-up wave:
 | 062-067 | CUDA projection optimization, asynchronous snapshots, shared artifacts, nonblocking persistence, and trustworthy GPU telemetry | One canonical trainer; parallel immutable consumers |
 | 068-071 | Adaptive worker allocation, resource-aware hparam search, continuous Leanstral batching, and Codex/validation flow control | Global resource leases and downstream capacity bound every lane |
 | 072 | Rebenchmark, smoke, hparam, eight-hour canary, and 24-hour promotion | Fail closed on non-responsive metrics or incomplete lineage |
+| 073-084 | Evaluation integrity and external validity | Do not optimize learned or compiler metrics that can be explained by leakage, shallow similarity, unstable schemas, or canary overfitting |
+| 085-100 | Compiler-grade IR infrastructure and final conformance | Make the compiler/decompiler inspectable, reproducible, incrementally runnable, standards-aware, and proof-carrying |
 
 The manifest is an operator index. The full paths and commands in each task's `Outputs` and `Validation` fields are authoritative for the supervisor.
 
@@ -1459,4 +1463,424 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ```json
 {"phase":"evidence_driven_rollout","scope":"quality_and_throughput_promotion","stages":["benchmark","integrated_smoke","one_hour_hparam","eight_hour_canary","twenty_four_hour_production"]}
+```
+
+## PORTAL-LIR-HAMMER-073 Build leakage-resistant LegalIR corpus splits
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: evaluation-integrity
+- Depends on: PORTAL-LIR-HAMMER-054, PORTAL-LIR-HAMMER-072
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_eval_splits.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_eval_splits.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_eval_splits.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_metric_responsiveness.py -q
+- Acceptance: Creates deterministic train, validation, canary, holdout, statute-family, jurisdiction, temporal, and external-test partitions with content, citation, source, amendment, and near-duplicate leakage checks; blocks training, hparam selection, representation promotion, and Codex TODO projection when an example, citation cluster, or source span crosses a protected split.
+
+```json
+{"phase":"evaluation_integrity","scope":"leakage_resistant_splits","hard_guardrails":["holdout_isolation","near_duplicate_blocking","citation_cluster_isolation"]}
+```
+
+## PORTAL-LIR-HAMMER-074 Add semantic-equivalence metrics beyond CE and cosine
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: evaluation-integrity
+- Depends on: PORTAL-LIR-HAMMER-058, PORTAL-LIR-HAMMER-073
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_objective_balancer.py -q
+- Acceptance: Adds structural equivalence, obligation-equivalence, counterexample-equivalence, graph isomorphism, temporal-window agreement, decompiler round-trip preservation, and proof-obligation delta metrics; reports disagreement when CE/cosine improve while semantic equivalence regresses; makes semantic equivalence a hard promotion gate by family.
+
+```json
+{"phase":"evaluation_integrity","scope":"semantic_equivalence_metrics","reason":"cross_entropy_and_cosine_are_insufficient_as_compiler_quality_signals"}
+```
+
+## PORTAL-LIR-HAMMER-075 Constrain LegalIR decoding with typed grammars
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: autoencoder-architecture
+- Depends on: PORTAL-LIR-HAMMER-055, PORTAL-LIR-HAMMER-074
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_grammar_decoder.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_grammar_decoder.py tests/unit/optimizers/logic_theorem_optimizer/test_trainable_legal_ir_objective.py -q
+- Acceptance: Adds typed constrained decoding for deontic, frame logic, TDFOL, KG, CEC, temporal, provenance, and decompiler plans; masks invalid productions before metric scoring; records grammar rejection reasons; and proves the learned path cannot gain reward by emitting syntactically impossible or source-copy placeholders.
+
+```json
+{"phase":"evaluation_integrity","scope":"typed_grammar_constrained_decoding","hard_guardrail":"invalid_ir_not_rewarded"}
+```
+
+## PORTAL-LIR-HAMMER-076 Calibrate uncertainty and abstention for learned guidance
+
+- Status: todo
+- Completion: 0
+- Priority: P1
+- Track: evaluation-integrity
+- Depends on: PORTAL-LIR-HAMMER-055, PORTAL-LIR-HAMMER-073, PORTAL-LIR-HAMMER-075
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_uncertainty.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_uncertainty.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_uncertainty.py tests/unit/optimizers/logic_theorem_optimizer/test_trainable_legal_ir_objective.py -q
+- Acceptance: Reports calibrated confidence, entropy, abstention, out-of-distribution, and unsupported-family signals by LegalIR family; routes low-confidence learned outputs to Hammer/Leanstral audit rather than Codex TODO generation; and blocks promotion when calibration error or unsupported abstention exceeds configured family thresholds.
+
+```json
+{"phase":"evaluation_integrity","scope":"uncertainty_and_abstention","promotion_rule":"uncertain_guidance_routes_to_audit_not_compiler_rules"}
+```
+
+## PORTAL-LIR-HAMMER-077 Add metamorphic and differential LegalIR fuzzing
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-validation
+- Depends on: PORTAL-LIR-HAMMER-059, PORTAL-LIR-HAMMER-074, PORTAL-LIR-HAMMER-075
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_fuzzing.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_metamorphic_fuzzing.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_metamorphic_fuzzing.py tests/unit/logic/integration/test_legal_ir_hammer_coverage.py -q
+- Acceptance: Generates semantics-preserving and semantics-changing mutations for legal text, deterministic IR, learned IR, obligations, and decompiler outputs; checks expected invariant or changed metrics; differentially compares deterministic compiler, learned guidance, Hammer obligations, and decompiler round trips; and stores minimal counterexamples as trusted negative training candidates only after verification.
+
+```json
+{"phase":"evaluation_integrity","scope":"metamorphic_differential_fuzzing","targets":["text","ir","obligations","decompiler"]}
+```
+
+## PORTAL-LIR-HAMMER-078 Train with verified hard-negative curricula
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: autoencoder-objective
+- Depends on: PORTAL-LIR-HAMMER-057, PORTAL-LIR-HAMMER-077
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_hard_negatives.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_hard_negatives.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_hard_negatives.py tests/unit/optimizers/logic_theorem_optimizer/test_proof_feedback_ablation.py -q
+- Acceptance: Builds a curriculum from verified counterexamples, near-miss clauses, swapped actors, inverted modalities, stale amendments, wrong citations, source-copy spans, and decompiler hallucinations; schedules negatives by family difficulty; and proves hard negatives reduce false-positive semantic equivalence without degrading trusted positive obligations beyond tolerance.
+
+```json
+{"phase":"evaluation_integrity","scope":"verified_hard_negative_curriculum","hard_rule":"unverified_model_negatives_are_not_training_labels"}
+```
+
+## PORTAL-LIR-HAMMER-079 Require multi-seed statistical promotion evidence
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: rollout
+- Depends on: PORTAL-LIR-HAMMER-072, PORTAL-LIR-HAMMER-073, PORTAL-LIR-HAMMER-074, PORTAL-LIR-HAMMER-078
+- Outputs: scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py, tests/unit/optimizers/logic_theorem_optimizer/test_multi_seed_promotion_gate.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_multi_seed_promotion_gate.py tests/unit/optimizers/logic_theorem_optimizer/test_evidence_driven_rollout.py -q
+- Acceptance: Requires configured multi-seed confidence intervals for learned quality, deterministic compiler quality, semantic equivalence, proof validity, hard-negative performance, and accepted patch rate; rejects single-lucky-run promotion and records effect size, variance, seed set, and failure-family attribution.
+
+```json
+{"phase":"evaluation_integrity","scope":"multi_seed_statistical_promotion","hard_guardrail":"single_seed_success_is_not_production_evidence"}
+```
+
+## PORTAL-LIR-HAMMER-080 Version LegalIR schema evolution and compatibility
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: legal-ir-contracts
+- Depends on: PORTAL-LIR-HAMMER-019, PORTAL-LIR-HAMMER-056, PORTAL-LIR-HAMMER-075
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_schema_evolution.py, tests/unit/logic/integration/test_legal_ir_schema_evolution.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_schema_evolution.py tests/unit/logic/integration/test_legal_ir_view_contracts.py -q
+- Acceptance: Adds explicit schema versions, migrations, compatibility checks, deprecation policy, downgrade behavior, feature gates, and metric lineage binding; rejects learned exports, Hammer receipts, Leanstral audits, caches, and compiler outputs whose schema compatibility is unknown or inconsistent.
+
+```json
+{"phase":"evaluation_integrity","scope":"ir_schema_evolution","hard_guardrail":"unknown_schema_never_reused"}
+```
+
+## PORTAL-LIR-HAMMER-081 Defend against prompt and premise poisoning
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: security
+- Depends on: PORTAL-LIR-HAMMER-022, PORTAL-LIR-HAMMER-060, PORTAL-LIR-HAMMER-080
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_premise_security.py, tests/unit/logic/integration/test_legal_ir_premise_security.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_premise_security.py tests/unit/logic/integration/test_legal_ir_premise_selection.py tests/unit_tests/logic/modal/test_leanstral_audit_policy.py -q
+- Acceptance: Detects prompt injection, adversarial quoted text, poisoned premises, malicious citations, model-output-as-premise leakage, and untrusted proof hints; sanitizes Leanstral prompts and Hammer premises; records provenance and rejection reasons; and blocks poisoned artifacts from training, proof, Codex TODOs, and promotion.
+
+```json
+{"phase":"evaluation_integrity","scope":"prompt_and_premise_poisoning_defense","hard_rule":"legal_source_text_is_data_not_instructions"}
+```
+
+## PORTAL-LIR-HAMMER-082 Add external legal-expert benchmark packets
+
+- Status: todo
+- Completion: 0
+- Priority: P1
+- Track: external-evaluation
+- Depends on: PORTAL-LIR-HAMMER-073, PORTAL-LIR-HAMMER-074, PORTAL-LIR-HAMMER-081
+- Outputs: tests/fixtures/legal_ir/external_expert_benchmark.jsonl, ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_external_benchmark.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py -q
+- Acceptance: Defines a versioned external benchmark packet format for expert-authored examples, expected IR families, acceptable ambiguity, citations, proof obligations, decompiler expectations, and adjudication metadata; keeps external packets out of training and hparam selection; and reports external validity separately from internal canary metrics.
+
+```json
+{"phase":"evaluation_integrity","scope":"external_legal_expert_benchmark","hard_guardrail":"external_benchmark_never_training_data"}
+```
+
+## PORTAL-LIR-HAMMER-083 Monitor production drift and rollback learned guidance
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: production-safety
+- Depends on: PORTAL-LIR-HAMMER-056, PORTAL-LIR-HAMMER-079, PORTAL-LIR-HAMMER-082
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_drift_monitor.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_drift_monitor.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_drift_monitor.py tests/unit/logic/integration/test_representation_promotion_evidence.py -q
+- Acceptance: Tracks production distribution drift, family-specific metric drift, proof failure drift, prompt/premise rejection spikes, schema drift, GPU/resource degradation, and accepted-patch regression; automatically disables promoted learned guidance and opens rollback TODOs when drift exceeds configured thresholds.
+
+```json
+{"phase":"evaluation_integrity","scope":"production_drift_and_rollback","hard_guardrail":"learned_guidance_is_reversible"}
+```
+
+## PORTAL-LIR-HAMMER-084 Run external-validity promotion gate
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: rollout
+- Depends on: PORTAL-LIR-HAMMER-079, PORTAL-LIR-HAMMER-080, PORTAL-LIR-HAMMER-081, PORTAL-LIR-HAMMER-082, PORTAL-LIR-HAMMER-083
+- Outputs: docs/implementation/reports/HAMMER_LEANSTRAL_EXTERNAL_VALIDITY_REPORT.md, scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py, tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py tests/unit/optimizers/logic_theorem_optimizer/test_multi_seed_promotion_gate.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_drift_monitor.py -q
+- Acceptance: Publishes an external-validity report that binds leak-free splits, semantic metrics, typed decoding, uncertainty, fuzzing, hard negatives, multi-seed statistics, schema compatibility, poisoning defenses, external benchmark scores, and rollback readiness; promotion fails closed on missing or inconsistent evidence.
+
+```json
+{"phase":"external_validity_rollout","scope":"fail_closed_evaluation_integrity_gate"}
+```
+
+## PORTAL-LIR-HAMMER-085 Add lossless source maps and provenance spans
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-core
+- Depends on: PORTAL-LIR-HAMMER-080, PORTAL-LIR-HAMMER-084
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_source_maps.py, tests/unit/logic/integration/test_legal_ir_source_maps.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_source_maps.py tests/unit/logic/integration/test_legal_ir_schema_evolution.py -q
+- Acceptance: Preserves source document, citation, offset, token span, normalized text, transformation step, and decompiler attribution for every IR node; supports many-to-one and one-to-many transforms; and proves compiler, decompiler, Hammer receipts, learned guidance, and diagnostics can trace every emitted fact back to source or mark it derived.
+
+```json
+{"phase":"compiler_productization","scope":"lossless_source_maps","compiler_property":"every_ir_fact_has_explainable_origin"}
+```
+
+## PORTAL-LIR-HAMMER-086 Implement legal symbol tables and definition resolution
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-core
+- Depends on: PORTAL-LIR-HAMMER-085
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_symbols.py, tests/unit/logic/integration/test_legal_ir_symbols.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_symbols.py tests/unit/logic/integration/test_legal_ir_source_maps.py -q
+- Acceptance: Resolves defined terms, scoped references, actors, authorities, exceptions, conditions, cross-document symbols, aliases, and shadowing with source-map provenance; exposes unresolved and ambiguous symbols as typed diagnostics rather than silent best guesses.
+
+```json
+{"phase":"compiler_productization","scope":"legal_symbol_tables","compiler_property":"definitions_are_scoped_and_diagnostic"}
+```
+
+## PORTAL-LIR-HAMMER-087 Link citations and cross references canonically
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-core
+- Depends on: PORTAL-LIR-HAMMER-085, PORTAL-LIR-HAMMER-086
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_citations.py, tests/unit/logic/integration/test_legal_ir_citations.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_citations.py tests/unit/logic/integration/test_legal_ir_symbols.py -q
+- Acceptance: Canonicalizes internal and external citations, ranges, subsections, incorporated references, repealed references, and unresolved references; records authority, version, source-map lineage, and confidence; and blocks proof or learned targets from treating unresolved citations as resolved law.
+
+```json
+{"phase":"compiler_productization","scope":"citation_cross_reference_linker","compiler_property":"references_are_explicitly_resolved_or_diagnostic"}
+```
+
+## PORTAL-LIR-HAMMER-088 Model authority, amendment, repeal, and temporal applicability
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-core
+- Depends on: PORTAL-LIR-HAMMER-080, PORTAL-LIR-HAMMER-087
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_temporal_authority.py, tests/unit/logic/integration/test_legal_ir_temporal_authority.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_temporal_authority.py tests/unit/logic/integration/test_legal_ir_citations.py -q
+- Acceptance: Represents effective dates, sunset dates, amendments, repeals, supersession, jurisdiction, authority hierarchy, emergency rules, and temporal query context; Hammer obligations verify that deontic and factual conclusions are evaluated under the correct authority and time window.
+
+```json
+{"phase":"compiler_productization","scope":"temporal_authority_model","compiler_property":"law_is_time_and_authority_scoped"}
+```
+
+## PORTAL-LIR-HAMMER-089 Represent ambiguity as first-class LegalIR
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-core
+- Depends on: PORTAL-LIR-HAMMER-076, PORTAL-LIR-HAMMER-086, PORTAL-LIR-HAMMER-088
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_ambiguity.py, tests/unit/logic/integration/test_legal_ir_ambiguity.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_ambiguity.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_uncertainty.py -q
+- Acceptance: Encodes unresolved ambiguity, competing parses, unsupported interpretations, and required human review as typed IR values with source spans and confidence; prevents ambiguity from being collapsed into arbitrary learned labels; and routes high-impact ambiguity to Leanstral audit or operator diagnostics.
+
+```json
+{"phase":"compiler_productization","scope":"first_class_ambiguity","compiler_property":"uncertainty_is_represented_not_hidden"}
+```
+
+## PORTAL-LIR-HAMMER-090 Build a verified LegalIR pass manager
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-core
+- Depends on: PORTAL-LIR-HAMMER-059, PORTAL-LIR-HAMMER-085, PORTAL-LIR-HAMMER-089
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_pass_manager.py, tests/unit/logic/integration/test_legal_ir_pass_manager.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_pass_manager.py tests/unit/logic/integration/test_legal_ir_hammer_coverage.py -q
+- Acceptance: Defines ordered compiler/decompiler passes, declared inputs and outputs, invalidation rules, source-map preservation, schema migrations, Hammer obligations, and deterministic replay; rejects passes that mutate protected fields without a proof or explicit diagnostic.
+
+```json
+{"phase":"compiler_productization","scope":"verified_pass_manager","compiler_property":"compiler_passes_are_ordered_replayable_and_checked"}
+```
+
+## PORTAL-LIR-HAMMER-091 Validate backend conformance across IR targets
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-backends
+- Depends on: PORTAL-LIR-HAMMER-074, PORTAL-LIR-HAMMER-090
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_backend_conformance.py, tests/unit/logic/integration/test_legal_ir_backend_conformance.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_backend_conformance.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py -q
+- Acceptance: Checks that frame logic, deontic, TDFOL, KG, CEC, external prover, and decompiler backends agree on shared semantics or emit typed unsupported diagnostics; records backend feature coverage and blocks promotion when one backend silently drops obligations.
+
+```json
+{"phase":"compiler_productization","scope":"backend_conformance","compiler_property":"backends_cannot_silently_diverge"}
+```
+
+## PORTAL-LIR-HAMMER-092 Make legal compiler builds reproducible
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-ops
+- Depends on: PORTAL-LIR-HAMMER-080, PORTAL-LIR-HAMMER-090
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_build_manifest.py, tests/unit/logic/integration/test_legal_ir_build_manifest.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_build_manifest.py tests/unit/logic/integration/test_legal_ir_schema_evolution.py -q
+- Acceptance: Emits reproducible build manifests with source digests, compiler commit, schema versions, pass graph, model/export IDs, proof tool versions, runtime configuration, cache digests, and deterministic replay command; proves equivalent inputs produce equivalent manifests and outputs.
+
+```json
+{"phase":"compiler_productization","scope":"reproducible_builds","compiler_property":"outputs_are_replayable"}
+```
+
+## PORTAL-LIR-HAMMER-093 Add incremental and parallel compilation
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-performance
+- Depends on: PORTAL-LIR-HAMMER-065, PORTAL-LIR-HAMMER-068, PORTAL-LIR-HAMMER-090, PORTAL-LIR-HAMMER-092
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_incremental_compiler.py, tests/unit/logic/integration/test_legal_ir_incremental_compiler.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_incremental_compiler.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py -q
+- Acceptance: Recompiles only changed source, citation, symbol, temporal, and pass dependency subgraphs; runs independent compilation shards in parallel under resource leases; preserves deterministic output order; and reports invalidated nodes, avoided work, and p95 speedup.
+
+```json
+{"phase":"compiler_productization","scope":"incremental_parallel_compilation","compiler_property":"large_corpora_do_not_force_full_rebuilds"}
+```
+
+## PORTAL-LIR-HAMMER-094 Produce semantic diffs and amendment impact analysis
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-analysis
+- Depends on: PORTAL-LIR-HAMMER-088, PORTAL-LIR-HAMMER-091, PORTAL-LIR-HAMMER-093
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_semantic_diff.py, tests/unit/logic/integration/test_legal_ir_semantic_diff.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_semantic_diff.py tests/unit/logic/integration/test_legal_ir_temporal_authority.py -q
+- Acceptance: Computes semantic diffs across source revisions, amendments, compiler commits, schema versions, and learned-guidance activation states; classifies obligation added, removed, narrowed, broadened, temporally shifted, citation changed, ambiguity changed, and proof status changed; and emits Codex TODOs only for verified compiler-impact regressions.
+
+```json
+{"phase":"compiler_productization","scope":"semantic_diff_and_amendment_impact","compiler_property":"changes_are_semantic_not_just_textual"}
+```
+
+## PORTAL-LIR-HAMMER-095 Emit proof-carrying LegalIR artifacts
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: formal-verification
+- Depends on: PORTAL-LIR-HAMMER-059, PORTAL-LIR-HAMMER-090, PORTAL-LIR-HAMMER-091, PORTAL-LIR-HAMMER-092
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_carrying_artifacts.py, tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py tests/unit/logic/integration/test_legal_ir_backend_conformance.py -q
+- Acceptance: Packages LegalIR outputs with proof obligations, Hammer receipts, reconstruction status, unsupported diagnostics, source maps, build manifest, and verification policy; downstream consumers can independently reject artifacts with missing, stale, incompatible, or failed proof evidence.
+
+```json
+{"phase":"compiler_productization","scope":"proof_carrying_ir_artifacts","compiler_property":"outputs_carry_their_verification_evidence"}
+```
+
+## PORTAL-LIR-HAMMER-096 Add diagnostics and explanation traces
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-ux
+- Depends on: PORTAL-LIR-HAMMER-061, PORTAL-LIR-HAMMER-085, PORTAL-LIR-HAMMER-089, PORTAL-LIR-HAMMER-095
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_diagnostics.py, tests/unit/logic/integration/test_legal_ir_diagnostics.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_diagnostics.py tests/unit/optimizers/logic_theorem_optimizer/test_compiler_repair_lineage.py -q
+- Acceptance: Emits structured diagnostics for unresolved symbols, citations, ambiguity, temporal authority, unsupported backend features, proof failures, learned-guidance abstentions, poisoning rejections, decompiler losses, and Codex repair attribution; every diagnostic includes severity, family, source map, remediation hint, and machine-readable code.
+
+```json
+{"phase":"compiler_productization","scope":"diagnostics_and_explanation_traces","compiler_property":"failures_are_actionable"}
+```
+
+## PORTAL-LIR-HAMMER-097 Expose compiler CLI, API, and LSP surfaces
+
+- Status: todo
+- Completion: 0
+- Priority: P1
+- Track: compiler-interface
+- Depends on: PORTAL-LIR-HAMMER-092, PORTAL-LIR-HAMMER-093, PORTAL-LIR-HAMMER-096
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_compiler_api.py, scripts/ops/legal_ir/legal_ir_compile.py, tests/unit/logic/integration/test_legal_ir_compiler_api.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_compiler_api.py tests/unit/logic/integration/test_legal_ir_diagnostics.py -q; /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python scripts/ops/legal_ir/legal_ir_compile.py --help
+- Acceptance: Provides stable compile, decompile, validate, diff, explain, benchmark, and artifact-export entrypoints with JSON output, deterministic exit codes, source-map diagnostics, and optional learned-guidance activation flags; keeps production defaults deterministic and proof-aware.
+
+```json
+{"phase":"compiler_productization","scope":"cli_api_lsp_surfaces","compiler_property":"compiler_is_operable_without_daemon_internals"}
+```
+
+## PORTAL-LIR-HAMMER-098 Add standards and interchange interoperability
+
+- Status: todo
+- Completion: 0
+- Priority: P1
+- Track: interoperability
+- Depends on: PORTAL-LIR-HAMMER-091, PORTAL-LIR-HAMMER-095, PORTAL-LIR-HAMMER-097
+- Outputs: ipfs_datasets_py/logic/integration/reasoning/legal_ir_interop.py, tests/unit/logic/integration/test_legal_ir_interop.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/logic/integration/test_legal_ir_interop.py tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py -q
+- Acceptance: Imports and exports selected legal XML/JSON, RDF/OWL, KG, proof, and decompiler interchange forms with explicit lossy/lossless markers, schema mappings, source maps, and unsupported diagnostics; proves round-trip conformance for supported subsets.
+
+```json
+{"phase":"compiler_productization","scope":"standards_interoperability","compiler_property":"interchange_loss_is_explicit"}
+```
+
+## PORTAL-LIR-HAMMER-099 Build end-to-end compiler conformance suite
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: compiler-validation
+- Depends on: PORTAL-LIR-HAMMER-084, PORTAL-LIR-HAMMER-095, PORTAL-LIR-HAMMER-096, PORTAL-LIR-HAMMER-097, PORTAL-LIR-HAMMER-098
+- Outputs: tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py, docs/implementation/reports/LEGAL_IR_COMPILER_CONFORMANCE_REPORT.md
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py -q
+- Acceptance: Runs an end-to-end conformance suite covering compile, proof, decompile, semantic diff, diagnostics, reproducibility, external benchmark isolation, hard negatives, source maps, backend conformance, and CLI/API behavior; publishes a report with required, optional, unsupported, and failed capabilities.
+
+```json
+{"phase":"compiler_productization","scope":"end_to_end_conformance_suite","compiler_property":"gcc_for_legal_text_has_a_release_gate"}
+```
+
+## PORTAL-LIR-HAMMER-100 Run final compiler-system promotion
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: rollout
+- Depends on: PORTAL-LIR-HAMMER-084, PORTAL-LIR-HAMMER-094, PORTAL-LIR-HAMMER-095, PORTAL-LIR-HAMMER-099
+- Outputs: docs/implementation/reports/HAMMER_LEANSTRAL_LEGAL_IR_COMPILER_SYSTEM_PROMOTION.md, scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py, tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py tests/conformance/legal_ir/test_legal_ir_compiler_conformance.py -q
+- Acceptance: Promotes the system only when evaluation integrity, external validity, compiler source maps, symbols, citations, temporal authority, ambiguity, pass management, backend conformance, reproducible builds, incremental compilation, semantic diffs, proof-carrying artifacts, diagnostics, APIs, interoperability, and conformance evidence are complete and rollback-ready.
+
+```json
+{"phase":"compiler_system_promotion","scope":"legal_text_compiler_decompiler_ir","stages":["evaluation_integrity","compiler_productization","conformance","promotion"]}
 ```
