@@ -105,6 +105,12 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage
     build_learned_ir_metric_lineage,
     metric_lineage_matches_block,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.parallelism_autotuner import (
+    AdaptivePipelineParallelismController,
+    AdaptivePipelineSignals,
+    ParallelismProfile,
+    RuntimeResourcePressure,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.codex_scope_scheduler import (
     CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION,
     MAX_INITIAL_CODEX_WORKERS,
@@ -11253,6 +11259,37 @@ def build_paired_daemon_commands(
         args,
         codex_children,
     )
+    adaptive_pipeline_plan: Dict[str, Any] = {
+        "enabled": False,
+        "reason": "disabled",
+    }
+    if bool(getattr(args, "adaptive_pipeline_parallelism_enabled", True)):
+        adaptive_pipeline_plan = paired_adaptive_pipeline_worker_plan(
+            args,
+            requested_codex_workers=len(codex_children),
+            disjoint_scope_count=len(
+                {
+                    str(child.get("ownership_scope") or child.get("scope") or "")
+                    for child in codex_children
+                    if str(child.get("ownership_scope") or child.get("scope") or "").strip()
+                }
+            ),
+        )
+        adaptive_pipeline_plan["enabled"] = True
+        counts = dict(adaptive_pipeline_plan.get("counts") or {})
+        codex_cap = max(1, int(counts.get("codex_workers", len(codex_children)) or 1))
+        codex_children = codex_children[:codex_cap]
+        _replace_command_option(
+            autoencoder_command,
+            "--daemon-hammer-guidance-parallel-workers",
+            max(1, int(counts.get("hammer_workers", 1) or 1)),
+        )
+        _replace_command_option(
+            autoencoder_command,
+            "--autoencoder-bridge-workers",
+            max(1, int(counts.get("legal_ir_family_workers", 1) or 1)),
+        )
+        codex_scope_schedule["adaptive_pipeline_parallelism"] = adaptive_pipeline_plan
     codex_command = list(codex_children[0]["command"])
 
     return {
@@ -11263,6 +11300,7 @@ def build_paired_daemon_commands(
         "codex_command": codex_command,
         "codex_children": codex_children,
         "codex_scope_schedule": codex_scope_schedule,
+        "adaptive_pipeline_parallelism": adaptive_pipeline_plan,
     }
 
 
@@ -11377,6 +11415,184 @@ def _host_resource_health() -> Dict[str, float]:
     except OSError:
         pass
     return health
+
+
+def _replace_command_option(command: List[str], option: str, value: Any) -> None:
+    try:
+        index = command.index(option)
+    except ValueError:
+        command.extend([option, str(value)])
+        return
+    if index + 1 < len(command):
+        command[index + 1] = str(value)
+    else:
+        command.append(str(value))
+
+
+def _adaptive_pipeline_profile_from_args(
+    args: argparse.Namespace,
+    *,
+    requested_codex_workers: int,
+) -> ParallelismProfile:
+    """Build the runtime profile envelope requested by paired-daemon arguments."""
+
+    codex_workers = max(
+        1,
+        min(
+            MAX_INITIAL_CODEX_WORKERS,
+            int(requested_codex_workers or getattr(args, "codex_initial_max_workers", 1) or 1),
+        ),
+    )
+    hammer_workers = max(
+        1,
+        int(
+            getattr(
+                args,
+                "daemon_hammer_guidance_parallel_workers",
+                DEFAULT_DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS,
+            )
+            or 1
+        ),
+    )
+    validation_workers = max(
+        1,
+        int(getattr(args, "autoencoder_bridge_workers", 1) or 1),
+    )
+    snapshot_workers = 1 if bool(getattr(args, "snapshot_evaluation_enabled", True)) else 1
+    return ParallelismProfile(
+        name="paired_runtime",
+        hammer_workers=hammer_workers,
+        lean_reconstruction_workers=max(1, min(2, hammer_workers)),
+        leanstral_workers=1 if bool(getattr(args, "paired_leanstral_worker_enabled", False)) else 1,
+        legal_ir_family_workers=validation_workers,
+        incremental_validation_workers=max(1, min(validation_workers, int(getattr(args, "validation_count", 1) or 1))),
+        snapshot_evaluator_workers=snapshot_workers,
+        codex_workers=codex_workers,
+        orchestration_workers=1,
+        trainer_count=1,
+        hammer_lean_cpu_slots=max(1, max(8, hammer_workers + 2)),
+        validation_cpu_slots=max(1, max(4, validation_workers)),
+        codex_cpu_slots=max(1, max(4, codex_workers)),
+        orchestration_cpu_slots=1,
+        reserve_cpu_slots=1,
+    )
+
+
+def _arg_or_default(args: argparse.Namespace, name: str, default: Any) -> Any:
+    value = getattr(args, name, None)
+    return default if value is None else value
+
+
+def paired_adaptive_pipeline_worker_plan(
+    args: argparse.Namespace,
+    *,
+    requested_codex_workers: int,
+    disjoint_scope_count: Optional[int] = None,
+    resource_health: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Choose paired daemon worker counts from useful live pressure signals."""
+
+    profile = _adaptive_pipeline_profile_from_args(
+        args,
+        requested_codex_workers=requested_codex_workers,
+    )
+    health = dict(resource_health or {})
+    memory_available = float(health.get("memory_available_gb", 0.0) or 0.0)
+    memory_total = float(health.get("memory_total_gb", 0.0) or 0.0)
+    memory_pressure = (
+        max(0.0, min(1.0, 1.0 - memory_available / memory_total))
+        if memory_available and memory_total
+        else float(getattr(args, "codex_memory_pressure", 0.0) or 0.0)
+    )
+    swap_free = float(health.get("swap_free_gb", 0.0) or 0.0)
+    swap_total = float(health.get("swap_total_gb", 0.0) or 0.0)
+    swap_pressure = (
+        max(0.0, min(1.0, 1.0 - swap_free / swap_total))
+        if swap_total
+        else 0.0
+    )
+    inferred_hammer_depth = max(
+        0,
+        int(getattr(args, "daemon_hammer_guidance_max_samples_per_cycle", 0) or 0)
+        * max(1, int(getattr(args, "daemon_hammer_guidance_max_obligations_per_sample", 1) or 1)),
+    )
+    inferred_validation_depth = max(
+        0,
+        int(getattr(args, "train_count", 0) or 0) + int(getattr(args, "validation_count", 0) or 0),
+    )
+    inferred_codex_depth = max(
+        requested_codex_workers,
+        min(512, int(getattr(args, "max_program_synthesis_pending", requested_codex_workers) or 0)),
+    )
+    ready_queue_depth = {
+        "codex": int(_arg_or_default(args, "adaptive_codex_ready_depth", inferred_codex_depth) or 0),
+        "evaluator": int(_arg_or_default(args, "adaptive_evaluator_ready_depth", inferred_validation_depth) or 0),
+        "hammer": int(_arg_or_default(args, "adaptive_hammer_ready_depth", inferred_hammer_depth) or 0),
+        "snapshot": int(
+            _arg_or_default(
+                args,
+                "adaptive_snapshot_ready_depth",
+                getattr(args, "snapshot_evaluation_queue_capacity", 1),
+            )
+            or 0
+        ),
+        "validation": int(_arg_or_default(args, "adaptive_validation_ready_depth", inferred_validation_depth) or 0),
+    }
+    service_time_seconds = {
+        "codex": float(getattr(args, "adaptive_codex_service_seconds", 60.0) or 60.0),
+        "evaluator": float(getattr(args, "adaptive_evaluator_service_seconds", 12.0) or 12.0),
+        "hammer": float(getattr(args, "adaptive_hammer_service_seconds", 10.0) or 10.0),
+        "snapshot": float(getattr(args, "adaptive_snapshot_service_seconds", 30.0) or 30.0),
+        "validation": float(getattr(args, "adaptive_validation_service_seconds", 6.0) or 6.0),
+    }
+    pressure = RuntimeResourcePressure(
+        cpu_utilization=float(health.get("cpu_percent", health.get("cpu_utilization", 0.0)) or 0.0),
+        memory_pressure=memory_pressure,
+        swap_pressure=swap_pressure,
+        gpu_memory_pressure=float(
+            health.get("gpu_memory_percent", health.get("gpu_memory_pressure", 0.0)) or 0.0
+        ),
+        gpu_utilization=float(
+            health.get("gpu_utilization_percent", health.get("gpu_utilization", 0.0)) or 0.0
+        ),
+        gpu_telemetry_known=bool(health.get("gpu_telemetry_known", health.get("gpu_telemetry_available", True))),
+        child_process_count=int(health.get("child_process_count", 0) or 0),
+        child_process_limit=max(
+            1,
+            int(
+                health.get(
+                    "child_process_limit",
+                    getattr(args, "adaptive_child_process_limit", 64),
+                )
+                or 64
+            ),
+        ),
+    )
+    signals = AdaptivePipelineSignals(
+        ready_queue_depth=ready_queue_depth,
+        measured_service_time_seconds=service_time_seconds,
+        disjoint_codex_scope_count=max(
+            0,
+            int(
+                disjoint_scope_count
+                if disjoint_scope_count is not None
+                else min(requested_codex_workers, MAX_INITIAL_CODEX_WORKERS)
+            ),
+        ),
+        nested_child_count=int(health.get("nested_child_count", health.get("child_process_count", 0)) or 0),
+        validation_capacity=max(
+            1,
+            int(_arg_or_default(args, "adaptive_validation_capacity", profile.validation_cpu_slots) or 1),
+        ),
+        merge_conflict_rate=float(getattr(args, "codex_apply_conflict_rate", 0.0) or 0.0),
+        resource_pressure=pressure,
+        active_worker_counts={
+            "codex": requested_codex_workers,
+            "leanstral": 1 if bool(getattr(args, "paired_leanstral_worker_enabled", False)) else 0,
+        },
+    )
+    decision = AdaptivePipelineParallelismController(profile).recommend(signals)
+    return decision.to_dict()
 
 
 def paired_codex_worker_resource_plan(
@@ -16488,6 +16704,27 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--codex-memory-pressure", type=float, default=0.0)
     parser.add_argument("--codex-transient-failure-rate", type=float, default=0.0)
     parser.add_argument(
+        "--adaptive-pipeline-parallelism-enabled",
+        type=parse_bool_flag,
+        default=True,
+        help=(
+            "Choose Hammer, evaluator, validation, and Codex worker counts from "
+            "ready queues, scope independence, measured service time, and host pressure."
+        ),
+    )
+    parser.add_argument("--adaptive-hammer-ready-depth", type=int, default=None)
+    parser.add_argument("--adaptive-evaluator-ready-depth", type=int, default=None)
+    parser.add_argument("--adaptive-validation-ready-depth", type=int, default=None)
+    parser.add_argument("--adaptive-snapshot-ready-depth", type=int, default=None)
+    parser.add_argument("--adaptive-codex-ready-depth", type=int, default=None)
+    parser.add_argument("--adaptive-hammer-service-seconds", type=float, default=10.0)
+    parser.add_argument("--adaptive-evaluator-service-seconds", type=float, default=12.0)
+    parser.add_argument("--adaptive-validation-service-seconds", type=float, default=6.0)
+    parser.add_argument("--adaptive-snapshot-service-seconds", type=float, default=30.0)
+    parser.add_argument("--adaptive-codex-service-seconds", type=float, default=60.0)
+    parser.add_argument("--adaptive-validation-capacity", type=int, default=None)
+    parser.add_argument("--adaptive-child-process-limit", type=int, default=64)
+    parser.add_argument(
         "--codex-scope-workers",
         type=int,
         default=1,
@@ -16940,6 +17177,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "autoencoder_run_id": paired["autoencoder_run_id"],
         "autoencoder_stderr_path": str(auto_stderr_path),
         "autoencoder_stdout_path": str(auto_stdout_path),
+        "adaptive_pipeline_parallelism": dict(
+            paired.get("adaptive_pipeline_parallelism") or {}
+        ),
         "leanstral_worker_enabled": leanstral_enabled,
         "leanstral_command": leanstral_command if leanstral_enabled else [],
         "leanstral_run_id": leanstral_run_id if leanstral_enabled else None,

@@ -102,6 +102,148 @@ ResourcePressureSampler = Callable[[], ResourceSnapshot | Mapping[str, Any]]
 
 
 @dataclass(frozen=True)
+class SchedulerPressureSummary:
+    """Normalized source-free pressure evidence for adaptive worker decisions."""
+
+    cpu_utilization: float = 0.0
+    memory_pressure: float = 0.0
+    swap_pressure: float = 0.0
+    gpu_memory_pressure: float = 0.0
+    gpu_utilization: float = 0.0
+    gpu_telemetry_known: bool = True
+    child_process_count: int = 0
+    child_process_limit: int = 64
+    active_child_lease_count: int = 0
+    waiting_request_count: int = 0
+    saturation_events_total: int = 0
+
+    @staticmethod
+    def _ratio(value: Any) -> float:
+        try:
+            result = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+        if not math.isfinite(result) or result < 0.0:
+            return 0.0
+        if result > 1.0:
+            result /= 100.0
+        return max(0.0, min(1.0, result))
+
+    def __post_init__(self) -> None:
+        for name in (
+            "cpu_utilization",
+            "memory_pressure",
+            "swap_pressure",
+            "gpu_memory_pressure",
+            "gpu_utilization",
+        ):
+            object.__setattr__(self, name, self._ratio(getattr(self, name)))
+        for name in (
+            "child_process_count",
+            "child_process_limit",
+            "active_child_lease_count",
+            "waiting_request_count",
+            "saturation_events_total",
+        ):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ResourceConfigurationError(f"{name} must be a non-negative integer")
+        if self.child_process_limit <= 0:
+            raise ResourceConfigurationError("child_process_limit must be positive")
+        if not isinstance(self.gpu_telemetry_known, bool):
+            raise ResourceConfigurationError("gpu_telemetry_known must be a bool")
+
+    @classmethod
+    def from_resource_snapshot(
+        cls,
+        snapshot: ResourceSnapshot | Mapping[str, Any],
+        *,
+        child_process_limit: int = 64,
+        scheduler_snapshot: Optional[Mapping[str, Any]] = None,
+    ) -> "SchedulerPressureSummary":
+        data = snapshot.to_dict() if isinstance(snapshot, ResourceSnapshot) else dict(snapshot)
+        scheduler = dict(scheduler_snapshot or {})
+        counters = dict(scheduler.get("counters") or {})
+        gpu_status = str(data.get("collector_status") or "")
+        gpu_known = bool(data.get("gpu_telemetry_available", "gpu_unavailable" not in gpu_status))
+        return cls(
+            cpu_utilization=data.get("cpu_percent", data.get("cpu_utilization", 0.0)),
+            memory_pressure=data.get("memory_percent", data.get("memory_pressure", 0.0)),
+            swap_pressure=data.get("swap_percent", data.get("swap_pressure", 0.0)),
+            gpu_memory_pressure=data.get(
+                "gpu_memory_percent",
+                data.get("gpu_memory_pressure", 0.0),
+            ),
+            gpu_utilization=data.get(
+                "gpu_utilization_percent",
+                data.get("gpu_utilization", 0.0),
+            ),
+            gpu_telemetry_known=gpu_known,
+            child_process_count=int(data.get("child_process_count", 0) or 0),
+            child_process_limit=max(1, int(child_process_limit or 1)),
+            active_child_lease_count=int(scheduler.get("active_child_lease_count", 0) or 0),
+            waiting_request_count=int(scheduler.get("waiting_request_count", 0) or 0),
+            saturation_events_total=int(counters.get("saturation_events_total", 0) or 0),
+        )
+
+    @classmethod
+    def from_scheduler_snapshot(
+        cls,
+        snapshot: Mapping[str, Any],
+        *,
+        resource_snapshot: ResourceSnapshot | Mapping[str, Any] | None = None,
+        child_process_limit: int = 64,
+    ) -> "SchedulerPressureSummary":
+        if resource_snapshot is not None:
+            return cls.from_resource_snapshot(
+                resource_snapshot,
+                child_process_limit=child_process_limit,
+                scheduler_snapshot=snapshot,
+            )
+        data = dict(snapshot or {})
+        capacity = dict(data.get("capacity") or {})
+        allocated = dict(data.get("allocated") or {})
+        available = dict(data.get("available") or {})
+        total_cpu = max(1.0, float(capacity.get("cpu_slots", 1) or 1))
+        total_mem = max(1.0, float(capacity.get("usable_memory_mb", capacity.get("memory_mb", 1)) or 1))
+        available_mem = max(0.0, float(available.get("memory_mb", 0) or 0))
+        gpu_total = capacity.get("usable_gpu_memory_mb")
+        gpu_available = available.get("gpu_memory_mb")
+        gpu_pressure = 0.0
+        if gpu_total not in {None, 0} and gpu_available is not None:
+            gpu_pressure = 1.0 - (max(0.0, float(gpu_available)) / max(1.0, float(gpu_total)))
+        counters = dict(data.get("counters") or {})
+        return cls(
+            cpu_utilization=float(allocated.get("cpu_slots", 0) or 0) / total_cpu,
+            memory_pressure=1.0 - (available_mem / total_mem),
+            swap_pressure=0.0,
+            gpu_memory_pressure=gpu_pressure,
+            gpu_utilization=0.0,
+            gpu_telemetry_known=gpu_total is not None,
+            child_process_count=int(data.get("active_child_lease_count", 0) or 0),
+            child_process_limit=max(1, int(child_process_limit or 1)),
+            active_child_lease_count=int(data.get("active_child_lease_count", 0) or 0),
+            waiting_request_count=int(data.get("waiting_request_count", 0) or 0),
+            saturation_events_total=int(counters.get("saturation_events_total", 0) or 0),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "active_child_lease_count": self.active_child_lease_count,
+            "child_process_count": self.child_process_count,
+            "child_process_limit": self.child_process_limit,
+            "cpu_utilization": self.cpu_utilization,
+            "gpu_memory_pressure": self.gpu_memory_pressure,
+            "gpu_telemetry_known": self.gpu_telemetry_known,
+            "gpu_utilization": self.gpu_utilization,
+            "memory_pressure": self.memory_pressure,
+            "saturation_events_total": self.saturation_events_total,
+            "swap_pressure": self.swap_pressure,
+            "waiting_request_count": self.waiting_request_count,
+        }
+
+
+@dataclass(frozen=True)
 class LaneReservation:
     """Capacity protected for a lane when other lanes request resources."""
 
@@ -1241,6 +1383,31 @@ class GlobalResourceScheduler:
     telemetry = snapshot
     telemetry_snapshot = snapshot
 
+    def pressure_summary(
+        self,
+        *,
+        resource_snapshot: ResourceSnapshot | Mapping[str, Any] | None = None,
+        child_process_limit: int = 64,
+    ) -> Dict[str, Any]:
+        """Return normalized pressure evidence for adaptive parallelism."""
+
+        scheduler_snapshot = self.snapshot()
+        if resource_snapshot is None:
+            try:
+                resource_snapshot = self._pressure_snapshot()
+            except Exception:
+                return SchedulerPressureSummary.from_scheduler_snapshot(
+                    scheduler_snapshot,
+                    child_process_limit=child_process_limit,
+                ).to_dict()
+        return SchedulerPressureSummary.from_resource_snapshot(
+            resource_snapshot,
+            child_process_limit=child_process_limit,
+            scheduler_snapshot=scheduler_snapshot,
+        ).to_dict()
+
+    adaptive_pressure_summary = pressure_summary
+
     def active_leases(self) -> list[Dict[str, Any]]:
         """Return redacted active lease records (never returns authority keys)."""
 
@@ -1311,6 +1478,7 @@ __all__ = [
     "ResourceLane",
     "LaneReservation",
     "ResourceSchedulerConfig",
+    "SchedulerPressureSummary",
     "ResourceLeaseToken",
     "ResourceLease",
     "GlobalResourceScheduler",
