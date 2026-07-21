@@ -1347,7 +1347,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-065 Build a shared single-flight compiler and embedding artifact graph
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: artifact-runtime
