@@ -13,6 +13,9 @@ from .legal_ir_view_contracts import (
     LegalIRViewContract,
     legal_ir_view_contracts,
 )
+from .legal_ir_temporal_authority import (
+    generate_legal_ir_temporal_authority_obligation_specs,
+)
 
 
 LEGAL_IR_OBLIGATION_SCHEMA_VERSION = "legal-ir-proof-obligation-v1"
@@ -509,6 +512,20 @@ def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIR
 
     obligations.extend(
         generate_legal_ir_contract_coverage_obligations(sample_or_document)
+    )
+    obligations.extend(
+        _obligation(
+            sample_id=str(spec.get("sample_id") or sample_id),
+            formula_id=str(spec.get("formula_id") or "temporal-authority"),
+            kind=str(spec.get("kind") or "temporal_authority_scope"),
+            legal_ir_view=str(spec.get("legal_ir_view") or "temporal_authority.ir"),
+            logic_family=str(spec.get("logic_family") or "temporal"),
+            statement=str(spec.get("statement") or ""),
+            premise_hints=_sequence(spec.get("premise_hints")),
+            metadata=_as_mapping(spec.get("metadata")),
+        )
+        for spec in generate_legal_ir_temporal_authority_obligation_specs(sample_or_document)
+        if str(spec.get("statement") or "")
     )
 
     for index, formula in enumerate(formulas, start=1):

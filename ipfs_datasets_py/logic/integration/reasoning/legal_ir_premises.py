@@ -10,6 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 from .hammer import HammerPremise
 from .legal_ir_obligations import LegalIRProofObligation, generate_legal_ir_proof_obligations
 from .legal_ir_premise_security import sanitize_hammer_premises
+from .legal_ir_temporal_authority import build_legal_ir_temporal_authority_graph
 
 
 LEGAL_IR_PREMISE_LIBRARY_VERSION = "legal-ir-premise-library-v1"
@@ -200,6 +201,33 @@ def default_legal_ir_premises() -> List[HammerPremise]:
             metadata={"premise_kind": "theorem_template"},
         ),
         _premise(
+            "temporal_authority_window_applies",
+            "A Legal IR conclusion may use a law version only when the query date is within its effective, sunset, repeal, supersession, and emergency window.",
+            legal_ir_view="temporal_authority.ir",
+            logic_family="temporal",
+            source_module="legal_ir_premise_library",
+            weight=1.55,
+            metadata={"premise_kind": "theorem_template"},
+        ),
+        _premise(
+            "authority_hierarchy_preempts_lower_rank",
+            "When multiple applicable law versions govern the same conflict key, the highest ranked compatible authority controls the proof context.",
+            legal_ir_view="temporal_authority.ir",
+            logic_family="authority",
+            source_module="legal_ir_premise_library",
+            weight=1.45,
+            metadata={"premise_kind": "theorem_template"},
+        ),
+        _premise(
+            "deontic_and_factual_conclusions_are_time_scoped",
+            "Deontic and factual Legal IR conclusions must carry authority, jurisdiction, and temporal query context before Hammer verification.",
+            legal_ir_view="temporal_authority.ir",
+            logic_family="temporal",
+            source_module="legal_ir_premise_library",
+            weight=1.45,
+            metadata={"premise_kind": "theorem_template"},
+        ),
+        _premise(
             "kg_edges_are_typed",
             "Knowledge graph edges must preserve typed subject, predicate, object, and provenance roles.",
             legal_ir_view="knowledge_graphs.neo4j_compat",
@@ -271,6 +299,33 @@ def premises_from_obligations(obligations: Iterable[LegalIRProofObligation]) -> 
 def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
     document = _document(sample_or_document)
     premises: List[HammerPremise] = []
+    temporal_graph = build_legal_ir_temporal_authority_graph(sample_or_document)
+    for law in temporal_graph.law_versions:
+        premises.append(
+            _premise(
+                f"temporal_authority_fact_{_atom(law.law_version_id)}",
+                (
+                    f"Law version {law.law_version_id} has authority {law.authority_id}, "
+                    f"jurisdiction {law.jurisdiction or 'unspecified'}, effective date {law.effective_date or 'unspecified'}, "
+                    f"and end date {law.temporal_window.end_date or 'open'}."
+                ),
+                legal_ir_view="temporal_authority.ir",
+                logic_family="temporal",
+                source_module="legal_ir_document",
+                weight=1.3,
+                metadata={
+                    "authority_id": law.authority_id,
+                    "canonical_citation_hash": _stable_hash(law.canonical_citation) if law.canonical_citation else "",
+                    "effective_date": law.effective_date,
+                    "emergency_rule": law.emergency,
+                    "law_version_id": law.law_version_id,
+                    "premise_kind": "compiler_fact",
+                    "schema_version": temporal_graph.schema_version,
+                    "temporal_authority_graph_id": temporal_graph.temporal_authority_graph_id,
+                    "temporal_end_date": law.temporal_window.end_date,
+                },
+            )
+        )
     for index, formula in enumerate(_formulas(document), start=1):
         formula_id = _formula_id(formula, index)
         operator = _operator(formula)
