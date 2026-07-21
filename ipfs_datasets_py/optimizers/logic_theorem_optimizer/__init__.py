@@ -141,6 +141,13 @@ __all__ = [
     'evaluate_proof_feedback_ablation',
     'run_trusted_feedback_ablation',
     'measure_trusted_feedback_causal_efficacy',
+    'FamilyObjectiveResult',
+    'LegalIRObjectiveBalanceReport',
+    'LegalIRObjectiveBalancer',
+    'LegalIRObjectiveBalancerConfig',
+    'ObjectiveWeightBounds',
+    'balance_legal_ir_objective',
+    'evaluate_constrained_legal_ir_objective',
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
@@ -949,6 +956,20 @@ def __getattr__(name):
         )
 
         return getattr(proof_feedback_ablation, name)
+    elif name in (
+        'FamilyObjectiveResult',
+        'LegalIRObjectiveBalanceReport',
+        'LegalIRObjectiveBalancer',
+        'LegalIRObjectiveBalancerConfig',
+        'ObjectiveWeightBounds',
+        'balance_legal_ir_objective',
+        'evaluate_constrained_legal_ir_objective',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_objective_balancer,
+        )
+
+        return getattr(legal_ir_objective_balancer, name)
     elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
             ModalProverRouteResult,
