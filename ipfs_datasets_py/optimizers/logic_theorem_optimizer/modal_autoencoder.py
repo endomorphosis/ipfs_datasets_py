@@ -26,6 +26,12 @@ from typing import (
     Sequence,
 )
 
+from .legal_ir_grammar_decoder import (
+    LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION,
+    LegalIRGrammarDecoder,
+    LegalIRGrammarRejection,
+    LegalIRGrammarValidation,
+)
 from .legal_samples import LegalSample, build_us_code_sample, stable_mock_embedding
 from .modal_registry import ModalLogicFamily
 from .projection_profiler import ProjectionProfiler
@@ -62,6 +68,7 @@ LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION = "legal-ir-view-family-metrics-v1"
 LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION = (
     "legal-ir-stable-autoencoder-feature-export-v1"
 )
+LEGAL_IR_GRAMMAR_GUARDRAIL_SCHEMA_VERSION = LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION
 LEGAL_IR_STABLE_FEATURE_EXPORT_MAX_FEATURES = 64
 DECOMPILER_STRUCTURAL_LEARNING_TARGET_SCHEMA_VERSION = (
     "legal-ir-decompiler-structural-learning-target-v1"
@@ -451,6 +458,9 @@ class AutoencoderEvaluation:
     legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
     legal_ir_target_hashes: Dict[str, str] = field(default_factory=dict)
     legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
+    legal_ir_grammar_rejection_reasons: Dict[str, List[Dict[str, str]]] = field(
+        default_factory=dict
+    )
     legal_ir_view_family_metrics: Dict[str, Dict[str, float]] = field(
         default_factory=dict
     )
@@ -472,6 +482,12 @@ class AutoencoderEvaluation:
             ),
             "legal_ir_target_count": self.legal_ir_target_count,
             "legal_ir_target_hashes": dict(sorted(self.legal_ir_target_hashes.items())),
+            "legal_ir_grammar_rejection_reasons": {
+                sample_id: list(reasons)
+                for sample_id, reasons in sorted(
+                    self.legal_ir_grammar_rejection_reasons.items()
+                )
+            },
             "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "legal_ir_view_family_metrics": {
                 family: dict(sorted(metrics.items()))
@@ -3181,6 +3197,9 @@ class ModalAutoencoderBaseline:
             legal_ir_target_count=legal_ir_payload["target_count"],
             legal_ir_losses=legal_ir_payload["losses"],
             legal_ir_target_hashes=legal_ir_payload["target_hashes"],
+            legal_ir_grammar_rejection_reasons=legal_ir_payload[
+                "grammar_rejection_reasons_by_sample"
+            ],
             legal_ir_view_distribution=legal_ir_payload["view_distribution"],
             legal_ir_view_family_metrics=_weighted_view_family_metric_block(
                 family_metric_observations
@@ -3893,6 +3912,9 @@ class AdaptiveModalAutoencoder:
                 predicted_view_distributions
             ),
             legal_ir_target_hashes=legal_ir_payload["target_hashes"],
+            legal_ir_grammar_rejection_reasons=legal_ir_payload[
+                "grammar_rejection_reasons_by_sample"
+            ],
             legal_ir_view_distribution=legal_ir_payload["view_distribution"],
             legal_ir_view_family_metrics=_weighted_view_family_metric_block(
                 family_metric_observations
@@ -26533,6 +26555,13 @@ def _legal_ir_target_payload(
     target_view_distributions_by_sample: Dict[str, Dict[str, float]] = {}
     target_hashes: Dict[str, str] = {}
     decompiler_structural_targets_by_sample: Dict[str, Dict[str, Any]] = {}
+    grammar_metric_values: Dict[str, List[float]] = {}
+    grammar_rejection_reasons_by_sample: Dict[str, List[Dict[str, str]]] = {}
+    sample_source_text_by_id = {
+        str(sample.sample_id): str(getattr(sample, "text", "") or "")
+        for sample in samples
+    }
+    grammar_decoder = LegalIRGrammarDecoder()
 
     for sample in samples:
         if not getattr(getattr(sample, "modal_ir", None), "formulas", None):
@@ -26550,6 +26579,23 @@ def _legal_ir_target_payload(
             safe_value = _float_or_zero(value)
             loss_values.setdefault(str(name), []).append(safe_value)
             sample_losses[str(name)] = safe_value
+        grammar_validation = _legal_ir_grammar_validation_from_target(
+            target,
+            decoder=grammar_decoder,
+            source_text=sample_source_text_by_id.get(str(sample_id), ""),
+        )
+        if grammar_validation is not None:
+            grammar_metrics = grammar_validation.metrics()
+            for name, value in sorted(grammar_metrics.items()):
+                safe_value = _float_or_zero(value)
+                grammar_metric_values.setdefault(name, []).append(safe_value)
+                loss_values.setdefault(name, []).append(safe_value)
+                sample_losses[name] = safe_value
+            if grammar_validation.rejection_reasons and sample_id:
+                grammar_rejection_reasons_by_sample[str(sample_id)] = [
+                    reason.to_dict()
+                    for reason in grammar_validation.rejection_reasons
+                ]
         if sample_id and sample_losses:
             target_losses_by_sample[str(sample_id)] = dict(sorted(sample_losses.items()))
         target_view_distribution: Dict[str, float] = {}
@@ -26570,9 +26616,17 @@ def _legal_ir_target_payload(
         "decompiler_structural_targets_by_sample": dict(
             sorted(decompiler_structural_targets_by_sample.items())
         ),
+        "grammar_rejection_reasons_by_sample": dict(
+            sorted(grammar_rejection_reasons_by_sample.items())
+        ),
         "losses": {
             name: _mean(values)
             for name, values in sorted(loss_values.items())
+            if values
+        },
+        "grammar_losses": {
+            name: _mean(values)
+            for name, values in sorted(grammar_metric_values.items())
             if values
         },
         "target_view_distributions_by_sample": dict(
@@ -26587,6 +26641,199 @@ def _legal_ir_target_payload(
             if values
         },
     }
+
+
+def _legal_ir_grammar_validation_from_target(
+    target: Any,
+    *,
+    decoder: LegalIRGrammarDecoder,
+    source_text: str,
+) -> Optional[LegalIRGrammarValidation]:
+    explicit = _existing_legal_ir_grammar_validation(target)
+    if explicit is not None:
+        return explicit
+    source = _target_mapping(target)
+    for key in (
+        "scored_productions",
+        "production_scores",
+        "candidate_productions",
+    ):
+        if key not in source:
+            continue
+        return decoder.decode(
+            source[key],
+            family=_legal_ir_candidate_family(source),
+            source_text=source_text,
+            context=source,
+        ).validation
+    has_candidate, candidate, family = _legal_ir_candidate_from_target(target)
+    if not has_candidate:
+        return None
+    return decoder.validate(candidate, family=family, source_text=source_text)
+
+
+def _existing_legal_ir_grammar_validation(target: Any) -> Optional[LegalIRGrammarValidation]:
+    raw = _target_attr(target, "grammar_validation")
+    if raw is None:
+        raw = _target_attr(target, "legal_ir_grammar_validation")
+    if raw is None:
+        return None
+    if isinstance(raw, LegalIRGrammarValidation):
+        return raw
+    if isinstance(raw, Mapping):
+        accepted = bool(raw.get("accepted"))
+        family = str(raw.get("family") or "unscoped")
+        reasons: List[LegalIRGrammarRejection] = []
+        for item in raw.get("rejection_reasons", ()) or ():
+            if not isinstance(item, Mapping):
+                continue
+            reasons.append(
+                LegalIRGrammarRejection(
+                    reason=str(item.get("reason") or "grammar_rejected"),
+                    path=str(item.get("path") or "$"),
+                    family=str(item.get("family") or family),
+                    production=str(item.get("production") or ""),
+                    detail=str(item.get("detail") or ""),
+                )
+            )
+        return LegalIRGrammarValidation(
+            accepted=accepted,
+            family=family,
+            candidate_ir=_target_attr(target, "candidate_ir"),
+            rejection_reasons=tuple(reasons),
+            selected_productions=tuple(
+                str(item) for item in raw.get("selected_productions", ()) or ()
+            ),
+            masked_productions=tuple(
+                str(item) for item in raw.get("masked_productions", ()) or ()
+            ),
+        )
+    return None
+
+
+def _legal_ir_candidate_from_target(target: Any) -> tuple[bool, Any, str]:
+    source = _target_mapping(target)
+    candidate_keys = (
+        "candidate_ir",
+        "candidate_legal_ir",
+        "decoded_ir",
+        "decoded_legal_ir",
+        "predicted_ir",
+        "predicted_legal_ir",
+        "generated_ir",
+        "legal_ir_candidate",
+        "decompiler_plan",
+        "plan",
+    )
+    for key in candidate_keys:
+        if key in source:
+            return True, source[key], _legal_ir_candidate_family(source)
+    production_keys = (
+        "scored_productions",
+        "production_scores",
+        "candidate_productions",
+    )
+    for key in production_keys:
+        if key in source:
+            decoder = LegalIRGrammarDecoder()
+            decoded = decoder.decode(
+                source[key],
+                family=_legal_ir_candidate_family(source),
+                source_text="",
+                context=source,
+            )
+            return True, decoded.decoded_ir, decoded.family
+    wrapper_keys = {
+        "accepted",
+        "adapter_losses",
+        "bridge_names",
+        "document",
+        "losses",
+        "target_count",
+        "total_loss",
+        "view_distribution",
+    }
+    grammar_shape_keys = {
+        "backend",
+        "citations",
+        "counterexamples",
+        "deontic_rules",
+        "edges",
+        "events",
+        "evidence",
+        "formulas",
+        "frames",
+        "graph",
+        "intervals",
+        "nodes",
+        "obligations",
+        "relations",
+        "rules",
+        "source_refs",
+        "steps",
+        "temporal_windows",
+        "triples",
+    }
+    if source and (set(source) & grammar_shape_keys) and not (
+        set(source) <= wrapper_keys
+    ):
+        return True, target, _legal_ir_candidate_family(source)
+    return False, None, ""
+
+
+def _legal_ir_candidate_family(source: Mapping[str, Any]) -> str:
+    for key in (
+        "family",
+        "legal_ir_family",
+        "view_family",
+        "logic_family",
+        "legal_ir_view",
+        "target_view",
+        "view",
+        "contract_id",
+    ):
+        value = source.get(key)
+        if value:
+            return str(value)
+    view_distribution = source.get("view_distribution")
+    if isinstance(view_distribution, Mapping) and view_distribution:
+        return max(
+            view_distribution,
+            key=lambda name: (
+                _float_or_zero(view_distribution.get(name)),
+                str(name),
+            ),
+        )
+    return ""
+
+
+def _target_mapping(target: Any) -> Dict[str, Any]:
+    if isinstance(target, Mapping):
+        return dict(target)
+    if target is None or isinstance(target, (str, bytes, bytearray, int, float, bool)):
+        return {}
+    to_dict = getattr(target, "to_dict", None)
+    if callable(to_dict):
+        try:
+            mapped = to_dict()
+        except TypeError:
+            mapped = None
+        if isinstance(mapped, Mapping):
+            return dict(mapped)
+    values: Dict[str, Any] = {}
+    slots = getattr(target, "__slots__", ())
+    if isinstance(slots, str):
+        slots = (slots,)
+    for name in sorted(set(getattr(target, "__dict__", {}) or {}) | set(slots)):
+        if not str(name).startswith("_") and hasattr(target, str(name)):
+            values[str(name)] = getattr(target, str(name))
+    return values
+
+
+def _target_attr(target: Any, name: str, default: Any = None) -> Any:
+    if isinstance(target, Mapping):
+        return target.get(name, default)
+    return getattr(target, name, default)
 
 
 def _legal_ir_target_timeout_seconds() -> float:
@@ -29957,6 +30204,10 @@ def _legal_ir_selected_metric_names(losses: Mapping[str, float]) -> List[str]:
         "legal_ir_view_family_cosine_gap_loss",
         "legal_ir_multiview_proof_failure_ratio",
         "legal_ir_multiview_graph_failure_penalty",
+        "legal_ir_grammar_invalid_production_penalty",
+        "legal_ir_grammar_rejection_count",
+        "legal_ir_grammar_rejection_ratio",
+        "legal_ir_grammar_source_copy_placeholder_penalty",
         "hammer_proof_failure_ratio",
         "hammer_backend_unavailable_ratio",
         "hammer_source_copy_penalty",
@@ -29979,11 +30230,16 @@ def _legal_ir_selected_metric_names(losses: Mapping[str, float]) -> List[str]:
         "hammer_proof_success_rate",
         "hammer_reconstruction_success_rate",
         "hammer_trusted_success_rate",
+        "legal_ir_grammar_accepted",
+        "legal_ir_grammar_syntactic_validity_success_rate",
         "round_trip_reconstruction_success_rate",
         "symbolic_validity_success_rate",
     ):
         if success_name in values:
             selected.append(success_name)
+    for name in sorted(values):
+        if name.startswith("legal_ir_grammar_rejection_reason_"):
+            selected.append(name)
     return _unique_preserve_order(selected)
 
 
@@ -30014,6 +30270,9 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
     component += min(1.0, values.get("legal_ir_view_family_cosine_gap_loss", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_proof_failure_ratio", 0.0))
     component += min(1.0, values.get("legal_ir_multiview_graph_failure_penalty", 0.0))
+    component += min(1.0, values.get("legal_ir_grammar_invalid_production_penalty", 0.0))
+    component += min(1.0, values.get("legal_ir_grammar_rejection_ratio", 0.0))
+    component += min(1.0, values.get("legal_ir_grammar_source_copy_placeholder_penalty", 0.0))
     component += min(1.0, values.get("hammer_proof_failure_ratio", 0.0))
     component += min(1.0, values.get("hammer_backend_unavailable_ratio", 0.0))
     component += min(1.0, values.get("hammer_source_copy_penalty", 0.0))
@@ -30076,6 +30335,10 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
             "legal_ir_view_family_cosine_gap_loss",
             "legal_ir_multiview_proof_failure_ratio",
             "legal_ir_multiview_graph_failure_penalty",
+            "legal_ir_grammar_invalid_production_penalty",
+            "legal_ir_grammar_rejection_count",
+            "legal_ir_grammar_rejection_ratio",
+            "legal_ir_grammar_source_copy_placeholder_penalty",
             "hammer_backend_unavailable_ratio",
             "hammer_premise_selection_hit_rate",
             "hammer_proof_failure_ratio",
@@ -30089,6 +30352,8 @@ def _legal_ir_objective_component(losses: Mapping[str, float]) -> float:
             "source_copy_penalty",
             "source_copy_reward_hack_penalty",
             "symbolic_validity_penalty",
+            "legal_ir_grammar_accepted",
+            "legal_ir_grammar_syntactic_validity_success_rate",
             "symbolic_validity_success_rate",
         }:
             continue
@@ -30844,6 +31109,7 @@ __all__ = [
     "LEGAL_IR_VIEW_FAMILIES",
     "LEGAL_IR_STABLE_FEATURE_EXPORT_MAX_FEATURES",
     "LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION",
+    "LEGAL_IR_GRAMMAR_GUARDRAIL_SCHEMA_VERSION",
     "LEGAL_IR_TRAINABLE_OBJECTIVE_NORM_SCHEMA_VERSION",
     "LEGAL_IR_VIEW_FAMILY_METRIC_NAMES",
     "LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION",
