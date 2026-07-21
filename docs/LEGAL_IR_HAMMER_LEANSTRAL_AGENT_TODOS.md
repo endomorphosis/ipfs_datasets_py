@@ -1332,7 +1332,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-064 Activate asynchronous immutable snapshot evaluation in production
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: evaluation-runtime
@@ -1347,7 +1347,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-065 Build a shared single-flight compiler and embedding artifact graph
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: artifact-runtime
@@ -1884,3 +1884,30 @@ The manifest is an operator index. The full paths and commands in each task's `O
 ```json
 {"phase":"compiler_system_promotion","scope":"legal_text_compiler_decompiler_ir","stages":["evaluation_integrity","compiler_productization","conformance","promotion"]}
 ```
+
+## PORTAL-101 Resolve dirty main checkout blocking 1 worktree merges
+
+- Status: completed
+- Completion: manual
+- Priority: P1
+- Track: ops
+- Fingerprint: 38278618935d633f49e601f69310a490ef3bd599
+- Dedupe key: reconciliation_guardrail:main_checkout_dirty
+- Depends on:
+- Outputs: workspace/discovery, docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md
+- Validation: test -f /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/discovery/2026-07-21-portal-101-reconciliation-38278618935d.md
+- Acceptance: Reconciliation guardrail filed this because 1 branch or worktree cleanup candidates are blocked by main_checkout_dirty. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/discovery/2026-07-21-portal-101-reconciliation-38278618935d.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
+- Reconciliation evidence: workspace/discovery/2026-07-21-portal-101-reconciliation-38278618935d.md
+
+## PORTAL-102 Resolve 1 preflight-conflicting backlogged worktree merges
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: ops
+- Fingerprint: 0c2214156b1d0b958aa92a0c395eb9ddeb3d2809
+- Dedupe key: reconciliation_guardrail:preflight_merge_conflict
+- Depends on:
+- Outputs: workspace/discovery, docs/LEGAL_IR_HAMMER_LEANSTRAL_AGENT_TODOS.md
+- Validation: test -f /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/discovery/2026-07-21-portal-102-reconciliation-0c2214156b1d.md
+- Acceptance: Reconciliation guardrail filed this because 1 branch or worktree cleanup candidates are blocked by preflight_merge_conflict. Use evidence and the machine-readable reconciliation plan in /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/discovery/2026-07-21-portal-102-reconciliation-0c2214156b1d.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
