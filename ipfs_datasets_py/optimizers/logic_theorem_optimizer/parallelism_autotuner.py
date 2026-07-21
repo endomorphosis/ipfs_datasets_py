@@ -21,7 +21,7 @@ import json
 import math
 import os
 import tempfile
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Final, Mapping, Sequence
 
@@ -29,6 +29,9 @@ from typing import Any, Final, Mapping, Sequence
 PARALLELISM_AUTOTUNER_SCHEMA_VERSION: Final = "legal-ir-parallelism-autotuner-v1"
 PIPELINE_BENCHMARK_SCHEMA_VERSION: Final = "legal-ir-optimizer-pipeline-benchmark-v1"
 DGX_SPARK_PROFILE_SCHEMA_VERSION: Final = "legal-ir-dgx-spark-production-profile-v1"
+ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION: Final = (
+    "legal-ir-adaptive-pipeline-parallelism-v1"
+)
 
 HIGHER_IS_BETTER_QUALITY: Final = frozenset(
     {
@@ -172,7 +175,7 @@ class GlobalResourceBounds:
     total_cpu_slots: int = 20
     total_memory_mb: int = 128 * 1024
     max_profile_memory_fraction: float = 0.80
-    useful_cpu_utilization_min: float = 0.75
+    useful_cpu_utilization_min: float = 0.70
     useful_cpu_utilization_max: float = 0.90
     max_memory_percent: float = 90.0
     max_swap_percent: float = 1.0
@@ -521,6 +524,565 @@ def _mean(values: Sequence[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def _bounded_ratio(value: Any, *, name: str, allow_percent: bool = True) -> float:
+    result = _finite(value, name=name, minimum=0.0)
+    if allow_percent and result > 1.0:
+        result /= 100.0
+    return max(0.0, min(1.0, result))
+
+
+def _normalized_count_mapping(value: Mapping[str, Any], *, name: str) -> dict[str, int]:
+    result: dict[str, int] = {}
+    for raw_key, raw_value in dict(value or {}).items():
+        key = str(raw_key or "").strip().lower()
+        if not key:
+            raise ValueError(f"{name} keys must be non-empty")
+        result[key] = _integer(raw_value, name=f"{name}.{key}", minimum=0)
+    return result
+
+
+def _normalized_float_mapping(value: Mapping[str, Any], *, name: str) -> dict[str, float]:
+    result: dict[str, float] = {}
+    for raw_key, raw_value in dict(value or {}).items():
+        key = str(raw_key or "").strip().lower()
+        if not key:
+            raise ValueError(f"{name} keys must be non-empty")
+        result[key] = _finite(raw_value, name=f"{name}.{key}", minimum=0.0)
+    return result
+
+
+def _first_named(mapping: Mapping[str, Any], names: Sequence[str], default: Any = 0) -> Any:
+    for name in names:
+        if name in mapping:
+            return mapping[name]
+    return default
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeResourcePressure:
+    """Current source-free host pressure normalized for adaptive worker control."""
+
+    cpu_utilization: float = 0.0
+    memory_pressure: float = 0.0
+    swap_pressure: float = 0.0
+    gpu_memory_pressure: float = 0.0
+    gpu_utilization: float = 0.0
+    gpu_telemetry_known: bool = True
+    child_process_count: int = 0
+    child_process_limit: int = 64
+
+    def __post_init__(self) -> None:
+        for name in (
+            "cpu_utilization",
+            "memory_pressure",
+            "swap_pressure",
+            "gpu_memory_pressure",
+            "gpu_utilization",
+        ):
+            object.__setattr__(
+                self,
+                name,
+                _bounded_ratio(getattr(self, name), name=name),
+            )
+        if not isinstance(self.gpu_telemetry_known, bool):
+            raise ValueError("gpu_telemetry_known must be a bool")
+        _integer(self.child_process_count, name="child_process_count", minimum=0)
+        _integer(self.child_process_limit, name="child_process_limit", minimum=1)
+
+    @property
+    def child_process_pressure(self) -> float:
+        return max(0.0, min(1.0, self.child_process_count / self.child_process_limit))
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any] | None) -> "RuntimeResourcePressure":
+        data = dict(value or {})
+        gpu_known = data.get("gpu_telemetry_known", data.get("gpu_telemetry_available", True))
+        gpu_status = str(data.get("collector_status", "") or "")
+        if gpu_known is None:
+            gpu_known = "gpu_unavailable" not in gpu_status
+        memory = data.get("memory_pressure")
+        if memory is None:
+            memory = data.get("memory_percent", 0.0)
+        swap = data.get("swap_pressure")
+        if swap is None:
+            swap = data.get("swap_percent", 0.0)
+        gpu_memory = data.get("gpu_memory_pressure")
+        if gpu_memory is None:
+            gpu_memory = data.get("gpu_memory_percent", 0.0)
+        return cls(
+            cpu_utilization=data.get("cpu_utilization", data.get("cpu_percent", 0.0)),
+            memory_pressure=memory,
+            swap_pressure=swap,
+            gpu_memory_pressure=gpu_memory,
+            gpu_utilization=data.get("gpu_utilization", data.get("gpu_utilization_percent", 0.0)),
+            gpu_telemetry_known=bool(gpu_known),
+            child_process_count=int(data.get("child_process_count", 0) or 0),
+            child_process_limit=int(data.get("child_process_limit", 64) or 64),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "child_process_count": self.child_process_count,
+            "child_process_limit": self.child_process_limit,
+            "child_process_pressure": round(self.child_process_pressure, 9),
+            "cpu_utilization": self.cpu_utilization,
+            "gpu_memory_pressure": self.gpu_memory_pressure,
+            "gpu_telemetry_known": self.gpu_telemetry_known,
+            "gpu_utilization": self.gpu_utilization,
+            "memory_pressure": self.memory_pressure,
+            "swap_pressure": self.swap_pressure,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class AdaptivePipelineSignals:
+    """Live demand and pressure evidence for one adaptive scheduling decision."""
+
+    ready_queue_depth: Mapping[str, int] = field(default_factory=dict)
+    measured_service_time_seconds: Mapping[str, float] = field(default_factory=dict)
+    disjoint_codex_scope_count: int = 0
+    nested_child_count: int = 0
+    validation_capacity: int = 1
+    merge_conflict_rate: float = 0.0
+    resource_pressure: RuntimeResourcePressure | Mapping[str, Any] = field(
+        default_factory=RuntimeResourcePressure
+    )
+    active_worker_counts: Mapping[str, int] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "ready_queue_depth",
+            _normalized_count_mapping(self.ready_queue_depth, name="ready_queue_depth"),
+        )
+        object.__setattr__(
+            self,
+            "measured_service_time_seconds",
+            _normalized_float_mapping(
+                self.measured_service_time_seconds,
+                name="measured_service_time_seconds",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "active_worker_counts",
+            _normalized_count_mapping(self.active_worker_counts, name="active_worker_counts"),
+        )
+        _integer(self.disjoint_codex_scope_count, name="disjoint_codex_scope_count", minimum=0)
+        _integer(self.nested_child_count, name="nested_child_count", minimum=0)
+        _integer(self.validation_capacity, name="validation_capacity", minimum=0)
+        object.__setattr__(
+            self,
+            "merge_conflict_rate",
+            _bounded_ratio(self.merge_conflict_rate, name="merge_conflict_rate"),
+        )
+        pressure = self.resource_pressure
+        if not isinstance(pressure, RuntimeResourcePressure):
+            pressure = RuntimeResourcePressure.from_mapping(dict(pressure or {}))
+        object.__setattr__(self, "resource_pressure", pressure)
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any] | None) -> "AdaptivePipelineSignals":
+        data = dict(value or {})
+        return cls(
+            ready_queue_depth=dict(data.get("ready_queue_depth") or data.get("queues") or {}),
+            measured_service_time_seconds=dict(
+                data.get("measured_service_time_seconds") or data.get("service_time_seconds") or {}
+            ),
+            disjoint_codex_scope_count=int(
+                data.get("disjoint_codex_scope_count", data.get("disjoint_scope_count", 0)) or 0
+            ),
+            nested_child_count=int(
+                data.get("nested_child_count", data.get("child_process_count", 0)) or 0
+            ),
+            validation_capacity=int(data.get("validation_capacity", 1) or 0),
+            merge_conflict_rate=data.get("merge_conflict_rate", data.get("apply_conflict_rate", 0.0)),
+            resource_pressure=data.get("resource_pressure", data),
+            active_worker_counts=dict(data.get("active_worker_counts") or {}),
+        )
+
+    def queue_depth_for(self, *names: str) -> int:
+        return int(_first_named(self.ready_queue_depth, names, 0) or 0)
+
+    def service_time_for(self, *names: str) -> float:
+        return float(_first_named(self.measured_service_time_seconds, names, 1.0) or 1.0)
+
+    def active_count_for(self, *names: str) -> int:
+        return int(_first_named(self.active_worker_counts, names, 0) or 0)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "active_worker_counts": dict(sorted(self.active_worker_counts.items())),
+            "disjoint_codex_scope_count": self.disjoint_codex_scope_count,
+            "measured_service_time_seconds": dict(
+                sorted(self.measured_service_time_seconds.items())
+            ),
+            "merge_conflict_rate": self.merge_conflict_rate,
+            "nested_child_count": self.nested_child_count,
+            "ready_queue_depth": dict(sorted(self.ready_queue_depth.items())),
+            "resource_pressure": self.resource_pressure.to_dict(),
+            "validation_capacity": self.validation_capacity,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class AdaptiveWorkerCounts:
+    """Concrete runtime worker counts for every parallel LegalIR lane."""
+
+    hammer_workers: int
+    lean_reconstruction_workers: int
+    leanstral_workers: int
+    legal_ir_family_workers: int
+    incremental_validation_workers: int
+    snapshot_evaluator_workers: int
+    codex_workers: int
+    orchestration_workers: int
+    trainer_count: int = 1
+    overlapping_write_merge_workers: int = 1
+
+    def __post_init__(self) -> None:
+        for name in self.__dataclass_fields__:
+            minimum = 1 if name in {"trainer_count", "overlapping_write_merge_workers"} else 0
+            _integer(getattr(self, name), name=name, minimum=minimum)
+        if self.trainer_count != 1:
+            raise ValueError("adaptive pipeline must preserve one canonical trainer")
+        if self.overlapping_write_merge_workers != 1:
+            raise ValueError("adaptive pipeline must preserve one overlapping-write merge lane")
+
+    @property
+    def total_non_trainer_workers(self) -> int:
+        return (
+            self.hammer_workers
+            + self.lean_reconstruction_workers
+            + self.leanstral_workers
+            + self.legal_ir_family_workers
+            + self.incremental_validation_workers
+            + self.snapshot_evaluator_workers
+            + self.codex_workers
+            + self.orchestration_workers
+            + self.overlapping_write_merge_workers
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
+
+
+@dataclass(frozen=True, slots=True)
+class AdaptivePipelineDecision:
+    """Serializable adaptive worker recommendation plus its pressure evidence."""
+
+    counts: AdaptiveWorkerCounts
+    target_useful_cpu_range: tuple[float, float]
+    useful_cpu_occupancy: float
+    reasons: tuple[str, ...]
+    signals: AdaptivePipelineSignals
+    profile_name: str
+    schema_version: str = ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        low, high = self.target_useful_cpu_range
+        _ratio(low, name="target_useful_cpu_range[0]")
+        _ratio(high, name="target_useful_cpu_range[1]")
+        if low >= high:
+            raise ValueError("target useful CPU range must be increasing")
+        object.__setattr__(
+            self,
+            "useful_cpu_occupancy",
+            _bounded_ratio(self.useful_cpu_occupancy, name="useful_cpu_occupancy"),
+        )
+        object.__setattr__(self, "reasons", tuple(sorted(set(self.reasons))) or ("healthy",))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "counts": self.counts.to_dict(),
+            "profile_name": self.profile_name,
+            "reasons": list(self.reasons),
+            "schema_version": self.schema_version,
+            "signals": self.signals.to_dict(),
+            "target_useful_cpu_range": list(self.target_useful_cpu_range),
+            "useful_cpu_occupancy": self.useful_cpu_occupancy,
+        }
+
+
+class AdaptivePipelineParallelismController:
+    """Choose useful worker counts from live queue, conflict, and pressure signals."""
+
+    def __init__(
+        self,
+        profile: ParallelismProfile | None = None,
+        resource_bounds: GlobalResourceBounds | None = None,
+        *,
+        target_queue_seconds: float = 30.0,
+        min_workers_per_active_lane: int = 1,
+    ) -> None:
+        self.profile = profile or FIXED_DGX_SPARK_BASELINE
+        self.resource_bounds = resource_bounds or GlobalResourceBounds()
+        self.target_queue_seconds = _finite(
+            target_queue_seconds,
+            name="target_queue_seconds",
+            minimum=0.001,
+        )
+        self.min_workers_per_active_lane = _integer(
+            min_workers_per_active_lane,
+            name="min_workers_per_active_lane",
+            minimum=1,
+        )
+
+    def _demand_workers(
+        self,
+        signals: AdaptivePipelineSignals,
+        names: Sequence[str],
+        *,
+        capacity: int,
+    ) -> int:
+        queue_depth = signals.queue_depth_for(*names)
+        if queue_depth <= 0 or capacity <= 0:
+            return 0
+        service = max(0.001, signals.service_time_for(*names))
+        demand = math.ceil(queue_depth * service / self.target_queue_seconds)
+        return max(self.min_workers_per_active_lane, min(capacity, queue_depth, demand))
+
+    @staticmethod
+    def _apply_cap(count: int, cap: int) -> int:
+        return max(0, min(int(count), int(cap)))
+
+    def _pressure_cap(
+        self,
+        signals: AdaptivePipelineSignals,
+        counts: dict[str, int],
+    ) -> tuple[int, list[str]]:
+        pressure = signals.resource_pressure
+        reasons: list[str] = []
+        factor = 1.0
+        low = self.resource_bounds.useful_cpu_utilization_min
+        high = self.resource_bounds.useful_cpu_utilization_max
+        soft_high = max(low, high - 0.05)
+        if pressure.cpu_utilization >= high:
+            factor = min(factor, 0.50)
+            reasons.append("cpu_contention")
+        elif pressure.cpu_utilization >= soft_high:
+            factor = min(factor, 0.75)
+            reasons.append("cpu_precontention")
+        elif (
+            pressure.cpu_utilization < low
+            and sum(signals.ready_queue_depth.values()) > 0
+        ):
+            reasons.append("cpu_under_target_with_ready_work")
+        if pressure.memory_pressure >= 0.90:
+            factor = min(factor, 0.40)
+            reasons.append("ram_contention")
+        elif pressure.memory_pressure >= 0.82:
+            factor = min(factor, 0.70)
+            reasons.append("ram_precontention")
+        if pressure.swap_pressure > 0.0:
+            factor = min(factor, 0.50)
+            reasons.append("swap_pressure")
+        if pressure.gpu_memory_pressure >= 0.90:
+            factor = min(factor, 0.50)
+            reasons.append("gpu_memory_contention")
+        elif pressure.gpu_memory_pressure >= 0.82:
+            factor = min(factor, 0.70)
+            reasons.append("gpu_memory_precontention")
+        if not pressure.gpu_telemetry_known:
+            reasons.append("gpu_telemetry_unknown")
+        if pressure.child_process_pressure >= 0.90:
+            factor = min(factor, 0.50)
+            reasons.append("child_process_contention")
+        elif pressure.child_process_pressure >= 0.75:
+            factor = min(factor, 0.75)
+            reasons.append("child_process_precontention")
+        if signals.nested_child_count:
+            nested_ratio = signals.nested_child_count / max(1, pressure.child_process_limit)
+            if nested_ratio >= 0.75:
+                factor = min(factor, 0.75)
+                reasons.append("nested_child_precontention")
+        if signals.merge_conflict_rate >= 0.20:
+            factor = min(factor, 0.50)
+            reasons.append("merge_conflicts")
+        elif signals.merge_conflict_rate >= 0.10:
+            factor = min(factor, 0.75)
+            reasons.append("merge_conflict_precontention")
+        current_total = sum(counts.values())
+        pressure_total_cap = max(0, math.floor(current_total * factor))
+        child_cap = max(
+            0,
+            pressure.child_process_limit
+            - max(pressure.child_process_count, signals.nested_child_count),
+        )
+        pressure_total_cap = min(pressure_total_cap, child_cap)
+        if not reasons:
+            reasons.append("healthy")
+        return pressure_total_cap, reasons
+
+    @staticmethod
+    def _reduce_to_total_cap(counts: dict[str, int], total_cap: int) -> dict[str, int]:
+        priority = (
+            "orchestration_workers",
+            "codex_workers",
+            "snapshot_evaluator_workers",
+            "leanstral_workers",
+            "incremental_validation_workers",
+            "lean_reconstruction_workers",
+            "legal_ir_family_workers",
+            "hammer_workers",
+        )
+        result = dict(counts)
+        while sum(result.values()) > total_cap and any(result[name] > 0 for name in priority):
+            for name in priority:
+                if sum(result.values()) <= total_cap:
+                    break
+                if result[name] > 0:
+                    result[name] -= 1
+        return result
+
+    def recommend(
+        self,
+        signals: AdaptivePipelineSignals | Mapping[str, Any],
+        *,
+        profile: ParallelismProfile | None = None,
+    ) -> AdaptivePipelineDecision:
+        if isinstance(signals, Mapping):
+            signals = AdaptivePipelineSignals.from_mapping(signals)
+        selected_profile = profile or self.profile
+        validation_cap = max(
+            1,
+            min(selected_profile.validation_cpu_slots, signals.validation_capacity or 1),
+        )
+        hammer_lane_capacity = max(1, selected_profile.hammer_lean_cpu_slots)
+        hammer = self._demand_workers(
+            signals,
+            ("hammer", "proof", "solver_execution", "hammer_lean"),
+            capacity=min(selected_profile.hammer_workers, hammer_lane_capacity),
+        )
+        lean_reconstruction = self._demand_workers(
+            signals,
+            ("lean_reconstruction", "reconstruction"),
+            capacity=min(
+                selected_profile.lean_reconstruction_workers,
+                max(1, hammer_lane_capacity - hammer),
+            ),
+        )
+        leanstral = self._demand_workers(
+            signals,
+            ("leanstral", "leanstral_queue", "leanstral_inference"),
+            capacity=min(
+                selected_profile.leanstral_workers,
+                max(1, hammer_lane_capacity - hammer - lean_reconstruction),
+            ),
+        )
+        if not signals.resource_pressure.gpu_telemetry_known:
+            leanstral = min(leanstral, max(1, signals.active_count_for("leanstral_workers", "leanstral")))
+
+        legal_ir = self._demand_workers(
+            signals,
+            ("evaluator", "legal_ir", "bridge_evaluation", "family"),
+            capacity=min(selected_profile.legal_ir_family_workers, validation_cap),
+        )
+        incremental_validation = self._demand_workers(
+            signals,
+            ("validation", "incremental_validation"),
+            capacity=min(selected_profile.incremental_validation_workers, validation_cap),
+        )
+        snapshot_evaluator = self._demand_workers(
+            signals,
+            ("snapshot", "snapshot_evaluator", "snapshot_evaluation"),
+            capacity=min(selected_profile.snapshot_evaluator_workers, validation_cap),
+        )
+        codex_capacity = min(
+            selected_profile.codex_workers,
+            selected_profile.codex_cpu_slots,
+            max(1, signals.disjoint_codex_scope_count or selected_profile.codex_workers),
+        )
+        codex = self._demand_workers(
+            signals,
+            ("codex", "program_synthesis"),
+            capacity=codex_capacity,
+        )
+        if signals.merge_conflict_rate >= 0.10:
+            codex = max(1, math.floor(codex * (0.75 if signals.merge_conflict_rate < 0.20 else 0.50)))
+        orchestration = self._demand_workers(
+            signals,
+            ("orchestration",),
+            capacity=selected_profile.orchestration_workers,
+        )
+
+        counts = {
+            "hammer_workers": hammer,
+            "lean_reconstruction_workers": lean_reconstruction,
+            "leanstral_workers": leanstral,
+            "legal_ir_family_workers": legal_ir,
+            "incremental_validation_workers": incremental_validation,
+            "snapshot_evaluator_workers": snapshot_evaluator,
+            "codex_workers": codex,
+            "orchestration_workers": orchestration,
+        }
+        pressure_total_cap, reasons = self._pressure_cap(signals, counts)
+        counts = self._reduce_to_total_cap(counts, pressure_total_cap)
+        counts["hammer_workers"] = self._apply_cap(counts["hammer_workers"], selected_profile.hammer_workers)
+        counts["lean_reconstruction_workers"] = self._apply_cap(
+            counts["lean_reconstruction_workers"],
+            selected_profile.lean_reconstruction_workers,
+        )
+        counts["leanstral_workers"] = self._apply_cap(
+            counts["leanstral_workers"],
+            selected_profile.leanstral_workers,
+        )
+        counts["legal_ir_family_workers"] = self._apply_cap(
+            counts["legal_ir_family_workers"],
+            min(selected_profile.legal_ir_family_workers, validation_cap),
+        )
+        counts["incremental_validation_workers"] = self._apply_cap(
+            counts["incremental_validation_workers"],
+            min(selected_profile.incremental_validation_workers, validation_cap),
+        )
+        counts["snapshot_evaluator_workers"] = self._apply_cap(
+            counts["snapshot_evaluator_workers"],
+            min(selected_profile.snapshot_evaluator_workers, validation_cap),
+        )
+        counts["codex_workers"] = self._apply_cap(counts["codex_workers"], codex_capacity)
+        counts["orchestration_workers"] = self._apply_cap(
+            counts["orchestration_workers"],
+            selected_profile.orchestration_workers,
+        )
+        hammer_lane_total = (
+            counts["hammer_workers"]
+            + counts["lean_reconstruction_workers"]
+            + counts["leanstral_workers"]
+        )
+        while hammer_lane_total > hammer_lane_capacity:
+            if counts["leanstral_workers"] > 1:
+                counts["leanstral_workers"] -= 1
+            elif counts["lean_reconstruction_workers"] > 1:
+                counts["lean_reconstruction_workers"] -= 1
+            else:
+                counts["hammer_workers"] = max(1, counts["hammer_workers"] - 1)
+            hammer_lane_total = (
+                counts["hammer_workers"]
+                + counts["lean_reconstruction_workers"]
+                + counts["leanstral_workers"]
+            )
+        if signals.resource_pressure.cpu_utilization > self.resource_bounds.useful_cpu_utilization_max:
+            reasons.append("scaled_down_before_contention")
+        elif (
+            signals.resource_pressure.cpu_utilization
+            >= self.resource_bounds.useful_cpu_utilization_max - 0.05
+        ):
+            reasons.append("scaled_down_before_contention")
+
+        worker_counts = AdaptiveWorkerCounts(**counts)
+        return AdaptivePipelineDecision(
+            counts=worker_counts,
+            target_useful_cpu_range=(
+                self.resource_bounds.useful_cpu_utilization_min,
+                self.resource_bounds.useful_cpu_utilization_max,
+            ),
+            useful_cpu_occupancy=signals.resource_pressure.cpu_utilization,
+            reasons=tuple(reasons),
+            signals=signals,
+            profile_name=selected_profile.name,
+        )
+
+
 class ParallelismAutotuner:
     """Select the fastest trustworthy measured DGX Spark profile."""
 
@@ -758,11 +1320,14 @@ def write_reproducible_profile(path: str | os.PathLike[str], result: AutotuneRes
 
 
 __all__ = [
+    "ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION",
     "DGX_SPARK_PROFILE_SCHEMA_VERSION", "FIXED_DGX_SPARK_BASELINE",
     "HIGHER_IS_BETTER_QUALITY", "LOWER_IS_BETTER_QUALITY",
     "PARALLELISM_AUTOTUNER_SCHEMA_VERSION", "PIPELINE_BENCHMARK_SCHEMA_VERSION",
-    "AutotuneResult", "BenchmarkTrial", "CandidateEvaluation", "GlobalResourceBounds",
+    "AdaptivePipelineDecision", "AdaptivePipelineParallelismController",
+    "AdaptivePipelineSignals", "AdaptiveWorkerCounts", "AutotuneResult",
+    "BenchmarkTrial", "CandidateEvaluation", "GlobalResourceBounds",
     "ParallelismAutotuner", "ParallelismProfile", "PhaseLatency",
     "PipelineBenchmarkMetrics", "TrustBounds", "autotune_parallelism",
-    "canonical_digest", "write_reproducible_profile",
+    "RuntimeResourcePressure", "canonical_digest", "write_reproducible_profile",
 ]
