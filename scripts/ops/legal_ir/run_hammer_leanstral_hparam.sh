@@ -15,6 +15,10 @@ BASE_RUN_ID="${BASE_RUN_ID:-legal-ir-hammer-leanstral-rollout-$(date -u +%Y%m%dT
 SMOKE_SECONDS="${SMOKE_SECONDS:-600}"
 TRIAL_SECONDS="${TRIAL_SECONDS:-600}"
 TRIAL_COUNT="${TRIAL_COUNT:-6}"
+HPARAM_CANDIDATE_COUNT="${HPARAM_CANDIDATE_COUNT:-12}"
+HPARAM_BASE_SEED="${HPARAM_BASE_SEED:-8675309}"
+HPARAM_MAX_CONCURRENT_TRAINERS="${HPARAM_MAX_CONCURRENT_TRAINERS:-1}"
+HPARAM_ALLOW_CONCURRENT_TRAINERS="${HPARAM_ALLOW_CONCURRENT_TRAINERS:-0}"
 CANARY_SECONDS="${CANARY_SECONDS:-28800}"
 PRODUCTION_SECONDS="${PRODUCTION_SECONDS:-${FINAL_SECONDS:-86400}}"
 # Compatibility names retained for existing operators and monitoring/tests.
@@ -86,6 +90,10 @@ if (( SMOKE_SECONDS != 600 || TRIAL_SECONDS * TRIAL_COUNT != 3600 \
 fi
 if (( TRIAL_COUNT < 1 || TRIAL_COUNT > 6 || TRIAL_SECONDS < 1 )); then
   echo "TRIAL_COUNT must be 1..6 and TRIAL_SECONDS must be positive" >&2
+  exit 2
+fi
+if (( HPARAM_CANDIDATE_COUNT < 2 || HPARAM_BASE_SEED < 0 || HPARAM_MAX_CONCURRENT_TRAINERS < 1 )); then
+  echo "HPARAM_CANDIDATE_COUNT must be >=2, HPARAM_BASE_SEED must be >=0, and HPARAM_MAX_CONCURRENT_TRAINERS must be >=1" >&2
   exit 2
 fi
 
@@ -192,12 +200,27 @@ if (( GATE_ONLY )); then
 fi
 
 if (( DRY_RUN )); then
+  hparam_scheduler_args=(
+    "${PYTHON_BIN}" -m ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hparam_scheduler
+    plan
+    --run-id "${BASE_RUN_ID}"
+    --budget-seconds "$((TRIAL_SECONDS * TRIAL_COUNT))"
+    --candidate-count "${HPARAM_CANDIDATE_COUNT}"
+    --base-seed "${HPARAM_BASE_SEED}"
+    --max-concurrent-trainers "${HPARAM_MAX_CONCURRENT_TRAINERS}"
+    --format env
+  )
+  if [[ "${HPARAM_ALLOW_CONCURRENT_TRAINERS,,}" =~ ^(1|true|yes|on)$ ]]; then
+    hparam_scheduler_args+=(--allow-concurrent-trainers)
+  fi
   echo "rollout_id=${BASE_RUN_ID}"
   echo "stage_sequence=short_smoke,one_hour_hparam,eight_hour_canary,twenty_four_hour_production"
   echo "smoke_seconds=${SMOKE_SECONDS}"
   echo "trial_seconds=${TRIAL_SECONDS}"
   echo "trial_count=${TRIAL_COUNT}"
   echo "hparam_seconds=$((TRIAL_SECONDS * TRIAL_COUNT))"
+  echo "hparam_scheduler_command=${hparam_scheduler_args[*]}"
+  "${hparam_scheduler_args[@]}"
   echo "canary_seconds=${CANARY_SECONDS}"
   echo "final_seconds=${PRODUCTION_SECONDS}"
   echo "final_run_label=${FINAL_RUN_LABEL}"
@@ -205,7 +228,7 @@ if (( DRY_RUN )); then
   echo "evidence_output=${EVIDENCE_OUTPUT}"
   echo "summary_path=${SUMMARY_PATH}"
   echo "smoke_command=${ROOT_DIR}/scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh --run-id ${BASE_RUN_ID}-short-smoke"
-  echo "hparam_canary_command=TRIAL_SECONDS=${TRIAL_SECONDS} TRIAL_COUNT=${TRIAL_COUNT} FINAL_SECONDS=${CANARY_SECONDS} FINAL_RUN_LABEL=8h source scripts/ops/logic/run_hparam_then_8h.sh ${BASE_RUN_ID}"
+  echo "hparam_canary_command=TRIAL_SECONDS=${TRIAL_SECONDS} TRIAL_COUNT=${TRIAL_COUNT} HPARAM_CANDIDATE_COUNT=${HPARAM_CANDIDATE_COUNT} HPARAM_BASE_SEED=${HPARAM_BASE_SEED} FINAL_SECONDS=${CANARY_SECONDS} FINAL_RUN_LABEL=8h source scripts/ops/logic/run_hparam_then_8h.sh ${BASE_RUN_ID}"
   echo "production_command=${PYTHON_BIN} -m ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner --run-id ${BASE_RUN_ID}-best-24h --duration-seconds ${PRODUCTION_SECONDS}"
   echo "extra_daemon_args=${EXTRA_DAEMON_ARGS}"
   echo "gate_metrics=${HARD_GUARDRAILS}"
