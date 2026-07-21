@@ -148,6 +148,14 @@ __all__ = [
     'ObjectiveWeightBounds',
     'balance_legal_ir_objective',
     'evaluate_constrained_legal_ir_objective',
+    'SemanticEquivalenceComparisonReport',
+    'SemanticEquivalenceConfig',
+    'SemanticEquivalenceFamilyComparison',
+    'SemanticEquivalenceFamilyResult',
+    'compare_legal_ir_semantic_equivalence',
+    'evaluate_legal_ir_semantic_equivalence',
+    'semantic_equivalence_from_metrics',
+    'semantic_equivalence_promotion_gate',
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
@@ -970,6 +978,21 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_objective_balancer, name)
+    elif name in (
+        'SemanticEquivalenceComparisonReport',
+        'SemanticEquivalenceConfig',
+        'SemanticEquivalenceFamilyComparison',
+        'SemanticEquivalenceFamilyResult',
+        'compare_legal_ir_semantic_equivalence',
+        'evaluate_legal_ir_semantic_equivalence',
+        'semantic_equivalence_from_metrics',
+        'semantic_equivalence_promotion_gate',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_semantic_metrics,
+        )
+
+        return getattr(legal_ir_semantic_metrics, name)
     elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
             ModalProverRouteResult,

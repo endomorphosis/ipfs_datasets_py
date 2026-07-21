@@ -21,6 +21,11 @@ from .legal_ir_family_evaluator import (
     LEGAL_IR_EVALUATION_FAMILIES,
     canonical_legal_ir_evaluation_family,
 )
+from .legal_ir_semantic_metrics import (
+    SemanticEquivalenceComparisonReport,
+    SemanticEquivalenceConfig,
+    compare_legal_ir_semantic_equivalence,
+)
 
 
 LEGAL_IR_OBJECTIVE_BALANCER_SCHEMA_VERSION: Final = (
@@ -191,6 +196,7 @@ class LegalIRObjectiveBalancerConfig:
     minimum_family_improvement: float = 0.0
     require_complete_soft_metrics: bool = True
     require_hard_guardrail_evidence: bool = True
+    require_semantic_equivalence_evidence: bool = True
 
     def __post_init__(self) -> None:
         families = tuple(
@@ -245,6 +251,15 @@ class FamilyObjectiveResult:
         default_factory=dict
     )
     missing_hard_guardrails: tuple[str, ...] = ()
+    semantic_equivalence: Mapping[str, Any] = field(default_factory=dict)
+    missing_semantic_equivalence_metrics: tuple[str, ...] = ()
+    semantic_equivalence_regressions: Mapping[str, Mapping[str, Any]] = field(
+        default_factory=dict
+    )
+    semantic_equivalence_threshold_failures: Mapping[str, Mapping[str, Any]] = field(
+        default_factory=dict
+    )
+    semantic_ce_cosine_disagreement: bool = False
 
     @property
     def status(self) -> str:
@@ -252,6 +267,12 @@ class FamilyObjectiveResult:
             return "hard_guardrail_regressed"
         if self.missing_hard_guardrails:
             return "hard_guardrail_evidence_missing"
+        if self.missing_semantic_equivalence_metrics:
+            return "semantic_equivalence_evidence_missing"
+        if self.semantic_equivalence_threshold_failures:
+            return "semantic_equivalence_threshold_failed"
+        if self.semantic_equivalence_regressions:
+            return "semantic_equivalence_regressed"
         if self.missing_soft_metrics:
             return "soft_metric_evidence_missing"
         if self.objective_improvement < 0.0:
@@ -272,9 +293,20 @@ class FamilyObjectiveResult:
             "hard_guardrail_regressions": _json_ready(self.hard_guardrail_regressions),
             "metric_deltas": _round_mapping(self.metric_deltas),
             "missing_hard_guardrails": list(self.missing_hard_guardrails),
+            "missing_semantic_equivalence_metrics": list(
+                self.missing_semantic_equivalence_metrics
+            ),
             "missing_soft_metrics": list(self.missing_soft_metrics),
             "objective_improvement": round(self.objective_improvement, 12),
             "passed": self.passed,
+            "semantic_ce_cosine_disagreement": self.semantic_ce_cosine_disagreement,
+            "semantic_equivalence": _json_ready(self.semantic_equivalence),
+            "semantic_equivalence_regressions": _json_ready(
+                self.semantic_equivalence_regressions
+            ),
+            "semantic_equivalence_threshold_failures": _json_ready(
+                self.semantic_equivalence_threshold_failures
+            ),
             "soft_weights_after": _round_mapping(self.soft_weights_after),
             "soft_weights_before": _round_mapping(self.soft_weights_before),
             "status": self.status,
@@ -291,6 +323,7 @@ class LegalIRObjectiveBalanceReport:
     macro_soft_improvement: float
     worst_family_improvement: float
     objective_id: str
+    semantic_equivalence_report: Optional[SemanticEquivalenceComparisonReport] = None
     schema_version: str = LEGAL_IR_OBJECTIVE_BALANCER_SCHEMA_VERSION
 
     @property
@@ -340,6 +373,9 @@ class LegalIRObjectiveBalanceReport:
             "macro_score_available": self.macro_score_available,
             "macro_soft_improvement": round(self.macro_soft_improvement, 12),
             "objective_id": self.objective_id,
+            "semantic_equivalence_gate": self.semantic_equivalence_report.to_dict()
+            if self.semantic_equivalence_report is not None
+            else {},
             "schema_version": self.schema_version,
             "status": "accepted" if self.accepted else "blocked",
             "worst_family_improvement": round(self.worst_family_improvement, 12),
@@ -364,6 +400,17 @@ class LegalIRObjectiveBalancer:
     ) -> LegalIRObjectiveBalanceReport:
         baseline = _extract_family_payload(baseline_metrics, self.config.families)
         candidate = _extract_family_payload(candidate_metrics, self.config.families)
+        semantic_report = compare_legal_ir_semantic_equivalence(
+            baseline_metrics,
+            candidate_metrics,
+            config=SemanticEquivalenceConfig(
+                families=self.config.families,
+                regression_tolerance=self.config.metric_tolerance,
+                require_complete_metrics=(
+                    self.config.require_semantic_equivalence_evidence
+                ),
+            ),
+        )
         hard_baseline = _extract_global_guardrails(baseline_metrics)
         hard_candidate = _extract_global_guardrails(candidate_metrics)
         weights, ignored_weight_keys = _normalize_current_weights(
@@ -394,6 +441,7 @@ class LegalIRObjectiveBalancer:
                 after_hard,
                 tolerance=self.config.metric_tolerance,
             )
+            semantic_family = semantic_report.family_results[family]
             family_weights = weights[family]
             before_objective = _soft_objective(before_soft, family_weights)
             after_objective = _soft_objective(after_soft, family_weights)
@@ -429,6 +477,15 @@ class LegalIRObjectiveBalancer:
                 missing_hard_guardrails=missing_hard
                 if self.config.require_hard_guardrail_evidence
                 else (),
+                semantic_equivalence=semantic_family.to_dict(),
+                missing_semantic_equivalence_metrics=semantic_family.missing_metrics
+                if self.config.require_semantic_equivalence_evidence
+                else (),
+                semantic_equivalence_regressions=semantic_family.regressions,
+                semantic_equivalence_threshold_failures=(
+                    semantic_family.threshold_failures
+                ),
+                semantic_ce_cosine_disagreement=semantic_family.disagreement,
             )
 
         improvements = [
@@ -454,11 +511,19 @@ class LegalIRObjectiveBalancer:
         }
         return LegalIRObjectiveBalanceReport(
             family_results=family_results,
-            block_reasons=block_reasons,
+            block_reasons=tuple(
+                list(block_reasons)
+                + [
+                    reason
+                    for reason in semantic_report.block_reasons
+                    if reason not in block_reasons
+                ]
+            ),
             ignored_weight_keys=ignored_weight_keys,
             macro_soft_improvement=macro,
             worst_family_improvement=worst,
             objective_id="lir-per-family-objective-" + _stable_hash(descriptor)[:24],
+            semantic_equivalence_report=semantic_report,
         )
 
 
@@ -731,6 +796,14 @@ def _block_reasons(
             reasons.append(f"{family}:hard_guardrail_evidence_missing")
         if result.hard_guardrail_regressions:
             reasons.append(f"{family}:hard_guardrail_regressed")
+        if result.missing_semantic_equivalence_metrics:
+            reasons.append(f"{family}:semantic_equivalence_evidence_missing")
+        if result.semantic_equivalence_threshold_failures:
+            reasons.append(f"{family}:semantic_equivalence_threshold_failed")
+        if result.semantic_equivalence_regressions:
+            reasons.append(f"{family}:semantic_equivalence_regressed")
+        if result.semantic_ce_cosine_disagreement:
+            reasons.append(f"{family}:ce_cosine_semantic_disagreement")
         if result.objective_improvement < float(config.minimum_family_improvement):
             reasons.append(f"{family}:soft_objective_regressed")
     return tuple(reasons)
