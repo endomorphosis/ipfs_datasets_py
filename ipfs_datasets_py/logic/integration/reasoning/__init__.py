@@ -48,6 +48,19 @@ from .legal_ir_hammer import (
     LegalIRHammerRunner,
     run_legal_ir_hammer,
 )
+from .legal_ir_hammer_coverage import (
+    LEGAL_IR_HAMMER_COVERAGE_SCHEMA_VERSION,
+    REQUIRED_LEGAL_IR_HAMMER_COVERAGE_FAMILIES,
+    LegalIRHammerCoverageCell,
+    LegalIRHammerCoverageReport,
+    LegalIRHammerCoverageWaiver,
+    LegalIRHammerFamilyCoverage,
+    LegalIRHammerUnsupportedTranslation,
+    LegalIRMinimizedCounterexample,
+    build_legal_ir_hammer_coverage_report,
+    coverage_report_from_hammer_report,
+    minimize_verified_counterexample,
+)
 from .legal_ir_hammer_translation import (
     LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION,
     LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION,

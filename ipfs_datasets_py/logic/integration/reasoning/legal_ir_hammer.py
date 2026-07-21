@@ -34,6 +34,11 @@ from .legal_ir_proof_router import (
     ProofRoutingPolicy,
     ProofTrustLevel,
 )
+from .legal_ir_hammer_coverage import (
+    LEGAL_IR_HAMMER_COVERAGE_SCHEMA_VERSION,
+    LegalIRHammerCoverageReport,
+    build_legal_ir_hammer_coverage_report,
+)
 
 
 LEGAL_IR_HAMMER_REPORT_SCHEMA_VERSION = "legal-ir-hammer-report-v1"
@@ -73,6 +78,7 @@ class LegalIRHammerReport:
     translation_records: List[HammerTranslationRecord] = field(default_factory=list)
     reconstruction_receipts: List[HammerReconstructionReceipt] = field(default_factory=list)
     route_results: List[LegalIRProofRouteResult] = field(default_factory=list)
+    coverage_report: Optional[LegalIRHammerCoverageReport] = None
 
     @property
     def proof_routing_results(self) -> List[LegalIRProofRouteResult]:
@@ -95,6 +101,11 @@ class LegalIRHammerReport:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "artifacts": [artifact.to_dict() for artifact in self.artifacts],
+            "coverage_report": (
+                self.coverage_report.to_dict()
+                if self.coverage_report is not None
+                else None
+            ),
             "elapsed_seconds": round(float(self.elapsed_seconds), 12),
             "metadata": dict(sorted(self.metadata.items())),
             "obligation_count": int(self.obligation_count),
@@ -283,6 +294,14 @@ class LegalIRHammerRunner:
 
         proved_count = sum(1 for artifact in artifacts if artifact.proved)
         trusted_count = sum(1 for artifact in artifacts if artifact.trusted)
+        coverage_report = build_legal_ir_hammer_coverage_report(
+            sample_or_document,
+            obligations=resolved_obligations,
+            artifacts=artifacts,
+            route_results=route_results,
+            translation_records=translation_records,
+            reconstruction_receipts=reconstruction_receipts,
+        )
         return LegalIRHammerReport(
             artifacts=artifacts,
             obligation_count=len(resolved_obligations),
@@ -293,8 +312,17 @@ class LegalIRHammerRunner:
             translation_records=translation_records,
             reconstruction_receipts=reconstruction_receipts,
             route_results=route_results,
+            coverage_report=coverage_report,
             metadata={
                 "backend_health": backend_health_summary,
+                "coverage_block_reasons": list(coverage_report.block_reasons),
+                "coverage_covered_family_count": coverage_report.covered_family_count,
+                "coverage_obligations": [
+                    obligation.to_dict() for obligation in resolved_obligations
+                ],
+                "coverage_promotion_allowed": coverage_report.promotion_allowed,
+                "coverage_required_family_count": coverage_report.required_family_count,
+                "coverage_schema_version": LEGAL_IR_HAMMER_COVERAGE_SCHEMA_VERSION,
                 "reconstruction_receipt_count": len(reconstruction_receipts),
                 "reconstruction_receipt_schema_version": (
                     LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION
@@ -402,6 +430,7 @@ __all__ = [
     "LegalIRHammerRunner",
     "HammerReconstructionReceipt",
     "HammerTranslationRecord",
+    "LegalIRHammerCoverageReport",
     "LegalIRProofRouteResult",
     "LegalIRProofRouter",
     "ProofRoutingPolicy",
