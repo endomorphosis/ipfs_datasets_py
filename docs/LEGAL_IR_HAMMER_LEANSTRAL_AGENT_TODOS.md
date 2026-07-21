@@ -1422,7 +1422,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-070 Operate Leanstral as a cache-first continuously batched service
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P1
 - Track: leanstral-runtime
