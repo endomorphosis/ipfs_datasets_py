@@ -1767,7 +1767,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-093 Add incremental and parallel compilation
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: compiler-performance
