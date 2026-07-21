@@ -35,9 +35,12 @@ DEFAULT_MAX_OOD_RATE: Final = 0.0
 DEFAULT_MAX_UNSUPPORTED_ABSTENTION_RATE: Final = 0.0
 
 _GUIDANCE_LIST_KEYS: Final = (
+    "ambiguities",
+    "ambiguity_records",
     "guidance_items",
     "learned_guidance",
     "leanstral_guidance",
+    "legal_ir_ambiguities",
     "guidance",
     "items",
     "verified_guidance",
@@ -105,6 +108,17 @@ _FAMILY_KEYS: Final = (
     "semantic_family",
     "view_family",
     "program_synthesis_scope",
+)
+
+_AMBIGUITY_KEYS: Final = (
+    "ambiguity_id",
+    "ambiguity_kind",
+    "arbitrary_learned_label",
+    "competing_parses",
+    "human_review_required",
+    "learned_label",
+    "legal_ir_ambiguity",
+    "unsupported_interpretations",
 )
 
 _VIEW_FAMILY_ALIASES: Final[Mapping[str, str]] = {
@@ -563,6 +577,9 @@ def _observation_from_item(
     policy: LegalIRUncertaintyConfig,
     metric_only: bool = False,
 ) -> dict[str, Any]:
+    if _looks_like_ambiguity_item(item):
+        return _ambiguity_observation_from_item(item, index=index)
+
     explicit_family = _first_string(item, _FAMILY_KEYS)
     distribution = _distribution_from_item(item)
     if not explicit_family and distribution:
@@ -872,17 +889,73 @@ def _looks_like_observation(item: Mapping[str, Any]) -> bool:
             | set(_CONFIDENCE_KEYS)
             | set(_DISTRIBUTION_KEYS)
             | set(_CALIBRATION_ERROR_KEYS)
+            | set(_AMBIGUITY_KEYS)
             | {"guidance_id", "task_id", "schema_version", "source"}
         )
     )
 
 
 def _guidance_id(item: Mapping[str, Any], *, index: int) -> str:
-    for key in ("guidance_id", "task_id", "obligation_id", "sample_id", "id"):
+    for key in ("guidance_id", "ambiguity_id", "task_id", "obligation_id", "sample_id", "id"):
         value = str(item.get(key) or "").strip()
         if value:
             return value
     return "uncertainty-guidance-" + _hash_json({"index": index, "item": item})[:20]
+
+
+def _looks_like_ambiguity_item(item: Mapping[str, Any]) -> bool:
+    if item.get("legal_ir_ambiguity") is True:
+        return True
+    schema = str(item.get("schema_version") or "")
+    if schema.startswith("legal-ir-ambiguity"):
+        return True
+    return bool(set(item).intersection(_AMBIGUITY_KEYS)) and bool(
+        item.get("ambiguity_id") or item.get("ambiguity_kind")
+    )
+
+
+def _ambiguity_observation_from_item(
+    item: Mapping[str, Any],
+    *,
+    index: int,
+) -> dict[str, Any]:
+    family, unsupported = _canonical_family(
+        _first_string(item, _FAMILY_KEYS)
+        or _ambiguity_target_view(item)
+        or "deontic"
+    )
+    raw_confidence = max(0.0, min(1.0, _finite_float(item.get("confidence"), 0.0)))
+    return {
+        "abstained": True,
+        "calibrated_confidence": 0.0,
+        "calibration_error": 1.0,
+        "evidence_sources": ("legal_ir_ambiguity",),
+        "family": family,
+        "guidance_id": _guidance_id(item, index=index),
+        "normalized_entropy": 1.0,
+        "ood": True,
+        "raw_confidence": raw_confidence,
+        "route": ROUTE_HAMMER_LEANSTRAL_AUDIT,
+        "unsupported_family": True if unsupported else bool(
+            item.get("learned_label") or item.get("arbitrary_learned_label")
+        ),
+    }
+
+
+def _ambiguity_target_view(item: Mapping[str, Any]) -> str:
+    for key in ("competing_parses", "unsupported_interpretations"):
+        for candidate in _sequence(item.get(key)):
+            if not isinstance(candidate, Mapping):
+                continue
+            view = str(
+                candidate.get("target_view")
+                or candidate.get("target_component")
+                or candidate.get("legal_ir_view")
+                or ""
+            ).strip()
+            if view:
+                return view
+    return ""
 
 
 def _first_string(item: Mapping[str, Any], keys: Iterable[str]) -> str:
