@@ -34,6 +34,12 @@ from .legal_ir_grammar_decoder import (
 )
 from .legal_samples import LegalSample, build_us_code_sample, stable_mock_embedding
 from .modal_registry import ModalLogicFamily
+from .modal_autoencoder_state_version import (
+    IncrementalStateIdentity,
+    MODAL_AUTOENCODER_STATE_IDENTITY_SCHEMA_VERSION,
+    StateIdentity,
+    StateRevisionToken,
+)
 from .projection_profiler import ProjectionProfiler
 
 _LEGAL_IR_TARGET_CACHE_MAX = 2048
@@ -170,6 +176,50 @@ LEGAL_IR_TRAINABLE_HEAD_FIELDS: Mapping[str, str] = {
     "semantic_slot_legal_ir_view_family_logits": "semantic_slot",
     "semantic_slot_legal_ir_view_logits": "semantic_slot",
 }
+
+# Every value emitted by ``ModalAutoencoderTrainingState.to_dict`` that is
+# object-owned mutable state.  Schema constants are bound separately by the
+# identity envelope, so this list remains exactly the set of assignable fields.
+MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS = (
+    "decoded_embeddings",
+    "family_logits",
+    "compiler_quality_embedding_weights",
+    "compiler_quality_family_logits",
+    "logic_signature_embedding_weights",
+    "logic_signature_family_logits",
+    "logic_signature_legal_ir_view_logits",
+    "round_trip_signal_embedding_weights",
+    "round_trip_signal_family_logits",
+    "round_trip_signal_legal_ir_view_logits",
+    "decompiler_plan_embedding_weights",
+    "decompiler_plan_family_logits",
+    "decompiler_plan_legal_ir_view_logits",
+    "predicate_argument_embedding_weights",
+    "predicate_argument_family_logits",
+    "predicate_argument_legal_ir_view_logits",
+    "feature_embedding_weights",
+    "family_embedding_weights",
+    "family_semantic_slot_embedding_weights",
+    "family_semantic_slot_legal_ir_view_embedding_weights",
+    "family_legal_ir_view_embedding_weights",
+    "semantic_slot_embedding_weights",
+    "feature_family_logits",
+    "semantic_slot_family_logits",
+    "legal_ir_view_logits",
+    "legal_ir_view_embedding_weights",
+    "legal_ir_view_family_logits",
+    "feature_legal_ir_view_logits",
+    "family_semantic_slot_legal_ir_view_logits",
+    "semantic_slot_legal_ir_view_embedding_weights",
+    "semantic_slot_legal_ir_view_family_logits",
+    "semantic_slot_legal_ir_view_logits",
+    "proof_auxiliary_head_logits",
+    "proof_feedback_version_fingerprint",
+    "applied_proof_feedback_ids",
+    "applied_leanstral_guidance_ids",
+    "applied_todo_ids",
+    "architecture_version",
+)
 
 
 @dataclass(frozen=True)
@@ -887,6 +937,103 @@ class ModalAutoencoderTrainingState:
     applied_leanstral_guidance_ids: List[str] = field(default_factory=list)
     applied_todo_ids: List[str] = field(default_factory=list)
     architecture_version: str = MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    _state_identity_tracker: IncrementalStateIdentity = field(
+        init=False,
+        repr=False,
+        compare=False,
+    )
+
+    def __post_init__(self) -> None:
+        """Attach recursive mutation tracking without changing checkpoints."""
+
+        tracker = IncrementalStateIdentity(
+            schema_version=MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+            metric_lineage={
+                "hammer_guidance_metric_schema_version": (
+                    HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION
+                ),
+                "legal_ir_view_family_metric_schema_version": (
+                    LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION
+                ),
+                "proof_auxiliary_head_schema_version": (
+                    PROOF_AUXILIARY_HEAD_SCHEMA_VERSION
+                ),
+            },
+            component_normalizers={
+                "proof_auxiliary_head_logits": lambda value: (
+                    _bounded_proof_auxiliary_head_logits(value)
+                    if self.proof_feedback_version_fingerprint
+                    else {}
+                )
+            },
+        )
+        object.__setattr__(self, "_state_identity_tracker", tracker)
+        for name in MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS:
+            wrapped = tracker.track_component(
+                name,
+                getattr(self, name),
+                mutation=False,
+            )
+            object.__setattr__(self, name, wrapped)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        tracker = self.__dict__.get("_state_identity_tracker")
+        if tracker is not None and name in MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS:
+            value = tracker.track_component(name, value, mutation=True)
+            object.__setattr__(self, name, value)
+            # The persisted proof-head component is conditionally present, so a
+            # fingerprint transition also changes its normalized representation.
+            if name == "proof_feedback_version_fingerprint":
+                tracker.dirty("proof_auxiliary_head_logits", mutation=False)
+            return
+        object.__setattr__(self, name, value)
+
+    def state_identity(self, *, metric_lineage: Any = None) -> str:
+        """Return the cached deterministic digest for this state and lineage."""
+
+        return self._state_identity_tracker.digest(metric_lineage=metric_lineage)
+
+    def state_identity_record(self, *, metric_lineage: Any = None) -> StateIdentity:
+        """Return identity diagnostics including revision and component hashes."""
+
+        return self._state_identity_tracker.identity(metric_lineage=metric_lineage)
+
+    @property
+    def state_revision(self) -> int:
+        return self._state_identity_tracker.revision
+
+    @property
+    def component_digests(self) -> Dict[str, str]:
+        return self._state_identity_tracker.component_digests()
+
+    @property
+    def identity_stats(self) -> Dict[str, Any]:
+        return self._state_identity_tracker.stats()
+
+    def state_revision_token(self, *, metric_lineage: Any = None) -> StateRevisionToken:
+        return self._state_identity_tracker.token(metric_lineage=metric_lineage)
+
+    def is_current_state_revision(
+        self,
+        token: StateRevisionToken,
+        *,
+        metric_lineage: Any = None,
+    ) -> bool:
+        return self._state_identity_tracker.matches(
+            token,
+            metric_lineage=metric_lineage,
+        )
+
+    def require_current_state_revision(
+        self,
+        token: StateRevisionToken,
+        *,
+        metric_lineage: Any = None,
+    ) -> None:
+        self._state_identity_tracker.assert_current(
+            token,
+            metric_lineage=metric_lineage,
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1096,6 +1243,18 @@ class ModalAutoencoderTrainingState:
             self.applied_proof_feedback_ids
         )
         copied.applied_todo_ids = list(self.applied_todo_ids)
+        return copied
+
+    def __copy__(self) -> "ModalAutoencoderTrainingState":
+        """Do not let a shallow copy retain callbacks into the source state."""
+
+        return self.copy()
+
+    def __deepcopy__(self, memo: Dict[int, Any]) -> "ModalAutoencoderTrainingState":
+        """Rebuild tracking callbacks for a fully independent copied state."""
+
+        copied = self.copy()
+        memo[id(self)] = copied
         return copied
 
     def generalizable_entry_count(self) -> int:
@@ -1520,6 +1679,7 @@ class ModalAutoencoderTrainingState:
 
     def telemetry(self) -> Dict[str, Any]:
         """Return compact state-size telemetry for daemon rollout diagnostics."""
+        identity_stats = self.identity_stats
         vector_maps = self.embedding_weight_maps()
         nested_logit_maps: Dict[str, Mapping[str, Mapping[str, float]]] = {
             "compiler_quality_family_logits": self.compiler_quality_family_logits,
@@ -1611,6 +1771,16 @@ class ModalAutoencoderTrainingState:
                 self.proof_feedback_version_fingerprint
             ),
             "schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+            "state_identity_component_digest_compute_count": int(
+                identity_stats["component_digest_compute_count"]
+            ),
+            "state_identity_dirty_component_count": int(
+                identity_stats["dirty_component_count"]
+            ),
+            "state_identity_schema_version": (
+                MODAL_AUTOENCODER_STATE_IDENTITY_SCHEMA_VERSION
+            ),
+            "state_revision": self.state_revision,
             "sample_memory_entry_count": len(self.decoded_embeddings)
             + len(self.family_logits),
             "sample_memory_scalar_count": sample_embedding_scalar_count

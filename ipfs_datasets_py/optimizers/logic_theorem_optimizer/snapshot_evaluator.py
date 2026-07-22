@@ -129,6 +129,7 @@ class EvaluationSnapshot:
     metadata: Mapping[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=_utc_now)
     created_monotonic: float = field(default_factory=time.monotonic)
+    payload_digest: str = ""
 
     def __post_init__(self) -> None:
         if int(self.sequence) < 0:
@@ -137,11 +138,12 @@ class EvaluationSnapshot:
         object.__setattr__(self, "state_payload", payload)
         object.__setattr__(self, "metadata", _frozen_mapping(self.metadata))
         digest = hashlib.sha256(payload).hexdigest()
-        if digest != self.versions.state_version:
+        if self.payload_digest and digest != self.payload_digest:
             raise ValueError(
-                "state_payload hash does not match versions.state_version "
-                f"({digest} != {self.versions.state_version})"
+                "state_payload hash does not match payload_digest "
+                f"({digest} != {self.payload_digest})"
             )
+        object.__setattr__(self, "payload_digest", digest)
 
     @classmethod
     def from_state_json(
@@ -153,6 +155,7 @@ class EvaluationSnapshot:
         holdout_version: str,
         schema_version: str = SNAPSHOT_EVALUATION_SCHEMA_VERSION,
         metadata: Optional[Mapping[str, Any]] = None,
+        state_version: str = "",
     ) -> "EvaluationSnapshot":
         if isinstance(state, bytes):
             payload = bytes(state)
@@ -165,7 +168,10 @@ class EvaluationSnapshot:
                 separators=(",", ":"),
             ).encode("utf-8")
         versions = SnapshotVersions(
-            state_version=hashlib.sha256(payload).hexdigest(),
+            # Callers with a mutation-tracked state provide its logical identity.
+            # The payload checksum remains an independent transport-integrity
+            # guard in ``payload_digest``.
+            state_version=str(state_version or hashlib.sha256(payload).hexdigest()),
             compiler_version=str(compiler_version),
             holdout_version=str(holdout_version),
             schema_version=str(schema_version),
@@ -175,6 +181,7 @@ class EvaluationSnapshot:
             versions=versions,
             state_payload=payload,
             metadata=metadata or {},
+            payload_digest=hashlib.sha256(payload).hexdigest(),
         )
 
     @property
@@ -190,6 +197,7 @@ class EvaluationSnapshot:
         value: Dict[str, Any] = {
             "created_at": self.created_at,
             "metadata": copy.deepcopy(dict(self.metadata)),
+            "payload_digest": self.payload_digest,
             "sequence": self.sequence,
             "snapshot_id": self.snapshot_id,
             "state_size_bytes": len(self.state_payload),
