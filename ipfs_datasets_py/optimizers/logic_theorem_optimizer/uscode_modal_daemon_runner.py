@@ -449,7 +449,8 @@ COMPILER_IR_METRIC_TEXT_POLICIES = ("skip", "truncate")
 DEFAULT_COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS = 400
 DEFAULT_COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS = 10.0
 DEFAULT_COMPILER_IR_METRIC_TEXT_POLICY = "truncate"
-COMPILER_IR_METRIC_PROFILE_VERSION = "compiler-ir-metric-profile-v2-bounded-real"
+COMPILER_IR_METRIC_PROFILE_VERSION = "compiler-ir-metric-profile-v3-compact-cache"
+LEANSTRAL_REPORT_WAIT_SUMMARY_INTERVAL_SECONDS = 5.0
 CODEX_TARGET_METRIC_TIMEOUT_SECONDS_ENV = (
     "IPFS_DATASETS_CODEX_TARGET_METRIC_TIMEOUT_SECONDS"
 )
@@ -480,8 +481,14 @@ _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v11"
 _COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
 _COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v3"
-_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v9"
+_COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v10"
 _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY = "timeout_surface_fallback_per_sample_budget_v2"
+MAX_CACHED_COMPILER_DECODED_TEXT_CHARS = 16 * 1024
+MAX_CACHED_COMPILER_GUIDANCE_SLOTS = 256
+MAX_CACHED_COMPILER_GUIDANCE_VALUES = 2_048
+MAX_CACHED_COMPILER_GUIDANCE_VALUES_PER_SLOT = 64
+MAX_CACHED_COMPILER_GUIDANCE_VALUE_CHARS = 512
+_COMPILER_IR_CACHE_OMITTED_METADATA_KEYS = frozenset({"_legal_ir_artifact_graph"})
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_LOCK = threading.Lock()
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
 _COMPILER_IR_SAMPLE_CODE_FINGERPRINT_VALUE: Optional[str] = None
@@ -4327,19 +4334,83 @@ def _compiler_ir_metric_sample_timeout_cache_key(
 def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
     modal_ir = getattr(result, "modal_ir", None)
     frame_candidates = getattr(result, "frame_candidates", ()) or ()
+    decoded = getattr(result, "decoded_modal_text", None)
+    decoded_text = getattr(decoded, "text", None)
+    if decoded_text is None:
+        decoded_text = getattr(result, "decoded_text", None)
+    if decoded_text is None:
+        decoded_text = decoded
+    decoded_text = str(decoded_text or "")
+    decoded_text_truncated = len(decoded_text) > MAX_CACHED_COMPILER_DECODED_TEXT_CHARS
+    retained_decoded_text = decoded_text[:MAX_CACHED_COMPILER_DECODED_TEXT_CHARS]
+
+    raw_metadata = getattr(result, "metadata", {}) or {}
+    omitted_metadata_keys: List[str] = []
+    if isinstance(raw_metadata, Mapping):
+        compact_metadata = {}
+        for key, value in raw_metadata.items():
+            key_text = str(key)
+            if key_text in _COMPILER_IR_CACHE_OMITTED_METADATA_KEYS:
+                omitted_metadata_keys.append(key_text)
+                continue
+            compact_metadata[key_text] = value
+    else:
+        compact_metadata = raw_metadata
+
     payload = {
-        "decoded_modal_text": str(getattr(result, "decoded_modal_text", "") or ""),
+        "decoded_modal_text": retained_decoded_text,
         "frame_candidate_count": len(frame_candidates),
         "kg_triple_count": len(getattr(result, "kg_triples", ()) or ()),
         "losses": _metric_cache_object_payload(getattr(result, "losses", {}) or {}),
-        "metadata": _metric_cache_object_payload(getattr(result, "metadata", {}) or {}),
+        "metadata": _metric_cache_object_payload(compact_metadata),
         "modal_formula_count": len(getattr(modal_ir, "formulas", ()) or ()),
     }
     slot_texts = compiler_guidance_slot_texts_from_result(result)
     if slot_texts:
+        compact_slot_texts: Dict[str, List[str]] = {}
+        original_value_count = 0
+        retained_value_count = 0
+        truncated_value_count = 0
+        for slot, values in sorted(slot_texts.items(), key=lambda item: str(item[0])):
+            normalized_values = _metadata_sequence_strings(values)
+            original_value_count += len(normalized_values)
+            if (
+                len(compact_slot_texts) >= MAX_CACHED_COMPILER_GUIDANCE_SLOTS
+                or retained_value_count >= MAX_CACHED_COMPILER_GUIDANCE_VALUES
+            ):
+                continue
+            retained_values: List[str] = []
+            for value in normalized_values[:MAX_CACHED_COMPILER_GUIDANCE_VALUES_PER_SLOT]:
+                if retained_value_count >= MAX_CACHED_COMPILER_GUIDANCE_VALUES:
+                    break
+                text = str(value)
+                if len(text) > MAX_CACHED_COMPILER_GUIDANCE_VALUE_CHARS:
+                    truncated_value_count += 1
+                retained_values.append(text[:MAX_CACHED_COMPILER_GUIDANCE_VALUE_CHARS])
+                retained_value_count += 1
+            if retained_values:
+                compact_slot_texts[str(slot)] = retained_values
         payload["compiler_guidance_slot_texts"] = _metric_cache_object_payload(
-            slot_texts
+            compact_slot_texts
         )
+        payload["compiler_guidance_slot_texts_compaction"] = {
+            "original_slot_count": len(slot_texts),
+            "original_value_count": original_value_count,
+            "retained_slot_count": len(compact_slot_texts),
+            "retained_value_count": retained_value_count,
+            "truncated_value_count": truncated_value_count,
+            "truncated": bool(
+                len(compact_slot_texts) < len(slot_texts)
+                or retained_value_count < original_value_count
+                or truncated_value_count
+            ),
+        }
+    payload["cache_compaction"] = {
+        "decoded_text_original_chars": len(decoded_text),
+        "decoded_text_retained_chars": len(retained_decoded_text),
+        "decoded_text_truncated": decoded_text_truncated,
+        "omitted_metadata_keys": sorted(omitted_metadata_keys),
+    }
     return payload
 
 
@@ -6113,7 +6184,14 @@ def run_daemon_hammer_guidance_cycle(
             sample_id = _daemon_hammer_sample_id(sample)
             try:
                 if runtime_telemetry is None:
-                    obligations = generate_legal_ir_proof_obligations(sample)
+                    obligations = generate_legal_ir_proof_obligations(
+                        sample,
+                        max_obligations=(
+                            hammer_config.max_obligations
+                            if hammer_config.max_obligations > 0
+                            else None
+                        ),
+                    )
                 else:
                     with runtime_telemetry.span(
                         "premise_selection",
@@ -6121,7 +6199,14 @@ def run_daemon_hammer_guidance_cycle(
                         sample_id=sample_id,
                         unit_count=1,
                     ):
-                        obligations = generate_legal_ir_proof_obligations(sample)
+                        obligations = generate_legal_ir_proof_obligations(
+                            sample,
+                            max_obligations=(
+                                hammer_config.max_obligations
+                                if hammer_config.max_obligations > 0
+                                else None
+                            ),
+                        )
             except (KeyError, TypeError, ValueError, RuntimeError) as exc:
                 obligation_failures.append(
                     {
@@ -6130,8 +6215,6 @@ def run_daemon_hammer_guidance_cycle(
                     }
                 )
                 obligations = []
-            if hammer_config.max_obligations > 0:
-                obligations = obligations[: hammer_config.max_obligations]
             result["obligation_count"] = int(result.get("obligation_count", 0) or 0) + len(obligations)
             if not obligations:
                 continue
@@ -6273,6 +6356,94 @@ def run_daemon_hammer_guidance_cycle(
     return result
 
 
+_DAEMON_HAMMER_SUMMARY_FIELDS = (
+    "artifact_paths",
+    "autoencoder_training",
+    "cache_error",
+    "cache_hit",
+    "contract_telemetry_schema_version",
+    "cycle",
+    "enabled",
+    "hammer_artifact_count",
+    "hammer_config",
+    "hammer_guidance_metric_schema_version",
+    "hammer_metrics",
+    "hammer_projected_todo_count",
+    "leanstral_drafting",
+    "leanstral_hammer_candidate_count",
+    "legal_ir_contract_coverage",
+    "legal_ir_contract_failure_counts",
+    "legal_ir_contract_telemetry",
+    "legal_ir_contract_view_family_gaps",
+    "obligation_count",
+    "obligation_failure_count",
+    "obligation_failures",
+    "output_path",
+    "persist_error",
+    "runtime_failure_count",
+    "runtime_failures",
+    "sample_count",
+    "sample_ids",
+    "schema_version",
+    "status",
+    "trusted_hammer_guidance_count",
+)
+
+
+def compact_daemon_hammer_guidance_report(
+    cycle_report: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return summary-safe Hammer evidence while leaving full artifacts on disk."""
+
+    report = dict(cycle_report or {})
+    compact = {
+        key: _metric_cache_object_payload(report[key])
+        for key in _DAEMON_HAMMER_SUMMARY_FIELDS
+        if key in report
+    }
+    hammer_reports = [
+        dict(item)
+        for item in report.get("hammer_reports", []) or []
+        if isinstance(item, Mapping)
+    ]
+    compact["hammer_report_count"] = len(hammer_reports)
+    compact["hammer_reconstruction_receipt_count"] = sum(
+        len(item.get("reconstruction_receipts", []) or []) for item in hammer_reports
+    )
+    compact["hammer_route_result_count"] = sum(
+        len(item.get("route_results", []) or []) for item in hammer_reports
+    )
+    compact["hammer_translation_record_count"] = sum(
+        len(item.get("translation_records", []) or []) for item in hammer_reports
+    )
+    compact["hammer_report_summaries"] = [
+        {
+            key: _metric_cache_object_payload(item[key])
+            for key in (
+                "citation",
+                "elapsed_seconds",
+                "obligation_count",
+                "premise_count",
+                "proof_success_rate",
+                "proved_count",
+                "sample_id",
+                "schema_version",
+                "trusted_count",
+                "trusted_success_rate",
+            )
+            if key in item
+        }
+        for item in hammer_reports[:16]
+    ]
+    compact["summary_payload_compacted"] = bool(
+        report.get("hammer_guidance_artifacts") or hammer_reports
+    )
+    compact["omitted_hammer_guidance_artifact_count"] = len(
+        report.get("hammer_guidance_artifacts", []) or []
+    )
+    return compact
+
+
 def _hammer_projected_count_from_projection(projection: Mapping[str, Any]) -> int:
     count = 0
     sources = projection.get("projection_sources")
@@ -6294,7 +6465,7 @@ def update_daemon_hammer_guidance_summary(
 ) -> Dict[str, Any]:
     """Expose hammer/Leanstral cycle telemetry under stable daemon keys."""
 
-    report = dict(cycle_report or {})
+    report = compact_daemon_hammer_guidance_report(cycle_report)
     projection = dict(projection or {})
     hammer_metrics = dict(report.get("hammer_metrics") or {})
     hammer_projected_todo_count = _hammer_projected_count_from_projection(projection)
@@ -11768,6 +11939,23 @@ def _paired_autoencoder_succeeded(
         return False
     health = dict(autoencoder_child_health or {})
     return bool(health.get("autoencoder_summary_final", False))
+
+
+def _paired_completion_succeeded(
+    *,
+    autoencoder_success: bool,
+    codex_success: bool,
+    leanstral_success: bool,
+    latest_stop_reason: str,
+) -> bool:
+    """Reject parent lifecycle failures even when child artifacts are durable."""
+
+    return bool(
+        autoencoder_success
+        and codex_success
+        and leanstral_success
+        and str(latest_stop_reason or "") != "paired_timeout_grace_exceeded"
+    )
 
 
 def _paired_child_exit_should_restart(
@@ -17606,6 +17794,10 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         )
     codex_stdout_path = Path(str(codex_child_summaries[0]["stdout_path"]))
     codex_stderr_path = Path(str(codex_child_summaries[0]["stderr_path"]))
+    paired_shutdown_poll_cushion_seconds = max(
+        15.0,
+        2.0 * float(args.paired_poll_seconds),
+    )
 
     summary: Dict[str, Any] = {
         "autoencoder_command": list(paired["autoencoder_command"]),
@@ -17640,6 +17832,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             args.paired_codex_queue_grace_seconds
         ),
         "paired_poll_seconds": float(args.paired_poll_seconds),
+        "paired_shutdown_poll_cushion_seconds": (
+            paired_shutdown_poll_cushion_seconds
+        ),
         "queue_run_id": paired["queue_run_id"],
         "run_id": args.run_id,
         "started_at": utc_now(),
@@ -17782,6 +17977,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     else 0.0
                 )
                 + max(0.0, float(args.paired_codex_queue_grace_seconds))
+                + paired_shutdown_poll_cushion_seconds
             )
             while True:
                 auto_exit_code = auto_process.poll()
@@ -17973,10 +18169,18 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         )
         summary["leanstral_success"] = leanstral_success
         summary["autoencoder_runner_terminated"] = autoencoder_runner_terminated
+        paired_success = _paired_completion_succeeded(
+            autoencoder_success=autoencoder_success,
+            codex_success=codex_success,
+            leanstral_success=leanstral_success,
+            latest_stop_reason=str(summary.get("latest_stop_reason") or ""),
+        )
+        summary["paired_timeout_exceeded"] = (
+            str(summary.get("latest_stop_reason") or "")
+            == "paired_timeout_grace_exceeded"
+        )
         summary["status"] = (
-            "succeeded"
-            if autoencoder_success and codex_success and leanstral_success
-            else "failed"
+            "succeeded" if paired_success else "failed"
         )
         save_summary(summary_path, summary, final=True)
         append_event(
@@ -18015,7 +18219,13 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         not leanstral_enabled
         or bool(summary.get("leanstral_success"))
     )
-    return 0 if autoencoder_success and codex_success and leanstral_success else 1
+    paired_success = _paired_completion_succeeded(
+        autoencoder_success=autoencoder_success,
+        codex_success=codex_success,
+        leanstral_success=leanstral_success,
+        latest_stop_reason=str(summary.get("latest_stop_reason") or ""),
+    )
+    return 0 if paired_success else 1
 
 
 def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
@@ -20147,8 +20357,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 ],
                 runtime_telemetry=runtime_telemetry,
             )
-            summary["active_cycle_hammer_guidance"] = dict(
-                daemon_hammer_guidance_cycle
+            summary["active_cycle_hammer_guidance"] = (
+                compact_daemon_hammer_guidance_report(
+                    daemon_hammer_guidance_cycle
+                )
             )
             save_summary(summary_path, summary)
             guidance_todo_candidates_by_kind = {
@@ -20267,19 +20479,26 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             leanstral_report = leanstral_rule_gap_report_path(args, root=root)
             leanstral_wait_started = time.monotonic()
+            leanstral_wait_last_summary = float("-inf")
             while (
                 leanstral_report_wait_seconds > 0.0
                 and not leanstral_report.is_file()
                 and (time.monotonic() - leanstral_wait_started)
                 < leanstral_report_wait_seconds
             ):
+                waited_seconds = time.monotonic() - leanstral_wait_started
                 summary["active_cycle_leanstral_report_wait"] = {
                     "path": str(leanstral_report),
                     "status": "waiting",
-                    "waited_seconds": round(time.monotonic() - leanstral_wait_started, 3),
+                    "waited_seconds": round(waited_seconds, 3),
                     "wait_seconds": leanstral_report_wait_seconds,
                 }
-                save_summary(summary_path, summary)
+                if (
+                    waited_seconds - leanstral_wait_last_summary
+                    >= LEANSTRAL_REPORT_WAIT_SUMMARY_INTERVAL_SECONDS
+                ):
+                    save_summary(summary_path, summary)
+                    leanstral_wait_last_summary = waited_seconds
                 time.sleep(0.5)
             summary["active_cycle_leanstral_report_wait"] = {
                 "path": str(leanstral_report),
@@ -21314,7 +21533,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "compiler_ir_guidance_scope_hints": guidance_scope_hints,
                     "compiler_ir_train": compiler_ir_train,
                     "compiler_ir_validation": compiler_ir_validation,
-                    "daemon_hammer_guidance": daemon_hammer_guidance_cycle,
+                    "daemon_hammer_guidance": (
+                        compact_daemon_hammer_guidance_report(
+                            daemon_hammer_guidance_cycle
+                        )
+                    ),
                     "compiler_ir_validation_comparable_to_previous_cycle": bool(
                         compiler_ir_validation_comparable
                     ),
@@ -21622,6 +21845,24 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     return 0
 
 
+def _codex_shutdown_drain_window_seconds(args: argparse.Namespace) -> float:
+    """Reserve enough time for an already-claimed packet to finish cleanly."""
+
+    exec_budget = 2.0 * max(0.0, float(args.codex_timeout_seconds))
+    if str(getattr(args, "codex_apply_mode", "patch_only")) == "apply_to_main":
+        validation_budget = 300.0
+        lock_budget = max(
+            0.0,
+            float(getattr(args, "codex_main_apply_lock_timeout_seconds", 0.0) or 0.0),
+        )
+        exec_budget += (2.0 * validation_budget) + lock_budget
+    scheduling_budget = max(
+        float(getattr(args, "poll_seconds", 0.0) or 0.0),
+        float(getattr(args, "codex_vector_max_bundle_wait_seconds", 0.0) or 0.0),
+    )
+    return max(15.0, exec_budget + scheduling_budget + 15.0)
+
+
 def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     """Claim program-synthesis TODOs asynchronously for an external Codex worker."""
     root = Path.cwd()
@@ -21725,6 +21966,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
 
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
+    shutdown_drain_window_seconds = _codex_shutdown_drain_window_seconds(args)
+    summary["codex_shutdown_drain_window_seconds"] = shutdown_drain_window_seconds
     policy = ModalOptimizerPolicy()
     append_event(
         log_path,
@@ -21766,7 +22009,21 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 attributes={"worker_id": worker_id},
             )
             bundle_mode = str(getattr(args, "codex_bundle_mode", "semantic")).strip().lower()
-            if bundle_mode == "vector":
+            claim_window_open = (
+                end_at - time.time()
+            ) > shutdown_drain_window_seconds
+            summary["codex_shutdown_drain_active"] = not claim_window_open
+            if not claim_window_open:
+                with queue_file_lock(queue_path):
+                    queue = ModalTodoQueue.load_jsonl(queue_path)
+                    status = update_program_synthesis_summary(
+                        summary,
+                        queue,
+                        policy,
+                        execution_mode=execution_mode,
+                    )
+                claimed = []
+            elif bundle_mode == "vector":
                 claimed, queue, status, vector_claim_report = _claim_vector_program_synthesis_batch(
                     args=args,
                     queue_path=queue_path,
@@ -21984,7 +22241,11 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             summary["latest_stop_reason"] = (
                 "claimed_program_synthesis_todos"
                 if claimed
-                else "waiting_for_program_synthesis_todos"
+                else (
+                    "draining_for_clean_shutdown"
+                    if not claim_window_open
+                    else "waiting_for_program_synthesis_todos"
+                )
             )
             metric_event_fields = _codex_packet_metric_event_fields(packet)
             if metric_event_fields:

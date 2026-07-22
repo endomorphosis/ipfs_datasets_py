@@ -43,7 +43,7 @@ LEGAL_IR_EVALUATION_CACHE_SCHEMA_VERSION: Final = "legal-ir-evaluation-cache-v1"
 LEGAL_IR_EVALUATION_ARTIFACT_SCHEMA_VERSION: Final = "legal-ir-evaluation-artifact-v1"
 LEGAL_IR_EVALUATION_RESULT_SCHEMA_VERSION: Final = "legal-ir-evaluation-result-v1"
 DETERMINISTIC_COMPILER_STATE_HASH: Final = "deterministic-compiler-state-independent-v1"
-DEFAULT_MAX_ENTRY_BYTES: Final = 64 * 1024 * 1024
+DEFAULT_MAX_ENTRY_BYTES: Final = 8 * 1024 * 1024
 
 _T = TypeVar("_T")
 

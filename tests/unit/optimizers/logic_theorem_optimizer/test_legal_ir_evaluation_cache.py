@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cache import (
+    DEFAULT_MAX_ENTRY_BYTES,
     LEGAL_IR_EVALUATION_CACHE_SCHEMA_VERSION,
     InvalidEvaluationArtifactError,
     LegalIREvaluationArtifact,
@@ -90,6 +91,18 @@ def test_artifact_is_deeply_immutable_and_rejects_unsafe_numbers() -> None:
             compiler_artifact={},
             embedding=(float("nan"),),
         )
+
+
+def test_cache_has_a_bounded_default_and_rejects_oversized_entries(tmp_path) -> None:
+    assert DEFAULT_MAX_ENTRY_BYTES == 8 * 1024 * 1024
+    cache = LegalIREvaluationCache(tmp_path, max_entry_bytes=1024)
+    artifact = LegalIREvaluationArtifact(
+        key=_key(),
+        compiler_artifact={"decoded_modal_text": "x" * 2_000},
+    )
+
+    with pytest.raises(InvalidEvaluationArtifactError, match="maximum cache entry size"):
+        cache.put(artifact)
 
 
 def test_persistent_role_reuse_reports_avoided_work_and_saved_time(tmp_path) -> None:

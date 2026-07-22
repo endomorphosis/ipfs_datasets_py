@@ -78,6 +78,13 @@ def test_daemon_hammer_cycle_persists_guidance_and_updates_summary(
         text="The agency shall provide notice unless an exception applies.",
     )
 
+    obligation_limits: list[int | None] = []
+    generate_obligations = runner.generate_legal_ir_proof_obligations
+
+    def bounded_obligations(sample_arg: object, *, max_obligations: int | None = None):
+        obligation_limits.append(max_obligations)
+        return generate_obligations(sample_arg, max_obligations=max_obligations)
+
     def fake_run_legal_ir_hammer(*args: object, **kwargs: object) -> dict:
         assert kwargs["config"].max_obligations == 2
         return {
@@ -90,6 +97,11 @@ def test_daemon_hammer_cycle_persists_guidance_and_updates_summary(
             "trusted_count": 1,
         }
 
+    monkeypatch.setattr(
+        runner,
+        "generate_legal_ir_proof_obligations",
+        bounded_obligations,
+    )
     monkeypatch.setattr(runner, "run_legal_ir_hammer", fake_run_legal_ir_hammer)
 
     report = runner.run_daemon_hammer_guidance_cycle(
@@ -107,6 +119,7 @@ def test_daemon_hammer_cycle_persists_guidance_and_updates_summary(
     assert report["hammer_metrics"]["hammer_proof_success_rate"] == 1.0
     assert report["hammer_metrics"]["hammer_reconstruction_success_rate"] == 1.0
     assert report["trusted_hammer_guidance_count"] == 1
+    assert obligation_limits == [2]
     assert artifact_path.is_file()
     persisted = json.loads(artifact_path.read_text(encoding="utf-8"))
     assert persisted["schema_version"] == runner.DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION
@@ -123,6 +136,12 @@ def test_daemon_hammer_cycle_persists_guidance_and_updates_summary(
     assert summary["leanstral_hammer_candidate_count"] == 0
     assert summary["trusted_hammer_guidance_count"] == 1
     assert summary["hammer_projected_todo_count"] == 3
+    compact = summary["latest_daemon_hammer_guidance"]
+    assert compact["hammer_report_count"] == 1
+    assert compact["omitted_hammer_guidance_artifact_count"] == 1
+    assert compact["summary_payload_compacted"] is True
+    assert "hammer_guidance_artifacts" not in compact
+    assert "hammer_reports" not in compact
 
 
 def test_daemon_hammer_cycle_reuses_cache_and_counts_leanstral_candidates(

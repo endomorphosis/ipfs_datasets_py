@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .legal_ir_view_contracts import (
     LegalIRFieldRequirement,
@@ -486,12 +486,32 @@ def generate_legal_ir_contract_coverage_obligations(
     return obligations
 
 
-def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIRProofObligation]:
+def generate_legal_ir_proof_obligations(
+    sample_or_document: Any,
+    *,
+    max_obligations: Optional[int] = None,
+) -> List[LegalIRProofObligation]:
     """Return deterministic formula and canonical-contract obligations."""
 
     document = _document(sample_or_document)
     sample_id = _sample_id(sample_or_document)
-    obligations: List[LegalIRProofObligation] = []
+    limit = None if max_obligations is None else max(0, int(max_obligations))
+
+    class _BoundedObligationList(list[LegalIRProofObligation]):
+        def append(self, item: LegalIRProofObligation) -> None:
+            if limit is None or len(self) < limit:
+                super().append(item)
+
+        def extend(self, items: Iterable[LegalIRProofObligation]) -> None:
+            if limit is None:
+                super().extend(items)
+                return
+            for item in items:
+                if len(self) >= limit:
+                    break
+                super().append(item)
+
+    obligations: List[LegalIRProofObligation] = _BoundedObligationList()
     formulas = _formulas(document)
     document_hash = _document_hash(document, sample_id)
 
@@ -513,6 +533,8 @@ def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIR
     obligations.extend(
         generate_legal_ir_contract_coverage_obligations(sample_or_document)
     )
+    if limit is not None and len(obligations) >= limit:
+        return obligations
     obligations.extend(
         _obligation(
             sample_id=str(spec.get("sample_id") or sample_id),
@@ -527,6 +549,8 @@ def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIR
         for spec in generate_legal_ir_temporal_authority_obligation_specs(sample_or_document)
         if str(spec.get("statement") or "")
     )
+    if limit is not None and len(obligations) >= limit:
+        return obligations
 
     for index, formula in enumerate(formulas, start=1):
         formula_id = _formula_id(formula, index)
@@ -600,6 +624,8 @@ def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIR
                     metadata={**base_metadata, "exception_count": len(exceptions)},
                 )
             )
+        if limit is not None and len(obligations) >= limit:
+            return obligations
         if family in {"temporal", "dynamic"} or _has_temporal_signal(formula):
             obligations.append(
                 _obligation(
@@ -708,6 +734,8 @@ def generate_legal_ir_proof_obligations(sample_or_document: Any) -> List[LegalIR
     frame_logic = _frame_logic(document)
     triples = _sequence(_get(frame_logic, "triples") or _as_mapping(frame_logic).get("triples", []))
     for index, triple in enumerate(triples, start=1):
+        if limit is not None and len(obligations) >= limit:
+            break
         triple_map = _as_mapping(triple)
         subject = _atom(_get(triple, "subject") or triple_map.get("subject"), fallback=f"subject_{index}")
         predicate = _atom(_get(triple, "predicate") or triple_map.get("predicate"), fallback="predicate")

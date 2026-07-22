@@ -46,6 +46,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cac
 LEGAL_IR_ARTIFACT_GRAPH_SCHEMA_VERSION: Final = "legal-ir-evaluation-artifact-graph-v1"
 LEGAL_IR_ARTIFACT_NODE_SCHEMA_VERSION: Final = "legal-ir-evaluation-artifact-node-v1"
 LEGAL_IR_ARTIFACT_GRAPH_KEY: Final = "_legal_ir_artifact_graph"
+MAX_EVALUATION_GRAPH_OBLIGATIONS: Final = 256
 
 NORMALIZATION_NODE: Final = "normalization"
 TOKENIZATION_NODE: Final = "tokenization"
@@ -216,10 +217,17 @@ def _default_view_contract_payload(compilation_result: Any, sample: Any) -> Mapp
 
 
 def _default_obligation_payload(compilation_result: Any, sample: Any) -> Mapping[str, Any]:
-    obligations = generate_legal_ir_proof_obligations(_modal_document(compilation_result, sample))
+    obligations = generate_legal_ir_proof_obligations(
+        _modal_document(compilation_result, sample),
+        max_obligations=MAX_EVALUATION_GRAPH_OBLIGATIONS + 1,
+    )
+    truncated = len(obligations) > MAX_EVALUATION_GRAPH_OBLIGATIONS
+    obligations = obligations[:MAX_EVALUATION_GRAPH_OBLIGATIONS]
     return {
         "obligation_count": len(obligations),
         "obligation_ids": [item.obligation_id for item in obligations],
+        "obligation_materialization_limit": MAX_EVALUATION_GRAPH_OBLIGATIONS,
+        "obligations_truncated": truncated,
         "obligations": [item.to_dict() for item in obligations],
     }
 
@@ -238,8 +246,14 @@ def _default_baseline_metrics(compilation_result: Any, sample: Any) -> Mapping[s
 def _default_compiler_payload(compilation_result: Any) -> Mapping[str, Any]:
     modal_ir = getattr(compilation_result, "modal_ir", None)
     frame_candidates = getattr(compilation_result, "frame_candidates", ()) or ()
+    decoded = getattr(compilation_result, "decoded_modal_text", None)
+    decoded_text = getattr(decoded, "text", None)
+    if decoded_text is None:
+        decoded_text = getattr(compilation_result, "decoded_text", None)
+    if decoded_text is None:
+        decoded_text = decoded
     return {
-        "decoded_modal_text": str(getattr(compilation_result, "decoded_modal_text", "") or ""),
+        "decoded_modal_text": str(decoded_text or ""),
         "frame_candidate_count": len(frame_candidates),
         "kg_triple_count": len(getattr(compilation_result, "kg_triples", ()) or ()),
         "losses": _json_value(getattr(compilation_result, "losses", {}) or {}),
@@ -986,6 +1000,7 @@ __all__ = [
     "EMBEDDING_NODE",
     "LEGAL_IR_ARTIFACT_CONSUMER_ROLES",
     "LEGAL_IR_ARTIFACT_GRAPH_KEY",
+    "MAX_EVALUATION_GRAPH_OBLIGATIONS",
     "LEGAL_IR_ARTIFACT_GRAPH_SCHEMA_VERSION",
     "LEGAL_IR_ARTIFACT_NODE_KINDS",
     "LEGAL_IR_ARTIFACT_NODE_ORDER",

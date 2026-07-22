@@ -5743,6 +5743,35 @@ def test_paired_autoencoder_status_requires_own_clean_stop() -> None:
     )
 
 
+def test_paired_completion_rejects_parent_timeout_even_when_children_succeeded() -> None:
+    assert runner._paired_completion_succeeded(
+        autoencoder_success=True,
+        codex_success=True,
+        leanstral_success=True,
+        latest_stop_reason="duration_complete",
+    )
+    assert not runner._paired_completion_succeeded(
+        autoencoder_success=True,
+        codex_success=True,
+        leanstral_success=True,
+        latest_stop_reason="paired_timeout_grace_exceeded",
+    )
+
+
+def test_codex_shutdown_drain_window_covers_fallback_attempts() -> None:
+    args = SimpleNamespace(
+        codex_apply_mode="patch_only",
+        codex_main_apply_lock_timeout_seconds=300.0,
+        codex_timeout_seconds=180.0,
+        codex_vector_max_bundle_wait_seconds=30.0,
+        poll_seconds=5.0,
+    )
+
+    assert runner._codex_shutdown_drain_window_seconds(args) == 405.0
+    args.codex_apply_mode = "apply_to_main"
+    assert runner._codex_shutdown_drain_window_seconds(args) == 1305.0
+
+
 def test_paired_accelerate_style_restart_policy_replaces_only_crashed_children() -> None:
     assert runner._paired_child_exit_should_restart(
         exit_code=2,
@@ -8911,6 +8940,51 @@ def test_validation_gating_completes_todos_only_when_holdout_improves() -> None:
     assert step.completed_count >= 1
     assert supervisor.queue.status_counts()["completed"] == step.completed_count
     assert step.improved
+
+
+def test_compiler_ir_result_cache_payload_is_bounded_and_omits_artifact_graph(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(runner, "MAX_CACHED_COMPILER_DECODED_TEXT_CHARS", 5)
+    monkeypatch.setattr(runner, "MAX_CACHED_COMPILER_GUIDANCE_SLOTS", 2)
+    monkeypatch.setattr(runner, "MAX_CACHED_COMPILER_GUIDANCE_VALUES", 3)
+    monkeypatch.setattr(runner, "MAX_CACHED_COMPILER_GUIDANCE_VALUES_PER_SLOT", 2)
+    monkeypatch.setattr(runner, "MAX_CACHED_COMPILER_GUIDANCE_VALUE_CHARS", 4)
+    result = SimpleNamespace(
+        compiler_guidance_slot_texts={
+            "z-slot": ["zeta", "zed"],
+            "a-slot": ["alpha", "atom", "after"],
+            "b-slot": ["beta"],
+        },
+        decoded_modal_text=SimpleNamespace(text="abcdefgh", phrases=[]),
+        frame_candidates=[object()],
+        kg_triples=[object(), object()],
+        losses={"cross_entropy_loss": 0.25},
+        metadata={
+            "_legal_ir_artifact_graph": {"duplicated": "payload" * 100},
+            "compiler_guidance_applied": True,
+        },
+        modal_ir=SimpleNamespace(formulas=[object()]),
+    )
+
+    payload = runner._compiler_ir_metric_result_cache_payload(result)
+    restored = runner._compiler_ir_metric_result_from_cache_payload(payload)
+
+    assert payload["decoded_modal_text"] == "abcde"
+    assert payload["cache_compaction"] == {
+        "decoded_text_original_chars": 8,
+        "decoded_text_retained_chars": 5,
+        "decoded_text_truncated": True,
+        "omitted_metadata_keys": ["_legal_ir_artifact_graph"],
+    }
+    assert payload["compiler_guidance_slot_texts"] == {
+        "a-slot": ["alph", "atom"],
+        "b-slot": ["beta"],
+    }
+    assert payload["compiler_guidance_slot_texts_compaction"]["truncated"] is True
+    assert "_legal_ir_artifact_graph" not in payload["metadata"]
+    assert restored.decoded_modal_text == "abcde"
+    assert restored.metadata["compiler_guidance_applied"] is True
 
 
 def test_compiler_ir_metric_block_reports_deterministic_codec_losses(monkeypatch) -> None:

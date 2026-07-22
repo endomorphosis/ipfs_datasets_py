@@ -1224,9 +1224,14 @@ class RuntimeTelemetry:
             self.finish_span(span, status=status, queue_depth=queue_depth)
         self.end_cycle(status=status, queue_depth=queue_depth)
 
-    def to_dict(self, *, latest_cycle: Optional[int] = None) -> dict[str, Any]:
+    def to_dict(
+        self,
+        *,
+        latest_cycle: Optional[int] = None,
+        max_spans: Optional[int] = None,
+    ) -> dict[str, Any]:
         with self._lock:
-            spans = [
+            matching_spans = [
                 dict(record)
                 for record in self._spans
                 if latest_cycle is None or record.get("cycle") == latest_cycle
@@ -1237,6 +1242,13 @@ class RuntimeTelemetry:
             cache_hits = dict(self._cache_hits)
             cache_misses = dict(self._cache_misses)
             dropped = self._dropped_span_count
+
+        retained_limit = None if max_spans is None else max(0, int(max_spans))
+        spans = (
+            matching_spans
+            if retained_limit is None
+            else matching_spans[-retained_limit:] if retained_limit else []
+        )
 
         phase_metrics: dict[str, Any] = {}
         all_phases = sorted(set(phase_totals) | set(cache_hits) | set(cache_misses))
@@ -1256,9 +1268,11 @@ class RuntimeTelemetry:
                 "cache_hit_rate": round(hits / lookups, 9) if lookups else None,
             }
 
+        # Headline resource statistics must continue to cover every matching
+        # span even when the summary retains only a bounded diagnostic tail.
         resource_records = [
             record[boundary]
-            for record in spans
+            for record in matching_spans
             for boundary in ("resources_start", "resources_end")
             if isinstance(record.get(boundary), Mapping)
         ]
@@ -1271,7 +1285,9 @@ class RuntimeTelemetry:
             "resource_schema_version": RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION,
             "run_id": self.run_id,
             "phase_catalog": list(RUNTIME_PHASES),
-            "span_count": len(spans),
+            "span_count": len(matching_spans),
+            "retained_span_count": len(spans),
+            "omitted_span_count": len(matching_spans) - len(spans),
             "dropped_span_count": dropped,
             "spans": spans,
             "phase_metrics": phase_metrics,
@@ -1350,14 +1366,24 @@ def attach_runtime_telemetry(
 ) -> dict[str, Any]:
     """Attach the stable telemetry block and convenient headline metrics."""
 
-    block = telemetry.to_dict(latest_cycle=cycle)
+    # Metric progress events already live in the append-only run log. Keeping
+    # every resource-rich span in each frequently rewritten summary caused
+    # multi-gigabyte write amplification on short smoke runs.
+    block = telemetry.to_dict(latest_cycle=cycle, max_spans=64)
     summary["runtime_telemetry_schema_version"] = RUNTIME_TELEMETRY_SCHEMA_VERSION
     summary["runtime_resource_telemetry_schema_version"] = (
         RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION
     )
     summary["runtime_phase_catalog"] = list(RUNTIME_PHASES)
     summary["runtime_telemetry"] = block
-    summary["latest_runtime_phase_telemetry"] = block
+    latest_block = dict(block)
+    latest_block["spans"] = list(block["spans"][-8:])
+    latest_block["retained_span_count"] = len(latest_block["spans"])
+    latest_block["omitted_span_count"] = max(
+        0,
+        int(block["span_count"]) - latest_block["retained_span_count"],
+    )
+    summary["latest_runtime_phase_telemetry"] = latest_block
     summary["latest_runtime_resources"] = block["resources"]
     summary["runtime_cache_hit_rate"] = block["cache_hit_rate"]
     return block

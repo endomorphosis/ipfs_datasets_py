@@ -90,6 +90,20 @@ def test_generate_legal_ir_obligations_is_stable() -> None:
     assert first == second
 
 
+def test_generate_legal_ir_obligations_respects_bounded_prefix() -> None:
+    complete = generate_legal_ir_proof_obligations(_document())
+    bounded = generate_legal_ir_proof_obligations(
+        _document(),
+        max_obligations=7,
+    )
+
+    assert bounded == complete[:7]
+    assert generate_legal_ir_proof_obligations(
+        _document(),
+        max_obligations=0,
+    ) == []
+
+
 def test_generate_legal_ir_obligations_reports_empty_formula_documents() -> None:
     document = ModalIRDocument(
         document_id="empty",

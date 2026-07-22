@@ -246,6 +246,31 @@ def test_summary_attachment_exposes_versioned_headline_metrics() -> None:
     assert summary["latest_runtime_resources"] == block["resources"]
 
 
+def test_summary_attachment_retains_bounded_span_tail_without_losing_aggregates() -> None:
+    telemetry = _telemetry("bounded-summary")
+    for cycle in range(80):
+        telemetry.record_instant(
+            "validation",
+            cycle=cycle,
+            unit_count=1,
+            queue_depth=cycle,
+        )
+    summary: dict[str, object] = {}
+
+    block = attach_runtime_telemetry(summary, telemetry)
+
+    assert block["span_count"] == 80
+    assert block["retained_span_count"] == 64
+    assert block["omitted_span_count"] == 16
+    assert len(block["spans"]) == 64
+    assert block["spans"][0]["cycle"] == 16
+    assert block["resources"]["queue_depth_peak"] == 79.0
+    latest = summary["latest_runtime_phase_telemetry"]
+    assert latest["retained_span_count"] == 8
+    assert latest["omitted_span_count"] == 72
+    assert latest["spans"][0]["cycle"] == 72
+
+
 def test_hammer_cycle_emits_sample_solver_and_reconstruction_spans_without_text(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -281,7 +306,7 @@ def test_hammer_cycle_emits_sample_solver_and_reconstruction_spans_without_text(
     monkeypatch.setattr(
         daemon_runner,
         "generate_legal_ir_proof_obligations",
-        lambda _sample: [object()],
+        lambda _sample, **_kwargs: [object()],
     )
     monkeypatch.setattr(
         daemon_runner,

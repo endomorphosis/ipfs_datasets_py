@@ -268,3 +268,21 @@ def test_graph_round_trips_through_typed_evaluation_artifact_and_detects_tamperi
     bad_artifact = type(artifact).from_dict(tampered)
     with pytest.raises(LegalIRArtifactGraphProvenanceError, match="checksum"):
         LegalIRArtifactGraphBundle.from_evaluation_artifact(bad_artifact)
+
+
+def test_default_compiler_payload_uses_decoded_text_not_dataclass_repr() -> None:
+    decoded = SimpleNamespace(
+        text="The agency shall provide notice.",
+        phrases=[SimpleNamespace(text="notice", slot="object")],
+    )
+    compiled = _compiled()
+    compiled.decoded_modal_text = decoded
+
+    artifact = legal_ir_evaluation_artifact_from_compilation(
+        _key(),
+        sample=_sample(),
+        compilation_result=compiled,
+    )
+
+    assert artifact.compiler_artifact["decoded_modal_text"] == decoded.text
+    assert "SimpleNamespace" not in artifact.compiler_artifact["decoded_modal_text"]
