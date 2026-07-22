@@ -32,6 +32,7 @@ DGX_SPARK_PROFILE_SCHEMA_VERSION: Final = "legal-ir-dgx-spark-production-profile
 ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION: Final = (
     "legal-ir-adaptive-pipeline-parallelism-v1"
 )
+BATCH_SIZE_AUTOTUNER_SCHEMA_VERSION: Final = "modal-autoencoder-batch-autotuner-v1"
 
 HIGHER_IS_BETTER_QUALITY: Final = frozenset(
     {
@@ -126,6 +127,8 @@ class ParallelismProfile:
     orchestration_cpu_slots: int = 2
     reserve_cpu_slots: int = 2
     memory_budget_mb: int = 96 * 1024
+    modal_autoencoder_batch_min: int = 32
+    modal_autoencoder_batch_max: int = 64
 
     def __post_init__(self) -> None:
         name = str(self.name or "").strip()
@@ -141,10 +144,15 @@ class ParallelismProfile:
             "snapshot_queue_capacity", "leanstral_queue_capacity", "codex_queue_capacity",
             "hammer_lean_cpu_slots", "validation_cpu_slots", "codex_cpu_slots",
             "orchestration_cpu_slots", "reserve_cpu_slots", "memory_budget_mb",
+            "modal_autoencoder_batch_min", "modal_autoencoder_batch_max",
         ):
             _integer(getattr(self, field_name), name=field_name, minimum=1)
         if self.leanstral_batch_min > self.leanstral_batch_max:
             raise ValueError("leanstral_batch_min cannot exceed leanstral_batch_max")
+        if self.modal_autoencoder_batch_min > self.modal_autoencoder_batch_max:
+            raise ValueError(
+                "modal_autoencoder_batch_min cannot exceed modal_autoencoder_batch_max"
+            )
 
     @property
     def allocated_cpu_slots(self) -> int:
@@ -183,6 +191,7 @@ class GlobalResourceBounds:
     max_child_processes: int = 64
     max_leanstral_workers: int = 4
     max_leanstral_batch_size: int = 16
+    max_modal_autoencoder_batch_size: int = 64
     target_cycle_seconds: float = 400.0
     max_queue_lag_p95_seconds: float = 120.0
 
@@ -192,6 +201,11 @@ class GlobalResourceBounds:
         _integer(self.max_child_processes, name="max_child_processes", minimum=1)
         _integer(self.max_leanstral_workers, name="max_leanstral_workers", minimum=1)
         _integer(self.max_leanstral_batch_size, name="max_leanstral_batch_size", minimum=1)
+        _integer(
+            self.max_modal_autoencoder_batch_size,
+            name="max_modal_autoencoder_batch_size",
+            minimum=1,
+        )
         _ratio(self.max_profile_memory_fraction, name="max_profile_memory_fraction")
         low = _ratio(self.useful_cpu_utilization_min, name="useful_cpu_utilization_min")
         high = _ratio(self.useful_cpu_utilization_max, name="useful_cpu_utilization_max")
@@ -235,6 +249,8 @@ class GlobalResourceBounds:
             failures.append("leanstral_workers_exceed_global_bound")
         if profile.leanstral_batch_max > self.max_leanstral_batch_size:
             failures.append("leanstral_batch_exceeds_global_bound")
+        if profile.modal_autoencoder_batch_max > self.max_modal_autoencoder_batch_size:
+            failures.append("modal_autoencoder_batch_exceeds_global_bound")
         return failures
 
     def to_dict(self) -> dict[str, Any]:
@@ -1083,6 +1099,375 @@ class AdaptivePipelineParallelismController:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class BatchSizeMeasurement:
+    """Measured resource, kernel, throughput, and trust evidence for one size."""
+
+    batch_size: int
+    samples_per_second: float
+    peak_memory_bytes: int
+    memory_capacity_bytes: int
+    kernel_efficiency: float
+    quality_metrics: Mapping[str, float] = field(default_factory=dict)
+    split_fingerprint: str = ""
+    gpu_telemetry_known: bool = True
+    recoverable_oom: bool = False
+    state_identity_preserved: bool = True
+    sample_count: int = 1
+
+    def __post_init__(self) -> None:
+        _integer(self.batch_size, name="batch_size", minimum=1)
+        _finite(self.samples_per_second, name="samples_per_second", minimum=0.0)
+        _integer(self.peak_memory_bytes, name="peak_memory_bytes", minimum=0)
+        _integer(self.memory_capacity_bytes, name="memory_capacity_bytes", minimum=0)
+        _ratio(self.kernel_efficiency, name="kernel_efficiency")
+        _integer(self.sample_count, name="sample_count", minimum=1)
+        for name, value in self.quality_metrics.items():
+            if not str(name or "").strip():
+                raise ValueError("quality metric names must not be empty")
+            _finite(value, name=f"quality_metrics[{name}]")
+
+    @classmethod
+    def from_observation(
+        cls,
+        *,
+        batch_size: int,
+        sample_count: int,
+        elapsed_seconds: float,
+        peak_memory_bytes: int,
+        memory_capacity_bytes: int,
+        kernel_active_seconds: float,
+        kernel_elapsed_seconds: float,
+        quality_metrics: Mapping[str, float] | None = None,
+        split_fingerprint: str = "",
+        gpu_telemetry_known: bool = True,
+        recoverable_oom: bool = False,
+        state_identity_preserved: bool = True,
+    ) -> "BatchSizeMeasurement":
+        """Derive throughput and kernel occupancy from raw timed telemetry."""
+
+        elapsed = _finite(elapsed_seconds, name="elapsed_seconds", minimum=1.0e-12)
+        kernel_elapsed = _finite(
+            kernel_elapsed_seconds,
+            name="kernel_elapsed_seconds",
+            minimum=1.0e-12,
+        )
+        active = _finite(
+            kernel_active_seconds,
+            name="kernel_active_seconds",
+            minimum=0.0,
+        )
+        samples = _integer(sample_count, name="sample_count", minimum=1)
+        return cls(
+            batch_size=batch_size,
+            samples_per_second=samples / elapsed,
+            peak_memory_bytes=peak_memory_bytes,
+            memory_capacity_bytes=memory_capacity_bytes,
+            kernel_efficiency=min(1.0, active / kernel_elapsed),
+            quality_metrics=quality_metrics or {},
+            split_fingerprint=split_fingerprint,
+            gpu_telemetry_known=gpu_telemetry_known,
+            recoverable_oom=recoverable_oom,
+            state_identity_preserved=state_identity_preserved,
+            sample_count=samples,
+        )
+
+    @property
+    def memory_headroom_bytes(self) -> int:
+        return max(0, self.memory_capacity_bytes - self.peak_memory_bytes)
+
+    @property
+    def memory_headroom_fraction(self) -> float:
+        if self.memory_capacity_bytes <= 0:
+            return 0.0
+        return self.memory_headroom_bytes / self.memory_capacity_bytes
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "batch_size": self.batch_size,
+            "gpu_telemetry_known": self.gpu_telemetry_known,
+            "kernel_efficiency": self.kernel_efficiency,
+            "memory_capacity_bytes": self.memory_capacity_bytes,
+            "memory_headroom_bytes": self.memory_headroom_bytes,
+            "memory_headroom_fraction": self.memory_headroom_fraction,
+            "peak_memory_bytes": self.peak_memory_bytes,
+            "quality_metrics": {
+                str(name): float(value)
+                for name, value in sorted(self.quality_metrics.items())
+            },
+            "recoverable_oom": self.recoverable_oom,
+            "sample_count": self.sample_count,
+            "samples_per_second": self.samples_per_second,
+            "split_fingerprint": self.split_fingerprint,
+            "state_identity_preserved": self.state_identity_preserved,
+        }
+
+
+# Compatibility aliases make the evidence object readable in both resource
+# telemetry and benchmark call sites.
+BatchCandidateMeasurement = BatchSizeMeasurement
+BatchResourceMeasurement = BatchSizeMeasurement
+
+
+@dataclass(frozen=True, slots=True)
+class BatchAutotuneConfig:
+    """Fail-closed promotion policy for autoencoder minibatch sizes."""
+
+    candidate_batch_sizes: tuple[int, ...] = (8, 16, 32, 64)
+    minimum_memory_headroom_fraction: float = 0.08
+    minimum_kernel_efficiency: float = 0.50
+    minimum_throughput_gain: float = 1.50
+    quality_tolerance: float = 0.0
+    quality_tolerances: Mapping[str, float] = field(default_factory=dict)
+    require_gpu_telemetry: bool = True
+    require_split_fingerprint: bool = True
+    minimum_sample_count: int = 1
+
+    def __post_init__(self) -> None:
+        candidates = tuple(sorted(set(self.candidate_batch_sizes)))
+        if not candidates or any(
+            isinstance(size, bool) or not isinstance(size, int) or size < 1
+            for size in candidates
+        ):
+            raise ValueError("candidate_batch_sizes must contain positive integers")
+        object.__setattr__(self, "candidate_batch_sizes", candidates)
+        _ratio(
+            self.minimum_memory_headroom_fraction,
+            name="minimum_memory_headroom_fraction",
+        )
+        _ratio(self.minimum_kernel_efficiency, name="minimum_kernel_efficiency")
+        _finite(self.minimum_throughput_gain, name="minimum_throughput_gain", minimum=1.0)
+        _finite(self.quality_tolerance, name="quality_tolerance", minimum=0.0)
+        _integer(self.minimum_sample_count, name="minimum_sample_count", minimum=1)
+        for name, value in self.quality_tolerances.items():
+            _finite(value, name=f"quality_tolerances[{name}]", minimum=0.0)
+
+
+DGX_SPARK_BATCH_AUTOTUNE_CONFIG: Final = BatchAutotuneConfig()
+
+
+@dataclass(frozen=True, slots=True)
+class BatchCandidateEvaluation:
+    batch_size: int
+    eligible: bool
+    violations: tuple[str, ...]
+    throughput_gain: float
+    score: float
+    measurement: BatchSizeMeasurement
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "batch_size": self.batch_size,
+            "eligible": self.eligible,
+            "measurement": self.measurement.to_dict(),
+            "score": self.score,
+            "throughput_gain": self.throughput_gain,
+            "violations": list(self.violations),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class BatchAutotuneDecision:
+    """Deterministic selected size and all evidence used to choose it."""
+
+    selected_batch_size: int
+    baseline_batch_size: int
+    promoted: bool
+    evaluations: tuple[BatchCandidateEvaluation, ...]
+    schema_version: str = BATCH_SIZE_AUTOTUNER_SCHEMA_VERSION
+
+    @property
+    def fallback_batch_sizes(self) -> tuple[int, ...]:
+        sizes = {
+            evaluation.batch_size
+            for evaluation in self.evaluations
+            if evaluation.batch_size <= self.selected_batch_size
+        }
+        sizes.add(1)
+        return tuple(sorted(sizes, reverse=True))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "baseline_batch_size": self.baseline_batch_size,
+            "evaluations": [evaluation.to_dict() for evaluation in self.evaluations],
+            "fallback_batch_sizes": list(self.fallback_batch_sizes),
+            "promoted": self.promoted,
+            "schema_version": self.schema_version,
+            "selected_batch_size": self.selected_batch_size,
+        }
+
+
+def _quality_is_lower_better(name: str) -> bool:
+    if name in LOWER_IS_BETTER_QUALITY:
+        return True
+    lowered = name.lower()
+    return any(
+        marker in lowered
+        for marker in ("loss", "penalty", "error", "cross_entropy", "latency")
+    )
+
+
+class BatchSizeAutotuner:
+    """Choose a measured batch size from headroom, occupancy, speed, and quality."""
+
+    def __init__(self, config: BatchAutotuneConfig | None = None) -> None:
+        self.config = config or DGX_SPARK_BATCH_AUTOTUNE_CONFIG
+
+    def evaluate(
+        self,
+        baseline: BatchSizeMeasurement,
+        candidate: BatchSizeMeasurement,
+    ) -> BatchCandidateEvaluation:
+        failures: list[str] = []
+        config = self.config
+        if candidate.batch_size not in config.candidate_batch_sizes:
+            failures.append("batch_size_not_configured")
+        if candidate.recoverable_oom:
+            failures.append("recoverable_oom")
+        if not candidate.state_identity_preserved:
+            failures.append("state_identity_not_preserved")
+        if config.require_gpu_telemetry and not candidate.gpu_telemetry_known:
+            failures.append("gpu_telemetry_unknown")
+        if candidate.memory_capacity_bytes <= 0:
+            failures.append("memory_capacity_unknown")
+        elif (
+            candidate.memory_headroom_fraction + 1.0e-12
+            < config.minimum_memory_headroom_fraction
+        ):
+            failures.append("insufficient_memory_headroom")
+        if candidate.peak_memory_bytes > candidate.memory_capacity_bytes:
+            failures.append("memory_capacity_exceeded")
+        if candidate.kernel_efficiency + 1.0e-12 < config.minimum_kernel_efficiency:
+            failures.append("kernel_efficiency_below_minimum")
+        if candidate.sample_count < config.minimum_sample_count:
+            failures.append("insufficient_sample_count")
+        if config.require_split_fingerprint:
+            if not baseline.split_fingerprint or not candidate.split_fingerprint:
+                failures.append("split_fingerprint_missing")
+            elif candidate.split_fingerprint != baseline.split_fingerprint:
+                failures.append("split_isolation_mismatch")
+
+        baseline_names = set(baseline.quality_metrics)
+        candidate_names = set(candidate.quality_metrics)
+        for name in sorted(baseline_names - candidate_names):
+            failures.append(f"quality_metric_missing:{name}")
+        for name in sorted(baseline_names & candidate_names):
+            base = float(baseline.quality_metrics[name])
+            trial = float(candidate.quality_metrics[name])
+            tolerance = float(config.quality_tolerances.get(name, config.quality_tolerance))
+            if _quality_is_lower_better(name):
+                regressed = trial > base + tolerance + 1.0e-12
+            else:
+                regressed = trial + tolerance + 1.0e-12 < base
+            if regressed:
+                failures.append(f"quality_regression:{name}")
+
+        throughput_gain = (
+            candidate.samples_per_second / baseline.samples_per_second
+            if baseline.samples_per_second > 0.0
+            else 0.0
+        )
+        if throughput_gain + 1.0e-12 < config.minimum_throughput_gain:
+            failures.append("throughput_gain_below_minimum")
+        # Throughput remains the objective; kernel efficiency resolves close
+        # candidates and prevents launch-heavy measurements from looking good
+        # solely because of noisy elapsed time.
+        score = candidate.samples_per_second * (0.5 + 0.5 * candidate.kernel_efficiency)
+        return BatchCandidateEvaluation(
+            batch_size=candidate.batch_size,
+            eligible=not failures,
+            violations=tuple(sorted(set(failures))),
+            throughput_gain=throughput_gain,
+            score=score,
+            measurement=candidate,
+        )
+
+    def tune(
+        self,
+        baseline: BatchSizeMeasurement,
+        candidates: Sequence[BatchSizeMeasurement],
+    ) -> BatchAutotuneDecision:
+        if baseline.batch_size != 1:
+            raise ValueError("batch autotuning requires a matched batch-one baseline")
+        sizes = [candidate.batch_size for candidate in candidates]
+        if len(sizes) != len(set(sizes)):
+            raise ValueError("candidate batch sizes must be unique")
+        evaluations = tuple(
+            self.evaluate(baseline, candidate)
+            for candidate in sorted(candidates, key=lambda item: item.batch_size)
+        )
+        eligible = [evaluation for evaluation in evaluations if evaluation.eligible]
+        if not eligible:
+            selected = baseline.batch_size
+            promoted = False
+        else:
+            best = max(
+                eligible,
+                key=lambda item: (
+                    item.score,
+                    item.measurement.samples_per_second,
+                    item.measurement.kernel_efficiency,
+                    item.batch_size,
+                ),
+            )
+            selected = best.batch_size
+            promoted = selected != baseline.batch_size
+        return BatchAutotuneDecision(
+            selected_batch_size=selected,
+            baseline_batch_size=baseline.batch_size,
+            promoted=promoted,
+            evaluations=evaluations,
+        )
+
+    def choose_batch_size(
+        self,
+        *,
+        memory_capacity_bytes: int,
+        memory_used_bytes: int,
+        fixed_memory_bytes: int = 0,
+        bytes_per_sample: int,
+        kernel_efficiency_by_batch: Mapping[int, float],
+    ) -> int:
+        """Conservatively choose from live headroom when benchmark rows are absent.
+
+        This admission helper never extrapolates past the configured candidate
+        set.  Benchmark-based :meth:`tune` remains the promotion authority.
+        """
+
+        capacity = _integer(memory_capacity_bytes, name="memory_capacity_bytes", minimum=1)
+        used = _integer(memory_used_bytes, name="memory_used_bytes", minimum=0)
+        fixed = _integer(fixed_memory_bytes, name="fixed_memory_bytes", minimum=0)
+        per_sample = _integer(bytes_per_sample, name="bytes_per_sample", minimum=1)
+        usable = max(
+            0,
+            int(capacity * (1.0 - self.config.minimum_memory_headroom_fraction))
+            - used
+            - fixed,
+        )
+        admitted = [
+            size
+            for size in self.config.candidate_batch_sizes
+            if size * per_sample <= usable
+            and float(kernel_efficiency_by_batch.get(size, 0.0))
+            >= self.config.minimum_kernel_efficiency
+        ]
+        return max(admitted, default=1)
+
+
+ResourceSafeBatchAutotuner = BatchSizeAutotuner
+BatchAutotuner = BatchSizeAutotuner
+BatchTuningConfig = BatchAutotuneConfig
+BatchTuningResult = BatchAutotuneDecision
+
+
+def autotune_batch_size(
+    baseline: BatchSizeMeasurement,
+    candidates: Sequence[BatchSizeMeasurement],
+    config: BatchAutotuneConfig | None = None,
+) -> BatchAutotuneDecision:
+    return BatchSizeAutotuner(config).tune(baseline, candidates)
+
+
 class ParallelismAutotuner:
     """Select the fastest trustworthy measured DGX Spark profile."""
 
@@ -1321,11 +1706,16 @@ def write_reproducible_profile(path: str | os.PathLike[str], result: AutotuneRes
 
 __all__ = [
     "ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION",
+    "BATCH_SIZE_AUTOTUNER_SCHEMA_VERSION", "DGX_SPARK_BATCH_AUTOTUNE_CONFIG",
     "DGX_SPARK_PROFILE_SCHEMA_VERSION", "FIXED_DGX_SPARK_BASELINE",
     "HIGHER_IS_BETTER_QUALITY", "LOWER_IS_BETTER_QUALITY",
     "PARALLELISM_AUTOTUNER_SCHEMA_VERSION", "PIPELINE_BENCHMARK_SCHEMA_VERSION",
     "AdaptivePipelineDecision", "AdaptivePipelineParallelismController",
     "AdaptivePipelineSignals", "AdaptiveWorkerCounts", "AutotuneResult",
+    "BatchAutotuneConfig", "BatchAutotuneDecision", "BatchCandidateEvaluation",
+    "BatchAutotuner", "BatchTuningConfig", "BatchTuningResult",
+    "BatchCandidateMeasurement", "BatchResourceMeasurement", "BatchSizeAutotuner",
+    "BatchSizeMeasurement", "ResourceSafeBatchAutotuner", "autotune_batch_size",
     "BenchmarkTrial", "CandidateEvaluation", "GlobalResourceBounds",
     "ParallelismAutotuner", "ParallelismProfile", "PhaseLatency",
     "PipelineBenchmarkMetrics", "TrustBounds", "autotune_parallelism",
