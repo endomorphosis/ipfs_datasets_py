@@ -219,6 +219,8 @@ DEFAULT_SNAPSHOT_EVALUATION_MAX_LAG = 2
 DEFAULT_SNAPSHOT_EVALUATION_MAX_AGE_SECONDS = 300.0
 DEFAULT_SNAPSHOT_EVALUATION_BACKPRESSURE_TIMEOUT_SECONDS = 600.0
 DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY = 64
+DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_QUEUE_BYTES = 256 * 1024 * 1024
+DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_WRITE_CONCURRENCY = 1
 DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS = 600.0
 DEFAULT_ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES = 4
 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
@@ -11126,6 +11128,22 @@ def build_paired_daemon_commands(
                 DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY,
             )
         ),
+        "--async-artifact-writer-max-queue-bytes",
+        str(
+            getattr(
+                args,
+                "async_artifact_writer_max_queue_bytes",
+                DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_QUEUE_BYTES,
+            )
+        ),
+        "--async-artifact-writer-max-write-concurrency",
+        str(
+            getattr(
+                args,
+                "async_artifact_writer_max_write_concurrency",
+                DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_WRITE_CONCURRENCY,
+            )
+        ),
         "--async-artifact-writer-backpressure-timeout-seconds",
         str(
             getattr(
@@ -15382,6 +15400,9 @@ def save_summary(summary_path: Path, summary: Dict[str, Any], *, final: bool = F
             indent=2,
             metadata={"final": bool(final)},
             wait=bool(final),
+            coalesce=True,
+            coalesce_key=f"daemon-summary:{summary_path.absolute()}",
+            required=bool(final),
         )
         return
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -15777,6 +15798,18 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY,
         help="Bounded queue capacity for summary, disagreement, and checkpoint writes.",
+    )
+    parser.add_argument(
+        "--async-artifact-writer-max-queue-bytes",
+        type=int,
+        default=DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_QUEUE_BYTES,
+        help="Maximum serialized artifact bytes admitted but not yet completed.",
+    )
+    parser.add_argument(
+        "--async-artifact-writer-max-write-concurrency",
+        type=int,
+        default=DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_WRITE_CONCURRENCY,
+        help="Maximum concurrent artifact writes; writes to one path remain ordered.",
     )
     parser.add_argument(
         "--async-artifact-writer-backpressure-timeout-seconds",
@@ -17731,6 +17764,28 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     args,
                     "async_artifact_writer_queue_capacity",
                     DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY,
+                )
+                or 1
+            ),
+        ),
+        max_queue_bytes=max(
+            1,
+            int(
+                getattr(
+                    args,
+                    "async_artifact_writer_max_queue_bytes",
+                    DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_QUEUE_BYTES,
+                )
+                or 1
+            ),
+        ),
+        max_write_concurrency=max(
+            1,
+            int(
+                getattr(
+                    args,
+                    "async_artifact_writer_max_write_concurrency",
+                    DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_WRITE_CONCURRENCY,
                 )
                 or 1
             ),
@@ -19873,9 +19928,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             state_checkpoint_future = None
             state_delta_future = None
+            state_persistence_snapshot = None
             if cycle == 1 or cycle % full_checkpoint_every == 0:
-                state_checkpoint_future = artifact_writer.write_state_checkpoint(
-                    state_path,
+                state_persistence_snapshot = artifact_writer.snapshot_state_checkpoint(
                     autoencoder.state,
                     cycle=cycle,
                     full=True,
@@ -19885,11 +19940,32 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
                     },
                 )
+                state_checkpoint_future = artifact_writer.write_state_checkpoint(
+                    state_path,
+                    state_persistence_snapshot,
+                    cycle=cycle,
+                    full=True,
+                    compact=True,
+                    metadata={
+                        "run_id": args.run_id,
+                        "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                    },
+                )
             else:
+                state_persistence_snapshot = artifact_writer.snapshot_state_checkpoint(
+                    autoencoder.state,
+                    cycle=cycle,
+                    full=False,
+                    compact=True,
+                    base_state=persisted_state,
+                    metadata={
+                        "run_id": args.run_id,
+                        "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                    },
+                )
                 state_delta_future = artifact_writer.append_state_delta(
                     state_delta_path,
-                    autoencoder.state,
-                    base_state=persisted_state,
+                    state_persistence_snapshot,
                     cycle=cycle,
                     metadata={
                         "run_id": args.run_id,
@@ -19916,6 +19992,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "state_delta_path": str(state_delta_path),
                 "state_path": str(state_path),
                 "state_delta_schema_version": MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
+                "snapshot_bytes": int(state_persistence_snapshot.byte_size),
+                "snapshot_identity": state_persistence_snapshot.identity,
+                "snapshot_revision": state_persistence_snapshot.revision,
             }
             summary["async_artifact_writer"] = artifact_writer.summary()
             finish_cycle_phase()
