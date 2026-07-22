@@ -1952,7 +1952,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-105 Make artifact persistence reference-based, coalesced, and bounded
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: artifact-runtime
