@@ -31,7 +31,7 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Final, Optional
+from typing import Any, Final, Optional, TypeVar
 
 try:  # pragma: no cover - exercised on POSIX in normal daemon deployments.
     import fcntl
@@ -41,7 +41,11 @@ except ImportError:  # pragma: no cover - Windows fallback still single-flights 
 
 LEGAL_IR_EVALUATION_CACHE_SCHEMA_VERSION: Final = "legal-ir-evaluation-cache-v1"
 LEGAL_IR_EVALUATION_ARTIFACT_SCHEMA_VERSION: Final = "legal-ir-evaluation-artifact-v1"
+LEGAL_IR_EVALUATION_RESULT_SCHEMA_VERSION: Final = "legal-ir-evaluation-result-v1"
+DETERMINISTIC_COMPILER_STATE_HASH: Final = "deterministic-compiler-state-independent-v1"
 DEFAULT_MAX_ENTRY_BYTES: Final = 64 * 1024 * 1024
+
+_T = TypeVar("_T")
 
 
 class EvaluationCacheError(RuntimeError):
@@ -50,6 +54,23 @@ class EvaluationCacheError(RuntimeError):
 
 class InvalidEvaluationArtifactError(EvaluationCacheError, ValueError):
     """Raised when a producer returns an artifact that cannot be trusted."""
+
+
+def compiler_artifact_state_hash(state_hash: str, *, state_dependent: bool) -> str:
+    """Return the state identity appropriate for a compiler artifact.
+
+    Unguided compiler output is a pure function of the sample, compiler build,
+    and compiler configuration.  Binding it to the changing autoencoder state
+    defeats content-addressed reuse.  Guided output remains state-dependent and
+    therefore fails closed when a caller omits its state identity.
+    """
+
+    if not state_dependent:
+        return DETERMINISTIC_COMPILER_STATE_HASH
+    resolved = str(state_hash or "").strip()
+    if not resolved:
+        raise ValueError("state-dependent compiler artifacts require a state hash")
+    return resolved
 
 
 def _utc_now() -> str:
@@ -315,6 +336,244 @@ class LegalIREvaluationArtifact:
             created_at=str(payload.get("created_at") or ""),
             schema_version=str(payload.get("schema_version") or ""),
         )
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluationResultLineage:
+    """Exact identity of a reusable aggregate autoencoder evaluation."""
+
+    state_hash: str
+    samples_hash: str
+    evaluator_hash: str
+    metric_schema: str
+
+    def __post_init__(self) -> None:
+        for name in ("state_hash", "samples_hash", "evaluator_hash", "metric_schema"):
+            value = str(getattr(self, name) or "").strip()
+            if not value:
+                raise ValueError(f"{name} must be non-empty")
+            if len(value) > 512 or any(character in value for character in "\r\n\0"):
+                raise ValueError(f"{name} is not a valid evaluation-lineage component")
+            object.__setattr__(self, name, value)
+
+    @classmethod
+    def for_samples(
+        cls,
+        samples: Sequence[Any],
+        *,
+        state_hash: str,
+        evaluator_configuration: Any,
+        metric_schema: str,
+    ) -> "EvaluationResultLineage":
+        """Build order-sensitive lineage without retaining source samples."""
+
+        return cls(
+            state_hash=state_hash,
+            samples_hash=stable_digest(
+                [sample_content_hash(sample) for sample in samples]
+            ),
+            evaluator_hash=configuration_digest(evaluator_configuration),
+            metric_schema=metric_schema,
+        )
+
+    @property
+    def digest(self) -> str:
+        return stable_digest(self.to_dict())
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "state_hash": self.state_hash,
+            "samples_hash": self.samples_hash,
+            "evaluator_hash": self.evaluator_hash,
+            "metric_schema": self.metric_schema,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ImmutableEvaluationResult:
+    """Deeply immutable, checksum-protected evaluation result for cycle reuse."""
+
+    lineage: EvaluationResultLineage
+    payload: Mapping[str, Any]
+    source_role: str
+    source_cycle: int
+    computation_seconds: float = 0.0
+    schema_version: str = LEGAL_IR_EVALUATION_RESULT_SCHEMA_VERSION
+    payload_digest: str = ""
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.lineage, EvaluationResultLineage):
+            raise InvalidEvaluationArtifactError("result lineage has the wrong type")
+        if self.schema_version != LEGAL_IR_EVALUATION_RESULT_SCHEMA_VERSION:
+            raise InvalidEvaluationArtifactError("evaluation result schema version is stale")
+        role = str(self.source_role or "").strip()
+        if not role:
+            raise InvalidEvaluationArtifactError("source_role must be non-empty")
+        object.__setattr__(self, "source_role", role)
+        cycle = int(self.source_cycle)
+        if cycle < 0:
+            raise InvalidEvaluationArtifactError("source_cycle must be non-negative")
+        object.__setattr__(self, "source_cycle", cycle)
+        seconds = float(self.computation_seconds)
+        if not math.isfinite(seconds) or seconds < 0.0:
+            raise InvalidEvaluationArtifactError(
+                "computation_seconds must be finite and non-negative"
+            )
+        object.__setattr__(self, "computation_seconds", seconds)
+        payload = _mapping(self.payload, name="payload")
+        object.__setattr__(self, "payload", payload)
+        digest = stable_digest(payload)
+        requested_digest = str(self.payload_digest or "").strip()
+        if requested_digest and requested_digest != digest:
+            raise InvalidEvaluationArtifactError("evaluation result payload checksum mismatch")
+        object.__setattr__(self, "payload_digest", digest)
+
+    @classmethod
+    def from_result(
+        cls,
+        lineage: EvaluationResultLineage,
+        result: Any,
+        *,
+        source_role: str,
+        source_cycle: int,
+        computation_seconds: float = 0.0,
+    ) -> "ImmutableEvaluationResult":
+        if hasattr(result, "to_dict") and callable(result.to_dict):
+            payload = result.to_dict()
+        elif isinstance(result, Mapping):
+            payload = result
+        else:
+            raise InvalidEvaluationArtifactError(
+                "reusable evaluation result must be a mapping or provide to_dict()"
+            )
+        return cls(
+            lineage=lineage,
+            payload=payload,
+            source_role=source_role,
+            source_cycle=source_cycle,
+            computation_seconds=computation_seconds,
+        )
+
+    def materialize(self, factory: Callable[..., _T]) -> _T:
+        """Create a detached mutable value after rechecking immutable contents."""
+
+        payload = _json_value(self.payload)
+        if stable_digest(payload) != self.payload_digest:
+            raise InvalidEvaluationArtifactError("evaluation result payload checksum mismatch")
+        return factory(**payload)
+
+
+class LegalIREvaluationResultCache:
+    """Bounded in-process cache for exact after-to-before result reuse.
+
+    This cache intentionally does not persist aggregate learned-state results.
+    Their useful lifetime is the next cycle boundary, while compiler artifacts
+    use :class:`LegalIREvaluationCache` for durable content-addressed reuse.
+    """
+
+    def __init__(self, *, max_entries: int = 16) -> None:
+        if int(max_entries) <= 0:
+            raise ValueError("max_entries must be positive")
+        self.max_entries = int(max_entries)
+        self._entries: OrderedDict[str, ImmutableEvaluationResult] = OrderedDict()
+        self._lock = threading.RLock()
+        self._stats: Counter[str] = Counter()
+
+    def put_after(
+        self,
+        lineage: EvaluationResultLineage,
+        result: Any,
+        *,
+        role: str,
+        cycle: int,
+        computation_seconds: float = 0.0,
+    ) -> ImmutableEvaluationResult:
+        normalized_role = str(role or "").strip()
+        if not normalized_role.startswith("after_"):
+            raise ValueError("only after-evaluations may seed before-evaluation reuse")
+        artifact = ImmutableEvaluationResult.from_result(
+            lineage,
+            result,
+            source_role=normalized_role,
+            source_cycle=cycle,
+            computation_seconds=computation_seconds,
+        )
+        with self._lock:
+            self._entries[lineage.digest] = artifact
+            self._entries.move_to_end(lineage.digest)
+            self._stats["writes"] += 1
+            while len(self._entries) > self.max_entries:
+                self._entries.popitem(last=False)
+                self._stats["evictions"] += 1
+        return artifact
+
+    def get_before(
+        self,
+        lineage: EvaluationResultLineage,
+        factory: Callable[..., _T],
+        *,
+        role: str,
+        current_cycle: int,
+    ) -> Optional[_T]:
+        """Return an exact prior-cycle result, never same/future-cycle evidence."""
+
+        normalized_role = str(role or "before_unspecified").strip()
+        with self._lock:
+            self._stats["lookups"] += 1
+            artifact = self._entries.get(lineage.digest)
+            if artifact is None:
+                self._stats["misses"] += 1
+                return None
+            if artifact.lineage != lineage or artifact.source_cycle >= int(current_cycle):
+                self._stats["lineage_rejections"] += 1
+                self._stats["misses"] += 1
+                return None
+            self._entries.move_to_end(lineage.digest)
+        try:
+            result = artifact.materialize(factory)
+        except (TypeError, ValueError, InvalidEvaluationArtifactError):
+            with self._lock:
+                self._stats["integrity_rejections"] += 1
+                self._stats["misses"] += 1
+                self._entries.pop(lineage.digest, None)
+            return None
+        with self._lock:
+            self._stats["hits"] += 1
+            self._stats[f"role_hits:{normalized_role}"] += 1
+            self._stats["saved_wall_time_milliseconds"] += int(
+                round(artifact.computation_seconds * 1000.0)
+            )
+        return result
+
+    def summary(self) -> dict[str, Any]:
+        with self._lock:
+            lookups = int(self._stats.get("lookups", 0))
+            hits = int(self._stats.get("hits", 0))
+            return {
+                "schema_version": LEGAL_IR_EVALUATION_RESULT_SCHEMA_VERSION,
+                "entry_count": len(self._entries),
+                "lookups": lookups,
+                "hits": hits,
+                "misses": int(self._stats.get("misses", 0)),
+                "hit_rate": round(hits / lookups, 9) if lookups else 0.0,
+                "writes": int(self._stats.get("writes", 0)),
+                "evictions": int(self._stats.get("evictions", 0)),
+                "lineage_rejections": int(
+                    self._stats.get("lineage_rejections", 0)
+                ),
+                "integrity_rejections": int(
+                    self._stats.get("integrity_rejections", 0)
+                ),
+                "saved_wall_time_seconds": round(
+                    int(self._stats.get("saved_wall_time_milliseconds", 0)) / 1000.0,
+                    3,
+                ),
+                "role_hits": {
+                    key.split(":", 1)[1]: int(value)
+                    for key, value in sorted(self._stats.items())
+                    if key.startswith("role_hits:")
+                },
+            }
 
 
 class LegalIREvaluationCache:
@@ -673,17 +932,23 @@ LegalIREvaluationArtifactCache = LegalIREvaluationCache
 
 
 __all__ = [
+    "DETERMINISTIC_COMPILER_STATE_HASH",
     "DEFAULT_MAX_ENTRY_BYTES",
     "EvaluationArtifact",
     "EvaluationCacheError",
     "EvaluationCacheKey",
+    "EvaluationResultLineage",
+    "ImmutableEvaluationResult",
     "InvalidEvaluationArtifactError",
     "LEGAL_IR_EVALUATION_ARTIFACT_SCHEMA_VERSION",
     "LEGAL_IR_EVALUATION_CACHE_SCHEMA_VERSION",
+    "LEGAL_IR_EVALUATION_RESULT_SCHEMA_VERSION",
     "LegalIREvaluationArtifact",
     "LegalIREvaluationArtifactCache",
     "LegalIREvaluationCache",
     "LegalIREvaluationCacheKey",
+    "LegalIREvaluationResultCache",
+    "compiler_artifact_state_hash",
     "configuration_digest",
     "sample_content_hash",
     "stable_digest",

@@ -94,9 +94,12 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import 
     state_to_compiler_patch_lag,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cache import (
+    EvaluationResultLineage,
     LegalIREvaluationArtifact,
     LegalIREvaluationCache,
     LegalIREvaluationCacheKey,
+    LegalIREvaluationResultCache,
+    compiler_artifact_state_hash,
     configuration_digest as legal_ir_evaluation_configuration_digest,
     sample_content_hash as legal_ir_evaluation_sample_hash,
 )
@@ -3079,7 +3082,10 @@ def _legal_ir_evaluation_key(
     return LegalIREvaluationCacheKey(
         sample_hash=legal_ir_evaluation_sample_hash(sample),
         compiler_commit=str(compiler_commit or _compiler_ir_sample_code_fingerprint()),
-        state_hash=str(state_hash or "state-independent"),
+        state_hash=compiler_artifact_state_hash(
+            state_hash,
+            state_dependent=bool(use_autoencoder_guidance),
+        ),
         metric_schema=str(metric_schema or AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION),
         config_hash=resolved_config_hash,
     )
@@ -6511,6 +6517,127 @@ def _should_run_cycle_cadence(*, cycle: int, mode: str, every_n_cycles: int) -> 
     return True
 
 
+def autoencoder_evaluation_lineage(
+    samples: Sequence[Any],
+    *,
+    state_hash: str,
+    compiler_commit: str,
+    legal_ir_bridge_names: Sequence[str],
+    legal_ir_evaluate_provers: bool,
+    legal_ir_parallel_workers: int,
+    max_bridge_sample_text_chars: int,
+    use_sample_memory: bool,
+) -> EvaluationResultLineage:
+    """Bind an aggregate evaluation to every input that can affect its result."""
+
+    return EvaluationResultLineage.for_samples(
+        samples,
+        state_hash=state_hash,
+        metric_schema=AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+        evaluator_configuration={
+            "compiler_commit": str(compiler_commit or "unknown"),
+            "evaluation_kind": "full_family_autoencoder",
+            "legal_ir_bridge_names": sorted(
+                str(name) for name in legal_ir_bridge_names if str(name)
+            ),
+            "legal_ir_evaluate_provers": bool(legal_ir_evaluate_provers),
+            "legal_ir_parallel_workers": max(1, int(legal_ir_parallel_workers or 1)),
+            "max_bridge_sample_text_chars": max(
+                0, int(max_bridge_sample_text_chars or 0)
+            ),
+            "use_sample_memory": bool(use_sample_memory),
+        },
+    )
+
+
+def evaluate_autoencoder_before_train_with_cadence(
+    *,
+    cycle: int,
+    mode: str,
+    every_n_cycles: int,
+    lineage: EvaluationResultLineage,
+    result_cache: LegalIREvaluationResultCache,
+    full_family_evaluator: Callable[[], AutoencoderEvaluation],
+    core_evaluator: Callable[[], AutoencoderEvaluation],
+) -> tuple[AutoencoderEvaluation, Dict[str, Any]]:
+    """Resolve the before-train baseline without weakening candidate gates.
+
+    Exact prior after-results are preferred.  When no reusable result exists,
+    cadence controls the expensive family/bridge pass; a core reconstruction
+    baseline is still produced for cycle accounting.  Callers must only pass
+    this result into candidate validation when ``full_family`` is true.
+    """
+
+    normalized_mode = str(mode or "every_cycle").strip().lower()
+    cadence = int(every_n_cycles or 0)
+    due = _should_run_cycle_cadence(
+        cycle=cycle,
+        mode=normalized_mode,
+        every_n_cycles=cadence,
+    )
+    reused = result_cache.get_before(
+        lineage,
+        AutoencoderEvaluation,
+        role="before_train",
+        current_cycle=cycle,
+    )
+    if reused is not None:
+        return reused, {
+            "cycle": int(cycle),
+            "due": bool(due),
+            "every_n_cycles": cadence,
+            "executed": False,
+            "full_family": True,
+            "lineage_digest": lineage.digest,
+            "mode": normalized_mode,
+            "reuse_source": "lineage_matched_prior_after_evaluation",
+            "reused": True,
+            "skipped_expensive_full_family_pass": True,
+        }
+
+    started = time.monotonic()
+    evaluation = full_family_evaluator() if due else core_evaluator()
+    return evaluation, {
+        "cycle": int(cycle),
+        "due": bool(due),
+        "elapsed_seconds": round(max(0.0, time.monotonic() - started), 6),
+        "every_n_cycles": cadence,
+        "executed": True,
+        "full_family": bool(due),
+        "lineage_digest": lineage.digest,
+        "mode": normalized_mode,
+        "reuse_source": "",
+        "reused": False,
+        "skipped_expensive_full_family_pass": not due,
+    }
+
+
+def skipped_compiler_train_metric_block(
+    *,
+    cycle: int,
+    mode: str,
+    every_n_cycles: int,
+    evaluation_role: str,
+    sample_count: int,
+) -> Dict[str, Any]:
+    """Return explicit telemetry for an optional train-only compiler pass."""
+
+    return {
+        "cadence": {
+            "cycle": int(cycle),
+            "every_n_cycles": int(every_n_cycles or 0),
+            "mode": str(mode or "every_cycle"),
+        },
+        "evaluated_count": 0,
+        "evaluation_artifact_role": str(evaluation_role),
+        "full_family_gates_required": False,
+        "metric_failures": 0,
+        "sample_count": int(sample_count),
+        "skip_reason": "train_evaluation_cadence",
+        "skipped": True,
+    }
+
+
 def _should_run_cycle_tests(cycle: int, every_n_cycles: int) -> bool:
     cadence = int(every_n_cycles or 0)
     return cadence > 0 and int(cycle) % cadence == 0
@@ -9824,6 +9951,7 @@ def _todo_supervisor_precomputed_evaluations(
     validation_samples: Sequence[Any],
     before_train: AutoencoderEvaluation,
     before_validation: AutoencoderEvaluation,
+    before_train_full_family: bool = True,
 ) -> tuple[Optional[AutoencoderEvaluation], Optional[AutoencoderEvaluation]]:
     """Reuse only evaluations that describe the state entering TODO training."""
 
@@ -9843,7 +9971,12 @@ def _todo_supervisor_precomputed_evaluations(
     accepted_epochs = int(feature_projection_report.get("accepted_epochs", 0) or 0)
     if accepted_epochs <= 0:
         return (
-            before_train if matches_samples(before_train, train_samples) else None,
+            (
+                before_train
+                if before_train_full_family
+                and matches_samples(before_train, train_samples)
+                else None
+            ),
             (
                 before_validation
                 if matches_samples(before_validation, validation_samples)
@@ -18000,8 +18133,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     evaluation_cache = LegalIREvaluationCache(
         log_dir / "legal-ir-evaluation-cache"
     )
+    evaluation_result_cache = LegalIREvaluationResultCache(max_entries=16)
     evaluation_compiler_commit = _compiler_commit(root)
     summary["legal_ir_evaluation_cache"] = evaluation_cache.summary()
+    summary["legal_ir_evaluation_result_cache"] = evaluation_result_cache.summary()
     bridge_adapters = bridge_loss_adapter_names(args)
     bridge_evaluate_provers = bool(
         getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())
@@ -19245,23 +19380,93 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     max_bridge_sample_text_chars=metric_bridge_text_cap,
                     use_sample_memory=use_sample_memory,
                 )
+            baseline_evaluation_state_hash = autoencoder_canonical_state_hash(state)
+            before_train_mode = str(
+                getattr(
+                    args,
+                    "autoencoder_before_train_eval_mode",
+                    DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE,
+                )
+                or DEFAULT_AUTOENCODER_BEFORE_TRAIN_EVAL_MODE
+            )
+            before_train_every_n_cycles = int(
+                getattr(args, "autoencoder_before_train_eval_every_n_cycles", 4)
+                or 0
+            )
+            before_train_lineage = autoencoder_evaluation_lineage(
+                train_samples,
+                state_hash=baseline_evaluation_state_hash,
+                compiler_commit=evaluation_compiler_commit,
+                legal_ir_bridge_names=metric_bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
+                max_bridge_sample_text_chars=metric_bridge_text_cap,
+                use_sample_memory=True,
+            )
             mark_cycle_phase(
                 "before_train_eval",
                 sample_count=len(train_samples),
+                mode=before_train_mode,
+                every_n_cycles=before_train_every_n_cycles,
             )
-            before_train = evaluate_cycle_samples(
-                train_samples,
-                use_sample_memory=True,
+            before_train, before_train_evaluation_control = (
+                evaluate_autoencoder_before_train_with_cadence(
+                    cycle=cycle,
+                    mode=before_train_mode,
+                    every_n_cycles=before_train_every_n_cycles,
+                    lineage=before_train_lineage,
+                    result_cache=evaluation_result_cache,
+                    full_family_evaluator=lambda: evaluate_cycle_samples(
+                        train_samples,
+                        use_sample_memory=True,
+                    ),
+                    core_evaluator=lambda: autoencoder.evaluate(
+                        train_samples,
+                        legal_ir_bridge_names=(),
+                        use_sample_memory=True,
+                    ),
+                )
+            )
+            before_validation_lineage = autoencoder_evaluation_lineage(
+                acceptance_validation_samples,
+                state_hash=baseline_evaluation_state_hash,
+                compiler_commit=evaluation_compiler_commit,
+                legal_ir_bridge_names=metric_bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
+                max_bridge_sample_text_chars=metric_bridge_text_cap,
+                use_sample_memory=False,
             )
             mark_cycle_phase(
                 "before_validation_eval",
                 sample_count=len(acceptance_validation_samples),
                 validation_mode=validation_mode,
             )
-            before_validation = evaluate_cycle_samples(
-                acceptance_validation_samples,
-                use_sample_memory=False,
+            before_validation = evaluation_result_cache.get_before(
+                before_validation_lineage,
+                AutoencoderEvaluation,
+                role="before_validation",
+                current_cycle=cycle,
             )
+            before_validation_reused = before_validation is not None
+            if before_validation is None:
+                before_validation = evaluate_cycle_samples(
+                    acceptance_validation_samples,
+                    use_sample_memory=False,
+                )
+            before_validation_evaluation_control = {
+                "cycle": cycle,
+                "executed": not before_validation_reused,
+                "full_family": True,
+                "lineage_digest": before_validation_lineage.digest,
+                "required_for_holdout_promotion": True,
+                "reuse_source": (
+                    "lineage_matched_prior_after_evaluation"
+                    if before_validation_reused
+                    else ""
+                ),
+                "reused": before_validation_reused,
+            }
             compiler_ir_metric_kwargs = {
                 "compiler_commit": evaluation_compiler_commit,
                 "evaluation_cache": evaluation_cache,
@@ -19290,16 +19495,48 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     or 0.0
                 ),
             }
-            baseline_evaluation_state_hash = autoencoder_canonical_state_hash(state)
-            mark_cycle_phase("compiler_ir_train", sample_count=len(train_samples))
-            compiler_ir_train = compiler_ir_metric_block(
-                train_samples,
-                feature_codec,
-                evaluation_role="baseline_train",
-                progress_callback=metric_progress_callback("compiler_ir_train"),
-                state_hash=baseline_evaluation_state_hash,
-                **compiler_ir_metric_kwargs,
+            compiler_ir_train_mode = str(
+                getattr(args, "compiler_ir_train_mode", DEFAULT_COMPILER_IR_TRAIN_MODE)
+                or DEFAULT_COMPILER_IR_TRAIN_MODE
             )
+            compiler_ir_train_every_n_cycles = int(
+                getattr(args, "compiler_ir_train_every_n_cycles", 4) or 0
+            )
+            compiler_ir_train_enabled = _should_run_cycle_cadence(
+                cycle=cycle,
+                mode=compiler_ir_train_mode,
+                every_n_cycles=compiler_ir_train_every_n_cycles,
+            )
+            mark_cycle_phase(
+                "compiler_ir_train",
+                sample_count=len(train_samples),
+                enabled=compiler_ir_train_enabled,
+                mode=compiler_ir_train_mode,
+                every_n_cycles=compiler_ir_train_every_n_cycles,
+            )
+            if compiler_ir_train_enabled:
+                compiler_ir_train = compiler_ir_metric_block(
+                    train_samples,
+                    feature_codec,
+                    evaluation_role="baseline_train",
+                    progress_callback=metric_progress_callback("compiler_ir_train"),
+                    state_hash=baseline_evaluation_state_hash,
+                    **compiler_ir_metric_kwargs,
+                )
+                compiler_ir_train["cadence"] = {
+                    "cycle": cycle,
+                    "every_n_cycles": compiler_ir_train_every_n_cycles,
+                    "mode": compiler_ir_train_mode,
+                }
+                compiler_ir_train["skipped"] = False
+            else:
+                compiler_ir_train = skipped_compiler_train_metric_block(
+                    cycle=cycle,
+                    mode=compiler_ir_train_mode,
+                    every_n_cycles=compiler_ir_train_every_n_cycles,
+                    evaluation_role="baseline_train",
+                    sample_count=len(train_samples),
+                )
             mark_cycle_phase(
                 "compiler_ir_validation",
                 sample_count=len(acceptance_validation_samples),
@@ -19602,7 +19839,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ),
                     projection_cycle=cycle,
                     precomputed_holdout_evaluation=before_validation,
-                    precomputed_training_evaluation=before_train,
+                    precomputed_training_evaluation=(
+                        before_train
+                        if before_train_evaluation_control["full_family"]
+                        else None
+                    ),
                     progress_callback=projection_progress_callback,
                 )
             mark_cycle_phase(
@@ -19620,6 +19861,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 validation_samples=acceptance_validation_samples,
                 before_train=before_train,
                 before_validation=before_validation,
+                before_train_full_family=bool(
+                    before_train_evaluation_control["full_family"]
+                ),
             )
             if effective_max_items <= 0 or not audited_train_samples:
                 run = ModalOptimizationRun(
@@ -19679,6 +19923,39 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 acceptance_validation_samples,
                 use_sample_memory=False,
             )
+            after_evaluation_state_hash = autoencoder_canonical_state_hash(state)
+            after_train_lineage = autoencoder_evaluation_lineage(
+                train_samples,
+                state_hash=after_evaluation_state_hash,
+                compiler_commit=evaluation_compiler_commit,
+                legal_ir_bridge_names=metric_bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
+                max_bridge_sample_text_chars=metric_bridge_text_cap,
+                use_sample_memory=True,
+            )
+            after_validation_lineage = autoencoder_evaluation_lineage(
+                acceptance_validation_samples,
+                state_hash=after_evaluation_state_hash,
+                compiler_commit=evaluation_compiler_commit,
+                legal_ir_bridge_names=metric_bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
+                max_bridge_sample_text_chars=metric_bridge_text_cap,
+                use_sample_memory=False,
+            )
+            evaluation_result_cache.put_after(
+                after_train_lineage,
+                after_train,
+                role="after_train",
+                cycle=cycle,
+            )
+            evaluation_result_cache.put_after(
+                after_validation_lineage,
+                after_validation,
+                role="after_validation",
+                cycle=cycle,
+            )
             sample_memory_probe_mode = str(
                 getattr(
                     args,
@@ -19718,17 +19995,56 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     use_sample_memory=True,
                 )
             guided_evaluation_state_hash = autoencoder_canonical_state_hash(state)
-            mark_cycle_phase("compiler_ir_guided_train", sample_count=len(train_samples))
-            compiler_ir_guided_train = compiler_ir_metric_block(
-                train_samples,
-                feature_codec,
-                autoencoder=autoencoder,
-                use_autoencoder_guidance=True,
-                evaluation_role="guided_train",
-                progress_callback=metric_progress_callback("compiler_ir_guided_train"),
-                state_hash=guided_evaluation_state_hash,
-                **compiler_ir_metric_kwargs,
+            compiler_ir_guided_train_mode = str(
+                getattr(
+                    args,
+                    "compiler_ir_guided_train_mode",
+                    DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE,
+                )
+                or DEFAULT_COMPILER_IR_GUIDED_TRAIN_MODE
             )
+            compiler_ir_guided_train_every_n_cycles = int(
+                getattr(args, "compiler_ir_guided_train_every_n_cycles", 4) or 0
+            )
+            compiler_ir_guided_train_enabled = _should_run_cycle_cadence(
+                cycle=cycle,
+                mode=compiler_ir_guided_train_mode,
+                every_n_cycles=compiler_ir_guided_train_every_n_cycles,
+            )
+            mark_cycle_phase(
+                "compiler_ir_guided_train",
+                sample_count=len(train_samples),
+                enabled=compiler_ir_guided_train_enabled,
+                mode=compiler_ir_guided_train_mode,
+                every_n_cycles=compiler_ir_guided_train_every_n_cycles,
+            )
+            if compiler_ir_guided_train_enabled:
+                compiler_ir_guided_train = compiler_ir_metric_block(
+                    train_samples,
+                    feature_codec,
+                    autoencoder=autoencoder,
+                    use_autoencoder_guidance=True,
+                    evaluation_role="guided_train",
+                    progress_callback=metric_progress_callback(
+                        "compiler_ir_guided_train"
+                    ),
+                    state_hash=guided_evaluation_state_hash,
+                    **compiler_ir_metric_kwargs,
+                )
+                compiler_ir_guided_train["cadence"] = {
+                    "cycle": cycle,
+                    "every_n_cycles": compiler_ir_guided_train_every_n_cycles,
+                    "mode": compiler_ir_guided_train_mode,
+                }
+                compiler_ir_guided_train["skipped"] = False
+            else:
+                compiler_ir_guided_train = skipped_compiler_train_metric_block(
+                    cycle=cycle,
+                    mode=compiler_ir_guided_train_mode,
+                    every_n_cycles=compiler_ir_guided_train_every_n_cycles,
+                    evaluation_role="guided_train",
+                    sample_count=len(train_samples),
+                )
             mark_cycle_phase(
                 "compiler_ir_guided_validation",
                 sample_count=len(acceptance_validation_samples),
@@ -20362,6 +20678,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             evaluation_cache_summary = evaluation_cache.summary()
             summary["legal_ir_evaluation_cache"] = evaluation_cache_summary
+            summary["legal_ir_evaluation_result_cache"] = (
+                evaluation_result_cache.summary()
+            )
+            summary["latest_before_train_evaluation_control"] = dict(
+                before_train_evaluation_control
+            )
+            summary["latest_before_validation_evaluation_control"] = dict(
+                before_validation_evaluation_control
+            )
+            summary["latest_compiler_ir_train_cadence_enabled"] = bool(
+                compiler_ir_train_enabled
+            )
+            summary["latest_compiler_ir_guided_train_cadence_enabled"] = bool(
+                compiler_ir_guided_train_enabled
+            )
             summary["avoided_recompilations"] = int(
                 evaluation_cache_summary.get("avoided_recompilations", 0) or 0
             )
@@ -20913,6 +21244,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     ),
                     "before_train": before_train_metrics,
                     "before_validation": before_validation_metrics,
+                    "before_train_evaluation_control": (
+                        before_train_evaluation_control
+                    ),
+                    "before_validation_evaluation_control": (
+                        before_validation_evaluation_control
+                    ),
                     "completed_count": sum(step.completed_count for step in run.steps),
                     "compiler_ir_guided_train": compiler_ir_guided_train,
                     "compiler_ir_guided_validation": compiler_ir_guided_validation,
