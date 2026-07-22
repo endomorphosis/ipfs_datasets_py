@@ -131,6 +131,23 @@ __all__ = [
     'pack_modal_autoencoder_state',
     'unpack_modal_autoencoder_state',
     'stable_parameter_id',
+    'FactorizedHeadConfig',
+    'FactorizedSemanticInteractionHead',
+    'FactorizedSemanticInteractionHeads',
+    'FactorizedHeadQualityGateConfig',
+    'FactorizedHeadQualityReport',
+    'VerifiedResidual',
+    'factorize_interaction_records',
+    'factorized_head_ablation_configs',
+    'evaluate_factorized_head_quality',
+    'require_factorized_head_quality',
+    'FactorizedStateMigrationConfig',
+    'FactorizedStateMigrationReport',
+    'FactorizedStateMigrationResult',
+    'factorize_modal_autoencoder_state',
+    'migrate_modal_autoencoder_factorized_heads',
+    'materialize_legacy_interaction_tables',
+    'load_factorized_head_checkpoint',
     'AutoencoderEvaluation',
     'AutoencoderIntrospection',
     'CodexCallCache',
@@ -1017,6 +1034,33 @@ def __getattr__(name):
             'unpack_modal_autoencoder_state': unpack_modal_autoencoder_state,
             'stable_parameter_id': stable_parameter_id,
         }[name]
+    elif name in (
+        'FactorizedHeadConfig',
+        'FactorizedSemanticInteractionHead',
+        'FactorizedSemanticInteractionHeads',
+        'FactorizedHeadQualityGateConfig',
+        'FactorizedHeadQualityReport',
+        'VerifiedResidual',
+        'factorize_interaction_records',
+        'factorized_head_ablation_configs',
+        'evaluate_factorized_head_quality',
+        'require_factorized_head_quality',
+        'FactorizedStateMigrationConfig',
+        'FactorizedStateMigrationReport',
+        'FactorizedStateMigrationResult',
+        'factorize_modal_autoencoder_state',
+        'migrate_modal_autoencoder_factorized_heads',
+        'materialize_legacy_interaction_tables',
+        'load_factorized_head_checkpoint',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            modal_autoencoder_factorized_heads,
+            modal_autoencoder_state_migration,
+        )
+
+        if hasattr(modal_autoencoder_factorized_heads, name):
+            return getattr(modal_autoencoder_factorized_heads, name)
+        return getattr(modal_autoencoder_state_migration, name)
     elif name in (
         'AutoencoderEvaluation',
         'AdaptiveModalAutoencoder',
