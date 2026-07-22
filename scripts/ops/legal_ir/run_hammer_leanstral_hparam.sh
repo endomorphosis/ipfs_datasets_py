@@ -17,8 +17,13 @@ TRIAL_SECONDS="${TRIAL_SECONDS:-600}"
 TRIAL_COUNT="${TRIAL_COUNT:-6}"
 HPARAM_CANDIDATE_COUNT="${HPARAM_CANDIDATE_COUNT:-12}"
 HPARAM_BASE_SEED="${HPARAM_BASE_SEED:-8675309}"
-HPARAM_MAX_CONCURRENT_TRAINERS="${HPARAM_MAX_CONCURRENT_TRAINERS:-1}"
-HPARAM_ALLOW_CONCURRENT_TRAINERS="${HPARAM_ALLOW_CONCURRENT_TRAINERS:-0}"
+HPARAM_SEEDS_PER_CANDIDATE="${HPARAM_SEEDS_PER_CANDIDATE:-3}"
+# One trainer is always the safe operating point.  Two is merely the policy
+# ceiling; the scheduler still requires fresh low unified-memory, GPU, proof,
+# validation, and persistent-service pressure before granting trainer two.
+HPARAM_MAX_CONCURRENT_TRAINERS="${HPARAM_MAX_CONCURRENT_TRAINERS:-2}"
+HPARAM_ALLOW_CONCURRENT_TRAINERS="${HPARAM_ALLOW_CONCURRENT_TRAINERS:-1}"
+HPARAM_SEARCH_STRATEGY="successive_halving"
 CANARY_SECONDS="${CANARY_SECONDS:-28800}"
 PRODUCTION_SECONDS="${PRODUCTION_SECONDS:-${FINAL_SECONDS:-86400}}"
 # Compatibility names retained for existing operators and monitoring/tests.
@@ -92,8 +97,10 @@ if (( TRIAL_COUNT < 1 || TRIAL_COUNT > 6 || TRIAL_SECONDS < 1 )); then
   echo "TRIAL_COUNT must be 1..6 and TRIAL_SECONDS must be positive" >&2
   exit 2
 fi
-if (( HPARAM_CANDIDATE_COUNT < 2 || HPARAM_BASE_SEED < 0 || HPARAM_MAX_CONCURRENT_TRAINERS < 1 )); then
-  echo "HPARAM_CANDIDATE_COUNT must be >=2, HPARAM_BASE_SEED must be >=0, and HPARAM_MAX_CONCURRENT_TRAINERS must be >=1" >&2
+if (( HPARAM_CANDIDATE_COUNT < 2 || HPARAM_BASE_SEED < 0 \
+      || HPARAM_SEEDS_PER_CANDIDATE < 2 || HPARAM_MAX_CONCURRENT_TRAINERS < 1 \
+      || HPARAM_MAX_CONCURRENT_TRAINERS > 2 )); then
+  echo "HPARAM_CANDIDATE_COUNT must be >=2, HPARAM_BASE_SEED must be >=0, HPARAM_SEEDS_PER_CANDIDATE must be >=2, and HPARAM_MAX_CONCURRENT_TRAINERS must be 1..2" >&2
   exit 2
 fi
 
@@ -126,6 +133,10 @@ export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_A
 export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-ipfs_accelerate_py}"
 export LEANSTRAL_AUDIT_PROVIDER="${LEANSTRAL_AUDIT_PROVIDER:-leanstral_local}"
 export LEANSTRAL_AUDIT_BATCH_USE_MESH="${LEANSTRAL_AUDIT_BATCH_USE_MESH:-1}"
+export LEGAL_IR_HPARAM_BASELINE_REVISION="${LEGAL_IR_HPARAM_BASELINE_REVISION:-$(git rev-parse HEAD)}"
+export LEGAL_IR_HPARAM_DATASET_DIGEST="${LEGAL_IR_HPARAM_DATASET_DIGEST:-sha256:fixed-legal-ir-selection-split}"
+export LEGAL_IR_HPARAM_METRIC_LINEAGE_ID="${LEGAL_IR_HPARAM_METRIC_LINEAGE_ID:-tensorized-legal-ir-objective-v2}"
+export HPARAM_SEARCH_STRATEGY HPARAM_SEEDS_PER_CANDIDATE
 
 export RUN_SUMMARY_GATE_MODULE="scripts.ops.legal_ir.hammer_leanstral_rollout_gate"
 export RUN_SUMMARY_GATE_ARGS="${REPRESENTATION_PROMOTION_GATE_FLAG} ${SUCCESSFUL_REPRESENTATION_PROMOTION_GATE_FLAG} ${COMPLETE_REPRESENTATION_EVIDENCE_GATE_FLAG} --max-validation-ce-regression ${GATE_MAX_VALIDATION_CE_REGRESSION:-0.02} --max-validation-cosine-regression ${GATE_MAX_VALIDATION_COSINE_REGRESSION:-0.02} --max-compiler-ir-ce-regression ${GATE_MAX_COMPILER_IR_CE_REGRESSION:-0.05} --max-compiler-ir-cosine-regression ${GATE_MAX_COMPILER_IR_COSINE_REGRESSION:-0.05} --max-source-copy-penalty ${GATE_MAX_SOURCE_COPY_PENALTY:-0.35} --max-per-view-ir-metric-regression ${GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION} --max-symbolic-validity-regression ${GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION} --max-hammer-proof-rate-regression ${GATE_MAX_HAMMER_PROOF_RATE_REGRESSION} --max-reconstruction-rate-regression ${GATE_MAX_RECONSTRUCTION_RATE_REGRESSION} --max-source-copy-penalty-regression ${GATE_MAX_SOURCE_COPY_PENALTY_REGRESSION} --max-todo-productivity-regression ${GATE_MAX_TODO_PRODUCTIVITY_REGRESSION} --min-cycles-for-todo-gate ${GATE_MIN_CYCLES_FOR_TODO_GATE:-1}"
@@ -207,6 +218,7 @@ if (( DRY_RUN )); then
     --budget-seconds "$((TRIAL_SECONDS * TRIAL_COUNT))"
     --candidate-count "${HPARAM_CANDIDATE_COUNT}"
     --base-seed "${HPARAM_BASE_SEED}"
+    --seeds-per-candidate "${HPARAM_SEEDS_PER_CANDIDATE}"
     --max-concurrent-trainers "${HPARAM_MAX_CONCURRENT_TRAINERS}"
     --format env
   )
@@ -219,6 +231,14 @@ if (( DRY_RUN )); then
   echo "trial_seconds=${TRIAL_SECONDS}"
   echo "trial_count=${TRIAL_COUNT}"
   echo "hparam_seconds=$((TRIAL_SECONDS * TRIAL_COUNT))"
+  echo "hparam_search_strategy=${HPARAM_SEARCH_STRATEGY}"
+  echo "hparam_multi_seed_required=true"
+  echo "hparam_cuda_required=true"
+  echo "hparam_cpu_fallback_allowed=false"
+  echo "hparam_immutable_baseline_required=true"
+  echo "hparam_deterministic_compiler_artifact_set_required=true"
+  echo "hparam_parallel_evaluation_and_proof_lanes=true"
+  echo "hparam_second_trainer_pressure_gate=unified_memory,gpu_memory,service,proof_queue,validation_queue"
   echo "hparam_scheduler_command=${hparam_scheduler_args[*]}"
   "${hparam_scheduler_args[@]}"
   echo "canary_seconds=${CANARY_SECONDS}"
@@ -868,6 +888,25 @@ if [[ -e "${SNAPSHOT_PATH}" || -e "${EVIDENCE_DIR}" ]]; then
   exit 2
 fi
 mkdir -p "${EVIDENCE_DIR}"
+
+# Materialize the baseline-bound plan once.  Every candidate process receives
+# this same read-only identity; resuming with a different compiler revision,
+# dataset, lineage, artifact set, or seed set necessarily produces a different
+# plan and cannot be ranked with this run.
+HPARAM_PLAN_PATH="${EVIDENCE_DIR}/hparam-search-plan.json"
+hparam_plan_args=(
+  "${PYTHON_BIN}" -m ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hparam_scheduler
+  plan --run-id "${BASE_RUN_ID}" --budget-seconds "$((TRIAL_SECONDS * TRIAL_COUNT))"
+  --candidate-count "${HPARAM_CANDIDATE_COUNT}" --base-seed "${HPARAM_BASE_SEED}"
+  --seeds-per-candidate "${HPARAM_SEEDS_PER_CANDIDATE}"
+  --max-concurrent-trainers "${HPARAM_MAX_CONCURRENT_TRAINERS}" --format json
+)
+if [[ "${HPARAM_ALLOW_CONCURRENT_TRAINERS,,}" =~ ^(1|true|yes|on)$ ]]; then
+  hparam_plan_args+=(--allow-concurrent-trainers)
+fi
+"${hparam_plan_args[@]}" > "${HPARAM_PLAN_PATH}"
+chmod 0444 "${HPARAM_PLAN_PATH}"
+export LEGAL_IR_HPARAM_PLAN_PATH="${HPARAM_PLAN_PATH}"
 
 SMOKE_RUN_ID="${BASE_RUN_ID}-short-smoke"
 SMOKE_SUMMARY="${LOG_DIR}/${SMOKE_RUN_ID}-autoencoder.summary"
