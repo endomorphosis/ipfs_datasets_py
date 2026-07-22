@@ -11,6 +11,8 @@ in ad-hoc CI orchestration:
 
 * every independent check is scheduled concurrently with the same recursively
   immutable baseline evidence;
+* Codex candidates may opt into syntax, focused-preflight, expensive, and
+  promotion stages so cheap failures do not consume expensive capacity;
 * only explicitly transient outcomes are retried, within a per-check bound;
 * absent checks and incomplete boundary gates are represented as failures, not
   silently omitted from an aggregate score.
@@ -110,6 +112,21 @@ class ValidationBoundary(str, Enum):
     @property
     def requires_complete_promotion_gates(self) -> bool:
         return self in {self.MERGE, self.ROLLOUT}
+
+
+class IncrementalValidationStage(str, Enum):
+    """Cost-ordered stages used by the preflight-first validator.
+
+    The ordinary :meth:`IncrementalCandidateValidator.validate` API retains its
+    original all-check concurrency contract.  Codex worktree validation can use
+    these stages to avoid starting semantic, replay, proof, or promotion work
+    before the inexpensive syntax and focused-test preflight has succeeded.
+    """
+
+    SYNTAX = "syntax"
+    FOCUSED_PREFLIGHT = "focused_preflight"
+    EXPENSIVE = "expensive"
+    PROMOTION = "promotion"
 
 
 def _normalize_path(value: Any) -> str:
@@ -731,10 +748,17 @@ class IncrementalValidationResult:
     started_at_monotonic: float = 0.0
     elapsed_seconds: float = 0.0
     worker_thread_id: int = 0
+    executed: bool = True
 
     def __post_init__(self) -> None:
-        if self.attempts < 1 or self.transient_failures < 0:
-            raise ValueError("attempt counts must be non-negative and include an initial attempt")
+        if self.executed and self.attempts < 1:
+            raise ValueError("an executed check must include an initial attempt")
+        if not self.executed and self.attempts != 0:
+            raise ValueError("a skipped check cannot report execution attempts")
+        if self.transient_failures < 0:
+            raise ValueError("transient_failures must be non-negative")
+        if not self.executed and (self.accepted or self.transient_failures):
+            raise ValueError("a skipped check cannot be accepted or transiently failed")
         if self.accepted and self.transient_failures >= self.attempts:
             raise ValueError("an accepted result must end with a non-transient attempt")
         if not math.isfinite(float(self.elapsed_seconds)) or self.elapsed_seconds < 0:
@@ -743,10 +767,12 @@ class IncrementalValidationResult:
 
     @property
     def status(self) -> str:
+        if not self.executed:
+            return "skipped"
         return "passed" if self.accepted else "failed"
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        value = {
             "accepted": self.accepted,
             "attempts": self.attempts,
             "baseline_evidence_id": self.baseline_evidence_id,
@@ -758,6 +784,12 @@ class IncrementalValidationResult:
             "transient_failures": self.transient_failures,
             "worker_thread_id": self.worker_thread_id,
         }
+        # Preserve the serialized shape (and therefore report ids) of reports
+        # produced by the original concurrent API.  The extra marker is emitted
+        # only for the new, explicitly skipped staged results.
+        if not self.executed:
+            value["executed"] = False
+        return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -782,6 +814,15 @@ class IncrementalValidationReport:
         return tuple(
             check_id for check_id in self.plan.required_check_ids
             if check_id in self.results and not self.results[check_id].accepted
+        )
+
+    @property
+    def skipped_check_ids(self) -> tuple[str, ...]:
+        """Required checks deliberately not started after an earlier gate failed."""
+
+        return tuple(
+            check_id for check_id in self.plan.required_check_ids
+            if check_id in self.results and not self.results[check_id].executed
         )
 
     @property
@@ -817,6 +858,8 @@ class IncrementalValidationReport:
         values: list[str] = []
         for check_id in self.failed_check_ids:
             result = self.results[check_id]
+            if not result.executed:
+                continue
             if result.transient_failures > 0:
                 continue
             if result.error in non_semantic_errors or result.error.startswith("executor_error:"):
@@ -827,28 +870,32 @@ class IncrementalValidationReport:
     @property
     def semantic_statistics_update_allowed(self) -> bool:
         return not self.transient_unresolved_check_ids and not (
-            set(self.failed_check_ids) - set(self.semantic_failure_check_ids)
+            set(self.failed_check_ids)
+            - set(self.semantic_failure_check_ids)
+            - set(self.skipped_check_ids)
         )
 
     @property
     def semantic_statistics_delta(self) -> Mapping[str, Any]:
-        return MappingProxyType(
-            {
-                "accepted": self.accepted,
-                "accepted_check_count": sum(
-                    1 for check_id in self.plan.required_check_ids
-                    if check_id in self.results and self.results[check_id].accepted
-                ),
-                "deterministic_semantic_failure_count": len(self.semantic_failure_check_ids),
-                "poison_semantic_statistics": False,
-                "semantic_failure_check_ids": list(self.semantic_failure_check_ids),
-                "transient_rescued_check_count": len(self.transient_rescued_check_ids),
-                "transient_rescued_check_ids": list(self.transient_rescued_check_ids),
-                "transient_unresolved_check_count": len(self.transient_unresolved_check_ids),
-                "transient_unresolved_check_ids": list(self.transient_unresolved_check_ids),
-                "update_allowed": self.semantic_statistics_update_allowed,
-            }
-        )
+        value = {
+            "accepted": self.accepted,
+            "accepted_check_count": sum(
+                1 for check_id in self.plan.required_check_ids
+                if check_id in self.results and self.results[check_id].accepted
+            ),
+            "deterministic_semantic_failure_count": len(self.semantic_failure_check_ids),
+            "poison_semantic_statistics": False,
+            "semantic_failure_check_ids": list(self.semantic_failure_check_ids),
+            "transient_rescued_check_count": len(self.transient_rescued_check_ids),
+            "transient_rescued_check_ids": list(self.transient_rescued_check_ids),
+            "transient_unresolved_check_count": len(self.transient_unresolved_check_ids),
+            "transient_unresolved_check_ids": list(self.transient_unresolved_check_ids),
+            "update_allowed": self.semantic_statistics_update_allowed,
+        }
+        if self.skipped_check_ids:
+            value["skipped_check_count"] = len(self.skipped_check_ids)
+            value["skipped_check_ids"] = list(self.skipped_check_ids)
+        return MappingProxyType(value)
 
     @property
     def promotion_gates_complete(self) -> bool:
@@ -862,6 +909,18 @@ class IncrementalValidationReport:
     @property
     def accepted(self) -> bool:
         return not self.missing_check_ids and not self.failed_check_ids and self.promotion_gates_complete
+
+    @property
+    def merge_allowed(self) -> bool:
+        """Whether this report itself authorizes crossing the merge boundary."""
+
+        return self.plan.boundary is ValidationBoundary.MERGE and self.accepted
+
+    @property
+    def transient_requeue_required(self) -> bool:
+        """Whether unresolved infrastructure failure should requeue this work."""
+
+        return bool(self.transient_unresolved_check_ids)
 
     @property
     def report_id(self) -> str:
@@ -882,6 +941,226 @@ class IncrementalValidationReport:
             "transient_failure_check_ids": list(self.transient_failure_check_ids),
             "transient_rescued_check_ids": list(self.transient_rescued_check_ids),
             "transient_unresolved_check_ids": list(self.transient_unresolved_check_ids),
+        }
+        if self.skipped_check_ids:
+            value["skipped_check_ids"] = list(self.skipped_check_ids)
+        if include_report_id:
+            value["report_id"] = self.report_id
+        return value
+
+
+@dataclass(frozen=True, slots=True)
+class IncrementalValidationStageResult:
+    """Auditable outcome for one cost-ordered validation stage."""
+
+    stage: IncrementalValidationStage
+    check_ids: tuple[str, ...]
+    results: Mapping[str, IncrementalValidationResult]
+    elapsed_seconds: float = 0.0
+    skip_reason: str = ""
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.stage, IncrementalValidationStage):
+            object.__setattr__(self, "stage", IncrementalValidationStage(str(self.stage)))
+        check_ids = tuple(dict.fromkeys(str(item).strip() for item in self.check_ids))
+        if any(not item for item in check_ids):
+            raise ValueError("stage check ids must be non-empty")
+        if set(check_ids) != set(self.results):
+            raise ValueError("stage results must cover exactly the stage check ids")
+        elapsed = float(self.elapsed_seconds)
+        if not math.isfinite(elapsed) or elapsed < 0:
+            raise ValueError("stage elapsed_seconds must be finite and non-negative")
+        frozen_results = MappingProxyType(
+            {check_id: self.results[check_id] for check_id in check_ids}
+        )
+        object.__setattr__(self, "check_ids", check_ids)
+        object.__setattr__(self, "results", frozen_results)
+        object.__setattr__(self, "elapsed_seconds", elapsed)
+        object.__setattr__(self, "skip_reason", str(self.skip_reason or "").strip())
+
+    @property
+    def executed_check_ids(self) -> tuple[str, ...]:
+        return tuple(
+            check_id for check_id in self.check_ids if self.results[check_id].executed
+        )
+
+    @property
+    def skipped_check_ids(self) -> tuple[str, ...]:
+        return tuple(
+            check_id for check_id in self.check_ids if not self.results[check_id].executed
+        )
+
+    @property
+    def failed_check_ids(self) -> tuple[str, ...]:
+        return tuple(
+            check_id
+            for check_id in self.executed_check_ids
+            if not self.results[check_id].accepted
+        )
+
+    @property
+    def accepted(self) -> bool:
+        # An empty stage is not required and therefore cannot block the run.
+        return not self.skipped_check_ids and not self.failed_check_ids
+
+    @property
+    def status(self) -> str:
+        if not self.check_ids:
+            return "not_required"
+        if self.skipped_check_ids:
+            return "skipped"
+        return "passed" if self.accepted else "failed"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "check_ids": list(self.check_ids),
+            "elapsed_seconds": round(self.elapsed_seconds, 9),
+            "executed_check_ids": list(self.executed_check_ids),
+            "failed_check_ids": list(self.failed_check_ids),
+            "results": {key: value.to_dict() for key, value in self.results.items()},
+            "skip_reason": self.skip_reason,
+            "skipped_check_ids": list(self.skipped_check_ids),
+            "stage": self.stage.value,
+            "status": self.status,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StagedIncrementalValidationReport:
+    """Preflight-first report retaining the ordinary aggregate contract.
+
+    ``report`` is a normal :class:`IncrementalValidationReport`, so existing
+    merge and statistics consumers can continue to use the established
+    fail-closed properties.  ``stages`` adds execution-order and skip evidence.
+    """
+
+    report: IncrementalValidationReport
+    stages: tuple[IncrementalValidationStageResult, ...]
+
+    def __post_init__(self) -> None:
+        expected = tuple(IncrementalValidationStage)
+        stages = tuple(self.stages)
+        if tuple(item.stage for item in stages) != expected:
+            raise ValueError("staged validation results must use canonical stage order")
+        covered = tuple(check_id for stage in stages for check_id in stage.check_ids)
+        if len(covered) != len(set(covered)):
+            raise ValueError("a validation check cannot belong to multiple stages")
+        if set(covered) != set(self.report.plan.required_check_ids):
+            raise ValueError("stages must cover every required validation check")
+        object.__setattr__(self, "stages", stages)
+
+    @property
+    def plan(self) -> ChangedScopeValidationPlan:
+        return self.report.plan
+
+    @property
+    def aggregate_report(self) -> IncrementalValidationReport:
+        """Descriptive alias for consumers that distinguish stage and aggregate data."""
+
+        return self.report
+
+    @property
+    def results(self) -> Mapping[str, IncrementalValidationResult]:
+        return self.report.results
+
+    @property
+    def accepted(self) -> bool:
+        return self.report.accepted
+
+    @property
+    def merge_allowed(self) -> bool:
+        return self.report.merge_allowed
+
+    @property
+    def semantic_statistics_update_allowed(self) -> bool:
+        return self.report.semantic_statistics_update_allowed
+
+    @property
+    def semantic_statistics_delta(self) -> Mapping[str, Any]:
+        return self.report.semantic_statistics_delta
+
+    @property
+    def failed_check_ids(self) -> tuple[str, ...]:
+        return self.report.failed_check_ids
+
+    @property
+    def semantic_failure_check_ids(self) -> tuple[str, ...]:
+        return self.report.semantic_failure_check_ids
+
+    @property
+    def transient_rescued_check_ids(self) -> tuple[str, ...]:
+        return self.report.transient_rescued_check_ids
+
+    @property
+    def transient_requeue_required(self) -> bool:
+        return self.report.transient_requeue_required
+
+    @property
+    def transient_unresolved_check_ids(self) -> tuple[str, ...]:
+        return self.report.transient_unresolved_check_ids
+
+    @property
+    def skipped_check_ids(self) -> tuple[str, ...]:
+        return self.report.skipped_check_ids
+
+    @property
+    def preflight_accepted(self) -> bool:
+        return all(
+            stage.accepted
+            for stage in self.stages
+            if stage.stage in {
+                IncrementalValidationStage.SYNTAX,
+                IncrementalValidationStage.FOCUSED_PREFLIGHT,
+            }
+        )
+
+    @property
+    def preflight_failed_check_ids(self) -> tuple[str, ...]:
+        return tuple(
+            check_id
+            for stage in self.stages
+            if stage.stage in {
+                IncrementalValidationStage.SYNTAX,
+                IncrementalValidationStage.FOCUSED_PREFLIGHT,
+            }
+            for check_id in stage.failed_check_ids
+        )
+
+    @property
+    def stage_results(self) -> Mapping[str, IncrementalValidationStageResult]:
+        return MappingProxyType({stage.stage.value: stage for stage in self.stages})
+
+    @property
+    def expensive_validation_started(self) -> bool:
+        return any(
+            stage.executed_check_ids
+            for stage in self.stages
+            if stage.stage in {
+                IncrementalValidationStage.EXPENSIVE,
+                IncrementalValidationStage.PROMOTION,
+            }
+        )
+
+    @property
+    def report_id(self) -> str:
+        return f"staged-incremental-validation-{_digest(self.to_dict(include_report_id=False))[:20]}"
+
+    def stage(self, value: IncrementalValidationStage | str) -> IncrementalValidationStageResult:
+        selected = value if isinstance(value, IncrementalValidationStage) else IncrementalValidationStage(value)
+        return next(item for item in self.stages if item.stage is selected)
+
+    def to_dict(self, *, include_report_id: bool = True) -> dict[str, Any]:
+        value = {
+            "accepted": self.accepted,
+            "expensive_validation_started": self.expensive_validation_started,
+            "merge_allowed": self.merge_allowed,
+            "preflight_accepted": self.preflight_accepted,
+            "report": self.report.to_dict(),
+            "semantic_statistics_update_allowed": self.semantic_statistics_update_allowed,
+            "skipped_check_ids": list(self.skipped_check_ids),
+            "stages": [stage.to_dict() for stage in self.stages],
+            "transient_requeue_required": self.transient_requeue_required,
         }
         if include_report_id:
             value["report_id"] = self.report_id
@@ -904,6 +1183,24 @@ class IncrementalCandidateValidator:
     def _record(self, **increments: int) -> None:
         with self._lock:
             self._counters.update(increments)
+
+    @staticmethod
+    def _normalize_checks(
+        checks: Mapping[str, ValidationCallback | IncrementalValidationCheck]
+        | Sequence[IncrementalValidationCheck],
+    ) -> dict[str, IncrementalValidationCheck]:
+        if isinstance(checks, Mapping):
+            return {
+                str(check_id): value
+                if isinstance(value, IncrementalValidationCheck)
+                else IncrementalValidationCheck(str(check_id), value)
+                for check_id, value in checks.items()
+            }
+        items = tuple(checks)
+        normalized = {item.check_id: item for item in items}
+        if len(normalized) != len(items):
+            raise ValueError("incremental validation check ids must be unique")
+        return normalized
 
     @staticmethod
     def _normalize_callback_result(check_id: str, value: Any) -> tuple[bool, bool, str, Mapping[str, Any]]:
@@ -974,6 +1271,186 @@ class IncrementalCandidateValidator:
             self._record(transient_retries=1)
         raise AssertionError(f"unreachable validation retry state: {terminal_error} {terminal_evidence}")
 
+    def _execute_stage(
+        self,
+        *,
+        stage: IncrementalValidationStage,
+        check_ids: tuple[str, ...],
+        normalized: Mapping[str, IncrementalValidationCheck],
+        plan: ChangedScopeValidationPlan,
+        baseline: Optional[FrozenBaselineEvidence],
+    ) -> IncrementalValidationStageResult:
+        started = time.monotonic()
+        baseline_id = baseline.evidence_id if baseline else ""
+        selected: dict[str, IncrementalValidationCheck] = {}
+        results: dict[str, IncrementalValidationResult] = {}
+        for check_id in check_ids:
+            check = normalized.get(check_id)
+            if check is None:
+                results[check_id] = IncrementalValidationResult(
+                    check_id=check_id,
+                    accepted=False,
+                    error="required_check_not_registered",
+                    baseline_evidence_id=baseline_id,
+                )
+            elif check.check_id != check_id:
+                results[check_id] = IncrementalValidationResult(
+                    check_id=check_id,
+                    accepted=False,
+                    error="registered_check_identity_mismatch",
+                    baseline_evidence_id=baseline_id,
+                )
+            else:
+                selected[check_id] = check
+
+        self._record(checks_selected=len(selected), checks_missing=len(results))
+        if selected:
+            worker_count = min(self.max_workers, len(selected))
+            with ThreadPoolExecutor(
+                max_workers=worker_count,
+                thread_name_prefix=f"legal-ir-{stage.value}",
+            ) as pool:
+                futures = {
+                    pool.submit(self._execute, check, plan, baseline): check_id
+                    for check_id, check in selected.items()
+                }
+                for future in as_completed(futures):
+                    check_id = futures[future]
+                    try:
+                        results[check_id] = future.result()
+                    except Exception as exc:  # pragma: no cover - executor defence
+                        results[check_id] = IncrementalValidationResult(
+                            check_id=check_id,
+                            accepted=False,
+                            error=f"executor_error:{exc.__class__.__name__}: {exc}",
+                            baseline_evidence_id=baseline_id,
+                        )
+        return IncrementalValidationStageResult(
+            stage=stage,
+            check_ids=check_ids,
+            results=results,
+            elapsed_seconds=time.monotonic() - started,
+        )
+
+    def _skip_stage(
+        self,
+        *,
+        stage: IncrementalValidationStage,
+        check_ids: tuple[str, ...],
+        plan: ChangedScopeValidationPlan,
+        baseline: Optional[FrozenBaselineEvidence],
+        blocked_by: IncrementalValidationStageResult,
+    ) -> IncrementalValidationStageResult:
+        del plan  # retained in the signature to make stage construction explicit
+        if not check_ids:
+            return IncrementalValidationStageResult(stage, (), {})
+        blocker_ids = blocked_by.failed_check_ids or blocked_by.skipped_check_ids
+        reason = f"blocked_by_{blocked_by.stage.value}"
+        baseline_id = baseline.evidence_id if baseline else ""
+        results = {
+            check_id: IncrementalValidationResult(
+                check_id=check_id,
+                accepted=False,
+                attempts=0,
+                error="skipped_due_to_prior_stage_failure",
+                evidence={
+                    "blocked_by_check_ids": list(blocker_ids),
+                    "blocked_by_stage": blocked_by.stage.value,
+                    "executed": False,
+                },
+                baseline_evidence_id=baseline_id,
+                executed=False,
+            )
+            for check_id in check_ids
+        }
+        self._record(checks_skipped=len(results))
+        return IncrementalValidationStageResult(
+            stage=stage,
+            check_ids=check_ids,
+            results=results,
+            skip_reason=reason,
+        )
+
+    def validate_staged(
+        self,
+        plan: ChangedScopeValidationPlan,
+        checks: Mapping[str, ValidationCallback | IncrementalValidationCheck]
+        | Sequence[IncrementalValidationCheck],
+        *,
+        baseline_evidence: Optional[FrozenBaselineEvidence] = None,
+    ) -> StagedIncrementalValidationReport:
+        """Validate in increasing cost order and stop after a failed gate.
+
+        Syntax runs alone first.  Focused ``test:`` checks then run concurrently,
+        followed by the semantic/replay/mutation/proof checks.  Complete frozen
+        canary and promotion proof gates, when required, are always the final
+        stage.  A transient failure rescued within its retry bound is a success
+        and does not block the next stage; an unresolved transient does block it
+        and marks the aggregate as requiring a requeue.
+        """
+
+        if not isinstance(plan, ChangedScopeValidationPlan):
+            raise TypeError("plan must be ChangedScopeValidationPlan")
+        normalized = self._normalize_checks(checks)
+        required = plan.required_check_ids
+        promotion_ids = tuple(
+            item for item in required if item in {"frozen_canary", "promotion_proof_set"}
+        )
+        syntax_ids = tuple(item for item in required if item == "syntax")
+        focused_ids = tuple(item for item in required if item.startswith("test:"))
+        preclassified = set(syntax_ids) | set(focused_ids) | set(promotion_ids)
+        expensive_ids = tuple(item for item in required if item not in preclassified)
+        specifications = (
+            (IncrementalValidationStage.SYNTAX, syntax_ids),
+            (IncrementalValidationStage.FOCUSED_PREFLIGHT, focused_ids),
+            (IncrementalValidationStage.EXPENSIVE, expensive_ids),
+            (IncrementalValidationStage.PROMOTION, promotion_ids),
+        )
+
+        self._record(runs=1, staged_runs=1)
+        stages: list[IncrementalValidationStageResult] = []
+        blocker: Optional[IncrementalValidationStageResult] = None
+        for stage, check_ids in specifications:
+            if blocker is None:
+                outcome = self._execute_stage(
+                    stage=stage,
+                    check_ids=check_ids,
+                    normalized=normalized,
+                    plan=plan,
+                    baseline=baseline_evidence,
+                )
+                if not outcome.accepted:
+                    blocker = outcome
+            else:
+                outcome = self._skip_stage(
+                    stage=stage,
+                    check_ids=check_ids,
+                    plan=plan,
+                    baseline=baseline_evidence,
+                    blocked_by=blocker,
+                )
+            stages.append(outcome)
+
+        combined_results = {
+            check_id: result
+            for stage in stages
+            for check_id, result in stage.results.items()
+        }
+        report = IncrementalValidationReport(
+            plan=plan,
+            results=combined_results,
+            baseline_evidence_id=baseline_evidence.evidence_id if baseline_evidence else "",
+        )
+        self._record(
+            runs_accepted=int(report.accepted),
+            runs_failed=int(not report.accepted),
+            staged_runs_requeue_required=int(report.transient_requeue_required),
+        )
+        return StagedIncrementalValidationReport(report=report, stages=tuple(stages))
+
+    # A more discoverable spelling for Codex worktree orchestration.
+    validate_preflight_first = validate_staged
+
     def validate(
         self,
         plan: ChangedScopeValidationPlan,
@@ -985,16 +1462,7 @@ class IncrementalCandidateValidator:
 
         if not isinstance(plan, ChangedScopeValidationPlan):
             raise TypeError("plan must be ChangedScopeValidationPlan")
-        if isinstance(checks, Mapping):
-            normalized = {
-                str(check_id): value if isinstance(value, IncrementalValidationCheck)
-                else IncrementalValidationCheck(str(check_id), value)
-                for check_id, value in checks.items()
-            }
-        else:
-            normalized = {item.check_id: item for item in checks}
-            if len(normalized) != len(tuple(checks)):
-                raise ValueError("incremental validation check ids must be unique")
+        normalized = self._normalize_checks(checks)
 
         selected: dict[str, IncrementalValidationCheck] = {}
         results: dict[str, IncrementalValidationResult] = {}
@@ -1041,6 +1509,20 @@ class IncrementalCandidateValidator:
             return dict(sorted(self._counters.items()))
 
 
+class PreflightFirstIncrementalValidator(IncrementalCandidateValidator):
+    """Validator whose primary ``validate`` entry point is the staged contract."""
+
+    def validate(  # type: ignore[override]
+        self,
+        plan: ChangedScopeValidationPlan,
+        checks: Mapping[str, ValidationCallback | IncrementalValidationCheck]
+        | Sequence[IncrementalValidationCheck],
+        *,
+        baseline_evidence: Optional[FrozenBaselineEvidence] = None,
+    ) -> StagedIncrementalValidationReport:
+        return self.validate_staged(plan, checks, baseline_evidence=baseline_evidence)
+
+
 def validate_incremental_candidate(
     plan: ChangedScopeValidationPlan,
     checks: Mapping[str, ValidationCallback | IncrementalValidationCheck] | Sequence[IncrementalValidationCheck],
@@ -1056,13 +1538,31 @@ def validate_incremental_candidate(
     ).validate(plan, checks, baseline_evidence=baseline_evidence)
 
 
+def validate_staged_incremental_candidate(
+    plan: ChangedScopeValidationPlan,
+    checks: Mapping[str, ValidationCallback | IncrementalValidationCheck]
+    | Sequence[IncrementalValidationCheck],
+    *,
+    baseline_evidence: Optional[FrozenBaselineEvidence] = None,
+    max_workers: int = 8,
+    max_transient_retries: int = 1,
+) -> StagedIncrementalValidationReport:
+    """Run syntax and focused preflight before expensive candidate checks."""
+
+    return IncrementalCandidateValidator(
+        max_workers=max_workers, max_transient_retries=max_transient_retries
+    ).validate_staged(plan, checks, baseline_evidence=baseline_evidence)
+
+
 # Stable descriptive aliases for callers which use the shorter runtime names.
 ASTScope = TypedASTScope
 IncrementalValidationPlan = ChangedScopeValidationPlan
 IncrementalValidationPlanner = ChangedScopeValidationPlanner
 IncrementalValidationRunner = IncrementalCandidateValidator
 ImmutableBaselineEvidence = FrozenBaselineEvidence
+IncrementalStagedValidationReport = StagedIncrementalValidationReport
 plan_changed_scope_validation = plan_incremental_validation
+validate_incremental_candidate_staged = validate_staged_incremental_candidate
 
 
 __all__ = [
@@ -1080,8 +1580,13 @@ __all__ = [
     "FrozenBaselineEvidence",
     "ImmutableBaselineEvidence",
     "IncrementalCandidateValidator",
+    "PreflightFirstIncrementalValidator",
     "IncrementalValidationCheck",
     "IncrementalValidationReport",
+    "IncrementalValidationStage",
+    "IncrementalValidationStageResult",
+    "StagedIncrementalValidationReport",
+    "IncrementalStagedValidationReport",
     "IncrementalValidationPlan",
     "IncrementalValidationPlanner",
     "IncrementalValidationRunner",
@@ -1097,4 +1602,6 @@ __all__ = [
     "plan_incremental_validation",
     "plan_changed_scope_validation",
     "validate_incremental_candidate",
+    "validate_staged_incremental_candidate",
+    "validate_incremental_candidate_staged",
 ]
