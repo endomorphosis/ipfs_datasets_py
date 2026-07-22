@@ -23,6 +23,7 @@ import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass, field, replace
+from datetime import datetime, timezone
 from typing import Any, AsyncIterator, Awaitable, Callable, Deque, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ipfs_datasets_py.utils import anyio_compat as anyio_runtime
@@ -32,6 +33,7 @@ LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION = "legal-ir-leanstral-batch-scheduler-v
 LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION = "legal-ir-leanstral-batch-telemetry-v1"
 LEANSTRAL_CONTINUOUS_SERVICE_SCHEMA_VERSION = "legal-ir-leanstral-continuous-service-v1"
 LEANSTRAL_PERSISTENT_SERVICE_SCHEMA_VERSION = "legal-ir-leanstral-persistent-service-v1"
+LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION = "legal-ir-leanstral-cycle-pipeline-v1"
 
 
 class LeanstralQueueBackpressureError(RuntimeError):
@@ -1513,6 +1515,803 @@ def _jsonable(value: Any) -> Any:
     return str(value)
 
 
+def _cycle_utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _canonical_json_bytes(value: Any) -> bytes:
+    """Serialize one pipeline value into an isolated, deterministic snapshot."""
+
+    return json.dumps(
+        _jsonable(value),
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+
+
+@dataclass(frozen=True, slots=True)
+class LeanstralCycleLineage:
+    """Complete trust identity for one cycle's Leanstral guidance.
+
+    These axes intentionally remain separate.  Folding them into one hash
+    would make a rejection impossible to diagnose and makes it too easy for a
+    caller to forget a dimension when constructing the expected boundary.
+    """
+
+    schema_version: str
+    model: str
+    source_revision: str
+    state_revision: str
+    proof_lineage: str
+
+    def __post_init__(self) -> None:
+        for name in (
+            "schema_version",
+            "model",
+            "source_revision",
+            "state_revision",
+            "proof_lineage",
+        ):
+            value = str(getattr(self, name) or "").strip()
+            if not value:
+                raise ValueError(f"{name} must be non-empty")
+            object.__setattr__(self, name, value)
+
+    def mismatch_fields(self, other: "LeanstralCycleLineage") -> Tuple[str, ...]:
+        if not isinstance(other, LeanstralCycleLineage):
+            return (
+                "schema_version",
+                "model",
+                "source_revision",
+                "state_revision",
+                "proof_lineage",
+            )
+        return tuple(
+            name
+            for name in (
+                "schema_version",
+                "model",
+                "source_revision",
+                "state_revision",
+                "proof_lineage",
+            )
+            if getattr(self, name) != getattr(other, name)
+        )
+
+    def to_dict(self) -> Dict[str, str]:
+        return asdict(self)
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "LeanstralCycleLineage":
+        return cls(
+            schema_version=str(value.get("schema_version") or ""),
+            model=str(value.get("model") or ""),
+            source_revision=str(value.get("source_revision") or ""),
+            state_revision=str(
+                value.get("state_revision") or value.get("state_hash") or ""
+            ),
+            proof_lineage=str(
+                value.get("proof_lineage") or value.get("proof_lineage_hash") or ""
+            ),
+        )
+
+
+# Compatibility terminology for callers that name this object after its role.
+LeanstralGuidanceLineage = LeanstralCycleLineage
+
+
+@dataclass(frozen=True, slots=True)
+class LeanstralCycleGuidanceRequest:
+    """Immutable inference input published at one trainer revision."""
+
+    cycle: int
+    lineage: LeanstralCycleLineage
+    input_payload: bytes
+    input_digest: str = ""
+    created_at: str = field(default_factory=_cycle_utc_now)
+    created_monotonic: float = field(default_factory=time.monotonic)
+
+    def __post_init__(self) -> None:
+        if int(self.cycle) < 1:
+            raise ValueError("cycle must be at least one")
+        if not isinstance(self.lineage, LeanstralCycleLineage):
+            raise TypeError("lineage must be a LeanstralCycleLineage")
+        payload = bytes(self.input_payload)
+        try:
+            json.loads(payload.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("input_payload must contain UTF-8 JSON") from exc
+        digest = hashlib.sha256(payload).hexdigest()
+        if self.input_digest and str(self.input_digest) != digest:
+            raise ValueError("input_payload does not match input_digest")
+        object.__setattr__(self, "cycle", int(self.cycle))
+        object.__setattr__(self, "input_payload", payload)
+        object.__setattr__(self, "input_digest", digest)
+
+    @classmethod
+    def from_payload(
+        cls,
+        payload: Any,
+        *,
+        cycle: int,
+        lineage: LeanstralCycleLineage,
+    ) -> "LeanstralCycleGuidanceRequest":
+        return cls(
+            cycle=cycle,
+            lineage=lineage,
+            input_payload=_canonical_json_bytes(payload),
+        )
+
+    @property
+    def request_id(self) -> str:
+        identity = {
+            "cycle": self.cycle,
+            "input_digest": self.input_digest,
+            "lineage": self.lineage.to_dict(),
+            "pipeline_schema": LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION,
+        }
+        digest = hashlib.sha256(_canonical_json_bytes(identity)).hexdigest()
+        return f"leanstral-cycle-{self.cycle}-{digest[:24]}"
+
+    def payload(self) -> Any:
+        """Decode a fresh evaluator-owned copy of the immutable input."""
+
+        return json.loads(self.input_payload.decode("utf-8"))
+
+    def to_dict(self, *, include_input: bool = False) -> Dict[str, Any]:
+        value: Dict[str, Any] = {
+            "created_at": self.created_at,
+            "cycle": self.cycle,
+            "input_digest": self.input_digest,
+            "input_size_bytes": len(self.input_payload),
+            "lineage": self.lineage.to_dict(),
+            "request_id": self.request_id,
+            "schema_version": LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION,
+        }
+        if include_input:
+            value["input"] = self.payload()
+        return value
+
+
+@dataclass(frozen=True, slots=True)
+class LeanstralCycleGuidanceResult:
+    """Locally verified model output carrying the request's complete lineage."""
+
+    cycle: int
+    lineage: LeanstralCycleLineage
+    request_id: str
+    input_digest: str
+    guidance_payload: bytes
+    verified: bool = False
+    verified_by: Sequence[str] = field(default_factory=tuple)
+    error: str = ""
+    diagnostics: Sequence[str] = field(default_factory=tuple)
+    finished_at: str = field(default_factory=_cycle_utc_now)
+    elapsed_seconds: float = 0.0
+
+    def __post_init__(self) -> None:
+        if int(self.cycle) < 1:
+            raise ValueError("cycle must be at least one")
+        if not isinstance(self.lineage, LeanstralCycleLineage):
+            raise TypeError("lineage must be a LeanstralCycleLineage")
+        elapsed = float(self.elapsed_seconds)
+        if not math.isfinite(elapsed) or elapsed < 0.0:
+            raise ValueError("elapsed_seconds must be finite and non-negative")
+        object.__setattr__(self, "cycle", int(self.cycle))
+        object.__setattr__(self, "request_id", str(self.request_id or "").strip())
+        object.__setattr__(self, "input_digest", str(self.input_digest or "").strip())
+        guidance_payload = bytes(self.guidance_payload)
+        try:
+            json.loads(guidance_payload.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("guidance_payload must contain UTF-8 JSON") from exc
+        object.__setattr__(self, "guidance_payload", guidance_payload)
+        object.__setattr__(
+            self,
+            "verified_by",
+            tuple(str(value) for value in self.verified_by if str(value).strip()),
+        )
+        object.__setattr__(
+            self,
+            "diagnostics",
+            tuple(str(value) for value in self.diagnostics if str(value).strip()),
+        )
+        object.__setattr__(self, "error", str(self.error or ""))
+        object.__setattr__(self, "elapsed_seconds", elapsed)
+
+    @classmethod
+    def for_request(
+        cls,
+        request: LeanstralCycleGuidanceRequest,
+        guidance: Any,
+        *,
+        verified: bool,
+        verified_by: Sequence[str] = (),
+        error: str = "",
+        diagnostics: Sequence[str] = (),
+        elapsed_seconds: float = 0.0,
+    ) -> "LeanstralCycleGuidanceResult":
+        return cls(
+            cycle=request.cycle,
+            lineage=request.lineage,
+            request_id=request.request_id,
+            input_digest=request.input_digest,
+            guidance_payload=_canonical_json_bytes(guidance),
+            verified=verified,
+            verified_by=verified_by,
+            error=error,
+            diagnostics=diagnostics,
+            elapsed_seconds=elapsed_seconds,
+        )
+
+    @classmethod
+    def from_mapping(
+        cls,
+        value: Mapping[str, Any],
+    ) -> "LeanstralCycleGuidanceResult":
+        lineage_value = value.get("lineage")
+        if not isinstance(lineage_value, Mapping):
+            lineage_value = value
+        verified_by_value = value.get("verified_by", ())
+        if not isinstance(verified_by_value, Sequence) or isinstance(
+            verified_by_value, (str, bytes, bytearray)
+        ):
+            verified_by_value = ()
+        diagnostics_value = value.get("diagnostics", ())
+        if not isinstance(diagnostics_value, Sequence) or isinstance(
+            diagnostics_value, (str, bytes, bytearray)
+        ):
+            diagnostics_value = ()
+        return cls(
+            cycle=int(value.get("cycle", 0) or 0),
+            lineage=LeanstralCycleLineage.from_mapping(lineage_value),
+            request_id=str(value.get("request_id") or ""),
+            input_digest=str(value.get("input_digest") or ""),
+            guidance_payload=_canonical_json_bytes(
+                value.get("guidance", value.get("guidance_payload", {}))
+            ),
+            # Fail closed for JSON values such as ``"false"`` or ``1``.
+            verified=value.get("verified") is True,
+            verified_by=tuple(verified_by_value),
+            error=str(value.get("error") or ""),
+            diagnostics=tuple(diagnostics_value),
+            elapsed_seconds=float(value.get("elapsed_seconds", 0.0) or 0.0),
+        )
+
+    @property
+    def succeeded(self) -> bool:
+        return not self.error
+
+    def guidance(self) -> Any:
+        return json.loads(self.guidance_payload.decode("utf-8"))
+
+    def to_dict(self, *, include_guidance: bool = True) -> Dict[str, Any]:
+        value: Dict[str, Any] = {
+            "cycle": self.cycle,
+            "diagnostics": list(self.diagnostics),
+            "elapsed_seconds": round(self.elapsed_seconds, 9),
+            "error": self.error,
+            "finished_at": self.finished_at,
+            "input_digest": self.input_digest,
+            "lineage": self.lineage.to_dict(),
+            "request_id": self.request_id,
+            "schema_version": LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION,
+            "status": "succeeded" if self.succeeded else "failed",
+            "verified": bool(self.verified),
+            "verified_by": list(self.verified_by),
+        }
+        if include_guidance:
+            value["guidance"] = self.guidance()
+        return value
+
+
+@dataclass(frozen=True, slots=True)
+class LeanstralCyclePipelineConfig:
+    """Queue and optional debug-wait bounds for cycle guidance."""
+
+    queue_capacity: int = 2
+    synchronous: bool = False
+    synchronous_timeout_seconds: float = 30.0
+
+    def __post_init__(self) -> None:
+        if int(self.queue_capacity) < 1:
+            raise ValueError("queue_capacity must be at least one")
+        timeout = float(self.synchronous_timeout_seconds)
+        if not math.isfinite(timeout) or timeout < 0.0:
+            raise ValueError("synchronous_timeout_seconds must be finite and non-negative")
+        object.__setattr__(self, "queue_capacity", int(self.queue_capacity))
+        object.__setattr__(self, "synchronous_timeout_seconds", timeout)
+
+
+@dataclass(frozen=True, slots=True)
+class LeanstralCycleEnqueueDecision:
+    enqueued: bool
+    status: str
+    cycle: int
+    request_id: str = ""
+    waited_seconds: float = 0.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True, slots=True)
+class LeanstralCycleConsumptionDecision:
+    """Fail-closed outcome of polling the exact previous cycle."""
+
+    consumed: bool
+    status: str
+    current_cycle: int
+    target_cycle: int
+    result: Optional[LeanstralCycleGuidanceResult] = None
+    mismatch_fields: Sequence[str] = field(default_factory=tuple)
+    diagnostics: Sequence[str] = field(default_factory=tuple)
+    waited_seconds: float = 0.0
+
+    @property
+    def guidance(self) -> Any:
+        return self.result.guidance() if self.consumed and self.result else None
+
+    def to_dict(self, *, include_guidance: bool = False) -> Dict[str, Any]:
+        value = {
+            "consumed": self.consumed,
+            "current_cycle": self.current_cycle,
+            "diagnostics": list(self.diagnostics),
+            "mismatch_fields": list(self.mismatch_fields),
+            "status": self.status,
+            "target_cycle": self.target_cycle,
+            "waited_seconds": round(float(self.waited_seconds), 9),
+        }
+        if self.result is not None:
+            value["result"] = self.result.to_dict(include_guidance=include_guidance)
+        return value
+
+
+class LeanstralCyclePipelineClosed(RuntimeError):
+    pass
+
+
+class LeanstralCyclePipeline:
+    """Single-lane, non-blocking Leanstral guidance pipeline.
+
+    The worker thread is daemonized and owns no trainer state.  The evaluator
+    receives only immutable request bytes.  Normal ``enqueue`` and
+    ``consume_previous`` calls do not wait; synchronous waiting is an explicit,
+    bounded debugging option.  Results are single-use and only promotion can
+    invoke a state/TODO callback.
+    """
+
+    def __init__(
+        self,
+        evaluate: Callable[
+            [LeanstralCycleGuidanceRequest],
+            Mapping[str, Any] | LeanstralCycleGuidanceResult,
+        ],
+        *,
+        config: Optional[LeanstralCyclePipelineConfig] = None,
+        name: str = "leanstral-cycle-pipeline",
+        autostart: bool = True,
+    ) -> None:
+        if not callable(evaluate):
+            raise TypeError("evaluate must be callable")
+        self.evaluate = evaluate
+        self.config = config or LeanstralCyclePipelineConfig()
+        self.name = str(name or "leanstral-cycle-pipeline")
+        self._condition = threading.Condition(threading.RLock())
+        self._pending: Deque[LeanstralCycleGuidanceRequest] = deque()
+        self._inflight: Optional[LeanstralCycleGuidanceRequest] = None
+        self._requests: Dict[int, LeanstralCycleGuidanceRequest] = {}
+        self._results: Dict[int, LeanstralCycleGuidanceResult] = {}
+        self._diagnostics: List[Dict[str, Any]] = []
+        self._stats: Dict[str, int] = defaultdict(int)
+        self._highest_enqueued_cycle = 0
+        self._closed = False
+        self._stop_requested = False
+        self._worker: Optional[threading.Thread] = None
+        if autostart:
+            self.start()
+
+    def __enter__(self) -> "LeanstralCyclePipeline":
+        self.start()
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
+        self.close(wait=True)
+
+    def start(self) -> None:
+        with self._condition:
+            if self._closed:
+                raise LeanstralCyclePipelineClosed("Leanstral cycle pipeline is closed")
+            if self._worker is not None and self._worker.is_alive():
+                return
+            self._worker = threading.Thread(
+                target=self._worker_main,
+                name=self.name,
+                daemon=True,
+            )
+            self._worker.start()
+
+    def close(self, *, wait: bool = True, cancel_pending: bool = False) -> None:
+        with self._condition:
+            if cancel_pending:
+                while self._pending:
+                    request = self._pending.popleft()
+                    self._record_locked("shutdown_cancelled", request.cycle)
+                    self._stats["cancelled"] += 1
+            self._closed = True
+            self._stop_requested = True
+            worker = self._worker
+            self._condition.notify_all()
+        if wait and worker is not None and worker is not threading.current_thread():
+            worker.join()
+
+    def enqueue(
+        self,
+        request: LeanstralCycleGuidanceRequest,
+        *,
+        synchronous: Optional[bool] = None,
+        timeout: Optional[float] = None,
+    ) -> LeanstralCycleEnqueueDecision:
+        """Publish without waiting, unless bounded debug mode is explicit."""
+
+        if not isinstance(request, LeanstralCycleGuidanceRequest):
+            raise TypeError("request must be a LeanstralCycleGuidanceRequest")
+        started = time.monotonic()
+        with self._condition:
+            if self._closed:
+                raise LeanstralCyclePipelineClosed("Leanstral cycle pipeline is closed")
+            if request.cycle in self._requests:
+                self._stats["duplicate"] += 1
+                return LeanstralCycleEnqueueDecision(
+                    False, "duplicate_cycle", request.cycle, request.request_id
+                )
+            if request.cycle <= self._highest_enqueued_cycle:
+                self._stats["stale_enqueue"] += 1
+                self._record_locked("non_monotonic_cycle", request.cycle)
+                return LeanstralCycleEnqueueDecision(
+                    False, "stale_cycle", request.cycle, request.request_id
+                )
+            outstanding = len(self._pending) + (1 if self._inflight is not None else 0)
+            if outstanding >= self.config.queue_capacity:
+                self._stats["queue_full"] += 1
+                self._record_locked("queue_full", request.cycle)
+                return LeanstralCycleEnqueueDecision(
+                    False, "queue_full", request.cycle, request.request_id
+                )
+            self._pending.append(request)
+            self._requests[request.cycle] = request
+            self._highest_enqueued_cycle = request.cycle
+            self._stats["enqueued"] += 1
+            self._condition.notify_all()
+
+        should_wait = self.config.synchronous if synchronous is None else bool(synchronous)
+        if should_wait:
+            wait_bound = self._bounded_timeout(timeout)
+            with self._condition:
+                self._condition.wait_for(
+                    lambda: request.cycle in self._results or self._closed,
+                    timeout=wait_bound,
+                )
+                ready = request.cycle in self._results
+            waited = time.monotonic() - started
+            self._stats["synchronous_wait"] += 1
+            if not ready:
+                self._stats["synchronous_timeout"] += 1
+            return LeanstralCycleEnqueueDecision(
+                True,
+                "completed" if ready else "synchronous_timeout",
+                request.cycle,
+                request.request_id,
+                waited,
+            )
+        return LeanstralCycleEnqueueDecision(
+            True,
+            "enqueued",
+            request.cycle,
+            request.request_id,
+            time.monotonic() - started,
+        )
+
+    # Familiar queue terminology used by daemon integrations.
+    publish = enqueue
+
+    def consume_previous(
+        self,
+        *,
+        current_cycle: int,
+        expected_lineage: LeanstralCycleLineage,
+        synchronous: Optional[bool] = None,
+        timeout: Optional[float] = None,
+    ) -> LeanstralCycleConsumptionDecision:
+        """Poll and validate exactly cycle ``current_cycle - 1``.
+
+        A late N-1 result is useful only at boundary N.  Once boundary N+1 is
+        observed it is diagnosed as stale and removed, never promoted.
+        """
+
+        current = int(current_cycle)
+        if current < 1:
+            raise ValueError("current_cycle must be at least one")
+        if not isinstance(expected_lineage, LeanstralCycleLineage):
+            raise TypeError("expected_lineage must be a LeanstralCycleLineage")
+        target = current - 1
+        started = time.monotonic()
+        with self._condition:
+            self._discard_stale_locked(target)
+            request = self._requests.get(target)
+            if target < 1 or request is None:
+                return self._decision_locked(
+                    False,
+                    "missing_previous_cycle",
+                    current,
+                    target,
+                    diagnostics=("no_request_for_previous_cycle",),
+                )
+            should_wait = self.config.synchronous if synchronous is None else bool(synchronous)
+            if target not in self._results and should_wait:
+                self._condition.wait_for(
+                    lambda: target in self._results or self._closed,
+                    timeout=self._bounded_timeout(timeout),
+                )
+            result = self._results.get(target)
+            waited = time.monotonic() - started
+            if result is None:
+                status = "late_previous_cycle"
+                diagnostic = "result_not_ready_without_blocking"
+                if should_wait:
+                    status = "synchronous_timeout"
+                    diagnostic = "result_not_ready_within_synchronous_timeout"
+                return self._decision_locked(
+                    False,
+                    status,
+                    current,
+                    target,
+                    diagnostics=(diagnostic,),
+                    waited_seconds=waited,
+                )
+
+            mismatch = list(request.lineage.mismatch_fields(expected_lineage))
+            mismatch.extend(
+                name
+                for name in result.lineage.mismatch_fields(expected_lineage)
+                if name not in mismatch
+            )
+            if result.cycle != target:
+                mismatch.append("cycle")
+            if result.request_id != request.request_id:
+                mismatch.append("request_id")
+            if result.input_digest != request.input_digest:
+                mismatch.append("input_digest")
+            if mismatch:
+                self._drop_cycle_locked(target)
+                return self._decision_locked(
+                    False,
+                    "lineage_mismatch",
+                    current,
+                    target,
+                    result=result,
+                    mismatch_fields=tuple(dict.fromkeys(mismatch)),
+                    diagnostics=("result_rejected_before_promotion",),
+                    waited_seconds=waited,
+                )
+            if result.error:
+                self._drop_cycle_locked(target)
+                return self._decision_locked(
+                    False,
+                    "inference_failed",
+                    current,
+                    target,
+                    result=result,
+                    diagnostics=(result.error,),
+                    waited_seconds=waited,
+                )
+            if not result.verified or not result.verified_by:
+                self._drop_cycle_locked(target)
+                return self._decision_locked(
+                    False,
+                    "unverified_result",
+                    current,
+                    target,
+                    result=result,
+                    diagnostics=("verified_and_verified_by_are_required",),
+                    waited_seconds=waited,
+                )
+            self._drop_cycle_locked(target)
+            return self._decision_locked(
+                True,
+                "consumed_previous_cycle",
+                current,
+                target,
+                result=result,
+                diagnostics=("all_revision_and_verification_gates_matched",),
+                waited_seconds=waited,
+            )
+
+    def promote_previous(
+        self,
+        *,
+        current_cycle: int,
+        expected_lineage: LeanstralCycleLineage,
+        promote: Callable[[Any], Any],
+        synchronous: Optional[bool] = None,
+        timeout: Optional[float] = None,
+    ) -> LeanstralCycleConsumptionDecision:
+        """Invoke ``promote`` only for a fully admitted N-1 result."""
+
+        if not callable(promote):
+            raise TypeError("promote must be callable")
+        decision = self.consume_previous(
+            current_cycle=current_cycle,
+            expected_lineage=expected_lineage,
+            synchronous=synchronous,
+            timeout=timeout,
+        )
+        if decision.consumed:
+            promote(decision.guidance)
+            with self._condition:
+                self._stats["promoted"] += 1
+        return decision
+
+    def wait_until_idle(self, timeout: Optional[float] = None) -> bool:
+        with self._condition:
+            return self._condition.wait_for(
+                lambda: not self._pending and self._inflight is None,
+                timeout=timeout,
+            )
+
+    @property
+    def pending_count(self) -> int:
+        with self._condition:
+            return len(self._pending) + (1 if self._inflight is not None else 0)
+
+    @property
+    def diagnostics(self) -> Tuple[Dict[str, Any], ...]:
+        with self._condition:
+            return tuple(dict(value) for value in self._diagnostics)
+
+    def request_for_cycle(
+        self, cycle: int
+    ) -> Optional[LeanstralCycleGuidanceRequest]:
+        """Return the immutable publication receipt retained for ``cycle``."""
+
+        with self._condition:
+            return self._requests.get(int(cycle))
+
+    def summary(self) -> Dict[str, Any]:
+        with self._condition:
+            return {
+                "closed": self._closed,
+                "diagnostics": [dict(value) for value in self._diagnostics[-32:]],
+                "highest_enqueued_cycle": self._highest_enqueued_cycle,
+                "mode": "synchronous" if self.config.synchronous else "asynchronous",
+                "pending_count": len(self._pending) + (1 if self._inflight else 0),
+                "queue_capacity": self.config.queue_capacity,
+                "ready_result_count": len(self._results),
+                "schema_version": LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION,
+                "stats": dict(sorted(self._stats.items())),
+                "synchronous_timeout_seconds": self.config.synchronous_timeout_seconds,
+            }
+
+    def _worker_main(self) -> None:
+        while True:
+            with self._condition:
+                self._condition.wait_for(lambda: self._pending or self._stop_requested)
+                if not self._pending:
+                    if self._stop_requested:
+                        return
+                    continue
+                request = self._pending.popleft()
+                self._inflight = request
+            started = time.monotonic()
+            try:
+                raw_result = self.evaluate(request)
+                if isinstance(raw_result, LeanstralCycleGuidanceResult):
+                    result = raw_result
+                elif isinstance(raw_result, Mapping):
+                    result = LeanstralCycleGuidanceResult.from_mapping(raw_result)
+                else:
+                    raise TypeError(
+                        "Leanstral cycle evaluator must return a result or mapping"
+                    )
+            except Exception as exc:
+                result = LeanstralCycleGuidanceResult.for_request(
+                    request,
+                    {},
+                    verified=False,
+                    error=f"{type(exc).__name__}: {str(exc)[:500]}",
+                    diagnostics=("cycle_evaluator_exception",),
+                    elapsed_seconds=time.monotonic() - started,
+                )
+            with self._condition:
+                self._inflight = None
+                retained_request = self._requests.get(request.cycle)
+                if (
+                    retained_request is None
+                    or retained_request.request_id != request.request_id
+                ):
+                    self._stats["late_result_discarded"] += 1
+                    self._record_locked(
+                        "late_result_discarded",
+                        request.cycle,
+                        request_id=request.request_id,
+                    )
+                else:
+                    self._results[request.cycle] = result
+                    self._stats["completed"] += 1
+                    if result.error:
+                        self._stats["failed"] += 1
+                self._condition.notify_all()
+                if self._stop_requested and not self._pending:
+                    return
+
+    def _bounded_timeout(self, value: Optional[float]) -> float:
+        timeout = (
+            self.config.synchronous_timeout_seconds
+            if value is None
+            else float(value)
+        )
+        if not math.isfinite(timeout):
+            return self.config.synchronous_timeout_seconds
+        return max(0.0, min(timeout, self.config.synchronous_timeout_seconds))
+
+    def _discard_stale_locked(self, target_cycle: int) -> None:
+        for cycle in sorted(value for value in self._requests if value < target_cycle):
+            self._record_locked("stale_late_result", cycle, target_cycle=target_cycle)
+            self._stats["stale"] += 1
+            self._drop_cycle_locked(cycle)
+
+    def _drop_cycle_locked(self, cycle: int) -> None:
+        self._requests.pop(cycle, None)
+        self._results.pop(cycle, None)
+        if self._pending:
+            self._pending = deque(
+                request for request in self._pending if request.cycle != cycle
+            )
+
+    def _decision_locked(
+        self,
+        consumed: bool,
+        status: str,
+        current_cycle: int,
+        target_cycle: int,
+        *,
+        result: Optional[LeanstralCycleGuidanceResult] = None,
+        mismatch_fields: Sequence[str] = (),
+        diagnostics: Sequence[str] = (),
+        waited_seconds: float = 0.0,
+    ) -> LeanstralCycleConsumptionDecision:
+        self._stats["consumed" if consumed else "skipped"] += 1
+        self._record_locked(
+            status,
+            target_cycle,
+            current_cycle=current_cycle,
+            mismatch_fields=list(mismatch_fields),
+        )
+        return LeanstralCycleConsumptionDecision(
+            consumed=consumed,
+            status=status,
+            current_cycle=current_cycle,
+            target_cycle=target_cycle,
+            result=result,
+            mismatch_fields=tuple(mismatch_fields),
+            diagnostics=tuple(diagnostics),
+            waited_seconds=waited_seconds,
+        )
+
+    def _record_locked(self, reason: str, cycle: int, **details: Any) -> None:
+        self._diagnostics.append(
+            {
+                "at": _cycle_utc_now(),
+                "cycle": int(cycle),
+                "reason": str(reason),
+                **_jsonable(details),
+            }
+        )
+        if len(self._diagnostics) > 256:
+            del self._diagnostics[:-256]
+
+
 # Compatibility exports: callers historically import the operational worker
 # from this path even though its audit/checkpoint contracts remain in
 # ``leanstral_audit``.
@@ -1536,6 +2335,7 @@ from .leanstral_audit_policy import (  # noqa: E402  (compatibility exports)
 
 
 __all__ = [
+    "LEANSTRAL_CYCLE_PIPELINE_SCHEMA_VERSION",
     "LEANSTRAL_CONTINUOUS_SERVICE_SCHEMA_VERSION",
     "LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION",
     "LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION",
@@ -1556,6 +2356,15 @@ __all__ = [
     "LeanstralBatchTelemetry",
     "LeanstralContinuousBatchService",
     "LeanstralContinuousBatchServiceConfig",
+    "LeanstralCycleConsumptionDecision",
+    "LeanstralCycleEnqueueDecision",
+    "LeanstralCycleGuidanceRequest",
+    "LeanstralCycleGuidanceResult",
+    "LeanstralCycleLineage",
+    "LeanstralCyclePipeline",
+    "LeanstralCyclePipelineClosed",
+    "LeanstralCyclePipelineConfig",
+    "LeanstralGuidanceLineage",
     "LeanstralInferenceBatch",
     "LeanstralPersistentServiceConfig",
     "LeanstralPersistentServiceManager",
