@@ -64,6 +64,10 @@ def _qualities() -> dict[str, object]:
 def complete_evidence() -> dict[str, object]:
     configuration = {
         "active_duration_seconds": 600,
+        "canonical_runner_budget_seconds": 610,
+        "paired_cycle_completion_grace_seconds": 240,
+        "paired_codex_queue_grace_seconds": 0,
+        "paired_shutdown_poll_cushion_seconds": 120,
         "autoencoder_device": "cuda:0",
         "codex_apply_mode": "patch_only",
         "fixture_seed": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
@@ -185,6 +189,8 @@ def complete_evidence() -> dict[str, object]:
                 "focused_validation_count": 1,
                 "accepted_merge_count": 0,
                 "safe_rejection_count": 1,
+                "transient_failure_count": 0,
+                "transient_requeue_count": 0,
                 "queue_bytes_peak": 4096,
                 "max_queue_bytes": 65536,
                 "dispositions": [
@@ -201,6 +207,9 @@ def complete_evidence() -> dict[str, object]:
                 "healthy": True,
                 "status": "exited_cleanly",
                 "heartbeat_count": 120,
+                "max_heartbeat_gap_seconds": 6,
+                "progress_heartbeat_count": 20,
+                "max_progress_gap_seconds": 45,
                 "missed_heartbeat_count": 0,
                 "fatal_event_count": 0,
                 "children_launched": 5,
@@ -256,6 +265,7 @@ def complete_evidence() -> dict[str, object]:
             for name in (
                 "autoencoder_summary",
                 "paired_summary",
+                "training_log",
                 "checkpoint",
                 "leanstral_service",
                 "gate_decision",
@@ -275,6 +285,23 @@ def test_complete_receipt_passes() -> None:
     assert result.metrics["active_seconds"] == 600.0
 
 
+def test_bounded_codex_retries_do_not_inflate_unique_todo_count() -> None:
+    payload = complete_evidence()
+    payload["services"]["codex"].update(
+        todo_count=2,
+        invocation_count=4,
+        focused_validation_count=2,
+        safe_rejection_count=2,
+    )
+    payload["services"]["codex"]["dispositions"][0]["count"] = 2
+    payload["manifest_sha256"] = manifest_sha256(payload)
+    result = verify_evidence(
+        payload,
+        now=datetime(2026, 7, 22, 0, 11, tzinfo=timezone.utc),
+    )
+    assert result.accepted, result.failures
+
+
 @pytest.mark.parametrize(
     ("mutation", "failure"),
     [
@@ -287,6 +314,10 @@ def test_complete_receipt_passes() -> None:
         (lambda p: p["services"]["hammer"].update(reconstruction_count=0), "service:hammer:reconstruction_count"),
         (lambda p: p["services"]["codex"].update(safe_rejection_count=0), "service:codex:no_safe_terminal_path"),
         (lambda p: p["services"]["watchdog"].update(orphaned_child_count=1), "service:watchdog:orphaned_child_count"),
+        (lambda p: p["services"]["watchdog"].update(max_progress_gap_seconds=361), "service:watchdog:progress_gap"),
+        (lambda p: p["services"]["cuda_autoencoder"].update(loss_count=3), "service:autoencoder:operation_count_mismatch"),
+        (lambda p: p["services"]["leanstral"].update(reuse_count=4), "service:leanstral:reuse_count_incoherent"),
+        (lambda p: p["services"]["hammer"].update(reconstruction_count=17), "service:hammer:counter_progression"),
     ],
 )
 def test_fail_closed_runtime_mutations(mutation, failure: str) -> None:

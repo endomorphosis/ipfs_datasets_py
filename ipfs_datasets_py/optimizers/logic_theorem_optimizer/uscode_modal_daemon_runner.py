@@ -17784,6 +17784,12 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     if leanstral_enabled
                     else 0.0
                 )
+                + max(0.0, float(args.paired_codex_queue_grace_seconds))
+                # Codex children use the same composed duration and poll their
+                # own deadline.  Give the parent a small observation window so
+                # it can reap a clean exit instead of racing the child at the
+                # exact same monotonic deadline.
+                + max(120.0, poll_seconds * 2.0)
             )
             while True:
                 auto_exit_code = auto_process.poll()
