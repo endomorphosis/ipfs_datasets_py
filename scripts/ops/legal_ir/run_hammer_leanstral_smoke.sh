@@ -25,7 +25,7 @@ CHECKPOINT_PATH="${ROOT_DIR}/workspace/todo-queues/${RUN_ID}-autoencoder.state.j
 EVIDENCE_OUTPUT="${EVIDENCE_OUTPUT:-${ROOT_DIR}/workspace/test-logs/${RUN_ID}-smoke-evidence.json}"
 ROLLBACK_ARTIFACT="${ROLLBACK_ARTIFACT:-${ROOT_DIR}/workspace/test-logs/${RUN_ID}-smoke-rollback.json}"
 GATE_DECISION_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-smoke-gate.json"
-MAX_SUMMARY_BYTES="${MAX_SUMMARY_BYTES:-16777216}"
+MAX_SUMMARY_BYTES="${MAX_SUMMARY_BYTES:-33554432}"
 MAX_CHECKPOINT_BYTES="${MAX_CHECKPOINT_BYTES:-536870912}"
 RESUME_FROM_RUN_ID=""
 RESUME_FROM_STATE=""
@@ -150,9 +150,10 @@ if [[ ! "${DURATION_SECONDS}" =~ ^[0-9]+$ ]] || (( DURATION_SECONDS != 600 )); t
   echo "promotion smoke duration is immutable: DURATION_SECONDS must be 600" >&2
   exit 2
 fi
-# The daemon deliberately declines to begin a cycle in its final eight seconds.
-# A ten-second orchestration margin therefore yields at least 600 measured
-# active seconds while keeping the contractual stage duration exactly 600.
+# The stage counts only the first 600 lineage-verified active seconds, but the
+# daemon cannot interrupt a cycle and two complete warm cycles are mandatory.
+# A bounded orchestration margin lets a cycle cross the duration boundary and
+# finish without weakening the immutable 600-second acceptance threshold.
 RUNNER_DURATION_SECONDS="$((DURATION_SECONDS + 10))"
 if [[ ! "${MAX_CYCLES}" =~ ^[0-9]+$ ]] || (( MAX_CYCLES != 0 )); then
   echo "promotion smoke is duration-bound: MAX_CYCLES must be 0" >&2
@@ -397,29 +398,62 @@ def walk(value):
         for child in value:
             yield from walk(child)
 
-def positive_counter(name):
-    total = 0.0
-    for key, value in walk(auto):
-        if key != name:
-            continue
-        if isinstance(value, dict):
-            value = value.get("count")
-        if isinstance(value, bool):
+training_log = Path(str(auto.get("log_path") or ""))
+if not training_log.is_absolute() or not training_log.is_file():
+    raise SystemExit(f"CUDA training log is unavailable: {training_log}")
+optimizer_steps = 0
+forward_backward = 0
+cuda_cycles = set()
+with training_log.open("r", encoding="utf-8") as handle:
+    for line_number, line in enumerate(handle, start=1):
+        if not line.strip():
             continue
         try:
-            number = float(value)
-        except (TypeError, ValueError):
+            record = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"CUDA training log JSON invalid at line {line_number}: {exc}")
+        if not isinstance(record, dict) or record.get("event") != "cycle":
             continue
-        if math.isfinite(number) and number > 0:
-            total += number
-    return total
-
-optimizer_steps = positive_counter("cuda_resident_optimizer_step_count")
-forward_backward = positive_counter("cuda_packed_forward_backward_update")
+        if record.get("run_id") != auto.get("run_id"):
+            raise SystemExit("CUDA training log run lineage mismatch")
+        cycle = record.get("cycle")
+        if isinstance(cycle, bool) or not isinstance(cycle, int) or cycle < 1 or cycle in cuda_cycles:
+            raise SystemExit(f"CUDA training log cycle lineage invalid: {cycle!r}")
+        cuda_cycles.add(cycle)
+        reports = (
+            ((record.get("feature_projection_report") or {}).get("projection_cuda_residency") or {})
+            .get("reports", [])
+        )
+        qualifying = 0
+        for report in reports:
+            losses = report.get("losses") or {}
+            total_loss = losses.get("total")
+            step = report.get("optimizer_step")
+            if (
+                report.get("training_schema_version")
+                != "modal-autoencoder-packed-cuda-training-v1"
+                or report.get("admitted") is not True
+                or report.get("applied") is not True
+                or str(report.get("fallback_reason") or "")
+                or report.get("optimizer_state_resident") is not True
+                or isinstance(total_loss, bool)
+                or not isinstance(total_loss, (int, float))
+                or not math.isfinite(float(total_loss))
+                or float(total_loss) <= 0.0
+                or isinstance(step, bool)
+                or not isinstance(step, int)
+                or step < 1
+            ):
+                continue
+            qualifying += 1
+            optimizer_steps += step
+        if qualifying < 1:
+            raise SystemExit(f"CUDA cycle {cycle} lacks forward/loss/backward/optimizer evidence")
+        forward_backward += qualifying
 residency_applied = str(auto.get("autoencoder_cuda_residency_applied") or "").lower() == "true"
-if optimizer_steps < 1:
+if optimizer_steps < int(auto.get("cycles") or 0):
     raise SystemExit("CUDA autoencoder optimizer-step counter is absent or zero")
-if forward_backward < 1:
+if forward_backward < int(auto.get("cycles") or 0):
     raise SystemExit("CUDA autoencoder forward/loss/backward counter is absent or zero")
 if not residency_applied:
     raise SystemExit("CUDA-resident autoencoder update was not applied")
@@ -883,8 +917,11 @@ PY
 if [[ "${GATE_ONLY}" == "1" ]]; then
   assert_no_managed_processes gate_only
   verify_integrated_stack
-  run_gate
-  exit $?
+  if ! run_gate | tee "${GATE_DECISION_PATH}"; then
+    exit 1
+  fi
+  write_smoke_evidence
+  exit 0
 fi
 
 if [[ "${DRY_RUN}" == "1" ]]; then

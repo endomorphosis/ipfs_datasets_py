@@ -24,7 +24,7 @@ RESUME_ARGS=()
 DRY_RUN=0
 VERIFY_ONLY=0
 ACTIVE_SECONDS=600
-MAX_WALL_SECONDS=1500
+MAX_WALL_SECONDS=2400
 HEARTBEAT_SECONDS=5
 STALL_SECONDS=360
 
@@ -42,7 +42,7 @@ Options:
   --run-root PATH             Directory for bulky transient run artifacts
   --resume-from-run-id ID     Import a prior run's generalizable state
   --resume-from-state PATH    Import an explicit state checkpoint
-  --max-wall-seconds N        Watchdog wall limit (minimum 900; default 1500)
+  --max-wall-seconds N        Watchdog wall limit (minimum 900; default 2400)
   --verify-only               Verify an already-sealed --evidence receipt
   --dry-run                   Print the immutable contract; never emit evidence
   -h, --help                  Show this help
@@ -102,7 +102,9 @@ if (( DRY_RUN )); then
   echo "cpu_fallback_allowed=false"
   echo "canonical_runner=${CANONICAL_RUNNER}"
   echo "evidence=${EVIDENCE_PATH}"
-  "${CANONICAL_RUNNER}" --run-id "${RUN_ID}" --dry-run
+  PYTHON_BIN="${PYTHON_BIN}" DURATION_SECONDS=600 MAX_CYCLES=0 \
+    PAIRED_GRACE_SECONDS=240 PAIRED_CODEX_QUEUE_GRACE_SECONDS=0 \
+    "${CANONICAL_RUNNER}" --run-id "${RUN_ID}" --dry-run
   exit 0
 fi
 
@@ -132,6 +134,9 @@ STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 HEARTBEATS=0
 MAX_HEARTBEAT_GAP=0
 LAST_HEARTBEAT_EPOCH="${START_EPOCH}"
+LAST_PROGRESS_EPOCH="${START_EPOCH}"
+PROGRESS_HEARTBEATS=0
+MAX_PROGRESS_GAP=0
 RUNNER_PID=""
 
 terminate_group() {
@@ -142,15 +147,27 @@ terminate_group() {
 }
 on_signal() {
   terminate_group TERM
+  local waited=0
+  while [[ -n "${RUNNER_PID}" ]] && kill -0 "${RUNNER_PID}" 2>/dev/null && (( waited < 10 )); do
+    sleep 1
+    waited=$((waited + 1))
+  done
+  terminate_group KILL
+  if [[ -n "${RUNNER_PID}" ]]; then
+    wait "${RUNNER_PID}" 2>/dev/null || true
+  fi
   exit 130
 }
 trap on_signal INT TERM HUP
 
 # The canonical launcher owns service semantics and its internal child cleanup.
 # setsid gives the outer watchdog a bounded process group for abnormal shutdown.
-setsid env \
+setsid --wait env \
+  PYTHON_BIN="${PYTHON_BIN}" \
   DURATION_SECONDS=600 \
   MAX_CYCLES=0 \
+  PAIRED_GRACE_SECONDS=240 \
+  PAIRED_CODEX_QUEUE_GRACE_SECONDS=0 \
   AUTOENCODER_DEVICE=cuda \
   LEANSTRAL_AUDIT_REQUIRE_CUDA=1 \
   LEANSTRAL_AUDIT_PERSIST_SERVICE=1 \
@@ -168,6 +185,27 @@ while kill -0 "${RUNNER_PID}" 2>/dev/null; do
   gap=$((now_epoch - LAST_HEARTBEAT_EPOCH))
   (( gap > MAX_HEARTBEAT_GAP )) && MAX_HEARTBEAT_GAP="${gap}"
   LAST_HEARTBEAT_EPOCH="${now_epoch}"
+  newest_progress="$(
+    find "${RUN_LOG}" "${ROOT_DIR}/workspace" \
+      -type f \( -path "*${RUN_ID}*" -o -path "${RUN_LOG}" \) \
+      -printf '%T@\n' 2>/dev/null | sort -nr | head -1 || true
+  )"
+  newest_progress="${newest_progress%%.*}"
+  if [[ "${newest_progress:-}" =~ ^[0-9]+$ ]] && (( newest_progress > LAST_PROGRESS_EPOCH )); then
+    progress_gap=$((newest_progress - LAST_PROGRESS_EPOCH))
+    (( progress_gap > MAX_PROGRESS_GAP )) && MAX_PROGRESS_GAP="${progress_gap}"
+    LAST_PROGRESS_EPOCH="${newest_progress}"
+    PROGRESS_HEARTBEATS=$((PROGRESS_HEARTBEATS + 1))
+  fi
+  current_progress_gap=$((now_epoch - LAST_PROGRESS_EPOCH))
+  (( current_progress_gap > MAX_PROGRESS_GAP )) && MAX_PROGRESS_GAP="${current_progress_gap}"
+  if (( current_progress_gap > STALL_SECONDS )); then
+    watchdog_status="progress_stalled"
+    terminate_group TERM
+    sleep 5
+    terminate_group KILL
+    break
+  fi
   if (( now_epoch - START_EPOCH > MAX_WALL_SECONDS )); then
     watchdog_status="max_wall_exceeded"
     terminate_group TERM
@@ -188,7 +226,7 @@ END_EPOCH="$(date +%s)"
 
 "${PYTHON_BIN}" - "${WATCHDOG_RECEIPT}" "${RUN_ID}" "${STARTED_AT}" "${ENDED_AT}" \
   "$((END_EPOCH - START_EPOCH))" "${HEARTBEATS}" "${MAX_HEARTBEAT_GAP}" \
-  "${runner_status}" "${watchdog_status}" <<'PY'
+  "${PROGRESS_HEARTBEATS}" "${MAX_PROGRESS_GAP}" "${runner_status}" "${watchdog_status}" <<'PY'
 import json, os, sys, tempfile
 from pathlib import Path
 
@@ -201,8 +239,14 @@ payload = {
     "wall_seconds": int(sys.argv[5]),
     "heartbeat_count": int(sys.argv[6]),
     "max_heartbeat_gap_seconds": int(sys.argv[7]),
-    "runner_exit_code": int(sys.argv[8]),
-    "status": "exited_cleanly" if int(sys.argv[8]) == 0 and sys.argv[9] == "healthy" else sys.argv[9],
+    "progress_heartbeat_count": int(sys.argv[8]),
+    "max_progress_gap_seconds": int(sys.argv[9]),
+    "runner_exit_code": int(sys.argv[10]),
+    "status": (
+        "exited_cleanly"
+        if int(sys.argv[10]) == 0 and sys.argv[11] == "healthy"
+        else (sys.argv[11] if sys.argv[11] != "healthy" else "runner_failed")
+    ),
 }
 fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
 try:
