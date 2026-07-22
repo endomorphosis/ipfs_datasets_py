@@ -6289,6 +6289,7 @@ class AdaptiveModalAutoencoder:
         projection_prescreen_mode: str = "off",
         projection_prescreen_top_k: int = 3,
         projection_periodic_full_search_every_n_cycles: int = 0,
+        projection_max_update_families: Optional[int] = None,
         projection_cycle: Optional[int] = None,
         precomputed_holdout_evaluation: Optional[AutoencoderEvaluation] = None,
         precomputed_training_evaluation: Optional[AutoencoderEvaluation] = None,
@@ -6596,6 +6597,16 @@ class AdaptiveModalAutoencoder:
                 ("family_logits", "decoded_embedding", "legal_ir_view_logits"),
             ),
         )
+        effective_max_update_families = max(
+            0,
+            int(projection_max_update_families or 0),
+        )
+        if effective_max_update_families > 0:
+            candidate_updates = candidate_updates[:effective_max_update_families]
+        projection_update_family_config = {
+            "candidate_update_family_count": len(candidate_updates),
+            "max_update_families": effective_max_update_families or None,
+        }
         head_learning_rate_scales = {
             "family_logits": 1.0,
             "decoded_embedding": 0.5,
@@ -7295,6 +7306,7 @@ class AdaptiveModalAutoencoder:
             "objective_weights": dict(objective_weights),
             "projection_deadband": dict(projection_deadband_config),
             "projection_prescreen": dict(projection_prescreen_config),
+            "projection_update_families": dict(projection_update_family_config),
             "projection_prescreen_summary": _projection_prescreen_summary(
                 epoch_reports
             ),

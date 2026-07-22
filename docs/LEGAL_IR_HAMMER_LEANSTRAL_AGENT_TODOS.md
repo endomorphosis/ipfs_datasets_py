@@ -16,7 +16,7 @@ Operator contract:
 
 - This board is the supervisor's dependency source of truth. A dependency must name another task in this file; task lifecycle values are limited to `todo`, `in_progress`, `blocked`, and `completed`.
 - `Outputs` names the concrete implementation or documentation artifacts owned by a task. `Validation` is the executable, semicolon-delimited command set the supervisor must pass before merge. Do not infer completion from advisory JSON or from an artifact merely being present.
-- The representation targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, retain focused output and validation contracts; PORTAL-LIR-HAMMER-034 records their operator handoff. Runtime and proof-feedback targets PORTAL-LIR-HAMMER-035 through PORTAL-LIR-HAMMER-052 form the first performance wave, and PORTAL-LIR-HAMMER-053 is its rollout handoff. The evidence-driven follow-up in `docs/implementation/plans/HAMMER_LEANSTRAL_LEGAL_IR_NEXT_OPTIMIZATION_PLAN.md` is tracked by PORTAL-LIR-HAMMER-054 through PORTAL-LIR-HAMMER-100.
+- The representation targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, retain focused output and validation contracts; PORTAL-LIR-HAMMER-034 records their operator handoff. Runtime and proof-feedback targets PORTAL-LIR-HAMMER-035 through PORTAL-LIR-HAMMER-052 form the first performance wave, and PORTAL-LIR-HAMMER-053 is its rollout handoff. The evidence-driven follow-up in `docs/implementation/plans/HAMMER_LEANSTRAL_LEGAL_IR_NEXT_OPTIMIZATION_PLAN.md` is tracked by PORTAL-LIR-HAMMER-054 through PORTAL-LIR-HAMMER-100. The measured throughput-remediation tranche is tracked by PORTAL-LIR-HAMMER-101 through PORTAL-LIR-HAMMER-116.
 - A generated patch, learned export, or model draft is never promoted merely because its producer task completed. Runtime trust and rollout evidence remain mandatory.
 
 Artifact and authority lanes:
@@ -33,6 +33,7 @@ Artifact and authority lanes:
 | Evidence-driven optimization | PORTAL-LIR-HAMMER-054-072 | Metric causality, formal-supervision efficacy, CUDA/runtime optimization, adaptive parallelism, and a second fail-closed rollout. |
 | Evaluation integrity | PORTAL-LIR-HAMMER-073-084 | Leakage-resistant evaluation, semantic-equivalence metrics, uncertainty, fuzzing, hard negatives, multi-seed promotion, schema compatibility, poisoning defenses, external benchmarks, and drift rollback. |
 | Compiler productization | PORTAL-LIR-HAMMER-085-100 | Source maps, symbol tables, citations, temporal authority, ambiguity, pass manager, backend conformance, reproducibility, incremental compilation, semantic diffs, proof-carrying outputs, diagnostics, APIs, interoperability, and final conformance. |
+| Measured throughput remediation | PORTAL-LIR-HAMMER-101-116 | Incremental state identity, compact checkpoints, copy-on-write updates, bounded persistence, evaluation cadence, packed CUDA training, factorized heads, persistent Leanstral reuse, stage parallelism, Codex rescue, resource-aware search, and fail-closed performance promotion. |
 
 Expanded optimization target manifest:
 
@@ -76,6 +77,10 @@ Evidence-driven follow-up wave:
 | 072 | Rebenchmark, smoke, hparam, eight-hour canary, and 24-hour promotion | Fail closed on non-responsive metrics or incomplete lineage |
 | 073-084 | Evaluation integrity and external validity | Do not optimize learned or compiler metrics that can be explained by leakage, shallow similarity, unstable schemas, or canary overfitting |
 | 085-100 | Compiler-grade IR infrastructure and final conformance | Make the compiler/decompiler inspectable, reproducible, incrementally runnable, standards-aware, and proof-carrying |
+| 101-106 | State and evaluation hot-path remediation | Remove whole-state serialization and copying from each cycle before increasing process counts |
+| 107-110 | Tensorized autoencoder architecture | Keep packed parameters, batching, loss computation, and updates on CUDA while preserving deterministic compatibility |
+| 111-114 | Service and pipeline parallelism | Reuse one Leanstral model and allocate independent stages from measured queue and resource pressure |
+| 115-116 | Search and promotion | Spend hparam compute on informative candidates and require matched quality plus throughput evidence |
 
 The manifest is an operator index. The full paths and commands in each task's `Outputs` and `Validation` fields are authoritative for the supervisor.
 
@@ -1883,6 +1888,246 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ```json
 {"phase":"compiler_system_promotion","scope":"legal_text_compiler_decompiler_ir","stages":["evaluation_integrity","compiler_productization","conformance","promotion"]}
+```
+
+## PORTAL-LIR-HAMMER-101 Freeze a reproducible cycle-throughput baseline
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: performance-evidence
+- Depends on: PORTAL-LIR-HAMMER-072, PORTAL-LIR-HAMMER-100
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/cycle_throughput_benchmark.py, benchmarks/bench_modal_autoencoder_cycle.py, tests/unit/optimizers/logic_theorem_optimizer/test_cycle_throughput_benchmark.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_cycle_throughput_benchmark.py -q; /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python benchmarks/bench_modal_autoencoder_cycle.py --dry-run
+- Acceptance: Replays a fixed canonical sample and emits immutable, content-addressed cold and warm baselines for every cycle phase, sample throughput, CPU occupancy, CUDA utilization and memory, state cardinality, bytes read and written, Leanstral startup and reuse, Hammer work, Codex attempts, validation outcomes, accepted patches, and all per-family CE, cosine, semantic-equivalence, proof-validity, round-trip, and source-copy guardrails. Measurements must distinguish useful compute from wait, serialization, persistence, and child-process time without changing training behavior.
+
+```json
+{"phase":"throughput_remediation","scope":"matched_cycle_baseline","observed_cycle_seconds":426.656,"observed_cpu_average":0.11691,"observed_state_bytes":577871788}
+```
+
+## PORTAL-LIR-HAMMER-102 Replace whole-state JSON hashing with incremental state identity
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: autoencoder-state
+- Depends on: PORTAL-LIR-HAMMER-080, PORTAL-LIR-HAMMER-092, PORTAL-LIR-HAMMER-101
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_version.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_version.py tests/unit/optimizers/logic_theorem_optimizer/test_state_to_patch_lag.py -q
+- Acceptance: Introduces mutation-tracked state revisions with deterministic component digests so unchanged state identity is O(1) after warmup and changed identity is proportional to touched components. Hot-cycle baseline, guided, learned, and introspection lineage checks must not call full `state.to_json()`. Digests must change for every persisted parameter mutation, remain stable across equivalent save and reload, bind schema and metric lineage, and reject stale asynchronous results.
+
+```json
+{"phase":"throughput_remediation","scope":"incremental_state_identity","hard_guardrails":["every_persisted_mutation_invalidates_identity","schema_bound_digest","no_full_json_hash_in_hot_path"]}
+```
+
+## PORTAL-LIR-HAMMER-103 Add compact versioned checkpoints and append-only state deltas
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: autoencoder-state
+- Depends on: PORTAL-LIR-HAMMER-102
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_checkpoint.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/async_artifact_writer.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_checkpoint.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_checkpoint.py tests/unit/optimizers/logic_theorem_optimizer/test_async_artifact_writer.py -q
+- Acceptance: Persists typed numeric tables in a compact, checksummed, non-executable format with a small versioned manifest and append-only delta segments between periodic full checkpoints. Loading must support the current JSON state, recover atomically from an interrupted delta or checkpoint, verify revision and schema lineage, and round-trip exactly within declared float precision. On the canonical state fixture, the full checkpoint must be at least 60 percent smaller than JSON and unchanged cycles must write only bounded metadata or deltas.
+
+```json
+{"phase":"throughput_remediation","scope":"compact_checkpoint_and_delta_log","compatibility":"current_json_state_remains_readable"}
+```
+
+## PORTAL-LIR-HAMMER-104 Implement touched-row copy-on-write training transactions
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: autoencoder-state
+- Depends on: PORTAL-LIR-HAMMER-102
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_transaction.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_state_transaction.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py -q
+- Acceptance: Replaces whole-state deep copies in projection and rollback paths with a transaction that snapshots only touched rows, inserted keys, scalar metadata, and their prior revisions. Commit and rollback must be exact, nested or conflicting writers must fail deterministically, rejected candidates must leave state identity unchanged, and the transaction must preserve existing objective, source-copy, proof, and family guardrails.
+
+```json
+{"phase":"throughput_remediation","scope":"copy_on_write_state_transactions","hard_guardrail":"rejected_projection_is_bitwise_rollback_within_declared_precision"}
+```
+
+## PORTAL-LIR-HAMMER-105 Make artifact persistence reference-based, coalesced, and bounded
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: artifact-runtime
+- Depends on: PORTAL-LIR-HAMMER-103, PORTAL-LIR-HAMMER-104
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/async_artifact_writer.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, tests/unit/optimizers/logic_theorem_optimizer/test_async_artifact_writer_backpressure.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_async_artifact_writer.py tests/unit/optimizers/logic_theorem_optimizer/test_async_artifact_writer_backpressure.py -q
+- Acceptance: Removes unconditional deep copies of full checkpoint payloads, hands the writer immutable revision-bound snapshot handles, coalesces superseded summaries, bounds queue bytes and write concurrency, and exposes enqueue, serialization, write, fsync, coalescing, and backpressure timings. Concurrent mutation must never alter an enqueued artifact, durable shutdown must flush the latest required checkpoint, and a canonical ten-minute smoke must not emit unbounded multi-gigabyte summary churn.
+
+```json
+{"phase":"throughput_remediation","scope":"bounded_nonblocking_artifact_persistence","observed_async_bytes_per_cycle":1585384879}
+```
+
+## PORTAL-LIR-HAMMER-106 Wire evaluation cadence and immutable result reuse into the cycle
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: evaluation-runtime
+- Depends on: PORTAL-LIR-HAMMER-036, PORTAL-LIR-HAMMER-054, PORTAL-LIR-HAMMER-101, PORTAL-LIR-HAMMER-102, PORTAL-LIR-HAMMER-105
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_evaluation_cache.py, tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_evaluation_cadence.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_evaluation_cadence.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_metric_responsiveness.py -q
+- Acceptance: Makes the existing compiler train mode, guided train mode, and before-train evaluation mode flags control real execution. A lineage-matched prior after-evaluation may become the next before-evaluation, immutable deterministic compiler artifacts may be reused by digest, and expensive full-family passes may run on configured cadence. Candidate acceptance and production promotion must still execute all required per-family semantic, proof, reconstruction, provenance, anti-copy, and holdout gates.
+
+```json
+{"phase":"throughput_remediation","scope":"evaluation_cadence_and_cache_reuse","hard_rule":"cadence_never_weakens_promotion_validation"}
+```
+
+## PORTAL-LIR-HAMMER-107 Pack sparse autoencoder parameters into a deterministic tensor state
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: autoencoder-architecture
+- Depends on: PORTAL-LIR-HAMMER-080, PORTAL-LIR-HAMMER-103, PORTAL-LIR-HAMMER-104
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_tensor_state.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_migration.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_tensor_state.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_tensor_state.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_checkpoint.py -q
+- Acceptance: Assigns stable IDs to typed feature, family, semantic slot, LegalIR view, target, and interaction keys and stores trainable numeric parameters in contiguous tensors plus bounded sparse overflow tables. Migration from current maps and JSON checkpoints must be deterministic and reversible, unknown-key insertion must preserve version identity, CPU accessors must remain compatible during rollout, and source strings or sample memory must never become learned parameter keys.
+
+```json
+{"phase":"tensorized_autoencoder","scope":"packed_deterministic_tensor_state","migration":"dual_read_old_state_then_compact_write"}
+```
+
+## PORTAL-LIR-HAMMER-108 Replace bookkeeping CUDA with a true batched CUDA training path
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: cuda-training
+- Depends on: PORTAL-LIR-HAMMER-062, PORTAL-LIR-HAMMER-107
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_cuda.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_training.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_training.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_cuda_residency.py -q
+- Acceptance: Performs feature gathering, forward logits, cross entropy, cosine and guarded auxiliary losses, gradient accumulation, clipping, and parameter updates on packed CUDA tensors without invoking the Python legacy apply path. Uses BF16 weights or activations where numerically accepted and FP32 loss reductions, keeps optimizer state resident across batches, proves CPU-reference parity on fixed fixtures, reports real kernel and transfer work, and retains a deterministic CPU fallback when CUDA is unavailable.
+
+```json
+{"phase":"tensorized_autoencoder","scope":"real_cuda_forward_backward_update","hard_test":"cuda_training_succeeds_when_legacy_apply_is_forbidden"}
+```
+
+## PORTAL-LIR-HAMMER-109 Factorize high-cardinality semantic interaction heads
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: autoencoder-architecture
+- Depends on: PORTAL-LIR-HAMMER-074, PORTAL-LIR-HAMMER-107
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_factorized_heads.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_migration.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_factorized_heads.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_factorized_heads.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py tests/unit/optimizers/logic_theorem_optimizer/test_source_copy_reward_hack_metrics.py -q
+- Acceptance: Replaces the unbounded family-by-semantic-slot-by-LegalIR-view table with typed additive embeddings and a configurable low-rank interaction, retaining a bounded sparse residual only for verified exceptions. Migration must preserve canonical logits within declared tolerance, reduce parameter and checkpoint bytes for the canonical state by at least fourfold, expose rank and residual ablations, and reject any configuration that improves CE or cosine while degrading family semantic equivalence, proof validity, provenance, round trip, or anti-copy metrics.
+
+```json
+{"phase":"tensorized_autoencoder","scope":"factorized_typed_interaction_heads","observed_interaction_rows":542094,"minimum_state_reduction":4.0}
+```
+
+## PORTAL-LIR-HAMMER-110 Add collated minibatches and resource-safe batch autotuning
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: cuda-training
+- Depends on: PORTAL-LIR-HAMMER-068, PORTAL-LIR-HAMMER-108, PORTAL-LIR-HAMMER-109
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_batching.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/parallelism_autotuner.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_batching.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_batching.py tests/unit/optimizers/logic_theorem_optimizer/test_adaptive_pipeline_parallelism.py -q
+- Acceptance: Collates variable sparse features into deterministic packed minibatches, supports gradient accumulation, chooses batch size from measured memory headroom and kernel efficiency, and retries a smaller batch after a recoverable OOM without losing state identity. The DGX Spark profile should admit batch sizes 32 through 64 when memory allows and achieve at least 1.5 times the matched batch-one sample throughput while preserving split isolation and all quality metrics within configured tolerance.
+
+```json
+{"phase":"tensorized_autoencoder","scope":"minibatch_collation_and_autotuning","candidate_batch_sizes":[8,16,32,64]}
+```
+
+## PORTAL-LIR-HAMMER-111 Enforce persistent CUDA Leanstral service reuse
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: leanstral-runtime
+- Depends on: PORTAL-LIR-HAMMER-070, PORTAL-LIR-HAMMER-101
+- Outputs: ipfs_datasets_py/logic/modal/leanstral_audit_worker.py, scripts/ops/legal_ir/watch_leanstral_audit_worker.sh, scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh, tests/unit_tests/logic/modal/test_leanstral_service_reuse.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit_tests/logic/modal/test_leanstral_service_reuse.py tests/unit_tests/logic/modal/test_leanstral_continuous_batching.py -q
+- Acceptance: Keeps exactly one leased CUDA-backed Leanstral model service alive across autoencoder cycles and compatible trials, performs model load and preflight once per healthy service generation, validates model and context identity before reuse, and restarts only on bounded health failure. The integrated smoke must report `healthy_cuda_service_reused=true` after warmup, must not reload canonical weights between requests, and must separate queue, inference, verification, and restart time.
+
+```json
+{"phase":"pipeline_parallelism","scope":"persistent_leanstral_cuda_service","observed_cold_start_seconds":207,"hard_rule":"service_health_does_not_confer_proof_trust"}
+```
+
+## PORTAL-LIR-HAMMER-112 Pipeline Leanstral guidance with revision-bound one-cycle lag
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: leanstral-runtime
+- Depends on: PORTAL-LIR-HAMMER-037, PORTAL-LIR-HAMMER-102, PORTAL-LIR-HAMMER-111
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py, ipfs_datasets_py/logic/modal/leanstral_audit_worker.py, tests/unit/optimizers/logic_theorem_optimizer/test_leanstral_cycle_pipeline.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_leanstral_cycle_pipeline.py tests/unit_tests/logic/modal/test_leanstral_audit_worker.py -q
+- Acceptance: Enqueues cycle N guidance against an immutable state and input revision while training proceeds, consumes verified cycle N minus 1 results when their schema, model, source, state, and proof lineage match, and never blocks the warm trainer on Leanstral inference. Missing, late, stale, unverified, or mismatched results must be skipped with diagnostics and cannot mutate state or generate Codex TODOs; bounded synchronous mode remains available for debugging.
+
+```json
+{"phase":"pipeline_parallelism","scope":"asynchronous_revision_bound_leanstral","observed_cycle_wait_seconds":95.292}
+```
+
+## PORTAL-LIR-HAMMER-113 Schedule pipeline stages from measured resource and queue pressure
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: parallel-runtime
+- Depends on: PORTAL-LIR-HAMMER-038, PORTAL-LIR-HAMMER-068, PORTAL-LIR-HAMMER-101, PORTAL-LIR-HAMMER-106, PORTAL-LIR-HAMMER-111
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/pipeline_stage_scheduler.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/parallelism_autotuner.py, tests/unit/optimizers/logic_theorem_optimizer/test_pipeline_stage_scheduler.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_pipeline_stage_scheduler.py tests/unit/optimizers/logic_theorem_optimizer/test_parallelism_autotuner.py tests/unit/optimizers/logic_theorem_optimizer/test_adaptive_pipeline_parallelism.py -q
+- Acceptance: Executes the canonical trainer, immutable snapshot evaluation, Hammer backends, Leanstral service, Codex generation, validation, persistence, and merge as an explicit dependency DAG under one global CPU, RAM, unified-memory, GPU, and child-process budget. Initial DGX Spark admission is one trainer, one Leanstral service, up to six Codex workers, four validation workers, and two Hammer coordinators, but live service rates, ready depth, nested solver children, validation backlog, conflicts, memory pressure, and accepted-patch throughput must rationally scale each lane up or down without overlapping canonical writes.
+
+```json
+{"phase":"pipeline_parallelism","scope":"resource_aware_stage_dag","initial_dgx_spark_roles":{"trainer":1,"leanstral_service":1,"codex":6,"validation":4,"hammer_coordinators":2}}
+```
+
+## PORTAL-LIR-HAMMER-114 Bundle compatible Codex TODOs and rescue failed validation work
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: codex-runtime
+- Depends on: PORTAL-LIR-HAMMER-049, PORTAL-LIR-HAMMER-061, PORTAL-LIR-HAMMER-071, PORTAL-LIR-HAMMER-113
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/codex_scope_scheduler.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/incremental_validation.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/program_synthesis_failures.py, tests/unit/optimizers/logic_theorem_optimizer/test_codex_bundle_validation_rescue.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_codex_bundle_validation_rescue.py tests/unit/optimizers/logic_theorem_optimizer/test_codex_validation_flow_control.py tests/unit/optimizers/logic_theorem_optimizer/test_program_synthesis_failure_recovery.py -q
+- Acceptance: Bundles compatible verified TODOs by abstract-syntax-tree ownership, logic family, expected write set, and shared validation while keeping conflicting scopes isolated; runs syntax and focused preflight before expensive validation; and turns failed worktrees into bounded diagnosis and repair attempts that preserve useful changes and evidence. Failed validation must never merge, transient failures must requeue without corrupting quality statistics, and scheduling must optimize accepted next-cycle-confirmed patches per hour rather than worker count or generated diffs.
+
+```json
+{"phase":"pipeline_parallelism","scope":"codex_bundle_and_validation_rescue","observed_attempts":10,"observed_failed_validations":5,"observed_completed":0}
+```
+
+## PORTAL-LIR-HAMMER-115 Run resource-aware multi-fidelity hyperparameter search
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: hparam-runtime
+- Depends on: PORTAL-LIR-HAMMER-069, PORTAL-LIR-HAMMER-106, PORTAL-LIR-HAMMER-108, PORTAL-LIR-HAMMER-110, PORTAL-LIR-HAMMER-113
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_hparam_scheduler.py, scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh, tests/unit/optimizers/logic_theorem_optimizer/test_tensorized_legal_ir_hparam_search.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_tensorized_legal_ir_hparam_search.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_hparam_scheduler.py tests/unit/optimizers/logic_theorem_optimizer/test_multi_seed_promotion_gate.py -q; scripts/ops/legal_ir/run_hammer_leanstral_hparam.sh --dry-run
+- Acceptance: Reuses one immutable baseline and deterministic compiler artifact set, applies successive halving or equivalent multi-fidelity pruning, parallelizes independent evaluation and proof lanes, and admits a second CUDA trainer only when measured unified-memory and service pressure make it safe. Candidate ranking must jointly improve IR CE and cosine, autoencoder CE and cosine, per-family semantic equivalence, symbolic validity, proof reconstruction, round trip, calibration, and anti-copy metrics with confidence-aware hard guardrails; incomplete, stale, single-seed, CPU-fallback, or lineage-mismatched trials cannot win.
+
+```json
+{"phase":"search_and_promotion","scope":"tensorized_multi_fidelity_hparam_search","default_trainers":1,"conditional_max_trainers":2}
+```
+
+## PORTAL-LIR-HAMMER-116 Add a fail-closed throughput and quality promotion gate
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: rollout
+- Depends on: PORTAL-LIR-HAMMER-103, PORTAL-LIR-HAMMER-105, PORTAL-LIR-HAMMER-106, PORTAL-LIR-HAMMER-108, PORTAL-LIR-HAMMER-109, PORTAL-LIR-HAMMER-110, PORTAL-LIR-HAMMER-112, PORTAL-LIR-HAMMER-113, PORTAL-LIR-HAMMER-114, PORTAL-LIR-HAMMER-115
+- Outputs: benchmarks/bench_legal_ir_optimizer_pipeline.py, scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh, scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py, docs/implementation/reports/LEGAL_IR_THROUGHPUT_REMEDIATION_REPORT.md, tests/unit/optimizers/logic_theorem_optimizer/test_throughput_remediation_rollout.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_throughput_remediation_rollout.py tests/unit/optimizers/logic_theorem_optimizer/test_evidence_driven_rollout.py tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py -q; /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python benchmarks/bench_legal_ir_optimizer_pipeline.py --dry-run
+- Acceptance: Provides reproducible cold and warm benchmark, ten-minute integrated smoke, one-hour hparam, eight-hour canary, and twenty-four-hour production stage definitions with resume and rollback evidence. Promotion requires CUDA autoencoder training, persistent CUDA Leanstral reuse, healthy Hammer and Codex paths, at least 1.8 times matched warm cycles per hour, at least 1.5 times samples per second, lower p95 state-to-accepted-patch lag, bounded checkpoint and summary bytes, no orphaned children, and no regression in any per-family CE, cosine, semantic-equivalence, proof, reconstruction, provenance, round-trip, uncertainty, holdout, or source-copy gate. The report must attribute gains by ablation and remain failed when any required evidence is absent.
+
+```json
+{"phase":"search_and_promotion","scope":"fail_closed_quality_throughput_gate","stages":["matched_benchmark","ten_minute_smoke","one_hour_hparam","eight_hour_canary","twenty_four_hour_production"]}
 ```
 
 ## PORTAL-101 Resolve dirty main checkout blocking 1 worktree merges

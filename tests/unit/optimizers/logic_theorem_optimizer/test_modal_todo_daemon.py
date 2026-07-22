@@ -4753,6 +4753,8 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         test_every_cycles=99,
         poll_seconds=1.5,
         paired_grace_seconds=300.0,
+        paired_leanstral_grace_seconds=45.0,
+        paired_codex_queue_grace_seconds=15.0,
         worker_id="codex-worker",
         codex_exec_mode="packet_only",
         codex_command="codex",
@@ -4802,7 +4804,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "/tmp/leanstral-guidance"
     )
     duration_index = paired["codex_command"].index("--duration-seconds")
-    assert paired["codex_command"][duration_index + 1] == "420.0"
+    assert paired["codex_command"][duration_index + 1] == "480.0"
     canary_index = paired["autoencoder_command"].index("--validation-canary-count")
     assert paired["autoencoder_command"][canary_index + 1] == str(
         runner.DEFAULT_VALIDATION_CANARY_COUNT
@@ -5383,6 +5385,7 @@ def test_build_paired_daemon_commands_pass_projection_bounds_to_autoencoder() ->
         sampling_seed="shared-hparam-seed",
         generalizable_projection_timeout_seconds=123.0,
         generalizable_projection_max_line_search_attempts=4,
+        generalizable_projection_max_update_families=2,
         autoencoder_bootstrap_mode="fast",
         test_every_cycles=50,
         poll_seconds=2.0,
@@ -5414,6 +5417,10 @@ def test_build_paired_daemon_commands_pass_projection_bounds_to_autoencoder() ->
     assert (
         command[command.index("--generalizable-projection-max-line-search-attempts") + 1]
         == "4"
+    )
+    assert (
+        command[command.index("--generalizable-projection-max-update-families") + 1]
+        == "2"
     )
     assert command[command.index("--autoencoder-bootstrap-mode") + 1] == "fast"
 
@@ -5499,6 +5506,7 @@ def test_guarded_daemon_passes_projection_runtime_bounds_to_autoencoder(
         generalizable_projection_epochs=1,
         generalizable_projection_hard_example_fraction=0.5,
         generalizable_projection_max_line_search_attempts=1,
+        generalizable_projection_max_update_families=3,
         generalizable_projection_timeout_seconds=7.5,
         learning_rate=0.1,
         max_inner_iterations=1,
@@ -5521,6 +5529,7 @@ def test_guarded_daemon_passes_projection_runtime_bounds_to_autoencoder(
     assert excinfo.value.code == 17
     assert captured["max_seconds"] == 7.5
     assert captured["max_line_search_attempts"] == 1
+    assert captured["projection_max_update_families"] == 3
     assert captured["legal_ir_bridge_max_sample_text_chars"] == 321
     assert captured["projection_deadband_mode"] == "enforce"
     assert captured["projection_max_ce_deadband"] == 0.002

@@ -10734,9 +10734,11 @@ def build_paired_daemon_commands(
     autoencoder_run_id = getattr(args, "autoencoder_run_id", None) or f"{args.run_id}-autoencoder"
     codex_run_id = getattr(args, "codex_run_id", None) or f"{args.run_id}-codex"
     queue_run_id = autoencoder_run_id
-    codex_duration_seconds = float(args.duration_seconds) + max(
-        0.0,
-        float(getattr(args, "paired_grace_seconds", 0.0)),
+    codex_duration_seconds = (
+        float(args.duration_seconds)
+        + max(0.0, float(getattr(args, "paired_grace_seconds", 0.0)))
+        + max(0.0, float(getattr(args, "paired_leanstral_grace_seconds", 0.0)))
+        + max(0.0, float(getattr(args, "paired_codex_queue_grace_seconds", 0.0)))
     )
     autoencoder_command = [
         sys.executable,
@@ -10822,6 +10824,8 @@ def build_paired_daemon_commands(
                 DEFAULT_GENERALIZABLE_PROJECTION_MAX_LINE_SEARCH_ATTEMPTS,
             )
         ),
+        "--generalizable-projection-max-update-families",
+        str(getattr(args, "generalizable_projection_max_update_families", 0)),
         "--bridge-loss-adapters",
         str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS)),
         "--bridge-evaluate-provers",
@@ -15595,6 +15599,18 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=DEFAULT_GENERALIZABLE_PROJECTION_MAX_LINE_SEARCH_ATTEMPTS,
     )
+    parser.add_argument(
+        "--generalizable-projection-max-update-families",
+        type=int,
+        default=int(
+            os.environ.get("IPFS_DATASETS_GENERALIZABLE_PROJECTION_MAX_UPDATE_FAMILIES", "0")
+            or 0
+        ),
+        help=(
+            "Limit the number of projection update families evaluated per epoch. "
+            "Zero keeps the full projection ladder."
+        ),
+    )
     parser.add_argument("--autoencoder-projection-deadband-mode", default="shadow")
     parser.add_argument("--autoencoder-max-ce-deadband", type=float, default=0.0001)
     parser.add_argument(
@@ -16959,6 +16975,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=900.0,
         help="Additional bounded time for the managed Leanstral report handoff.",
+    )
+    parser.add_argument(
+        "--paired-codex-queue-grace-seconds",
+        type=float,
+        default=float(os.environ.get("IPFS_DATASETS_PAIRED_CODEX_QUEUE_GRACE_SECONDS", "900") or 900),
+        help=(
+            "Extra Codex child runtime beyond paired autoencoder and Leanstral "
+            "grace so late autoencoder TODO queue flushes can still be claimed."
+        ),
     )
     parser.add_argument(
         "--paired-codex-disable-cuda",
@@ -18708,12 +18733,45 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
 
                 return record_metric_progress
 
+            todo_supervisor_program_synthesis_flushed = False
+
             def todo_progress_callback(progress: Mapping[str, Any]) -> None:
+                nonlocal todo_supervisor_program_synthesis_flushed
                 payload = dict(progress)
                 summary["active_cycle"] = cycle
                 summary["active_cycle_phase"] = "todo_supervisor_optimize"
                 summary["active_cycle_todo_supervisor_progress"] = payload
                 summary["active_cycle_last_heartbeat_at"] = utc_now()
+                role_queue_counts = payload.get("role_queue_counts")
+                program_synthesis_counts = (
+                    role_queue_counts.get("program_synthesis", {})
+                    if isinstance(role_queue_counts, Mapping)
+                    else {}
+                )
+                program_synthesis_pending = (
+                    int(program_synthesis_counts.get("pending", 0) or 0)
+                    if isinstance(program_synthesis_counts, Mapping)
+                    else 0
+                )
+                if (
+                    program_synthesis_pending > 0
+                    and not todo_supervisor_program_synthesis_flushed
+                ):
+                    todo_supervisor_program_synthesis_flushed = True
+                    with queue_file_lock(queue_path):
+                        latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+                        latest_queue.merge_from(
+                            supervisor.queue,
+                            preserve_claimed_role=(
+                                supervisor.policy.program_synthesis_role
+                            ),
+                        )
+                        latest_queue.save_jsonl(queue_path)
+                        supervisor.queue = latest_queue
+                    payload["early_program_synthesis_queue_flush"] = {
+                        "pending": program_synthesis_pending,
+                        "queue_path": str(queue_path),
+                    }
                 save_summary(summary_path, summary)
                 append_event(
                     log_path,
@@ -19247,6 +19305,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                             args,
                             "autoencoder_projection_periodic_full_search_every_n_cycles",
                             8,
+                        )
+                        or 0
+                    ),
+                    projection_max_update_families=int(
+                        getattr(
+                            args,
+                            "generalizable_projection_max_update_families",
+                            0,
                         )
                         or 0
                     ),

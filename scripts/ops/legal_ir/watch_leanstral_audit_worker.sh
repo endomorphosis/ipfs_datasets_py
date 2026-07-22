@@ -28,28 +28,83 @@ REFERENCE_EXAMPLE_COUNT=0
 LAST_RESOLVED_INPUT_PATH=""
 LLAMA_CPP_ACCELERATOR_REQUEST="${LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR:-auto}"
 LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT="${LEANSTRAL_AUDIT_BATCH_SIZE:-2}"
-LLAMA_CPP_CONTEXT_PER_SLOT_DEFAULT="${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT:-4096}"
-if [[ "${LLAMA_CPP_CONTEXT_PER_SLOT_DEFAULT}" =~ ^[0-9]+$ ]] && \
-   [[ "${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT}" =~ ^[0-9]+$ ]]; then
-  LLAMA_CPP_CONTEXT_DEFAULT="$((LLAMA_CPP_CONTEXT_PER_SLOT_DEFAULT * LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT))"
-else
-  LLAMA_CPP_CONTEXT_DEFAULT="4096"
+LLAMA_CPP_CONTEXT_DEFAULT="${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT:-8096}"
+if ! [[ "${LLAMA_CPP_CONTEXT_DEFAULT}" =~ ^[0-9]+$ ]]; then
+  LLAMA_CPP_CONTEXT_DEFAULT="8096"
 fi
 LLAMA_CPP_GPU_LAYERS_DEFAULT="0"
 LLAMA_CPP_AUTO_SIZE_DEFAULT="0"
 LLAMA_CPP_EXTRA_ARGS_DEFAULT="--parallel ${LEANSTRAL_AUDIT_BATCH_SIZE_DEFAULT} --device none --no-op-offload --no-kv-offload"
 LLAMA_CPP_RESOLVED_ACCELERATOR="cpu"
 LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="0"
+LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_CONTEXT_SIZE="0"
+LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID=""
 
-active_cuda_leanstral_port() {
-  ps -eo args= 2>/dev/null | awk '
+timestamp() {
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+}
+
+log_line() {
+  echo "$(timestamp) $*"
+}
+
+llama_cpp_parallel_slots() {
+  local raw="${1:-}" slots="1" previous=""
+  # shellcheck disable=SC2206
+  local args=( ${raw} )
+  local arg
+  for arg in "${args[@]}"; do
+    if [[ "${previous}" == "--parallel" || "${previous}" == "-np" ]]; then
+      if [[ "${arg}" =~ ^[0-9]+$ ]]; then
+        slots="${arg}"
+      fi
+      previous=""
+      continue
+    fi
+    case "${arg}" in
+      --parallel=*)
+        slots="${arg#--parallel=}"
+        ;;
+      -np=*)
+        slots="${arg#-np=}"
+        ;;
+      --parallel|-np)
+        previous="${arg}"
+        ;;
+      *)
+        previous=""
+        ;;
+    esac
+  done
+  if ! [[ "${slots}" =~ ^[0-9]+$ ]] || (( slots < 1 )); then
+    slots="1"
+  fi
+  printf '%s\n' "${slots}"
+}
+
+active_cuda_leanstral_server_info() {
+  ps -eo pid=,args= 2>/dev/null | awk '
     /[l]lama-server/ && /[Ll]eanstral/ && /--device[ =]CUDA/ {
-      for (i = 1; i <= NF; i++) {
-        if ($i == "--port" && (i + 1) <= NF) { print $(i + 1); exit }
-        if ($i ~ /^--port=/) { sub(/^--port=/, "", $i); print $i; exit }
+      port = ""
+      ctx = "0"
+      pid = $1
+      for (i = 2; i <= NF; i++) {
+        if ($i == "--port" && (i + 1) <= NF) { port = $(i + 1) }
+        if ($i ~ /^--port=/) { port = $i; sub(/^--port=/, "", port) }
+        if (($i == "--ctx-size" || $i == "-c" || $i == "--context-size") && (i + 1) <= NF) { ctx = $(i + 1) }
+        if ($i ~ /^--ctx-size=/) { ctx = $i; sub(/^--ctx-size=/, "", ctx) }
+        if ($i ~ /^--context-size=/) { ctx = $i; sub(/^--context-size=/, "", ctx) }
       }
+      if (port != "") { print port ":" ctx ":" pid; exit }
     }
   '
+}
+
+active_cuda_leanstral_port() {
+  local info
+  info="$(active_cuda_leanstral_server_info)"
+  [[ -n "${info}" ]] || return 0
+  printf '%s\n' "${info%%:*}"
 }
 
 llama_cpp_cuda_available() {
@@ -126,11 +181,29 @@ configure_llama_cpp_accelerator_defaults() {
 
 configure_llama_cpp_accelerator_defaults
 
-ACTIVE_LEANSTRAL_CUDA_PORT="$(active_cuda_leanstral_port)"
-if [[ -n "${ACTIVE_LEANSTRAL_CUDA_PORT}" && -z "${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL:-}" ]]; then
-  export IPFS_ACCELERATE_LLAMA_CPP_BASE_URL="http://127.0.0.1:${ACTIVE_LEANSTRAL_CUDA_PORT}/v1"
-  export IPFS_ACCELERATE_LLAMA_CPP_PORT="${ACTIVE_LEANSTRAL_CUDA_PORT}"
-  LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="1"
+LLAMA_CPP_EFFECTIVE_EXTRA_ARGS="${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS:-${LLAMA_CPP_EXTRA_ARGS_DEFAULT}}"
+LLAMA_CPP_PARALLEL_SLOTS="$(llama_cpp_parallel_slots "${LLAMA_CPP_EFFECTIVE_EXTRA_ARGS}")"
+if [[ -z "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-}" ]]; then
+  IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE="$(( LLAMA_CPP_CONTEXT_DEFAULT * LLAMA_CPP_PARALLEL_SLOTS ))"
+fi
+export IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE
+ACTIVE_LEANSTRAL_CUDA_SERVER_INFO="$(active_cuda_leanstral_server_info)"
+if [[ -n "${ACTIVE_LEANSTRAL_CUDA_SERVER_INFO}" && -z "${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL:-}" ]]; then
+  ACTIVE_LEANSTRAL_CUDA_PORT="${ACTIVE_LEANSTRAL_CUDA_SERVER_INFO%%:*}"
+  ACTIVE_LEANSTRAL_CUDA_REST="${ACTIVE_LEANSTRAL_CUDA_SERVER_INFO#*:}"
+  ACTIVE_LEANSTRAL_CUDA_CONTEXT="${ACTIVE_LEANSTRAL_CUDA_REST%%:*}"
+  ACTIVE_LEANSTRAL_CUDA_PID="${ACTIVE_LEANSTRAL_CUDA_REST#*:}"
+  if [[ "${ACTIVE_LEANSTRAL_CUDA_CONTEXT}" =~ ^[0-9]+$ ]] && \
+     [[ "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE}" =~ ^[0-9]+$ ]] && \
+     (( ACTIVE_LEANSTRAL_CUDA_CONTEXT >= IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE )); then
+    export IPFS_ACCELERATE_LLAMA_CPP_BASE_URL="http://127.0.0.1:${ACTIVE_LEANSTRAL_CUDA_PORT}/v1"
+    export IPFS_ACCELERATE_LLAMA_CPP_PORT="${ACTIVE_LEANSTRAL_CUDA_PORT}"
+    LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="1"
+    LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_CONTEXT_SIZE="${ACTIVE_LEANSTRAL_CUDA_CONTEXT}"
+    LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID="${ACTIVE_LEANSTRAL_CUDA_PID}"
+  else
+    log_line "llama_cpp_reuse_rejected base_url=http://127.0.0.1:${ACTIVE_LEANSTRAL_CUDA_PORT}/v1 existing_context=${ACTIVE_LEANSTRAL_CUDA_CONTEXT:-unknown} required_context=${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE}"
+  fi
 fi
 
 case "${LEANSTRAL_AUDIT_REQUIRE_CUDA:-0}" in
@@ -154,7 +227,6 @@ else
 fi
 export IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL="${IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL:-1}"
 export IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS="${IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS:-900}"
-export IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE="${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-${LLAMA_CPP_CONTEXT_DEFAULT}}"
 export IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS="${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}}"
 export IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING="${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING:-${LLAMA_CPP_AUTO_SIZE_DEFAULT}}"
 export IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS="${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS:-${LLAMA_CPP_EXTRA_ARGS_DEFAULT}}"
@@ -182,14 +254,6 @@ fi
 AUDIT_RUN_KILL_AFTER_SECONDS="${LEANSTRAL_AUDIT_RUN_KILL_AFTER_SECONDS:-30}"
 CURRENT_AUDIT_PID=""
 mkdir -p "${WORK_DIR}"
-
-timestamp() {
-  date -u +"%Y-%m-%dT%H:%M:%SZ"
-}
-
-log_line() {
-  echo "$(timestamp) $*"
-}
 
 current_compiler_commit() {
   git rev-parse HEAD 2>/dev/null || true
@@ -503,7 +567,7 @@ run_audit_if_due() {
 configure_reference_example_args
 resolve_input_path
 log_line "audit_companion_started parent_pid=${PARENT_PID} input=${INPUT_PATH} reference_example_paths=${REFERENCE_EXAMPLE_COUNT}"
-log_line "llama_cpp_accelerator_resolved requested=${LLAMA_CPP_ACCELERATOR_REQUEST} resolved=${LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR} context=${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE} gpu_layers=${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS} auto_sizing=${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING} extra_args=${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS}"
+log_line "llama_cpp_accelerator_resolved requested=${LLAMA_CPP_ACCELERATOR_REQUEST} resolved=${LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR} context=${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE} context_per_slot=${LLAMA_CPP_CONTEXT_DEFAULT} parallel_slots=${LLAMA_CPP_PARALLEL_SLOTS} gpu_layers=${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS} auto_sizing=${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING} extra_args=${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS}"
 log_line "audit_timeouts provider_seconds=${AUDIT_PROVIDER_TIMEOUT_SECONDS} run_seconds=${AUDIT_RUN_TIMEOUT_SECONDS} kill_after_seconds=${AUDIT_RUN_KILL_AFTER_SECONDS}"
 while parent_alive; do
   run_audit_if_due

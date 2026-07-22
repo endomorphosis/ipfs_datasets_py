@@ -841,6 +841,7 @@ def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
         projection_max_ce_deadband=1.0e-4,
         projection_prescreen_mode="shadow",
         projection_prescreen_top_k=1,
+        projection_max_update_families=1,
         progress_callback=progress.append,
     )
 
@@ -852,10 +853,12 @@ def test_generalizable_projection_reports_progress_and_attempt_cap() -> None:
     assert report["projection_deadband"]["max_ce_deadband"] == pytest.approx(1.0e-4)
     assert report["projection_prescreen"]["mode"] == "shadow"
     assert report["projection_prescreen"]["top_k"] == 1
-    assert report["candidate_update_order"][:2] == [
-        "legal_ir_view_global_logits",
-        "legal_ir_view_logits",
-    ]
+    assert report["candidate_update_order"] == ["legal_ir_view_global_logits"]
+    assert report["projection_update_families"] == {
+        "candidate_update_family_count": 1,
+        "max_update_families": 1,
+    }
+    assert len(report["epoch_reports"][0]["candidate_reports"]) == 1
     assert report["projection_prescreen_summary"]["enabled_attempt_count"] >= 1
     assert report["epoch_reports"][0]["candidate_reports"][0]["attempt_reports"][0][
         "projection_deadband"

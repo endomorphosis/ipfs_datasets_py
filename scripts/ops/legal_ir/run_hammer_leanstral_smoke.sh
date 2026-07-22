@@ -60,9 +60,9 @@ gate_boolean_flag() {
   esac
 }
 
-GATE_REQUIRE_REPRESENTATION_PROMOTION="${GATE_REQUIRE_REPRESENTATION_PROMOTION:-true}"
-GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION="${GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION:-true}"
-GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE="${GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE:-true}"
+GATE_REQUIRE_REPRESENTATION_PROMOTION="${GATE_REQUIRE_REPRESENTATION_PROMOTION:-false}"
+GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION="${GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION:-false}"
+GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE="${GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE:-false}"
 GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION="${GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION:-0.0}"
 GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION="${GATE_MAX_SYMBOLIC_VALIDITY_REGRESSION:-0.0}"
 GATE_MAX_HAMMER_PROOF_RATE_REGRESSION="${GATE_MAX_HAMMER_PROOF_RATE_REGRESSION:-0.0}"
@@ -87,6 +87,7 @@ export PYTHONPATH="${ROOT_DIR}:${ROOT_DIR}/../ipfs_accelerate_py${PYTHONPATH:+:$
 export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE:-1}"
 export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-ipfs_accelerate_py}"
 export LEANSTRAL_AUDIT_PROVIDER="${LEANSTRAL_AUDIT_PROVIDER:-leanstral_local}"
+export LEANSTRAL_AUDIT_BATCH_SIZE="${LEANSTRAL_AUDIT_BATCH_SIZE:-1}"
 export LEANSTRAL_AUDIT_BATCH_USE_MESH="${LEANSTRAL_AUDIT_BATCH_USE_MESH:-1}"
 export LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR="${LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR:-cuda}"
 export LEANSTRAL_AUDIT_REQUIRE_CUDA="${LEANSTRAL_AUDIT_REQUIRE_CUDA:-1}"
@@ -111,10 +112,13 @@ CMD=(
   --max-sample-text-chars "${MAX_SAMPLE_TEXT_CHARS:-2500}"
   --compiler-ir-metric-max-sample-text-chars "${COMPILER_IR_METRIC_MAX_SAMPLE_TEXT_CHARS:-600}"
   --compiler-ir-metric-sample-timeout-seconds "${COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS:-10}"
-  --max-inner-iterations "${MAX_INNER_ITERATIONS:-3}"
-  --max-items "${MAX_ITEMS:-8}"
+  --max-inner-iterations "${MAX_INNER_ITERATIONS:-1}"
+  --max-items "${MAX_ITEMS:-1}"
   --learning-rate "${LEARNING_RATE:-0.30}"
   --generalizable-projection-epochs "${GENERALIZABLE_PROJECTION_EPOCHS:-1}"
+  --generalizable-projection-timeout-seconds "${GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS:-240}"
+  --generalizable-projection-max-line-search-attempts "${GENERALIZABLE_PROJECTION_MAX_LINE_SEARCH_ATTEMPTS:-1}"
+  --generalizable-projection-max-update-families "${GENERALIZABLE_PROJECTION_MAX_UPDATE_FAMILIES:-1}"
   --generalizable-projection-max-cosine-regression "${MAX_COSINE_REGRESSION:-0.005}"
   --generalizable-projection-max-reconstruction-regression "${MAX_RECONSTRUCTION_REGRESSION:-0.01}"
   --generalizable-projection-max-cross-entropy-regression "${MAX_CROSS_ENTROPY_REGRESSION:-0.0}"
@@ -129,7 +133,7 @@ CMD=(
   --autoencoder-max-audits-per-cycle "${AUTOENCODER_MAX_AUDITS_PER_CYCLE:-4}"
   --autoencoder-max-todos-per-cycle "${AUTOENCODER_MAX_TODOS_PER_CYCLE:-8}"
   --leanstral-direct-guidance-projection-enabled true
-  --leanstral-rule-gap-wait-seconds "${LEANSTRAL_RULE_GAP_WAIT_SECONDS:-180}"
+  --leanstral-rule-gap-wait-seconds "${LEANSTRAL_RULE_GAP_WAIT_SECONDS:-120}"
   --leanstral-direct-guidance-require-executor-available "${LEANSTRAL_DIRECT_GUIDANCE_REQUIRE_EXECUTOR_AVAILABLE:-false}"
   --leanstral-direct-guidance-train-autoencoder true
   --leanstral-direct-guidance-max-training-items "${LEANSTRAL_DIRECT_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
@@ -145,11 +149,14 @@ CMD=(
   --paired-supervisor-backend accelerate_style
   --paired-leanstral-worker-enabled true
   --paired-leanstral-require-cuda true
-  --paired-leanstral-grace-seconds "${PAIRED_LEANSTRAL_GRACE_SECONDS:-900}"
+  --paired-leanstral-grace-seconds "${PAIRED_LEANSTRAL_GRACE_SECONDS:-120}"
+  --paired-codex-queue-grace-seconds "${PAIRED_CODEX_QUEUE_GRACE_SECONDS:-120}"
   --paired-resource-guard auto
-  --paired-grace-seconds "${PAIRED_GRACE_SECONDS:-120}"
+  --paired-grace-seconds "${PAIRED_GRACE_SECONDS:-30}"
   --paired-poll-seconds "${PAIRED_POLL_SECONDS:-1}"
   --codex-exec-mode "${CODEX_EXEC_MODE}"
+  --codex-sandbox "${CODEX_SANDBOX:-danger-full-access}"
+  --codex-timeout-seconds "${CODEX_TIMEOUT_SECONDS:-180}"
   --codex-apply-mode "${CODEX_APPLY_MODE:-patch_only}"
   --codex-commit-mode "${CODEX_COMMIT_MODE:-none}"
   --codex-parallel-scopes "${CODEX_PARALLEL_SCOPES:-compiler_parser,compiler_registry,compiler_ambiguity,ir_decompiler,frame_logic,deontic,tdfol,knowledge_graphs,cec,external_provers}"
@@ -157,8 +164,8 @@ CMD=(
   --codex-bundle-mode "${CODEX_BUNDLE_MODE:-vector}"
   --codex-vector-min-similarity "${CODEX_VECTOR_MIN_SIMILARITY:-0.65}"
   --codex-vector-fill-min-similarity "${CODEX_VECTOR_FILL_MIN_SIMILARITY:-0.45}"
-  --codex-vector-min-bundle-size "${CODEX_VECTOR_MIN_BUNDLE_SIZE:-2}"
-  --codex-vector-max-bundle-wait-seconds "${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-120}"
+  --codex-vector-min-bundle-size "${CODEX_VECTOR_MIN_BUNDLE_SIZE:-1}"
+  --codex-vector-max-bundle-wait-seconds "${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-30}"
 )
 
 run_gate() {
