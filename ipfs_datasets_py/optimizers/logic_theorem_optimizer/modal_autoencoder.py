@@ -3945,6 +3945,7 @@ class AdaptiveModalAutoencoder:
         self._legal_ir_view_target_cache: Dict[str, Dict[str, float]] = {}
         self._legal_ir_view_family_candidates_cache: Optional[tuple[str, ...]] = None
         self._cuda_resident_projection_state: Any = None
+        self._cuda_resident_proof_state: Any = None
         self._cuda_residency_reports: List[Dict[str, Any]] = []
 
     def evaluate(
@@ -7591,7 +7592,7 @@ class AdaptiveModalAutoencoder:
         cuda_residency = {
             "enabled": normalized_update_backend == "cuda_resident",
             "reports": list(self._cuda_residency_reports[-64:]),
-            "schema_version": "modal-autoencoder-cuda-residency-v1",
+            "schema_version": "modal-autoencoder-cuda-residency-v2",
         }
         emit_progress(
             "finished",
@@ -7694,11 +7695,11 @@ class AdaptiveModalAutoencoder:
     ) -> Dict[str, Any]:
         """Apply compatible projection updates as one guarded optimizer batch.
 
-        The sample-outer/head-inner order matches the legacy line-search loop,
-        so deterministic state updates remain comparable.  On CUDA requests,
-        ``python_sparse_batch`` keeps the tiny sparse optimizer arithmetic on
-        the host while dense metric evaluation can still use torch/CUDA; this
-        removes repeated small tensor transfers and their implicit sync points.
+        Native updates retain the historical sample-outer/head-inner order.
+        The ``cuda_resident`` backend instead collates the complete batch into
+        packed feature/parameter tensors and performs forward loss, backward,
+        clipping, and the optimizer step on the selected CUDA device.  It never
+        enters this method recursively or invokes a legacy per-sample updater.
         """
         sample_list = list(samples)
         target_tuple = tuple(str(target) for target in update_targets)
@@ -7709,16 +7710,6 @@ class AdaptiveModalAutoencoder:
                 "projection update batch requires an active state transaction"
             )
         if normalized_backend == "cuda_resident":
-            def legacy_apply() -> None:
-                self._apply_projection_update_batch(
-                    sample_list,
-                    update_targets=target_tuple,
-                    learning_rate=learning_rate,
-                    l2_regularization=l2_regularization,
-                    profiler=profiler,
-                    update_backend="native",
-                )
-
             try:
                 from .modal_autoencoder_cuda import (
                     apply_cuda_resident_projection_update,
@@ -7731,7 +7722,6 @@ class AdaptiveModalAutoencoder:
                     learning_rate=learning_rate,
                     l2_regularization=l2_regularization,
                     profiler=profiler,
-                    legacy_apply=legacy_apply,
                 )
                 self._cuda_residency_reports.append(report.to_dict())
                 self._cuda_residency_reports = self._cuda_residency_reports[-256:]
