@@ -2118,7 +2118,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-116 Add a fail-closed throughput and quality promotion gate
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: rollout
