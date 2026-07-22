@@ -29,6 +29,7 @@ from scripts.ops.legal_ir.verify_legal_ir_run_evidence import (
 
 ROOT = Path(__file__).resolve().parents[4]
 RUNNER = ROOT / "scripts/ops/legal_ir/run_legal_ir_10m_smoke.sh"
+CANONICAL_RUNNER = ROOT / "scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh"
 VERIFIER = ROOT / "scripts/ops/legal_ir/verify_legal_ir_run_evidence.py"
 COMMITTED_EVIDENCE = (
     ROOT
@@ -38,6 +39,11 @@ SHA_A = "sha256:" + "a" * 64
 SHA_B = "sha256:" + "b" * 64
 SHA_C = "sha256:" + "c" * 64
 SHA_D = "sha256:" + "d" * 64
+EXPECTED_HARD_GUARDRAILS = (
+    "compiler_ir_cosine,structural_validity,source_copy_penalty,"
+    "source_copy_reward_hack_penalty,hammer_proof_success_rate,"
+    "hammer_reconstruction_success_rate,symbolic_validity_success_rate"
+)
 
 
 def _qualities() -> dict[str, object]:
@@ -548,6 +554,57 @@ def test_runner_contract_is_real_immutable_and_non_promotable_when_dry_run(tmp_p
     assert "execution=false" in dry.stdout
     assert "promotable_evidence=false" in dry.stdout
     assert "minimum_active_seconds=600" in dry.stdout
+
+
+def test_canonical_runner_extracts_one_guardrail_contract_from_noisy_stdout(tmp_path: Path) -> None:
+    fake_python = tmp_path / "python-with-notices"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        "printf '%s\\n' 'dependency initialization notice' "
+        f"'{EXPECTED_HARD_GUARDRAILS}' 'service availability notice'\n",
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    env = dict(os.environ, PYTHON_BIN=str(fake_python), DURATION_SECONDS="600", MAX_CYCLES="0")
+
+    result = subprocess.run(
+        [str(CANONICAL_RUNNER), "--dry-run", "--run-id", "unit-noisy-guardrails"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert f"gate_metrics={EXPECTED_HARD_GUARDRAILS}" in result.stdout
+    smoke_command = next(line for line in result.stdout.splitlines() if line.startswith("smoke_command="))
+    assert EXPECTED_HARD_GUARDRAILS.replace(",", r"\,") in smoke_command
+    assert "dependency initialization notice" not in smoke_command
+    assert "service availability notice" not in smoke_command
+
+
+def test_canonical_runner_rejects_ambiguous_guardrail_contract(tmp_path: Path) -> None:
+    fake_python = tmp_path / "python-with-ambiguous-contract"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        f"printf '%s\\n' '{EXPECTED_HARD_GUARDRAILS}' '{EXPECTED_HARD_GUARDRAILS}'\n",
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    env = dict(os.environ, PYTHON_BIN=str(fake_python), DURATION_SECONDS="600", MAX_CYCLES="0")
+
+    result = subprocess.run(
+        [str(CANONICAL_RUNNER), "--dry-run", "--run-id", "unit-ambiguous-guardrails"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "exactly one canonical" in result.stderr
 
 
 def test_committed_execution_receipt_verifies() -> None:

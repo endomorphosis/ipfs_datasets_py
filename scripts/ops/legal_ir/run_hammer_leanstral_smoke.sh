@@ -230,7 +230,38 @@ export IPFS_ACCELERATE_LLAMA_CPP_RESTART_ON_CONFIG_MISMATCH="${IPFS_ACCELERATE_L
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 
-HARD_GUARDRAILS="$("${PYTHON_BIN}" -m scripts.ops.legal_ir.hammer_leanstral_rollout_gate guardrail-metrics)"
+EXPECTED_HARD_GUARDRAILS="compiler_ir_cosine,structural_validity,source_copy_penalty,source_copy_reward_hack_penalty,hammer_proof_success_rate,hammer_reconstruction_success_rate,symbolic_validity_success_rate"
+if ! HARD_GUARDRAIL_OUTPUT="$("${PYTHON_BIN}" -m scripts.ops.legal_ir.hammer_leanstral_rollout_gate guardrail-metrics)"; then
+  echo "failed to load the immutable hard-guardrail metric contract" >&2
+  exit 2
+fi
+if ! HARD_GUARDRAILS="$(
+  printf '%s\n' "${HARD_GUARDRAIL_OUTPUT}" | LC_ALL=C awk '
+    /^[a-z][a-z0-9_]*(,[a-z][a-z0-9_]*)*$/ {
+      candidate_count += 1
+      candidate = $0
+    }
+    END {
+      if (candidate_count != 1) {
+        exit 1
+      }
+      metric_count = split(candidate, metrics, ",")
+      for (metric_index = 1; metric_index <= metric_count; metric_index += 1) {
+        if (seen[metrics[metric_index]]++) {
+          exit 1
+        }
+      }
+      print candidate
+    }
+  '
+)"; then
+  echo "guardrail metric helper must emit exactly one canonical, duplicate-free metric list" >&2
+  exit 2
+fi
+if [[ "${HARD_GUARDRAILS}" != "${EXPECTED_HARD_GUARDRAILS}" ]]; then
+  echo "guardrail metric helper disagrees with the immutable smoke contract" >&2
+  exit 2
+fi
 MODULE="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner"
 
 CMD=(
