@@ -11759,11 +11759,7 @@ def _paired_autoencoder_succeeded(
         if not runner_stopped_child:
             return True
         health = dict(autoencoder_child_health or {})
-        try:
-            cycles = int(health.get("autoencoder_cycles", 0) or 0)
-        except (TypeError, ValueError):
-            cycles = 0
-        return bool(health.get("autoencoder_summary_final", False)) or cycles > 0
+        return bool(health.get("autoencoder_summary_final", False))
     runner_stopped_by_signal = (
         runner_stopped_child
         and autoencoder_exit_code in {-signal.SIGTERM, -signal.SIGKILL}
@@ -11771,12 +11767,7 @@ def _paired_autoencoder_succeeded(
     if not runner_stopped_by_signal:
         return False
     health = dict(autoencoder_child_health or {})
-    try:
-        cycles = int(health.get("autoencoder_cycles", 0) or 0)
-    except (TypeError, ValueError):
-        cycles = 0
-    summary_final = bool(health.get("autoencoder_summary_final", False))
-    return summary_final or cycles > 0
+    return bool(health.get("autoencoder_summary_final", False))
 
 
 def _paired_child_exit_should_restart(
@@ -17642,6 +17633,12 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "log_path": str(log_path),
         "loop_role": "paired",
         "paired_grace_seconds": float(args.paired_grace_seconds),
+        "paired_leanstral_grace_seconds": float(
+            args.paired_leanstral_grace_seconds
+        ),
+        "paired_codex_queue_grace_seconds": float(
+            args.paired_codex_queue_grace_seconds
+        ),
         "paired_poll_seconds": float(args.paired_poll_seconds),
         "queue_run_id": paired["queue_run_id"],
         "run_id": args.run_id,
@@ -17784,6 +17781,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     if leanstral_enabled
                     else 0.0
                 )
+                + max(0.0, float(args.paired_codex_queue_grace_seconds))
             )
             while True:
                 auto_exit_code = auto_process.poll()

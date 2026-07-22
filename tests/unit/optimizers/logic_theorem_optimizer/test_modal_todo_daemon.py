@@ -5695,13 +5695,23 @@ def test_paired_autoencoder_status_requires_own_clean_stop() -> None:
         autoencoder_exit_code=0,
         runner_terminated_children={"paired-root-autoencoder"},
     )
-    assert runner._paired_autoencoder_succeeded(
+    assert not runner._paired_autoencoder_succeeded(
         autoencoder_run_id="paired-root-autoencoder",
         autoencoder_exit_code=-signal.SIGTERM,
         autoencoder_child_health={
             "autoencoder_cycles": 31,
             "autoencoder_latest_stop_reason": "no_claimed_todos",
             "autoencoder_summary_final": False,
+        },
+        runner_terminated_children={"paired-root-autoencoder"},
+    )
+    assert runner._paired_autoencoder_succeeded(
+        autoencoder_run_id="paired-root-autoencoder",
+        autoencoder_exit_code=-signal.SIGTERM,
+        autoencoder_child_health={
+            "autoencoder_cycles": 31,
+            "autoencoder_latest_stop_reason": "duration_complete",
+            "autoencoder_summary_final": True,
         },
         runner_terminated_children={"paired-root-autoencoder"},
     )
