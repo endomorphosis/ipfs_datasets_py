@@ -24,6 +24,9 @@ _DID_LOG_INIT = False
 
 # Fallback imports when SymbolicAI is not available
 try:
+    from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+    ensure_symai_config_for_import()
     from symai import Symbol, Expression
     SYMBOLIC_AI_AVAILABLE = True
 except (ImportError, SystemExit):

@@ -22,6 +22,9 @@ from .logic_verification_utils import are_contradictory, parse_proof_steps
 # The same conditional import pattern used in logic_verification.py is used
 # here to avoid hard-requiring SymbolicAI.
 try:
+    from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+    ensure_symai_config_for_import()
     from symai import Symbol  # type: ignore
     _SYMBOLIC_AI_AVAILABLE = True
 except (ImportError, SystemExit):
