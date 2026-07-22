@@ -1632,6 +1632,69 @@ def _matching_published_snapshot_boundary(
     return SnapshotBoundary(sequence=sequence, versions=expected_versions)
 
 
+def compact_snapshot_evaluation_summary(
+    snapshot_result: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Drop repeated snapshot diagnostics already preserved in the event log."""
+
+    snapshot = dict(snapshot_result or {})
+    compact = {
+        str(key): _metric_cache_object_payload(value)
+        for key, value in snapshot.items()
+        if str(key) != "metrics"
+    }
+    raw_metrics = snapshot.get("metrics")
+    metrics = dict(raw_metrics) if isinstance(raw_metrics, Mapping) else {}
+    top_level_shards = list(metrics.pop("shards", []) or [])
+
+    aggregate = dict(metrics.get("aggregate") or {})
+    aggregate_shards = list(aggregate.pop("shards", []) or [])
+    metrics_by_role = dict(aggregate.pop("metrics_by_role", {}) or {})
+    if aggregate:
+        metrics["aggregate"] = aggregate
+
+    proof = dict(metrics.get("proof") or {})
+    proof_signals = list(proof.pop("signals", []) or [])
+    if proof:
+        metrics["proof"] = proof
+
+    compiler = dict(metrics.get("compiler") or {})
+    omitted_sample_records = 0
+    omitted_worst_records = 0
+    compact_compiler: Dict[str, Any] = {}
+    for role, raw_role_metrics in compiler.items():
+        if not isinstance(raw_role_metrics, Mapping):
+            compact_compiler[str(role)] = raw_role_metrics
+            continue
+        role_metrics = dict(raw_role_metrics)
+        omitted_sample_records += len(role_metrics.pop("sample_metric_records", []) or [])
+        omitted_worst_records += len(
+            role_metrics.pop("worst_source_decompiled_text_records", []) or []
+        )
+        compact_compiler[str(role)] = role_metrics
+    if compact_compiler:
+        metrics["compiler"] = compact_compiler
+
+    compact["metrics"] = _metric_cache_object_payload(metrics)
+    compact["summary_payload_compacted"] = bool(
+        top_level_shards
+        or aggregate_shards
+        or metrics_by_role
+        or proof_signals
+        or omitted_sample_records
+        or omitted_worst_records
+    )
+    compact["omitted_diagnostics"] = {
+        "aggregate_metric_role_count": len(metrics_by_role),
+        "aggregate_shard_count": len(aggregate_shards),
+        "compiler_sample_metric_record_count": omitted_sample_records,
+        "compiler_worst_record_count": omitted_worst_records,
+        "proof_signal_count": len(proof_signals),
+        "top_level_shard_count": len(top_level_shards),
+    }
+    return compact
+
+
 PRODUCTION_SNAPSHOT_REQUIRED_ROLES = (
     "train",
     "validation",
@@ -19476,7 +19539,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     append_event(log_path, args.run_id, event)
                     if promotion is not None and promotion.promoted:
                         summary["latest_promoted_snapshot_evaluation"] = (
-                            snapshot_result.to_dict()
+                            compact_snapshot_evaluation_summary(
+                                snapshot_result.to_dict()
+                            )
                         )
                         summary["latest_promoted_snapshot_complete"] = bool(
                             (
@@ -21667,7 +21732,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 )
                 if promotion is not None and promotion.promoted:
                     summary["latest_promoted_snapshot_evaluation"] = (
-                        snapshot_result.to_dict()
+                        compact_snapshot_evaluation_summary(
+                            snapshot_result.to_dict()
+                        )
                     )
                     summary["latest_promoted_snapshot_complete"] = bool(
                         (

@@ -24,6 +24,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     autoencoder_for_evaluation_snapshot,
     build_uscode_modal_daemon_arg_parser,
     build_autoencoder_evaluation_snapshot,
+    compact_snapshot_evaluation_summary,
 )
 
 
@@ -35,6 +36,48 @@ def snapshot(sequence: int, *, state_value: int | None = None) -> EvaluationSnap
         holdout_version="holdout-a",
         schema_version="schema-a",
     )
+
+
+def test_snapshot_summary_omits_repeated_diagnostics_but_keeps_headlines() -> None:
+    compact = compact_snapshot_evaluation_summary(
+        {
+            "snapshot_id": "snapshot-1",
+            "metrics": {
+                "shards": [{"id": "top"}],
+                "aggregate": {
+                    "complete": True,
+                    "shards": [{"id": "aggregate"}],
+                    "metrics_by_role": {"validation": {"loss": 0.2}},
+                },
+                "compiler": {
+                    "validation": {
+                        "cross_entropy_loss": 0.2,
+                        "sample_metric_records": [{"sample_id": "s1"}],
+                        "worst_source_decompiled_text_records": [{"sample_id": "s1"}],
+                    }
+                },
+                "proof": {
+                    "attempted_count": 1,
+                    "signals": [{"obligation_id": "o1"}],
+                },
+            },
+        }
+    )
+
+    assert compact["metrics"]["aggregate"] == {"complete": True}
+    assert compact["metrics"]["compiler"]["validation"] == {
+        "cross_entropy_loss": 0.2
+    }
+    assert compact["metrics"]["proof"] == {"attempted_count": 1}
+    assert compact["summary_payload_compacted"] is True
+    assert compact["omitted_diagnostics"] == {
+        "aggregate_metric_role_count": 1,
+        "aggregate_shard_count": 1,
+        "compiler_sample_metric_record_count": 1,
+        "compiler_worst_record_count": 1,
+        "proof_signal_count": 1,
+        "top_level_shard_count": 1,
+    }
 
 
 def test_snapshot_is_an_immutable_serialized_state_copy() -> None:
