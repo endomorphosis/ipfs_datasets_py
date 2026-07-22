@@ -116,12 +116,12 @@ if [[ ! -x "${CANONICAL_RUNNER}" ]]; then
   echo "canonical integrated runner is missing or not executable: ${CANONICAL_RUNNER}" >&2
   exit 2
 fi
-if [[ ! -f "${VERIFIER}" ]]; then
-  echo "task-117 evidence verifier is missing: ${VERIFIER}" >&2
-  exit 2
-fi
 if [[ -e "${EVIDENCE_PATH}" && "${REPLACE_EVIDENCE}" != 1 ]]; then
   echo "refusing to overwrite evidence (pass --replace-evidence explicitly): ${EVIDENCE_PATH}" >&2
+  exit 2
+fi
+if [[ ! -f "${VERIFIER}" ]]; then
+  echo "task-117 evidence verifier is missing: ${VERIFIER}" >&2
   exit 2
 fi
 
@@ -364,7 +364,12 @@ if [[ -n "${orphans}" ]]; then
   echo "orphaned managed children remain for run ${RUN_ID}: ${orphans//$'\n'/,}" >&2
   exit 1
 fi
-write_watchdog_state succeeded verified_and_reaped 1 "${runner_status}"
+watchdog_heartbeats="$("${PYTHON_BIN}" -c 'import json,sys; print(int(json.load(open(sys.argv[1])).get("heartbeat_count", 0)))' "${WATCHDOG_STATE}")"
+if (( watchdog_heartbeats < 1 )); then
+  echo "watchdog recorded no heartbeat during integrated execution" >&2
+  exit 1
+fi
+write_watchdog_state succeeded verified_and_reaped "${watchdog_heartbeats}" "${runner_status}"
 
 # Aggregate only bounded, source-free facts.  Raw prompts, Codex messages,
 # checkpoints, and model weights stay in the runtime workspace and are bound by
@@ -433,12 +438,16 @@ start, fragment = load(start_raw), load(fragment_raw)
 auto, paired, rollback, watchdog = (load(paths[name]) for name in (
     "autoencoder_summary", "paired_summary", "rollback", "watchdog_state"))
 minimum = int(minimum_raw)
-active = finite(fragment.get("active_seconds"), 0.0)
+runtime = dict(auto.get("runtime_telemetry") or {})
+phase_metrics = dict(runtime.get("phase_metrics") or {})
+cycle_metric = dict(phase_metrics.get("cycle") or {})
+active = finite(cycle_metric.get("duration_seconds"), 0.0)
+fragment_active = finite(fragment.get("active_seconds"), 0.0)
 cycles = int(fragment.get("completed_cycles") or auto.get("cycles") or 0)
 if fragment.get("dry_run") is not False or fragment.get("accepted") is not True:
     raise SystemExit("task-116 fragment is not accepted real execution evidence")
-if active < minimum or cycles < 2:
-    raise SystemExit(f"insufficient active work: active_seconds={active}, cycles={cycles}")
+if active < minimum or fragment_active < minimum or cycles < 2:
+    raise SystemExit(f"insufficient active work: cycle_active_seconds={active}, runner_elapsed_seconds={fragment_active}, cycles={cycles}")
 if watchdog.get("status") != "succeeded" or watchdog.get("runner_exit_code") != 0:
     raise SystemExit(f"watchdog did not verify a clean execution: {watchdog}")
 if start.get("code_revision") != fragment.get("code_revision"):
@@ -449,8 +458,6 @@ cuda = dict(services.get("cuda_autoencoder") or {})
 leanstral = dict(services.get("leanstral") or {})
 hammer = dict(services.get("hammer") or {})
 codex = dict(services.get("codex") or {})
-runtime = dict(auto.get("runtime_telemetry") or {})
-phase_metrics = dict(runtime.get("phase_metrics") or {})
 spans = [item for item in runtime.get("spans", []) if isinstance(item, dict)]
 
 def timing_for(phases):
