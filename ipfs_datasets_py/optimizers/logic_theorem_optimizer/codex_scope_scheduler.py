@@ -7,12 +7,12 @@ codec, test, or package initializer.  This module is the policy boundary for
 that concurrency.  It provides:
 
 * canonical ownership for the nine LegalIR repair lanes;
-* deterministic, scope-local evidence bundles and conservative write-set
-  prediction;
+* deterministic evidence bundles matched by AST ownership, logic family,
+  expected writes, shared validation, and verified readiness;
 * an initial scheduler capped at four unique, non-conflicting scopes;
 * concurrent validation of isolated worktrees;
-* a fair merge serializer which permits disjoint callbacks but never overlaps
-  conflicting write sets; and
+* a fair merge serializer which permits disjoint callbacks, never overlaps
+  conflicting write sets, and offers a validation-receipt-guarded merge path;
 * a stateful worker controller which backs off on validation failures, apply
   conflicts, memory pressure, and transient provider/infrastructure failures.
 
@@ -153,6 +153,25 @@ def canonical_codex_scope(value: CodexOwnershipScope | str) -> str:
     return CodexOwnershipScope.coerce(value).value
 
 
+def _scope_from_ast_ownership(value: Any) -> str:
+    text = " ".join(str(item) for item in _sequence(value)).lower().replace("-", "_")
+    ordered = (
+        (("registry", "codec"), "compiler_registry"),
+        (("decompil", "reconstruct"), "ir_decompiler"),
+        (("frame", "flogic"), "frame_logic"),
+        (("tdfol", "td_fol", "temporal_deontic"), "tdfol"),
+        (("knowledge_graph", "kg"), "knowledge_graphs"),
+        (("event_calculus", "cec"), "cec"),
+        (("external_prover", "prover_router"), "external_provers"),
+        (("deontic",), "deontic"),
+        (("compiler", "parser"), "compiler_parser"),
+    )
+    for terms, scope in ordered:
+        if any(term in text for term in terms):
+            return scope
+    return ""
+
+
 def _sequence(value: Any) -> tuple[Any, ...]:
     if value is None:
         return ()
@@ -186,6 +205,31 @@ def _paths(value: Any) -> tuple[str, ...]:
 
 def _identifiers(value: Any) -> tuple[str, ...]:
     return tuple(sorted({str(item).strip() for item in _sequence(value) if str(item).strip()}))
+
+
+def _logic_families(value: Any) -> tuple[str, ...]:
+    """Normalize the family spellings emitted by TODO and validation producers."""
+
+    aliases = {
+        "flogic": "frame_logic",
+        "frame": "frame_logic",
+        "td_fol": "tdfol",
+        "temporal_deontic_fol": "tdfol",
+        "kg": "knowledge_graphs",
+        "knowledge_graph": "knowledge_graphs",
+        "event_calculus": "cec",
+        "external_prover": "external_provers",
+        "prover": "external_provers",
+        "ir_decompiler": "decompiler",
+    }
+    normalized: set[str] = set()
+    for item in _sequence(value):
+        if isinstance(item, Mapping):
+            item = item.get("family") or item.get("logic_family") or item.get("name")
+        text = str(item or "").strip().lower().replace("-", "_").replace(" ", "_")
+        if text:
+            normalized.add(aliases.get(text, text))
+    return tuple(sorted(normalized))
 
 
 def _json_safe(value: Any, *, depth: int = 0) -> Any:
@@ -316,6 +360,9 @@ class CodexScopeTask:
     readiness_evidence: tuple[str, ...] = ()
     ready_blockers: tuple[str, ...] = ()
     evidence: Mapping[str, Any] = field(default_factory=dict, compare=False)
+    ast_ownership: tuple[str, ...] = ()
+    logic_families: tuple[str, ...] = ()
+    observed_confirmed_patches_per_hour: float = 0.0
 
     def __post_init__(self) -> None:
         task_id = str(self.task_id or "").strip()
@@ -335,6 +382,23 @@ class CodexScopeTask:
         object.__setattr__(self, "readiness_evidence", _identifiers(self.readiness_evidence))
         object.__setattr__(self, "ready_blockers", _identifiers(self.ready_blockers))
         object.__setattr__(self, "evidence", MappingProxyType(dict(_json_safe(self.evidence))))
+        object.__setattr__(self, "ast_ownership", _identifiers(self.ast_ownership))
+        object.__setattr__(self, "logic_families", _logic_families(self.logic_families))
+        confirmed_rate = _finite_non_negative(
+            "observed_confirmed_patches_per_hour", self.observed_confirmed_patches_per_hour
+        )
+        object.__setattr__(self, "observed_confirmed_patches_per_hour", confirmed_rate)
+
+    @property
+    def uses_structured_compatibility(self) -> bool:
+        """Whether this TODO carries the four-factor bundle contract."""
+
+        return bool(
+            self.ast_ownership
+            and self.logic_families
+            and self.validation_commands
+            and (self.explicit_paths or self.symbols)
+        )
 
     @classmethod
     def from_value(cls, value: "CodexScopeTask | Mapping[str, Any] | Any") -> "CodexScopeTask":
@@ -348,15 +412,24 @@ class CodexScopeTask:
         data = dict(value)
         metadata = dict(data.get("metadata") or {})
         task_id = data.get("task_id") or data.get("todo_id") or data.get("id")
+        raw_ast_ownership = (
+            data.get("ast_ownership")
+            or data.get("owned_ast_scope")
+            or data.get("typed_ast_scopes")
+            or metadata.get("ast_ownership")
+            or metadata.get("owned_ast_scope")
+            or metadata.get("typed_ast_scopes")
+        )
         scope = (
             data.get("scope")
             or data.get("program_synthesis_scope")
             or data.get("ownership_scope")
             or metadata.get("program_synthesis_scope")
-            or metadata.get("owned_ast_scope")
             or metadata.get("scope")
+            or _scope_from_ast_ownership(raw_ast_ownership)
         )
         paths: list[Any] = []
+        predicted_symbols: list[Any] = []
         for source in (data, metadata):
             for key in (
                 "predicted_write_set", "predicted_write_paths", "changed_files",
@@ -364,6 +437,7 @@ class CodexScopeTask:
             ):
                 raw = source.get(key)
                 if isinstance(raw, Mapping):
+                    predicted_symbols.extend(_sequence(raw.get("symbols")))
                     raw = raw.get("paths")
                 paths.extend(_sequence(raw))
         correlation = (
@@ -418,6 +492,42 @@ class CodexScopeTask:
             ready = bool(explicit_ready)
         if blocked_by:
             ready = False
+        verification_flags = tuple(
+            bool(value)
+            for value in (
+                data.get("leanstral_verified", metadata.get("leanstral_verified")),
+                data.get("hammer_verified", metadata.get("hammer_verified")),
+                data.get("evidence_verified", metadata.get("evidence_verified")),
+            )
+            if value is not None
+        )
+        if verification_flags and not all(verification_flags):
+            ready = False
+            blocked_by = _identifiers((*blocked_by, "verification_not_confirmed"))
+        raw_validation_set = data.get("validation_set") or metadata.get("validation_set") or {}
+        validation_set = raw_validation_set if isinstance(raw_validation_set, Mapping) else {}
+        ast_ownership = _identifiers(raw_ast_ownership)
+        logic_families = _logic_families(
+            data.get("logic_families")
+            or data.get("logic_family")
+            or data.get("legal_ir_families")
+            or data.get("semantic_family")
+            or data.get("affected_ir_families")
+            or metadata.get("logic_families")
+            or metadata.get("logic_family")
+            or metadata.get("legal_ir_families")
+            or metadata.get("semantic_family")
+            or metadata.get("affected_ir_families")
+            or validation_set.get("logic_families")
+            or validation_set.get("families")
+        )
+        observed_rate = (
+            data.get("observed_accepted_next_cycle_confirmed_patches_per_hour")
+            or data.get("accepted_next_cycle_confirmed_patches_per_hour")
+            or metadata.get("observed_accepted_next_cycle_confirmed_patches_per_hour")
+            or metadata.get("accepted_next_cycle_confirmed_patches_per_hour")
+            or 0.0
+        )
         return cls(
             task_id=str(task_id or ""),
             scope=str(scope or ""),
@@ -425,15 +535,25 @@ class CodexScopeTask:
             correlation_key=str(correlation or ""),
             explicit_paths=tuple(paths),
             symbols=_identifiers(
-                data.get("symbols") or metadata.get("symbols") or metadata.get("typed_ast_symbols")
+                data.get("symbols")
+                or metadata.get("symbols")
+                or metadata.get("typed_ast_symbols")
+                or predicted_symbols
             ),
             validation_commands=_identifiers(
-                data.get("validation_commands") or metadata.get("validation_commands")
+                data.get("validation_commands")
+                or metadata.get("validation_commands")
+                or validation_set.get("commands")
+                or validation_set.get("validation_commands")
+                or (raw_validation_set if not isinstance(raw_validation_set, Mapping) else ())
             ),
             readiness_verified=ready,
             readiness_evidence=readiness_evidence,
             ready_blockers=blocked_by,
             evidence=evidence,
+            ast_ownership=ast_ownership,
+            logic_families=logic_families,
+            observed_confirmed_patches_per_hour=float(observed_rate),
         )
 
 
@@ -481,6 +601,10 @@ class ScopeEvidenceBundle:
     readiness_verified: bool = True
     ready_blockers: tuple[str, ...] = ()
     schema_version: str = CODEX_SCOPE_BUNDLE_SCHEMA_VERSION
+    ast_ownership: tuple[str, ...] = ()
+    logic_families: tuple[str, ...] = ()
+    shared_validation_commands: tuple[str, ...] = ()
+    observed_confirmed_patches_per_hour: float = 0.0
 
     def __post_init__(self) -> None:
         scope = canonical_codex_scope(self.scope)
@@ -490,6 +614,19 @@ class ScopeEvidenceBundle:
             raise ValueError("correlated evidence cannot cross ownership scopes")
         object.__setattr__(self, "scope", scope)
         object.__setattr__(self, "validation_commands", _identifiers(self.validation_commands))
+        object.__setattr__(self, "ast_ownership", _identifiers(self.ast_ownership))
+        object.__setattr__(self, "logic_families", _logic_families(self.logic_families))
+        object.__setattr__(
+            self, "shared_validation_commands", _identifiers(self.shared_validation_commands)
+        )
+        object.__setattr__(
+            self,
+            "observed_confirmed_patches_per_hour",
+            _finite_non_negative(
+                "observed_confirmed_patches_per_hour",
+                self.observed_confirmed_patches_per_hour,
+            ),
+        )
         blockers = tuple(
             blocker for task in self.tasks for blocker in task.ready_blockers
         )
@@ -508,10 +645,14 @@ class ScopeEvidenceBundle:
     def to_dict(self) -> dict[str, Any]:
         return {
             "bundle_id": self.bundle_id,
+            "ast_ownership": list(self.ast_ownership),
             "correlation_key": self.correlation_key,
+            "logic_families": list(self.logic_families),
+            "observed_confirmed_patches_per_hour": self.observed_confirmed_patches_per_hour,
             "priority": self.priority,
             "schema_version": self.schema_version,
             "scope": self.scope,
+            "shared_validation_commands": list(self.shared_validation_commands),
             "task_ids": list(self.task_ids),
             "readiness_verified": self.readiness_verified,
             "ready_blockers": list(self.ready_blockers),
@@ -533,20 +674,95 @@ class ScopeEvidenceBundler:
         self, tasks: Iterable[CodexScopeTask | Mapping[str, Any] | Any]
     ) -> tuple[ScopeEvidenceBundle, ...]:
         normalized = [CodexScopeTask.from_value(task) for task in tasks]
-        grouped: dict[tuple[str, str], list[CodexScopeTask]] = {}
+        grouped: list[list[CodexScopeTask]] = []
+        legacy_groups: dict[tuple[str, str, bool], list[CodexScopeTask]] = {}
+        # Rich TODO packets are matched pairwise.  In particular, the shared
+        # validation intersection is maintained across the complete bundle;
+        # pairwise overlap alone is not enough (A/B, B/C must not admit A/C).
+        rich = sorted(
+            (task for task in normalized if task.uses_structured_compatibility),
+            key=lambda item: (
+                not item.readiness_verified,
+                -item.observed_confirmed_patches_per_hour,
+                -item.priority,
+                item.task_id,
+            ),
+        )
+        for task in rich:
+            if not task.readiness_verified or task.ready_blockers:
+                grouped.append([task])
+                continue
+            # Compatibility is based on the TODO's expected writes, not the
+            # broader lane defaults which are added later for conservative
+            # cross-worker conflict detection.
+            task_write_set = PredictedWriteSet(
+                paths=task.explicit_paths,
+                symbols=task.symbols,
+                unknown=not task.explicit_paths and not task.symbols,
+                sources=("task",),
+            )
+            placed = False
+            for members in grouped:
+                first = members[0]
+                if not first.uses_structured_compatibility or not first.readiness_verified:
+                    continue
+                shared_validation = set(task.validation_commands)
+                for member in members:
+                    shared_validation.intersection_update(member.validation_commands)
+                compatible = (
+                    first.scope == task.scope
+                    and first.ast_ownership == task.ast_ownership
+                    and first.logic_families == task.logic_families
+                    and bool(shared_validation)
+                    and all(
+                        not task_write_set.unknown
+                        and task_write_set.conflicts_with(
+                            PredictedWriteSet(
+                                paths=member.explicit_paths,
+                                symbols=member.symbols,
+                                unknown=not member.explicit_paths and not member.symbols,
+                                sources=("task",),
+                            )
+                        )
+                        for member in members
+                    )
+                )
+                if compatible and len(members) < self.max_tasks:
+                    members.append(task)
+                    placed = True
+                    break
+            if not placed:
+                grouped.append([task])
         for task in normalized:
-            key = task.correlation_key or task.task_id
-            grouped.setdefault((task.scope, key), []).append(task)
+            if task.uses_structured_compatibility:
+                continue
+            key = (task.scope, task.correlation_key or task.task_id, task.readiness_verified)
+            legacy_groups.setdefault(key, []).append(task)
+        grouped.extend(legacy_groups[key] for key in sorted(legacy_groups))
+
         bundles: list[ScopeEvidenceBundle] = []
-        for (scope, correlation_key), members in sorted(grouped.items()):
+        for members in grouped:
+            scope = members[0].scope
             ordered = sorted(members, key=lambda item: (-item.priority, item.task_id))
             for offset in range(0, len(ordered), self.max_tasks):
                 shard = tuple(ordered[offset : offset + self.max_tasks])
+                correlations = {task.correlation_key or task.task_id for task in shard}
+                correlation_key = (
+                    next(iter(correlations))
+                    if len(correlations) == 1
+                    else f"compatible-{_digest(sorted(correlations))[:16]}"
+                )
                 write_sets = tuple(self.predictor.predict(task) for task in shard)
                 write_set = write_sets[0].union(*write_sets[1:])
+                shared_validation = set(shard[0].validation_commands)
+                for task in shard[1:]:
+                    shared_validation.intersection_update(task.validation_commands)
                 payload = {
+                    "ast_ownership": list(shard[0].ast_ownership),
                     "correlation_key": correlation_key,
+                    "logic_families": list(shard[0].logic_families),
                     "scope": scope,
+                    "shared_validation_commands": sorted(shared_validation),
                     "task_ids": [task.task_id for task in shard],
                 }
                 bundle_id = f"scope-bundle-{_digest(payload)[:20]}"
@@ -563,9 +779,25 @@ class ScopeEvidenceBundler:
                         validation_commands=tuple(
                             command for task in shard for command in task.validation_commands
                         ),
+                        ast_ownership=shard[0].ast_ownership,
+                        logic_families=shard[0].logic_families,
+                        shared_validation_commands=tuple(shared_validation),
+                        observed_confirmed_patches_per_hour=max(
+                            task.observed_confirmed_patches_per_hour for task in shard
+                        ),
                     )
                 )
-        return tuple(sorted(bundles, key=lambda item: (-item.priority, item.scope, item.bundle_id)))
+        return tuple(
+            sorted(
+                bundles,
+                key=lambda item: (
+                    -item.observed_confirmed_patches_per_hour,
+                    -item.priority,
+                    item.scope,
+                    item.bundle_id,
+                ),
+            )
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -1496,6 +1728,59 @@ class ConflictAwareMergeSerializer:
                     result = future.result()
                     results[result.assignment_id] = result
         return MappingProxyType(dict(sorted(results.items())))
+
+    def merge_validated(
+        self,
+        assignments: Sequence[ScopeAssignment],
+        validation_results: Mapping[str, Any],
+        callback: Callable[[ScopeAssignment], Any],
+        *,
+        max_workers: int = MAX_INITIAL_CODEX_WORKERS,
+        timeout_seconds: Optional[float] = None,
+    ) -> Mapping[str, MergeResult]:
+        """Merge only assignments carrying an accepted validation receipt.
+
+        The older :meth:`merge` remains the low-level serializer used by
+        daemon code which performs its validation gate under the main-checkout
+        lock.  New bundle pipelines must use this guarded entry point so a
+        missing, stale-shaped, or failed receipt cannot invoke the merge
+        callback.
+        """
+
+        eligible: list[ScopeAssignment] = []
+        rejected: dict[str, MergeResult] = {}
+        for assignment in assignments:
+            receipt = validation_results.get(assignment.assignment_id)
+            if isinstance(receipt, Mapping):
+                accepted = bool(
+                    receipt.get("accepted", receipt.get("passed", receipt.get("merge_allowed", False)))
+                )
+            else:
+                accepted = bool(
+                    getattr(receipt, "merge_allowed", getattr(receipt, "accepted", False))
+                )
+            if accepted:
+                eligible.append(assignment)
+            else:
+                rejected[assignment.assignment_id] = MergeResult(
+                    assignment_id=assignment.assignment_id,
+                    scope=assignment.scope,
+                    accepted=False,
+                    status="validation_rejected",
+                    wait_seconds=0.0,
+                    elapsed_seconds=0.0,
+                    evidence={"validation_receipt_present": receipt is not None},
+                    error=(
+                        "validation_failed" if receipt is not None else "validation_receipt_missing"
+                    ),
+                )
+        merged = self.merge(
+            eligible,
+            callback,
+            max_workers=max_workers,
+            timeout_seconds=timeout_seconds,
+        )
+        return MappingProxyType(dict(sorted({**rejected, **dict(merged)}.items())))
 
     def telemetry(self) -> dict[str, int]:
         with self._condition:

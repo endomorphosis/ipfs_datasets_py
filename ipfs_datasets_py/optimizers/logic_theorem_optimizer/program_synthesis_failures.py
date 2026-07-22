@@ -11,7 +11,10 @@ recovery orchestration:
 * :class:`ProgramSynthesisFailureRecovery` persists evidence and retry state
   before it invokes a category-specific retry, rebase, or rescue callback;
 * :class:`FailureRateReporter` reports transient and terminal rates separately
-  for every program-synthesis scope.
+  for every program-synthesis scope; and
+* :class:`ValidationWorktreeRescueCoordinator` preserves useful failed patches,
+  performs bounded diagnosis and repair, and requires fresh successful
+  revalidation before a result can become merge eligible.
 
 Git and queue mutations are deliberately injected as callbacks.  The daemon
 already owns locking, worktree creation, patch replay, and queue persistence;
@@ -29,6 +32,7 @@ import math
 import os
 import shutil
 import threading
+import time
 from collections import Counter, defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -42,6 +46,7 @@ from typing import Any, Final, Optional
 PROGRAM_SYNTHESIS_FAILURE_SCHEMA_VERSION: Final = "program-synthesis-failure-v1"
 PROGRAM_SYNTHESIS_RECOVERY_SCHEMA_VERSION: Final = "program-synthesis-recovery-v1"
 FAILURE_RATE_REPORT_SCHEMA_VERSION: Final = "program-synthesis-failure-rates-v1"
+VALIDATION_WORKTREE_RESCUE_SCHEMA_VERSION: Final = "validation-worktree-rescue-v1"
 
 
 class FailureCategory(str, Enum):
@@ -1127,6 +1132,903 @@ class ProgramSynthesisFailureRecovery:
         self.reporter.record_success(scope, count=count)
 
 
+class ValidationRescueStage(str, Enum):
+    """Evidence boundaries in a failed-worktree rescue attempt."""
+
+    INITIAL = "initial"
+    PRE_REPAIR = "pre_repair"
+    POST_REPAIR = "post_repair"
+    POST_VALIDATION = "post_validation"
+    PRE_REQUEUE = "pre_requeue"
+    TERMINAL = "terminal"
+
+
+class ValidationRescueStatus(str, Enum):
+    """Terminal state of a bounded failed-worktree rescue."""
+
+    REPAIRED = "repaired"
+    REQUEUED_TRANSIENT = "requeued_transient"
+    REPAIR_EXHAUSTED = "repair_exhausted"
+    DIAGNOSIS_FAILED = "diagnosis_failed"
+    ACTION_FAILED = "action_failed"
+    NOT_REQUIRED = "not_required"
+
+
+def _rescue_mapping(value: Any) -> dict[str, Any]:
+    """Return a plain mapping from validation/report-like callback values."""
+
+    if value is None:
+        return {}
+    if isinstance(value, Mapping):
+        return dict(value)
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        mapped = to_dict()
+        if isinstance(mapped, Mapping):
+            return dict(mapped)
+    if isinstance(value, bool):
+        return {"accepted": value}
+    return {"error": f"invalid_result:{type(value).__name__}"}
+
+
+def _rescue_string_tuple(value: Any) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, (str, bytes, bytearray)):
+        items = (value,)
+    elif isinstance(value, Sequence):
+        items = value
+    else:
+        items = (value,)
+    return tuple(dict.fromkeys(str(item).strip() for item in items if str(item).strip()))
+
+
+def _validation_rescue_state(value: Any) -> tuple[bool, bool, bool, dict[str, Any]]:
+    """Return accepted/transient/semantic-update state from structured evidence.
+
+    Transience is deliberately recognized only from structured fields.  Error
+    text is evidence for a diagnosis, but must not allow a deterministic test
+    failure to consume infrastructure retry budget or bypass quality metrics.
+    """
+
+    data = _rescue_mapping(value)
+    accepted = bool(data.get("accepted", data.get("passed", data.get("status") == "passed")))
+    if "merge_allowed" in data:
+        accepted = accepted and bool(data["merge_allowed"])
+    transient_ids = _rescue_string_tuple(
+        data.get("transient_unresolved_check_ids")
+        or data.get("unresolved_transient_check_ids")
+    )
+    transient = bool(
+        not accepted
+        and (
+            data.get("transient") is True
+            or data.get("transient_failure") is True
+            or data.get("retryable_transient") is True
+            or transient_ids
+        )
+    )
+    semantic_allowed_value = data.get("semantic_statistics_update_allowed")
+    if semantic_allowed_value is None:
+        delta = data.get("semantic_statistics_delta")
+        if isinstance(delta, Mapping) and "update_allowed" in delta:
+            semantic_allowed_value = delta.get("update_allowed")
+    semantic_allowed = bool(
+        semantic_allowed_value
+        if semantic_allowed_value is not None
+        else not transient
+    )
+    return accepted, transient, semantic_allowed, data
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationWorktreeRescueRequest:
+    """Immutable input for diagnosing and repairing one failed worktree."""
+
+    task_id: str
+    scope: str
+    worktree_path: str | Path
+    validation_report: Any = field(default_factory=dict, compare=False, repr=False)
+    patch: str = field(default="", compare=False, repr=False)
+    artifacts: tuple[str | Path, ...] = field(default=(), compare=False, repr=False)
+    evidence: Mapping[str, Any] = field(default_factory=dict, compare=False, repr=False)
+    transient_failure: bool = False
+    schema_version: str = VALIDATION_WORKTREE_RESCUE_SCHEMA_VERSION
+    changed_files: tuple[str, ...] = ()
+    useful_changes: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not str(self.task_id or "").strip():
+            raise ValueError("validation rescue task_id must not be empty")
+        if not str(self.worktree_path or "").strip():
+            raise ValueError("validation rescue worktree_path must not be empty")
+        if self.schema_version != VALIDATION_WORKTREE_RESCUE_SCHEMA_VERSION:
+            raise ValueError("validation rescue request schema version is stale")
+        object.__setattr__(self, "task_id", str(self.task_id).strip())
+        object.__setattr__(self, "scope", _atom(self.scope))
+        object.__setattr__(self, "worktree_path", str(Path(self.worktree_path)))
+        object.__setattr__(self, "validation_report", MappingProxyType(_rescue_mapping(self.validation_report)))
+        object.__setattr__(self, "patch", str(self.patch or ""))
+        object.__setattr__(self, "artifacts", tuple(self.artifacts or ()))
+        object.__setattr__(self, "evidence", MappingProxyType(dict(self.evidence or {})))
+        object.__setattr__(self, "changed_files", _string_sequence(self.changed_files))
+        object.__setattr__(self, "useful_changes", _string_sequence(self.useful_changes))
+
+    @property
+    def rescue_id(self) -> str:
+        return "validation-rescue-" + _digest(
+            {
+                "task_id": self.task_id,
+                "scope": self.scope,
+                "worktree_path": self.worktree_path,
+                "validation_report": self.validation_report,
+                "patch_sha256": hashlib.sha256(self.patch.encode("utf-8")).hexdigest(),
+            }
+        )[:20]
+
+    def to_dict(self, *, include_patch: bool = True) -> dict[str, Any]:
+        result = {
+            "artifacts": [str(path) for path in self.artifacts],
+            "changed_files": list(self.changed_files),
+            "evidence": _safe_json(self.evidence),
+            "patch_sha256": hashlib.sha256(self.patch.encode("utf-8")).hexdigest(),
+            "rescue_id": self.rescue_id,
+            "schema_version": self.schema_version,
+            "scope": self.scope,
+            "task_id": self.task_id,
+            "transient_failure": self.transient_failure,
+            "useful_changes": list(self.useful_changes),
+            "validation_report": _safe_json(self.validation_report),
+            "worktree_path": self.worktree_path,
+        }
+        if include_patch:
+            result["patch"] = self.patch
+        return result
+
+    @classmethod
+    def from_packet(
+        cls,
+        packet: Mapping[str, Any],
+        *,
+        task_id: str = "",
+        scope: str = "",
+    ) -> "ValidationWorktreeRescueRequest":
+        """Extract a rescue request while retaining the packet as evidence."""
+
+        todos = packet.get("todos")
+        first_todo = todos[0] if isinstance(todos, Sequence) and todos else {}
+        first_todo = first_todo if isinstance(first_todo, Mapping) else {}
+        metadata = first_todo.get("metadata")
+        metadata = metadata if isinstance(metadata, Mapping) else {}
+        scopes = _string_sequence(packet.get("program_synthesis_scopes"))
+        validation = (
+            packet.get("failed_validation_report")
+            or metadata.get("failed_validation_report")
+            or packet.get("incremental_validation")
+            or packet.get("isolated_validation")
+            or packet.get("main_apply_validation")
+            or packet.get("validation_report")
+            or {}
+        )
+        patch = str(packet.get("patch") or packet.get("diff") or "")
+        patch_path = packet.get("patch_path")
+        if not patch and patch_path:
+            try:
+                patch = Path(str(patch_path)).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                patch = ""
+        exec_result = packet.get("codex_exec")
+        exec_result = exec_result if isinstance(exec_result, Mapping) else {}
+        artifact_values = [
+            packet.get("packet_path"),
+            patch_path,
+            packet.get("task_path"),
+            exec_result.get("stderr_path"),
+            exec_result.get("stdout_path"),
+            exec_result.get("last_message_path"),
+        ]
+        return cls(
+            task_id=task_id or str(
+                packet.get("task_id")
+                or first_todo.get("todo_id")
+                or packet.get("packet_id")
+                or "unbound-packet"
+            ),
+            scope=scope or str(packet.get("scope") or "") or (
+                scopes[0]
+                if len(scopes) == 1
+                else str(metadata.get("program_synthesis_scope") or "unknown")
+            ),
+            worktree_path=str(packet.get("worktree_path") or packet.get("failed_worktree_path") or ""),
+            validation_report=validation,
+            patch=patch,
+            artifacts=tuple(value for value in artifact_values if value),
+            evidence=packet,
+            transient_failure=bool(
+                packet.get("transient_failure")
+                or packet.get("transient_requeue")
+                or packet.get("retryable_transient")
+            ),
+            changed_files=_string_sequence(
+                packet.get("changed_files") or packet.get("main_apply_target_files")
+            ),
+            useful_changes=_string_sequence(
+                packet.get("useful_changes")
+                or packet.get("preserved_changes")
+                or metadata.get("useful_changes")
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationRescueContext:
+    """Immutable context passed to a rescue operation callback."""
+
+    request: ValidationWorktreeRescueRequest
+    stage: ValidationRescueStage
+    attempt: int = 0
+    evidence_path: Path = Path()
+    diagnosis: Mapping[str, Any] = field(default_factory=dict)
+    repair_result: Mapping[str, Any] = field(default_factory=dict)
+    validation_report: Mapping[str, Any] = field(default_factory=dict)
+    current_patch: str = field(default="", repr=False)
+
+    def __post_init__(self) -> None:
+        if int(self.attempt) < 0:
+            raise ValueError("validation rescue attempt must be non-negative")
+        object.__setattr__(self, "attempt", int(self.attempt))
+        object.__setattr__(self, "diagnosis", MappingProxyType(dict(self.diagnosis or {})))
+        object.__setattr__(self, "repair_result", MappingProxyType(dict(self.repair_result or {})))
+        object.__setattr__(self, "validation_report", MappingProxyType(dict(self.validation_report or {})))
+        object.__setattr__(self, "current_patch", str(self.current_patch or ""))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "attempt": self.attempt,
+            "current_patch_sha256": hashlib.sha256(self.current_patch.encode("utf-8")).hexdigest(),
+            "diagnosis": _safe_json(self.diagnosis),
+            "evidence_path": str(self.evidence_path),
+            "repair_result": _safe_json(self.repair_result),
+            "request": self.request.to_dict(include_patch=False),
+            "stage": self.stage.value,
+            "validation_report": _safe_json(self.validation_report),
+        }
+
+
+ValidationRescueCallback = Callable[[ValidationRescueContext], Any]
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationRescueOperations:
+    """Caller-owned operations used by the bounded rescue coordinator."""
+
+    diagnose: Optional[ValidationRescueCallback] = None
+    repair: Optional[ValidationRescueCallback] = None
+    revalidate: Optional[ValidationRescueCallback] = None
+    requeue: Optional[ValidationRescueCallback] = None
+    preserve: Optional[ValidationRescueCallback] = None
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationRescueAttempt:
+    """Serializable evidence for one diagnosis or repair attempt."""
+
+    kind: str
+    attempt: int
+    succeeded: bool
+    transient: bool = False
+    evidence_path: str = ""
+    result: Mapping[str, Any] = field(default_factory=dict)
+    error: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "result", MappingProxyType(dict(self.result or {})))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "attempt": self.attempt,
+            "error": self.error,
+            "evidence_path": self.evidence_path,
+            "kind": self.kind,
+            "result": _safe_json(self.result),
+            "succeeded": self.succeeded,
+            "transient": self.transient,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationWorktreeRescueOutcome:
+    """Fail-closed terminal result of a bounded failed-worktree rescue."""
+
+    request: ValidationWorktreeRescueRequest
+    status: ValidationRescueStatus
+    attempts: tuple[ValidationRescueAttempt, ...]
+    evidence_paths: tuple[str, ...]
+    final_validation_report: Mapping[str, Any] = field(default_factory=dict)
+    merge_eligible: bool = False
+    fresh_post_repair_validation: bool = False
+    requeued: bool = False
+    preserve_worktree: bool = True
+    semantic_statistics_update_allowed: bool = False
+    reason: str = ""
+    schema_version: str = VALIDATION_WORKTREE_RESCUE_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.merge_eligible and not self.fresh_post_repair_validation:
+            raise ValueError("merge eligibility requires fresh post-repair validation")
+        if self.requeued and self.semantic_statistics_update_allowed:
+            raise ValueError("transient requeues cannot update semantic statistics")
+        object.__setattr__(self, "attempts", tuple(self.attempts or ()))
+        object.__setattr__(self, "evidence_paths", tuple(self.evidence_paths or ()))
+        object.__setattr__(
+            self, "final_validation_report",
+            MappingProxyType(dict(self.final_validation_report or {})),
+        )
+
+    @property
+    def accepted(self) -> bool:
+        return self.merge_eligible
+
+    @property
+    def merge_allowed(self) -> bool:
+        """Compatibility spelling used by guarded merge consumers."""
+
+        return self.merge_eligible
+
+    @property
+    def requeue_required(self) -> bool:
+        return self.status is ValidationRescueStatus.REQUEUED_TRANSIENT and self.requeued
+
+    @property
+    def semantic_statistics_delta(self) -> Mapping[str, Any]:
+        transient = self.status is ValidationRescueStatus.REQUEUED_TRANSIENT
+        return MappingProxyType(
+            {
+                "accepted": self.merge_eligible,
+                "deterministic_semantic_failure_count": int(
+                    self.semantic_statistics_update_allowed and not self.merge_eligible
+                ),
+                "poison_semantic_statistics": False,
+                "transient_requeue_count": int(transient),
+                "update_allowed": self.semantic_statistics_update_allowed,
+            }
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "attempts": [attempt.to_dict() for attempt in self.attempts],
+            "evidence_paths": list(self.evidence_paths),
+            "final_validation_report": _safe_json(self.final_validation_report),
+            "fresh_post_repair_validation": self.fresh_post_repair_validation,
+            "merge_eligible": self.merge_eligible,
+            "merge_allowed": self.merge_allowed,
+            "preserve_worktree": self.preserve_worktree,
+            "reason": self.reason,
+            "requeued": self.requeued,
+            "requeue_required": self.requeue_required,
+            "request": self.request.to_dict(include_patch=False),
+            "schema_version": self.schema_version,
+            "semantic_statistics_delta": _safe_json(self.semantic_statistics_delta),
+            "semantic_statistics_update_allowed": self.semantic_statistics_update_allowed,
+            "status": self.status.value,
+        }
+
+
+class ValidationWorktreeEvidenceStore:
+    """Append-only stage evidence for bounded worktree rescue."""
+
+    def __init__(self, root: str | Path) -> None:
+        self.root = Path(root)
+        self.root.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
+        self._sequence = 0
+
+    def preserve(
+        self,
+        context: ValidationRescueContext,
+        *,
+        details: Optional[Mapping[str, Any]] = None,
+    ) -> Path:
+        request = context.request
+        task_dir = (
+            self.root
+            / FailureEvidenceStore._safe_name(request.scope)
+            / FailureEvidenceStore._safe_name(request.task_id)
+        )
+        task_dir.mkdir(parents=True, exist_ok=True)
+        with self._lock:
+            self._sequence += 1
+            sequence = self._sequence
+            stem = (
+                f"{sequence:06d}-{context.stage.value}-{context.attempt:02d}-"
+                f"{os.getpid()}-{threading.get_ident()}-{time.time_ns()}"
+            )
+            payload_path = task_dir / f"{stem}.json"
+            patch_path: Optional[Path] = None
+            patch = context.current_patch or request.patch
+            if patch:
+                patch_path = task_dir / f"{stem}.patch"
+                temporary_patch = task_dir / f".{stem}.{os.getpid()}.patch.tmp"
+                temporary_patch.write_text(patch, encoding="utf-8")
+                os.replace(temporary_patch, patch_path)
+            copied_artifacts: list[dict[str, Any]] = []
+            if context.stage is ValidationRescueStage.INITIAL:
+                artifact_dir = task_dir / f"{stem}.artifacts"
+                for index, raw_path in enumerate(request.artifacts):
+                    source = Path(raw_path)
+                    record: dict[str, Any] = {"source_path": str(source)}
+                    try:
+                        if source.is_file():
+                            artifact_dir.mkdir(parents=True, exist_ok=True)
+                            destination = artifact_dir / (
+                                f"{index:02d}-{FailureEvidenceStore._safe_name(source.name)}"
+                            )
+                            shutil.copy2(source, destination)
+                            record.update(
+                                copied=True,
+                                evidence_path=str(destination),
+                                sha256=hashlib.sha256(destination.read_bytes()).hexdigest(),
+                                size_bytes=destination.stat().st_size,
+                            )
+                        else:
+                            record.update(copied=False, reason="missing_or_not_file")
+                    except OSError as exc:
+                        record.update(copied=False, reason=type(exc).__name__)
+                    copied_artifacts.append(record)
+            payload = {
+                "artifacts": copied_artifacts,
+                "context": context.to_dict(),
+                "details": _safe_json(details or {}),
+                "patch_path": str(patch_path) if patch_path else "",
+                "patch_sha256": hashlib.sha256(patch.encode("utf-8")).hexdigest(),
+                "preserved_at": _utc_now(),
+                "schema_version": VALIDATION_WORKTREE_RESCUE_SCHEMA_VERSION,
+            }
+            temporary = task_dir / f".{stem}.{os.getpid()}.json.tmp"
+            temporary.write_text(
+                json.dumps(payload, allow_nan=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            os.replace(temporary, payload_path)
+            return payload_path
+
+
+class ValidationWorktreeRescueCoordinator:
+    """Diagnose, repair, and revalidate a failed worktree within fixed budgets.
+
+    This class intentionally has no merge callback.  Its only positive output
+    is ``merge_eligible`` after a *fresh* successful validation following a
+    repair.  The caller's serialized merge lane remains the sole merge owner.
+    """
+
+    def __init__(
+        self,
+        evidence_store: ValidationWorktreeEvidenceStore | str | Path,
+        *,
+        operations: Optional[ValidationRescueOperations] = None,
+        max_diagnosis_attempts: int = 1,
+        max_repair_attempts: int = 2,
+    ) -> None:
+        if int(max_diagnosis_attempts) < 1:
+            raise ValueError("max_diagnosis_attempts must be at least one")
+        if int(max_repair_attempts) < 0:
+            raise ValueError("max_repair_attempts must be non-negative")
+        self.evidence_store = (
+            evidence_store
+            if isinstance(evidence_store, ValidationWorktreeEvidenceStore)
+            else ValidationWorktreeEvidenceStore(evidence_store)
+        )
+        self.operations = operations or ValidationRescueOperations()
+        self.max_diagnosis_attempts = int(max_diagnosis_attempts)
+        self.max_repair_attempts = int(max_repair_attempts)
+
+    @staticmethod
+    def _call(
+        callback: Optional[ValidationRescueCallback],
+        context: ValidationRescueContext,
+        *,
+        operation: str,
+        mapping_is_success: bool = False,
+    ) -> tuple[bool, bool, dict[str, Any], str]:
+        if callback is None:
+            return False, False, {}, f"{operation}_operation_not_configured"
+        try:
+            value = callback(context)
+        except (TimeoutError, ConnectionError) as exc:
+            return False, True, {}, f"{type(exc).__name__}: {exc}"
+        except Exception as exc:
+            return False, False, {}, f"{type(exc).__name__}: {exc}"
+        data = _rescue_mapping(value)
+        if "error" in data and str(data["error"]).startswith("invalid_result:"):
+            return False, False, data, str(data["error"])
+        explicit_result_keys = ("accepted", "passed", "succeeded", "ok", "status", "outcome")
+        if data.get("error") and not any(key in data for key in explicit_result_keys):
+            return False, bool(data.get("transient") is True), data, str(data["error"])
+        if isinstance(value, bool):
+            succeeded = value
+        elif value is None:
+            succeeded = True
+        elif mapping_is_success and not any(
+            key in data for key in explicit_result_keys
+        ):
+            succeeded = True
+        else:
+            status = str(data.get("status") or data.get("outcome") or "").strip().lower()
+            succeeded = bool(
+                data.get(
+                    "accepted",
+                    data.get("passed", data.get("succeeded", data.get("ok", False))),
+                )
+            ) or status in {
+                "ok", "passed", "succeeded", "diagnosed", "repaired", "requeued",
+            }
+        transient = bool(data.get("transient") is True or data.get("transient_failure") is True)
+        error = str(data.get("error", data.get("reason", "")) or "")
+        return succeeded, transient, data, error
+
+    def _preserve(
+        self,
+        context: ValidationRescueContext,
+        evidence_paths: list[str],
+        *,
+        details: Optional[Mapping[str, Any]] = None,
+        operations: Optional[ValidationRescueOperations] = None,
+    ) -> tuple[ValidationRescueContext, dict[str, Any]]:
+        # Built-in evidence is durable before the injected callback can mutate
+        # its own store, queue, or worktree snapshot.
+        path = self.evidence_store.preserve(context, details=details)
+        evidence_paths.append(str(path))
+        persisted_context = ValidationRescueContext(
+            request=context.request,
+            stage=context.stage,
+            attempt=context.attempt,
+            evidence_path=path,
+            diagnosis=context.diagnosis,
+            repair_result=context.repair_result,
+            validation_report=context.validation_report,
+            current_patch=context.current_patch,
+        )
+        selected_operations = operations or self.operations
+        if selected_operations.preserve is None:
+            return persisted_context, {}
+        succeeded, transient, result, error = self._call(
+            selected_operations.preserve,
+            persisted_context,
+            operation="preserve",
+            mapping_is_success=True,
+        )
+        return persisted_context, {
+            "succeeded": succeeded,
+            "transient": transient,
+            "result": result,
+            "error": error,
+        }
+
+    def _requeue_transient(
+        self,
+        request: ValidationWorktreeRescueRequest,
+        *,
+        diagnosis: Mapping[str, Any],
+        validation: Mapping[str, Any],
+        current_patch: str,
+        attempts: list[ValidationRescueAttempt],
+        evidence_paths: list[str],
+        reason: str,
+        operations: ValidationRescueOperations,
+    ) -> ValidationWorktreeRescueOutcome:
+        context, _ = self._preserve(
+            ValidationRescueContext(
+                request=request,
+                stage=ValidationRescueStage.PRE_REQUEUE,
+                attempt=sum(item.kind == "repair" for item in attempts),
+                diagnosis=diagnosis,
+                validation_report=validation,
+                current_patch=current_patch,
+            ),
+            evidence_paths,
+            details={"reason": reason, "semantic_statistics_update_allowed": False},
+            operations=operations,
+        )
+        succeeded, _, result, error = self._call(
+            operations.requeue, context, operation="requeue", mapping_is_success=True
+        )
+        attempts.append(
+            ValidationRescueAttempt(
+                "requeue", context.attempt, succeeded, True, str(context.evidence_path), result, error
+            )
+        )
+        return ValidationWorktreeRescueOutcome(
+            request=request,
+            status=(
+                ValidationRescueStatus.REQUEUED_TRANSIENT
+                if succeeded else ValidationRescueStatus.ACTION_FAILED
+            ),
+            attempts=tuple(attempts),
+            evidence_paths=tuple(evidence_paths),
+            final_validation_report=validation,
+            requeued=succeeded,
+            semantic_statistics_update_allowed=False,
+            reason=reason if succeeded else "transient_requeue_failed",
+        )
+
+    def rescue(
+        self,
+        request: ValidationWorktreeRescueRequest | Mapping[str, Any],
+        *,
+        operations: Optional[ValidationRescueOperations] = None,
+    ) -> ValidationWorktreeRescueOutcome:
+        if isinstance(request, Mapping):
+            request = ValidationWorktreeRescueRequest.from_packet(request)
+        if not isinstance(request, ValidationWorktreeRescueRequest):
+            raise TypeError("request must be a ValidationWorktreeRescueRequest or packet mapping")
+        selected_operations = operations or self.operations
+        attempts: list[ValidationRescueAttempt] = []
+        evidence_paths: list[str] = []
+        current_validation = dict(request.validation_report)
+        current_patch = request.patch
+        diagnosis: dict[str, Any] = {}
+        try:
+            initial_context, _ = self._preserve(
+                ValidationRescueContext(
+                    request=request,
+                    stage=ValidationRescueStage.INITIAL,
+                    validation_report=current_validation,
+                    current_patch=current_patch,
+                ),
+                evidence_paths,
+                details={"worktree_preserved": True},
+                operations=selected_operations,
+            )
+            accepted, transient, semantic_allowed, _ = _validation_rescue_state(current_validation)
+            transient = transient or bool(request.transient_failure)
+            if transient:
+                return self._requeue_transient(
+                    request,
+                    diagnosis=diagnosis,
+                    validation=current_validation,
+                    current_patch=current_patch,
+                    attempts=attempts,
+                    evidence_paths=evidence_paths,
+                    reason="explicit_transient_validation_failure",
+                    operations=selected_operations,
+                )
+            if accepted:
+                return ValidationWorktreeRescueOutcome(
+                    request=request,
+                    status=ValidationRescueStatus.NOT_REQUIRED,
+                    attempts=(),
+                    evidence_paths=tuple(evidence_paths),
+                    final_validation_report=current_validation,
+                    merge_eligible=False,
+                    fresh_post_repair_validation=False,
+                    semantic_statistics_update_allowed=True,
+                    reason="initial_validation_already_accepted",
+                )
+
+            diagnosis_succeeded = False
+            for number in range(1, self.max_diagnosis_attempts + 1):
+                context = ValidationRescueContext(
+                    request=request,
+                    stage=ValidationRescueStage.INITIAL,
+                    attempt=number,
+                    evidence_path=initial_context.evidence_path,
+                    diagnosis=diagnosis,
+                    validation_report=current_validation,
+                    current_patch=current_patch,
+                )
+                succeeded, diagnosis_transient, result, error = self._call(
+                    selected_operations.diagnose,
+                    context,
+                    operation="diagnose",
+                    mapping_is_success=True,
+                )
+                attempts.append(
+                    ValidationRescueAttempt(
+                        "diagnosis", number, succeeded, diagnosis_transient,
+                        str(context.evidence_path), result, error,
+                    )
+                )
+                if succeeded:
+                    diagnosis = result
+                    diagnosis_succeeded = True
+                    break
+                if diagnosis_transient:
+                    return self._requeue_transient(
+                        request,
+                        diagnosis=result,
+                        validation=current_validation,
+                        current_patch=current_patch,
+                        attempts=attempts,
+                        evidence_paths=evidence_paths,
+                        reason="transient_diagnosis_failure",
+                        operations=selected_operations,
+                    )
+            if not diagnosis_succeeded:
+                self._preserve(
+                    ValidationRescueContext(
+                        request=request,
+                        stage=ValidationRescueStage.TERMINAL,
+                        attempt=self.max_diagnosis_attempts,
+                        diagnosis=diagnosis,
+                        validation_report=current_validation,
+                        current_patch=current_patch,
+                    ),
+                    evidence_paths,
+                    details={
+                        "attempts": [attempt.to_dict() for attempt in attempts],
+                        "reason": "diagnosis_budget_exhausted",
+                    },
+                    operations=selected_operations,
+                )
+                return ValidationWorktreeRescueOutcome(
+                    request, ValidationRescueStatus.DIAGNOSIS_FAILED, tuple(attempts),
+                    tuple(evidence_paths), current_validation,
+                    semantic_statistics_update_allowed=semantic_allowed,
+                    reason="diagnosis_budget_exhausted",
+                )
+
+            for number in range(1, self.max_repair_attempts + 1):
+                pre_context, _ = self._preserve(
+                    ValidationRescueContext(
+                        request=request,
+                        stage=ValidationRescueStage.PRE_REPAIR,
+                        attempt=number,
+                        diagnosis=diagnosis,
+                        validation_report=current_validation,
+                        current_patch=current_patch,
+                    ),
+                    evidence_paths,
+                    details={"mutation_allowed_after_this_boundary": True},
+                    operations=selected_operations,
+                )
+                repaired, repair_transient, repair_result, repair_error = self._call(
+                    selected_operations.repair,
+                    pre_context,
+                    operation="repair",
+                    mapping_is_success=True,
+                )
+                returned_patch = repair_result.get("patch", repair_result.get("diff"))
+                if returned_patch is not None:
+                    current_patch = str(returned_patch)
+                post_context, _ = self._preserve(
+                    ValidationRescueContext(
+                        request=request,
+                        stage=ValidationRescueStage.POST_REPAIR,
+                        attempt=number,
+                        diagnosis=diagnosis,
+                        repair_result=repair_result,
+                        validation_report=current_validation,
+                        current_patch=current_patch,
+                    ),
+                    evidence_paths,
+                    details={"repair_succeeded": repaired, "repair_error": repair_error},
+                    operations=selected_operations,
+                )
+                attempts.append(
+                    ValidationRescueAttempt(
+                        "repair", number, repaired, repair_transient,
+                        str(post_context.evidence_path), repair_result, repair_error,
+                    )
+                )
+                if repair_transient:
+                    return self._requeue_transient(
+                        request,
+                        diagnosis=diagnosis,
+                        validation=current_validation,
+                        current_patch=current_patch,
+                        attempts=attempts,
+                        evidence_paths=evidence_paths,
+                        reason="transient_repair_failure",
+                        operations=selected_operations,
+                    )
+                if not repaired:
+                    continue
+
+                validate_ok, validate_transient, validate_result, validate_error = self._call(
+                    selected_operations.revalidate,
+                    post_context,
+                    operation="revalidate",
+                    mapping_is_success=False,
+                )
+                accepted, structured_transient, semantic_allowed, current_validation = (
+                    _validation_rescue_state(validate_result)
+                )
+                accepted = bool(validate_ok and accepted)
+                validate_transient = validate_transient or structured_transient
+                validation_context, _ = self._preserve(
+                    ValidationRescueContext(
+                        request=request,
+                        stage=ValidationRescueStage.POST_VALIDATION,
+                        attempt=number,
+                        diagnosis=diagnosis,
+                        repair_result=repair_result,
+                        validation_report=current_validation,
+                        current_patch=current_patch,
+                    ),
+                    evidence_paths,
+                    details={
+                        "accepted": accepted,
+                        "error": validate_error,
+                        "fresh_post_repair_validation": True,
+                        "transient": validate_transient,
+                    },
+                    operations=selected_operations,
+                )
+                attempts.append(
+                    ValidationRescueAttempt(
+                        "revalidation", number, accepted, validate_transient,
+                        str(validation_context.evidence_path), current_validation,
+                        validate_error,
+                    )
+                )
+                if accepted:
+                    return ValidationWorktreeRescueOutcome(
+                        request=request,
+                        status=ValidationRescueStatus.REPAIRED,
+                        attempts=tuple(attempts),
+                        evidence_paths=tuple(evidence_paths),
+                        final_validation_report=current_validation,
+                        merge_eligible=True,
+                        fresh_post_repair_validation=True,
+                        semantic_statistics_update_allowed=True,
+                        reason="fresh_post_repair_validation_accepted",
+                    )
+                if validate_transient:
+                    return self._requeue_transient(
+                        request,
+                        diagnosis=diagnosis,
+                        validation=current_validation,
+                        current_patch=current_patch,
+                        attempts=attempts,
+                        evidence_paths=evidence_paths,
+                        reason="transient_revalidation_failure",
+                        operations=selected_operations,
+                    )
+
+            terminal_context, _ = self._preserve(
+                ValidationRescueContext(
+                    request=request,
+                    stage=ValidationRescueStage.TERMINAL,
+                    attempt=self.max_repair_attempts,
+                    diagnosis=diagnosis,
+                    validation_report=current_validation,
+                    current_patch=current_patch,
+                ),
+                evidence_paths,
+                details={"reason": "repair_budget_exhausted", "merge_eligible": False},
+                operations=selected_operations,
+            )
+            del terminal_context
+            return ValidationWorktreeRescueOutcome(
+                request=request,
+                status=ValidationRescueStatus.REPAIR_EXHAUSTED,
+                attempts=tuple(attempts),
+                evidence_paths=tuple(evidence_paths),
+                final_validation_report=current_validation,
+                merge_eligible=False,
+                fresh_post_repair_validation=any(
+                    attempt.kind == "revalidation" for attempt in attempts
+                ),
+                semantic_statistics_update_allowed=semantic_allowed,
+                reason="repair_budget_exhausted",
+            )
+        finally:
+            # All state is invocation-local; the finally block intentionally
+            # performs no queue, worktree, or callback mutation.
+            pass
+
+    # Common orchestration spelling.
+    handle = rescue
+
+
+# Concise compatibility aliases for queue/worktree integrations.
+FailedValidationRescueRequest = ValidationWorktreeRescueRequest
+ValidationRescueOutcome = ValidationWorktreeRescueOutcome
+FailedWorktreeRescuer = ValidationWorktreeRescueCoordinator
+BoundedValidationWorktreeRescuer = ValidationWorktreeRescueCoordinator
+
+
 # Concise public aliases for callers which do not need the longer subsystem name.
 FailureClassifier = ProgramSynthesisFailureClassifier
 FailureRecoveryManager = ProgramSynthesisFailureRecovery
@@ -1137,6 +2039,10 @@ __all__ = [
     "FAILURE_RATE_REPORT_SCHEMA_VERSION",
     "PROGRAM_SYNTHESIS_FAILURE_SCHEMA_VERSION",
     "PROGRAM_SYNTHESIS_RECOVERY_SCHEMA_VERSION",
+    "VALIDATION_WORKTREE_RESCUE_SCHEMA_VERSION",
+    "BoundedValidationWorktreeRescuer",
+    "FailedValidationRescueRequest",
+    "FailedWorktreeRescuer",
     "FailureCategory",
     "FailureClassification",
     "FailureClassifier",
@@ -1153,4 +2059,14 @@ __all__ = [
     "RecoveryOperations",
     "RecoveryOutcome",
     "RecoveryStatus",
+    "ValidationRescueAttempt",
+    "ValidationRescueContext",
+    "ValidationRescueOperations",
+    "ValidationRescueOutcome",
+    "ValidationRescueStage",
+    "ValidationRescueStatus",
+    "ValidationWorktreeEvidenceStore",
+    "ValidationWorktreeRescueCoordinator",
+    "ValidationWorktreeRescueOutcome",
+    "ValidationWorktreeRescueRequest",
 ]
