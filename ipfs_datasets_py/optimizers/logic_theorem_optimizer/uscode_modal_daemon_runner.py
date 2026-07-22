@@ -22494,10 +22494,26 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     return 0
 
 
+def _codex_shutdown_drain_attempt_count(args: argparse.Namespace) -> int:
+    """Return the maximum CLI attempts possible for one claimed packet."""
+
+    execution_mode = str(getattr(args, "codex_exec_mode", "codex_cli")).strip().lower()
+    requested_sandbox = str(
+        getattr(args, "codex_sandbox", "workspace-write") or "workspace-write"
+    ).strip().lower()
+    if execution_mode != "codex_cli":
+        return 0
+    return 1 if requested_sandbox == CODEX_SANDBOX_FALLBACK else 2
+
+
 def _codex_shutdown_drain_window_seconds(args: argparse.Namespace) -> float:
     """Reserve enough time for an already-claimed packet to finish cleanly."""
 
-    exec_budget = 2.0 * max(0.0, float(args.codex_timeout_seconds))
+    exec_attempt_count = _codex_shutdown_drain_attempt_count(args)
+    exec_budget = float(exec_attempt_count) * max(
+        0.0,
+        float(args.codex_timeout_seconds),
+    )
     if str(getattr(args, "codex_apply_mode", "patch_only")) == "apply_to_main":
         validation_budget = 300.0
         lock_budget = max(
@@ -22634,6 +22650,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     end_at = started_at + args.duration_seconds
     shutdown_drain_window_seconds = _codex_shutdown_drain_window_seconds(args)
     summary["codex_shutdown_drain_window_seconds"] = shutdown_drain_window_seconds
+    summary["codex_shutdown_drain_attempt_count"] = (
+        _codex_shutdown_drain_attempt_count(args)
+    )
     policy = ModalOptimizerPolicy()
     append_event(
         log_path,

@@ -5823,7 +5823,9 @@ def test_paired_runner_fails_fast_when_autoencoder_child_crashes() -> None:
 def test_codex_shutdown_drain_window_covers_fallback_attempts() -> None:
     args = SimpleNamespace(
         codex_apply_mode="patch_only",
+        codex_exec_mode="codex_cli",
         codex_main_apply_lock_timeout_seconds=300.0,
+        codex_sandbox="workspace-write",
         codex_timeout_seconds=180.0,
         codex_vector_max_bundle_wait_seconds=30.0,
         poll_seconds=5.0,
@@ -5832,6 +5834,22 @@ def test_codex_shutdown_drain_window_covers_fallback_attempts() -> None:
     assert runner._codex_shutdown_drain_window_seconds(args) == 405.0
     args.codex_apply_mode = "apply_to_main"
     assert runner._codex_shutdown_drain_window_seconds(args) == 1305.0
+
+
+def test_codex_shutdown_drain_window_does_not_reserve_impossible_fallback() -> None:
+    args = SimpleNamespace(
+        codex_apply_mode="patch_only",
+        codex_exec_mode="codex_cli",
+        codex_main_apply_lock_timeout_seconds=300.0,
+        codex_sandbox="danger-full-access",
+        codex_timeout_seconds=180.0,
+        codex_vector_max_bundle_wait_seconds=30.0,
+        poll_seconds=5.0,
+    )
+
+    assert runner._codex_shutdown_drain_window_seconds(args) == 225.0
+    args.codex_exec_mode = "packet_only"
+    assert runner._codex_shutdown_drain_window_seconds(args) == 45.0
 
 
 def test_codex_execution_budget_counts_validation_dispositions() -> None:
