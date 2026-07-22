@@ -150,10 +150,13 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator impo
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.async_artifact_writer import (
     ASYNC_ARTIFACT_WRITER_SCHEMA_VERSION,
-    STATE_DELTA_SCHEMA_VERSION,
     ArtifactFsyncPolicy,
     ArtifactWriteFuture,
     AsyncArtifactWriter,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_checkpoint import (
+    MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
+    load_checkpoint as load_autoencoder_checkpoint,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     LeanstralTodoProjectionConfig,
@@ -17714,6 +17717,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary_path = log_dir / f"{args.run_id}.summary"
     queue_path = queue_dir / f"{args.run_id}.jsonl"
     state_path = queue_dir / f"{args.run_id}.state.json"
+    state_delta_path = queue_dir / f"{args.run_id}.state-deltas.bin"
     run_json_path = queue_dir / f"{args.run_id}.last-run.json"
     log_dir.mkdir(parents=True, exist_ok=True)
     queue_dir.mkdir(parents=True, exist_ok=True)
@@ -17886,7 +17890,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary["autoencoder_introspection_enforce_block_reason"] = ""
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
-    state = ModalAutoencoderTrainingState.load_json(state_path)
+    if state_path.exists():
+        state = load_autoencoder_checkpoint(
+            state_path,
+            delta_path=state_delta_path,
+            expected_state_schema_version=MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+            recover=True,
+        ).state
+    else:
+        state = ModalAutoencoderTrainingState()
     warm_start_paths = resolve_warm_start_state_paths(args, queue_dir)
     if warm_start_paths:
         existing_warm_start = dict(summary.get("warm_start", {}))
@@ -17910,6 +17922,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 state,
                 cycle=int(summary.get("cycles", 0) or 0),
                 full=True,
+                compact=True,
                 metadata={
                     "reason": "warm_start",
                     "run_id": args.run_id,
@@ -17923,6 +17936,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 args.run_id,
                 {"event": "warm_start_loaded", "warm_start": warm_start},
             )
+    persisted_state = state.copy()
+    persisted_state._state_identity_tracker.restore_revision(state.state_revision)
     with queue_file_lock(queue_path):
         queue = ModalTodoQueue.load_jsonl(queue_path)
     feature_codec = DeterministicModalLogicCodec(
@@ -19845,25 +19860,6 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     },
                 )
             mark_cycle_phase("state_persistence_enqueue")
-            state_delta_path = queue_dir / f"{args.run_id}.state-deltas.jsonl"
-            state_delta_future = artifact_writer.append_state_delta(
-                state_delta_path,
-                {
-                    "applied_leanstral_guidance_count": len(
-                        autoencoder.state.applied_leanstral_guidance_ids
-                    ),
-                    "applied_todo_count": len(autoencoder.state.applied_todo_ids),
-                    "cycle": int(cycle),
-                    "decoded_embedding_count": len(
-                        autoencoder.state.decoded_embeddings
-                    ),
-                    "family_logit_sample_count": len(
-                        autoencoder.state.family_logits
-                    ),
-                    "run_id": args.run_id,
-                    "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
-                },
-            )
             full_checkpoint_every = max(
                 1,
                 int(
@@ -19876,17 +19872,34 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 ),
             )
             state_checkpoint_future = None
+            state_delta_future = None
             if cycle == 1 or cycle % full_checkpoint_every == 0:
                 state_checkpoint_future = artifact_writer.write_state_checkpoint(
                     state_path,
                     autoencoder.state,
                     cycle=cycle,
                     full=True,
+                    compact=True,
                     metadata={
                         "run_id": args.run_id,
                         "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
                     },
                 )
+            else:
+                state_delta_future = artifact_writer.append_state_delta(
+                    state_delta_path,
+                    autoencoder.state,
+                    base_state=persisted_state,
+                    cycle=cycle,
+                    metadata={
+                        "run_id": args.run_id,
+                        "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                    },
+                )
+            persisted_state = autoencoder.state.copy()
+            persisted_state._state_identity_tracker.restore_revision(
+                autoencoder.state.state_revision
+            )
             run.save_json(run_json_path)
             summary["latest_async_state_persistence"] = {
                 "checkpoint_enqueued": state_checkpoint_future is not None,
@@ -19895,11 +19908,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     if state_checkpoint_future is not None
                     else ""
                 ),
-                "delta_future_id": state_delta_future.job_id,
+                "delta_enqueued": state_delta_future is not None,
+                "delta_future_id": (
+                    state_delta_future.job_id if state_delta_future is not None else ""
+                ),
                 "full_checkpoint_every_n_cycles": full_checkpoint_every,
                 "state_delta_path": str(state_delta_path),
                 "state_path": str(state_path),
-                "state_delta_schema_version": STATE_DELTA_SCHEMA_VERSION,
+                "state_delta_schema_version": MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
             }
             summary["async_artifact_writer"] = artifact_writer.summary()
             finish_cycle_phase()

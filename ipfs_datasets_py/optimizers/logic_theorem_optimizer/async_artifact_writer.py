@@ -15,6 +15,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from .modal_autoencoder_checkpoint import (
+    MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION,
+    MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
+    append_delta_segment as append_compact_delta_segment,
+    serialize_checkpoint,
+    serialize_delta,
+)
+
 
 ASYNC_ARTIFACT_WRITER_SCHEMA_VERSION = "legal-ir-async-artifact-writer-v1"
 STATE_DELTA_SCHEMA_VERSION = "legal-ir-autoencoder-state-delta-v1"
@@ -148,13 +156,14 @@ class _ArtifactJob:
     payload_factory: Callable[[], bytes]
     created_at: str
     append_jsonl: bool = False
+    append_state_delta: bool = False
     dedupe_keys: Sequence[str] = field(default_factory=tuple)
     metadata: Mapping[str, Any] = field(default_factory=dict)
     future: Optional[ArtifactWriteFuture] = None
 
 
 class AsyncArtifactWriter:
-    """Persist JSON/JSONL artifacts on a bounded worker with crash replay."""
+    """Persist JSON, JSONL, and compact state artifacts with crash replay."""
 
     def __init__(
         self,
@@ -381,13 +390,62 @@ class AsyncArtifactWriter:
         *,
         cycle: int,
         full: bool = True,
+        compact: Optional[bool] = None,
+        float_precision: str = "float64",
+        metric_lineage: Any = None,
+        base_state: Any = None,
         metadata: Optional[Mapping[str, Any]] = None,
         timeout: Optional[float] = None,
         wait: bool = False,
     ) -> ArtifactWriteFuture | ArtifactWriteReceipt:
         state_copy = state.copy() if hasattr(state, "copy") else copy.deepcopy(state)
+        source_revision = int(getattr(state, "state_revision", 0))
+        tracker = getattr(state_copy, "_state_identity_tracker", None)
+        restore_revision = getattr(tracker, "restore_revision", None)
+        if callable(restore_revision):
+            restore_revision(source_revision)
+        use_compact = (
+            Path(path).suffix.lower() not in {".json", ".jsonl"}
+            if compact is None
+            else bool(compact)
+        )
+        base_copy = None
+        base_revision = None
+        if not full:
+            if base_state is None:
+                raise ValueError("base_state is required for a compact state delta")
+            base_copy = (
+                base_state.copy()
+                if hasattr(base_state, "copy")
+                else copy.deepcopy(base_state)
+            )
+            base_revision = int(getattr(base_state, "state_revision", 0))
+            base_tracker = getattr(base_copy, "_state_identity_tracker", None)
+            base_restore = getattr(base_tracker, "restore_revision", None)
+            if callable(base_restore):
+                base_restore(base_revision)
+            use_compact = True
 
         def payload_factory() -> bytes:
+            if use_compact:
+                if full:
+                    return serialize_checkpoint(
+                        state_copy,
+                        float_precision=float_precision,
+                        metric_lineage=metric_lineage,
+                        metadata={"cycle": int(cycle), **dict(metadata or {})},
+                        revision=source_revision,
+                    )
+                assert base_copy is not None
+                return serialize_delta(
+                    base_copy,
+                    state_copy,
+                    float_precision=float_precision,
+                    metric_lineage=metric_lineage,
+                    metadata={"cycle": int(cycle), **dict(metadata or {})},
+                    base_revision=base_revision,
+                    revision=source_revision,
+                )
             to_json = getattr(state_copy, "to_json", None)
             if callable(to_json):
                 return (to_json() + "\n").encode("utf-8")
@@ -399,9 +457,18 @@ class AsyncArtifactWriter:
             kind="state_checkpoint_full" if full else "state_checkpoint_delta",
             path=Path(path),
             payload_factory=payload_factory,
+            append_state_delta=bool(use_compact and not full),
             metadata={
+                "checkpoint_schema_version": (
+                    MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION
+                    if full
+                    else MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION
+                ) if use_compact else "legacy-json",
+                "compact": bool(use_compact),
                 "cycle": int(cycle),
+                "float_precision": str(float_precision),
                 "full": bool(full),
+                "revision": source_revision,
                 **dict(metadata or {}),
             },
             timeout=timeout,
@@ -411,11 +478,32 @@ class AsyncArtifactWriter:
     def append_state_delta(
         self,
         path: str | Path,
-        delta: Mapping[str, Any],
+        delta: Any,
         *,
+        base_state: Any = None,
+        cycle: int = 0,
+        float_precision: str = "float64",
+        metric_lineage: Any = None,
+        metadata: Optional[Mapping[str, Any]] = None,
         timeout: Optional[float] = None,
         wait: bool = False,
     ) -> ArtifactWriteFuture | ArtifactWriteReceipt:
+        if not isinstance(delta, Mapping) or base_state is not None:
+            if base_state is None:
+                raise ValueError("base_state is required for a compact state delta")
+            return self.write_state_checkpoint(
+                path,
+                delta,
+                cycle=cycle,
+                full=False,
+                compact=True,
+                float_precision=float_precision,
+                metric_lineage=metric_lineage,
+                base_state=base_state,
+                metadata=metadata,
+                timeout=timeout,
+                wait=wait,
+            )
         payload = {
             "created_at": _utc_now(),
             "schema_version": STATE_DELTA_SCHEMA_VERSION,
@@ -507,6 +595,7 @@ class AsyncArtifactWriter:
         path: Path,
         payload_factory: Callable[[], bytes],
         append_jsonl: bool = False,
+        append_state_delta: bool = False,
         dedupe_keys: Sequence[str] = (),
         metadata: Optional[Mapping[str, Any]] = None,
         timeout: Optional[float] = None,
@@ -523,6 +612,7 @@ class AsyncArtifactWriter:
             path=path,
             payload_factory=payload_factory,
             append_jsonl=append_jsonl,
+            append_state_delta=append_state_delta,
             dedupe_keys=tuple(dedupe_keys),
             metadata=copy.deepcopy(dict(metadata or {})),
             created_at=_utc_now(),
@@ -585,6 +675,7 @@ class AsyncArtifactWriter:
             _fsync_directory(payload_path.parent)
         manifest = {
             "append_jsonl": bool(job.append_jsonl),
+            "append_state_delta": bool(job.append_state_delta),
             "checksum": _sha256(payload),
             "created_at": job.created_at,
             "dedupe_keys": list(job.dedupe_keys),
@@ -639,7 +730,15 @@ class AsyncArtifactWriter:
             raise AsyncArtifactWriteError(f"checksum mismatch for {payload_path}")
         destination = Path(str(manifest["path"]))
         destination.parent.mkdir(parents=True, exist_ok=True)
-        if bool(manifest.get("append_jsonl", False)):
+        if bool(manifest.get("append_state_delta", False)):
+            bytes_written = append_compact_delta_segment(
+                destination,
+                payload,
+                fsync=self.fsync_policy.data,
+            )
+            if self.fsync_policy.directory:
+                _fsync_directory(destination.parent)
+        elif bool(manifest.get("append_jsonl", False)):
             bytes_written = self._append_jsonl_payload(
                 destination,
                 payload,
