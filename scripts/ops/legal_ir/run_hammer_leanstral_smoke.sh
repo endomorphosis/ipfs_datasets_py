@@ -18,6 +18,7 @@ fi
 RUN_ID="${RUN_ID:-legal-ir-hammer-leanstral-smoke-$(date -u +%Y%m%dT%H%M%SZ)}"
 DURATION_SECONDS="${DURATION_SECONDS:-600}"
 MAX_CYCLES="${MAX_CYCLES:-0}"
+RUNNER_DURATION_MARGIN_SECONDS="${RUNNER_DURATION_MARGIN_SECONDS:-10}"
 SUMMARY_PATH="${SUMMARY_PATH:-${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.summary}"
 LEANSTRAL_SERVICE_STATE_PATH="${LEANSTRAL_AUDIT_SERVICE_STATE_PATH:-${ROOT_DIR}/workspace/leanstral-audit-worker/persistent-service.state.json}"
 PAIRED_SUMMARY_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.summary"
@@ -150,12 +151,19 @@ if [[ ! "${DURATION_SECONDS}" =~ ^[0-9]+$ ]] || (( DURATION_SECONDS != 600 )); t
   echo "promotion smoke duration is immutable: DURATION_SECONDS must be 600" >&2
   exit 2
 fi
-# The daemon deliberately declines to begin a cycle in its final eight seconds.
-# A ten-second orchestration margin therefore yields at least 600 measured
-# active seconds while keeping the contractual stage duration exactly 600.
-RUNNER_DURATION_SECONDS="$((DURATION_SECONDS + 10))"
-if [[ ! "${MAX_CYCLES}" =~ ^[0-9]+$ ]] || (( MAX_CYCLES != 0 )); then
-  echo "promotion smoke is duration-bound: MAX_CYCLES must be 0" >&2
+# The ordinary task-116 entry point remains duration-bound. Task 117 may set a
+# larger orchestration margin and an exact cycle ceiling of at least two so a
+# long second cycle can seal its durable state instead of being killed by the
+# paired supervisor immediately after crossing the active-time threshold.
+if [[ ! "${RUNNER_DURATION_MARGIN_SECONDS}" =~ ^[0-9]+$ ]] \
+    || (( RUNNER_DURATION_MARGIN_SECONDS < 10 )); then
+  echo "RUNNER_DURATION_MARGIN_SECONDS must be an integer of at least 10" >&2
+  exit 2
+fi
+RUNNER_DURATION_SECONDS="$((DURATION_SECONDS + RUNNER_DURATION_MARGIN_SECONDS))"
+if [[ ! "${MAX_CYCLES}" =~ ^[0-9]+$ ]] \
+    || (( MAX_CYCLES != 0 && MAX_CYCLES < 2 )); then
+  echo "promotion smoke MAX_CYCLES must be 0 or at least 2" >&2
   exit 2
 fi
 for byte_limit in MAX_SUMMARY_BYTES MAX_CHECKPOINT_BYTES; do
@@ -241,6 +249,7 @@ CMD=(
   --compiler-ir-metric-sample-timeout-seconds "${COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS:-10}"
   --max-inner-iterations "${MAX_INNER_ITERATIONS:-1}"
   --max-items "${MAX_ITEMS:-1}"
+  --sampling-seed "${SAMPLING_SEED:-PORTAL-LIR-HAMMER-117-fixed-smoke-v1}"
   --learning-rate "${LEARNING_RATE:-0.30}"
   --generalizable-projection-epochs "${GENERALIZABLE_PROJECTION_EPOCHS:-1}"
   --generalizable-projection-timeout-seconds "${GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS:-240}"
@@ -273,6 +282,8 @@ CMD=(
   --daemon-hammer-guidance-max-premises "${DAEMON_HAMMER_GUIDANCE_MAX_PREMISES:-64}"
   --daemon-hammer-guidance-timeout-seconds "${DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS:-5}"
   --daemon-hammer-guidance-parallel-workers "${DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS:-2}"
+  --daemon-hammer-guidance-verify-reconstruction true
+  --daemon-hammer-guidance-trusted-requires-reconstruction true
   --daemon-hammer-guidance-train-autoencoder true
   --daemon-hammer-guidance-max-training-items "${DAEMON_HAMMER_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
   --paired-supervisor-backend accelerate_style
