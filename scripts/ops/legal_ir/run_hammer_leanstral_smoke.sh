@@ -25,8 +25,9 @@ CHECKPOINT_PATH="${ROOT_DIR}/workspace/todo-queues/${RUN_ID}-autoencoder.state.j
 EVIDENCE_OUTPUT="${EVIDENCE_OUTPUT:-${ROOT_DIR}/workspace/test-logs/${RUN_ID}-smoke-evidence.json}"
 ROLLBACK_ARTIFACT="${ROLLBACK_ARTIFACT:-${ROOT_DIR}/workspace/test-logs/${RUN_ID}-smoke-rollback.json}"
 GATE_DECISION_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-smoke-gate.json"
-MAX_SUMMARY_BYTES="${MAX_SUMMARY_BYTES:-33554432}"
+MAX_SUMMARY_BYTES="${MAX_SUMMARY_BYTES:-8388608}"
 MAX_CHECKPOINT_BYTES="${MAX_CHECKPOINT_BYTES:-536870912}"
+MAX_GENERALIZABLE_ENTRIES_PER_GROUP="${AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP:-8192}"
 RESUME_FROM_RUN_ID=""
 RESUME_FROM_STATE=""
 RUN_ID_EXPLICIT=0
@@ -166,6 +167,10 @@ for byte_limit in MAX_SUMMARY_BYTES MAX_CHECKPOINT_BYTES; do
     exit 2
   fi
 done
+if [[ ! "${MAX_GENERALIZABLE_ENTRIES_PER_GROUP}" =~ ^[0-9]+$ ]] || (( MAX_GENERALIZABLE_ENTRIES_PER_GROUP < 1 )); then
+  echo "AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP must be a positive integer" >&2
+  exit 2
+fi
 
 gate_boolean_flag() {
   local value="${1,,}"
@@ -254,12 +259,13 @@ CMD=(
   --generalizable-projection-max-legal-ir-loss-regression "${MAX_LEGAL_IR_LOSS_REGRESSION:-0.01}"
   --autoencoder-hard-guardrail-metrics "${HARD_GUARDRAILS}"
   --autoencoder-device "${AUTOENCODER_DEVICE:-cuda}"
+  --autoencoder-max-generalizable-entries-per-group "${MAX_GENERALIZABLE_ENTRIES_PER_GROUP}"
   --async-artifact-writer-max-queue-bytes "${MAX_CHECKPOINT_BYTES}"
-  --async-artifact-full-checkpoint-every-n-cycles "${ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES:-1}"
+  --async-artifact-full-checkpoint-every-n-cycles "${ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES:-16}"
   --autoencoder-bridge-workers "${AUTOENCODER_BRIDGE_WORKERS:-2}"
   --autoencoder-metric-bridge-adapters "${AUTOENCODER_METRIC_BRIDGE_ADAPTERS:-modal_frame_logic,deontic_norms,fol_tdfol,cec_dcec,external_prover_router}"
   --bridge-loss-adapters "${BRIDGE_LOSS_ADAPTERS:-modal_frame_logic,deontic_norms}"
-  --bridge-evaluate-provers "${BRIDGE_EVALUATE_PROVERS:-false}"
+  --bridge-evaluate-provers "${BRIDGE_EVALUATE_PROVERS:-true}"
   --autoencoder-introspection-mode "${AUTOENCODER_INTROSPECTION_MODE:-seed}"
   --autoencoder-introspection-every-n-cycles "${AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES:-1}"
   --autoencoder-max-audits-per-cycle "${AUTOENCODER_MAX_AUDITS_PER_CYCLE:-4}"
@@ -290,7 +296,8 @@ CMD=(
   --paired-poll-seconds "${PAIRED_POLL_SECONDS:-1}"
   --codex-exec-mode "${CODEX_EXEC_MODE}"
   --codex-sandbox "${CODEX_SANDBOX:-danger-full-access}"
-  --codex-timeout-seconds "${CODEX_TIMEOUT_SECONDS:-180}"
+  --codex-timeout-seconds "${CODEX_TIMEOUT_SECONDS:-420}"
+  --codex-max-executions "${CODEX_MAX_EXECUTIONS:-1}"
   --codex-apply-mode "${CODEX_APPLY_MODE:-patch_only}"
   --codex-commit-mode "${CODEX_COMMIT_MODE:-none}"
   --codex-parallel-scopes "${CODEX_PARALLEL_SCOPES:-compiler_parser,compiler_registry,compiler_ambiguity,ir_decompiler,frame_logic,deontic,tdfol,knowledge_graphs,cec,external_provers}"
@@ -337,12 +344,20 @@ verify_integrated_stack() {
   paired_summary="${PAIRED_SUMMARY_PATH}"
   leanstral_log="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.leanstral.stdout.log"
   "${PYTHON_BIN}" - "${SUMMARY_PATH}" "${paired_summary}" "${LEANSTRAL_SERVICE_STATE_PATH}" \
-    "${leanstral_log}" "${CHECKPOINT_PATH}" "${MAX_SUMMARY_BYTES}" "${MAX_CHECKPOINT_BYTES}" <<'PY'
+    "${leanstral_log}" "${CHECKPOINT_PATH}" "${MAX_SUMMARY_BYTES}" "${MAX_CHECKPOINT_BYTES}" \
+    "${MAX_GENERALIZABLE_ENTRIES_PER_GROUP}" <<'PY'
 import json
 import math
 import os
 import sys
 from pathlib import Path
+
+from scripts.ops.legal_ir.verify_legal_ir_run_evidence import (
+    REQUIRED_FAMILIES,
+    REQUIRED_FAMILY_OBSERVED_METRICS,
+    _strict_contract_evidence,
+    _strict_metric_evidence,
+)
 
 (
     auto_path,
@@ -352,9 +367,11 @@ from pathlib import Path
     checkpoint_path,
     max_summary_bytes_raw,
     max_checkpoint_bytes_raw,
+    max_generalizable_entries_raw,
 ) = sys.argv[1:]
 max_summary_bytes = int(max_summary_bytes_raw)
 max_checkpoint_bytes = int(max_checkpoint_bytes_raw)
+max_generalizable_entries = int(max_generalizable_entries_raw)
 
 for raw, maximum, label in (
     (auto_path, max_summary_bytes, "autoencoder summary"),
@@ -380,6 +397,18 @@ if auto.get("autoencoder_compute_backend") != "torch_cuda":
     )
 if not str(auto.get("autoencoder_compute_device") or "").lower().startswith("cuda"):
     raise SystemExit(f"autoencoder device is not CUDA: {auto.get('autoencoder_compute_device')!r}")
+capacity = auto.get("latest_autoencoder_generalizable_capacity") or {}
+if (
+    auto.get("autoencoder_generalizable_capacity_schema_version")
+    != "modal-autoencoder-generalizable-capacity-v1"
+    or int(auto.get("autoencoder_max_generalizable_entries_per_group") or 0)
+    != max_generalizable_entries
+    or capacity.get("schema_version")
+    != "modal-autoencoder-generalizable-capacity-v1"
+    or int(capacity.get("max_entries_per_group") or 0)
+    != max_generalizable_entries
+):
+    raise SystemExit(f"autoencoder state capacity evidence invalid: {capacity!r}")
 if int(auto.get("cycles") or 0) < 2:
     raise SystemExit(f"smoke completed fewer than two warm cycles: {auto.get('cycles')!r}")
 try:
@@ -388,6 +417,17 @@ except (TypeError, ValueError):
     active_seconds = 0.0
 if not math.isfinite(active_seconds) or active_seconds < 600.0:
     raise SystemExit(f"smoke accumulated fewer than 600 active seconds: {active_seconds!r}")
+final_persistence = auto.get("final_state_persistence") or {}
+if (
+    final_persistence.get("durable") is not True
+    or Path(str(final_persistence.get("state_path") or "")) != Path(checkpoint_path)
+    or int(final_persistence.get("checkpoint_revision") or 0) < 1
+):
+    raise SystemExit(f"final state checkpoint is not durable: {final_persistence!r}")
+try:
+    metric_evidence = _strict_metric_evidence(auto)
+except ValueError as exc:
+    raise SystemExit(f"strict metric verification failed: {exc}") from exc
 
 def walk(value):
     if isinstance(value, dict):
@@ -468,6 +508,12 @@ for key, value in walk(auto):
         raise SystemExit(f"autoencoder CPU fallback evidence detected: {key}={value!r}")
 
 health = paired.get("leanstral_worker_health") or {}
+if (
+    paired.get("status") != "succeeded"
+    or paired.get("paired_timeout_exceeded") is True
+    or paired.get("latest_stop_reason") == "paired_timeout_grace_exceeded"
+):
+    raise SystemExit(f"paired supervisor did not complete cleanly: {paired!r}")
 if not health.get("cuda_confirmed"):
     raise SystemExit(f"Leanstral CUDA verification failed: {health!r}")
 if not health.get("report_present"):
@@ -530,6 +576,46 @@ if float(hammer_metrics.get("hammer_backend_unavailable_ratio") or 0.0) >= 1.0:
     raise SystemExit(f"all Hammer backends were unavailable: {hammer_metrics!r}")
 if int(hammer_metrics.get("hammer_obligation_count") or hammer.get("obligation_count") or 0) < 1:
     raise SystemExit(f"Hammer produced no proof obligations: {hammer_metrics!r}")
+if int(hammer.get("contract_projection_failure_count") or 0) != 0:
+    raise SystemExit(f"bridge-to-contract projection failed: {hammer!r}")
+legal_proved_count = int(hammer_metrics.get("hammer_proved_count") or 0)
+legal_reconstruction_count = int(
+    hammer_metrics.get("hammer_reconstruction_success_count") or 0
+)
+legal_trusted_count = int(hammer_metrics.get("trusted_hammer_guidance_count") or 0)
+if not legal_trusted_count <= legal_reconstruction_count <= legal_proved_count:
+    raise SystemExit(f"Hammer success counters are incoherent: {hammer_metrics!r}")
+runtime_canary = hammer.get("runtime_canary") or {}
+canary_proved_count = int(runtime_canary.get("proved_count") or 0)
+canary_reconstruction_count = int(runtime_canary.get("reconstruction_count") or 0)
+canary_trusted_count = int(runtime_canary.get("trusted_count") or 0)
+if (
+    runtime_canary.get("status") != "passed"
+    or min(canary_proved_count, canary_reconstruction_count, canary_trusted_count) < 1
+    or "z3_python" not in set(runtime_canary.get("winner_backends") or [])
+    or "lean" not in set(runtime_canary.get("checker_routes") or [])
+):
+    raise SystemExit(f"SMT-to-Lean runtime canary failed: {runtime_canary!r}")
+try:
+    contract_evidence = _strict_contract_evidence(auto, hammer)
+except ValueError as exc:
+    raise SystemExit(f"strict LegalIR contract verification failed: {exc}") from exc
+family_metrics = (
+    (auto.get("latest_legal_ir_view_family_validation") or {}).get("view_family_metrics")
+    or (auto.get("latest_autoencoder_validation") or {}).get("legal_ir_view_family_metrics")
+    or {}
+)
+if set(family_metrics) != set(REQUIRED_FAMILIES):
+    raise SystemExit(f"LegalIR family metric set is incomplete: {sorted(family_metrics)!r}")
+for family in REQUIRED_FAMILIES:
+    row = family_metrics.get(family) or {}
+    observed = {str(name) for name in (row.get("observed_metrics") or [])}
+    if (
+        int(row.get("sample_count") or 0) < 1
+        or float(row.get("metric_coverage") or 0.0) <= 0.0
+        or not REQUIRED_FAMILY_OBSERVED_METRICS.issubset(observed)
+    ):
+        raise SystemExit(f"LegalIR family lacks measured IR coverage: {family}={row!r}")
 
 report_path = health.get("report_path")
 with open(report_path, "r", encoding="utf-8") as handle:
@@ -562,12 +648,30 @@ codex_activity = (
 )
 if codex_activity < 1:
     raise SystemExit(f"Codex did not claim or execute queue work: {codex_health!r}")
+if int(codex_health.get("program_synthesis_completed") or 0) < 1:
+    raise SystemExit(
+        "Codex produced no validated compiler patch; "
+        f"health={codex_health!r}"
+    )
+if int(codex_health.get("program_synthesis_claimed") or 0) != 0:
+    raise SystemExit(f"Codex left a claimed TODO without disposition: {codex_health!r}")
 child_status = paired.get("child_status") or {}
 if child_status.get("autoencoder") != "exited" or child_status.get("leanstral") != "exited":
     raise SystemExit(f"managed CUDA children were not reaped: {child_status!r}")
 codex_status = child_status.get("codex") or {}
 if not codex_status or any(value != "exited" for value in codex_status.values()):
     raise SystemExit(f"managed Codex children were not reaped: {child_status!r}")
+if int(paired.get("autoencoder_exit_code") or 0) != 0:
+    raise SystemExit(f"autoencoder child exit was not clean: {paired.get('autoencoder_exit_code')!r}")
+codex_exit_codes = paired.get("codex_exit_codes") or {}
+if set(codex_exit_codes) != set(codex_status) or any(
+    int(value) != 0 for value in codex_exit_codes.values()
+):
+    raise SystemExit(f"Codex child exits were not clean: {codex_exit_codes!r}")
+runner_terminated = set(paired.get("runner_terminated_children") or [])
+allowed_termination = {f"{auto.get('run_id')}:leanstral"}
+if runner_terminated - allowed_termination or paired.get("autoencoder_runner_terminated") is True:
+    raise SystemExit(f"finite-work children were terminated by the runner: {runner_terminated!r}")
 queue_run_id = paired.get("queue_run_id")
 for child in codex_children:
     child_path = child.get("stdout_path", "").replace(".orchestrator.stdout.log", ".summary")
@@ -586,6 +690,14 @@ print(
     f"active_seconds={active_seconds:g} "
     f"cuda_optimizer_steps={optimizer_steps:g} "
     f"cuda_forward_backward={forward_backward:g} "
+    f"metric_samples={metric_evidence['sample_count']} "
+    f"contract_coverage={contract_evidence['coverage']:g} "
+    f"legal_hammer_proved={legal_proved_count} "
+    f"legal_hammer_reconstructed={legal_reconstruction_count} "
+    f"legal_hammer_trusted={legal_trusted_count} "
+    f"runtime_canary_proved={canary_proved_count} "
+    f"runtime_canary_reconstructed={canary_reconstruction_count} "
+    f"runtime_canary_trusted={canary_trusted_count} "
     f"summary_bytes={Path(auto_path).stat().st_size} "
     f"checkpoint_bytes={Path(checkpoint_path).stat().st_size} "
     "healthy_cuda_service_reused=true "

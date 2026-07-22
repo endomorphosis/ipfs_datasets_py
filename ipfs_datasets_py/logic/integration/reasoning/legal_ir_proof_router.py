@@ -793,8 +793,30 @@ class LegalIRProofRouter:
         raise TypeError(f"Route {route} returned unsupported outcome {type(raw).__name__}")
 
     def _from_hammer_result(self, result: HammerResult) -> ProofRouteOutcome:
+        diagnostics = {
+            "hammer_status": result.status.value,
+            "backend_results": [
+                {
+                    "backend": item.backend,
+                    "error": str(item.error or "")[:240],
+                    "status": item.status.value,
+                    "timed_out": bool(item.timed_out),
+                }
+                for item in result.backend_results[:8]
+            ],
+            "translation_errors": {
+                str(name): [str(error)[:240] for error in translation.errors[:4]]
+                for name, translation in result.translations.items()
+                if translation.errors
+            },
+        }
         if result.status == HammerStatus.TRANSLATION_FAILED:
-            return ProofRouteOutcome(ProofRouteStatus.UNSUPPORTED_TRANSLATION, reason="unsupported_translation", hammer_result=result)
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="unsupported_translation",
+                hammer_result=result,
+                metadata=diagnostics,
+            )
         if result.status == HammerStatus.PROVED:
             verified = bool(result.reconstruction and result.reconstruction.verified)
             return ProofRouteOutcome(
@@ -802,14 +824,35 @@ class LegalIRProofRouter:
                 ProofTrustLevel.KERNEL if verified else ProofTrustLevel.BACKEND,
                 reason="native_reconstruction_verified" if verified else "backend_proof_candidate",
                 hammer_result=result,
+                metadata=diagnostics,
             )
         if any(item.status == HammerBackendStatus.DISPROVED for item in result.backend_results):
-            return ProofRouteOutcome(ProofRouteStatus.THEOREM_FAILED, reason="backend_counterexample", hammer_result=result)
+            return ProofRouteOutcome(
+                ProofRouteStatus.THEOREM_FAILED,
+                reason="backend_counterexample",
+                hammer_result=result,
+                metadata=diagnostics,
+            )
         if result.status == HammerStatus.RECONSTRUCTION_FAILED:
-            return ProofRouteOutcome(ProofRouteStatus.THEOREM_FAILED, reason="native_reconstruction_failed", hammer_result=result)
+            return ProofRouteOutcome(
+                ProofRouteStatus.THEOREM_FAILED,
+                reason="native_reconstruction_failed",
+                hammer_result=result,
+                metadata=diagnostics,
+            )
         if result.backend_results and all(item.status == HammerBackendStatus.TIMEOUT for item in result.backend_results):
-            return ProofRouteOutcome(ProofRouteStatus.TIMEOUT, reason="portfolio_timeout", hammer_result=result)
-        return ProofRouteOutcome(ProofRouteStatus.UNKNOWN, reason=str(result.status.value), hammer_result=result)
+            return ProofRouteOutcome(
+                ProofRouteStatus.TIMEOUT,
+                reason="portfolio_timeout",
+                hammer_result=result,
+                metadata=diagnostics,
+            )
+        return ProofRouteOutcome(
+            ProofRouteStatus.UNKNOWN,
+            reason=str(result.status.value),
+            hammer_result=result,
+            metadata=diagnostics,
+        )
 
     def _default_trust(self, route: str) -> ProofTrustLevel:
         if route.startswith("deterministic_"):

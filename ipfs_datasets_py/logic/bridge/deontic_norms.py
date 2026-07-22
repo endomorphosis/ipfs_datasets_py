@@ -80,6 +80,10 @@ class DeonticNormsBridgeAdapter:
             parser_elements = _parser_rows_from_deontic_compiler_guidance(
                 guidance_context,
             )
+        if not parser_elements and not norms:
+            parser_elements = _parser_rows_from_deontic_guidance_source_text(
+                guidance_context,
+            )
         parser_elements = _merge_legal_norm_rows_into_parser_elements(
             parser_elements,
             norms,
@@ -1010,6 +1014,78 @@ def _parser_rows_from_deontic_compiler_guidance(
     return rows
 
 
+def _parser_rows_from_deontic_guidance_source_text(
+    context: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Recover source-grounded parser rows for deontic guidance-only packets.
+
+    Compiler-guidance activation packets can identify the ``deontic.ir`` repair
+    route without carrying a full LegalNormIR sample. When the converter has
+    returned an empty successful result, use the deterministic parser over the
+    original source text and attach the guidance evidence to the resulting rows
+    so bridge metrics observe typed IR behavior rather than diagnostic slots.
+    """
+
+    guidance = _mapping(context.get("guidance"))
+    source_text = str(context.get("source_text") or "").strip()
+    if not guidance or not source_text:
+        return []
+
+    from ipfs_datasets_py.logic.deontic.exports import (
+        parser_elements_with_ir_export_readiness,
+    )
+    from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+        extract_normative_elements,
+    )
+
+    parser_elements = extract_normative_elements(
+        source_text,
+        "statute",
+        expand_enumerations=False,
+    )
+    parser_elements = parser_elements_with_ir_export_readiness(parser_elements)
+    bridge_guidance = _deontic_bridge_evidence_from_guidance_row(
+        guidance,
+        source="compiler_guidance.source_text",
+        route=str(context.get("route") or "repair_deontic_bridge_quality_gate"),
+    )
+    if not bridge_guidance:
+        bridge_guidance = {
+            "compiler_guidance_source": str(
+                context.get("route") or "repair_deontic_bridge_quality_gate"
+            ),
+            "compiler_guidance_evidence_source": "compiler_guidance.source_text",
+            "compiler_guidance_target_view": "deontic.ir",
+        }
+
+    rows: list[dict[str, Any]] = []
+    for index, element in enumerate(parser_elements):
+        if not isinstance(element, Mapping):
+            continue
+        row = dict(element)
+        row.setdefault(
+            "source_id",
+            f"{context.get('document_id') or 'deontic'}:compiler_guidance:{index}",
+        )
+        row.setdefault("source_text", source_text)
+        row.setdefault("text", source_text)
+        row.setdefault("support_text", source_text)
+        legal_frame = dict(row.get("legal_frame") or {})
+        for key, value in bridge_guidance.items():
+            if _value_is_present(value):
+                legal_frame.setdefault(key, value)
+        row["legal_frame"] = legal_frame
+        row.setdefault(
+            "compiler_guidance_source",
+            bridge_guidance.get("compiler_guidance_source"),
+        )
+        rows.append(row)
+
+    if rows and isinstance(context, dict):
+        context["applied"] = True
+    return rows
+
+
 def _parser_row_from_deontic_guidance_ir(
     promoted_ir: Mapping[str, Any],
     evidence: Mapping[str, Any],
@@ -1162,18 +1238,23 @@ def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
         "compiler_guidance_route",
         "route",
         "action",
-        "target_component",
-        "target",
     ):
         value = str(guidance.get(key) or "").strip()
         if value:
             return value
+    sample_route = _deontic_guidance_route_from_samples(guidance)
+    if sample_route:
+        return sample_route
     routes = guidance.get("compiler_guidance_todo_routes")
     if isinstance(routes, Mapping):
         for route in routes:
             route_text = str(route or "").strip()
             if route_text:
                 return route_text
+    for key in ("target_component", "target"):
+        value = str(guidance.get(key) or "").strip()
+        if value:
+            return value
     for key in ("bundle", "compiler_guidance_bundle", "semantic_bundle"):
         bundle = _mapping(guidance.get(key))
         if bundle:
@@ -1183,6 +1264,17 @@ def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
     if _deontic_guidance_has_passing_gap_evidence(guidance):
         return "repair_deontic_bridge_quality_gate"
     return "repair_deontic_bridge_quality_gate"
+
+
+def _deontic_guidance_route_from_samples(guidance: Mapping[str, Any]) -> str:
+    for key in ("samples", "sample_id", "source_id"):
+        for value in _list_of_strings(guidance.get(key)):
+            text = str(value or "").strip()
+            if "repair_deontic_bridge_quality_gate" in text:
+                return "repair_deontic_bridge_quality_gate"
+            if "repair_deontic_prover_bridge" in text:
+                return "repair_deontic_prover_bridge"
+    return ""
 
 
 def _deontic_guidance_has_passing_gap_evidence(guidance: Mapping[str, Any]) -> bool:

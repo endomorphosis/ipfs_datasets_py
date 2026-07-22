@@ -1471,13 +1471,18 @@ def test_runner_projects_direct_leanstral_guidance_artifact_into_existing_queue(
                             "proof_obligation_id": "proof-direct-runner",
                         }
                     ],
+                    "calibrated_confidence": 0.96,
+                    "calibration_error": 0.01,
                     "guidance_id": "leanstral-guidance-runner-a",
                     "legal_ir_view_metrics": {
                         "cross_entropy_loss": 0.42,
                         "source_decompiled_text_embedding_cosine_loss": 0.18,
                     },
+                    "legal_ir_family": "deontic",
                     "modal_ir_hash": "modal-hash-direct-runner-a",
                     "mutation_cases": ["remove_exception"],
+                    "normalized_entropy": 0.08,
+                    "ood": False,
                     "proof_obligation_ids": ["proof-direct-runner"],
                     "ranked_guidance_features": [
                         {
@@ -4805,6 +4810,10 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     )
     duration_index = paired["codex_command"].index("--duration-seconds")
     assert paired["codex_command"][duration_index + 1] == "480.0"
+    max_executions_index = paired["codex_command"].index(
+        "--codex-max-executions"
+    )
+    assert paired["codex_command"][max_executions_index + 1] == "0"
     canary_index = paired["autoencoder_command"].index("--validation-canary-count")
     assert paired["autoencoder_command"][canary_index + 1] == str(
         runner.DEFAULT_VALIDATION_CANARY_COUNT
@@ -5125,6 +5134,33 @@ def test_resolve_warm_start_state_paths_uses_canonical_state_by_default(tmp_path
     assert warm_state.applied_todo_ids == []
 
 
+def test_load_warm_start_state_bounds_sparse_groups_before_merge(tmp_path: Path) -> None:
+    state_path = tmp_path / "oversized.state.json"
+    ModalAutoencoderTrainingState(
+        feature_embedding_weights={
+            "high": [3.0],
+            "low": [1.0],
+            "middle": [2.0],
+        },
+        feature_family_logits={
+            "high": {"deontic": 3.0},
+            "low": {"deontic": 1.0},
+            "middle": {"deontic": 2.0},
+        },
+    ).save_json(state_path)
+
+    warm_state, metadata = runner.load_warm_start_state(
+        [state_path],
+        max_entries_per_group=2,
+    )
+
+    assert set(warm_state.feature_embedding_weights) == {"high", "middle"}
+    assert set(warm_state.feature_family_logits) == {"high", "middle"}
+    assert metadata["capacity"]["max_entries_per_group"] == 2
+    assert metadata["capacity"]["sources"][0]["compacted"] is True
+    assert metadata["capacity"]["averaged"]["compacted"] is False
+
+
 def test_resolve_warm_start_state_paths_can_disable_or_require_canonical_state(tmp_path: Path) -> None:
     queue_dir = tmp_path / "todo-queues"
     queue_dir.mkdir()
@@ -5192,6 +5228,12 @@ def test_build_paired_daemon_commands_can_launch_parallel_scoped_codex_children(
     assert all("--codex-scope" in child["command"] for child in children)
     assert "--codex-scope" in paired["codex_command"]
     assert paired["codex_command"][paired["codex_command"].index("--codex-scope") + 1] == "compiler_ambiguity"
+    capacity_index = paired["autoencoder_command"].index(
+        "--autoencoder-max-generalizable-entries-per-group"
+    )
+    assert paired["autoencoder_command"][capacity_index + 1] == str(
+        runner.DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
+    )
 
 
 def test_build_paired_daemon_commands_can_launch_multiple_workers_per_scope() -> None:
@@ -5490,6 +5532,8 @@ def test_guarded_daemon_passes_projection_runtime_bounds_to_autoencoder(
     )
 
     args = SimpleNamespace(
+        autoencoder_before_train_eval_every_n_cycles=1,
+        autoencoder_before_train_eval_mode="always",
         autoencoder_bridge_workers=1,
         autoencoder_canonical_warm_start="off",
         autoencoder_device="python",
@@ -5758,6 +5802,24 @@ def test_paired_completion_rejects_parent_timeout_even_when_children_succeeded()
     )
 
 
+def test_paired_runner_fails_fast_when_autoencoder_child_crashes() -> None:
+    assert runner._paired_finite_child_failure_reason(
+        autoencoder_exit_code=1,
+        leanstral_enabled=True,
+        leanstral_exit_code=None,
+    ) == "autoencoder_child_failed"
+    assert runner._paired_finite_child_failure_reason(
+        autoencoder_exit_code=0,
+        leanstral_enabled=True,
+        leanstral_exit_code=2,
+    ) == "leanstral_child_failed"
+    assert runner._paired_finite_child_failure_reason(
+        autoencoder_exit_code=0,
+        leanstral_enabled=True,
+        leanstral_exit_code=None,
+    ) == ""
+
+
 def test_codex_shutdown_drain_window_covers_fallback_attempts() -> None:
     args = SimpleNamespace(
         codex_apply_mode="patch_only",
@@ -5770,6 +5832,25 @@ def test_codex_shutdown_drain_window_covers_fallback_attempts() -> None:
     assert runner._codex_shutdown_drain_window_seconds(args) == 405.0
     args.codex_apply_mode = "apply_to_main"
     assert runner._codex_shutdown_drain_window_seconds(args) == 1305.0
+
+
+def test_codex_execution_budget_counts_validation_dispositions() -> None:
+    assert not runner._codex_execution_budget_reached(
+        execution_count=7,
+        max_executions=0,
+    )
+    assert not runner._codex_execution_budget_reached(
+        execution_count=0,
+        max_executions=1,
+    )
+    assert runner._codex_execution_budget_reached(
+        execution_count=1,
+        max_executions=1,
+    )
+    assert runner._codex_execution_budget_reached(
+        execution_count=3,
+        max_executions=2,
+    )
 
 
 def test_paired_accelerate_style_restart_policy_replaces_only_crashed_children() -> None:

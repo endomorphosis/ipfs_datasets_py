@@ -334,6 +334,342 @@ def extract_legal_ir_contract_payloads(
     }
 
 
+def _object_field(value: Any, name: str, default: Any = None) -> Any:
+    if isinstance(value, Mapping):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
+def _multiview_report(value: Any, adapter_name: str) -> Any:
+    reports = _object_field(value, "reports", {})
+    return reports.get(adapter_name) if isinstance(reports, Mapping) else None
+
+
+def _bridge_view_payload(multiview: Any, adapter_name: str, view_name: str) -> dict[str, Any]:
+    report = _multiview_report(multiview, adapter_name)
+    document = _object_field(report, "ir_document")
+    views = _object_field(document, "views", {})
+    if not isinstance(views, Mapping):
+        return {}
+    view = views.get(view_name)
+    return _mapping(_object_field(view, "payload", {}))
+
+
+def _bridge_records(multiview: Any, adapter: str, view: str, key: str) -> list[dict[str, Any]]:
+    return [
+        converted
+        for item in _sequence(_bridge_view_payload(multiview, adapter, view).get(key))
+        if (converted := _mapping(item))
+    ]
+
+
+def _canonical_deontic_force(norm: Mapping[str, Any]) -> tuple[str, str, str]:
+    raw_type = _string(norm.get("norm_type") or norm.get("modality")).lower()
+    if raw_type in {"f", "forbidden", "prohibited", "prohibition"}:
+        norm_type = "prohibition"
+    elif raw_type in {"p", "allowed", "permission", "permitted"}:
+        norm_type = "permission"
+    elif raw_type in {"o", "duty", "mandatory", "obligation", "required"}:
+        norm_type = "obligation"
+    else:
+        norm_type = raw_type
+    operator = {"prohibition": "F", "permission": "P", "obligation": "O"}.get(
+        norm_type,
+        _string(norm.get("modality")),
+    )
+    polarity = "negative" if norm_type == "prohibition" else "positive"
+    return operator, norm_type, polarity
+
+
+def _semantic_references(value: Any, *, prefix: str) -> list[str]:
+    references: list[str] = []
+    for item in _sequence(value):
+        mapping = _mapping(item)
+        if mapping:
+            identifier = _string(
+                mapping.get("id")
+                or mapping.get("event_id")
+                or mapping.get("source_id")
+                or mapping.get("clause_id")
+            )
+            references.append(
+                identifier or f"{prefix}:{_stable_hash(mapping)[:20]}"
+            )
+        elif _string(item):
+            references.append(f"{prefix}:{_stable_hash(_string(item))[:20]}")
+    return list(dict.fromkeys(references))
+
+
+def legal_ir_contract_payloads_from_multiview_report(
+    multiview: Any,
+) -> dict[str, list[dict[str, Any]]]:
+    """Project executed bridge stages into source-free canonical contracts.
+
+    This adapter only emits a family when the corresponding bridge produced a
+    concrete record.  It normalizes field names and stable identifiers but does
+    not invent semantic events, prover successes, or decompiler output.
+    """
+
+    result: dict[str, list[dict[str, Any]]] = {}
+    norms = _bridge_records(multiview, "deontic_norms", "deontic_ir", "norms")
+    formula_records = _bridge_records(
+        multiview, "deontic_norms", "deontic_formula_records", "records"
+    )
+    formula_by_source = {
+        _string(record.get("source_id")): _string(record.get("formula_id"))
+        for record in formula_records
+        if _string(record.get("source_id"))
+    }
+    norms_by_source = {
+        _string(norm.get("source_id")): norm
+        for norm in norms
+        if _string(norm.get("source_id"))
+    }
+
+    for norm in norms:
+        source_id = _string(norm.get("source_id"))
+        operator, norm_type, polarity = _canonical_deontic_force(norm)
+        formula_id = formula_by_source.get(source_id) or f"{source_id}:deontic"
+        result.setdefault("deontic", []).append(
+            {
+                "action": _string(norm.get("action") or norm.get("action_verb")),
+                "actor": _string(norm.get("actor")),
+                "conditions": _semantic_references(
+                    norm.get("conditions"), prefix="condition"
+                ),
+                "exceptions": _semantic_references(
+                    norm.get("exceptions"), prefix="exception"
+                ),
+                "formula_id": formula_id,
+                "norm_type": norm_type,
+                "object": _string(
+                    norm.get("action_object") or norm.get("object") or norm.get("recipient")
+                ),
+                "operator": operator,
+                "polarity": polarity,
+                "provenance_ids": [source_id] if source_id else [],
+            }
+        )
+
+    frame_document = _object_field(
+        _multiview_report(multiview, "deontic_norms"), "ir_document"
+    )
+    frame_id = _string(_object_field(frame_document, "document_id"))
+    frame_triples = _bridge_records(
+        multiview, "deontic_norms", "frame_logic", "triples"
+    )
+    for index, triple in enumerate(frame_triples):
+        source_id = _string(triple.get("subject"))
+        if source_id not in norms_by_source:
+            continue
+        result.setdefault("frame_logic", []).append(
+            {
+                "formula_id": formula_by_source.get(source_id) or f"{source_id}:deontic",
+                "frame_id": frame_id or f"{source_id}:frame",
+                "object": _string(triple.get("object")),
+                "predicate": _string(triple.get("predicate")),
+                "provenance_ids": [source_id],
+                "role": _string(triple.get("predicate")) or f"relation-{index + 1}",
+                "subject": source_id,
+            }
+        )
+
+    cec_events = _bridge_records(multiview, "cec_dcec", "cec_events", "events")
+    events_by_source: dict[str, list[dict[str, Any]]] = {}
+    for event in cec_events:
+        source_id = _string(event.get("source_id"))
+        if source_id:
+            events_by_source.setdefault(source_id, []).append(event)
+
+    tdfol_records = _bridge_records(multiview, "fol_tdfol", "tdfol_formula", "records")
+    for record in tdfol_records:
+        source_id = _string(record.get("source_id"))
+        anchors = [
+            _string(event.get("event_id") or event.get("event_symbol") or event.get("event"))
+            for event in events_by_source.get(source_id, [])
+        ]
+        anchors = list(dict.fromkeys(anchor for anchor in anchors if anchor))
+        result.setdefault("tdfol", []).append(
+            {
+                "expression": record.get("formula") or record.get("proof_input"),
+                "formula_id": f"{source_id}:tdfol",
+                "provenance_ids": [source_id] if source_id else [],
+                "quantifiers": list(_sequence(record.get("quantifiers"))),
+                "temporal_anchors": anchors,
+            }
+        )
+
+    cec_state_records = _bridge_records(
+        multiview, "cec_dcec", "event_calculus", "records"
+    )
+    state_by_source = {
+        _string(record.get("source_id")): record
+        for record in cec_state_records
+        if _string(record.get("source_id"))
+    }
+    for source_id, events in events_by_source.items():
+        state = state_by_source.get(source_id)
+        if state is None:
+            continue
+        fluent_id = _string(state.get("event_formula_fingerprint")) or f"{source_id}:fluent"
+        canonical_events = []
+        transitions = []
+        for index, event in enumerate(events):
+            event_id = _string(event.get("event_id")) or (
+                f"event:{_stable_hash([source_id, event.get('event'), index])[:20]}"
+            )
+            canonical_events.append(
+                {
+                    "id": event_id,
+                    "type": _string(event.get("event_role") or event.get("event")),
+                }
+            )
+            transitions.append(
+                {
+                    "effect": "initiates",
+                    "event_id": event_id,
+                    "fluent_id": fluent_id,
+                }
+            )
+        result.setdefault("cec", []).append(
+            {
+                "events": canonical_events,
+                "fluents": [
+                    {
+                        "id": fluent_id,
+                        "type": _string(state.get("selected_frame")) or "legal_state",
+                    }
+                ],
+                "formula_id": f"{source_id}:cec",
+                "lifecycle_transitions": transitions,
+                "provenance_ids": [source_id],
+            }
+        )
+
+    for adapter_name in (
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router",
+    ):
+        graph = _bridge_view_payload(
+            multiview, adapter_name, "neo4j_graph_data"
+        )
+        nodes = [_mapping(item) for item in _sequence(graph.get("nodes"))]
+        raw_edges = [_mapping(item) for item in _sequence(graph.get("relationships"))]
+        if not nodes or not raw_edges:
+            continue
+        edges = [
+            {
+                "source": edge.get("source") or edge.get("subject") or edge.get("start_node"),
+                "target": edge.get("target") or edge.get("object") or edge.get("end_node"),
+                "type": edge.get("type") or edge.get("predicate"),
+            }
+            for edge in raw_edges
+        ]
+        graph_metadata = _mapping(graph.get("metadata"))
+        provenance = sorted(norms_by_source) or [
+            _string(_object_field(_object_field(_multiview_report(multiview, adapter_name), "ir_document"), "document_id"))
+        ]
+        result["knowledge_graphs"] = [
+            {
+                "graph_id": _string(graph_metadata.get("graph_id"))
+                or f"{adapter_name}:legal-ir-graph",
+                "nodes": nodes,
+                "provenance_ids": [item for item in provenance if item],
+                "relationships": edges,
+            }
+        ]
+        break
+
+    external_report = _multiview_report(multiview, "external_prover_router")
+    proof_gate = _object_field(external_report, "proof_gate")
+    proof_details = [
+        _mapping(item) for item in _sequence(_object_field(proof_gate, "details", ()))
+    ]
+    prover_records = _bridge_records(
+        multiview, "external_prover_router", "prover_formulas", "records"
+    )
+    for index, record in enumerate(prover_records):
+        source_id = _string(record.get("source_id"))
+        detail = proof_details[min(index, len(proof_details) - 1)] if proof_details else {}
+        route = [
+            _string(item)
+            for item in (
+                list(_sequence(detail.get("completed_provers")))
+                or list(_sequence(detail.get("available_provers")))
+                or list(_sequence(_object_field(proof_gate, "verified_by", ())))
+            )
+            if _string(item)
+        ]
+        route = list(dict.fromkeys(route))
+        backend_status = {
+            name: (
+                "proved"
+                if detail.get("proved") and name == _string(detail.get("prover_used"))
+                else "completed"
+            )
+            for name in route
+        }
+        result.setdefault("external_provers", []).append(
+            {
+                "backend_route": route,
+                "backend_status": backend_status,
+                "input_formula_id": f"{source_id}:tdfol",
+                "obligation_id": f"{source_id}:external-prover",
+                "provenance_ids": [source_id] if source_id else [],
+                "reconstruction_status": (
+                    "bridge_proof_validated" if detail.get("proved") else "not_requested"
+                ),
+            }
+        )
+
+    decoder_records = _bridge_records(
+        multiview,
+        "deontic_norms",
+        "deontic_decoder_reconstructions",
+        "records",
+    )
+    for decoder in decoder_records:
+        source_id = _string(decoder.get("source_id"))
+        norm = norms_by_source.get(source_id)
+        if norm is None:
+            continue
+        operator, norm_type, _ = _canonical_deontic_force(norm)
+        action = _string(norm.get("action") or norm.get("action_verb"))
+        obj = _string(
+            norm.get("action_object") or norm.get("object") or norm.get("recipient")
+        )
+        result.setdefault("decompiler", []).append(
+            {
+                "arguments": [_string(norm.get("actor")), obj],
+                "conditions": _semantic_references(
+                    norm.get("conditions"), prefix="condition"
+                ),
+                "exceptions": _semantic_references(
+                    norm.get("exceptions"), prefix="exception"
+                ),
+                "formula_id": formula_by_source.get(source_id) or f"{source_id}:deontic",
+                "operator": operator,
+                "predicate": {"arity": 2, "name": action},
+                "provenance_ids": [source_id],
+                "reconstructed_structure": {
+                    "norm_type": norm_type,
+                    "reconstruction_id": _string(decoder.get("reconstruction_id")),
+                    "semantic_family": _string(decoder.get("semantic_family")),
+                },
+                "source_contract_id": "legal-ir-view/deontic/v1",
+            }
+        )
+
+    return {
+        contract.view.value: result[contract.view.value]
+        for contract in legal_ir_view_contracts()
+        if result.get(contract.view.value)
+    }
+
+
 def _collect_provenance_references(value: Any) -> tuple[str, ...]:
     references: set[str] = set()
 
@@ -819,5 +1155,6 @@ __all__ = [
     "collect_legal_ir_contract_telemetry",
     "emit_legal_ir_contract_telemetry",
     "extract_legal_ir_contract_payloads",
+    "legal_ir_contract_payloads_from_multiview_report",
     "summarize_legal_ir_contract_telemetry",
 ]

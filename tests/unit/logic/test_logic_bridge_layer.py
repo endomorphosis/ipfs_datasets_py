@@ -329,6 +329,41 @@ def test_deontic_bridge_metadata_exposes_family_probability_floor() -> None:
     assert metadata["deontic_ir_family_distribution"] == metadata["family_distribution"]
 
 
+def test_deontic_guidance_route_reconstructs_ir_from_source_text() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    source_text = "The agency shall publish notice before the permit takes effect."
+
+    class _EmptyResult:
+        success = True
+        metadata = {}
+
+    class _EmptyConverter:
+        def convert(self, text: str):
+            return _EmptyResult()
+
+    document, _ = DeonticNormsBridgeAdapter(converter=_EmptyConverter()).encode(
+        source_text,
+        document_id="bridge-layer-deontic-guidance-source-repair",
+        compiler_guidance={
+            "samples": "compiler-guidance-activation:repair_deontic_bridge_quality_gate",
+            "source": "compiler_guidance_activation_v1",
+            "target_component": "deontic.ir",
+        },
+    )
+
+    norms = document.views["deontic_ir"].payload["norms"]
+    assert document.metadata["compiler_guidance_applied"] is True
+    assert norms
+    assert norms[0]["modality"] == "O"
+    assert norms[0]["actor"]
+    assert norms[0]["action"]
+    assert (
+        norms[0]["legal_frame"]["compiler_guidance_source"]
+        == "repair_deontic_bridge_quality_gate"
+    )
+
+
 def test_modal_frame_logic_bridge_evaluates_ir_graph_and_proof_gate() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -455,6 +490,35 @@ def test_external_prover_router_promotes_serialized_packet_guidance() -> None:
             '"source":"compiler_guidance_distillation_v1",'
             '"target_component":"external_provers.router"}'
         )
+    )
+
+    assert signal["active"] is True
+    assert signal["prover_gate_hint"] is True
+    assert signal["routes"] == ("repair_external_prover_router",)
+
+
+def test_external_prover_router_promotes_activation_packet_guidance() -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        _router_guidance_signal,
+    )
+
+    signal = _router_guidance_signal(
+        {
+            "bundle": (
+                '{"program_synthesis_scope":"external_provers",'
+                '"route":"repair_external_prover_router",'
+                '"source":"compiler_guidance_activation_v1",'
+                '"target_component":"external_provers.router"}'
+            ),
+            "score": 1.0,
+            "target_metrics": [
+                "cross_entropy_loss",
+                "compiler_ir_cross_entropy_loss",
+                "compiler_ir_cosine_similarity",
+                "legal_ir_multiview_proof_failure_ratio",
+            ],
+            "vector_bundle": "guidance-activation-d25b406ba8626851",
+        }
     )
 
     assert signal["active"] is True
@@ -12835,6 +12899,91 @@ def test_external_prover_router_bridge_accepts_packet_shaped_guidance_route(
     assert report.metadata["compiler_guidance_prover_gate_hint"] is True
     assert report.proof_gate.compiles is True
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
+def test_external_prover_router_bridge_records_activation_guidance_in_ir(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _GuidedResult:
+        def __init__(self) -> None:
+            self.is_proved = True
+            self.prover_used = "native"
+            self.proof_time = 0.01
+            self.reason = "Proved by native"
+            self.strategy_used = "sequential"
+            self.all_results = {"native": object()}
+
+    class _GuidedRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["native"]
+
+        @staticmethod
+        def route(_formula, **_kwargs):
+            return _GuidedResult()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _GuidedRouter(),
+    )
+
+    guidance = {
+        "bundle": (
+            '{"program_synthesis_scope":"external_provers",'
+            '"route":"repair_external_prover_router",'
+            '"source":"compiler_guidance_activation_v1",'
+            '"target_component":"external_provers.router"}'
+        ),
+        "score": 1.0,
+        "target_metrics": [
+            "cross_entropy_loss",
+            "compiler_ir_cross_entropy_loss",
+            "compiler_ir_cosine_similarity",
+            "legal_ir_multiview_proof_failure_ratio",
+        ],
+        "vector_bundle": "guidance-activation-d25b406ba8626851",
+    }
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=True,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "The Director shall make awards on a competitive basis.",
+        document_id="external-prover-bridge-activation-guidance-ir",
+        citation="42 U.S.C. 19012",
+        compiler_guidance=guidance,
+    )
+
+    assert report.metadata["compiler_guidance_applied"] is True
+    assert report.metadata["compiler_guidance_routes"] == [
+        "repair_external_prover_router"
+    ]
+    assert report.ir_document.metadata["compiler_guidance_applied"] is True
+    assert report.ir_document.metadata["compiler_guidance_prover_gate_hint"] is True
+    assert report.ir_document.metadata["compiler_guidance_routes"] == (
+        "repair_external_prover_router",
+    )
+    assert (
+        report.ir_document.views["prover_formulas"].metadata[
+            "compiler_guidance_routes"
+        ]
+        == ("repair_external_prover_router",)
+    )
+    assert report.metadata["compiler_ir_cross_entropy_loss"] == 0.0
+    assert report.metadata["compiler_ir_cosine_similarity"] == 1.0
+    assert report.round_trip.cross_entropy_loss == 0.0
+    assert report.round_trip.extra_losses["compiler_ir_cross_entropy_loss"] == 0.0
+    assert report.round_trip.extra_losses["compiler_ir_cosine_similarity"] == 1.0
+    assert (
+        report.round_trip.extra_losses["legal_ir_multiview_proof_failure_ratio"]
+        == 0.0
+    )
+    assert report.round_trip.extra_losses["source_copy_reward_hack_penalty"] == 0.0
 
 
 def test_external_prover_router_bridge_accepts_packet_evidence_guidance_route(

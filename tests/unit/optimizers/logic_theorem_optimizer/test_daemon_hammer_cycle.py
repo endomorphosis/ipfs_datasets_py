@@ -68,10 +68,48 @@ def _trusted_hammer_artifact(sample_id: str, guidance_id: str = "hammer-guidance
     }
 
 
+def _patch_contract_projection_and_canary(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def project(_args: Namespace, sample: object):
+        sample_id = runner._daemon_hammer_sample_id(sample)
+        return (
+            {
+                "citation": runner._daemon_hammer_sample_citation(sample),
+                "legal_ir_views": {},
+                "modal_ir": getattr(sample, "modal_ir", None),
+                "sample_id": sample_id,
+                "text": getattr(sample, "text", ""),
+            },
+            {
+                "adapter_count": 5,
+                "bridge_failures": {},
+                "contract_view_counts": {},
+                "document_hash": "contract-projection-unit",
+            },
+        )
+
+    monkeypatch.setattr(runner, "_daemon_hammer_contract_sample", project)
+    monkeypatch.setattr(
+        runner,
+        "_daemon_hammer_runtime_canary",
+        lambda _config: {
+            "checker_routes": ["lean"],
+            "proved_count": 1,
+            "reconstruction_count": 1,
+            "schema_version": "legal-ir-hammer-runtime-canary-v1",
+            "status": "passed",
+            "trusted_count": 1,
+            "winner_backends": ["z3_python"],
+        },
+    )
+
+
 def test_daemon_hammer_cycle_persists_guidance_and_updates_summary(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    _patch_contract_projection_and_canary(monkeypatch)
     sample = build_us_code_sample(
         title="5",
         section="552",
@@ -136,6 +174,7 @@ def test_daemon_hammer_cycle_persists_guidance_and_updates_summary(
     assert summary["leanstral_hammer_candidate_count"] == 0
     assert summary["trusted_hammer_guidance_count"] == 1
     assert summary["hammer_projected_todo_count"] == 3
+    assert summary["hammer_runtime_canary_passed"] is True
     compact = summary["latest_daemon_hammer_guidance"]
     assert compact["hammer_report_count"] == 1
     assert compact["omitted_hammer_guidance_artifact_count"] == 1
@@ -148,6 +187,7 @@ def test_daemon_hammer_cycle_reuses_cache_and_counts_leanstral_candidates(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    _patch_contract_projection_and_canary(monkeypatch)
     sample = build_us_code_sample(
         title="5",
         section="553",

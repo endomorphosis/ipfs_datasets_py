@@ -26,7 +26,7 @@ from typing import Any, Mapping, Sequence
 
 SCHEMA_VERSION = "legal-ir-10-minute-integrated-smoke-evidence-v1"
 WATCHDOG_SCHEMA_VERSION = "legal-ir-execution-watchdog-v1"
-MAX_SUMMARY_BYTES = 32 * 1024 * 1024
+MAX_SUMMARY_BYTES = 8 * 1024 * 1024
 MAX_TRAINING_LOG_BYTES = 64 * 1024 * 1024
 MAX_CHECKPOINT_BYTES = 512 * 1024 * 1024
 MAX_SERVICE_STATE_BYTES = 4 * 1024 * 1024
@@ -44,6 +44,18 @@ REQUIRED_FAMILIES = (
     "cec",
     "external_provers",
     "decompiler",
+)
+REQUIRED_METRIC_BRIDGE_ADAPTERS = frozenset(
+    {
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router",
+    }
+)
+REQUIRED_FAMILY_OBSERVED_METRICS = frozenset(
+    {"ir_cross_entropy_loss", "ir_cosine_similarity"}
 )
 REQUIRED_QUALITY_METRICS = (
     "ir_cross_entropy_loss",
@@ -434,7 +446,11 @@ def verify_evidence(
         failures.append("service:leanstral:not_reused_after_warmup")
     request_count = _nonnegative_integer(lean.get("request_count"))
     reuse_count = _nonnegative_integer(lean.get("reuse_count"))
-    if request_count is not None and reuse_count is not None and reuse_count > max(0, request_count - 1):
+    if (
+        request_count is not None
+        and reuse_count is not None
+        and reuse_count != max(0, request_count - 1)
+    ):
         failures.append("service:leanstral:reuse_count_incoherent")
     for name in ("queue_seconds", "inference_seconds", "verification_seconds", "restart_seconds"):
         value = _number(lean.get(name))
@@ -444,20 +460,97 @@ def verify_evidence(
     hammer = _mapping(services.get("hammer")) or {}
     if hammer.get("healthy") is not True or hammer.get("backend_available") is not True:
         failures.append("service:hammer:backend")
-    for name in ("obligation_count", "backend_attempt_count", "proof_attempt_count", "reconstruction_count"):
+    if hammer.get("evidence_kind") != "runtime_canary":
+        failures.append("service:hammer:evidence_kind")
+    if "z3_python" not in set(_sequence(hammer.get("winner_backends")) or []):
+        failures.append("service:hammer:winner_backend")
+    if "lean" not in set(_sequence(hammer.get("checker_routes")) or []):
+        failures.append("service:hammer:checker_route")
+    for name in (
+        "obligation_count",
+        "backend_attempt_count",
+        "proof_attempt_count",
+        "proved_count",
+        "reconstruction_count",
+        "trusted_guidance_count",
+    ):
         if (_nonnegative_integer(hammer.get(name)) or 0) < 1:
             failures.append(f"service:hammer:{name}")
     obligations = _nonnegative_integer(hammer.get("obligation_count"))
     backend_attempts = _nonnegative_integer(hammer.get("backend_attempt_count"))
     proof_attempts = _nonnegative_integer(hammer.get("proof_attempt_count"))
+    proved = _nonnegative_integer(hammer.get("proved_count"))
     reconstructions = _nonnegative_integer(hammer.get("reconstruction_count"))
-    if None not in (obligations, backend_attempts, proof_attempts, reconstructions):
+    trusted = _nonnegative_integer(hammer.get("trusted_guidance_count"))
+    if None not in (
+        obligations,
+        backend_attempts,
+        proof_attempts,
+        proved,
+        reconstructions,
+        trusted,
+    ):
         assert obligations is not None and backend_attempts is not None
-        assert proof_attempts is not None and reconstructions is not None
-        if backend_attempts > obligations or proof_attempts > backend_attempts or reconstructions > proof_attempts:
+        assert proof_attempts is not None and proved is not None
+        assert reconstructions is not None and trusted is not None
+        if not (
+            trusted
+            <= reconstructions
+            <= proved
+            <= proof_attempts
+            <= backend_attempts
+            <= obligations
+        ):
             failures.append("service:hammer:counter_progression")
     if _number(hammer.get("fatal_failure_count")) != 0:
         failures.append("service:hammer:fatal_failure")
+    legal_names = (
+        "legal_obligation_count",
+        "legal_proof_attempt_count",
+        "legal_proved_count",
+        "legal_reconstruction_count",
+        "legal_trusted_guidance_count",
+    )
+    legal_counts = [_nonnegative_integer(hammer.get(name)) for name in legal_names]
+    if legal_counts[0] is None or legal_counts[0] < 1:
+        failures.append("service:hammer:legal_obligation_count")
+    if legal_counts[1] is None or legal_counts[1] < 1:
+        failures.append("service:hammer:legal_proof_attempt_count")
+    if any(value is None for value in legal_counts[2:]):
+        failures.append("service:hammer:legal_result_counters")
+    if all(value is not None for value in legal_counts):
+        legal_obligations, legal_attempts, legal_proved, legal_reconstructed, legal_trusted = legal_counts
+        assert legal_obligations is not None and legal_attempts is not None
+        assert legal_proved is not None and legal_reconstructed is not None
+        assert legal_trusted is not None
+        if not (
+            legal_trusted
+            <= legal_reconstructed
+            <= legal_proved
+            <= legal_attempts
+            <= legal_obligations
+        ):
+            failures.append("service:hammer:legal_counter_progression")
+
+    contract = _mapping(services.get("contract_validation")) or {}
+    if (_number(contract.get("coverage")) or 0.0) < 1.0:
+        failures.append("service:contract:coverage")
+    if _number(contract.get("failure_count")) != 0:
+        failures.append("service:contract:failure_count")
+    if _number(contract.get("family_gap_count")) != 0:
+        failures.append("service:contract:family_gaps")
+    contract_counts = _mapping(contract.get("failure_counts"))
+    if not contract_counts or any(_number(value) != 0 for value in contract_counts.values()):
+        failures.append("service:contract:failure_counters")
+
+    metric_evaluation = _mapping(services.get("metric_evaluation")) or {}
+    metric_samples = _nonnegative_integer(metric_evaluation.get("sample_count"))
+    metric_evaluated = _nonnegative_integer(metric_evaluation.get("evaluated_count"))
+    if metric_samples is None or metric_samples < 1 or metric_evaluated != metric_samples:
+        failures.append("service:metrics:sample_coverage")
+    for name in ("failure_count", "sample_timeout_count", "timeout_fallback_count"):
+        if _number(metric_evaluation.get(name)) != 0:
+            failures.append(f"service:metrics:{name}")
 
     codex = _mapping(services.get("codex")) or {}
     if codex.get("fixture_sha256") != lineage.get("fixture_sha256") or codex.get("run_id") != run_id:
@@ -555,7 +648,17 @@ def verify_evidence(
             failures.append("service:watchdog:managed_child_ledger_incomplete")
         for index, raw in enumerate(children):
             item = _mapping(raw) or {}
-            if item.get("status") != "exited" or _number(item.get("exit_code")) != 0 or item.get("orphaned") is not False:
+            exit_code = _number(item.get("exit_code"))
+            expected_managed_shutdown = (
+                item.get("name") == "leanstral-worker"
+                and item.get("expected_managed_shutdown") is True
+                and exit_code in (143.0, -15.0)
+            )
+            if (
+                item.get("status") != "exited"
+                or (exit_code != 0 and not expected_managed_shutdown)
+                or item.get("orphaned") is not False
+            ):
                 failures.append(f"service:watchdog:child:{index}")
 
     quality = _mapping(payload.get("quality_families"))
@@ -569,6 +672,17 @@ def verify_evidence(
         baseline, candidate = _mapping(pair.get("baseline")) or {}, _mapping(pair.get("candidate")) or {}
         if not _positive(pair, "sample_count") or pair.get("guardrail_passed") is not True:
             failures.append(f"quality:{family}:coverage")
+        for phase in ("baseline", "candidate"):
+            if not _positive(pair, f"{phase}_sample_count"):
+                failures.append(f"quality:{family}:{phase}_sample_coverage")
+            if not _positive(pair, f"{phase}_metric_coverage"):
+                failures.append(f"quality:{family}:{phase}_metric_coverage")
+            observed = {
+                str(name)
+                for name in (_sequence(pair.get(f"{phase}_observed_metrics")) or [])
+            }
+            if not REQUIRED_FAMILY_OBSERVED_METRICS.issubset(observed):
+                failures.append(f"quality:{family}:{phase}_observed_metrics")
         if set(baseline) != set(REQUIRED_QUALITY_METRICS) or set(candidate) != set(REQUIRED_QUALITY_METRICS):
             failures.append(f"quality:{family}:metric_set")
         for metric in REQUIRED_QUALITY_METRICS:
@@ -715,6 +829,23 @@ def _sum_named_counter(value: Any, key_name: str) -> int:
     return total
 
 
+def _gap_count(value: Any) -> int:
+    """Count either expanded gap names or compact ``name -> count`` maps."""
+
+    if isinstance(value, Mapping):
+        total = 0
+        for name, raw_count in value.items():
+            count = _nonnegative_integer(raw_count)
+            if count is None:
+                raise ValueError(f"LegalIR contract gap counter is invalid: {name}")
+            total += count
+        return total
+    sequence = _sequence(value)
+    if sequence is None:
+        return 0 if value in (None, "") else 1
+    return len(sequence)
+
+
 def _cuda_training_receipts(path: Path, run_id: str) -> tuple[int, int]:
     """Validate one packed CUDA forward/loss/backward receipt per cycle."""
 
@@ -816,6 +947,45 @@ def _family_quality_pair(
     provenance_score: float,
     uncertainty_error: float,
 ) -> dict[str, Any]:
+    evidence: dict[str, dict[str, Any]] = {}
+    for label, item in (("baseline", baseline), ("candidate", candidate)):
+        sample_count = _nonnegative_integer(item.get("sample_count"))
+        metric_coverage = _number(item.get("metric_coverage"))
+        observed = {
+            str(name)
+            for name in (_sequence(item.get("observed_metrics")) or [])
+            if str(name).strip()
+        }
+        ir_ce = _number(item.get("ir_cross_entropy_loss"))
+        ir_cosine = _number(item.get("ir_cosine_similarity"))
+        if sample_count is None or sample_count < 1:
+            raise ValueError(f"{label} LegalIR family sample coverage is absent")
+        if metric_coverage is None or metric_coverage <= 0.0:
+            raise ValueError(f"{label} LegalIR family metric coverage is absent")
+        if not REQUIRED_FAMILY_OBSERVED_METRICS.issubset(observed):
+            raise ValueError(f"{label} LegalIR family IR metrics were not observed")
+        if ir_ce is None or ir_ce < 0.0 or ir_cosine is None or not 0.0 <= ir_cosine <= 1.0:
+            raise ValueError(f"{label} LegalIR family IR metrics are invalid")
+        evidence[label] = {
+            "metric_coverage": metric_coverage,
+            "observed_metrics": sorted(observed),
+            "sample_count": sample_count,
+        }
+
+    for label, validation in (
+        ("baseline", baseline_validation),
+        ("candidate", candidate_validation),
+    ):
+        auto_ce = _number(validation.get("cross_entropy_loss"))
+        auto_cosine = _number(validation.get("cosine_similarity"))
+        if (
+            auto_ce is None
+            or auto_ce < 0.0
+            or auto_cosine is None
+            or not 0.0 <= auto_cosine <= 1.0
+        ):
+            raise ValueError(f"{label} global autoencoder metrics are invalid")
+
     def quality(
         item: Mapping[str, Any], validation: Mapping[str, Any],
     ) -> dict[str, float]:
@@ -845,14 +1015,16 @@ def _family_quality_pair(
         }
         return result
 
-    sample_count = max(
-        _nonnegative_integer(candidate.get("sample_count")) or 0,
-        _nonnegative_integer(candidate_validation.get("sample_count")) or 0,
-    )
     before = quality(baseline, baseline_validation)
     after = quality(candidate, candidate_validation)
     return {
-        "sample_count": sample_count,
+        "sample_count": evidence["candidate"]["sample_count"],
+        "baseline_sample_count": evidence["baseline"]["sample_count"],
+        "candidate_sample_count": evidence["candidate"]["sample_count"],
+        "baseline_metric_coverage": evidence["baseline"]["metric_coverage"],
+        "candidate_metric_coverage": evidence["candidate"]["metric_coverage"],
+        "baseline_observed_metrics": evidence["baseline"]["observed_metrics"],
+        "candidate_observed_metrics": evidence["candidate"]["observed_metrics"],
         "guardrail_passed": all(
             after[name] <= before[name] + 1e-12
             if name in LOWER_IS_BETTER
@@ -861,6 +1033,138 @@ def _family_quality_pair(
         ),
         "baseline": before,
         "candidate": after,
+    }
+
+
+def _strict_metric_evidence(auto: Mapping[str, Any]) -> dict[str, int]:
+    failure_count = _sum_named_counter(auto, "metric_failures")
+    failure_count += _nonnegative_integer(auto.get("bridge_metric_failures")) or 0
+    sample_timeout_count = _sum_named_counter(auto, "sample_timeouts")
+    timeout_fallback_count = _sum_named_counter(auto, "timeout_fallback_count")
+    if failure_count or sample_timeout_count or timeout_fallback_count:
+        raise ValueError(
+            "metric evaluation contains failures, timeouts, or fallback approximations"
+        )
+
+    evaluated_count = 0
+    sample_count = 0
+    for name in ("latest_compiler_ir_validation", "latest_compiler_ir_guided_validation"):
+        block = _mapping(auto.get(name))
+        if block is None or block.get("skipped") is True:
+            raise ValueError(f"required compiler metric block is absent or skipped: {name}")
+        block_samples = _nonnegative_integer(block.get("sample_count"))
+        block_evaluated = _nonnegative_integer(block.get("evaluated_count"))
+        if (
+            block_samples is None
+            or block_samples < 1
+            or block_evaluated != block_samples
+            or (_nonnegative_integer(block.get("skipped_sample_count")) or 0) != 0
+        ):
+            raise ValueError(f"compiler metric block has incomplete sample coverage: {name}")
+        sample_count += block_samples
+        evaluated_count += block_evaluated
+
+    configured_adapters = {
+        str(name)
+        for name in (_sequence(auto.get("active_cycle_metric_bridge_adapters")) or [])
+    }
+    bridge = _mapping(auto.get("latest_logic_bridge_validation")) or {}
+    adapter_rows = _mapping(bridge.get("adapters")) or {}
+    if configured_adapters != REQUIRED_METRIC_BRIDGE_ADAPTERS:
+        raise ValueError("the full LegalIR metric bridge adapter set was not active")
+    if set(adapter_rows) != REQUIRED_METRIC_BRIDGE_ADAPTERS:
+        raise ValueError("the full LegalIR metric bridge adapter set was not evaluated")
+    if any(
+        (_nonnegative_integer((_mapping(row) or {}).get("metric_failures")) or 0) != 0
+        for row in adapter_rows.values()
+    ):
+        raise ValueError("a LegalIR metric bridge adapter failed")
+    return {
+        "evaluated_count": evaluated_count,
+        "failure_count": failure_count,
+        "sample_count": sample_count,
+        "sample_timeout_count": sample_timeout_count,
+        "timeout_fallback_count": timeout_fallback_count,
+    }
+
+
+def _strict_contract_evidence(
+    auto: Mapping[str, Any], hammer: Mapping[str, Any]
+) -> dict[str, Any]:
+    projection_failure_count = _nonnegative_integer(
+        hammer.get("contract_projection_failure_count")
+    )
+    if projection_failure_count is None:
+        raise ValueError("LegalIR contract projection failure counter is absent")
+    if projection_failure_count:
+        raise ValueError("LegalIR bridge-to-contract projection reported failures")
+    coverage = _number(
+        hammer.get("legal_ir_contract_coverage", auto.get("legal_ir_contract_coverage"))
+    )
+    failure_counts = _mapping(
+        hammer.get("legal_ir_contract_failure_counts")
+        or auto.get("legal_ir_contract_failure_counts")
+    )
+    family_gaps = (
+        hammer.get("legal_ir_contract_view_family_gaps")
+        or auto.get("legal_ir_contract_view_family_gaps")
+    )
+    if coverage is None or coverage < 1.0:
+        raise ValueError("LegalIR contract coverage is incomplete")
+    if failure_counts is None or not failure_counts:
+        raise ValueError("LegalIR contract failure counters are absent")
+    failure_count = 0
+    for name, raw in failure_counts.items():
+        count = _nonnegative_integer(raw)
+        if count is None:
+            raise ValueError(f"LegalIR contract counter is invalid: {name}")
+        failure_count += count
+    if failure_count:
+        raise ValueError("LegalIR contract validation reported failures")
+    if any(_sum_named_counter(hammer, str(name)) for name in failure_counts):
+        raise ValueError("a Hammer artifact reported LegalIR contract failures")
+    family_gap_count = _gap_count(family_gaps)
+    if family_gap_count:
+        raise ValueError("LegalIR contract validation has view-family gaps")
+    for _, key, value in _walk(hammer):
+        if key == "legal_ir_contract_view_family_gaps" and _gap_count(value):
+            raise ValueError("a Hammer artifact has LegalIR contract family gaps")
+    return {
+        "coverage": coverage,
+        "failure_count": failure_count,
+        "failure_counts": dict(failure_counts),
+        "family_gap_count": family_gap_count,
+    }
+
+
+def _strict_hammer_runtime_canary(hammer: Mapping[str, Any]) -> dict[str, Any]:
+    canary = _mapping(hammer.get("runtime_canary")) or {}
+    if canary.get("schema_version") != "legal-ir-hammer-runtime-canary-v1":
+        raise ValueError("Hammer runtime canary schema is absent or invalid")
+    if canary.get("status") != "passed":
+        raise ValueError("Hammer runtime canary did not pass")
+    proved = _nonnegative_integer(canary.get("proved_count"))
+    reconstructed = _nonnegative_integer(canary.get("reconstruction_count"))
+    trusted = _nonnegative_integer(canary.get("trusted_count"))
+    if None in (proved, reconstructed, trusted) or min(
+        int(proved or 0), int(reconstructed or 0), int(trusted or 0)
+    ) < 1:
+        raise ValueError("Hammer runtime canary proof counters are incomplete")
+    assert proved is not None and reconstructed is not None and trusted is not None
+    if not trusted <= reconstructed <= proved:
+        raise ValueError("Hammer runtime canary counters are incoherent")
+    winner_backends = sorted(set(_sequence(canary.get("winner_backends")) or []))
+    checker_routes = sorted(set(_sequence(canary.get("checker_routes")) or []))
+    if "z3_python" not in winner_backends:
+        raise ValueError("Hammer runtime canary did not use native Python Z3")
+    if "lean" not in checker_routes:
+        raise ValueError("Hammer runtime canary did not pass Lean reconstruction")
+    return {
+        "checker_routes": checker_routes,
+        "proved_count": proved,
+        "reconstruction_count": reconstructed,
+        "trusted_count": trusted,
+        "winner_backends": winner_backends,
     }
 
 
@@ -899,11 +1203,55 @@ def build_execution_receipt_from_legacy(
     gate = load_evidence(artifact_paths["gate_decision"])
     if gate.get("accepted") is not True or paired.get("status") != "succeeded":
         raise ValueError("canonical gate or paired supervisor rejected the run")
+    if (
+        paired.get("paired_timeout_exceeded") is True
+        or str(paired.get("latest_stop_reason") or "")
+        == "paired_timeout_grace_exceeded"
+    ):
+        raise ValueError("paired supervisor exceeded its completion deadline")
     if str(paired.get("run_id") or "") != run_id:
         raise ValueError("paired summary run lineage mismatch")
     auto_run_id = str(auto.get("run_id") or "")
     if auto_run_id not in {run_id, f"{run_id}-autoencoder"}:
         raise ValueError("autoencoder summary run lineage mismatch")
+    if auto.get("final") is not True:
+        raise ValueError("autoencoder summary is not final")
+    auto_exit_code = _nonnegative_integer(paired.get("autoencoder_exit_code"))
+    codex_exit_codes = _mapping(paired.get("codex_exit_codes")) or {}
+    if auto_exit_code != 0 or not codex_exit_codes:
+        raise ValueError("paired autoencoder or Codex exit evidence is incomplete")
+    if any(_number(code) != 0 for code in codex_exit_codes.values()):
+        raise ValueError("one or more Codex workers exited unsuccessfully")
+    runner_terminated = {
+        str(name) for name in (_sequence(paired.get("runner_terminated_children")) or [])
+    }
+    leanstral_child_name = f"{auto_run_id}:leanstral"
+    if runner_terminated - {leanstral_child_name}:
+        raise ValueError("paired supervisor terminated a finite-work child")
+    if paired.get("autoencoder_runner_terminated") is True:
+        raise ValueError("paired supervisor terminated the autoencoder")
+    leanstral_exit_code = _number(paired.get("leanstral_exit_code"))
+    if leanstral_exit_code not in (0.0, 143.0, -15.0):
+        raise ValueError("Leanstral worker exit status is invalid")
+    if leanstral_exit_code != 0.0 and leanstral_child_name not in runner_terminated:
+        raise ValueError("Leanstral nonzero exit was not an expected managed shutdown")
+    child_status = _mapping(paired.get("child_status")) or {}
+    if child_status.get("autoencoder") != "exited" or child_status.get("leanstral") != "exited":
+        raise ValueError("paired CUDA children were not reaped")
+    codex_status = _mapping(child_status.get("codex")) or {}
+    if set(codex_status) != set(codex_exit_codes) or any(
+        value != "exited" for value in codex_status.values()
+    ):
+        raise ValueError("paired Codex children were not reaped")
+
+    final_persistence = _mapping(auto.get("final_state_persistence")) or {}
+    if (
+        final_persistence.get("durable") is not True
+        or _nonnegative_integer(final_persistence.get("checkpoint_revision")) is None
+        or Path(str(final_persistence.get("state_path") or ""))
+        != artifact_paths["checkpoint"]
+    ):
+        raise ValueError("final autoencoder state checkpoint is not durable")
     training_log = Path(str(auto.get("log_path") or ""))
     if not training_log.is_absolute() or not training_log.is_file():
         raise ValueError("autoencoder training log is unavailable")
@@ -933,6 +1281,7 @@ def build_execution_receipt_from_legacy(
     baseline_snapshot = _mapping(auto.get("latest_rollout_baseline_snapshot")) or {}
     baseline_validation = _mapping(baseline_snapshot.get("validation")) or {}
     candidate_validation = _mapping(auto.get("latest_autoencoder_validation")) or {}
+    metric_evidence = _strict_metric_evidence(auto)
     baseline_state_sha = _json_sha256(baseline_snapshot)
     final_state_sha = file_sha256(artifact_paths["checkpoint"])
     baseline_revision = "state-" + baseline_state_sha[-16:]
@@ -954,19 +1303,58 @@ def build_execution_receipt_from_legacy(
         "target_hashes": fixture_material["target_hashes"],
     }
     holdout_sha = _json_sha256(holdout_material)
+    paired_grace = _number(paired.get("paired_grace_seconds"))
+    paired_codex_grace = _number(paired.get("paired_codex_queue_grace_seconds"))
+    paired_poll_cushion = _number(paired.get("paired_shutdown_poll_cushion_seconds"))
+    compiler_validation = _mapping(auto.get("latest_compiler_ir_validation")) or {}
+    compiler_timeout = _number(compiler_validation.get("sample_timeout_seconds"))
+    persistence = _mapping(auto.get("latest_async_state_persistence")) or {}
+    checkpoint_cadence = _nonnegative_integer(
+        persistence.get("full_checkpoint_every_n_cycles")
+    )
+    capacity_limit = _nonnegative_integer(
+        auto.get("autoencoder_max_generalizable_entries_per_group")
+    )
+    capacity = _mapping(
+        auto.get("latest_autoencoder_generalizable_capacity")
+    ) or {}
+    if (
+        paired_grace is None
+        or paired_grace < 0.0
+        or paired_codex_grace is None
+        or paired_codex_grace < 0.0
+        or paired_poll_cushion is None
+        or paired_poll_cushion < 0.0
+        or compiler_timeout is None
+        or compiler_timeout <= 0.0
+        or checkpoint_cadence is None
+        or checkpoint_cadence < 2
+        or capacity_limit is None
+        or capacity_limit < 1
+        or auto.get("autoencoder_generalizable_capacity_schema_version")
+        != "modal-autoencoder-generalizable-capacity-v1"
+        or capacity.get("schema_version")
+        != "modal-autoencoder-generalizable-capacity-v1"
+        or _nonnegative_integer(capacity.get("max_entries_per_group"))
+        != capacity_limit
+    ):
+        raise ValueError("selected runtime configuration evidence is incomplete")
     selected_configuration: dict[str, Any] = {
         "active_duration_seconds": 600,
         "canonical_runner_budget_seconds": 610,
-        "paired_cycle_completion_grace_seconds": 240,
-        "paired_codex_queue_grace_seconds": 0,
-        "paired_shutdown_poll_cushion_seconds": 120,
+        "paired_cycle_completion_grace_seconds": paired_grace,
+        "paired_codex_queue_grace_seconds": paired_codex_grace,
+        "paired_shutdown_poll_cushion_seconds": paired_poll_cushion,
         "autoencoder_device": str(auto.get("autoencoder_compute_device") or ""),
         "codex_apply_mode": "patch_only",
         "fixture_seed": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
         "max_codex_todos": max(1, cycles * (_nonnegative_integer(auto.get("autoencoder_max_todos_per_cycle")) or 8)),
         "validation_canary_count": _nonnegative_integer(auto.get("validation_canary_count")) or 0,
         "train_count": _nonnegative_integer((_mapping(auto.get("latest_autoencoder_train")) or {}).get("sample_count")) or 0,
-        "compiler_ir_metric_sample_timeout_seconds": 10,
+        "compiler_ir_metric_sample_timeout_seconds": compiler_timeout,
+        "full_checkpoint_every_n_cycles": checkpoint_cadence,
+        "max_generalizable_entries_per_group": capacity_limit,
+        "metric_bridge_adapters": sorted(REQUIRED_METRIC_BRIDGE_ADAPTERS),
         "hammer_reconstruction_required": True,
         "leanstral_persistent_cuda_required": True,
     }
@@ -996,25 +1384,43 @@ def build_execution_receipt_from_legacy(
     hammer_config = _mapping(hammer.get("hammer_config")) or {}
     if hammer_config.get("verify_reconstruction") is not True:
         raise ValueError("Hammer reconstruction verification was not enabled")
-    obligations = _nonnegative_integer(hammer.get("obligation_count")) or 0
+    obligations = (
+        _nonnegative_integer(hammer_metrics.get("hammer_obligation_count"))
+        or _nonnegative_integer(hammer.get("obligation_count"))
+        or 0
+    )
     proof_attempts = _nonnegative_integer(hammer.get("hammer_artifact_count")) or 0
-    reports = _sequence(hammer.get("hammer_reports")) or []
-    reconstruction_count = 0
-    backend_attempt_count = 0
-    for raw_report in reports:
-        report = _mapping(raw_report) or {}
-        report_meta = _mapping(report.get("metadata")) or {}
-        reconstruction_count += _nonnegative_integer(report_meta.get("reconstruction_receipt_count")) or len(_sequence(report.get("reconstruction_receipts")) or [])
-        backend_attempt_count += _nonnegative_integer(report.get("obligation_count")) or len(_sequence(report.get("artifacts")) or [])
-    if reconstruction_count < 1:
-        reconstruction_count = _nonnegative_integer(hammer.get("reconstruction_receipt_count")) or 0
-    if backend_attempt_count < 1:
-        backend_attempt_count = proof_attempts
-    if min(obligations, backend_attempt_count, proof_attempts, reconstruction_count) < 1:
-        raise ValueError("Hammer obligation/backend/proof/reconstruction activity is incomplete")
-    backend_attempt_count = min(backend_attempt_count, obligations)
-    proof_attempts = min(proof_attempts, backend_attempt_count)
-    reconstruction_count = min(reconstruction_count, proof_attempts)
+    backend_attempt_count = proof_attempts
+    proved_count = _nonnegative_integer(hammer_metrics.get("hammer_proved_count")) or 0
+    reconstruction_count = (
+        _nonnegative_integer(hammer_metrics.get("hammer_reconstruction_success_count"))
+        or 0
+    )
+    trusted_guidance_count = (
+        _nonnegative_integer(hammer_metrics.get("trusted_hammer_guidance_count"))
+        or 0
+    )
+    if min(obligations, backend_attempt_count, proof_attempts) < 1:
+        raise ValueError("Hammer did not attempt any legal proof obligations")
+    if not (
+        trusted_guidance_count
+        <= reconstruction_count
+        <= proved_count
+        <= proof_attempts
+        <= backend_attempt_count
+        <= obligations
+    ):
+        raise ValueError("Hammer success counters are incoherent")
+    for name in (
+        "hammer_proof_success_rate",
+        "hammer_reconstruction_success_rate",
+        "hammer_trusted_success_rate",
+    ):
+        value = _number(hammer_metrics.get(name))
+        if value is None or not 0.0 <= value <= 1.0:
+            raise ValueError(f"Hammer success rate is invalid: {name}")
+    runtime_canary = _strict_hammer_runtime_canary(hammer)
+    contract_evidence = _strict_contract_evidence(auto, hammer)
 
     codex_children = _sequence(paired.get("codex_children")) or []
     codex_summaries: list[tuple[Path, Mapping[str, Any]]] = []
@@ -1026,6 +1432,8 @@ def build_execution_receipt_from_legacy(
             raise ValueError(f"Codex child summary unavailable: {child_path}")
         codex_summaries.append((child_path, load_evidence(child_path)))
     codex_health = _mapping(paired.get("program_synthesis_health")) or {}
+    if (_nonnegative_integer(codex_health.get("program_synthesis_claimed")) or 0) != 0:
+        raise ValueError("Codex left a claimed TODO without a terminal disposition")
     todo_count = sum(
         _nonnegative_integer(codex_health.get(name)) or 0
         for name in (
@@ -1093,14 +1501,8 @@ def build_execution_receipt_from_legacy(
     ) or _mapping(candidate_validation.get("legal_ir_view_family_metrics")) or {}
     if set(baseline_family_block) != set(REQUIRED_FAMILIES) or set(candidate_family_block) != set(REQUIRED_FAMILIES):
         raise ValueError("canonical summaries lack the exact LegalIR family set")
-    contract_failures = _mapping(hammer.get("legal_ir_contract_failure_counts")) or {}
-    provenance_failures = sum(
-        _nonnegative_integer(value) or 0
-        for key, value in contract_failures.items()
-        if "provenance" in str(key)
-    )
-    provenance_score = 1.0 if provenance_failures == 0 else 0.0
-    uncertainty_error = 0.0 if not (_sequence(auto.get("metric_failures")) or []) else 1.0
+    provenance_score = 1.0
+    uncertainty_error = 0.0
     quality_families = {
         family: _family_quality_pair(
             _mapping(baseline_family_block.get(family)) or {},
@@ -1139,13 +1541,27 @@ def build_execution_receipt_from_legacy(
 
     child_ledger: list[dict[str, Any]] = [
         {"name": "canonical-runner", "status": "exited", "exit_code": 0, "orphaned": False},
-        {"name": "cuda-autoencoder", "status": "exited", "exit_code": 0, "orphaned": False},
-        {"name": "leanstral-worker", "status": "exited", "exit_code": 0, "orphaned": False},
+        {
+            "name": "cuda-autoencoder",
+            "status": "exited",
+            "exit_code": auto_exit_code,
+            "orphaned": False,
+        },
+        {
+            "name": "leanstral-worker",
+            "status": "exited",
+            "exit_code": int(leanstral_exit_code),
+            "expected_managed_shutdown": leanstral_exit_code != 0.0,
+            "orphaned": False,
+        },
     ]
-    child_status = _mapping(paired.get("child_status")) or {}
-    codex_status = _mapping(child_status.get("codex")) or {}
     for name, status in sorted(codex_status.items()):
-        child_ledger.append({"name": str(name), "status": str(status), "exit_code": 0, "orphaned": False})
+        child_ledger.append({
+            "name": str(name),
+            "status": str(status),
+            "exit_code": int(_number(codex_exit_codes.get(name)) or 0),
+            "orphaned": False,
+        })
     heartbeat_count = _nonnegative_integer(watchdog.get("heartbeat_count")) or 0
     progress_count = _nonnegative_integer(watchdog.get("progress_heartbeat_count")) or 0
     if heartbeat_count < 1 or progress_count < 1:
@@ -1253,10 +1669,27 @@ def build_execution_receipt_from_legacy(
             "hammer": {
                 "healthy": hammer.get("status") == "completed",
                 "backend_available": _number(hammer_metrics.get("hammer_backend_unavailable_ratio")) != 1.0,
-                "obligation_count": obligations, "backend_attempt_count": backend_attempt_count,
-                "proof_attempt_count": proof_attempts, "reconstruction_count": reconstruction_count,
-                "fatal_failure_count": (_nonnegative_integer(hammer.get("runtime_failure_count")) or 0),
+                "evidence_kind": "runtime_canary",
+                "winner_backends": runtime_canary["winner_backends"],
+                "checker_routes": runtime_canary["checker_routes"],
+                "obligation_count": runtime_canary["proved_count"],
+                "backend_attempt_count": runtime_canary["proved_count"],
+                "proof_attempt_count": runtime_canary["proved_count"],
+                "proved_count": runtime_canary["proved_count"],
+                "reconstruction_count": runtime_canary["reconstruction_count"],
+                "trusted_guidance_count": runtime_canary["trusted_count"],
+                "legal_obligation_count": obligations,
+                "legal_proof_attempt_count": proof_attempts,
+                "legal_proved_count": proved_count,
+                "legal_reconstruction_count": reconstruction_count,
+                "legal_trusted_guidance_count": trusted_guidance_count,
+                "fatal_failure_count": (
+                    (_nonnegative_integer(hammer.get("runtime_failure_count")) or 0)
+                    + (_nonnegative_integer(hammer.get("contract_projection_failure_count")) or 0)
+                ),
             },
+            "contract_validation": contract_evidence,
+            "metric_evaluation": metric_evidence,
             "codex": {
                 "run_id": run_id, "fixture_sha256": fixture_sha,
                 "todo_count": todo_count, "max_todos": max_todos,

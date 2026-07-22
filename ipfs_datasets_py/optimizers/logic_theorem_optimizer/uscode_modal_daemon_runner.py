@@ -43,6 +43,7 @@ from ipfs_datasets_py.logic.integration.reasoning import (
     attach_legal_ir_contract_telemetry,
     collect_legal_ir_contract_telemetry,
     generate_legal_ir_proof_obligations,
+    legal_ir_contract_payloads_from_multiview_report,
     legal_ir_view_contract,
     run_legal_ir_hammer,
     summarize_legal_ir_contract_telemetry,
@@ -67,7 +68,10 @@ from ipfs_datasets_py.logic.modal.leanstral_audit_worker import (
     LeanstralCyclePipeline,
 )
 from ipfs_datasets_py.logic.modal.codec import stable_mock_embedding
-from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
+from ipfs_datasets_py.logic.bridge import (
+    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
+    evaluate_legal_ir_multiview,
+)
 from ipfs_datasets_py.logic.submodule_registry import (
     logic_optimizer_scope_for_component,
     logic_optimizer_target_file_hints,
@@ -78,10 +82,12 @@ from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
     AutoencoderEvaluation,
+    DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP,
     HAMMER_GUIDANCE_METRIC_SCHEMA_VERSION,
     LEGAL_IR_VIEW_FAMILIES,
     LEGAL_IR_VIEW_FAMILY_METRIC_SCHEMA_VERSION,
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+    MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION,
     MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
     ModalAutoencoderTrainingState,
     evaluate_modal_prover_compilation,
@@ -231,13 +237,13 @@ DEFAULT_ASYNC_ARTIFACT_WRITER_QUEUE_CAPACITY = 64
 DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_QUEUE_BYTES = 256 * 1024 * 1024
 DEFAULT_ASYNC_ARTIFACT_WRITER_MAX_WRITE_CONCURRENCY = 1
 DEFAULT_ASYNC_ARTIFACT_WRITER_BACKPRESSURE_TIMEOUT_SECONDS = 600.0
-DEFAULT_ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES = 4
+DEFAULT_ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES = 16
 DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME = "legal-ir-autoencoder-canonical.state.json"
 DEFAULT_AUTOENCODER_INTROSPECTION_MODE = "off"
 DEFAULT_AUTOENCODER_INTROSPECTION_EVERY_N_CYCLES = 4
 DEFAULT_AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES = 0
 AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION = "legal-ir-daemon-metrics-v2"
-DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION = "legal-ir-daemon-hammer-guidance-cycle-v1"
+DAEMON_HAMMER_GUIDANCE_CYCLE_SCHEMA_VERSION = "legal-ir-daemon-hammer-guidance-cycle-v2"
 DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_SAMPLES_PER_CYCLE = 2
 DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_OBLIGATIONS_PER_SAMPLE = 8
 DEFAULT_DAEMON_HAMMER_GUIDANCE_MAX_PREMISES = 128
@@ -479,8 +485,8 @@ _METRIC_CODE_FINGERPRINT_LOCK = threading.Lock()
 _METRIC_CODE_FINGERPRINT_SIGNATURE: Optional[str] = None
 _METRIC_CODE_FINGERPRINT_VALUE: Optional[str] = None
 _COMPILER_IR_METRIC_BLOCK_CACHE_VERSION = "compiler-ir-metric-block-cache-v11"
-_COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v1"
-_COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v3"
+_COMPILER_IR_GUIDANCE_CACHE_POLICY = "codec-output-contract-v2"
+_COMPILER_IR_GUIDANCE_DIAGNOSTICS_VERSION = "compiler-guidance-diagnostics-v4"
 _COMPILER_IR_SAMPLE_CACHE_VERSION = "compiler-ir-metric-sample-cache-v10"
 _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY = "timeout_surface_fallback_per_sample_budget_v2"
 MAX_CACHED_COMPILER_DECODED_TEXT_CHARS = 16 * 1024
@@ -600,7 +606,7 @@ def _compiler_ir_metric_lineage(
             metric_text_policy
         ),
         "sample_timeout_policy": _COMPILER_IR_SAMPLE_TIMEOUT_CACHE_POLICY,
-        "sample_timeout_seconds": round(max(0.0, float(sample_timeout_seconds or 0.0)), 6),
+        "successful_result_timeout_policy": "timeout_agnostic",
         "use_autoencoder_guidance": bool(use_autoencoder_guidance),
     }
     if config_hash:
@@ -4434,7 +4440,15 @@ def _compiler_ir_metric_result_cache_payload(result: Any) -> Dict[str, Any]:
         original_value_count = 0
         retained_value_count = 0
         truncated_value_count = 0
-        for slot, values in sorted(slot_texts.items(), key=lambda item: str(item[0])):
+        for slot, values in sorted(
+            slot_texts.items(),
+            key=lambda item: (
+                0
+                if str(item[0]).startswith("compiler_guidance_")
+                else 1,
+                str(item[0]),
+            ),
+        ):
             normalized_values = _metadata_sequence_strings(values)
             original_value_count += len(normalized_values)
             if (
@@ -6070,6 +6084,159 @@ def _daemon_hammer_loaded_guidance(
     }
 
 
+def _daemon_hammer_contract_sample(
+    args: argparse.Namespace,
+    sample: Any,
+) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """Attach canonical contract views produced by the executed bridge stack."""
+
+    bridge_adapters = bridge_loss_adapter_names(args)
+    metric_adapters = autoencoder_metric_bridge_adapter_names(args, bridge_adapters)
+    max_text_chars = max(
+        0,
+        int(
+            getattr(
+                args,
+                "autoencoder_metric_bridge_max_sample_text_chars",
+                DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS,
+            )
+            or 0
+        ),
+    )
+    if isinstance(sample, Mapping):
+        text = str(sample.get("text") or sample.get("normalized_text") or "")
+        if max_text_chars > 0 and len(text) > max_text_chars:
+            text = _compiler_ir_metric_bounded_text(text, max_text_chars)
+        sample_id = _daemon_hammer_sample_id(sample)
+        citation = _daemon_hammer_sample_citation(sample)
+        source = str(sample.get("source") or "us_code")
+        embedding_vector = sample.get("embedding_vector")
+        if embedding_vector is None:
+            embedding_vector = sample.get("embedding")
+        modal_ir = sample.get("modal_ir")
+        normalized_text = str(sample.get("normalized_text") or "")
+    else:
+        bridge_samples = autoencoder_metric_bridge_samples_for_evaluation(
+            [sample],
+            max_sample_text_chars=max_text_chars,
+        )
+        if not bridge_samples:
+            raise ValueError("no bounded sample was available for Hammer contract projection")
+        bridge_sample = bridge_samples[0]
+        text = str(getattr(bridge_sample, "text", "") or "")
+        sample_id = str(getattr(bridge_sample, "sample_id", "") or "")
+        citation = str(getattr(bridge_sample, "citation", "") or "")
+        source = str(getattr(bridge_sample, "source", "") or "us_code")
+        embedding_vector = getattr(bridge_sample, "embedding_vector", None)
+        modal_ir = getattr(sample, "modal_ir", None)
+        normalized_text = str(getattr(sample, "normalized_text", "") or "")
+    report = evaluate_legal_ir_multiview(
+        text,
+        bridge_names=metric_adapters,
+        document_id=sample_id,
+        citation=citation,
+        evaluate_provers=bool(
+            getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())
+        ),
+        source=source,
+        source_embedding=embedding_vector,
+    )
+    contract_views = legal_ir_contract_payloads_from_multiview_report(report)
+    projected = {
+        "citation": citation,
+        "document_id": sample_id,
+        "legal_ir_views": contract_views,
+        "modal_ir": modal_ir,
+        "normalized_text": normalized_text,
+        "sample_id": sample_id,
+        "source": source,
+        "text": text,
+    }
+    return projected, {
+        "adapter_count": len(metric_adapters),
+        "bridge_failures": dict(report.failures),
+        "contract_view_counts": {
+            name: len(payloads) for name, payloads in contract_views.items()
+        },
+        "document_hash": report.document.canonical_hash(),
+    }
+
+
+def _daemon_hammer_runtime_canary(
+    config: LegalIRHammerConfig,
+) -> Dict[str, Any]:
+    """Exercise SMT proof and Lean kernel reconstruction outside quality metrics."""
+
+    canary_config = replace(
+        config,
+        max_obligations=1,
+        max_premises=4,
+        timeout_seconds=max(1.0, min(5.0, config.timeout_seconds)),
+        verify_reconstruction=True,
+        trusted_requires_reconstruction=True,
+    )
+    report = run_legal_ir_hammer(
+        {"sample_id": "hammer-runtime-canary-v1"},
+        obligations=[
+            {
+                "formula_id": "runtime-canary:true",
+                "kind": "runtime_canary",
+                "legal_ir_view": "runtime.canary",
+                "logic_family": "propositional",
+                "metadata": {
+                    "lean_hammer_tactic": "trivial",
+                    "lean_imports": "-- core-only runtime canary",
+                    "lean_statement": "True",
+                    "runtime_canary": True,
+                    "smt_lib": "(assert (not true))",
+                },
+                "obligation_id": "hammer-runtime-canary-v1",
+                "sample_id": "hammer-runtime-canary-v1",
+                "statement": "True",
+            }
+        ],
+        premises=[
+            {
+                "metadata": {
+                    "premise_kind": "runtime_canary",
+                    "verified": True,
+                },
+                "name": "runtime_canary_context",
+                "statement": "Runtime canary context is available.",
+            }
+        ],
+        config=canary_config,
+    )
+    receipts = [receipt.to_dict() for receipt in report.reconstruction_receipts]
+    reconstruction_count = sum(
+        1 for receipt in receipts if receipt.get("native_reconstruction_verified") is True
+    )
+    winner_backends = sorted(
+        {
+            str(artifact.winner_backend)
+            for artifact in report.artifacts
+            if str(artifact.winner_backend)
+        }
+    )
+    checkers = sorted(
+        {
+            str(receipt.get("checker") or "")
+            for receipt in receipts
+            if str(receipt.get("checker") or "")
+        }
+    )
+    passed = min(report.proved_count, report.trusted_count, reconstruction_count) >= 1
+    return {
+        "checker_routes": checkers,
+        "proved_count": int(report.proved_count),
+        "reconstruction_count": int(reconstruction_count),
+        "schema_version": "legal-ir-hammer-runtime-canary-v1",
+        "status": "passed" if passed else "failed",
+        "trusted_count": int(report.trusted_count),
+        "winner_backends": winner_backends,
+    }
+
+
 def run_daemon_hammer_guidance_cycle(
     *,
     args: argparse.Namespace,
@@ -6096,11 +6263,57 @@ def run_daemon_hammer_guidance_cycle(
             or 0
         ),
     )
-    selected_samples = list(samples)[:max_samples] if max_samples else []
+    source_samples = list(samples)[:max_samples] if max_samples else []
+    selected_samples: List[Any] = []
+    contract_view_payloads_by_sample_id: Dict[str, Mapping[str, Any]] = {}
+    contract_projection_diagnostics: List[Dict[str, Any]] = []
+    contract_projection_failures: List[Dict[str, Any]] = []
+    for source_sample in source_samples:
+        sample_id = _daemon_hammer_sample_id(source_sample)
+        if not enabled:
+            selected_samples.append(source_sample)
+            continue
+        try:
+            projected_sample, projection_diagnostics = _daemon_hammer_contract_sample(
+                args,
+                source_sample,
+            )
+        except Exception as exc:
+            contract_projection_failures.append(
+                {
+                    "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+                    "sample_id": sample_id,
+                }
+            )
+            selected_samples.append(source_sample)
+        else:
+            selected_samples.append(projected_sample)
+            contract_view_payloads_by_sample_id[sample_id] = dict(
+                projected_sample.get("legal_ir_views") or {}
+            )
+            contract_projection_diagnostics.append(
+                {
+                    **projection_diagnostics,
+                    "sample_id": sample_id,
+                }
+            )
     sample_ids = [_daemon_hammer_sample_id(sample) for sample in selected_samples]
-    contract_telemetry_records = [
-        collect_legal_ir_contract_telemetry(sample) for sample in selected_samples
-    ]
+    contract_telemetry_records = []
+    for sample in selected_samples:
+        sample_id = _daemon_hammer_sample_id(sample)
+        if enabled:
+            contract_telemetry_records.append(
+                collect_legal_ir_contract_telemetry(
+                    sample,
+                    view_payloads=contract_view_payloads_by_sample_id.get(sample_id, {}),
+                    sample_id=sample_id,
+                    derive_modal_ir_views=False,
+                )
+            )
+        else:
+            contract_telemetry_records.append(
+                collect_legal_ir_contract_telemetry(sample, sample_id=sample_id)
+            )
     if runtime_telemetry is not None:
         for sample, contract_record in zip(selected_samples, contract_telemetry_records):
             sample_id = _daemon_hammer_sample_id(sample)
@@ -6127,6 +6340,9 @@ def run_daemon_hammer_guidance_cycle(
         "artifact_paths": [],
         "cache_hit": False,
         "cycle": int(cycle),
+        "contract_projection_diagnostics": contract_projection_diagnostics,
+        "contract_projection_failure_count": len(contract_projection_failures),
+        "contract_projection_failures": contract_projection_failures,
         "enabled": enabled,
         "hammer_artifact_count": 0,
         "hammer_config": config_payload,
@@ -6207,12 +6423,33 @@ def run_daemon_hammer_guidance_cycle(
                 result["status"] = "cache_hit"
         except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             result["cache_error"] = f"{type(exc).__name__}: {str(exc)[:240]}"
+    result.update(
+        {
+            "contract_projection_diagnostics": contract_projection_diagnostics,
+            "contract_projection_failure_count": len(contract_projection_failures),
+            "contract_projection_failures": contract_projection_failures,
+            "legal_ir_contract_telemetry": [
+                record.to_dict() for record in contract_telemetry_records
+            ],
+            **contract_telemetry_summary,
+        }
+    )
     if runtime_telemetry is not None:
         runtime_telemetry.record_cache_lookup(
             hit=bool(result.get("cache_hit")),
             cycle=cycle,
             cache_kind="daemon_hammer_guidance",
         )
+
+    hammer_config = _daemon_hammer_config(args)
+    try:
+        result["runtime_canary"] = _daemon_hammer_runtime_canary(hammer_config)
+    except Exception as exc:
+        result["runtime_canary"] = {
+            "error": f"{type(exc).__name__}: {str(exc)[:240]}",
+            "schema_version": "legal-ir-hammer-runtime-canary-v1",
+            "status": "failed",
+        }
 
     hammer_artifacts: List[Dict[str, Any]] = []
     for cached_artifact in cached_artifacts:
@@ -6242,7 +6479,6 @@ def run_daemon_hammer_guidance_cycle(
     obligation_failures: List[Dict[str, Any]] = []
     hammer_failures: List[Dict[str, Any]] = []
     if not result.get("cache_hit"):
-        hammer_config = _daemon_hammer_config(args)
         for sample in selected_samples:
             sample_id = _daemon_hammer_sample_id(sample)
             try:
@@ -6396,7 +6632,7 @@ def run_daemon_hammer_guidance_cycle(
             }
         else:
             sample_lookup = dict(samples_by_id or {})
-            for sample in selected_samples:
+            for sample in source_samples:
                 sample_id = _daemon_hammer_sample_id(sample)
                 if sample_id:
                     sample_lookup.setdefault(sample_id, sample)
@@ -6424,6 +6660,9 @@ _DAEMON_HAMMER_SUMMARY_FIELDS = (
     "autoencoder_training",
     "cache_error",
     "cache_hit",
+    "contract_projection_diagnostics",
+    "contract_projection_failure_count",
+    "contract_projection_failures",
     "contract_telemetry_schema_version",
     "cycle",
     "enabled",
@@ -6445,6 +6684,7 @@ _DAEMON_HAMMER_SUMMARY_FIELDS = (
     "persist_error",
     "runtime_failure_count",
     "runtime_failures",
+    "runtime_canary",
     "sample_count",
     "sample_ids",
     "schema_version",
@@ -6536,6 +6776,13 @@ def update_daemon_hammer_guidance_summary(
         hammer_projected_todo_count = int(report.get("hammer_projected_todo_count", 0) or 0)
     report["hammer_projected_todo_count"] = hammer_projected_todo_count
     summary["latest_daemon_hammer_guidance"] = report
+    runtime_canary = dict(report.get("runtime_canary") or {})
+    runtime_canary_passed = runtime_canary.get("status") == "passed"
+    summary["hammer_runtime_canary"] = runtime_canary
+    summary["hammer_runtime_canary_passed"] = runtime_canary_passed
+    summary["hammer_runtime_canary_passed_total"] = int(
+        summary.get("hammer_runtime_canary_passed_total", 0) or 0
+    ) + int(runtime_canary_passed)
     summary["hammer_proof_success_rate"] = float(
         hammer_metrics.get("hammer_proof_success_rate", 0.0) or 0.0
     )
@@ -10307,6 +10554,13 @@ def parse_bool_flag(value: Any) -> bool:
     raise argparse.ArgumentTypeError(f"expected boolean flag, got {value!r}")
 
 
+def parse_positive_int(value: Any) -> int:
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError(f"expected a positive integer, got {value!r}")
+    return parsed
+
+
 def autoencoder_introspection_mode(args: argparse.Namespace) -> str:
     """Return the normalized reversible introspection rollout mode."""
 
@@ -11254,6 +11508,8 @@ def _build_codex_child_command(
         str(args.codex_sandbox),
         "--codex-timeout-seconds",
         str(args.codex_timeout_seconds),
+        "--codex-max-executions",
+        str(max(0, int(getattr(args, "codex_max_executions", 0) or 0))),
         "--codex-apply-mode",
         str(getattr(args, "codex_apply_mode", "patch_only")),
         "--codex-commit-mode",
@@ -11413,6 +11669,14 @@ def build_paired_daemon_commands(
         str(getattr(args, "bridge_evaluate_provers", _default_bridge_evaluate_provers())).lower(),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
+        "--autoencoder-max-generalizable-entries-per-group",
+        str(
+            getattr(
+                args,
+                "autoencoder_max_generalizable_entries_per_group",
+                DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP,
+            )
+        ),
         "--autoencoder-feature-family-logit-scale",
         str(getattr(args, "autoencoder_feature_family_logit_scale", 1.0)),
         "--autoencoder-feature-embedding-weight-scale",
@@ -11905,7 +12169,7 @@ def build_paired_daemon_commands(
         "enabled": False,
         "reason": "disabled",
     }
-    if bool(getattr(args, "adaptive_pipeline_parallelism_enabled", True)):
+    if bool(getattr(args, "adaptive_pipeline_parallelism_enabled", False)):
         adaptive_pipeline_plan = paired_adaptive_pipeline_worker_plan(
             args,
             requested_codex_workers=len(codex_children),
@@ -12019,6 +12283,21 @@ def _paired_completion_succeeded(
         and leanstral_success
         and str(latest_stop_reason or "") != "paired_timeout_grace_exceeded"
     )
+
+
+def _paired_finite_child_failure_reason(
+    *,
+    autoencoder_exit_code: Optional[int],
+    leanstral_enabled: bool,
+    leanstral_exit_code: Optional[int],
+) -> str:
+    """Return the fail-fast reason for a managed finite-work child."""
+
+    if autoencoder_exit_code not in (None, 0):
+        return "autoencoder_child_failed"
+    if leanstral_enabled and leanstral_exit_code not in (None, 0):
+        return "leanstral_child_failed"
+    return ""
 
 
 def _paired_child_exit_should_restart(
@@ -15971,6 +16250,16 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         ),
         "runtime_phase_catalog": list(RUNTIME_PHASES),
         "autoencoder_architecture_version": MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
+        "autoencoder_generalizable_capacity_schema_version": (
+            MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
+        ),
+        "autoencoder_max_generalizable_entries_per_group": int(
+            getattr(
+                args,
+                "autoencoder_max_generalizable_entries_per_group",
+                DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP,
+            )
+        ),
         "autoencoder_state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
         "metric_failures": 0,
         "optimizer_policy": "autoencoder_sgd_with_codex_program_synthesis_backlog",
@@ -17217,6 +17506,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--autoencoder-max-generalizable-entries-per-group",
+        type=parse_positive_int,
+        default=DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP,
+        help=(
+            "Maximum globally retained sparse semantic keys per coupled "
+            "autoencoder state group."
+        ),
+    )
+    parser.add_argument(
         "--autoencoder-max-codec-feature-keys",
         type=int,
         default=64,
@@ -17573,6 +17871,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         default="workspace-write",
     )
     parser.add_argument("--codex-timeout-seconds", type=float, default=900.0)
+    parser.add_argument(
+        "--codex-max-executions",
+        type=int,
+        default=0,
+        help=(
+            "Stop a Codex worker cleanly after this many packet executions, "
+            "including validation rejections; zero is duration-only."
+        ),
+    )
     parser.add_argument("--autoencoder-run-id", default=None)
     parser.add_argument("--codex-run-id", default=None)
     parser.add_argument("--paired-launch-delay-seconds", type=float, default=0.0)
@@ -17701,20 +18008,44 @@ def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) ->
     return paths
 
 
-def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTrainingState, Dict[str, Any]]:
-    """Load and average generalizable state from previous runs."""
+def load_warm_start_state(
+    paths: Sequence[Path],
+    *,
+    max_entries_per_group: int = (
+        DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
+    ),
+) -> tuple[ModalAutoencoderTrainingState, Dict[str, Any]]:
+    """Load, capacity-bound, and average reusable state from previous runs."""
     loaded_states: List[ModalAutoencoderTrainingState] = []
     loaded_paths: List[str] = []
     missing_paths: List[str] = []
+    source_capacity_reports: List[Dict[str, Any]] = []
     for path in paths:
         if not path.exists():
             missing_paths.append(str(path))
             continue
-        loaded_states.append(ModalAutoencoderTrainingState.load_json(path).generalizable_copy())
+        loaded = ModalAutoencoderTrainingState.load_json(path)
+        source_capacity_report = loaded.compact_generalizable_capacity(
+            max_entries_per_group
+        )
+        source_capacity_report["path"] = str(path)
+        source_capacity_reports.append(source_capacity_report)
+        loaded_states.append(loaded.generalizable_copy())
         loaded_paths.append(str(path))
 
     averaged = ModalAutoencoderTrainingState.average_generalizable(loaded_states)
+    averaged_capacity_report = averaged.compact_generalizable_capacity(
+        max_entries_per_group
+    )
     return averaged, {
+        "capacity": {
+            "averaged": averaged_capacity_report,
+            "max_entries_per_group": int(max_entries_per_group),
+            "schema_version": (
+                MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
+            ),
+            "sources": source_capacity_reports,
+        },
         "compiler_quality_embedding_weight_entries": len(
             averaged.compiler_quality_embedding_weights
         ),
@@ -18098,8 +18429,13 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     exit_code is not None for exit_code in codex_exit_codes.values()
                 ) and (not leanstral_enabled or leanstral_report_path.is_file()):
                     break
-                if leanstral_enabled and leanstral_exit_code not in (None, 0):
-                    summary["latest_stop_reason"] = "leanstral_child_failed"
+                child_failure_reason = _paired_finite_child_failure_reason(
+                    autoencoder_exit_code=auto_exit_code,
+                    leanstral_enabled=leanstral_enabled,
+                    leanstral_exit_code=leanstral_exit_code,
+                )
+                if child_failure_reason:
+                    summary["latest_stop_reason"] = child_failure_reason
                     break
                 if stop_requested:
                     break
@@ -18231,6 +18567,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             )
         )
         summary["leanstral_success"] = leanstral_success
+        summary["autoencoder_success"] = autoencoder_success
+        summary["codex_success"] = codex_success
         summary["autoencoder_runner_terminated"] = autoencoder_runner_terminated
         paired_success = _paired_completion_succeeded(
             autoencoder_success=autoencoder_success,
@@ -18430,6 +18768,24 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     os.environ["IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS"] = str(bridge_parallel_workers)
     summary["metric_schema_version"] = AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION
     summary["autoencoder_architecture_version"] = MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    generalizable_capacity_limit = int(
+        getattr(
+            args,
+            "autoencoder_max_generalizable_entries_per_group",
+            DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP,
+        )
+    )
+    if generalizable_capacity_limit < 1:
+        raise ValueError(
+            "autoencoder_max_generalizable_entries_per_group must be positive"
+        )
+    summary["autoencoder_generalizable_capacity_schema_version"] = (
+        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
+    )
+    summary["autoencoder_max_generalizable_entries_per_group"] = (
+        generalizable_capacity_limit
+    )
+    summary.setdefault("autoencoder_generalizable_capacity_compactions_total", 0)
     summary["autoencoder_state_schema_version"] = MODAL_AUTOENCODER_STATE_SCHEMA_VERSION
     summary["bridge_loss_adapters"] = bridge_adapters
     summary["autoencoder_metric_bridge_adapters"] = metric_bridge_adapters
@@ -18508,6 +18864,22 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         ).state
     else:
         state = ModalAutoencoderTrainingState()
+    startup_capacity_report = state.compact_generalizable_capacity(
+        generalizable_capacity_limit
+    )
+    startup_capacity_report["reason"] = "loaded_run_state"
+    startup_capacity_report["cycle"] = int(summary.get("cycles", 0) or 0)
+    summary["startup_autoencoder_generalizable_capacity"] = (
+        startup_capacity_report
+    )
+    summary["latest_autoencoder_generalizable_capacity"] = (
+        startup_capacity_report
+    )
+    checkpoint_required = bool(startup_capacity_report["compacted"])
+    if checkpoint_required:
+        summary["autoencoder_generalizable_capacity_compactions_total"] = int(
+            summary["autoencoder_generalizable_capacity_compactions_total"]
+        ) + 1
     warm_start_paths = resolve_warm_start_state_paths(args, queue_dir)
     if warm_start_paths:
         existing_warm_start = dict(summary.get("warm_start", {}))
@@ -18522,29 +18894,63 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 },
             )
         else:
-            warm_state, warm_start = load_warm_start_state(warm_start_paths)
+            warm_state, warm_start = load_warm_start_state(
+                warm_start_paths,
+                max_entries_per_group=generalizable_capacity_limit,
+            )
             state.merge_generalizable_from(warm_state)
+            warm_start_capacity_report = state.compact_generalizable_capacity(
+                generalizable_capacity_limit
+            )
+            warm_start_capacity_report["reason"] = "warm_start_merge"
+            warm_start_capacity_report["cycle"] = int(
+                summary.get("cycles", 0) or 0
+            )
+            warm_start["destination_capacity"] = warm_start_capacity_report
             warm_start["applied"] = True
             summary["warm_start"] = warm_start
-            artifact_writer.write_state_checkpoint(
-                state_path,
-                state,
-                cycle=int(summary.get("cycles", 0) or 0),
-                full=True,
-                compact=True,
-                metadata={
-                    "reason": "warm_start",
-                    "run_id": args.run_id,
-                    "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
-                },
-                wait=True,
+            summary["latest_autoencoder_generalizable_capacity"] = (
+                warm_start_capacity_report
             )
-            save_summary(summary_path, summary)
+            if warm_start_capacity_report["compacted"]:
+                summary[
+                    "autoencoder_generalizable_capacity_compactions_total"
+                ] = int(
+                    summary[
+                        "autoencoder_generalizable_capacity_compactions_total"
+                    ]
+                ) + 1
+            checkpoint_required = True
             append_event(
                 log_path,
                 args.run_id,
                 {"event": "warm_start_loaded", "warm_start": warm_start},
             )
+    if checkpoint_required:
+        artifact_writer.write_state_checkpoint(
+            state_path,
+            state,
+            cycle=int(summary.get("cycles", 0) or 0),
+            full=True,
+            compact=True,
+            metadata={
+                "reason": "bounded_startup_state",
+                "run_id": args.run_id,
+                "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+            },
+            wait=True,
+        )
+        append_event(
+            log_path,
+            args.run_id,
+            {
+                "capacity": summary[
+                    "latest_autoencoder_generalizable_capacity"
+                ],
+                "event": "autoencoder_generalizable_capacity_checkpointed",
+            },
+        )
+    save_summary(summary_path, summary)
     persisted_state = state.copy()
     persisted_state._state_identity_tracker.restore_revision(state.state_revision)
     with queue_file_lock(queue_path):
@@ -20182,6 +20588,55 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "queue_persist": todo_supervisor_queue_persist,
                 },
             )
+            if autoencoder.state.generalizable_capacity_exceeded(
+                generalizable_capacity_limit
+            ):
+                mark_cycle_phase(
+                    "state_capacity_compaction",
+                    max_entries_per_group=generalizable_capacity_limit,
+                )
+                cycle_capacity_report = (
+                    autoencoder.state.compact_generalizable_capacity(
+                        generalizable_capacity_limit
+                    )
+                )
+                cycle_capacity_report["cycle"] = cycle
+                cycle_capacity_report["reason"] = "post_training_pre_evaluation"
+                summary[
+                    "autoencoder_generalizable_capacity_compactions_total"
+                ] = int(
+                    summary[
+                        "autoencoder_generalizable_capacity_compactions_total"
+                    ]
+                ) + 1
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "capacity": cycle_capacity_report,
+                        "cycle": cycle,
+                        "event": "autoencoder_generalizable_capacity_compacted",
+                    },
+                )
+            else:
+                current_entry_count = (
+                    autoencoder.state.generalizable_entry_count()
+                )
+                cycle_capacity_report = {
+                    "after_entry_count": current_entry_count,
+                    "before_entry_count": current_entry_count,
+                    "compacted": False,
+                    "cycle": cycle,
+                    "dropped_entry_count": 0,
+                    "max_entries_per_group": generalizable_capacity_limit,
+                    "reason": "post_training_pre_evaluation",
+                    "schema_version": (
+                        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
+                    ),
+                }
+            summary["latest_autoencoder_generalizable_capacity"] = (
+                cycle_capacity_report
+            )
             mark_cycle_phase("after_train_eval", sample_count=len(train_samples))
             after_train = evaluate_cycle_samples(
                 train_samples,
@@ -20615,6 +21070,58 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 leanstral_rule_gap_projection,
                 leanstral_direct_guidance_projection,
             )
+            if autoencoder.state.generalizable_capacity_exceeded(
+                generalizable_capacity_limit
+            ):
+                mark_cycle_phase(
+                    "state_capacity_compaction",
+                    max_entries_per_group=generalizable_capacity_limit,
+                    source="post_guidance",
+                )
+                guidance_capacity_report = (
+                    autoencoder.state.compact_generalizable_capacity(
+                        generalizable_capacity_limit
+                    )
+                )
+                guidance_capacity_report["cycle"] = cycle
+                guidance_capacity_report["reason"] = (
+                    "post_guidance_pre_persistence"
+                )
+                summary["latest_autoencoder_generalizable_capacity"] = (
+                    guidance_capacity_report
+                )
+                summary[
+                    "autoencoder_generalizable_capacity_compactions_total"
+                ] = int(
+                    summary[
+                        "autoencoder_generalizable_capacity_compactions_total"
+                    ]
+                ) + 1
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "capacity": guidance_capacity_report,
+                        "cycle": cycle,
+                        "event": "autoencoder_generalizable_capacity_compacted",
+                    },
+                )
+            else:
+                guidance_entry_count = (
+                    autoencoder.state.generalizable_entry_count()
+                )
+                summary["latest_autoencoder_generalizable_capacity"] = {
+                    "after_entry_count": guidance_entry_count,
+                    "before_entry_count": guidance_entry_count,
+                    "compacted": False,
+                    "cycle": cycle,
+                    "dropped_entry_count": 0,
+                    "max_entries_per_group": generalizable_capacity_limit,
+                    "reason": "post_guidance_pre_persistence",
+                    "schema_version": (
+                        MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
+                    ),
+                }
             if snapshot_evaluator is not None:
                 evaluation_snapshot = build_autoencoder_evaluation_snapshot(
                     autoencoder.state,
@@ -21880,6 +22387,71 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["supervisor_health"] = build_modal_supervisor_health_report(
             summary
         ).to_dict()
+        if autoencoder.state.generalizable_capacity_exceeded(
+            generalizable_capacity_limit
+        ):
+            shutdown_capacity_report = (
+                autoencoder.state.compact_generalizable_capacity(
+                    generalizable_capacity_limit
+                )
+            )
+            shutdown_capacity_report["cycle"] = int(
+                summary.get("cycles", 0) or 0
+            )
+            shutdown_capacity_report["reason"] = "clean_shutdown"
+            summary["latest_autoencoder_generalizable_capacity"] = (
+                shutdown_capacity_report
+            )
+            summary[
+                "autoencoder_generalizable_capacity_compactions_total"
+            ] = int(
+                summary[
+                    "autoencoder_generalizable_capacity_compactions_total"
+                ]
+            ) + 1
+            append_event(
+                log_path,
+                args.run_id,
+                {
+                    "capacity": shutdown_capacity_report,
+                    "event": "autoencoder_generalizable_capacity_compacted",
+                },
+            )
+        final_checkpoint_future = None
+        final_cycle = int(summary.get("cycles", 0) or 0)
+        if final_cycle > 0:
+            final_checkpoint_snapshot = artifact_writer.snapshot_state_checkpoint(
+                autoencoder.state,
+                cycle=final_cycle,
+                full=True,
+                compact=True,
+                metadata={
+                    "reason": "clean_shutdown",
+                    "run_id": args.run_id,
+                    "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                },
+            )
+            final_checkpoint_future = artifact_writer.write_state_checkpoint(
+                state_path,
+                final_checkpoint_snapshot,
+                cycle=final_cycle,
+                full=True,
+                compact=True,
+                metadata={
+                    "reason": "clean_shutdown",
+                    "run_id": args.run_id,
+                    "state_schema_version": MODAL_AUTOENCODER_STATE_SCHEMA_VERSION,
+                },
+            )
+            summary["final_state_persistence"] = {
+                "checkpoint_bytes": int(final_checkpoint_snapshot.byte_size),
+                "checkpoint_enqueued": True,
+                "checkpoint_future_id": final_checkpoint_future.job_id,
+                "checkpoint_identity": final_checkpoint_snapshot.identity,
+                "checkpoint_revision": final_checkpoint_snapshot.revision,
+                "durable": False,
+                "state_path": str(state_path),
+            }
         artifact_drain_timeout = max(
             0.0,
             float(
@@ -21894,6 +22466,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         artifact_writer_drained = artifact_writer.wait_until_idle(
             timeout=artifact_drain_timeout
         )
+        if artifact_writer_drained and final_checkpoint_future is not None:
+            final_checkpoint_receipt = final_checkpoint_future.result(timeout=0.0)
+            summary["final_state_persistence"].update(
+                {
+                    "checksum": final_checkpoint_receipt.checksum,
+                    "completed_at": final_checkpoint_receipt.completed_at,
+                    "durable": True,
+                    "written_bytes": final_checkpoint_receipt.bytes_written,
+                }
+            )
         summary["async_artifact_writer_shutdown"] = {
             "drained": bool(artifact_writer_drained),
             "timeout_seconds": artifact_drain_timeout,
@@ -21930,6 +22512,17 @@ def _codex_shutdown_drain_window_seconds(args: argparse.Namespace) -> float:
     return max(15.0, exec_budget + scheduling_budget + 15.0)
 
 
+def _codex_execution_budget_reached(
+    *,
+    execution_count: int,
+    max_executions: int,
+) -> bool:
+    """Return whether a finite Codex worker has dispositioned its packet budget."""
+
+    limit = max(0, int(max_executions or 0))
+    return limit > 0 and max(0, int(execution_count or 0)) >= limit
+
+
 def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     """Claim program-synthesis TODOs asynchronously for an external Codex worker."""
     root = Path.cwd()
@@ -21948,6 +22541,10 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     queue_dir.mkdir(parents=True, exist_ok=True)
     work_dir.mkdir(parents=True, exist_ok=True)
     execution_mode = codex_loop_execution_mode(args)
+    max_codex_executions = max(
+        0,
+        int(getattr(args, "codex_max_executions", 0) or 0),
+    )
 
     stop_requested = False
     stop_signal: int | None = None
@@ -21983,6 +22580,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_vector_min_similarity": args.codex_vector_min_similarity,
             "codex_execution_count": 0,
             "codex_execution_failure_count": 0,
+            "codex_max_executions": max_codex_executions,
             "codex_main_apply_count": 0,
             "codex_main_apply_failure_count": 0,
             "codex_main_apply_lock_timeout_seconds": (
@@ -22027,6 +22625,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_main_apply_count", 0)
     summary.setdefault("codex_main_apply_failure_count", 0)
     summary.setdefault("codex_main_apply_repair_count", 0)
+    summary["codex_max_executions"] = max_codex_executions
     summary.setdefault("codex_transient_requeue_count", 0)
     runtime_telemetry = RuntimeTelemetry(args.run_id)
     attach_runtime_telemetry(summary, runtime_telemetry)
@@ -22065,6 +22664,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
 
     try:
         while not stop_requested and time.time() < end_at:
+            if _codex_execution_budget_reached(
+                execution_count=int(summary.get("codex_execution_count", 0) or 0),
+                max_executions=max_codex_executions,
+            ):
+                summary["latest_stop_reason"] = "max_codex_executions"
+                break
             cycle = int(summary.get("cycles", 0)) + 1
             cycle_started = time.time()
             packet: Dict[str, Any] = {}
@@ -22368,6 +22973,13 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             )
             attach_runtime_telemetry(summary, runtime_telemetry, cycle=cycle)
             save_summary(summary_path, summary)
+            if _codex_execution_budget_reached(
+                execution_count=int(summary.get("codex_execution_count", 0) or 0),
+                max_executions=max_codex_executions,
+            ):
+                summary["latest_stop_reason"] = "max_codex_executions"
+                save_summary(summary_path, summary)
+                break
             sleep_seconds = max(0.1, float(args.poll_seconds))
             if not stop_requested:
                 with runtime_telemetry.span(

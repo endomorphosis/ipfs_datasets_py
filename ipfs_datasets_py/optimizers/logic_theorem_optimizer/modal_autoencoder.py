@@ -71,6 +71,10 @@ MODAL_AUTOENCODER_COMPATIBLE_ARCHITECTURE_VERSIONS = frozenset(
     }
 )
 MODAL_AUTOENCODER_STATE_SCHEMA_VERSION = "modal-autoencoder-state-v1"
+MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION = (
+    "modal-autoencoder-generalizable-capacity-v1"
+)
+DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP = 8192
 MODAL_AUTOENCODER_LOW_RANK_STATE_SCHEMA_VERSION = "modal-autoencoder-low-rank-v1"
 MODAL_AUTOENCODER_LOW_RANK_BASIS = "implicit-dct-v1"
 MODAL_AUTOENCODER_LOW_RANK_DEFAULT_RANK = 32
@@ -225,6 +229,104 @@ MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS = (
     "applied_todo_ids",
     "architecture_version",
 )
+
+# Fields in each group share the same semantic key. Capacity selection must be
+# coupled so an encoder row cannot survive after its decoder/logit peers were
+# independently evicted (or vice versa).
+MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS: Mapping[
+    str,
+    tuple[str, ...],
+] = {
+    "compiler_quality": (
+        "compiler_quality_embedding_weights",
+        "compiler_quality_family_logits",
+    ),
+    "logic_signature": (
+        "logic_signature_embedding_weights",
+        "logic_signature_family_logits",
+        "logic_signature_legal_ir_view_logits",
+    ),
+    "round_trip_signal": (
+        "round_trip_signal_embedding_weights",
+        "round_trip_signal_family_logits",
+        "round_trip_signal_legal_ir_view_logits",
+    ),
+    "decompiler_plan": (
+        "decompiler_plan_embedding_weights",
+        "decompiler_plan_family_logits",
+        "decompiler_plan_legal_ir_view_logits",
+    ),
+    "predicate_argument": (
+        "predicate_argument_embedding_weights",
+        "predicate_argument_family_logits",
+        "predicate_argument_legal_ir_view_logits",
+    ),
+    "feature": (
+        "feature_embedding_weights",
+        "feature_family_logits",
+        "feature_legal_ir_view_logits",
+    ),
+    "family": ("family_embedding_weights",),
+    "family_semantic_slot": ("family_semantic_slot_embedding_weights",),
+    "family_semantic_slot_legal_ir_view": (
+        "family_semantic_slot_legal_ir_view_embedding_weights",
+        "family_semantic_slot_legal_ir_view_logits",
+    ),
+    "family_legal_ir_view": ("family_legal_ir_view_embedding_weights",),
+    "semantic_slot": (
+        "semantic_slot_embedding_weights",
+        "semantic_slot_family_logits",
+    ),
+    "legal_ir_view": (
+        "legal_ir_view_logits",
+        "legal_ir_view_embedding_weights",
+        "legal_ir_view_family_logits",
+    ),
+    "semantic_slot_legal_ir_view": (
+        "semantic_slot_legal_ir_view_embedding_weights",
+        "semantic_slot_legal_ir_view_family_logits",
+        "semantic_slot_legal_ir_view_logits",
+    ),
+}
+
+
+def _generalizable_capacity_signal(value: Any) -> float:
+    """Return a finite aggregate L1 signal for a sparse state row."""
+
+    if isinstance(value, bool):
+        return 0.0
+    if isinstance(value, (int, float)):
+        numeric = float(value)
+        return abs(numeric) if math.isfinite(numeric) else 0.0
+    if isinstance(value, Mapping):
+        return sum(_generalizable_capacity_signal(item) for item in value.values())
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return sum(_generalizable_capacity_signal(item) for item in value)
+    return 0.0
+
+
+def _generalizable_capacity_key_is_protected(key: Any) -> bool:
+    """Keep global and bias rows unless protected rows alone exceed capacity."""
+
+    text = str(key).strip().lower()
+    return (
+        text in {"__global__", "global", "bias"}
+        or text.endswith(":bias")
+        or text.endswith("|bias")
+    )
+
+
+def _generalizable_capacity_row_copy(value: Any) -> Any:
+    """Detach retained rows from their old recursive mutation wrappers."""
+
+    if isinstance(value, Mapping):
+        return {
+            key: _generalizable_capacity_row_copy(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_generalizable_capacity_row_copy(item) for item in value]
+    return value
 
 
 @dataclass(frozen=True)
@@ -1365,6 +1467,163 @@ class ModalAutoencoderTrainingState:
                 self.proof_auxiliary_head_logits,
             )
         )
+
+    def generalizable_capacity_exceeded(
+        self,
+        max_entries_per_group: int = (
+            DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
+        ),
+    ) -> bool:
+        """Return whether any coupled sparse-key group exceeds its global cap."""
+
+        limit = int(max_entries_per_group)
+        if limit < 1:
+            raise ValueError("max_entries_per_group must be positive")
+        for fields in MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.values():
+            keys: set[Any] = set()
+            for field_name in fields:
+                keys.update(getattr(self, field_name))
+                if len(keys) > limit:
+                    return True
+        return False
+
+    def compact_generalizable_capacity(
+        self,
+        max_entries_per_group: int = (
+            DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
+        ),
+    ) -> Dict[str, Any]:
+        """Bound reusable sparse rows while preserving coupled head alignment.
+
+        Selection is deterministic and favors aggregate L1 signal across every
+        head sharing a semantic key. Global and bias rows sort ahead of ordinary
+        rows, and lexical key order resolves equal-signal ties.
+        """
+
+        limit = int(max_entries_per_group)
+        if limit < 1:
+            raise ValueError("max_entries_per_group must be positive")
+
+        before_entry_count = self.generalizable_entry_count()
+        compacted_fields: set[str] = set()
+        group_reports: Dict[str, Dict[str, Any]] = {}
+        total_signal_before = 0.0
+        total_signal_after = 0.0
+        total_unique_keys_before = 0
+        total_unique_keys_after = 0
+
+        for group_name, fields in sorted(
+            MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()
+        ):
+            mappings = {
+                field_name: getattr(self, field_name)
+                for field_name in fields
+            }
+            keys: set[Any] = set()
+            for mapping in mappings.values():
+                keys.update(mapping)
+            scores = {
+                key: sum(
+                    _generalizable_capacity_signal(mapping[key])
+                    for mapping in mappings.values()
+                    if key in mapping
+                )
+                for key in keys
+            }
+            ordered_keys = sorted(
+                keys,
+                key=lambda key: (
+                    0 if _generalizable_capacity_key_is_protected(key) else 1,
+                    -scores[key],
+                    str(key),
+                ),
+            )
+            retained_keys = set(ordered_keys[:limit])
+            signal_before = sum(scores.values())
+            signal_after = sum(scores[key] for key in retained_keys)
+            component_entries_before = {
+                field_name: len(mapping)
+                for field_name, mapping in mappings.items()
+            }
+
+            if len(keys) > limit:
+                for field_name, mapping in mappings.items():
+                    if all(key in retained_keys for key in mapping):
+                        continue
+                    setattr(
+                        self,
+                        field_name,
+                        {
+                            key: _generalizable_capacity_row_copy(mapping[key])
+                            for key in sorted(mapping, key=str)
+                            if key in retained_keys
+                        },
+                    )
+                    compacted_fields.add(field_name)
+
+            component_entries_after = {
+                field_name: len(getattr(self, field_name))
+                for field_name in fields
+            }
+            protected_before = sum(
+                1 for key in keys if _generalizable_capacity_key_is_protected(key)
+            )
+            protected_after = sum(
+                1
+                for key in retained_keys
+                if _generalizable_capacity_key_is_protected(key)
+            )
+            unique_after = len(retained_keys)
+            total_signal_before += signal_before
+            total_signal_after += signal_after
+            total_unique_keys_before += len(keys)
+            total_unique_keys_after += unique_after
+            group_reports[group_name] = {
+                "component_entries_after": component_entries_after,
+                "component_entries_before": component_entries_before,
+                "component_entries_dropped": {
+                    field_name: (
+                        component_entries_before[field_name]
+                        - component_entries_after[field_name]
+                    )
+                    for field_name in fields
+                },
+                "fields": list(fields),
+                "protected_keys_after": protected_after,
+                "protected_keys_before": protected_before,
+                "retained_signal_ratio": (
+                    signal_after / signal_before if signal_before > 0.0 else 1.0
+                ),
+                "signal_after": signal_after,
+                "signal_before": signal_before,
+                "unique_keys_after": unique_after,
+                "unique_keys_before": len(keys),
+                "unique_keys_dropped": len(keys) - unique_after,
+            }
+
+        after_entry_count = self.generalizable_entry_count()
+        return {
+            "after_entry_count": after_entry_count,
+            "before_entry_count": before_entry_count,
+            "compacted": bool(compacted_fields),
+            "compacted_fields": sorted(compacted_fields),
+            "dropped_entry_count": before_entry_count - after_entry_count,
+            "groups": group_reports,
+            "max_entries_per_group": limit,
+            "retained_signal_ratio": (
+                total_signal_after / total_signal_before
+                if total_signal_before > 0.0
+                else 1.0
+            ),
+            "schema_version": (
+                MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_SCHEMA_VERSION
+            ),
+            "total_unique_keys_after": total_unique_keys_after,
+            "total_unique_keys_before": total_unique_keys_before,
+            "total_unique_keys_dropped": (
+                total_unique_keys_before - total_unique_keys_after
+            ),
+        }
 
     def embedding_weight_maps(self) -> Dict[str, Mapping[str, Sequence[float]]]:
         """Return reusable dense embedding-weight maps by state field name."""

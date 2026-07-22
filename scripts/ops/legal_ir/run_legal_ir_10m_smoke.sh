@@ -24,7 +24,7 @@ RESUME_ARGS=()
 DRY_RUN=0
 VERIFY_ONLY=0
 ACTIVE_SECONDS=600
-MAX_WALL_SECONDS=2400
+MAX_WALL_SECONDS=1500
 HEARTBEAT_SECONDS=5
 STALL_SECONDS=360
 
@@ -42,7 +42,7 @@ Options:
   --run-root PATH             Directory for bulky transient run artifacts
   --resume-from-run-id ID     Import a prior run's generalizable state
   --resume-from-state PATH    Import an explicit state checkpoint
-  --max-wall-seconds N        Watchdog wall limit (minimum 900; default 2400)
+  --max-wall-seconds N        Watchdog wall limit (minimum 900; default 1500)
   --verify-only               Verify an already-sealed --evidence receipt
   --dry-run                   Print the immutable contract; never emit evidence
   -h, --help                  Show this help
@@ -103,7 +103,7 @@ if (( DRY_RUN )); then
   echo "canonical_runner=${CANONICAL_RUNNER}"
   echo "evidence=${EVIDENCE_PATH}"
   PYTHON_BIN="${PYTHON_BIN}" DURATION_SECONDS=600 MAX_CYCLES=0 \
-    PAIRED_GRACE_SECONDS=240 PAIRED_CODEX_QUEUE_GRACE_SECONDS=0 \
+    PAIRED_GRACE_SECONDS=240 PAIRED_CODEX_QUEUE_GRACE_SECONDS=120 \
     "${CANONICAL_RUNNER}" --run-id "${RUN_ID}" --dry-run
   exit 0
 fi
@@ -167,7 +167,7 @@ setsid --wait env \
   DURATION_SECONDS=600 \
   MAX_CYCLES=0 \
   PAIRED_GRACE_SECONDS=240 \
-  PAIRED_CODEX_QUEUE_GRACE_SECONDS=0 \
+  PAIRED_CODEX_QUEUE_GRACE_SECONDS=120 \
   AUTOENCODER_DEVICE=cuda \
   LEANSTRAL_AUDIT_REQUIRE_CUDA=1 \
   LEANSTRAL_AUDIT_PERSIST_SERVICE=1 \

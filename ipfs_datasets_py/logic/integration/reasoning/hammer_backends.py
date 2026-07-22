@@ -16,12 +16,77 @@ from ipfs_datasets_py.logic.hammers.process_lifecycle import (
 )
 
 from .hammer import HammerBackendRunner, SubprocessHammerBackendRunner
+from .hammer import (
+    HammerBackendResult,
+    HammerBackendStatus,
+    HammerTranslation,
+)
 
 
 HAMMER_BACKEND_HEALTH_SCHEMA_VERSION = "legal-ir-hammer-backend-health-v1"
 
 ExecutableResolver = Callable[[str], Optional[str]]
 InstallerRunner = Callable[[Sequence[str], float], subprocess.CompletedProcess[str]]
+
+
+class PythonZ3HammerBackendRunner:
+    """Run SMT-LIB through the native Python Z3 binding.
+
+    DGX Spark hosts are aarch64, while an unrelated executable on ``PATH`` may
+    target x86-64.  The Python wheel is already architecture checked by the
+    interpreter, so this route is both faster and more portable than spawning
+    a solver binary.
+    """
+
+    name = "z3_python"
+    problem_format = "smt-lib"
+
+    def run(
+        self, translation: HammerTranslation, timeout_seconds: float
+    ) -> HammerBackendResult:
+        start = time.time()
+        try:
+            import z3
+
+            solver = z3.Solver()
+            solver.set(timeout=max(1, int(float(timeout_seconds) * 1000)))
+            solver.from_string(translation.problem)
+            result = solver.check()
+            reason = str(solver.reason_unknown() or "") if result == z3.unknown else ""
+            if result == z3.unsat:
+                status = HammerBackendStatus.PROVED
+                proved = True
+            elif result == z3.sat:
+                status = HammerBackendStatus.DISPROVED
+                proved = False
+            elif "timeout" in reason.lower():
+                status = HammerBackendStatus.TIMEOUT
+                proved = False
+            else:
+                status = HammerBackendStatus.UNKNOWN
+                proved = False
+            return HammerBackendResult(
+                backend=self.name,
+                status=status,
+                proved=proved,
+                elapsed_seconds=time.time() - start,
+                translation_format=translation.target_format,
+                proof_trace="z3-python:unsat" if proved else "",
+                raw_output=str(result),
+                error=reason,
+                timed_out=status is HammerBackendStatus.TIMEOUT,
+                metadata={"runtime": "python-z3"},
+            )
+        except Exception as exc:
+            return HammerBackendResult(
+                backend=self.name,
+                status=HammerBackendStatus.ERROR,
+                proved=False,
+                elapsed_seconds=time.time() - start,
+                translation_format=translation.target_format,
+                error=f"{type(exc).__name__}: {str(exc)[:500]}",
+                metadata={"runtime": "python-z3"},
+            )
 
 
 @dataclass(frozen=True)
@@ -288,7 +353,13 @@ def backend_health_for_runners(
                     problem_format=str(getattr(backend, "problem_format", "") or ""),
                 ),
             )
-            health.append(check_hammer_backend_availability(spec, resolver=resolver))
+            health.append(
+                check_hammer_backend_availability(
+                    spec,
+                    resolver=resolver,
+                    include_version=resolver is shutil.which,
+                )
+            )
             continue
         health.append(
             HammerBackendHealth(
@@ -300,6 +371,24 @@ def backend_health_for_runners(
             )
         )
     return health
+
+
+def default_hammer_backend_runners(
+    backend_names: Optional[Iterable[str]] = None,
+) -> List[HammerBackendRunner]:
+    """Return native Python SMT routes followed by fail-closed subprocess routes."""
+
+    names = list(backend_names or ("z3", "cvc5", "vampire", "e_prover"))
+    runners: List[HammerBackendRunner] = []
+    if "z3" in names:
+        try:
+            import z3  # noqa: F401
+
+            runners.append(PythonZ3HammerBackendRunner())
+        except Exception:
+            pass
+    runners.extend(default_hammer_subprocess_backends(names))
+    return runners
 
 
 def default_hammer_subprocess_backends(
@@ -379,8 +468,10 @@ __all__ = [
     "check_hammer_backend_availability",
     "check_hammer_backend_health",
     "default_hammer_backend_specs",
+    "default_hammer_backend_runners",
     "default_hammer_subprocess_backends",
     "hammer_backend_health_summary",
     "hammer_backend_specs_by_name",
     "lazy_install_hammer_backend",
+    "PythonZ3HammerBackendRunner",
 ]

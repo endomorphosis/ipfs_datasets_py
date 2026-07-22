@@ -566,9 +566,9 @@ class SubprocessHammerBackendRunner:
 def default_hammer_backends() -> List[HammerBackendRunner]:
     """Return conservative local ATP/SMT backend runners."""
 
-    from .hammer_backends import default_hammer_subprocess_backends
+    from .hammer_backends import default_hammer_backend_runners
 
-    return default_hammer_subprocess_backends()
+    return default_hammer_backend_runners()
 
 
 class HammerProofReconstructor:

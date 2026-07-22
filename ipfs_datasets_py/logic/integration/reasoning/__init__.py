@@ -164,6 +164,7 @@ from .legal_ir_contract_telemetry import (
     collect_legal_ir_contract_telemetry,
     emit_legal_ir_contract_telemetry,
     extract_legal_ir_contract_payloads,
+    legal_ir_contract_payloads_from_multiview_report,
     summarize_legal_ir_contract_telemetry,
 )
 from .legal_ir_premises import (
@@ -737,6 +738,7 @@ __all__ = [
     'collect_legal_ir_contract_telemetry',
     'emit_legal_ir_contract_telemetry',
     'extract_legal_ir_contract_payloads',
+    'legal_ir_contract_payloads_from_multiview_report',
     'summarize_legal_ir_contract_telemetry',
     'LEGAL_IR_PREMISE_LIBRARY_VERSION',
     'default_legal_ir_premises',

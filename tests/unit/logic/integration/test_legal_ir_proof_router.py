@@ -228,6 +228,44 @@ def test_unsupported_translation_is_not_reported_as_failed_theorem() -> None:
     assert result.hammer_result.status.value == "translation_failed"
 
 
+def test_portfolio_failure_preserves_bounded_backend_diagnostics() -> None:
+    def unavailable_backend(translation, timeout_seconds):
+        return HammerBackendResult(
+            backend="cvc5",
+            status=HammerBackendStatus.ERROR,
+            proved=False,
+            elapsed_seconds=0.01,
+            translation_format=translation.target_format,
+            error="OSError: Exec format error",
+        )
+
+    router = LegalIRProofRouter(
+        HammerPipeline(
+            backends=[CallableHammerBackendRunner("cvc5", "smt-lib", unavailable_backend)]
+        ),
+        policy=ProofRoutingPolicy(
+            enabled_routes=("smt_atp_portfolio",),
+            required_trust="backend",
+        ),
+    )
+    obligation = _obligation()
+    result = router.route(obligation, _goal(obligation), _premises())
+    attempt = next(
+        item for item in result.attempts if item.route == "smt_atp_portfolio"
+    )
+
+    assert attempt.status == ProofRouteStatus.UNKNOWN
+    assert attempt.metadata["hammer_status"] == "unproved"
+    assert attempt.metadata["backend_results"] == [
+        {
+            "backend": "cvc5",
+            "error": "OSError: Exec format error",
+            "status": "error",
+            "timed_out": False,
+        }
+    ]
+
+
 def test_deterministic_counterexample_stops_as_theorem_failure() -> None:
     obligation = _obligation(deterministic_syntax_valid=False)
     result = LegalIRProofRouter(HammerPipeline(backends=[])).route(

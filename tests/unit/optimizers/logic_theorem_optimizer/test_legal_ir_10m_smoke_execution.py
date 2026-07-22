@@ -14,8 +14,13 @@ import pytest
 
 from scripts.ops.legal_ir.verify_legal_ir_run_evidence import (
     REQUIRED_FAMILIES,
+    REQUIRED_METRIC_BRIDGE_ADAPTERS,
     REQUIRED_QUALITY_METRICS,
     SCHEMA_VERSION,
+    _family_quality_pair,
+    _strict_contract_evidence,
+    _strict_hammer_runtime_canary,
+    _strict_metric_evidence,
     manifest_sha256,
     verify_evidence,
     write_evidence,
@@ -53,6 +58,18 @@ def _qualities() -> dict[str, object]:
     return {
         family: {
             "sample_count": 8,
+            "baseline_sample_count": 8,
+            "candidate_sample_count": 8,
+            "baseline_metric_coverage": 1.0,
+            "candidate_metric_coverage": 1.0,
+            "baseline_observed_metrics": [
+                "ir_cosine_similarity",
+                "ir_cross_entropy_loss",
+            ],
+            "candidate_observed_metrics": [
+                "ir_cosine_similarity",
+                "ir_cross_entropy_loss",
+            ],
             "guardrail_passed": True,
             "baseline": dict(values),
             "candidate": dict(values),
@@ -174,11 +191,40 @@ def complete_evidence() -> dict[str, object]:
             "hammer": {
                 "healthy": True,
                 "backend_available": True,
-                "obligation_count": 16,
-                "backend_attempt_count": 16,
-                "proof_attempt_count": 16,
-                "reconstruction_count": 4,
+                "evidence_kind": "runtime_canary",
+                "winner_backends": ["z3_python"],
+                "checker_routes": ["lean"],
+                "obligation_count": 1,
+                "backend_attempt_count": 1,
+                "proof_attempt_count": 1,
+                "proved_count": 1,
+                "reconstruction_count": 1,
+                "trusted_guidance_count": 1,
+                "legal_obligation_count": 16,
+                "legal_proof_attempt_count": 16,
+                "legal_proved_count": 8,
+                "legal_reconstruction_count": 4,
+                "legal_trusted_guidance_count": 4,
                 "fatal_failure_count": 0,
+            },
+            "contract_validation": {
+                "coverage": 1.0,
+                "failure_count": 0,
+                "failure_counts": {
+                    "cross_view_mismatches": 0,
+                    "decompiler_preservation_failures": 0,
+                    "missing_required_fields": 0,
+                    "provenance_policy_failures": 0,
+                    "validation_errors": 0,
+                },
+                "family_gap_count": 0,
+            },
+            "metric_evaluation": {
+                "evaluated_count": 16,
+                "failure_count": 0,
+                "sample_count": 16,
+                "sample_timeout_count": 0,
+                "timeout_fallback_count": 0,
             },
             "codex": {
                 "run_id": "legal-ir-smoke-unit",
@@ -312,12 +358,24 @@ def test_bounded_codex_retries_do_not_inflate_unique_todo_count() -> None:
         (lambda p: p["services"]["cuda_autoencoder"].update(cpu_fallback=True), "service:autoencoder:fallback_or_simulated"),
         (lambda p: p["services"]["leanstral"].update(model_load_count=2), "service:leanstral:weights_reloaded"),
         (lambda p: p["services"]["hammer"].update(reconstruction_count=0), "service:hammer:reconstruction_count"),
+        (lambda p: p["services"]["hammer"].update(proved_count=0), "service:hammer:proved_count"),
+        (lambda p: p["services"]["hammer"].update(trusted_guidance_count=0), "service:hammer:trusted_guidance_count"),
+        (lambda p: p["services"]["hammer"].update(evidence_kind="legal_quality"), "service:hammer:evidence_kind"),
+        (lambda p: p["services"]["hammer"].update(winner_backends=[]), "service:hammer:winner_backend"),
+        (lambda p: p["services"]["hammer"].update(checker_routes=[]), "service:hammer:checker_route"),
+        (lambda p: p["services"]["hammer"].update(legal_obligation_count=0), "service:hammer:legal_obligation_count"),
+        (lambda p: p["services"]["hammer"].update(legal_proof_attempt_count=0), "service:hammer:legal_proof_attempt_count"),
+        (lambda p: p["services"]["contract_validation"].update(coverage=0.0), "service:contract:coverage"),
+        (lambda p: p["services"]["contract_validation"].update(failure_count=1), "service:contract:failure_count"),
+        (lambda p: p["services"]["metric_evaluation"].update(sample_timeout_count=1), "service:metrics:sample_timeout_count"),
         (lambda p: p["services"]["codex"].update(safe_rejection_count=0), "service:codex:no_safe_terminal_path"),
         (lambda p: p["services"]["watchdog"].update(orphaned_child_count=1), "service:watchdog:orphaned_child_count"),
         (lambda p: p["services"]["watchdog"].update(max_progress_gap_seconds=361), "service:watchdog:progress_gap"),
         (lambda p: p["services"]["cuda_autoencoder"].update(loss_count=3), "service:autoencoder:operation_count_mismatch"),
         (lambda p: p["services"]["leanstral"].update(reuse_count=4), "service:leanstral:reuse_count_incoherent"),
         (lambda p: p["services"]["hammer"].update(reconstruction_count=17), "service:hammer:counter_progression"),
+        (lambda p: p["quality_families"]["tdfol"].update(candidate_sample_count=0), "quality:tdfol:candidate_sample_coverage"),
+        (lambda p: p["quality_families"]["cec"].update(candidate_observed_metrics=[]), "quality:cec:candidate_observed_metrics"),
     ],
 )
 def test_fail_closed_runtime_mutations(mutation, failure: str) -> None:
@@ -337,6 +395,109 @@ def test_each_family_metric_is_finite_and_non_regressing() -> None:
             payload["manifest_sha256"] = manifest_sha256(payload)
             result = verify_evidence(payload, now=datetime(2026, 7, 22, 0, 11, tzinfo=timezone.utc))
             assert f"quality:{family}:{metric}:nonfinite_or_missing" in result.failures
+
+
+def test_legacy_family_builder_does_not_borrow_global_sample_coverage() -> None:
+    row = {
+        "ir_cross_entropy_loss": 0.4,
+        "ir_cosine_similarity": 0.8,
+        "metric_coverage": 0.25,
+        "observed_metrics": ["ir_cross_entropy_loss", "ir_cosine_similarity"],
+        "sample_count": 0,
+    }
+    validation = {
+        "cross_entropy_loss": 0.5,
+        "cosine_similarity": 0.7,
+        "sample_count": 8,
+    }
+    with pytest.raises(ValueError, match="family sample coverage"):
+        _family_quality_pair(
+            row,
+            row,
+            baseline_validation=validation,
+            candidate_validation=validation,
+            provenance_score=1.0,
+            uncertainty_error=0.0,
+        )
+
+
+def test_legacy_metric_builder_rejects_numeric_failures_and_timeouts() -> None:
+    adapters = {
+        name: {"metric_failures": 0, "sample_count": 2}
+        for name in REQUIRED_METRIC_BRIDGE_ADAPTERS
+    }
+    block = {
+        "evaluated_count": 2,
+        "metric_failures": 0,
+        "sample_count": 2,
+        "sample_timeouts": 0,
+        "skipped_sample_count": 0,
+        "timeout_fallback_count": 0,
+    }
+    auto = {
+        "active_cycle_metric_bridge_adapters": sorted(REQUIRED_METRIC_BRIDGE_ADAPTERS),
+        "bridge_metric_failures": 0,
+        "latest_compiler_ir_validation": dict(block),
+        "latest_compiler_ir_guided_validation": dict(block),
+        "latest_logic_bridge_validation": {"adapters": adapters},
+        "metric_failures": 0,
+    }
+    assert _strict_metric_evidence(auto)["sample_count"] == 4
+    auto["metric_failures"] = 1
+    with pytest.raises(ValueError, match="failures, timeouts"):
+        _strict_metric_evidence(auto)
+    auto["metric_failures"] = 0
+    auto["latest_compiler_ir_validation"]["sample_timeouts"] = 1
+    with pytest.raises(ValueError, match="failures, timeouts"):
+        _strict_metric_evidence(auto)
+
+
+def test_legacy_contract_builder_rejects_nested_failures() -> None:
+    failure_counts = {
+        "cross_view_mismatches": 0,
+        "decompiler_preservation_failures": 0,
+        "missing_required_fields": 0,
+        "provenance_policy_failures": 0,
+        "validation_errors": 0,
+    }
+    hammer = {
+        "contract_projection_failure_count": 0,
+        "legal_ir_contract_coverage": 1.0,
+        "legal_ir_contract_failure_counts": failure_counts,
+        "legal_ir_contract_view_family_gaps": [],
+        "hammer_guidance_artifacts": [{"validation_errors": 1}],
+    }
+    with pytest.raises(ValueError, match="artifact reported"):
+        _strict_contract_evidence({}, hammer)
+
+    hammer["hammer_guidance_artifacts"] = []
+    hammer["legal_ir_contract_view_family_gaps"] = {"cec": 1}
+    with pytest.raises(ValueError, match="view-family gaps"):
+        _strict_contract_evidence({}, hammer)
+
+
+def test_runtime_canary_is_separate_from_legal_quality_counters() -> None:
+    hammer = {
+        "runtime_canary": {
+            "checker_routes": ["lean"],
+            "proved_count": 1,
+            "reconstruction_count": 1,
+            "schema_version": "legal-ir-hammer-runtime-canary-v1",
+            "status": "passed",
+            "trusted_count": 1,
+            "winner_backends": ["z3_python"],
+        },
+        "hammer_metrics": {
+            "hammer_proved_count": 0,
+            "hammer_reconstruction_success_count": 0,
+            "trusted_hammer_guidance_count": 0,
+        },
+    }
+
+    assert _strict_hammer_runtime_canary(hammer)["proved_count"] == 1
+    hammer["runtime_canary"]["winner_backends"] = ["cvc5"]
+    with pytest.raises(ValueError, match="native Python Z3"):
+        _strict_hammer_runtime_canary(hammer)
 
 
 def test_manifest_digest_and_lineage_are_recomputed() -> None:

@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import subprocess
 
+import pytest
+
 from ipfs_datasets_py.logic.integration.reasoning.hammer import (
     CallableHammerBackendRunner,
     HammerBackendResult,
     HammerBackendStatus,
+    HammerTranslation,
     SubprocessHammerBackendRunner,
 )
 from ipfs_datasets_py.logic.integration.reasoning.hammer_backends import (
@@ -15,9 +18,11 @@ from ipfs_datasets_py.logic.integration.reasoning.hammer_backends import (
     backend_health_for_runners,
     check_hammer_backend_availability,
     check_hammer_backend_health,
+    default_hammer_backend_runners,
     default_hammer_subprocess_backends,
     hammer_backend_health_summary,
     lazy_install_hammer_backend,
+    PythonZ3HammerBackendRunner,
 )
 
 
@@ -63,6 +68,32 @@ def test_default_hammer_subprocess_backends_preserve_unavailable_routes_for_fail
     assert {runner.problem_format for runner in runners} == {"smt-lib", "tptp-fof"}
 
 
+def test_native_python_z3_runner_proves_unsatisfiable_smt_without_a_binary() -> None:
+    pytest.importorskip("z3")
+    result = PythonZ3HammerBackendRunner().run(
+        HammerTranslation(
+            target_format="smt-lib",
+            problem="(assert (not true))\n(check-sat)",
+            selected_premises=[],
+            transformations=[],
+        ),
+        timeout_seconds=1.0,
+    )
+
+    assert result.status is HammerBackendStatus.PROVED
+    assert result.proved is True
+    assert result.backend == "z3_python"
+    assert result.metadata["runtime"] == "python-z3"
+
+
+def test_default_hammer_runners_prefer_native_python_z3_when_available() -> None:
+    pytest.importorskip("z3")
+    runners = default_hammer_backend_runners(["z3", "cvc5"])
+
+    assert runners[0].name == "z3_python"
+    assert [runner.name for runner in runners[1:]] == ["z3", "cvc5"]
+
+
 def test_backend_health_for_runtime_and_subprocess_runners() -> None:
     def _run(translation, timeout_seconds):
         return HammerBackendResult(
@@ -106,4 +137,3 @@ def test_lazy_install_hook_is_explicit_and_side_effect_injectable() -> None:
     assert calls[0][0] == ("python", "-m", "pip", "install", "z3-solver")
     assert calls[0][1] == 12.0
     assert health.name == "z3"
-

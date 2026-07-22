@@ -122,6 +122,7 @@ class ExternalProverRouterBridgeAdapter:
     ) -> tuple[LegalIRDocument, Mapping[str, Any]]:
         """Encode text into router-ready TDFOL formulas and graph records."""
 
+        guidance = _router_guidance_signal(compiler_guidance)
         adapter = self.tdfol_adapter or FolTdfolBridgeAdapter()
         _, context = adapter.encode(
             text,
@@ -147,6 +148,9 @@ class ExternalProverRouterBridgeAdapter:
             metadata={
                 "router_formula_count": len(records),
                 "source": "external_prover_router_bridge_ir",
+                "compiler_guidance_applied": guidance["active"],
+                "compiler_guidance_prover_gate_hint": guidance["prover_gate_hint"],
+                "compiler_guidance_routes": list(guidance["routes"]),
             },
         )
         views = {
@@ -166,6 +170,9 @@ class ExternalProverRouterBridgeAdapter:
                     "sanitized_formula_count": formula_resolution.sanitized_count,
                     "text_fallback_formula_count": formula_resolution.text_fallback_count,
                     "unresolved_formula_count": formula_resolution.unresolved_count,
+                    "compiler_guidance_applied": guidance["active"],
+                    "compiler_guidance_prover_gate_hint": guidance["prover_gate_hint"],
+                    "compiler_guidance_routes": guidance["routes"],
                 },
             ),
             "frame_logic": LogicIRView(
@@ -173,7 +180,12 @@ class ExternalProverRouterBridgeAdapter:
                 format="flogic-triples-v1",
                 source_component="external_provers.router",
                 payload={"triples": [dict(triple) for triple in triples]},
-                metadata={"triple_count": len(triples)},
+                metadata={
+                    "triple_count": len(triples),
+                    "compiler_guidance_applied": guidance["active"],
+                    "compiler_guidance_prover_gate_hint": guidance["prover_gate_hint"],
+                    "compiler_guidance_routes": guidance["routes"],
+                },
             ),
         }
         if graph_data is not None:
@@ -202,6 +214,9 @@ class ExternalProverRouterBridgeAdapter:
                     "router_sanitized_formula_count": formula_resolution.sanitized_count,
                     "router_text_fallback_formula_count": formula_resolution.text_fallback_count,
                     "router_unresolved_formula_count": formula_resolution.unresolved_count,
+                    "compiler_guidance_applied": guidance["active"],
+                    "compiler_guidance_prover_gate_hint": guidance["prover_gate_hint"],
+                    "compiler_guidance_routes": guidance["routes"],
                 },
             ),
             {
@@ -209,6 +224,7 @@ class ExternalProverRouterBridgeAdapter:
                 "formulas": formulas,
                 "formula_resolution": formula_resolution.to_dict(),
                 "graph_data": graph_data,
+                "guidance": guidance,
             },
         )
 
@@ -238,7 +254,7 @@ class ExternalProverRouterBridgeAdapter:
             enable_external_binaries=self.enable_external_binaries,
         )
         formulas = list(context["formulas"])
-        guidance = _router_guidance_signal(compiler_guidance)
+        guidance = dict(context["guidance"])
         proof_gate = _proof_gate_from_router(
             router,
             formulas,
@@ -262,13 +278,23 @@ class ExternalProverRouterBridgeAdapter:
         failure_ratio = max(0.0, (attempted - proof_gate.valid_count) / attempted)
         available_provers = _router_available_provers(router)
         unavailable_loss = 0.0 if available_provers else 1.0
+        compiler_ir_cross_entropy_loss = failure_ratio
+        compiler_ir_cosine_similarity = max(
+            0.0,
+            1.0 - compiler_ir_cross_entropy_loss,
+        )
         round_trip = RoundTripMetrics(
             cosine_similarity=max(0.0, 1.0 - unavailable_loss),
             cosine_loss=unavailable_loss,
+            cross_entropy_loss=failure_ratio,
             symbolic_validity_penalty=failure_ratio,
             extra_losses={
+                "compiler_ir_cross_entropy_loss": compiler_ir_cross_entropy_loss,
+                "compiler_ir_cosine_similarity": compiler_ir_cosine_similarity,
                 "external_prover_failure_ratio": failure_ratio,
                 "external_prover_unavailable_loss": unavailable_loss,
+                "legal_ir_multiview_proof_failure_ratio": failure_ratio,
+                "source_copy_reward_hack_penalty": 0.0,
             },
         )
         status = "ok" if proof_gate.compiles else "partial"
@@ -291,6 +317,9 @@ class ExternalProverRouterBridgeAdapter:
                 "available_provers": available_provers,
                 "compiler_guidance_applied": guidance["active"],
                 "compiler_guidance_prover_gate_hint": guidance["prover_gate_hint"],
+                "compiler_guidance_routes": list(guidance["routes"]),
+                "compiler_ir_cross_entropy_loss": compiler_ir_cross_entropy_loss,
+                "compiler_ir_cosine_similarity": compiler_ir_cosine_similarity,
                 "proof_gate_soft_pass": proof_gate_soft_pass,
                 "proof_gate_soft_pass_reason": proof_gate_soft_pass_reason,
             },
