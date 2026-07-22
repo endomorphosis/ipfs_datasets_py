@@ -43,8 +43,9 @@ common_args=(
   --stale-seconds "${HAMMER_LEANSTRAL_STALE_SECONDS:-1800}"
   --check-interval "${HAMMER_LEANSTRAL_CHECK_INTERVAL:-60}"
   --daemon-interval "${HAMMER_LEANSTRAL_DAEMON_INTERVAL:-15}"
-  --max-restarts "${HAMMER_LEANSTRAL_MAX_RESTARTS:-20}"
-  --implementation-timeout "${HAMMER_LEANSTRAL_IMPLEMENTATION_TIMEOUT:-3600}"
+  --max-restarts "${HAMMER_LEANSTRAL_MAX_RESTARTS:-100}"
+  # Covers an eight-hour canary plus setup, durable evidence, and validation.
+  --implementation-timeout "${HAMMER_LEANSTRAL_IMPLEMENTATION_TIMEOUT:-43200}"
   --implementation-log-stall-seconds "${HAMMER_LEANSTRAL_LOG_STALL_SECONDS:-900}"
   --worktree-root "${HAMMER_LEANSTRAL_WORKTREE_ROOT:-${ROOT_DIR}/workspace/hammer-leanstral-worktrees}"
   --worktree-reconciliation-max-merges "${HAMMER_LEANSTRAL_RECONCILIATION_MAX_MERGES:-2}"
