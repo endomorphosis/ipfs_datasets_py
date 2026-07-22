@@ -7,8 +7,10 @@ response is still admitted by the request-specific deterministic validator.
 
 The scheduler is synchronous and thread safe.  Producers may enqueue work as
 it arrives while an async worker periodically calls :meth:`pop_ready_batch`.
-That small interface also makes scheduling deterministic and easy to test
-without an event-loop or a model server.
+The generation-aware lease manager in this module owns the complementary
+runtime contract: one exact model/context identity, one load and preflight per
+healthy CUDA generation, and bounded health-triggered replacement.  Neither
+scheduling nor service health grants proof authority to model output.
 """
 
 from __future__ import annotations
@@ -20,8 +22,8 @@ import os
 import threading
 import time
 from collections import defaultdict, deque
-from dataclasses import asdict, dataclass, field
-from typing import Any, AsyncIterator, Awaitable, Deque, Dict, List, Mapping, Optional, Sequence, Tuple
+from dataclasses import asdict, dataclass, field, replace
+from typing import Any, AsyncIterator, Awaitable, Callable, Deque, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ipfs_datasets_py.utils import anyio_compat as anyio_runtime
 
@@ -29,6 +31,7 @@ from ipfs_datasets_py.utils import anyio_compat as anyio_runtime
 LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION = "legal-ir-leanstral-batch-scheduler-v1"
 LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION = "legal-ir-leanstral-batch-telemetry-v1"
 LEANSTRAL_CONTINUOUS_SERVICE_SCHEMA_VERSION = "legal-ir-leanstral-continuous-service-v1"
+LEANSTRAL_PERSISTENT_SERVICE_SCHEMA_VERSION = "legal-ir-leanstral-persistent-service-v1"
 
 
 class LeanstralQueueBackpressureError(RuntimeError):
@@ -174,6 +177,10 @@ class LeanstralBatchTelemetry:
     marginal_information: float = 0.0
     gpu_seconds: float = 0.0
     healthy_cuda_service_reused: bool = False
+    queue_seconds: float = 0.0
+    inference_seconds: float = 0.0
+    verification_seconds: float = 0.0
+    restart_seconds: float = 0.0
     batch_sizes: List[int] = field(default_factory=list)
     family_dispatch_counts: Dict[str, int] = field(default_factory=dict)
 
@@ -223,6 +230,21 @@ class LeanstralBatchTelemetry:
         self.marginal_information += _finite_nonnegative(marginal_information, 0.0)
         self.gpu_seconds += _finite_nonnegative(gpu_seconds, 0.0)
 
+    def record_request_timing(
+        self,
+        *,
+        queue_seconds: float = 0.0,
+        inference_seconds: float = 0.0,
+        verification_seconds: float = 0.0,
+        restart_seconds: float = 0.0,
+    ) -> None:
+        """Record non-overlapping service phases for throughput diagnosis."""
+
+        self.queue_seconds += _finite_nonnegative(queue_seconds, 0.0)
+        self.inference_seconds += _finite_nonnegative(inference_seconds, 0.0)
+        self.verification_seconds += _finite_nonnegative(verification_seconds, 0.0)
+        self.restart_seconds += _finite_nonnegative(restart_seconds, 0.0)
+
     def to_dict(self, *, queued_count: int = 0) -> Dict[str, Any]:
         sizes = list(self.batch_sizes)
         dispatched = max(0, int(self.dispatched_item_count))
@@ -249,6 +271,10 @@ class LeanstralBatchTelemetry:
             "full_batch_count": int(self.full_batch_count),
             "gpu_seconds": round(gpu_seconds, 6),
             "healthy_cuda_service_reused": bool(self.healthy_cuda_service_reused),
+            "inference_seconds": round(_finite_nonnegative(self.inference_seconds, 0.0), 6),
+            "leanstral_inference_seconds": round(
+                _finite_nonnegative(self.inference_seconds, 0.0), 6
+            ),
             "marginal_information": round(float(self.marginal_information), 6),
             "marginal_information_per_gpu_second": _per_second(
                 self.marginal_information,
@@ -257,11 +283,13 @@ class LeanstralBatchTelemetry:
             "mesh_batch_count": int(self.mesh_batch_count),
             "proof_authority": False,
             "provider_error_count": int(self.provider_error_count),
+            "queue_seconds": round(_finite_nonnegative(self.queue_seconds, 0.0), 6),
             "queued_count": max(0, int(queued_count)),
             "reassociated_response_count": int(self.reassociated_response_count),
             "retry_count": int(self.retry_count),
             "schema_repair_count": int(self.schema_repair_count),
             "schema_version": LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION,
+            "restart_seconds": round(_finite_nonnegative(self.restart_seconds, 0.0), 6),
             "tokens_per_gpu_second": _per_second(total_tokens, gpu_seconds),
             "verified_audit_count": int(self.verified_audit_count),
             "verified_audits_per_gpu_second": _per_second(
@@ -269,6 +297,9 @@ class LeanstralBatchTelemetry:
                 gpu_seconds,
             ),
             "wait_flush_count": int(self.wait_flush_count),
+            "verification_seconds": round(
+                _finite_nonnegative(self.verification_seconds, 0.0), 6
+            ),
         }
 
 
@@ -701,6 +732,9 @@ class LeanstralServiceHealth:
     model: str = "Leanstral"
     base_url: str = ""
     service_id: str = ""
+    context_size: int = 0
+    context_fingerprint: str = ""
+    generation: int = 0
     proof_authority: bool = False
 
     @property
@@ -709,6 +743,372 @@ class LeanstralServiceHealth:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+class LeanstralServiceIdentityError(RuntimeError):
+    """Raised before reuse when model or serving-context identity differs."""
+
+
+class LeanstralServiceHealthError(RuntimeError):
+    """Raised when a newly loaded service generation fails preflight."""
+
+
+@dataclass(frozen=True)
+class LeanstralServiceIdentity:
+    """Exact identity of weights and context that may share one CUDA lease.
+
+    Context size alone is insufficient: tokenizer, prompt-template, rope, slot,
+    and other serving settings can change semantics without changing the token
+    limit.  Callers therefore provide a stable fingerprint of the complete
+    context configuration in addition to its explicit size.
+    """
+
+    model: str
+    context_size: int
+    context_fingerprint: str
+    provider: str = "leanstral_local"
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "model", str(self.model or "").strip())
+        object.__setattr__(self, "provider", str(self.provider or "").strip())
+        object.__setattr__(
+            self,
+            "context_fingerprint",
+            str(self.context_fingerprint or "").strip(),
+        )
+        object.__setattr__(self, "context_size", int(self.context_size or 0))
+        if not self.model:
+            raise ValueError("Leanstral service identity requires a model")
+        if not self.provider:
+            raise ValueError("Leanstral service identity requires a provider")
+        if self.context_size <= 0:
+            raise ValueError("Leanstral service identity requires a positive context_size")
+        if not self.context_fingerprint:
+            raise ValueError("Leanstral service identity requires a context_fingerprint")
+
+    def compatible_with(self, other: "LeanstralServiceIdentity") -> bool:
+        """Return true only for an exact model/provider/context match."""
+
+        return self == other
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class LeanstralPersistentServiceConfig:
+    """Bounds for one process-wide, generation-aware CUDA model lease."""
+
+    max_consecutive_health_failures: int = 2
+    require_cuda_backed: bool = True
+
+    def bounded_health_failures(self) -> int:
+        return max(1, int(self.max_consecutive_health_failures or 1))
+
+
+class LeanstralServiceLease:
+    """Stable lease object whose service advances atomically by generation.
+
+    Compatible callers receive this same object.  Its properties deliberately
+    resolve through the manager so a caller cannot retain a stale model handle
+    after the bounded health policy replaces a failed generation.
+    """
+
+    def __init__(self, manager: "LeanstralPersistentServiceManager") -> None:
+        self._manager = manager
+
+    @property
+    def identity(self) -> LeanstralServiceIdentity:
+        return self._manager.identity
+
+    @property
+    def service(self) -> Any:
+        return self._manager.service
+
+    @property
+    def service_id(self) -> str:
+        return self._manager.service_id
+
+    @property
+    def generation(self) -> int:
+        return self._manager.generation
+
+    @property
+    def health(self) -> LeanstralServiceHealth:
+        return self._manager.health
+
+
+class LeanstralPersistentServiceManager:
+    """Own exactly one reusable CUDA Leanstral service and its health policy.
+
+    Loading and preflight are lazy and occur exactly once for each successful
+    generation.  A request-level failure never reloads weights: only the
+    configured number of *consecutive* health failures advances the generation.
+    Model responses remain untrusted and retain ``proof_authority=False``.
+    """
+
+    def __init__(
+        self,
+        identity: LeanstralServiceIdentity,
+        *,
+        loader: Callable[[LeanstralServiceIdentity], Any],
+        preflight: Callable[[Any, LeanstralServiceIdentity], LeanstralServiceHealth],
+        restarter: Optional[Callable[[Any, LeanstralServiceIdentity], Any]] = None,
+        config: Optional[LeanstralPersistentServiceConfig] = None,
+        clock: Optional[Callable[[], float]] = None,
+    ) -> None:
+        if not isinstance(identity, LeanstralServiceIdentity):
+            raise TypeError("identity must be a LeanstralServiceIdentity")
+        if not callable(loader):
+            raise TypeError("loader must be callable")
+        if not callable(preflight):
+            raise TypeError("preflight must be callable")
+        if restarter is not None and not callable(restarter):
+            raise TypeError("restarter must be callable")
+        self.identity = identity
+        self.config = config or LeanstralPersistentServiceConfig()
+        self._loader = loader
+        self._preflight = preflight
+        self._restarter = restarter
+        self._clock = clock or time.monotonic
+        self._service: Any = None
+        self._health: Optional[LeanstralServiceHealth] = None
+        self._lease = LeanstralServiceLease(self)
+        self._generation = 0
+        self._model_load_count = 0
+        self._preflight_count = 0
+        self._restart_count = 0
+        self._acquire_count = 0
+        self._reuse_count = 0
+        self._health_failure_count = 0
+        self._consecutive_health_failures = 0
+        self._healthy_cuda_service_reused = False
+        self._queue_seconds = 0.0
+        self._inference_seconds = 0.0
+        self._verification_seconds = 0.0
+        self._restart_seconds = 0.0
+        self._last_health_failure_reason = ""
+        self._lock = threading.RLock()
+
+    @property
+    def service(self) -> Any:
+        with self._lock:
+            if self._generation <= 0 or self._service is None:
+                raise RuntimeError("Leanstral service has not been acquired")
+            return self._service
+
+    @property
+    def health(self) -> LeanstralServiceHealth:
+        with self._lock:
+            if self._health is None:
+                raise RuntimeError("Leanstral service has not been acquired")
+            return self._health
+
+    @property
+    def service_id(self) -> str:
+        return self.health.service_id
+
+    @property
+    def generation(self) -> int:
+        with self._lock:
+            return self._generation
+
+    def acquire(
+        self,
+        identity: Optional[LeanstralServiceIdentity] = None,
+    ) -> LeanstralServiceLease:
+        """Load once or return the one lease after exact identity validation."""
+
+        requested = self.identity if identity is None else identity
+        if not isinstance(requested, LeanstralServiceIdentity):
+            raise TypeError("identity must be a LeanstralServiceIdentity")
+        with self._lock:
+            self._validate_identity(requested)
+            if self._generation == 0:
+                loaded = self._loader(self.identity)
+                self._install_generation(loaded, generation=1)
+            else:
+                self._reuse_count += 1
+                self._healthy_cuda_service_reused = bool(
+                    self._health is not None and self._health.healthy_cuda_backed
+                )
+            self._acquire_count += 1
+            return self._lease
+
+    # Operational terminology used by schedulers which explicitly lease lanes.
+    lease = acquire
+
+    def report_healthy(self) -> None:
+        """Clear the consecutive-failure window after a successful health check."""
+
+        with self._lock:
+            self._consecutive_health_failures = 0
+            self._last_health_failure_reason = ""
+
+    def report_health_failure(self, reason: str = "health_check_failed") -> bool:
+        """Record one health failure and restart only at the bounded threshold.
+
+        Returns ``True`` when this call successfully installed a new generation.
+        Inference/schema/proof rejection must not be reported here: service
+        health is operational and confers no trust on model output.
+        """
+
+        with self._lock:
+            if self._generation <= 0 or self._service is None:
+                raise RuntimeError("cannot report health before service acquisition")
+            self._health_failure_count += 1
+            self._consecutive_health_failures += 1
+            self._last_health_failure_reason = _token(reason, "health_check_failed")
+            if (
+                self._consecutive_health_failures
+                < self.config.bounded_health_failures()
+            ):
+                return False
+            self._restart_locked()
+            return True
+
+    def record_request_timing(
+        self,
+        *,
+        queue_seconds: float = 0.0,
+        inference_seconds: float = 0.0,
+        verification_seconds: float = 0.0,
+        restart_seconds: float = 0.0,
+    ) -> None:
+        """Accumulate mutually named phases without folding queue into inference."""
+
+        with self._lock:
+            self._queue_seconds += _finite_nonnegative(queue_seconds, 0.0)
+            self._inference_seconds += _finite_nonnegative(inference_seconds, 0.0)
+            self._verification_seconds += _finite_nonnegative(verification_seconds, 0.0)
+            self._restart_seconds += _finite_nonnegative(restart_seconds, 0.0)
+
+    def telemetry_snapshot(self) -> Dict[str, Any]:
+        with self._lock:
+            health = self._health.to_dict() if self._health is not None else {}
+            return {
+                "acquire_count": self._acquire_count,
+                "consecutive_health_failures": self._consecutive_health_failures,
+                "generation": self._generation,
+                "health": health,
+                "health_failure_count": self._health_failure_count,
+                "healthy_cuda_service_reused": self._healthy_cuda_service_reused,
+                "identity": self.identity.to_dict(),
+                "inference_seconds": round(self._inference_seconds, 6),
+                "leanstral_inference_seconds": round(self._inference_seconds, 6),
+                "leanstral_request_count": self._acquire_count,
+                "leanstral_reuse_count": self._reuse_count,
+                "leanstral_service_startup_count": self._model_load_count,
+                "last_health_failure_reason": self._last_health_failure_reason,
+                "model_load_count": self._model_load_count,
+                "model_reload_count": max(0, self._model_load_count - 1),
+                "preflight_count": self._preflight_count,
+                "proof_authority": False,
+                "queue_seconds": round(self._queue_seconds, 6),
+                "restart_count": self._restart_count,
+                "restart_seconds": round(self._restart_seconds, 6),
+                "reuse_count": self._reuse_count,
+                "schema_version": LEANSTRAL_PERSISTENT_SERVICE_SCHEMA_VERSION,
+                "service_generation": self._generation,
+                "service_id": str(health.get("service_id") or ""),
+                "verification_seconds": round(self._verification_seconds, 6),
+            }
+
+    def _validate_identity(self, requested: LeanstralServiceIdentity) -> None:
+        if not self.identity.compatible_with(requested):
+            raise LeanstralServiceIdentityError(
+                "incompatible Leanstral service identity: "
+                f"leased={self.identity.to_dict()} requested={requested.to_dict()}"
+            )
+
+    def _restart_locked(self) -> None:
+        started = float(self._clock())
+        old_service = self._service
+        next_generation = self._generation + 1
+        try:
+            loaded = (
+                self._restarter(old_service, self.identity)
+                if self._restarter is not None
+                else self._loader(self.identity)
+            )
+            self._install_generation(loaded, generation=next_generation)
+        finally:
+            self._restart_seconds += max(0.0, float(self._clock()) - started)
+        self._restart_count += 1
+        self._consecutive_health_failures = 0
+        self._last_health_failure_reason = ""
+        # The replacement is not considered reused until another compatible
+        # request actually acquires it.
+        self._healthy_cuda_service_reused = False
+
+    def _install_generation(self, loaded: Any, *, generation: int) -> None:
+        if loaded is None:
+            raise LeanstralServiceHealthError("Leanstral model loader returned no service")
+        self._model_load_count += 1
+        self._preflight_count += 1
+        raw_health = self._preflight(loaded, self.identity)
+        health = self._validated_health(raw_health, generation=generation)
+        self._service = loaded
+        self._health = health
+        self._generation = generation
+
+    def _validated_health(
+        self,
+        health: LeanstralServiceHealth,
+        *,
+        generation: int,
+    ) -> LeanstralServiceHealth:
+        if not isinstance(health, LeanstralServiceHealth):
+            raise LeanstralServiceHealthError(
+                "Leanstral preflight must return LeanstralServiceHealth"
+            )
+        if health.status != "healthy":
+            raise LeanstralServiceHealthError(
+                f"Leanstral generation preflight is not healthy: {health.status!r}"
+            )
+        if self.config.require_cuda_backed and not health.cuda_backed:
+            raise LeanstralServiceHealthError(
+                "Leanstral generation preflight is not CUDA-backed"
+            )
+        if _token(health.model, "") != self.identity.model:
+            raise LeanstralServiceIdentityError(
+                f"preflight model mismatch: {health.model!r} != {self.identity.model!r}"
+            )
+        if _token(health.provider, "") != self.identity.provider:
+            raise LeanstralServiceIdentityError(
+                "preflight provider mismatch: "
+                f"{health.provider!r} != {self.identity.provider!r}"
+            )
+        if int(health.context_size or 0) != self.identity.context_size:
+            raise LeanstralServiceIdentityError(
+                "preflight context_size mismatch: "
+                f"{health.context_size!r} != {self.identity.context_size!r}"
+            )
+        if _token(health.context_fingerprint, "") != self.identity.context_fingerprint:
+            raise LeanstralServiceIdentityError(
+                "preflight context_fingerprint mismatch: "
+                f"{health.context_fingerprint!r} != "
+                f"{self.identity.context_fingerprint!r}"
+            )
+        service_id = _token(
+            health.service_id,
+            self._generation_service_id(generation),
+        )
+        return replace(
+            health,
+            service_id=service_id,
+            context_size=self.identity.context_size,
+            context_fingerprint=self.identity.context_fingerprint,
+            generation=generation,
+            proof_authority=False,
+        )
+
+    def _generation_service_id(self, generation: int) -> str:
+        payload = {"generation": generation, "identity": self.identity.to_dict()}
+        digest = hashlib.sha256(
+            json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:24]
+        return f"leanstral-service-{digest}"
 
 
 @dataclass(frozen=True)
@@ -764,6 +1164,16 @@ def probe_reusable_cuda_leanstral_service(
     ).strip().lower()
     reused = str(values.get("LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER") or "").strip().lower()
     gpu_layers = str(values.get("IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS") or "").strip().lower()
+    try:
+        context_size = max(
+            0,
+            int(str(values.get("IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE") or "0").strip()),
+        )
+    except ValueError:
+        context_size = 0
+    context_fingerprint = str(
+        values.get("LEANSTRAL_AUDIT_CONTEXT_FINGERPRINT") or base_url
+    ).strip()
     cuda_backed = (
         accelerator == "cuda"
         or reused in {"1", "true", "yes", "on"}
@@ -773,6 +1183,8 @@ def probe_reusable_cuda_leanstral_service(
     service_identity = {
         "base_url": base_url,
         "cuda_backed": cuda_backed,
+        "context_fingerprint": context_fingerprint,
+        "context_size": context_size,
         "model": model_name,
         "provider": provider_name,
     }
@@ -786,6 +1198,8 @@ def probe_reusable_cuda_leanstral_service(
         model=model_name,
         base_url=base_url,
         service_id=f"leanstral-service-{service_id}",
+        context_size=context_size,
+        context_fingerprint=context_fingerprint,
         proof_authority=False,
     )
 
@@ -799,16 +1213,24 @@ class LeanstralContinuousBatchService:
         config: Optional[LeanstralContinuousBatchServiceConfig] = None,
         *,
         health: Optional[LeanstralServiceHealth] = None,
+        persistent_service: Optional[LeanstralPersistentServiceManager] = None,
+        service_identity: Optional[LeanstralServiceIdentity] = None,
     ) -> None:
         self.worker = worker
         self.config = config or LeanstralContinuousBatchServiceConfig()
         self.scheduler = LeanstralBatchScheduler(self.config.scheduler_config())
         provider = str(getattr(getattr(worker, "config", None), "provider", "leanstral_local"))
         model = str(getattr(getattr(worker, "config", None), "model", "Leanstral"))
-        self.health = health or probe_reusable_cuda_leanstral_service(
-            provider=provider,
-            model=model,
-        )
+        self.persistent_service = persistent_service
+        self.service_lease: Optional[LeanstralServiceLease] = None
+        if persistent_service is not None:
+            self.service_lease = persistent_service.acquire(service_identity)
+            self.health = self.service_lease.health
+        else:
+            self.health = health or probe_reusable_cuda_leanstral_service(
+                provider=provider,
+                model=model,
+            )
         self.scheduler.telemetry.healthy_cuda_service_reused = bool(
             self.health.healthy_cuda_backed
         )
@@ -920,6 +1342,14 @@ class LeanstralContinuousBatchService:
         return tuple([await future for future in futures])
 
     async def _dispatch_batch(self, batch: LeanstralInferenceBatch) -> None:
+        if self.service_lease is not None:
+            # A bounded external health restart advances this stable lease in
+            # place.  Refresh metadata before attributing GPU work.
+            self.health = self.service_lease.health
+        queue_seconds = sum(
+            max(0.0, batch.formed_monotonic - item.enqueued_monotonic)
+            for item in batch.items
+        )
         started = time.monotonic()
         results = tuple(await self.worker._run_items_batch(batch.work_items))
         elapsed = max(0.0, time.monotonic() - started)
@@ -954,6 +1384,20 @@ class LeanstralContinuousBatchService:
             marginal_information=marginal,
             gpu_seconds=elapsed if self.health.cuda_backed else 0.0,
         )
+        self.scheduler.telemetry.record_request_timing(
+            queue_seconds=queue_seconds,
+            inference_seconds=elapsed,
+            # Local verification currently occurs inside _run_items_batch.  It
+            # remains a distinct field (rather than being mislabeled queue or
+            # restart time) until the runner exposes its inner phase clock.
+            verification_seconds=0.0,
+        )
+        if self.persistent_service is not None:
+            self.persistent_service.record_request_timing(
+                queue_seconds=queue_seconds,
+                inference_seconds=elapsed,
+                verification_seconds=0.0,
+            )
 
     def _resolve_terminal_items(self) -> None:
         from .leanstral_audit import _work_result
@@ -973,10 +1417,26 @@ class LeanstralContinuousBatchService:
                 )
 
     def telemetry_snapshot(self) -> Dict[str, Any]:
+        if self.service_lease is not None:
+            self.health = self.service_lease.health
         payload = self.scheduler.telemetry_snapshot()
+        persistent_payload: Dict[str, Any] = {}
+        if self.persistent_service is not None:
+            persistent_payload = self.persistent_service.telemetry_snapshot()
+            payload["healthy_cuda_service_reused"] = bool(
+                persistent_payload["healthy_cuda_service_reused"]
+            )
+            for field_name in (
+                "queue_seconds",
+                "inference_seconds",
+                "verification_seconds",
+                "restart_seconds",
+            ):
+                payload[field_name] = persistent_payload[field_name]
         payload["continuous_service"] = {
             "accepted_request_count": len(self._accepted_request_ids),
             "health": self.health.to_dict(),
+            "persistent_service": persistent_payload,
             "schema_version": LEANSTRAL_CONTINUOUS_SERVICE_SCHEMA_VERSION,
         }
         return payload
@@ -1076,8 +1536,10 @@ from .leanstral_audit_policy import (  # noqa: E402  (compatibility exports)
 
 
 __all__ = [
+    "LEANSTRAL_CONTINUOUS_SERVICE_SCHEMA_VERSION",
     "LEANSTRAL_BATCH_SCHEDULER_SCHEMA_VERSION",
     "LEANSTRAL_BATCH_TELEMETRY_SCHEMA_VERSION",
+    "LEANSTRAL_PERSISTENT_SERVICE_SCHEMA_VERSION",
     "LEANSTRAL_AUDIT_POLICY_SCHEMA_VERSION",
     "LeanstralAuditWorker",
     "LeanstralAuditWorkerConfig",
@@ -1092,10 +1554,23 @@ __all__ = [
     "LeanstralBatchScheduler",
     "LeanstralBatchSchedulerConfig",
     "LeanstralBatchTelemetry",
+    "LeanstralContinuousBatchService",
+    "LeanstralContinuousBatchServiceConfig",
     "LeanstralInferenceBatch",
+    "LeanstralPersistentServiceConfig",
+    "LeanstralPersistentServiceManager",
+    "LeanstralQueueBackpressureError",
     "LeanstralScheduledItem",
+    "LeanstralServiceHealth",
+    "LeanstralServiceHealthError",
+    "LeanstralServiceIdentity",
+    "LeanstralServiceIdentityError",
+    "LeanstralServiceLease",
+    "estimate_leanstral_audit_tokens",
+    "estimate_leanstral_marginal_information",
     "leanstral_batch_metadata",
     "leanstral_policy_report_with_cache_hits",
     "policy_decision_by_candidate_id",
+    "probe_reusable_cuda_leanstral_service",
     "select_informative_leanstral_audit_clusters",
 ]

@@ -13,6 +13,7 @@ RUN_ID="${RUN_ID:-legal-ir-hammer-leanstral-smoke-$(date -u +%Y%m%dT%H%M%SZ)}"
 DURATION_SECONDS="${DURATION_SECONDS:-600}"
 MAX_CYCLES="${MAX_CYCLES:-1}"
 SUMMARY_PATH="${SUMMARY_PATH:-${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.summary}"
+LEANSTRAL_SERVICE_STATE_PATH="${LEANSTRAL_AUDIT_SERVICE_STATE_PATH:-${ROOT_DIR}/workspace/leanstral-audit-worker/persistent-service.state.json}"
 DRY_RUN=0
 GATE_ONLY=0
 
@@ -60,7 +61,7 @@ gate_boolean_flag() {
   esac
 }
 
-GATE_REQUIRE_REPRESENTATION_PROMOTION="${GATE_REQUIRE_REPRESENTATION_PROMOTION:-false}"
+GATE_REQUIRE_REPRESENTATION_PROMOTION="${GATE_REQUIRE_REPRESENTATION_PROMOTION:-true}"
 GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION="${GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION:-false}"
 GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE="${GATE_REQUIRE_COMPLETE_REPRESENTATION_EVIDENCE:-false}"
 GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION="${GATE_MAX_PER_VIEW_IR_METRIC_REGRESSION:-0.0}"
@@ -91,6 +92,12 @@ export LEANSTRAL_AUDIT_BATCH_SIZE="${LEANSTRAL_AUDIT_BATCH_SIZE:-1}"
 export LEANSTRAL_AUDIT_BATCH_USE_MESH="${LEANSTRAL_AUDIT_BATCH_USE_MESH:-1}"
 export LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR="${LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR:-cuda}"
 export LEANSTRAL_AUDIT_REQUIRE_CUDA="${LEANSTRAL_AUDIT_REQUIRE_CUDA:-1}"
+export LEANSTRAL_AUDIT_PERSIST_SERVICE="${LEANSTRAL_AUDIT_PERSIST_SERVICE:-1}"
+export LEANSTRAL_AUDIT_SERVICE_STATE_PATH="${LEANSTRAL_SERVICE_STATE_PATH}"
+export LEANSTRAL_AUDIT_SERVICE_HEALTH_FAILURE_LIMIT="${LEANSTRAL_AUDIT_SERVICE_HEALTH_FAILURE_LIMIT:-3}"
+export LEANSTRAL_AUDIT_SERVICE_MIN_REQUESTS_FOR_REUSE="${LEANSTRAL_AUDIT_SERVICE_MIN_REQUESTS_FOR_REUSE:-2}"
+export IPFS_ACCELERATE_LLAMA_CPP_MAX_WARM_SERVERS="${IPFS_ACCELERATE_LLAMA_CPP_MAX_WARM_SERVERS:-1}"
+export IPFS_ACCELERATE_LLAMA_CPP_RESTART_ON_CONFIG_MISMATCH="${IPFS_ACCELERATE_LLAMA_CPP_RESTART_ON_CONFIG_MISMATCH:-0}"
 
 CODEX_EXEC_MODE="${CODEX_EXEC_MODE:-codex_cli}"
 if ! command -v codex >/dev/null 2>&1; then
@@ -133,7 +140,7 @@ CMD=(
   --autoencoder-max-audits-per-cycle "${AUTOENCODER_MAX_AUDITS_PER_CYCLE:-4}"
   --autoencoder-max-todos-per-cycle "${AUTOENCODER_MAX_TODOS_PER_CYCLE:-8}"
   --leanstral-direct-guidance-projection-enabled true
-  --leanstral-rule-gap-wait-seconds "${LEANSTRAL_RULE_GAP_WAIT_SECONDS:-120}"
+  --leanstral-rule-gap-wait-seconds "${LEANSTRAL_RULE_GAP_WAIT_SECONDS:-180}"
   --leanstral-direct-guidance-require-executor-available "${LEANSTRAL_DIRECT_GUIDANCE_REQUIRE_EXECUTOR_AVAILABLE:-false}"
   --leanstral-direct-guidance-train-autoencoder true
   --leanstral-direct-guidance-max-training-items "${LEANSTRAL_DIRECT_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
@@ -192,11 +199,11 @@ verify_integrated_stack() {
   local paired_summary leanstral_log
   paired_summary="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.summary"
   leanstral_log="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.leanstral.stdout.log"
-  "${PYTHON_BIN}" - "${SUMMARY_PATH}" "${paired_summary}" <<'PY'
+  "${PYTHON_BIN}" - "${SUMMARY_PATH}" "${paired_summary}" "${LEANSTRAL_SERVICE_STATE_PATH}" "${leanstral_log}" <<'PY'
 import json
 import sys
 
-auto_path, paired_path = sys.argv[1:]
+auto_path, paired_path, service_state_path, leanstral_log_path = sys.argv[1:]
 with open(auto_path, "r", encoding="utf-8") as handle:
     auto = json.load(handle)
 with open(paired_path, "r", encoding="utf-8") as handle:
@@ -214,6 +221,53 @@ if not health.get("report_present"):
     raise SystemExit(f"Leanstral report verification failed: {health!r}")
 if not paired.get("leanstral_success"):
     raise SystemExit("paired supervisor did not accept the Leanstral worker")
+
+with open(service_state_path, "r", encoding="utf-8") as handle:
+    service = json.load(handle)
+if service.get("schema_version") != "legal-ir-leanstral-persistent-service-v1":
+    raise SystemExit(f"persistent Leanstral service schema mismatch: {service!r}")
+service_health = service.get("health") or {}
+identity = service.get("identity") or {}
+if service_health.get("status") != "healthy" or service_health.get("cuda_backed") is not True:
+    raise SystemExit(f"persistent Leanstral CUDA service is not healthy: {service!r}")
+if service.get("proof_authority") is not False or service_health.get("proof_authority") is not False:
+    raise SystemExit(f"service health incorrectly confers proof authority: {service!r}")
+if not service.get("generation") or service_health.get("generation") != service.get("generation"):
+    raise SystemExit(f"persistent Leanstral generation identity mismatch: {service!r}")
+if identity.get("context_fingerprint") != service_health.get("context_fingerprint"):
+    raise SystemExit(f"persistent Leanstral context identity mismatch: {service!r}")
+if int(identity.get("context_size") or 0) < 1 or "leanstral" not in str(identity.get("model") or "").lower():
+    raise SystemExit(f"persistent Leanstral model/context identity invalid: {identity!r}")
+if int(service.get("model_load_count") or 0) != 1:
+    raise SystemExit(f"canonical Leanstral weights reloaded within one generation: {service!r}")
+if int(service.get("preflight_count") or 0) != 1:
+    raise SystemExit(f"Leanstral preflight did not run exactly once in generation: {service!r}")
+minimum_requests = max(2, int(__import__("os").environ.get("LEANSTRAL_AUDIT_SERVICE_MIN_REQUESTS_FOR_REUSE", "2")))
+if int(service.get("acquire_count") or 0) < minimum_requests or int(service.get("reuse_count") or 0) < 1:
+    raise SystemExit(f"Leanstral service did not receive enough compatible warm requests: {service!r}")
+if service.get("healthy_cuda_service_reused") is not True:
+    raise SystemExit(f"healthy CUDA Leanstral service was not reused after warmup: {service!r}")
+timing_keys = ("queue_seconds", "inference_seconds", "verification_seconds", "restart_seconds")
+for key in timing_keys:
+    value = service.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or float(value) < 0.0:
+        raise SystemExit(f"persistent service timing {key} is missing or invalid: {service!r}")
+
+with open(leanstral_log_path, "r", encoding="utf-8", errors="replace") as handle:
+    watcher_text = handle.read()
+watcher_states = []
+for line in watcher_text.splitlines():
+    marker = "leanstral_persistent_service {"
+    if marker not in line:
+        continue
+    try:
+        watcher_states.append(json.loads("{" + line.split(marker, 1)[1]))
+    except Exception:
+        continue
+if not any(item.get("generation") == service.get("generation") for item in watcher_states):
+    raise SystemExit("watcher did not report the persistent Leanstral service generation")
+if watcher_text.count("llama_cpp_preflight_completed") > 1:
+    raise SystemExit("watcher loaded/preflighted canonical Leanstral weights more than once")
 
 hammer = auto.get("active_cycle_hammer_guidance") or {}
 if hammer.get("status") != "completed" or int(hammer.get("hammer_artifact_count") or 0) < 1:
@@ -265,7 +319,16 @@ print(
     f"autoencoder={auto.get('autoencoder_compute_device')} "
     f"hammer_artifacts={hammer.get('hammer_artifact_count')} "
     f"leanstral=cuda source_audits={leanstral_report.get('source_audit_count')} "
-    f"codex_activity={codex_activity} queue={queue_run_id}"
+    f"codex_activity={codex_activity} queue={queue_run_id} "
+    "healthy_cuda_service_reused=true "
+    f"leanstral_service_generation={service.get('generation')} "
+    f"model_load_count={service.get('model_load_count')} "
+    f"preflight_count={service.get('preflight_count')} "
+    f"service_requests={service.get('acquire_count')} "
+    f"queue_seconds={service.get('queue_seconds')} "
+    f"inference_seconds={service.get('inference_seconds')} "
+    f"verification_seconds={service.get('verification_seconds')} "
+    f"restart_seconds={service.get('restart_seconds')}"
 )
 PY
   grep -q 'llama_cpp_accelerator_resolved.*resolved=cuda' "${leanstral_log}"
@@ -281,6 +344,11 @@ if [[ "${DRY_RUN}" == "1" ]]; then
   printf '%q ' "${CMD[@]}"
   printf '\n'
   echo "summary_path=${SUMMARY_PATH}"
+  echo "leanstral_service_state_path=${LEANSTRAL_SERVICE_STATE_PATH}"
+  echo "leanstral_persistent_service_required=true"
+  echo "leanstral_healthy_cuda_service_reused_required=true"
+  echo "leanstral_min_service_requests=${LEANSTRAL_AUDIT_SERVICE_MIN_REQUESTS_FOR_REUSE}"
+  echo "leanstral_max_warm_servers=${IPFS_ACCELERATE_LLAMA_CPP_MAX_WARM_SERVERS}"
   echo "gate_metrics=${HARD_GUARDRAILS}"
   echo "representation_gate_required=${GATE_REQUIRE_REPRESENTATION_PROMOTION}"
   echo "representation_gate_require_successful=${GATE_REQUIRE_SUCCESSFUL_REPRESENTATION_PROMOTION}"

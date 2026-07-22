@@ -16,8 +16,15 @@ CHECKPOINT_PATH="${WORK_DIR}/${RUN_ID}.checkpoint.json"
 CACHE_DIR="${LEANSTRAL_AUDIT_CACHE_DIR:-${WORK_DIR}/cache}"
 VERIFICATION_OUTPUT="${WORK_DIR}/${RUN_ID}.verification.jsonl"
 RUN_REPORT_OUTPUT="${WORK_DIR}/${RUN_ID}.rule-gaps.json"
+AUDIT_STDOUT_OUTPUT="${WORK_DIR}/${RUN_ID}.audit.stdout.jsonl"
 PUBLISHED_REPORT_OUTPUT="${LEANSTRAL_RULE_GAP_REPORT_PATH:-${WORK_DIR}/canonical.rule-gaps.json}"
 PROOF_CACHE_PATH="${LEANSTRAL_PROOF_CACHE_PATH:-${WORK_DIR}/lean-proof-cache.json}"
+SERVICE_STATE_PATH="${LEANSTRAL_AUDIT_SERVICE_STATE_PATH:-${WORK_DIR}/persistent-service.state.json}"
+SERVICE_START_LOCK_PATH="${LEANSTRAL_AUDIT_SERVICE_START_LOCK_PATH:-${WORK_DIR}/persistent-service.start.lock}"
+SERVICE_STATE_LOCK_PATH="${LEANSTRAL_AUDIT_SERVICE_STATE_LOCK_PATH:-${WORK_DIR}/persistent-service.state.lock}"
+SERVICE_HEALTH_FAILURE_LIMIT="${LEANSTRAL_AUDIT_SERVICE_HEALTH_FAILURE_LIMIT:-3}"
+SERVICE_HEALTH_RETRY_SECONDS="${LEANSTRAL_AUDIT_SERVICE_HEALTH_RETRY_SECONDS:-2}"
+SERVICE_MIN_REQUESTS_FOR_REUSE="${LEANSTRAL_AUDIT_SERVICE_MIN_REQUESTS_FOR_REUSE:-2}"
 POLL_SECONDS="${LEANSTRAL_AUDIT_POLL_SECONDS:-30}"
 FAILURE_BACKOFF_SECONDS="${LEANSTRAL_AUDIT_FAILURE_BACKOFF_SECONDS:-900}"
 DEFAULT_REFERENCE_EXAMPLE_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.reference-examples.json"
@@ -39,6 +46,23 @@ LLAMA_CPP_RESOLVED_ACCELERATOR="cpu"
 LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="0"
 LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_CONTEXT_SIZE="0"
 LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID=""
+LEANSTRAL_AUDIT_SERVICE_GENERATION=""
+LEANSTRAL_AUDIT_CONTEXT_FINGERPRINT=""
+LEANSTRAL_AUDIT_SERVICE_PREFLIGHT_COMPLETED="0"
+LEANSTRAL_AUDIT_SERVICE_RESTART_PENDING="0"
+LEANSTRAL_AUDIT_SERVICE_CONSECUTIVE_HEALTH_FAILURES="0"
+if ! [[ "${SERVICE_HEALTH_FAILURE_LIMIT}" =~ ^[0-9]+$ ]] || (( SERVICE_HEALTH_FAILURE_LIMIT < 1 )); then
+  echo "LEANSTRAL_AUDIT_SERVICE_HEALTH_FAILURE_LIMIT must be a positive integer" >&2
+  exit 2
+fi
+if ! [[ "${SERVICE_HEALTH_RETRY_SECONDS}" =~ ^[0-9]+$ ]]; then
+  echo "LEANSTRAL_AUDIT_SERVICE_HEALTH_RETRY_SECONDS must be a nonnegative integer" >&2
+  exit 2
+fi
+if ! [[ "${SERVICE_MIN_REQUESTS_FOR_REUSE}" =~ ^[0-9]+$ ]] || (( SERVICE_MIN_REQUESTS_FOR_REUSE < 2 )); then
+  echo "LEANSTRAL_AUDIT_SERVICE_MIN_REQUESTS_FOR_REUSE must be an integer of at least two" >&2
+  exit 2
+fi
 
 timestamp() {
   date -u +"%Y-%m-%dT%H:%M:%SZ"
@@ -84,7 +108,7 @@ llama_cpp_parallel_slots() {
 
 active_cuda_leanstral_server_info() {
   ps -eo pid=,args= 2>/dev/null | awk '
-    /[l]lama-server/ && /[Ll]eanstral/ && /--device[ =]CUDA/ {
+    /[l]lama-server/ && /[Ll]eanstral/ && (/--device[ =]CUDA[0-9]*/ || /--?(ngl|n-gpu-layers|gpu-layers)[ =][1-9][0-9]*/) {
       port = ""
       ctx = "0"
       pid = $1
@@ -97,6 +121,13 @@ active_cuda_leanstral_server_info() {
       }
       if (port != "") { print port ":" ctx ":" pid; exit }
     }
+  '
+}
+
+active_cuda_leanstral_server_count() {
+  ps -eo args= 2>/dev/null | awk '
+    /[l]lama-server/ && /[Ll]eanstral/ && (/--device[ =]CUDA[0-9]*/ || /--?(ngl|n-gpu-layers|gpu-layers)[ =][1-9][0-9]*/) { count++ }
+    END { print count + 0 }
   '
 }
 
@@ -187,6 +218,7 @@ if [[ -z "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE:-}" ]]; then
   IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE="$(( LLAMA_CPP_CONTEXT_DEFAULT * LLAMA_CPP_PARALLEL_SLOTS ))"
 fi
 export IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE
+mkdir -p "${WORK_DIR}"
 ACTIVE_LEANSTRAL_CUDA_SERVER_INFO="$(active_cuda_leanstral_server_info)"
 if [[ -n "${ACTIVE_LEANSTRAL_CUDA_SERVER_INFO}" && -z "${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL:-}" ]]; then
   ACTIVE_LEANSTRAL_CUDA_PORT="${ACTIVE_LEANSTRAL_CUDA_SERVER_INFO%%:*}"
@@ -195,7 +227,7 @@ if [[ -n "${ACTIVE_LEANSTRAL_CUDA_SERVER_INFO}" && -z "${IPFS_ACCELERATE_LLAMA_C
   ACTIVE_LEANSTRAL_CUDA_PID="${ACTIVE_LEANSTRAL_CUDA_REST#*:}"
   if [[ "${ACTIVE_LEANSTRAL_CUDA_CONTEXT}" =~ ^[0-9]+$ ]] && \
      [[ "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE}" =~ ^[0-9]+$ ]] && \
-     (( ACTIVE_LEANSTRAL_CUDA_CONTEXT >= IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE )); then
+     (( ACTIVE_LEANSTRAL_CUDA_CONTEXT == IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE )); then
     export IPFS_ACCELERATE_LLAMA_CPP_BASE_URL="http://127.0.0.1:${ACTIVE_LEANSTRAL_CUDA_PORT}/v1"
     export IPFS_ACCELERATE_LLAMA_CPP_PORT="${ACTIVE_LEANSTRAL_CUDA_PORT}"
     LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="1"
@@ -227,6 +259,8 @@ else
 fi
 export IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL="${IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL:-1}"
 export IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS="${IPFS_ACCELERATE_LLAMA_CPP_STARTUP_TIMEOUT_SECONDS:-900}"
+export IPFS_ACCELERATE_LLAMA_CPP_MAX_WARM_SERVERS="${IPFS_ACCELERATE_LLAMA_CPP_MAX_WARM_SERVERS:-1}"
+export IPFS_ACCELERATE_LLAMA_CPP_RESTART_ON_CONFIG_MISMATCH="${IPFS_ACCELERATE_LLAMA_CPP_RESTART_ON_CONFIG_MISMATCH:-0}"
 export IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS="${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS:-${LLAMA_CPP_GPU_LAYERS_DEFAULT}}"
 export IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING="${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING:-${LLAMA_CPP_AUTO_SIZE_DEFAULT}}"
 export IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS="${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS:-${LLAMA_CPP_EXTRA_ARGS_DEFAULT}}"
@@ -253,7 +287,6 @@ if [[ -z "${AUDIT_RUN_TIMEOUT_SECONDS}" ]]; then
 fi
 AUDIT_RUN_KILL_AFTER_SECONDS="${LEANSTRAL_AUDIT_RUN_KILL_AFTER_SECONDS:-30}"
 CURRENT_AUDIT_PID=""
-mkdir -p "${WORK_DIR}"
 
 current_compiler_commit() {
   git rev-parse HEAD 2>/dev/null || true
@@ -296,6 +329,12 @@ terminate_process_group_or_pid() {
 kill_leanstral_llama_servers() {
   local reason pid
   reason="${1:-cleanup}"
+  case "${LEANSTRAL_AUDIT_PERSIST_SERVICE:-1}" in
+    1|true|True|TRUE|yes|Yes|YES|on|On|ON)
+      log_line "leanstral_llama_cleanup_skipped reason=${reason} persistent_service=1 generation=${LEANSTRAL_AUDIT_SERVICE_GENERATION:-unknown}"
+      return 0
+      ;;
+  esac
   if [[ "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER}" == "1" ]]; then
     log_line "leanstral_llama_cleanup_skipped reason=${reason} shared_server=1"
     return 0
@@ -388,11 +427,337 @@ configure_reference_example_args() {
   done
 }
 
+set_persistent_service_identity() {
+  local info rest port context pid fingerprint generation start_ticks
+  info="${1:-}"
+  [[ -n "${info}" ]] || return 1
+  port="${info%%:*}"
+  rest="${info#*:}"
+  context="${rest%%:*}"
+  pid="${rest#*:}"
+  [[ "${port}" =~ ^[0-9]+$ && "${context}" =~ ^[0-9]+$ && "${pid}" =~ ^[0-9]+$ ]] || return 1
+  [[ "${context}" == "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE}" ]] || return 1
+  kill -0 "${pid}" 2>/dev/null || return 1
+  start_ticks="$(ps -o lstart= -p "${pid}" 2>/dev/null | tr -s '[:space:]' ' ' | sed 's/^ //;s/ $//')"
+  fingerprint="$("${PYTHON_BIN}" - \
+    "${LEANSTRAL_AUDIT_MODEL:-Leanstral}" \
+    "${LEANSTRAL_AUDIT_PROVIDER:-leanstral_local}" \
+    "${context}" \
+    "${IPFS_ACCELERATE_LLAMA_CPP_MODEL_REF:-}" \
+    "${IPFS_ACCELERATE_LLAMA_CPP_MODEL_PATH:-}" \
+    "${IPFS_ACCELERATE_LLAMA_CPP_HF_FILE:-}" <<'PY'
+import hashlib
+import json
+import sys
+
+print(hashlib.sha256(json.dumps(sys.argv[1:], separators=(",", ":"), ensure_ascii=True).encode()).hexdigest())
+PY
+)"
+  generation="$("${PYTHON_BIN}" - "${pid}" "${start_ticks}" "${fingerprint}" <<'PY'
+import hashlib
+import sys
+
+print("leanstral-generation-" + hashlib.sha256("\0".join(sys.argv[1:]).encode()).hexdigest()[:24])
+PY
+)"
+  export IPFS_ACCELERATE_LLAMA_CPP_BASE_URL="http://127.0.0.1:${port}/v1"
+  export IPFS_ACCELERATE_LLAMA_CPP_PORT="${port}"
+  export IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART="0"
+  export LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="1"
+  export LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_CONTEXT_SIZE="${context}"
+  export LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID="${pid}"
+  export LEANSTRAL_AUDIT_SERVICE_GENERATION="${generation}"
+  export LEANSTRAL_AUDIT_CONTEXT_FINGERPRINT="${fingerprint}"
+}
+
+record_persistent_service_generation() {
+  local elapsed_seconds state_json
+  elapsed_seconds="${1:-0}"
+  exec 8>"${SERVICE_STATE_LOCK_PATH}"
+  if command -v flock >/dev/null 2>&1; then
+    flock 8
+  fi
+  state_json="$("${PYTHON_BIN}" - \
+    "${SERVICE_STATE_PATH}" \
+    "${LEANSTRAL_AUDIT_SERVICE_GENERATION}" \
+    "${LEANSTRAL_AUDIT_CONTEXT_FINGERPRINT}" \
+    "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID}" \
+    "${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL}" \
+    "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE}" \
+    "${LEANSTRAL_AUDIT_SERVICE_RESTART_PENDING}" \
+    "${elapsed_seconds}" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import time
+
+path = Path(sys.argv[1])
+generation, fingerprint, pid, base_url, context, restarted, elapsed = sys.argv[2:]
+try:
+    previous = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    previous = {}
+same_generation = previous.get("generation") == generation
+lifetime_restarts = int(previous.get("lifetime_restart_count") or 0)
+if restarted == "1":
+    lifetime_restarts += 1
+identity = {
+    "model": os.environ.get("LEANSTRAL_AUDIT_MODEL", "Leanstral"),
+    "provider": os.environ.get("LEANSTRAL_AUDIT_PROVIDER", "leanstral_local"),
+    "context_size": int(context),
+    "context_fingerprint": fingerprint,
+}
+service_id = "leanstral-service-" + hashlib.sha256(
+    json.dumps({"generation": generation, "identity": identity}, sort_keys=True).encode()
+).hexdigest()[:24]
+payload = dict(previous) if same_generation else {}
+payload.update({
+    "schema_version": "legal-ir-leanstral-persistent-service-v1",
+    "generation": generation,
+    "service_generation": generation,
+    "service_id": service_id,
+    "identity": identity,
+    "health": {
+        "status": "healthy",
+        "cuda_backed": True,
+        "provider": identity["provider"],
+        "model": identity["model"],
+        "base_url": base_url,
+        "service_id": service_id,
+        "proof_authority": False,
+        "context_size": identity["context_size"],
+        "context_fingerprint": fingerprint,
+        "generation": generation,
+    },
+    "pid": int(pid),
+    "proof_authority": False,
+    "model_load_count": 1,
+    "model_reload_count": 1 if restarted == "1" else 0,
+    "leanstral_service_startup_count": 1,
+    "preflight_count": 1,
+    "restart_count": 1 if restarted == "1" else int(payload.get("restart_count") or 0),
+    "lifetime_restart_count": lifetime_restarts,
+    "consecutive_health_failures": 0,
+    "health_failure_count": int(previous.get("health_failure_count") or 0),
+    "acquire_count": int(payload.get("acquire_count") or 0),
+    "reuse_count": int(payload.get("reuse_count") or 0),
+    "healthy_cuda_service_reused": bool(payload.get("healthy_cuda_service_reused", False)),
+    "queue_seconds": float(payload.get("queue_seconds") or 0.0),
+    "inference_seconds": float(payload.get("inference_seconds") or 0.0),
+    "verification_seconds": float(payload.get("verification_seconds") or 0.0),
+    "restart_seconds": float(payload.get("restart_seconds") or 0.0) + (float(elapsed) if restarted == "1" else 0.0),
+    "updated_at": time.time(),
+})
+path.parent.mkdir(parents=True, exist_ok=True)
+temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+temporary.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+os.replace(temporary, path)
+print(json.dumps(payload, sort_keys=True))
+PY
+)"
+  exec 8>&-
+  log_line "leanstral_persistent_service ${state_json}"
+}
+
+record_persistent_service_audit() {
+  local total_seconds state_json
+  total_seconds="${1:-0}"
+  exec 8>"${SERVICE_STATE_LOCK_PATH}"
+  if command -v flock >/dev/null 2>&1; then
+    flock 8
+  fi
+  state_json="$("${PYTHON_BIN}" - \
+    "${SERVICE_STATE_PATH}" \
+    "${AUDIT_STDOUT_OUTPUT}" \
+    "${total_seconds}" \
+    "${SERVICE_MIN_REQUESTS_FOR_REUSE}" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+import time
+
+state_path, stdout_path = Path(sys.argv[1]), Path(sys.argv[2])
+total_seconds = max(0.0, float(sys.argv[3]))
+minimum_requests = max(2, int(sys.argv[4]))
+state = json.loads(state_path.read_text(encoding="utf-8"))
+summary = {}
+try:
+    for line in stdout_path.read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            candidate = json.loads(line)
+        except Exception:
+            continue
+        if isinstance(candidate, dict) and "work_item_count" in candidate:
+            summary = candidate
+except OSError:
+    pass
+batch = summary.get("batch_telemetry") if isinstance(summary.get("batch_telemetry"), dict) else {}
+request_count = max(
+    int(summary.get("llm_call_count") or 0),
+    int(batch.get("dispatched_item_count") or 0),
+)
+queue_seconds = max(0.0, float(batch.get("queue_seconds") or 0.0))
+inference_seconds = max(0.0, float(batch.get("inference_seconds") or 0.0))
+if inference_seconds == 0.0:
+    inference_seconds = max(0.0, float(summary.get("runtime_seconds") or 0.0) - queue_seconds)
+verification_seconds = max(0.0, float(batch.get("verification_seconds") or 0.0))
+if verification_seconds == 0.0:
+    verification_seconds = max(0.0, total_seconds - queue_seconds - inference_seconds)
+state["acquire_count"] = int(state.get("acquire_count") or 0) + request_count
+state["reuse_count"] = max(0, int(state["acquire_count"]) - 1)
+state["leanstral_request_count"] = state["acquire_count"]
+state["leanstral_reuse_count"] = state["reuse_count"]
+state["queue_seconds"] = float(state.get("queue_seconds") or 0.0) + queue_seconds
+state["inference_seconds"] = float(state.get("inference_seconds") or 0.0) + inference_seconds
+state["leanstral_inference_seconds"] = state["inference_seconds"]
+state["verification_seconds"] = float(state.get("verification_seconds") or 0.0) + verification_seconds
+state["healthy_cuda_service_reused"] = bool(
+    state.get("health", {}).get("status") == "healthy"
+    and state.get("health", {}).get("cuda_backed") is True
+    and int(state.get("model_load_count") or 0) == 1
+    and int(state.get("preflight_count") or 0) == 1
+    and int(state.get("acquire_count") or 0) >= minimum_requests
+)
+state["updated_at"] = time.time()
+temporary = state_path.with_name(f".{state_path.name}.{os.getpid()}.tmp")
+temporary.write_text(json.dumps(state, sort_keys=True) + "\n", encoding="utf-8")
+os.replace(temporary, state_path)
+print(json.dumps(state, sort_keys=True))
+PY
+)"
+  exec 8>&-
+  log_line "leanstral_persistent_service ${state_json}"
+}
+
+persistent_service_healthy() {
+  local info rest context pid count
+  count="$(active_cuda_leanstral_server_count)"
+  [[ "${count}" == "1" ]] || return 1
+  info="$(active_cuda_leanstral_server_info)"
+  [[ -n "${info}" ]] || return 1
+  rest="${info#*:}"
+  context="${rest%%:*}"
+  pid="${rest#*:}"
+  [[ "${pid}" == "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID}" ]] || return 1
+  [[ "${context}" == "${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE}" ]] || return 1
+  "${PYTHON_BIN}" - "${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL}" <<'PY'
+import json
+import sys
+import urllib.request
+
+with urllib.request.urlopen(sys.argv[1].rstrip("/") + "/models", timeout=3.0) as response:
+    payload = json.load(response)
+if "leanstral" not in json.dumps(payload, sort_keys=True).lower():
+    raise SystemExit(1)
+PY
+}
+
+record_persistent_service_health_failure() {
+  local state_json
+  exec 8>"${SERVICE_STATE_LOCK_PATH}"
+  if command -v flock >/dev/null 2>&1; then
+    flock 8
+  fi
+  state_json="$("${PYTHON_BIN}" - "${SERVICE_STATE_PATH}" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+import time
+
+path = Path(sys.argv[1])
+try:
+    state = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    state = {"schema_version": "legal-ir-leanstral-persistent-service-v1"}
+state["health_failure_count"] = int(state.get("health_failure_count") or 0) + 1
+state["consecutive_health_failures"] = int(state.get("consecutive_health_failures") or 0) + 1
+if isinstance(state.get("health"), dict):
+    state["health"]["status"] = "unhealthy"
+state["healthy_cuda_service_reused"] = False
+state["updated_at"] = time.time()
+path.parent.mkdir(parents=True, exist_ok=True)
+temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+temporary.write_text(json.dumps(state, sort_keys=True) + "\n", encoding="utf-8")
+os.replace(temporary, path)
+print(json.dumps(state, sort_keys=True))
+PY
+)"
+  exec 8>&-
+  log_line "leanstral_persistent_service ${state_json}"
+}
+
+record_persistent_service_health_recovered() {
+  "${PYTHON_BIN}" - "${SERVICE_STATE_PATH}" "${SERVICE_STATE_LOCK_PATH}" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+import time
+
+state_path, lock_path = Path(sys.argv[1]), Path(sys.argv[2])
+try:
+    import fcntl
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_handle = lock_path.open("a", encoding="utf-8")
+    fcntl.flock(lock_handle, fcntl.LOCK_EX)
+except Exception:
+    lock_handle = None
+try:
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+except Exception:
+    raise SystemExit(0)
+changed = int(state.get("consecutive_health_failures") or 0) != 0
+health = state.get("health")
+if isinstance(health, dict) and health.get("status") != "healthy":
+    health["status"] = "healthy"
+    changed = True
+if changed:
+    state["consecutive_health_failures"] = 0
+    state["updated_at"] = time.time()
+    temporary = state_path.with_name(f".{state_path.name}.{os.getpid()}.tmp")
+    temporary.write_text(json.dumps(state, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, state_path)
+PY
+}
+
+ensure_persistent_service_for_request() {
+  local failure_now
+  if ! llama_cpp_preflight_if_enabled; then
+    return 1
+  fi
+  if persistent_service_healthy; then
+    LEANSTRAL_AUDIT_SERVICE_CONSECUTIVE_HEALTH_FAILURES="0"
+    record_persistent_service_health_recovered
+    return 0
+  fi
+  LEANSTRAL_AUDIT_SERVICE_CONSECUTIVE_HEALTH_FAILURES=$((LEANSTRAL_AUDIT_SERVICE_CONSECUTIVE_HEALTH_FAILURES + 1))
+  record_persistent_service_health_failure
+  log_line "leanstral_service_health_failed generation=${LEANSTRAL_AUDIT_SERVICE_GENERATION:-unknown} consecutive_failures=${LEANSTRAL_AUDIT_SERVICE_CONSECUTIVE_HEALTH_FAILURES} limit=${SERVICE_HEALTH_FAILURE_LIMIT}"
+  if (( LEANSTRAL_AUDIT_SERVICE_CONSECUTIVE_HEALTH_FAILURES < SERVICE_HEALTH_FAILURE_LIMIT )); then
+    failure_now="$(date +%s)"
+    next_retry_epoch=$((failure_now + SERVICE_HEALTH_RETRY_SECONDS))
+    return 1
+  fi
+
+  log_line "leanstral_service_bounded_restart generation=${LEANSTRAL_AUDIT_SERVICE_GENERATION:-unknown} pid=${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID:-unknown} failures=${LEANSTRAL_AUDIT_SERVICE_CONSECUTIVE_HEALTH_FAILURES}"
+  terminate_process_group_or_pid "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID}" "unhealthy_leanstral_service"
+  LEANSTRAL_AUDIT_SERVICE_RESTART_PENDING="1"
+  LEANSTRAL_AUDIT_SERVICE_PREFLIGHT_COMPLETED="0"
+  LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="0"
+  LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER_PID=""
+  unset IPFS_ACCELERATE_LLAMA_CPP_BASE_URL
+  export IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART="1"
+  llama_cpp_preflight_if_enabled
+}
+
 llama_cpp_preflight_if_enabled() {
-  local provider_chain lower_chain preflight_log
+  local provider_chain lower_chain preflight_log active_info active_count started_ns finished_ns elapsed_seconds
   local preflight_auto_size_args=()
-  if [[ "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER}" == "1" ]]; then
-    log_line "llama_cpp_preflight_reused base_url=${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL}"
+  if [[ "${LEANSTRAL_AUDIT_SERVICE_PREFLIGHT_COMPLETED}" == "1" ]]; then
     return 0
   fi
   case "${LEANSTRAL_AUDIT_LLAMA_CPP_PREFLIGHT:-1}" in
@@ -408,7 +773,28 @@ llama_cpp_preflight_if_enabled() {
   fi
 
   preflight_log="${WORK_DIR}/${RUN_ID}.llama-cpp-preflight.log"
-  log_line "llama_cpp_preflight_started log=${preflight_log}"
+  started_ns="$(date +%s%N)"
+  exec 9>"${SERVICE_START_LOCK_PATH}"
+  if command -v flock >/dev/null 2>&1; then
+    if ! flock -w "${LEANSTRAL_AUDIT_SERVICE_LOCK_TIMEOUT_SECONDS:-900}" 9; then
+      log_line "llama_cpp_preflight_lock_timeout lock=${SERVICE_START_LOCK_PATH}"
+      exec 9>&-
+      return 1
+    fi
+  fi
+  active_count="$(active_cuda_leanstral_server_count)"
+  if (( active_count > 1 )); then
+    log_line "llama_cpp_preflight_rejected reason=multiple_cuda_leanstral_services count=${active_count}"
+    exec 9>&-
+    return 1
+  fi
+  active_info="$(active_cuda_leanstral_server_info)"
+  if [[ -n "${active_info}" ]] && set_persistent_service_identity "${active_info}"; then
+    log_line "llama_cpp_preflight_reused base_url=${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL} generation=${LEANSTRAL_AUDIT_SERVICE_GENERATION}"
+    LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="1"
+  else
+    log_line "llama_cpp_preflight_started log=${preflight_log}"
+    LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER="0"
   case "$(printf '%s' "${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING:-}" | tr '[:upper:]' '[:lower:]')" in
     1|true|yes|on)
       preflight_auto_size_args=(--auto-size)
@@ -429,7 +815,28 @@ llama_cpp_preflight_if_enabled() {
     log_line "llama_cpp_preflight_completed log=${preflight_log}"
   else
     log_line "llama_cpp_preflight_failed log=${preflight_log}"
+      exec 9>&-
+      return 1
+    fi
+    active_count="$(active_cuda_leanstral_server_count)"
+    active_info="$(active_cuda_leanstral_server_info)"
+    if [[ "${active_count}" != "1" ]] || ! set_persistent_service_identity "${active_info}"; then
+      log_line "llama_cpp_preflight_failed reason=service_identity_or_cardinality_mismatch count=${active_count}"
+      exec 9>&-
+      return 1
+    fi
   fi
+  finished_ns="$(date +%s%N)"
+  elapsed_seconds="$("${PYTHON_BIN}" - "${started_ns}" "${finished_ns}" <<'PY'
+import sys
+print(max(0.0, (int(sys.argv[2]) - int(sys.argv[1])) / 1_000_000_000.0))
+PY
+)"
+  record_persistent_service_generation "${elapsed_seconds}"
+  LEANSTRAL_AUDIT_SERVICE_PREFLIGHT_COMPLETED="1"
+  LEANSTRAL_AUDIT_SERVICE_RESTART_PENDING="0"
+  LEANSTRAL_AUDIT_SERVICE_CONSECUTIVE_HEALTH_FAILURES="0"
+  exec 9>&-
 }
 
 last_signature=""
@@ -447,6 +854,7 @@ update_input_signature() {
 run_audit_if_due() {
   local signature now failure_now batch_use_mesh_args audit_status audit_timeout_cmd audit_launch_cmd
   local expected_compiler_commit expected_compiler_commit_args
+  local audit_started_ns audit_finished_ns audit_elapsed_seconds
   update_input_signature || return 0
   signature="${current_input_signature}"
   now="$(date +%s)"
@@ -461,7 +869,9 @@ run_audit_if_due() {
   fi
 
   last_signature="${signature}"
-  llama_cpp_preflight_if_enabled
+  if ! ensure_persistent_service_for_request; then
+    return 0
+  fi
   # The preflight may block while a local GGUF downloads. Refresh the audit
   # input and reference examples afterwards so startup races do not leave the
   # worker pointed at the parent-run path while the autoencoder writes the
@@ -504,6 +914,7 @@ run_audit_if_due() {
   fi
   log_line "audit_started signature=${signature} expected_compiler_commit=${expected_compiler_commit:-none}"
   audit_status=0
+  audit_started_ns="$(date +%s%N)"
   "${audit_launch_cmd[@]}" "${audit_timeout_cmd[@]}" "${PYTHON_BIN}" scripts/ops/legal_ir/run_leanstral_audit_worker.py \
     --input "${INPUT_PATH}" \
     --cache-dir "${CACHE_DIR}" \
@@ -545,10 +956,23 @@ run_audit_if_due() {
     --lean-slice-size "${LEANSTRAL_LEAN_SLICE_SIZE:-4}" \
     --lean-proof-cache-path "${PROOF_CACHE_PATH}" \
     --prover-timeout-seconds "${LEANSTRAL_PROVER_TIMEOUT_SECONDS:-5}" \
+    > "${AUDIT_STDOUT_OUTPUT}" \
     &
   CURRENT_AUDIT_PID=$!
   wait "${CURRENT_AUDIT_PID}" || audit_status=$?
   CURRENT_AUDIT_PID=""
+  audit_finished_ns="$(date +%s%N)"
+  audit_elapsed_seconds="$("${PYTHON_BIN}" - "${audit_started_ns}" "${audit_finished_ns}" <<'PY'
+import sys
+print(max(0.0, (int(sys.argv[2]) - int(sys.argv[1])) / 1_000_000_000.0))
+PY
+)"
+  if [[ -s "${AUDIT_STDOUT_OUTPUT}" ]]; then
+    cat "${AUDIT_STDOUT_OUTPUT}"
+  fi
+  if [[ -s "${SERVICE_STATE_PATH}" ]]; then
+    record_persistent_service_audit "${audit_elapsed_seconds}"
+  fi
   if (( audit_status == 0 )); then
     next_retry_epoch=0
     log_line "audit_completed signature=${signature} report=${PUBLISHED_REPORT_OUTPUT}"
@@ -568,6 +992,7 @@ configure_reference_example_args
 resolve_input_path
 log_line "audit_companion_started parent_pid=${PARENT_PID} input=${INPUT_PATH} reference_example_paths=${REFERENCE_EXAMPLE_COUNT}"
 log_line "llama_cpp_accelerator_resolved requested=${LLAMA_CPP_ACCELERATOR_REQUEST} resolved=${LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR} context=${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE} context_per_slot=${LLAMA_CPP_CONTEXT_DEFAULT} parallel_slots=${LLAMA_CPP_PARALLEL_SLOTS} gpu_layers=${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS} auto_sizing=${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING} extra_args=${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS}"
+log_line "leanstral_persistent_service_config state_path=${SERVICE_STATE_PATH} start_lock=${SERVICE_START_LOCK_PATH} state_lock=${SERVICE_STATE_LOCK_PATH} max_warm_servers=${IPFS_ACCELERATE_LLAMA_CPP_MAX_WARM_SERVERS} health_failure_limit=${SERVICE_HEALTH_FAILURE_LIMIT} min_requests_for_reuse=${SERVICE_MIN_REQUESTS_FOR_REUSE}"
 log_line "audit_timeouts provider_seconds=${AUDIT_PROVIDER_TIMEOUT_SECONDS} run_seconds=${AUDIT_RUN_TIMEOUT_SECONDS} kill_after_seconds=${AUDIT_RUN_KILL_AFTER_SECONDS}"
 while parent_alive; do
   run_audit_if_due

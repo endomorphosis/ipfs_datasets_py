@@ -1430,11 +1430,15 @@ class LeanstralAuditRunner:
         provider: Optional[str] = None,
         model: Optional[str] = None,
         vibe_agent: Optional[str] = None,
+        audit_request: Optional[LeanstralAuditRequest] = None,
     ) -> LeanstralAuditResult:
         provider_name = str(provider or self.config.provider).strip()
         model_name = str(model or self.config.model).strip()
         vibe_agent_name = str(vibe_agent or self.config.vibe_agent).strip()
-        request = LeanstralAuditRequest.build(
+        # Worker retries must retain the already-attested request identity.
+        # Rebuilding a request from its sanitized evidence/prompt sanitizes the
+        # envelope a second time, changing its hashes, cache key, and request ID.
+        request = audit_request or LeanstralAuditRequest.build(
             evidence=evidence,
             prompt=prompt,
             model=self.config.model_identity(),
@@ -2341,6 +2345,7 @@ class LeanstralAuditWorker:
             provider=provider,
             model=self.config.model,
             vibe_agent=self.config.vibe_agent,
+            audit_request=item.request,
         )
 
     def _run_sync_items_initial_batch(
