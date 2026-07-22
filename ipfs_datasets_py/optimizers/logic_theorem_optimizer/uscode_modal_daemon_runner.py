@@ -50,6 +50,7 @@ from ipfs_datasets_py.logic.integration.reasoning import (
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     IntrospectionPacketExportConfig,
+    LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION,
     MODAL_INTROSPECTION_MODES,
     ModalLogicCodecConfig,
     append_disagreement_packets_jsonl,
@@ -59,6 +60,11 @@ from ipfs_datasets_py.logic.modal import (
     modal_text_token_similarity,
     packet_to_json,
     validate_disagreement_packet,
+)
+from ipfs_datasets_py.logic.modal.leanstral_audit_worker import (
+    LeanstralCycleGuidanceRequest,
+    LeanstralCycleLineage,
+    LeanstralCyclePipeline,
 )
 from ipfs_datasets_py.logic.modal.codec import stable_mock_embedding
 from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
@@ -4970,6 +4976,148 @@ def leanstral_rule_gap_report_path(args: argparse.Namespace, *, root: Path) -> P
         / "leanstral-audit-worker"
         / f"{getattr(args, 'run_id', 'default')}.rule-gaps.json"
     )
+
+
+def leanstral_cycle_input_revision(value: Any) -> str:
+    """Return the canonical revision of immutable Leanstral cycle input."""
+
+    encoded = json.dumps(
+        value,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+        default=str,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def leanstral_cycle_proof_lineage(value: Any) -> str:
+    """Hash only proof-bearing input fields for an independently checked axis."""
+
+    proof_keys = {
+        "hammer_proof_status",
+        "hammer_reconstruction_status",
+        "proof_auxiliary_head_schema_version",
+        "proof_feedback_version_fingerprint",
+        "proof_ids",
+        "proof_obligation_ids",
+        "proof_route_hash",
+        "proof_route_status",
+        "reconstruction_receipts",
+        "theorem_registry_hash",
+        "verified_by",
+        "verification",
+        "verification_outcome",
+    }
+    evidence: List[Dict[str, Any]] = []
+
+    def collect(node: Any, path: tuple[str, ...] = ()) -> None:
+        if isinstance(node, Mapping):
+            for raw_key in sorted(node, key=lambda item: str(item)):
+                key = str(raw_key)
+                item = node[raw_key]
+                if key in proof_keys or "proof_lineage" in key.lower():
+                    evidence.append({"path": [*path, key], "value": item})
+                else:
+                    collect(item, (*path, key))
+        elif isinstance(node, Sequence) and not isinstance(node, (str, bytes)):
+            for index, item in enumerate(node):
+                collect(item, (*path, str(index)))
+
+    collect(value)
+    return leanstral_cycle_input_revision(
+        {
+            "proof_evidence": evidence,
+            "schema_version": "legal-ir-leanstral-proof-lineage-v1",
+        }
+    )
+
+
+def build_leanstral_cycle_guidance_request(
+    *,
+    cycle: int,
+    state: ModalAutoencoderTrainingState,
+    input_payload: Any,
+    model: str = "Leanstral",
+    schema_version: str = LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION,
+    source_revision: str = "",
+    proof_lineage: str = "",
+) -> LeanstralCycleGuidanceRequest:
+    """Freeze cycle input and bind it to the trainer and proof revisions."""
+
+    if not isinstance(state, ModalAutoencoderTrainingState):
+        raise TypeError("state must be a ModalAutoencoderTrainingState")
+    lineage = LeanstralCycleLineage(
+        schema_version=str(schema_version or ""),
+        model=str(model or ""),
+        source_revision=str(
+            source_revision or leanstral_cycle_input_revision(input_payload)
+        ),
+        state_revision=autoencoder_canonical_state_hash(state),
+        proof_lineage=str(
+            proof_lineage or leanstral_cycle_proof_lineage(input_payload)
+        ),
+    )
+    return LeanstralCycleGuidanceRequest.from_payload(
+        input_payload,
+        cycle=cycle,
+        lineage=lineage,
+    )
+
+
+def run_leanstral_cycle_pipeline_boundary(
+    *,
+    pipeline: LeanstralCyclePipeline,
+    request: LeanstralCycleGuidanceRequest,
+    promote: Optional[Callable[[Any], Any]] = None,
+    synchronous: Optional[bool] = None,
+    timeout: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Consume verified N-1 guidance, then enqueue immutable cycle N input.
+
+    This runs at a trainer boundary after warm training for N.  In asynchronous
+    mode neither operation waits for inference.  ``promote`` is unreachable
+    for missing, late, failed, stale, unverified, or mismatched results, so the
+    callback may safely own state updates and Codex TODO generation.
+    """
+
+    if not isinstance(pipeline, LeanstralCyclePipeline):
+        raise TypeError("pipeline must be a LeanstralCyclePipeline")
+    if not isinstance(request, LeanstralCycleGuidanceRequest):
+        raise TypeError("request must be a LeanstralCycleGuidanceRequest")
+    previous_request = pipeline.request_for_cycle(request.cycle - 1)
+    if previous_request is None:
+        consumption = pipeline.consume_previous(
+            current_cycle=request.cycle,
+            expected_lineage=request.lineage,
+            synchronous=False,
+        )
+    elif promote is None:
+        consumption = pipeline.consume_previous(
+            current_cycle=request.cycle,
+            expected_lineage=previous_request.lineage,
+            synchronous=synchronous,
+            timeout=timeout,
+        )
+    else:
+        consumption = pipeline.promote_previous(
+            current_cycle=request.cycle,
+            expected_lineage=previous_request.lineage,
+            promote=promote,
+            synchronous=synchronous,
+            timeout=timeout,
+        )
+    enqueue = pipeline.enqueue(
+        request,
+        synchronous=synchronous,
+        timeout=timeout,
+    )
+    return {
+        "consumption": consumption.to_dict(include_guidance=False),
+        "enqueue": enqueue.to_dict(),
+        "pipeline": pipeline.summary(),
+        "schema_version": "legal-ir-daemon-leanstral-cycle-boundary-v1",
+    }
 
 
 def leanstral_direct_guidance_paths(
