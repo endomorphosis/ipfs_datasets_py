@@ -2103,7 +2103,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-115 Run resource-aware multi-fidelity hyperparameter search
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: hparam-runtime
