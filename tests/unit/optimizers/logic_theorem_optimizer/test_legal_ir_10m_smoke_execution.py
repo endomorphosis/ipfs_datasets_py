@@ -1,0 +1,365 @@
+"""Execution-receipt tests for PORTAL-LIR-HAMMER-117."""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from copy import deepcopy
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pytest
+
+from scripts.ops.legal_ir.verify_legal_ir_run_evidence import (
+    REQUIRED_FAMILIES,
+    REQUIRED_QUALITY_METRICS,
+    SCHEMA_VERSION,
+    manifest_sha256,
+    verify_evidence,
+    write_evidence,
+)
+
+
+ROOT = Path(__file__).resolve().parents[4]
+RUNNER = ROOT / "scripts/ops/legal_ir/run_legal_ir_10m_smoke.sh"
+VERIFIER = ROOT / "scripts/ops/legal_ir/verify_legal_ir_run_evidence.py"
+COMMITTED_EVIDENCE = (
+    ROOT
+    / "docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json"
+)
+SHA_A = "sha256:" + "a" * 64
+SHA_B = "sha256:" + "b" * 64
+SHA_C = "sha256:" + "c" * 64
+SHA_D = "sha256:" + "d" * 64
+
+
+def _qualities() -> dict[str, object]:
+    values = {
+        "ir_cross_entropy_loss": 0.31,
+        "ir_cosine_similarity": 0.81,
+        "autoencoder_cross_entropy_loss": 0.29,
+        "autoencoder_cosine_similarity": 0.84,
+        "semantic_equivalence": 0.91,
+        "proof_success_rate": 0.72,
+        "reconstruction_success_rate": 0.70,
+        "provenance": 0.98,
+        "round_trip": 0.94,
+        "uncertainty": 0.10,
+        "holdout": 0.88,
+        "source_copy_penalty": 0.04,
+    }
+    return {
+        family: {
+            "sample_count": 8,
+            "guardrail_passed": True,
+            "baseline": dict(values),
+            "candidate": dict(values),
+        }
+        for family in REQUIRED_FAMILIES
+    }
+
+
+def complete_evidence() -> dict[str, object]:
+    configuration = {
+        "active_duration_seconds": 600,
+        "autoencoder_device": "cuda:0",
+        "codex_apply_mode": "patch_only",
+        "fixture_seed": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
+        "max_codex_todos": 8,
+        "validation_canary_count": 8,
+    }
+    configuration_digest = manifest_sha256(configuration)
+    payload: dict[str, object] = {
+        "schema_version": SCHEMA_VERSION,
+        "task_id": "PORTAL-LIR-HAMMER-117",
+        "run_id": "legal-ir-smoke-unit",
+        "stage": "ten_minute_smoke",
+        "dry_run": False,
+        "simulated": False,
+        "fixture_replay": False,
+        "complete": True,
+        "decision": "passed",
+        "timing": {
+            "started_at": "2026-07-22T00:00:00+00:00",
+            "ended_at": "2026-07-22T00:10:20+00:00",
+            "generated_at": "2026-07-22T00:10:21+00:00",
+            "wall_seconds": 620.0,
+            "active_seconds": 600.0,
+            "startup_seconds": 20.0,
+            "downtime_seconds": 0.0,
+            "active_intervals": [
+                {
+                    "started_at": "2026-07-22T00:00:20+00:00",
+                    "ended_at": "2026-07-22T00:10:20+00:00",
+                    "active_seconds": 600.0,
+                }
+            ],
+        },
+        "lineage": {
+            "run_id": "legal-ir-smoke-unit",
+            "stage": "ten_minute_smoke",
+            "code_revision": "1" * 40,
+            "source_tree_sha256": SHA_A,
+            "baseline_state_id": "baseline-unit",
+            "baseline_state_revision": "state-100",
+            "baseline_state_sha256": SHA_B,
+            "final_state_revision": "state-102",
+            "final_state_sha256": SHA_C,
+            "fixture_id": "fixed-smoke-v1",
+            "fixture_sha256": SHA_D,
+            "configuration_id": "task-117-selected-v1",
+            "configuration_sha256": configuration_digest,
+            "holdout_id": "fixed-canary-v1",
+            "holdout_sha256": SHA_A,
+        },
+        "selected_configuration": configuration,
+        "fixed_fixture": {
+            "fixture_id": "fixed-smoke-v1",
+            "sha256": SHA_D,
+            "immutable": True,
+            "replay": False,
+        },
+        "progress": {
+            "warm_cycles_completed": 2,
+            "sample_count_start": 100,
+            "sample_count_end": 108,
+            "state_revision_start": "state-100",
+            "state_revision_end": "state-102",
+            "resume_count": 0,
+            "resumes": [],
+        },
+        "model_context": {
+            "model_id": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4",
+            "model_sha256": SHA_B,
+            "context_size": 2048,
+            "context_fingerprint": "leanstral-context-unit",
+            "service_generation": "generation-unit",
+            "device": "cuda:0",
+        },
+        "services": {
+            "cuda_autoencoder": {
+                "backend": "torch_cuda",
+                "device": "cuda:0",
+                "cpu_fallback": False,
+                "simulated": False,
+                "forward_count": 2,
+                "loss_count": 2,
+                "backward_count": 2,
+                "optimizer_step_count": 2,
+            },
+            "leanstral": {
+                "healthy": True,
+                "persistent": True,
+                "device": "cuda:0",
+                "cpu_fallback": False,
+                "generation": "generation-unit",
+                "model_id": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4",
+                "context_fingerprint": "leanstral-context-unit",
+                "model_load_count": 1,
+                "preflight_count": 1,
+                "request_count": 3,
+                "reuse_count": 2,
+                "healthy_cuda_service_reused": True,
+                "queue_seconds": 1.0,
+                "inference_seconds": 40.0,
+                "verification_seconds": 3.0,
+                "restart_seconds": 0.0,
+            },
+            "hammer": {
+                "healthy": True,
+                "backend_available": True,
+                "obligation_count": 16,
+                "backend_attempt_count": 16,
+                "proof_attempt_count": 16,
+                "reconstruction_count": 4,
+                "fatal_failure_count": 0,
+            },
+            "codex": {
+                "run_id": "legal-ir-smoke-unit",
+                "fixture_sha256": SHA_D,
+                "todo_count": 1,
+                "max_todos": 8,
+                "invocation_count": 1,
+                "focused_validation_count": 1,
+                "accepted_merge_count": 0,
+                "safe_rejection_count": 1,
+                "queue_bytes_peak": 4096,
+                "max_queue_bytes": 65536,
+                "dispositions": [
+                    {
+                        "status": "safe_rejection",
+                        "reason_code": "focused_validation_failed",
+                        "focused_validation": True,
+                        "todo_sha256": SHA_A,
+                        "validation_sha256": SHA_B,
+                    }
+                ],
+            },
+            "watchdog": {
+                "healthy": True,
+                "status": "exited_cleanly",
+                "heartbeat_count": 120,
+                "missed_heartbeat_count": 0,
+                "fatal_event_count": 0,
+                "children_launched": 5,
+                "children_reaped": 5,
+                "orphaned_child_count": 0,
+                "concurrent_writer_count": 0,
+                "managed_children": [
+                    {
+                        "name": name,
+                        "status": "exited",
+                        "exit_code": 0,
+                        "orphaned": False,
+                    }
+                    for name in (
+                        "paired-supervisor",
+                        "cuda-autoencoder",
+                        "leanstral-worker",
+                        "codex-worker",
+                        "artifact-writer",
+                    )
+                ],
+            },
+        },
+        "quality_families": _qualities(),
+        "telemetry": {
+            "stage_timings_seconds": {
+                "cuda_training": 280.0,
+                "snapshot_evaluation": 80.0,
+                "hammer": 20.0,
+                "leanstral": 160.0,
+                "codex": 35.0,
+                "focused_validation": 15.0,
+                "persistence": 10.0,
+            },
+            "queue_timings_seconds": {
+                "snapshot_queue_seconds": 2.0,
+                "hammer_queue_seconds": 1.0,
+                "leanstral_queue_seconds": 1.0,
+                "codex_queue_seconds": 2.0,
+                "persistence_queue_seconds": 1.0,
+            },
+            "queue_depth_peak": 8,
+            "queue_depth_limit": 512,
+        },
+        "artifacts": {
+            name: {
+                "id": name + "-unit",
+                "bytes": 1024,
+                "max_bytes": 16 * 1024 * 1024,
+                "sha256": SHA_C,
+                "durable": True,
+            }
+            for name in (
+                "autoencoder_summary",
+                "paired_summary",
+                "checkpoint",
+                "leanstral_service",
+                "gate_decision",
+            )
+        },
+    }
+    payload["manifest_sha256"] = manifest_sha256(payload)
+    return payload
+
+
+def test_complete_receipt_passes() -> None:
+    result = verify_evidence(
+        complete_evidence(),
+        now=datetime(2026, 7, 22, 0, 11, tzinfo=timezone.utc),
+    )
+    assert result.accepted, result.failures
+    assert result.metrics["active_seconds"] == 600.0
+
+
+@pytest.mark.parametrize(
+    ("mutation", "failure"),
+    [
+        (lambda p: p.update(dry_run=True), "authenticity:dry_run"),
+        (lambda p: p["timing"].update(active_seconds=599.99), "timing:insufficient_active_seconds"),
+        (lambda p: p["progress"].update(warm_cycles_completed=1), "progress:fewer_than_two_warm_cycles"),
+        (lambda p: p["progress"].update(sample_count_end=100), "progress:samples_not_advanced"),
+        (lambda p: p["services"]["cuda_autoencoder"].update(cpu_fallback=True), "service:autoencoder:fallback_or_simulated"),
+        (lambda p: p["services"]["leanstral"].update(model_load_count=2), "service:leanstral:weights_reloaded"),
+        (lambda p: p["services"]["hammer"].update(reconstruction_count=0), "service:hammer:reconstruction_count"),
+        (lambda p: p["services"]["codex"].update(safe_rejection_count=0), "service:codex:no_safe_terminal_path"),
+        (lambda p: p["services"]["watchdog"].update(orphaned_child_count=1), "service:watchdog:orphaned_child_count"),
+    ],
+)
+def test_fail_closed_runtime_mutations(mutation, failure: str) -> None:
+    payload = complete_evidence()
+    mutation(payload)
+    payload["manifest_sha256"] = manifest_sha256(payload)
+    result = verify_evidence(payload, now=datetime(2026, 7, 22, 0, 11, tzinfo=timezone.utc))
+    assert not result.accepted
+    assert failure in result.failures
+
+
+def test_each_family_metric_is_finite_and_non_regressing() -> None:
+    for family in REQUIRED_FAMILIES:
+        for metric in REQUIRED_QUALITY_METRICS:
+            payload = complete_evidence()
+            payload["quality_families"][family]["candidate"][metric] = float("nan")
+            payload["manifest_sha256"] = manifest_sha256(payload)
+            result = verify_evidence(payload, now=datetime(2026, 7, 22, 0, 11, tzinfo=timezone.utc))
+            assert f"quality:{family}:{metric}:nonfinite_or_missing" in result.failures
+
+
+def test_manifest_digest_and_lineage_are_recomputed() -> None:
+    payload = complete_evidence()
+    payload["services"]["cuda_autoencoder"]["optimizer_step_count"] = 99
+    result = verify_evidence(payload, now=datetime(2026, 7, 22, 0, 11, tzinfo=timezone.utc))
+    assert "content_address:manifest_digest_mismatch" in result.failures
+
+    payload = complete_evidence()
+    payload["selected_configuration"]["max_codex_todos"] = 9
+    payload["manifest_sha256"] = manifest_sha256(payload)
+    result = verify_evidence(payload, now=datetime(2026, 7, 22, 0, 11, tzinfo=timezone.utc))
+    assert "lineage:configuration_digest_mismatch" in result.failures
+
+
+def test_atomic_writer_refuses_overwrite(tmp_path: Path) -> None:
+    output = tmp_path / "evidence.json"
+    write_evidence(output, complete_evidence())
+    assert json.loads(output.read_text())["manifest_sha256"] == manifest_sha256(json.loads(output.read_text()))
+    with pytest.raises(FileExistsError):
+        write_evidence(output, complete_evidence())
+
+
+def test_cli_rejects_incomplete_evidence(tmp_path: Path) -> None:
+    path = tmp_path / "bad.json"
+    path.write_text(json.dumps({"schema_version": SCHEMA_VERSION}), encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, str(VERIFIER), "--evidence", str(path), "--stage", "ten_minute_smoke", "--minimum-active-seconds", "600"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert "rejected" in result.stderr
+
+
+def test_runner_contract_is_real_immutable_and_non_promotable_when_dry_run(tmp_path: Path) -> None:
+    syntax = subprocess.run(["bash", "-n", str(RUNNER)], cwd=ROOT, check=False)
+    assert syntax.returncode == 0
+    env = dict(os.environ, DURATION_SECONDS="599")
+    rejected = subprocess.run([str(RUNNER), "--dry-run"], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
+    assert rejected.returncode == 2
+    assert "immutable" in rejected.stderr
+
+    dry = subprocess.run([str(RUNNER), "--dry-run", "--run-id", "unit-dry-run"], cwd=ROOT, text=True, capture_output=True, check=False)
+    assert dry.returncode == 0
+    assert "execution=false" in dry.stdout
+    assert "promotable_evidence=false" in dry.stdout
+    assert "minimum_active_seconds=600" in dry.stdout
+
+
+def test_committed_execution_receipt_verifies() -> None:
+    assert COMMITTED_EVIDENCE.is_file()
+    payload = json.loads(COMMITTED_EVIDENCE.read_text(encoding="utf-8"))
+    result = verify_evidence(payload, evidence_path=COMMITTED_EVIDENCE)
+    assert result.accepted, result.failures
