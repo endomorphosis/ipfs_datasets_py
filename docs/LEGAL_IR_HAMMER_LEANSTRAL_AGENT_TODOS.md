@@ -1907,7 +1907,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-102 Replace whole-state JSON hashing with incremental state identity
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: autoencoder-state
