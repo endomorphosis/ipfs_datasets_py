@@ -16,7 +16,7 @@ Operator contract:
 
 - This board is the supervisor's dependency source of truth. A dependency must name another task in this file; task lifecycle values are limited to `todo`, `in_progress`, `blocked`, and `completed`.
 - `Outputs` names the concrete implementation or documentation artifacts owned by a task. `Validation` is the executable, semicolon-delimited command set the supervisor must pass before merge. Do not infer completion from advisory JSON or from an artifact merely being present.
-- The representation targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, retain focused output and validation contracts; PORTAL-LIR-HAMMER-034 records their operator handoff. Runtime and proof-feedback targets PORTAL-LIR-HAMMER-035 through PORTAL-LIR-HAMMER-052 form the first performance wave, and PORTAL-LIR-HAMMER-053 is its rollout handoff. The evidence-driven follow-up in `docs/implementation/plans/HAMMER_LEANSTRAL_LEGAL_IR_NEXT_OPTIMIZATION_PLAN.md` is tracked by PORTAL-LIR-HAMMER-054 through PORTAL-LIR-HAMMER-100. The measured throughput-remediation tranche is tracked by PORTAL-LIR-HAMMER-101 through PORTAL-LIR-HAMMER-116.
+- The representation targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, retain focused output and validation contracts; PORTAL-LIR-HAMMER-034 records their operator handoff. Runtime and proof-feedback targets PORTAL-LIR-HAMMER-035 through PORTAL-LIR-HAMMER-052 form the first performance wave, and PORTAL-LIR-HAMMER-053 is its rollout handoff. The evidence-driven follow-up in `docs/implementation/plans/HAMMER_LEANSTRAL_LEGAL_IR_NEXT_OPTIMIZATION_PLAN.md` is tracked by PORTAL-LIR-HAMMER-054 through PORTAL-LIR-HAMMER-100. The measured throughput-remediation tranche is tracked by PORTAL-LIR-HAMMER-101 through PORTAL-LIR-HAMMER-118, with explicit execution evidence required by PORTAL-LIR-HAMMER-117 and PORTAL-LIR-HAMMER-118.
 - A generated patch, learned export, or model draft is never promoted merely because its producer task completed. Runtime trust and rollout evidence remain mandatory.
 
 Artifact and authority lanes:
@@ -33,7 +33,7 @@ Artifact and authority lanes:
 | Evidence-driven optimization | PORTAL-LIR-HAMMER-054-072 | Metric causality, formal-supervision efficacy, CUDA/runtime optimization, adaptive parallelism, and a second fail-closed rollout. |
 | Evaluation integrity | PORTAL-LIR-HAMMER-073-084 | Leakage-resistant evaluation, semantic-equivalence metrics, uncertainty, fuzzing, hard negatives, multi-seed promotion, schema compatibility, poisoning defenses, external benchmarks, and drift rollback. |
 | Compiler productization | PORTAL-LIR-HAMMER-085-100 | Source maps, symbol tables, citations, temporal authority, ambiguity, pass manager, backend conformance, reproducibility, incremental compilation, semantic diffs, proof-carrying outputs, diagnostics, APIs, interoperability, and final conformance. |
-| Measured throughput remediation | PORTAL-LIR-HAMMER-101-116 | Incremental state identity, compact checkpoints, copy-on-write updates, bounded persistence, evaluation cadence, packed CUDA training, factorized heads, persistent Leanstral reuse, stage parallelism, Codex rescue, resource-aware search, and fail-closed performance promotion. |
+| Measured throughput remediation | PORTAL-LIR-HAMMER-101-118 | Incremental state identity, compact checkpoints, copy-on-write updates, bounded persistence, evaluation cadence, packed CUDA training, factorized heads, persistent Leanstral reuse, stage parallelism, Codex rescue, resource-aware search, fail-closed performance promotion, and preserved smoke/canary execution evidence. |
 
 Expanded optimization target manifest:
 
@@ -81,6 +81,7 @@ Evidence-driven follow-up wave:
 | 107-110 | Tensorized autoencoder architecture | Keep packed parameters, batching, loss computation, and updates on CUDA while preserving deterministic compatibility |
 | 111-114 | Service and pipeline parallelism | Reuse one Leanstral model and allocate independent stages from measured queue and resource pressure |
 | 115-116 | Search and promotion | Spend hparam compute on informative candidates and require matched quality plus throughput evidence |
+| 117-118 | Executed rollout evidence | Run the ten-minute integrated smoke, then run the selected configuration for eight active hours under watchdog supervision |
 
 The manifest is an operator index. The full paths and commands in each task's `Outputs` and `Validation` fields are authoritative for the supervisor.
 
@@ -2128,6 +2129,36 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ```json
 {"phase":"search_and_promotion","scope":"fail_closed_quality_throughput_gate","stages":["matched_benchmark","ten_minute_smoke","one_hour_hparam","eight_hour_canary","twenty_four_hour_production"]}
+```
+
+## PORTAL-LIR-HAMMER-117 Execute and verify the ten-minute integrated smoke
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: rollout-execution
+- Depends on: PORTAL-LIR-HAMMER-116
+- Outputs: scripts/ops/legal_ir/run_legal_ir_10m_smoke.sh, scripts/ops/legal_ir/verify_legal_ir_run_evidence.py, docs/implementation/reports/LEGAL_IR_10_MINUTE_INTEGRATED_SMOKE_REPORT.md, docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_10m_smoke_execution.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_10m_smoke_execution.py -q; /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python scripts/ops/legal_ir/verify_legal_ir_run_evidence.py --evidence docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json --stage ten_minute_smoke --minimum-active-seconds 600
+- Acceptance: Executes, rather than merely dry-runs or defines, at least 600 seconds of the integrated canonical pipeline under the watchdog. Fresh content-addressed evidence must prove real CUDA autoencoder forward, loss, backward, and optimizer work with CPU fallback disabled; one healthy CUDA Leanstral service reused after warmup without reloading weights; Hammer obligation, backend, and reconstruction activity; and a bounded Codex TODO, invocation, focused validation, and merge-or-safe-rejection path from the fixed smoke fixture. The run must complete at least two warm cycles, advance samples and state revisions, preserve finite IR and autoencoder CE/cosine plus every per-family semantic, proof, provenance, round-trip, uncertainty, holdout, and anti-copy guardrail, report queue and stage timings, leave no orphaned children, and fail closed on missing, stale, simulated, lineage-mismatched, CPU-fallback, or incomplete evidence. The committed report and compact evidence manifest must identify the exact code revision, baseline state, model/context identity, selected configuration, start/end/active duration, resumes, watchdog health, artifact hashes, and any rejected Codex work without committing bulky model checkpoints or raw prompts.
+
+```json
+{"phase":"rollout_execution","scope":"ten_minute_integrated_smoke","minimum_active_seconds":600,"required_services":["cuda_autoencoder","cuda_leanstral","hammer","codex","watchdog"],"hard_rule":"stage_definitions_and_dry_runs_are_not_execution_evidence"}
+```
+
+## PORTAL-LIR-HAMMER-118 Execute the selected configuration for eight hours
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: rollout-execution
+- Depends on: PORTAL-LIR-HAMMER-117
+- Outputs: scripts/ops/legal_ir/run_legal_ir_8h_canary.sh, docs/implementation/reports/LEGAL_IR_8_HOUR_CANARY_REPORT.md, docs/implementation/reports/evidence/legal_ir_8_hour_canary.json, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_8h_canary_execution.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_8h_canary_execution.py -q; /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python scripts/ops/legal_ir/verify_legal_ir_run_evidence.py --evidence docs/implementation/reports/evidence/legal_ir_8_hour_canary.json --stage eight_hour_canary --minimum-active-seconds 28800
+- Acceptance: Runs the task-115 winning hyperparameters and task-117 smoke-approved configuration for at least 28,800 accumulated active seconds under the watchdog, using resumable lineage-bound checkpoints without counting downtime, startup, dry-run, fixture replay, or validation-only time as training time. Fresh evidence must continuously demonstrate real CUDA autoencoder updates, persistent CUDA Leanstral reuse, Hammer proof and reconstruction throughput, Codex TODO generation and accepted-or-safely-rejected patch flow, bounded queues and memory, regular heartbeats, successful resume drills, and no orphaned children or canonical concurrent writers. The report must compare matched baseline and canary time series for cycles/hour, samples/second, state-to-accepted-patch p50/p95, IR CE/cosine, autoencoder CE/cosine, all LegalIR family metrics, symbolic validity, proof/reconstruction, provenance, round trip, calibration/uncertainty, holdout behavior, source-copy penalties, TODO yield, validation outcomes, and accepted next-cycle-confirmed patches. Completion and any promotion recommendation must fail closed when a required service silently falls back, metrics are nonresponsive or regress beyond configured confidence bounds, lineage or artifact hashes disagree, the run stalls without a bounded documented recovery, or the full active duration and final durable checkpoint cannot be verified.
+
+```json
+{"phase":"rollout_execution","scope":"eight_hour_integrated_canary","minimum_active_seconds":28800,"configuration_source":"PORTAL-LIR-HAMMER-115","smoke_gate":"PORTAL-LIR-HAMMER-117","hard_rule":"only_active_lineage_verified_runtime_counts_toward_eight_hours"}
 ```
 
 ## PORTAL-101 Resolve dirty main checkout blocking 1 worktree merges
