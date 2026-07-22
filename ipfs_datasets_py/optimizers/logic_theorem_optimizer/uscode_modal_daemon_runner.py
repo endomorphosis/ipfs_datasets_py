@@ -1459,10 +1459,21 @@ def autoencoder_state_telemetry(
     return telemetry
 
 
-def autoencoder_canonical_state_hash(state: ModalAutoencoderTrainingState) -> str:
-    """Return the canonical hash exported in disagreement packets."""
+def autoencoder_canonical_state_hash(
+    state: ModalAutoencoderTrainingState,
+    *,
+    metric_lineage: str = AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+) -> str:
+    """Return the mutation-tracked identity exported with metric evidence.
 
-    return hashlib.sha256(state.to_json().encode("utf-8")).hexdigest()
+    State identity is deliberately independent from checkpoint serialization.
+    Once the state's touched components have been digested, repeated lineage
+    checks are constant time and never materialize the full JSON checkpoint.
+    The metric lineage is part of the identity so evidence produced under two
+    incompatible metric contracts cannot be treated as interchangeable.
+    """
+
+    return state.state_identity(metric_lineage=metric_lineage)
 
 
 def build_autoencoder_evaluation_snapshot(
@@ -1477,12 +1488,17 @@ def build_autoencoder_evaluation_snapshot(
 ) -> EvaluationSnapshot:
     """Serialize trainer state at a boundary for asynchronous evaluation.
 
-    The canonical ``to_json`` bytes are copied into the snapshot, so neither a
-    later SGD update nor a caller mutation can change what the worker observes.
+    Checkpoint bytes are copied into the snapshot, so neither a later SGD update
+    nor a caller mutation can change what the worker observes.  Their transport
+    checksum is separate from the mutation-tracked logical state version.
     Holdout contents are not retained in the identity; the ordered sample IDs
     and validation mode form the version used by the result acceptance guard.
     """
 
+    state_version = autoencoder_canonical_state_hash(
+        state,
+        metric_lineage=schema_version,
+    )
     state_json = state.to_json()
     return EvaluationSnapshot.from_state_json(
         state_json,
@@ -1494,6 +1510,7 @@ def build_autoencoder_evaluation_snapshot(
         ),
         schema_version=schema_version,
         metadata=metadata,
+        state_version=state_version,
     )
 
 
@@ -1540,7 +1557,10 @@ def matching_snapshot_versions(
     """Return the exact versions expected at the current trainer boundary."""
 
     return SnapshotVersions(
-        state_version=autoencoder_canonical_state_hash(state),
+        state_version=autoencoder_canonical_state_hash(
+            state,
+            metric_lineage=schema_version,
+        ),
         compiler_version=compiler_version,
         holdout_version=canonical_holdout_version(
             holdout_sample_ids,
@@ -1548,6 +1568,47 @@ def matching_snapshot_versions(
         ),
         schema_version=schema_version,
     )
+
+
+def _matching_published_snapshot_boundary(
+    state: ModalAutoencoderTrainingState,
+    published_snapshot: Any,
+    *,
+    compiler_version: str,
+    schema_version: str = AUTOENCODER_DAEMON_METRIC_SCHEMA_VERSION,
+) -> Optional[SnapshotBoundary]:
+    """Bind a published holdout boundary to the trainer's *current* state.
+
+    Async evidence is accepted only for the newest published sequence and only
+    while its logical state, compiler, holdout, and metric schema still match.
+    In particular, the result's own version tuple is never used as its expected
+    tuple; doing so would let stale work validate itself after training moved
+    on.  The holdout identity is recovered from the immutable publication
+    receipt because rotating holdouts may already have been sampled for the
+    next cycle when the prior result becomes available.
+    """
+
+    if not isinstance(published_snapshot, Mapping):
+        return None
+    versions = published_snapshot.get("versions")
+    if not isinstance(versions, Mapping):
+        return None
+    try:
+        sequence = int(published_snapshot.get("sequence", -1))
+        if sequence < 0:
+            return None
+        expected_versions = SnapshotVersions(
+            state_version=autoencoder_canonical_state_hash(
+                state,
+                metric_lineage=schema_version,
+            ),
+            compiler_version=str(compiler_version or ""),
+            holdout_version=str(versions.get("holdout_version") or ""),
+            schema_version=str(schema_version or ""),
+        )
+    except (TypeError, ValueError):
+        return None
+    return SnapshotBoundary(sequence=sequence, versions=expected_versions)
 
 
 PRODUCTION_SNAPSHOT_REQUIRED_ROLES = (
@@ -18821,20 +18882,25 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 else "rotating_holdout"
             )
             if snapshot_evaluator is not None:
+                snapshot_boundary = _matching_published_snapshot_boundary(
+                    autoencoder.state,
+                    summary.get("latest_published_snapshot"),
+                    compiler_version=evaluation_compiler_commit,
+                )
                 for snapshot_result in snapshot_evaluator.poll_results():
-                    accepted = snapshot_evaluator.accept_result(
-                        snapshot_result,
-                        snapshot_result.versions,
-                        expected_sequence=snapshot_result.sequence,
+                    accepted = bool(
+                        snapshot_boundary is not None
+                        and snapshot_evaluator.accept_result(
+                            snapshot_result,
+                            snapshot_boundary.versions,
+                            expected_sequence=snapshot_boundary.sequence,
+                        )
                     )
                     promotion = (
                         snapshot_evaluator.promote_at_boundary(
-                            SnapshotBoundary(
-                                sequence=snapshot_result.sequence,
-                                versions=snapshot_result.versions,
-                            )
+                            snapshot_boundary
                         )
-                        if accepted
+                        if accepted and snapshot_boundary is not None
                         else None
                     )
                     event = {
@@ -20774,43 +20840,28 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             shutdown_results = snapshot_evaluator.poll_results()
             latest_published = summary.get("latest_published_snapshot")
-            latest_snapshot_id = (
-                str(latest_published.get("snapshot_id") or "")
-                if isinstance(latest_published, Mapping)
-                else ""
+            shutdown_boundary = _matching_published_snapshot_boundary(
+                autoencoder.state,
+                latest_published,
+                compiler_version=evaluation_compiler_commit,
             )
             unmatched_result_ids: List[str] = []
             for snapshot_result in shutdown_results:
-                if snapshot_result.snapshot_id != latest_snapshot_id:
-                    unmatched_result_ids.append(snapshot_result.snapshot_id)
-                    continue
-                versions = latest_published.get("versions")
-                if not isinstance(versions, Mapping):
-                    unmatched_result_ids.append(snapshot_result.snapshot_id)
-                    continue
-                try:
-                    expected_versions = SnapshotVersions(
-                        state_version=str(versions.get("state_version") or ""),
-                        compiler_version=str(versions.get("compiler_version") or ""),
-                        holdout_version=str(versions.get("holdout_version") or ""),
-                        schema_version=str(versions.get("schema_version") or ""),
+                accepted = bool(
+                    shutdown_boundary is not None
+                    and snapshot_evaluator.accept_result(
+                        snapshot_result,
+                        shutdown_boundary.versions,
+                        expected_sequence=shutdown_boundary.sequence,
                     )
-                except ValueError:
-                    unmatched_result_ids.append(snapshot_result.snapshot_id)
-                    continue
-                accepted = snapshot_evaluator.accept_result(
-                    snapshot_result,
-                    expected_versions,
-                    expected_sequence=int(latest_published.get("sequence", -1)),
                 )
+                if not accepted:
+                    unmatched_result_ids.append(snapshot_result.snapshot_id)
                 promotion = (
                     snapshot_evaluator.promote_at_boundary(
-                        SnapshotBoundary(
-                            sequence=snapshot_result.sequence,
-                            versions=expected_versions,
-                        )
+                        shutdown_boundary
                     )
-                    if accepted
+                    if accepted and shutdown_boundary is not None
                     else None
                 )
                 if promotion is not None and promotion.promoted:
