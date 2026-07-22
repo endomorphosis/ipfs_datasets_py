@@ -8,7 +8,11 @@ chosen floating point dtype) and restores its durable operational revision.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import math
+import zlib
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence
 
@@ -22,6 +26,128 @@ from .modal_autoencoder_tensor_state import (
     TensorParameterTable,
     TypedParameterKey,
 )
+
+# The packed tensor migration above remains the dual-read path for legacy
+# checkpoints.  PORTAL-LIR-HAMMER-109 adds a compact-write path for the three
+# Cartesian semantic interaction tables.  Imports are local in public
+# functions where possible so old packed-state consumers do not pay for NumPy
+# fitting or create a circular import during package initialization.
+
+
+@dataclass(frozen=True, slots=True)
+class FactorizedStateMigrationConfig:
+    """Fail-closed policy for migrating the high-cardinality head family."""
+
+    rank: int = 8
+    residual_capacity: int = 4096
+    tolerance: float = 1.0e-6
+    fitting_steps: int = 600
+    learning_rate: float = 0.035
+    regularization: float = 1.0e-8
+    seed: int = 0
+    minimum_state_reduction: float = 4.0
+    enforce_minimum_reduction: bool = True
+    verified_exceptions: Mapping[str, Mapping[tuple[str, str, str], str]] = field(
+        default_factory=dict
+    )
+
+    def __post_init__(self) -> None:
+        if int(self.rank) < 0:
+            raise ValueError("rank must be non-negative")
+        if int(self.residual_capacity) < 0:
+            raise ValueError("residual_capacity must be non-negative")
+        if not math.isfinite(float(self.tolerance)) or float(self.tolerance) < 0.0:
+            raise ValueError("tolerance must be finite and non-negative")
+        if (
+            not math.isfinite(float(self.minimum_state_reduction))
+            or float(self.minimum_state_reduction) <= 0.0
+        ):
+            raise ValueError("minimum_state_reduction must be finite and positive")
+
+    def head_config(self) -> Any:
+        from .modal_autoencoder_factorized_heads import FactorizedHeadConfig
+
+        return FactorizedHeadConfig(
+            rank=self.rank,
+            residual_capacity=self.residual_capacity,
+            tolerance=self.tolerance,
+            fitting_steps=self.fitting_steps,
+            learning_rate=self.learning_rate,
+            regularization=self.regularization,
+            seed=self.seed,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class FactorizedStateMigrationReport:
+    """Compression, fidelity, and residual evidence for the full head family."""
+
+    head_reports: Mapping[str, Any]
+    legacy_parameter_bytes: int
+    factorized_parameter_bytes: int
+    legacy_checkpoint_bytes: int
+    factorized_checkpoint_bytes: int
+    minimum_state_reduction: float
+    source_state_digest: str
+
+    @property
+    def parameter_reduction_ratio(self) -> float:
+        if self.factorized_parameter_bytes <= 0:
+            return math.inf if self.legacy_parameter_bytes else 0.0
+        return self.legacy_parameter_bytes / self.factorized_parameter_bytes
+
+    @property
+    def checkpoint_reduction_ratio(self) -> float:
+        if self.factorized_checkpoint_bytes <= 0:
+            return math.inf if self.legacy_checkpoint_bytes else 0.0
+        return self.legacy_checkpoint_bytes / self.factorized_checkpoint_bytes
+
+    @property
+    def max_absolute_error(self) -> float:
+        return max(
+            (float(report.max_absolute_error) for report in self.head_reports.values()),
+            default=0.0,
+        )
+
+    @property
+    def residual_count(self) -> int:
+        return sum(int(report.residual_count) for report in self.head_reports.values())
+
+    @property
+    def accepted(self) -> bool:
+        return (
+            all(bool(report.logits_preserved) for report in self.head_reports.values())
+            and self.parameter_reduction_ratio >= self.minimum_state_reduction
+            and self.checkpoint_reduction_ratio >= self.minimum_state_reduction
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "checkpoint_reduction_ratio": round(self.checkpoint_reduction_ratio, 12),
+            "factorized_checkpoint_bytes": self.factorized_checkpoint_bytes,
+            "factorized_parameter_bytes": self.factorized_parameter_bytes,
+            "head_reports": {
+                name: report.to_dict() for name, report in sorted(self.head_reports.items())
+            },
+            "legacy_checkpoint_bytes": self.legacy_checkpoint_bytes,
+            "legacy_parameter_bytes": self.legacy_parameter_bytes,
+            "max_absolute_error": self.max_absolute_error,
+            "minimum_state_reduction": self.minimum_state_reduction,
+            "parameter_reduction_ratio": round(self.parameter_reduction_ratio, 12),
+            "residual_count": self.residual_count,
+            "source_state_digest": self.source_state_digest,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class FactorizedStateMigrationResult:
+    heads: Any
+    report: FactorizedStateMigrationReport
+
+    @property
+    def accepted(self) -> bool:
+        return self.report.accepted
 
 
 # (legacy field, row namespace)
@@ -484,14 +610,286 @@ migrate_json_checkpoint = load_and_pack_modal_autoencoder_checkpoint
 migrate_checkpoint = load_and_pack_modal_autoencoder_checkpoint
 
 
+def _canonical_state_bytes(value: Any) -> bytes:
+    return json.dumps(
+        value,
+        allow_nan=False,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+
+
+def _split_interaction_key(raw: Any, width: int, *, field: str) -> tuple[str, ...]:
+    parts = tuple(str(raw).split("||"))
+    if len(parts) != width or any(not part for part in parts):
+        raise ValueError(
+            f"legacy field {field!r} has malformed {width}-part interaction key {raw!r}"
+        )
+    return parts
+
+
+def _legacy_factorized_records(
+    data: Mapping[str, Any],
+) -> Dict[str, Dict[tuple[str, str, str], Any]]:
+    """Normalize all legacy layouts to the canonical (family, slot, view) key."""
+
+    from .modal_autoencoder_factorized_heads import (
+        FAMILY_LOGIT_HEAD,
+        LEGAL_IR_VIEW_LOGIT_HEAD,
+        TRIPLE_EMBEDDING_HEAD,
+    )
+
+    embedding: Dict[tuple[str, str, str], Any] = {}
+    for raw_key, vector in _mapping(
+        data.get(TRIPLE_EMBEDDING_HEAD, {}), field=TRIPLE_EMBEDDING_HEAD
+    ).items():
+        family, slot, view = _split_interaction_key(
+            raw_key, 3, field=TRIPLE_EMBEDDING_HEAD
+        )
+        if isinstance(vector, (str, bytes)) or not isinstance(vector, Sequence):
+            raise TypeError(f"{TRIPLE_EMBEDDING_HEAD}.{raw_key} must be a vector")
+        embedding[(family, slot, view)] = tuple(float(value) for value in vector)
+
+    legal_logits: Dict[tuple[str, str, str], float] = {}
+    for raw_key, raw_logits in _mapping(
+        data.get(LEGAL_IR_VIEW_LOGIT_HEAD, {}), field=LEGAL_IR_VIEW_LOGIT_HEAD
+    ).items():
+        family, slot = _split_interaction_key(
+            raw_key, 2, field=LEGAL_IR_VIEW_LOGIT_HEAD
+        )
+        for raw_view, value in _mapping(
+            raw_logits, field=f"{LEGAL_IR_VIEW_LOGIT_HEAD}.{raw_key}"
+        ).items():
+            legal_logits[(family, slot, str(raw_view))] = float(value)
+
+    family_logits: Dict[tuple[str, str, str], float] = {}
+    for raw_key, raw_logits in _mapping(
+        data.get(FAMILY_LOGIT_HEAD, {}), field=FAMILY_LOGIT_HEAD
+    ).items():
+        slot, view = _split_interaction_key(raw_key, 2, field=FAMILY_LOGIT_HEAD)
+        for raw_family, value in _mapping(
+            raw_logits, field=f"{FAMILY_LOGIT_HEAD}.{raw_key}"
+        ).items():
+            family_logits[(str(raw_family), slot, view)] = float(value)
+    return {
+        TRIPLE_EMBEDDING_HEAD: embedding,
+        LEGAL_IR_VIEW_LOGIT_HEAD: legal_logits,
+        FAMILY_LOGIT_HEAD: family_logits,
+    }
+
+
+def migrate_modal_autoencoder_factorized_heads(
+    state: Any,
+    *,
+    config: Optional[FactorizedStateMigrationConfig] = None,
+) -> FactorizedStateMigrationResult:
+    """Compact the three unbounded semantic tables into typed factorized heads.
+
+    The migration is fail-closed: observed values must reconstruct within the
+    declared tolerance, residual capacity is a hard bound, and (by default)
+    both numeric parameters and compressed checkpoint bytes must fall by at
+    least fourfold.  Small test fixtures may explicitly lower the reduction
+    target; production callers should retain the default.
+    """
+
+    from .modal_autoencoder_factorized_heads import (
+        FACTORIZED_HEADS_SCHEMA_VERSION,
+        FAMILY_LOGIT_HEAD,
+        LEGAL_IR_VIEW_LOGIT_HEAD,
+        TRIPLE_EMBEDDING_HEAD,
+        FactorizedMigrationError,
+        FactorizedSemanticInteractionHeads,
+        factorize_interaction_records,
+    )
+
+    effective = config or FactorizedStateMigrationConfig()
+    data, _revision = _state_mapping(state)
+    records = _legacy_factorized_records(data)
+    source_projection = {
+        name: data.get(name, {})
+        for name in (TRIPLE_EMBEDDING_HEAD, LEGAL_IR_VIEW_LOGIT_HEAD, FAMILY_LOGIT_HEAD)
+    }
+    source_digest = hashlib.sha256(_canonical_state_bytes(source_projection)).hexdigest()
+    heads: Dict[str, Any] = {}
+    reports: Dict[str, Any] = {}
+    for offset, name in enumerate(
+        (TRIPLE_EMBEDDING_HEAD, LEGAL_IR_VIEW_LOGIT_HEAD, FAMILY_LOGIT_HEAD)
+    ):
+        values = records[name]
+        # Empty legacy fields carry no parameters and do not need a placeholder
+        # head.  This also avoids inventing vocabularies during partial rollout.
+        if not values:
+            continue
+        first = next(iter(values.values()))
+        width = len(first) if isinstance(first, Sequence) else 1
+        labels = tuple(str(index) for index in range(width))
+        head_config = effective.head_config()
+        head_config = type(head_config)(
+            **{**head_config.to_dict(), "seed": int(effective.seed) + offset}
+        )
+        head, report = factorize_interaction_records(
+            values,
+            name=name,
+            config=head_config,
+            output_labels=labels,
+            verified_exceptions=effective.verified_exceptions.get(name),
+        )
+        heads[name] = head
+        reports[name] = report
+    bundle = FactorizedSemanticInteractionHeads(
+        heads=heads,
+        migration_reports=reports,
+        source_state_digest=source_digest,
+        metadata={
+            "architecture": "typed-additive-cp-low-rank-bounded-residual",
+            "legacy_fields": [
+                TRIPLE_EMBEDDING_HEAD,
+                LEGAL_IR_VIEW_LOGIT_HEAD,
+                FAMILY_LOGIT_HEAD,
+            ],
+            "schema_version": FACTORIZED_HEADS_SCHEMA_VERSION,
+        },
+    )
+    legacy_parameter_bytes = sum(report.legacy_parameter_bytes for report in reports.values())
+    factorized_parameter_bytes = bundle.parameter_bytes
+    # Compare actual deterministic compressed encodings of the scoped state.
+    legacy_checkpoint_bytes = len(zlib.compress(_canonical_state_bytes(source_projection), 9))
+    factorized_checkpoint_bytes = bundle.checkpoint_bytes
+    migration_report = FactorizedStateMigrationReport(
+        head_reports=reports,
+        legacy_parameter_bytes=legacy_parameter_bytes,
+        factorized_parameter_bytes=factorized_parameter_bytes,
+        legacy_checkpoint_bytes=legacy_checkpoint_bytes,
+        factorized_checkpoint_bytes=factorized_checkpoint_bytes,
+        minimum_state_reduction=float(effective.minimum_state_reduction),
+        source_state_digest=source_digest,
+    )
+    if effective.enforce_minimum_reduction and not migration_report.accepted:
+        reasons = []
+        if migration_report.parameter_reduction_ratio < effective.minimum_state_reduction:
+            reasons.append(
+                "parameter reduction "
+                f"{migration_report.parameter_reduction_ratio:.3f}x < "
+                f"{effective.minimum_state_reduction:.3f}x"
+            )
+        if migration_report.checkpoint_reduction_ratio < effective.minimum_state_reduction:
+            reasons.append(
+                "checkpoint reduction "
+                f"{migration_report.checkpoint_reduction_ratio:.3f}x < "
+                f"{effective.minimum_state_reduction:.3f}x"
+            )
+        if not all(report.logits_preserved for report in reports.values()):
+            reasons.append("canonical logits exceeded migration tolerance")
+        raise FactorizedMigrationError("factorized state migration rejected: " + "; ".join(reasons))
+    return FactorizedStateMigrationResult(heads=bundle, report=migration_report)
+
+
+def factorize_modal_autoencoder_state(
+    state: Any,
+    *,
+    config: Optional[FactorizedStateMigrationConfig] = None,
+) -> Any:
+    """Convenience API returning only the compact factorized head bundle."""
+
+    return migrate_modal_autoencoder_factorized_heads(state, config=config).heads
+
+
+def materialize_legacy_interaction_tables(
+    heads: Any,
+    *,
+    observed_only: bool = False,
+) -> Dict[str, Any]:
+    """Materialize legacy maps for rollback/read compatibility.
+
+    ``observed_only`` restricts output to residual-backed cells.  The default
+    emits each known typed Cartesian product and is appropriate for an old
+    reader that cannot consume the factorized checkpoint directly.
+    """
+
+    from .modal_autoencoder_factorized_heads import (
+        FAMILY_LOGIT_HEAD,
+        LEGAL_IR_VIEW_LOGIT_HEAD,
+        TRIPLE_EMBEDDING_HEAD,
+        FactorizedSemanticInteractionHeads,
+    )
+
+    if not isinstance(heads, FactorizedSemanticInteractionHeads):
+        raise TypeError("heads must be FactorizedSemanticInteractionHeads")
+    result: Dict[str, Any] = {
+        TRIPLE_EMBEDDING_HEAD: {},
+        LEGAL_IR_VIEW_LOGIT_HEAD: {},
+        FAMILY_LOGIT_HEAD: {},
+    }
+    for name, head in heads.heads.items():
+        if observed_only:
+            triples = [residual.key for residual in head.residuals]
+        else:
+            triples = [
+                (family, slot, view)
+                for family in head.families
+                for slot in head.semantic_slots
+                for view in head.legal_ir_views
+            ]
+        if name == TRIPLE_EMBEDDING_HEAD:
+            for family, slot, view in triples:
+                result[name][f"{family}||{slot}||{view}"] = [
+                    float(value) for value in head.forward(family, slot, view)
+                ]
+        elif name == LEGAL_IR_VIEW_LOGIT_HEAD:
+            for family, slot, view in triples:
+                result[name].setdefault(f"{family}||{slot}", {})[view] = head.scalar(
+                    family, slot, view
+                )
+        elif name == FAMILY_LOGIT_HEAD:
+            for family, slot, view in triples:
+                result[name].setdefault(f"{slot}||{view}", {})[family] = head.scalar(
+                    family, slot, view
+                )
+    return result
+
+
+def load_factorized_head_checkpoint(source: str | Path | bytes | Mapping[str, Any]) -> Any:
+    """Load deterministic JSON or compact factorized-head checkpoint bytes."""
+
+    from .modal_autoencoder_factorized_heads import (
+        FACTORIZED_HEAD_CHECKPOINT_MAGIC,
+        FactorizedSemanticInteractionHeads,
+    )
+
+    if isinstance(source, Mapping):
+        return FactorizedSemanticInteractionHeads.from_dict(source)
+    if isinstance(source, bytes):
+        if source.startswith(FACTORIZED_HEAD_CHECKPOINT_MAGIC):
+            return FactorizedSemanticInteractionHeads.from_checkpoint_bytes(source)
+        return FactorizedSemanticInteractionHeads.from_dict(json.loads(source.decode("utf-8")))
+    if isinstance(source, str) and source.lstrip().startswith("{"):
+        return FactorizedSemanticInteractionHeads.from_dict(json.loads(source))
+    return load_factorized_head_checkpoint(Path(source).read_bytes())
+
+
+# Migration-script aliases kept deliberately explicit for discoverability.
+migrate_state_to_factorized_heads = migrate_modal_autoencoder_factorized_heads
+restore_factorized_heads_to_legacy = materialize_legacy_interaction_tables
+
+
 __all__ = [
+    "FactorizedStateMigrationConfig",
+    "FactorizedStateMigrationReport",
+    "FactorizedStateMigrationResult",
+    "factorize_modal_autoencoder_state",
     "load_and_pack_modal_autoencoder_checkpoint",
+    "load_factorized_head_checkpoint",
+    "materialize_legacy_interaction_tables",
     "migrate_checkpoint",
     "migrate_json_checkpoint",
     "migrate_legacy_state",
+    "migrate_modal_autoencoder_factorized_heads",
+    "migrate_state_to_factorized_heads",
     "pack_modal_autoencoder_state",
     "pack_training_state",
     "restore_legacy_state",
+    "restore_factorized_heads_to_legacy",
     "unpack_modal_autoencoder_state",
     "unpack_training_state",
 ]
