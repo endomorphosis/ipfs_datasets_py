@@ -479,6 +479,30 @@ __all__ = [
     'ParallelismAutotuner',
     'autotune_parallelism',
     'write_reproducible_profile',
+    'BatchAutotuneConfig',
+    'BatchAutotuneDecision',
+    'BatchAutotuner',
+    'BatchCandidateEvaluation',
+    'BatchCandidateMeasurement',
+    'BatchResourceMeasurement',
+    'BatchSizeAutotuner',
+    'BatchSizeMeasurement',
+    'BatchTuningConfig',
+    'BatchTuningResult',
+    'ResourceSafeBatchAutotuner',
+    'autotune_batch_size',
+    # Deterministic modal-autoencoder minibatches
+    'BatchCollationConfig',
+    'BatchExecutionResult',
+    'GradientAccumulationPlan',
+    'ModalAutoencoderBatchCollator',
+    'PackedSparseMinibatch',
+    'ResourceSafeBatchRunner',
+    'SparseFeatureExample',
+    'SplitIsolationError',
+    'collate_sparse_minibatch',
+    'iter_collated_minibatches',
+    'plan_gradient_accumulation',
     # Program-synthesis failure classification and recovery
     'FailureCategory',
     'FailureClassification',
@@ -570,12 +594,42 @@ def __getattr__(name):
         'ParallelismAutotuner',
         'autotune_parallelism',
         'write_reproducible_profile',
+        'BatchAutotuneConfig',
+        'BatchAutotuneDecision',
+        'BatchAutotuner',
+        'BatchCandidateEvaluation',
+        'BatchCandidateMeasurement',
+        'BatchResourceMeasurement',
+        'BatchSizeAutotuner',
+        'BatchSizeMeasurement',
+        'BatchTuningConfig',
+        'BatchTuningResult',
+        'ResourceSafeBatchAutotuner',
+        'autotune_batch_size',
     ):
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             parallelism_autotuner,
         )
 
         return getattr(parallelism_autotuner, name)
+    if name in (
+        'BatchCollationConfig',
+        'BatchExecutionResult',
+        'GradientAccumulationPlan',
+        'ModalAutoencoderBatchCollator',
+        'PackedSparseMinibatch',
+        'ResourceSafeBatchRunner',
+        'SparseFeatureExample',
+        'SplitIsolationError',
+        'collate_sparse_minibatch',
+        'iter_collated_minibatches',
+        'plan_gradient_accumulation',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            modal_autoencoder_batching,
+        )
+
+        return getattr(modal_autoencoder_batching, name)
     if name in (
         'CodexOwnershipScope',
         'CodexScopeTask',

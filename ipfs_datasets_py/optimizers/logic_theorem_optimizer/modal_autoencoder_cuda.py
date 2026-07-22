@@ -21,6 +21,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
+from .modal_autoencoder_batching import plan_gradient_accumulation
 from .modal_autoencoder_tensor_state import TensorKeyKind, stable_parameter_id
 
 
@@ -1310,8 +1311,10 @@ def apply_packed_projection_update(
             "IPFS_DATASETS_MODAL_AUTOENCODER_CUDA_GRADIENT_ACCUMULATION_STEPS",
             1,
         )
-        microbatch_count = min(max(1, len(sample_list)), requested_accumulation)
-        microbatch_size = max(1, int(math.ceil(len(sample_list) / microbatch_count)))
+        accumulation_plan = plan_gradient_accumulation(
+            len(sample_list),
+            accumulation_steps=requested_accumulation,
+        )
         loss_names = (
             "cross_entropy",
             "legal_ir_cross_entropy",
@@ -1327,8 +1330,7 @@ def apply_packed_projection_update(
         }
         actual_steps = 0
         target_set = {str(target) for target in update_targets}
-        for start in range(0, len(sample_list), microbatch_size):
-            stop = min(len(sample_list), start + microbatch_size)
+        for start, stop in accumulation_plan.ranges:
             total, losses, kernels = _loss_chunk(
                 state,
                 session,
