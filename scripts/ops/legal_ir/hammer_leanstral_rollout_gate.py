@@ -137,6 +137,9 @@ EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION = (
 COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION = (
     "legal-ir-hammer-leanstral-compiler-system-promotion-v1"
 )
+THROUGHPUT_REMEDIATION_SCHEMA_VERSION = (
+    "legal-ir-throughput-remediation-rollout-v1"
+)
 
 LEGAL_IR_EVAL_SPLITS_SCHEMA_VERSION = "legal-ir-eval-splits-v1"
 LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION = (
@@ -447,6 +450,68 @@ STAGED_HARD_GUARDRAILS = (
     "queue_lag",
 )
 
+# ``matched_benchmark`` is an evidence-producing stage rather than a timed
+# deployment.  Keeping it in the sequence makes it impossible to promote a
+# long-running canary whose baseline was collected after (or with a different
+# configuration from) the candidate run.
+THROUGHPUT_REMEDIATION_STAGES = (
+    RolloutStageSpec("matched_benchmark", 0),
+    RolloutStageSpec("ten_minute_smoke", 10 * 60),
+    RolloutStageSpec("one_hour_hparam", 60 * 60),
+    RolloutStageSpec("eight_hour_canary", 8 * 60 * 60),
+    RolloutStageSpec("twenty_four_hour_production", 24 * 60 * 60),
+)
+
+THROUGHPUT_REMEDIATION_QUALITY_METRICS = (
+    "ir_cross_entropy_loss",
+    "ir_cosine_similarity",
+    "autoencoder_cross_entropy_loss",
+    "autoencoder_cosine_similarity",
+    "semantic_equivalence",
+    "proof_success_rate",
+    "reconstruction_success_rate",
+    "provenance",
+    "round_trip",
+    "uncertainty",
+    "holdout",
+    "source_copy_penalty",
+)
+
+_THROUGHPUT_LOWER_IS_BETTER = frozenset(
+    {
+        "ir_cross_entropy_loss",
+        "autoencoder_cross_entropy_loss",
+        "uncertainty",
+        "source_copy_penalty",
+    }
+)
+
+_THROUGHPUT_QUALITY_ALIASES = {
+    "ce": "ir_cross_entropy_loss",
+    "cross_entropy": "ir_cross_entropy_loss",
+    "cross_entropy_loss": "ir_cross_entropy_loss",
+    "compiler_ir_cross_entropy_loss": "ir_cross_entropy_loss",
+    "cosine": "ir_cosine_similarity",
+    "compiler_ir_cosine": "ir_cosine_similarity",
+    "semantic_equivalence_score": "semantic_equivalence",
+    "semantic_equivalence_rate": "semantic_equivalence",
+    "hammer_proof_success_rate": "proof_success_rate",
+    "proof": "proof_success_rate",
+    "hammer_reconstruction_success_rate": "reconstruction_success_rate",
+    "reconstruction": "reconstruction_success_rate",
+    "provenance_alignment": "provenance",
+    "provenance_success_rate": "provenance",
+    "round_trip_preservation": "round_trip",
+    "decompiler_round_trip_preservation": "round_trip",
+    "calibration_error": "uncertainty",
+    "expected_calibration_error": "uncertainty",
+    "uncertainty_error": "uncertainty",
+    "holdout_score": "holdout",
+    "holdout_success_rate": "holdout",
+    "source_copy_rate": "source_copy_penalty",
+    "source_copy_reward_hack_penalty": "source_copy_penalty",
+}
+
 
 @dataclass(frozen=True)
 class StagedRolloutConfig:
@@ -472,6 +537,52 @@ class StagedRolloutConfig:
     min_state_to_merged_patch_lag_reduction: float = 0.25
     required_families: tuple[str, ...] = LEGAL_IR_VIEW_FAMILIES
     required_guardrails: tuple[str, ...] = STAGED_HARD_GUARDRAILS
+
+
+@dataclass(frozen=True)
+class ThroughputRemediationConfig:
+    """Fail-closed policy for quality-preserving throughput remediation.
+
+    Ratios are always recomputed from paired measurements.  Claimed gains or
+    precomputed ``passed`` flags are retained only as report metadata and can
+    never authorize promotion.
+    """
+
+    min_warm_cycles_per_hour_ratio: float = 1.8
+    min_samples_per_second_ratio: float = 1.5
+    require_lower_state_to_accepted_patch_p95: bool = True
+    max_checkpoint_bytes: int = 512 * 1024 * 1024
+    max_summary_bytes: int = 16 * 1024 * 1024
+    require_reproducible_benchmark: bool = True
+    require_resume_evidence: bool = True
+    require_rollback_evidence: bool = True
+    verify_rollback_artifacts: bool = False
+    require_ablation_attribution: bool = True
+    duration_tolerance_seconds: float = 0.0
+    required_families: tuple[str, ...] = LEGAL_IR_VIEW_FAMILIES
+    required_quality_metrics: tuple[str, ...] = (
+        THROUGHPUT_REMEDIATION_QUALITY_METRICS
+    )
+
+    def __post_init__(self) -> None:
+        if self.min_warm_cycles_per_hour_ratio < 1.0:
+            raise ValueError("min_warm_cycles_per_hour_ratio must be at least 1")
+        if self.min_samples_per_second_ratio < 1.0:
+            raise ValueError("min_samples_per_second_ratio must be at least 1")
+        if isinstance(self.max_checkpoint_bytes, bool) or self.max_checkpoint_bytes < 1:
+            raise ValueError("max_checkpoint_bytes must be a positive integer")
+        if isinstance(self.max_summary_bytes, bool) or self.max_summary_bytes < 1:
+            raise ValueError("max_summary_bytes must be a positive integer")
+        if self.duration_tolerance_seconds < 0.0:
+            raise ValueError("duration_tolerance_seconds must be non-negative")
+        if not self.required_families or len(set(self.required_families)) != len(
+            self.required_families
+        ):
+            raise ValueError("required_families must be non-empty and unique")
+        if not self.required_quality_metrics or len(
+            set(self.required_quality_metrics)
+        ) != len(self.required_quality_metrics):
+            raise ValueError("required_quality_metrics must be non-empty and unique")
 
 
 @dataclass(frozen=True)
@@ -895,6 +1006,445 @@ def staged_rollout_gate(
         warnings=warnings,
         metrics=metrics,
     )
+
+
+def throughput_remediation_rollout_gate(
+    payload: Mapping[str, Any],
+    config: ThroughputRemediationConfig | None = None,
+) -> RolloutGateResult:
+    """Gate the complete quality-preserving throughput remediation rollout.
+
+    This gate intentionally accepts only persisted, positive evidence.  It
+    recomputes all ratios and per-family comparisons and never treats a
+    supplied ``healthy``/``passed`` headline as a substitute for counters.
+    """
+
+    cfg = config or ThroughputRemediationConfig()
+    failures: list[str] = []
+    metrics: dict[str, Any] = {
+        "schema_version": THROUGHPUT_REMEDIATION_SCHEMA_VERSION,
+        "required_stages": [stage.name for stage in THROUGHPUT_REMEDIATION_STAGES],
+        "minimum_warm_cycles_per_hour_ratio": cfg.min_warm_cycles_per_hour_ratio,
+        "minimum_samples_per_second_ratio": cfg.min_samples_per_second_ratio,
+    }
+    if not isinstance(payload, Mapping):
+        return RolloutGateResult(False, ["evidence_invalid:not_an_object"], metrics=metrics)
+    schema = str(payload.get("schema_version") or "")
+    if schema != THROUGHPUT_REMEDIATION_SCHEMA_VERSION:
+        failures.append(f"schema_mismatch:{schema or 'missing'}")
+
+    required_domains = (
+        "stages", "matched_benchmark", "services", "artifacts",
+        "quality_families", "ablations",
+    )
+    for domain in required_domains:
+        if domain not in payload or payload.get(domain) in (None, {}, []):
+            failures.append(f"evidence_missing:{domain}")
+
+    stage_items = payload.get("stages")
+    completed_stages: list[str] = []
+    if isinstance(stage_items, Sequence) and not isinstance(
+        stage_items, (str, bytes, bytearray)
+    ):
+        if len(stage_items) != len(THROUGHPUT_REMEDIATION_STAGES):
+            failures.append(
+                "stage_sequence:incomplete:"
+                f"{len(stage_items)}/{len(THROUGHPUT_REMEDIATION_STAGES)}"
+            )
+        for index, spec in enumerate(THROUGHPUT_REMEDIATION_STAGES):
+            if index >= len(stage_items):
+                failures.append(f"evidence_missing:stage:{spec.name}")
+                continue
+            item = stage_items[index]
+            if not isinstance(item, Mapping):
+                failures.append(f"evidence_missing:stage:{spec.name}:not_an_object")
+                continue
+            completed_stages.append(_throughput_stage_failures(item, spec, cfg, failures))
+    elif "stages" in payload:
+        failures.append("evidence_invalid:stages")
+    metrics["completed_stages"] = completed_stages
+
+    benchmark = payload.get("matched_benchmark")
+    if isinstance(benchmark, Mapping):
+        _throughput_benchmark_failures(benchmark, cfg, failures, metrics)
+    services = payload.get("services")
+    if isinstance(services, Mapping):
+        _throughput_service_failures(services, failures)
+    artifacts = payload.get("artifacts")
+    if isinstance(artifacts, Mapping):
+        _throughput_artifact_failures(artifacts, cfg, failures, metrics)
+    quality = payload.get("quality_families")
+    if isinstance(quality, Mapping):
+        _throughput_quality_failures(quality, cfg, failures, metrics)
+    ablations = payload.get("ablations")
+    if isinstance(ablations, Mapping):
+        _throughput_ablation_failures(ablations, cfg, failures, metrics)
+
+    metrics["evidence_complete"] = not failures
+    return RolloutGateResult(
+        accepted=not failures,
+        failures=list(dict.fromkeys(failures)),
+        warnings=[],
+        metrics=metrics,
+    )
+
+
+def _throughput_number(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    return _finite_float(value)
+
+
+def _throughput_positive(block: Mapping[str, Any], key: str) -> bool:
+    value = _throughput_number(block.get(key))
+    return value is not None and value > 0.0
+
+
+def _throughput_stage_failures(
+    item: Mapping[str, Any],
+    spec: RolloutStageSpec,
+    cfg: ThroughputRemediationConfig,
+    failures: list[str],
+) -> str:
+    name = str(item.get("name") or item.get("stage") or "").strip()
+    if name != spec.name:
+        failures.append(f"stage_sequence:expected_{spec.name}:got_{name or 'missing'}")
+    planned = _throughput_number(
+        item.get("planned_duration_seconds", item.get("duration_seconds"))
+    )
+    if planned is None or abs(planned - spec.duration_seconds) > cfg.duration_tolerance_seconds:
+        failures.append(f"stage_duration:{spec.name}:planned")
+    active = _throughput_number(
+        item.get("active_seconds", item.get("elapsed_seconds"))
+    )
+    if active is None or active + cfg.duration_tolerance_seconds < spec.duration_seconds:
+        failures.append(f"stage_duration:{spec.name}:active")
+    if str(item.get("status") or "").lower() not in {
+        "completed", "passed", "succeeded", "success",
+    }:
+        failures.append(f"stage_status:{spec.name}")
+    if item.get("snapshot_complete") is not True:
+        failures.append(f"evidence_missing:stage:{spec.name}:snapshot_complete")
+
+    lineage = item.get("lineage", item.get("promotion_lineage"))
+    if not isinstance(lineage, Mapping):
+        failures.append(f"evidence_missing:stage:{spec.name}:lineage")
+    else:
+        for key in ("run_id", "configuration_digest", "input_digest", "output_digest"):
+            value = str(lineage.get(key) or "").strip()
+            if not value or (key.endswith("digest") and not _valid_digest_ref(value)):
+                failures.append(f"evidence_missing:stage:{spec.name}:lineage:{key}")
+        if str(lineage.get("stage") or "") != spec.name:
+            failures.append(f"lineage_mismatch:stage:{spec.name}")
+
+    orphan_count = _throughput_number(item.get("orphaned_child_count"))
+    if orphan_count is None or orphan_count != 0.0:
+        failures.append(f"orphaned_children:{spec.name}")
+    processes = item.get("managed_processes")
+    if not isinstance(processes, Sequence) or isinstance(
+        processes, (str, bytes, bytearray)
+    ) or not processes:
+        failures.append(f"evidence_missing:stage:{spec.name}:managed_processes")
+    else:
+        for process in processes:
+            if not isinstance(process, Mapping):
+                failures.append(f"managed_process_invalid:{spec.name}")
+                continue
+            state = str(process.get("status") or process.get("state") or "").lower()
+            code = _throughput_number(process.get("exit_code", process.get("returncode")))
+            if process.get("orphaned") is not False or state not in {
+                "completed", "exited", "stopped", "terminated", "cleaned",
+            } or code != 0.0:
+                failures.append(
+                    f"orphaned_or_failed_managed_process:{spec.name}:"
+                    f"{process.get('name', 'unknown')}"
+                )
+
+    resume = item.get("resume_evidence")
+    if cfg.require_resume_evidence:
+        if not isinstance(resume, Mapping):
+            failures.append(f"resume_evidence_missing:{spec.name}")
+        else:
+            explicit_resume = resume.get("resumed")
+            if (
+                resume.get("available") is not True
+                or resume.get("lineage_verified") is not True
+                or not isinstance(explicit_resume, bool)
+                or not str(resume.get("checkpoint_path") or "").strip()
+                or not _valid_digest_ref(str(resume.get("sha256") or ""))
+            ):
+                failures.append(f"resume_evidence_invalid:{spec.name}")
+    rollback = item.get("rollback_evidence")
+    if cfg.require_rollback_evidence:
+        if not isinstance(rollback, Mapping):
+            failures.append(f"rollback_evidence_missing:{spec.name}")
+        else:
+            path = str(rollback.get("artifact_path") or "").strip()
+            digest = str(rollback.get("sha256") or "")
+            valid = (
+                rollback.get("available") is True
+                and rollback.get("restorable") is True
+                and rollback.get("rollback_tested") is True
+                and bool(str(rollback.get("baseline_revision") or "").strip())
+                and bool(path)
+                and _valid_digest_ref(digest)
+            )
+            if cfg.verify_rollback_artifacts and valid:
+                try:
+                    valid = Path(path).is_file() and snapshot_sha256(path) == digest.removeprefix("sha256:")
+                except OSError:
+                    valid = False
+            if not valid:
+                failures.append(f"rollback_evidence_invalid:{spec.name}")
+    return name or spec.name
+
+
+def _throughput_benchmark_failures(
+    benchmark: Mapping[str, Any],
+    cfg: ThroughputRemediationConfig,
+    failures: list[str],
+    metrics: dict[str, Any],
+) -> None:
+    if benchmark.get("dry_run") is True:
+        failures.append("matched_benchmark:dry_run_not_promotion_evidence")
+    if cfg.require_reproducible_benchmark and benchmark.get("reproducible") is not True:
+        failures.append("matched_benchmark:not_reproducible")
+    for key in ("fixture_digest", "configuration_digest"):
+        if not _valid_digest_ref(str(benchmark.get(key) or "")):
+            failures.append(f"evidence_missing:matched_benchmark:{key}")
+    values: dict[tuple[str, str], Mapping[str, Any]] = {}
+    for cache in ("cold", "warm"):
+        cache_block = benchmark.get(cache)
+        if not isinstance(cache_block, Mapping):
+            failures.append(f"evidence_missing:matched_benchmark:{cache}")
+            continue
+        for arm in ("baseline", "candidate"):
+            block = cache_block.get(arm)
+            if not isinstance(block, Mapping):
+                failures.append(f"evidence_missing:matched_benchmark:{cache}:{arm}")
+                continue
+            values[(cache, arm)] = block
+            for key in (
+                "cycles_per_hour", "samples_per_second",
+                "state_to_accepted_patch_lag_p95_seconds",
+            ):
+                number = _throughput_number(block.get(key))
+                if number is None or number <= 0.0:
+                    failures.append(f"evidence_missing:matched_benchmark:{cache}:{arm}:{key}")
+    baseline = values.get(("warm", "baseline"))
+    candidate = values.get(("warm", "candidate"))
+    if baseline is None or candidate is None:
+        return
+    base_cycles = _throughput_number(baseline.get("cycles_per_hour")) or 0.0
+    cand_cycles = _throughput_number(candidate.get("cycles_per_hour")) or 0.0
+    base_samples = _throughput_number(baseline.get("samples_per_second")) or 0.0
+    cand_samples = _throughput_number(candidate.get("samples_per_second")) or 0.0
+    base_lag = _throughput_number(baseline.get("state_to_accepted_patch_lag_p95_seconds"))
+    cand_lag = _throughput_number(candidate.get("state_to_accepted_patch_lag_p95_seconds"))
+    cycle_ratio = cand_cycles / base_cycles if base_cycles > 0 else 0.0
+    sample_ratio = cand_samples / base_samples if base_samples > 0 else 0.0
+    metrics["warm_cycles_per_hour_ratio"] = cycle_ratio
+    metrics["warm_samples_per_second_ratio"] = sample_ratio
+    metrics["state_to_accepted_patch_lag_improved"] = (
+        base_lag is not None and cand_lag is not None and cand_lag < base_lag
+    )
+    if cycle_ratio + 1e-12 < cfg.min_warm_cycles_per_hour_ratio:
+        failures.append("throughput_threshold:warm_cycles_per_hour")
+    if sample_ratio + 1e-12 < cfg.min_samples_per_second_ratio:
+        failures.append("throughput_threshold:warm_samples_per_second")
+    if cfg.require_lower_state_to_accepted_patch_p95 and not metrics[
+        "state_to_accepted_patch_lag_improved"
+    ]:
+        failures.append("throughput_threshold:state_to_accepted_patch_lag_p95")
+
+
+def _throughput_service_failures(
+    services: Mapping[str, Any], failures: list[str]
+) -> None:
+    for name in ("cuda_autoencoder", "leanstral", "hammer", "codex"):
+        if not isinstance(services.get(name), Mapping):
+            failures.append(f"evidence_missing:services:{name}")
+    auto = services.get("cuda_autoencoder")
+    if isinstance(auto, Mapping):
+        valid = (
+            auto.get("healthy") is True
+            and auto.get("training") is True
+            and str(auto.get("device") or "").lower().startswith("cuda")
+            and auto.get("cpu_fallback") is False
+            and all(
+                _throughput_positive(auto, key)
+                for key in ("forward_count", "loss_count", "backward_count", "optimizer_step_count")
+            )
+        )
+        if not valid:
+            failures.append("service_invalid:cuda_autoencoder")
+    lean = services.get("leanstral")
+    if isinstance(lean, Mapping):
+        valid = (
+            lean.get("healthy") is True
+            and lean.get("persistent") is True
+            and str(lean.get("device") or "").lower().startswith("cuda")
+            and lean.get("cpu_fallback") is False
+            and _throughput_number(lean.get("model_load_count")) == 1.0
+            and _throughput_positive(lean, "request_count")
+            and _throughput_positive(lean, "reuse_count")
+        )
+        if not valid:
+            failures.append("service_invalid:leanstral")
+    hammer = services.get("hammer")
+    if isinstance(hammer, Mapping):
+        valid = (
+            hammer.get("healthy") is True
+            and hammer.get("backend_available") is True
+            and all(
+                _throughput_positive(hammer, key)
+                for key in ("obligation_count", "proof_attempt_count", "reconstruction_count")
+            )
+            and _throughput_number(hammer.get("fatal_failure_count")) == 0.0
+        )
+        if not valid:
+            failures.append("service_invalid:hammer")
+    codex = services.get("codex")
+    if isinstance(codex, Mapping):
+        accepted = _throughput_number(codex.get("accepted_patch_count")) or 0.0
+        rejected = _throughput_number(codex.get("safe_rejection_count")) or 0.0
+        valid = (
+            codex.get("healthy") is True
+            and _throughput_positive(codex, "invocation_count")
+            and _throughput_positive(codex, "focused_validation_count")
+            and accepted + rejected > 0.0
+            and _throughput_number(codex.get("fatal_failure_count")) == 0.0
+        )
+        if not valid:
+            failures.append("service_invalid:codex")
+
+
+def _throughput_artifact_failures(
+    artifacts: Mapping[str, Any],
+    cfg: ThroughputRemediationConfig,
+    failures: list[str],
+    metrics: dict[str, Any],
+) -> None:
+    for key, limit in (
+        ("checkpoint_bytes", cfg.max_checkpoint_bytes),
+        ("summary_bytes", cfg.max_summary_bytes),
+    ):
+        value = _throughput_number(artifacts.get(key))
+        metrics[key] = value
+        if value is None or value < 0.0:
+            failures.append(f"artifact_evidence_missing:{key}")
+        elif value > limit:
+            failures.append(f"artifact_bound_exceeded:{key}:{value:g}>{limit}")
+        digest_key = key.replace("bytes", "sha256")
+        if not _valid_digest_ref(str(artifacts.get(digest_key) or "")):
+            failures.append(f"artifact_evidence_missing:{digest_key}")
+
+
+def _canonical_throughput_quality(block: Mapping[str, Any]) -> dict[str, float]:
+    result: dict[str, float] = {}
+    for key, value in block.items():
+        canonical = _THROUGHPUT_QUALITY_ALIASES.get(str(key), str(key))
+        number = _throughput_number(value)
+        if number is not None:
+            result[canonical] = number
+    return result
+
+
+def _throughput_quality_failures(
+    quality: Mapping[str, Any],
+    cfg: ThroughputRemediationConfig,
+    failures: list[str],
+    metrics: dict[str, Any],
+) -> None:
+    comparisons: dict[str, Any] = {}
+    extra = sorted(set(quality) - set(cfg.required_families))
+    if extra:
+        failures.extend(f"quality_family_unknown:{name}" for name in extra)
+    for family in cfg.required_families:
+        pair = quality.get(family)
+        if not isinstance(pair, Mapping):
+            failures.append(f"evidence_missing:quality_families:{family}")
+            continue
+        before_raw, after_raw = pair.get("baseline"), pair.get("candidate")
+        if not isinstance(before_raw, Mapping) or not isinstance(after_raw, Mapping):
+            failures.append(f"evidence_missing:quality_families:{family}:paired_values")
+            continue
+        before = _canonical_throughput_quality(before_raw)
+        after = _canonical_throughput_quality(after_raw)
+        family_metrics: dict[str, Any] = {}
+        for metric in cfg.required_quality_metrics:
+            if metric not in before or metric not in after:
+                failures.append(f"evidence_missing:quality_families:{family}:{metric}")
+                continue
+            regressed = (
+                after[metric] > before[metric] + 1e-12
+                if metric in _THROUGHPUT_LOWER_IS_BETTER
+                else after[metric] + 1e-12 < before[metric]
+            )
+            family_metrics[metric] = {
+                "baseline": before[metric], "candidate": after[metric],
+                "regression": regressed,
+            }
+            if regressed:
+                failures.append(f"quality_regression:{family}:{metric}")
+        comparisons[family] = family_metrics
+    metrics["quality_comparisons"] = comparisons
+
+
+def _throughput_ablation_failures(
+    ablations: Mapping[str, Any],
+    cfg: ThroughputRemediationConfig,
+    failures: list[str],
+    metrics: dict[str, Any],
+) -> None:
+    if cfg.require_ablation_attribution and not ablations:
+        failures.append("evidence_missing:ablations")
+        return
+    recorded: dict[str, Any] = {}
+    for name, item in sorted(ablations.items()):
+        if not isinstance(item, Mapping):
+            failures.append(f"ablation_invalid:{name}")
+            continue
+        cycle_gain = _throughput_number(item.get("cycles_per_hour_gain"))
+        sample_gain = _throughput_number(item.get("samples_per_second_gain"))
+        valid = (
+            item.get("attributed") is True
+            and _valid_digest_ref(str(item.get("evidence_digest") or ""))
+            and cycle_gain is not None
+            and sample_gain is not None
+        )
+        if not valid:
+            failures.append(f"ablation_invalid:{name}")
+        recorded[str(name)] = {
+            "cycles_per_hour_gain": cycle_gain,
+            "samples_per_second_gain": sample_gain,
+        }
+    metrics["ablation_attribution"] = recorded
+
+
+def render_throughput_remediation_report(result: RolloutGateResult) -> str:
+    """Render a compact operator report without changing the decision."""
+
+    decision = "accepted" if result.accepted else "blocked"
+    metrics = result.metrics
+    lines = [
+        "# LegalIR Throughput Remediation Decision",
+        "",
+        f"Decision: `{decision}`",
+        f"Schema: `{THROUGHPUT_REMEDIATION_SCHEMA_VERSION}`",
+        f"Warm cycles/hour ratio: `{metrics.get('warm_cycles_per_hour_ratio')}` (minimum `1.8`)",
+        f"Warm samples/second ratio: `{metrics.get('warm_samples_per_second_ratio')}` (minimum `1.5`)",
+        f"State-to-accepted-patch p95 improved: `{metrics.get('state_to_accepted_patch_lag_improved')}`",
+        "",
+        "## Ablation attribution",
+    ]
+    for name, values in sorted((metrics.get("ablation_attribution") or {}).items()):
+        lines.append(f"- `{name}`: `{values}`")
+    lines.extend(["", "## Failures"])
+    lines.extend(f"- `{failure}`" for failure in result.failures)
+    if not result.failures:
+        lines.append("- none")
+    return "\n".join(lines) + "\n"
 
 
 def _staged_snapshot_items(
@@ -4548,6 +5098,34 @@ def build_parser() -> argparse.ArgumentParser:
     )
     staged_parser.set_defaults(func=_cmd_staged_gate)
 
+    remediation_parser = subparsers.add_parser(
+        "throughput-remediation-gate",
+        help="Gate the complete matched benchmark and five-stage rollout envelope",
+    )
+    remediation_parser.add_argument(
+        "--evidence-path", "--summary-path", required=True, type=Path
+    )
+    remediation_parser.add_argument(
+        "--evidence-output", type=Path,
+        help="Atomically store the machine-readable promotion decision",
+    )
+    remediation_parser.add_argument(
+        "--report-output", type=Path,
+        help="Atomically store the Markdown operator decision report",
+    )
+    remediation_parser.add_argument(
+        "--verify-rollback-artifacts",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+    )
+    remediation_parser.add_argument(
+        "--max-checkpoint-bytes", type=int, default=512 * 1024 * 1024
+    )
+    remediation_parser.add_argument(
+        "--max-summary-bytes", type=int, default=16 * 1024 * 1024
+    )
+    remediation_parser.set_defaults(func=_cmd_throughput_remediation_gate)
+
     external_parser = subparsers.add_parser(
         "external-validity-gate",
         help="Gate final promotion on bound external-validity evidence",
@@ -4724,6 +5302,42 @@ def _cmd_staged_gate(args: argparse.Namespace) -> int:
         decision["snapshot_sha256"] = snapshot_sha256(snapshot_path)
     if args.evidence_output is not None:
         write_rollout_evidence(args.evidence_output, decision)
+    print(json.dumps(decision, indent=2, sort_keys=True))
+    return 0 if result.accepted else 1
+
+
+def _cmd_throughput_remediation_gate(args: argparse.Namespace) -> int:
+    try:
+        payload = load_summary(args.evidence_path)
+        result = throughput_remediation_rollout_gate(
+            payload,
+            ThroughputRemediationConfig(
+                verify_rollback_artifacts=args.verify_rollback_artifacts,
+                max_checkpoint_bytes=args.max_checkpoint_bytes,
+                max_summary_bytes=args.max_summary_bytes,
+            ),
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        result = RolloutGateResult(
+            accepted=False,
+            failures=[
+                f"throughput_remediation_evidence_unreadable:"
+                f"{type(exc).__name__}:{exc}"
+            ],
+            metrics={"schema_version": THROUGHPUT_REMEDIATION_SCHEMA_VERSION},
+        )
+    decision = result.to_dict()
+    decision["schema_version"] = THROUGHPUT_REMEDIATION_SCHEMA_VERSION
+    decision["evidence_path"] = str(args.evidence_path)
+    if args.evidence_path.is_file():
+        decision["evidence_sha256"] = snapshot_sha256(args.evidence_path)
+    if args.evidence_output is not None:
+        write_rollout_evidence(args.evidence_output, decision)
+    if args.report_output is not None:
+        write_text_artifact(
+            args.report_output,
+            render_throughput_remediation_report(result),
+        )
     print(json.dumps(decision, indent=2, sort_keys=True))
     return 0 if result.accepted else 1
 
