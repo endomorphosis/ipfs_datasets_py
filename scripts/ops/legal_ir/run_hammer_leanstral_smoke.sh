@@ -241,6 +241,7 @@ CMD=(
   --compiler-ir-metric-sample-timeout-seconds "${COMPILER_IR_METRIC_SAMPLE_TIMEOUT_SECONDS:-10}"
   --max-inner-iterations "${MAX_INNER_ITERATIONS:-1}"
   --max-items "${MAX_ITEMS:-1}"
+  --sampling-seed "${SAMPLING_SEED:-PORTAL-LIR-HAMMER-117-fixed-smoke-v1}"
   --learning-rate "${LEARNING_RATE:-0.30}"
   --generalizable-projection-epochs "${GENERALIZABLE_PROJECTION_EPOCHS:-1}"
   --generalizable-projection-timeout-seconds "${GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS:-240}"
@@ -273,6 +274,8 @@ CMD=(
   --daemon-hammer-guidance-max-premises "${DAEMON_HAMMER_GUIDANCE_MAX_PREMISES:-64}"
   --daemon-hammer-guidance-timeout-seconds "${DAEMON_HAMMER_GUIDANCE_TIMEOUT_SECONDS:-5}"
   --daemon-hammer-guidance-parallel-workers "${DAEMON_HAMMER_GUIDANCE_PARALLEL_WORKERS:-2}"
+  --daemon-hammer-guidance-verify-reconstruction true
+  --daemon-hammer-guidance-trusted-requires-reconstruction true
   --daemon-hammer-guidance-train-autoencoder true
   --daemon-hammer-guidance-max-training-items "${DAEMON_HAMMER_GUIDANCE_MAX_TRAINING_ITEMS:-64}"
   --paired-supervisor-backend accelerate_style
