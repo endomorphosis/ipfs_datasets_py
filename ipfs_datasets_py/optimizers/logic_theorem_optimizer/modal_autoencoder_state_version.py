@@ -302,6 +302,26 @@ class IncrementalStateIdentity:
         with self._lock:
             return self._revision
 
+    def restore_revision(self, revision: int) -> None:
+        """Restore a durable operational revision after checkpoint loading.
+
+        Revisions are deliberately not part of the deterministic state digest,
+        but delta logs use them to reject missing, reordered, and stale
+        segments.  A freshly constructed state starts at revision zero, so a
+        verified checkpoint loader must be able to restore the persisted
+        counter without pretending that every decoded field was a new
+        mutation.
+        """
+
+        value = int(revision)
+        if value < 0:
+            raise ValueError("state revision must be non-negative")
+        with self._lock:
+            self._revision = value
+            # Cached identities contain the object-local revision even though
+            # their digest does not.  Rebuild them on the next request.
+            self._identity_cache.clear()
+
     def set_lineage(self, metric_lineage: Any) -> None:
         with self._lock:
             self._metric_lineage = copy.deepcopy(metric_lineage)

@@ -3160,7 +3160,12 @@ class ModalAutoencoderTrainingState:
         source = Path(path)
         if not source.exists():
             return cls()
-        return cls.from_dict(json.loads(source.read_text(encoding="utf-8")))
+        raw = source.read_bytes()
+        if raw.startswith(b"LIRMAECP"):
+            from .modal_autoencoder_checkpoint import load_checkpoint
+
+            return load_checkpoint(source).state
+        return cls.from_dict(json.loads(raw.decode("utf-8")))
 
 
 @dataclass(frozen=True)
