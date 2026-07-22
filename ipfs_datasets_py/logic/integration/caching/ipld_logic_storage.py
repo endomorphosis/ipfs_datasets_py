@@ -20,12 +20,11 @@ logger = logging.getLogger(__name__)
 
 # Try to import IPLD components
 try:
-    from ..data_transformation.ipld.storage import IPLDStorage
-    from ..data_transformation.ipld.vector_store import IPLDVectorStore
+    from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
     IPLD_AVAILABLE = True
-except ImportError:
+except ImportError as exc:
     IPLD_AVAILABLE = False
-    logger.warning("IPLD components not available - using file-based storage fallback")
+    logger.warning("IPLD components not available (%s) - using file-based storage fallback", exc)
 
 
 @dataclass
@@ -104,7 +103,7 @@ class LogicIPLDStorage:
         if IPLD_AVAILABLE:
             try:
                 self.block_manager = IPLDStorage()
-                self.vector_store = IPLDVectorStore()
+                self.vector_store = None
                 self.use_ipld = True
                 logger.info("IPLD logic storage initialized with full IPLD support")
             except Exception as e:
@@ -276,8 +275,7 @@ class LogicIPLDStorage:
         """Store node in IPLD (when available)."""
         try:
             node_data = node.to_dict()
-            block = self.block_manager.create_block(node_data)
-            return block.cid
+            return self.block_manager.store_json(node_data)
         except Exception as e:
             logger.error(f"IPLD storage failed: {e}, falling back to filesystem")
             return self._store_in_filesystem(node)
@@ -298,8 +296,7 @@ class LogicIPLDStorage:
     def _store_translation_in_ipld(self, translation_data: Dict[str, Any]) -> str:
         """Store translation in IPLD."""
         try:
-            block = self.block_manager.create_block(translation_data)
-            return block.cid
+            return self.block_manager.store_json(translation_data)
         except Exception as e:
             logger.error(f"IPLD translation storage failed: {e}")
             # Generate fallback CID
@@ -322,8 +319,7 @@ class LogicIPLDStorage:
     def _store_collection_in_ipld(self, collection_data: Dict[str, Any]) -> str:
         """Store collection in IPLD."""
         try:
-            block = self.block_manager.create_block(collection_data)
-            return block.cid
+            return self.block_manager.store_json(collection_data)
         except Exception as e:
             logger.error(f"IPLD collection storage failed: {e}")
             # Generate fallback CID
