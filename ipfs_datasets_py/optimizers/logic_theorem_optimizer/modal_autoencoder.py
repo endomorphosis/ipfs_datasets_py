@@ -1285,6 +1285,16 @@ class ModalAutoencoderTrainingState:
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
+    def to_tensor_state(self, *, overflow_capacity: int = 4096) -> Any:
+        """Return the deterministic packed rollout representation."""
+
+        from .modal_autoencoder_state_migration import pack_modal_autoencoder_state
+
+        return pack_modal_autoencoder_state(
+            self,
+            overflow_capacity=overflow_capacity,
+        )
+
     def copy(self) -> "ModalAutoencoderTrainingState":
         """Return a deep copy suitable for transactional optimizer rollback."""
         copied = self.generalizable_copy()
@@ -2968,6 +2978,17 @@ class ModalAutoencoderTrainingState:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ModalAutoencoderTrainingState":
+        if str(data.get("schema_version") or "").startswith(
+            "modal-autoencoder-tensor-state-"
+        ):
+            from .modal_autoencoder_state_migration import (
+                unpack_modal_autoencoder_state,
+            )
+            from .modal_autoencoder_tensor_state import ModalAutoencoderTensorState
+
+            return unpack_modal_autoencoder_state(
+                ModalAutoencoderTensorState.from_dict(data)
+            )
         architecture_version = str(
             data.get("architecture_version")
             or MODAL_AUTOENCODER_LEGACY_ARCHITECTURE_VERSION

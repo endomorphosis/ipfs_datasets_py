@@ -436,6 +436,15 @@ def _state_class() -> Any:
 def _state_data(state: Any) -> Dict[str, Any]:
     if isinstance(state, Mapping):
         return _canonical_copy(state)
+    # Packed tensor state deliberately writes the rollout-compatible legacy
+    # map envelope.  This keeps existing readers operational while migration
+    # code can immediately re-pack the decoded object.
+    checkpoint_dict = getattr(state, "to_checkpoint_dict", None)
+    if callable(checkpoint_dict):
+        value = checkpoint_dict()
+        if not isinstance(value, Mapping):
+            raise TypeError("state.to_checkpoint_dict() must return a mapping")
+        return _canonical_copy(value)
     to_dict = getattr(state, "to_dict", None)
     if not callable(to_dict):
         raise TypeError(f"unsupported checkpoint state: {type(state).__name__}")
@@ -451,6 +460,12 @@ def _identity_record(state: Any, metric_lineage: Any) -> tuple[str, int, str, Di
         # typed state object.  Normalize it through the strict public loader so
         # its schema-bound identity is identical after checkpoint decoding.
         state = _state_from_data(state)
+    elif callable(getattr(state, "to_checkpoint_dict", None)):
+        # Bind tensor-rollout checkpoints to the exact same component and
+        # lineage identity as the current CPU state representation.
+        revision = int(getattr(state, "state_revision", 0))
+        state = _state_from_data(state.to_checkpoint_dict())
+        _restore_revision(state, revision)
     record_method = getattr(state, "state_identity_record", None)
     if callable(record_method):
         record = record_method(metric_lineage=metric_lineage)
@@ -482,6 +497,10 @@ def _identity_record(state: Any, metric_lineage: Any) -> tuple[str, int, str, Di
 def _restore_revision(state: Any, revision: int) -> None:
     tracker = getattr(state, "_state_identity_tracker", None)
     restore = getattr(tracker, "restore_revision", None)
+    if callable(restore):
+        restore(int(revision))
+        return
+    restore = getattr(state, "restore_revision", None)
     if callable(restore):
         restore(int(revision))
 
