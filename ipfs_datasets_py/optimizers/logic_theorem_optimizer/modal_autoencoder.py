@@ -40,6 +40,11 @@ from .modal_autoencoder_state_version import (
     StateIdentity,
     StateRevisionToken,
 )
+from .modal_autoencoder_state_transaction import (
+    ModalAutoencoderStatePatch,
+    ModalAutoencoderStateTransaction,
+    StateTransactionConflictError,
+)
 from .projection_profiler import ProjectionProfiler
 
 _LEGAL_IR_TARGET_CACHE_MAX = 2048
@@ -942,6 +947,18 @@ class ModalAutoencoderTrainingState:
         repr=False,
         compare=False,
     )
+    _state_transaction_guard: threading.RLock = field(
+        init=False,
+        repr=False,
+        compare=False,
+        default_factory=threading.RLock,
+    )
+    _active_state_transaction: Optional[ModalAutoencoderStateTransaction] = field(
+        init=False,
+        repr=False,
+        compare=False,
+        default=None,
+    )
 
     def __post_init__(self) -> None:
         """Attach recursive mutation tracking without changing checkpoints."""
@@ -966,6 +983,7 @@ class ModalAutoencoderTrainingState:
                     else {}
                 )
             },
+            before_mutation=self._before_state_component_mutation,
         )
         object.__setattr__(self, "_state_identity_tracker", tracker)
         for name in MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS:
@@ -979,6 +997,9 @@ class ModalAutoencoderTrainingState:
     def __setattr__(self, name: str, value: Any) -> None:
         tracker = self.__dict__.get("_state_identity_tracker")
         if tracker is not None and name in MODAL_AUTOENCODER_STATE_COMPONENT_FIELDS:
+            transaction = self.__dict__.get("_active_state_transaction")
+            if transaction is not None:
+                transaction.before_component_replacement(name)
             value = tracker.track_component(name, value, mutation=True)
             object.__setattr__(self, name, value)
             # The persisted proof-head component is conditionally present, so a
@@ -987,6 +1008,45 @@ class ModalAutoencoderTrainingState:
                 tracker.dirty("proof_auxiliary_head_logits", mutation=False)
             return
         object.__setattr__(self, name, value)
+
+    def _before_state_component_mutation(
+        self,
+        component: str,
+        path: tuple[Any, ...],
+        operation: str,
+    ) -> None:
+        transaction = self._active_state_transaction
+        if transaction is not None:
+            transaction.before_mutation(component, path, operation)
+
+    def _begin_state_transaction(
+        self,
+        transaction: ModalAutoencoderStateTransaction,
+    ) -> None:
+        with self._state_transaction_guard:
+            active = self._active_state_transaction
+            if active is not None:
+                raise StateTransactionConflictError(
+                    "modal autoencoder state already has an active writer: "
+                    f"{active.label or 'unlabelled'}"
+                )
+            object.__setattr__(self, "_active_state_transaction", transaction)
+
+    def _end_state_transaction(
+        self,
+        transaction: ModalAutoencoderStateTransaction,
+    ) -> None:
+        with self._state_transaction_guard:
+            if self._active_state_transaction is not transaction:
+                raise StateTransactionConflictError(
+                    "modal autoencoder state writer ownership mismatch"
+                )
+            object.__setattr__(self, "_active_state_transaction", None)
+
+    def transaction(self, *, label: str = "") -> ModalAutoencoderStateTransaction:
+        """Create a touched-row copy-on-write transaction for this state."""
+
+        return ModalAutoencoderStateTransaction(self, label=label)
 
     def state_identity(self, *, metric_lineage: Any = None) -> str:
         """Return the cached deterministic digest for this state and lineage."""
@@ -6670,10 +6730,26 @@ class AdaptiveModalAutoencoder:
                 legal_ir_view_distribution=dict(bridge.legal_ir_view_distribution),
             )
 
-        def restore_projection_state(
-            state: ModalAutoencoderTrainingState,
+        def rollback_projection_transaction(
+            transaction: ModalAutoencoderStateTransaction,
+        ) -> ModalAutoencoderStatePatch:
+            patch = transaction.rollback()
+            self._invalidate_state_dependent_evaluator_caches()
+            return patch
+
+        def commit_projection_patch(
+            patch: ModalAutoencoderStatePatch,
+            *,
+            label: str,
         ) -> None:
-            self.state = state.copy()
+            transaction = self.state.transaction(label=label).begin()
+            try:
+                patch.apply(transaction)
+                transaction.commit()
+            except BaseException:
+                if transaction.active:
+                    rollback_projection_transaction(transaction)
+                raise
             self._invalidate_state_dependent_evaluator_caches()
 
         emit_progress(
@@ -6712,7 +6788,6 @@ class AdaptiveModalAutoencoder:
                     sample_count=len(sample_list),
                 )
         emit_progress("initial_state_snapshot")
-        best_state = self.state.copy()
         best = before
         accepted_epochs = 0
         epoch_reports: List[Dict[str, Any]] = []
@@ -6819,9 +6894,15 @@ class AdaptiveModalAutoencoder:
                 epoch=epoch,
                 state_entry_count=state_entry_count,
             )
-            epoch_before_state = self.state.copy()
             candidate_reports: List[Dict[str, Any]] = []
-            selected: Optional[tuple[float, AutoencoderEvaluation, ModalAutoencoderTrainingState, str]] = None
+            selected: Optional[
+                tuple[
+                    float,
+                    AutoencoderEvaluation,
+                    ModalAutoencoderStatePatch,
+                    str,
+                ]
+            ] = None
             prescreen_holdout_evaluation_count = 0
             prescreen_holdout_evaluation_limit = (
                 prescreen_top_k
@@ -6890,16 +6971,28 @@ class AdaptiveModalAutoencoder:
                     break
                 head_scale = head_learning_rate_scales.get(update_name, 1.0)
                 attempt_reports: List[Dict[str, Any]] = []
-                best_attempt: Optional[tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]] = None
+                best_attempt: Optional[
+                    tuple[
+                        float,
+                        Dict[str, Any],
+                        AutoencoderEvaluation,
+                        ModalAutoencoderStatePatch,
+                    ]
+                ] = None
                 best_improved_attempt: Optional[
-                    tuple[float, Dict[str, Any], AutoencoderEvaluation, ModalAutoencoderTrainingState]
+                    tuple[
+                        float,
+                        Dict[str, Any],
+                        AutoencoderEvaluation,
+                        ModalAutoencoderStatePatch,
+                    ]
                 ] = None
                 attempt_tuples: List[
                     tuple[
                         float,
                         Dict[str, Any],
                         AutoencoderEvaluation,
-                        ModalAutoencoderTrainingState,
+                        ModalAutoencoderStatePatch,
                     ]
                 ] = []
                 multipliers_to_try = list(line_search_multipliers)
@@ -6908,26 +7001,36 @@ class AdaptiveModalAutoencoder:
                 def finalize_attempt_report(
                     *,
                     attempt_report: Dict[str, Any],
-                    candidate_state: ModalAutoencoderTrainingState,
+                    candidate_state: ModalAutoencoderStatePatch,
                 ) -> tuple[
                     float,
                     Dict[str, Any],
                     AutoencoderEvaluation,
-                    ModalAutoencoderTrainingState,
+                    ModalAutoencoderStatePatch,
                 ]:
-                    restore_projection_state(candidate_state)
-                    emit_progress(
-                        "line_search_evaluation",
-                        epoch=epoch,
-                        line_search_attempt=int(
-                            attempt_report.get("line_search_attempt", 0) or 0
-                        ),
-                        update=update_name,
-                    )
-                    after = evaluate_projection_rows(
-                        target_samples,
-                        stage="line_search_evaluation",
-                    )
+                    evaluation_transaction = self.state.transaction(
+                        label=(
+                            f"projection-evaluate:{epoch}:{update_name}:"
+                            f"{attempt_report.get('line_search_attempt', 0)}"
+                        )
+                    ).begin()
+                    try:
+                        candidate_state.apply(evaluation_transaction)
+                        emit_progress(
+                            "line_search_evaluation",
+                            epoch=epoch,
+                            line_search_attempt=int(
+                                attempt_report.get("line_search_attempt", 0) or 0
+                            ),
+                            update=update_name,
+                        )
+                        after = evaluate_projection_rows(
+                            target_samples,
+                            stage="line_search_evaluation",
+                        )
+                    finally:
+                        if evaluation_transaction.active:
+                            rollback_projection_transaction(evaluation_transaction)
                     regressions = _evaluation_regressions_for_training(
                         best,
                         after,
@@ -7077,7 +7180,7 @@ class AdaptiveModalAutoencoder:
                         objective_delta,
                         attempt_report,
                         after,
-                        self.state.copy(),
+                        candidate_state,
                     )
                 for line_search_multiplier in multipliers_to_try:
                     if timed_out():
@@ -7105,74 +7208,87 @@ class AdaptiveModalAutoencoder:
                         state_entry_count=state_entry_count,
                         update=update_name,
                     )
-                    restore_projection_state(epoch_before_state)
-                    update_norm_report = self._apply_projection_update_batch(
-                        update_samples,
-                        update_targets=update_targets,
-                        learning_rate=effective_learning_rate,
-                        l2_regularization=l2_regularization,
-                        profiler=profiler,
-                        update_backend=normalized_update_backend,
-                    )
-                    prescreen_report: Dict[str, Any] = {
-                        "effective_mode": effective_prescreen_mode,
-                        "enabled": effective_prescreen_mode != "off",
-                        "mode": prescreen_mode,
-                        "selected_for_holdout": True,
-                        "top_k": prescreen_top_k,
-                    }
-                    if prescreen_before is not None:
-                        emit_progress(
-                            "projection_prescreen_evaluation",
-                            effective_learning_rate=effective_learning_rate,
-                            epoch=epoch,
-                            line_search_attempt=len(attempt_reports) + 1,
-                            line_search_multiplier=float(line_search_multiplier),
-                            sample_count=len(update_samples),
-                            top_k=prescreen_top_k,
-                            update=update_name,
+                    attempt_transaction = self.state.transaction(
+                        label=(
+                            f"projection-attempt:{epoch}:{update_name}:"
+                            f"{len(attempt_reports) + 1}"
                         )
-                        with profile_phase(
-                            (
-                                "kernel"
-                                if self.compute_backend.startswith("torch")
-                                else "python_loop"
-                            ),
-                            stage="projection_prescreen_evaluation",
-                            legal_family="aggregate",
-                            metadata={"sample_count": len(update_samples)},
-                        ):
-                            prescreen_after = self.evaluate(
-                                update_samples,
-                                **base_evaluation_kwargs,
+                    ).begin()
+                    try:
+                        update_norm_report = self._apply_projection_update_batch(
+                            update_samples,
+                            update_targets=update_targets,
+                            learning_rate=effective_learning_rate,
+                            l2_regularization=l2_regularization,
+                            profiler=profiler,
+                            update_backend=normalized_update_backend,
+                        )
+                        prescreen_report: Dict[str, Any] = {
+                            "effective_mode": effective_prescreen_mode,
+                            "enabled": effective_prescreen_mode != "off",
+                            "mode": prescreen_mode,
+                            "selected_for_holdout": True,
+                            "top_k": prescreen_top_k,
+                        }
+                        if prescreen_before is not None:
+                            emit_progress(
+                                "projection_prescreen_evaluation",
+                                effective_learning_rate=effective_learning_rate,
+                                epoch=epoch,
+                                line_search_attempt=len(attempt_reports) + 1,
+                                line_search_multiplier=float(line_search_multiplier),
+                                sample_count=len(update_samples),
+                                top_k=prescreen_top_k,
+                                update=update_name,
                             )
-                        before_prescreen_objective = _evaluation_objective_for_training(
-                            prescreen_before,
-                            **objective_weights,
-                        )
-                        after_prescreen_objective = _evaluation_objective_for_training(
-                            prescreen_after,
-                            **objective_weights,
-                        )
-                        prescreen_report.update(
-                            {
-                                "after_objective": round(
-                                    after_prescreen_objective,
-                                    12,
+                            with profile_phase(
+                                (
+                                    "kernel"
+                                    if self.compute_backend.startswith("torch")
+                                    else "python_loop"
                                 ),
-                                "before_objective": round(
-                                    before_prescreen_objective,
-                                    12,
-                                ),
-                                "objective_delta": round(
-                                    before_prescreen_objective
-                                    - after_prescreen_objective,
-                                    12,
-                                ),
-                                "sample_count": len(update_samples),
-                            }
-                        )
-                    candidate_state = self.state.copy()
+                                stage="projection_prescreen_evaluation",
+                                legal_family="aggregate",
+                                metadata={"sample_count": len(update_samples)},
+                            ):
+                                prescreen_after = self.evaluate(
+                                    update_samples,
+                                    **base_evaluation_kwargs,
+                                )
+                            before_prescreen_objective = (
+                                _evaluation_objective_for_training(
+                                    prescreen_before,
+                                    **objective_weights,
+                                )
+                            )
+                            after_prescreen_objective = (
+                                _evaluation_objective_for_training(
+                                    prescreen_after,
+                                    **objective_weights,
+                                )
+                            )
+                            prescreen_report.update(
+                                {
+                                    "after_objective": round(
+                                        after_prescreen_objective,
+                                        12,
+                                    ),
+                                    "before_objective": round(
+                                        before_prescreen_objective,
+                                        12,
+                                    ),
+                                    "objective_delta": round(
+                                        before_prescreen_objective
+                                        - after_prescreen_objective,
+                                        12,
+                                    ),
+                                    "sample_count": len(update_samples),
+                                }
+                            )
+                        candidate_state = attempt_transaction.capture_patch()
+                    finally:
+                        if attempt_transaction.active:
+                            rollback_projection_transaction(attempt_transaction)
                     line_search_attempt_index = len(attempt_reports) + 1
                     defer_holdout_evaluation = bool(
                         effective_prescreen_mode == "enforce"
@@ -7368,7 +7484,6 @@ class AdaptiveModalAutoencoder:
 
             if projection_stopped_reason:
                 if selected is None:
-                    restore_projection_state(epoch_before_state)
                     epoch_reports.append(
                         {
                             "accepted": False,
@@ -7387,9 +7502,11 @@ class AdaptiveModalAutoencoder:
                     )
                     break
                 objective_delta, after, selected_state, update_name = selected
-                restore_projection_state(selected_state)
+                commit_projection_patch(
+                    selected_state,
+                    label=f"projection-commit:{epoch}:{update_name}",
+                )
                 best = after
-                best_state = self.state.copy()
                 accepted_epochs += 1
                 selected_report = next(
                     report
@@ -7409,7 +7526,6 @@ class AdaptiveModalAutoencoder:
                 )
                 break
             if selected is None:
-                restore_projection_state(epoch_before_state)
                 epoch_reports.append(
                     {
                         "accepted": False,
@@ -7428,9 +7544,11 @@ class AdaptiveModalAutoencoder:
                 break
 
             objective_delta, after, selected_state, update_name = selected
-            restore_projection_state(selected_state)
+            commit_projection_patch(
+                selected_state,
+                label=f"projection-commit:{epoch}:{update_name}",
+            )
             best = after
-            best_state = self.state.copy()
             accepted_epochs += 1
             selected_report = next(
                 report
@@ -7448,7 +7566,6 @@ class AdaptiveModalAutoencoder:
                 }
             )
 
-        restore_projection_state(best_state)
         projection_profile = profiler.summarize() if profiler is not None else {}
         cuda_residency = {
             "enabled": normalized_update_backend == "cuda_resident",
@@ -7514,6 +7631,46 @@ class AdaptiveModalAutoencoder:
         profiler: Optional[ProjectionProfiler] = None,
         update_backend: str = "native",
     ) -> Dict[str, Any]:
+        """Apply a batch atomically and account only for its touched rows."""
+
+        active = self.state._active_state_transaction
+        if active is not None:
+            return self._apply_projection_update_batch_in_transaction(
+                samples,
+                update_targets=update_targets,
+                learning_rate=learning_rate,
+                l2_regularization=l2_regularization,
+                profiler=profiler,
+                update_backend=update_backend,
+            )
+        transaction = self.state.transaction(label="projection-update-batch").begin()
+        try:
+            report = self._apply_projection_update_batch_in_transaction(
+                samples,
+                update_targets=update_targets,
+                learning_rate=learning_rate,
+                l2_regularization=l2_regularization,
+                profiler=profiler,
+                update_backend=update_backend,
+            )
+            transaction.commit()
+            return report
+        except BaseException:
+            if transaction.active:
+                transaction.rollback()
+                self._invalidate_state_dependent_evaluator_caches()
+            raise
+
+    def _apply_projection_update_batch_in_transaction(
+        self,
+        samples: Sequence[LegalSample],
+        *,
+        update_targets: Sequence[str],
+        learning_rate: float,
+        l2_regularization: float,
+        profiler: Optional[ProjectionProfiler] = None,
+        update_backend: str = "native",
+    ) -> Dict[str, Any]:
         """Apply compatible projection updates as one guarded optimizer batch.
 
         The sample-outer/head-inner order matches the legacy line-search loop,
@@ -7525,7 +7682,11 @@ class AdaptiveModalAutoencoder:
         sample_list = list(samples)
         target_tuple = tuple(str(target) for target in update_targets)
         normalized_backend = str(update_backend or "native").strip().lower()
-        before_state = self.state.copy()
+        transaction = self.state._active_state_transaction
+        if transaction is None:
+            raise StateTransactionConflictError(
+                "projection update batch requires an active state transaction"
+            )
         if normalized_backend == "cuda_resident":
             def legacy_apply() -> None:
                 self._apply_projection_update_batch(
@@ -7554,8 +7715,8 @@ class AdaptiveModalAutoencoder:
                 self._cuda_residency_reports.append(report.to_dict())
                 self._cuda_residency_reports = self._cuda_residency_reports[-256:]
                 if report.applied:
-                    norm_report = legal_ir_trainable_head_delta_norm_report(
-                        before_state,
+                    norm_report = legal_ir_trainable_head_transaction_delta_norm_report(
+                        transaction,
                         self.state,
                         learning_rate=learning_rate,
                     )
@@ -7675,8 +7836,8 @@ class AdaptiveModalAutoencoder:
             if use_sparse_python:
                 self._torch = old_torch
                 self.compute_device = old_device
-        norm_report = legal_ir_trainable_head_delta_norm_report(
-            before_state,
+        norm_report = legal_ir_trainable_head_transaction_delta_norm_report(
+            transaction,
             self.state,
             learning_rate=learning_rate,
         )
@@ -23255,10 +23416,8 @@ class AdaptiveModalAutoencoder:
                 view: float(value) * factor
                 for view, value in logits.items()
             }
-        self.state.legal_ir_view_logits = {
-            view: float(value) * factor
-            for view, value in self.state.legal_ir_view_logits.items()
-        }
+        for view, value in list(self.state.legal_ir_view_logits.items()):
+            self.state.legal_ir_view_logits[view] = float(value) * factor
         for feature, logits in list(self.state.feature_legal_ir_view_logits.items()):
             self.state.feature_legal_ir_view_logits[feature] = {
                 view: float(value) * factor
@@ -30229,6 +30388,74 @@ def legal_ir_trainable_head_delta_norm_report(
     trusted-feedback paths expose the same accounting.
     """
 
+    values_by_field: Dict[
+        str,
+        tuple[Mapping[tuple[str, ...], float], Mapping[tuple[str, ...], float]],
+    ] = {}
+    for field_name in LEGAL_IR_TRAINABLE_HEAD_FIELDS:
+        values_by_field[field_name] = (
+            _flatten_numeric_head_values(getattr(before, field_name, {})),
+            _flatten_numeric_head_values(getattr(after, field_name, {})),
+        )
+    return _legal_ir_trainable_flat_delta_norm_report(
+        values_by_field,
+        learning_rate=learning_rate,
+    )
+
+
+def legal_ir_trainable_head_transaction_delta_norm_report(
+    transaction: ModalAutoencoderStateTransaction,
+    state: ModalAutoencoderTrainingState,
+    *,
+    learning_rate: float,
+) -> Dict[str, Any]:
+    """Return update norms from a transaction's sparse row journal."""
+
+    if transaction.state is not state:
+        raise StateTransactionConflictError(
+            "update-norm transaction targets a different state object"
+        )
+
+    before_by_field: Dict[str, Dict[tuple[str, ...], float]] = {}
+    after_by_field: Dict[str, Dict[tuple[str, ...], float]] = {}
+    for row in transaction.iter_row_deltas():
+        if row.component not in LEGAL_IR_TRAINABLE_HEAD_FIELDS:
+            continue
+        if row.before_exists:
+            for path, value in _flatten_numeric_head_values(
+                row.before_value
+            ).items():
+                before_by_field.setdefault(row.component, {})[
+                    (str(row.key), *path)
+                ] = value
+        if row.after_exists:
+            for path, value in _flatten_numeric_head_values(
+                row.after_value
+            ).items():
+                after_by_field.setdefault(row.component, {})[
+                    (str(row.key), *path)
+                ] = value
+    values_by_field = {
+        field_name: (
+            before_by_field.get(field_name, {}),
+            after_by_field.get(field_name, {}),
+        )
+        for field_name in LEGAL_IR_TRAINABLE_HEAD_FIELDS
+    }
+    return _legal_ir_trainable_flat_delta_norm_report(
+        values_by_field,
+        learning_rate=learning_rate,
+    )
+
+
+def _legal_ir_trainable_flat_delta_norm_report(
+    values_by_field: Mapping[
+        str,
+        tuple[Mapping[tuple[str, ...], float], Mapping[tuple[str, ...], float]],
+    ],
+    *,
+    learning_rate: float,
+) -> Dict[str, Any]:
     step = abs(float(learning_rate)) if math.isfinite(float(learning_rate)) else 0.0
     update_squares_by_head: Dict[str, float] = {}
     update_squares_by_head_family: Dict[str, float] = {}
@@ -30237,8 +30464,7 @@ def legal_ir_trainable_head_delta_norm_report(
     finite = True
 
     for field_name, head_family in LEGAL_IR_TRAINABLE_HEAD_FIELDS.items():
-        before_values = _flatten_numeric_head_values(getattr(before, field_name, {}))
-        after_values = _flatten_numeric_head_values(getattr(after, field_name, {}))
+        before_values, after_values = values_by_field.get(field_name, ({}, {}))
         for path in sorted(set(before_values) | set(after_values)):
             delta = float(after_values.get(path, 0.0)) - float(
                 before_values.get(path, 0.0)

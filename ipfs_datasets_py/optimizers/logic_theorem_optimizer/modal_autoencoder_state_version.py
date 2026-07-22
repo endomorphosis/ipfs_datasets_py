@@ -69,11 +69,30 @@ def canonical_digest(value: Any) -> str:
 class _TrackedDict(dict):
     """A normal dict whose successful mutations invalidate one component."""
 
-    def __init__(self, value: Mapping[Any, Any], callback: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        value: Mapping[Any, Any],
+        callback: Callable[[], None],
+        before_callback: Callable[[tuple[Any, ...], str], None],
+        path: tuple[Any, ...],
+    ) -> None:
         self._callback = callback
+        self._before_callback = before_callback
+        self._path = path
         dict.__init__(
             self,
-            ((key, _tracked_value(item, callback)) for key, item in value.items()),
+            (
+                (
+                    key,
+                    _tracked_value(
+                        item,
+                        callback,
+                        before_callback,
+                        (*path, key),
+                    ),
+                )
+                for key, item in value.items()
+            ),
         )
 
     def __deepcopy__(self, memo: Dict[int, Any]) -> Dict[Any, Any]:
@@ -83,26 +102,46 @@ class _TrackedDict(dict):
         }
 
     def __setitem__(self, key: Any, value: Any) -> None:
-        dict.__setitem__(self, key, _tracked_value(value, self._callback))
+        item_path = (*self._path, key)
+        self._before_callback(item_path, "set")
+        dict.__setitem__(
+            self,
+            key,
+            _tracked_value(
+                value,
+                self._callback,
+                self._before_callback,
+                item_path,
+            ),
+        )
         self._callback()
 
     def __delitem__(self, key: Any) -> None:
+        self._before_callback((*self._path, key), "delete")
         dict.__delitem__(self, key)
         self._callback()
 
     def clear(self) -> None:
         if self:
+            for key in tuple(self):
+                self._before_callback((*self._path, key), "delete")
             dict.clear(self)
             self._callback()
 
     def pop(self, key: Any, *default: Any) -> Any:
         existed = key in self
+        if existed:
+            self._before_callback((*self._path, key), "delete")
         result = dict.pop(self, key, *default)
         if existed:
             self._callback()
         return result
 
     def popitem(self) -> tuple[Any, Any]:
+        if not self:
+            return dict.popitem(self)
+        key = next(reversed(self))
+        self._before_callback((*self._path, key), "delete")
         result = dict.popitem(self)
         self._callback()
         return result
@@ -110,7 +149,14 @@ class _TrackedDict(dict):
     def setdefault(self, key: Any, default: Any = None) -> Any:
         if key in self:
             return dict.__getitem__(self, key)
-        value = _tracked_value(default, self._callback)
+        item_path = (*self._path, key)
+        self._before_callback(item_path, "insert")
+        value = _tracked_value(
+            default,
+            self._callback,
+            self._before_callback,
+            item_path,
+        )
         dict.__setitem__(self, key, value)
         self._callback()
         return value
@@ -120,7 +166,18 @@ class _TrackedDict(dict):
         if not incoming:
             return
         for key, value in incoming.items():
-            dict.__setitem__(self, key, _tracked_value(value, self._callback))
+            item_path = (*self._path, key)
+            self._before_callback(item_path, "set")
+            dict.__setitem__(
+                self,
+                key,
+                _tracked_value(
+                    value,
+                    self._callback,
+                    self._before_callback,
+                    item_path,
+                ),
+            )
         self._callback()
 
     def __ior__(self, other: Mapping[Any, Any]) -> "_TrackedDict":
@@ -131,60 +188,130 @@ class _TrackedDict(dict):
 class _TrackedList(list):
     """A normal list whose successful mutations invalidate one component."""
 
-    def __init__(self, value: Iterable[Any], callback: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        value: Iterable[Any],
+        callback: Callable[[], None],
+        before_callback: Callable[[tuple[Any, ...], str], None],
+        path: tuple[Any, ...],
+    ) -> None:
         self._callback = callback
-        list.__init__(self, (_tracked_value(item, callback) for item in value))
+        self._before_callback = before_callback
+        self._path = path
+        list.__init__(
+            self,
+            (
+                _tracked_value(
+                    item,
+                    callback,
+                    before_callback,
+                    (*path, index),
+                )
+                for index, item in enumerate(value)
+            ),
+        )
 
     def __deepcopy__(self, memo: Dict[int, Any]) -> list[Any]:
         return [copy.deepcopy(value, memo) for value in self]
 
     def __setitem__(self, index: Any, value: Any) -> None:
+        self._before_callback((*self._path, index), "set")
         if isinstance(index, slice):
-            wrapped = [_tracked_value(item, self._callback) for item in value]
+            wrapped = [
+                _tracked_value(
+                    item,
+                    self._callback,
+                    self._before_callback,
+                    self._path,
+                )
+                for item in value
+            ]
         else:
-            wrapped = _tracked_value(value, self._callback)
+            wrapped = _tracked_value(
+                value,
+                self._callback,
+                self._before_callback,
+                (*self._path, index),
+            )
         list.__setitem__(self, index, wrapped)
         self._callback()
 
     def __delitem__(self, index: Any) -> None:
+        self._before_callback((*self._path, index), "delete")
         list.__delitem__(self, index)
         self._callback()
 
     def append(self, value: Any) -> None:
-        list.append(self, _tracked_value(value, self._callback))
+        index = len(self)
+        self._before_callback((*self._path, index), "insert")
+        list.append(
+            self,
+            _tracked_value(
+                value,
+                self._callback,
+                self._before_callback,
+                (*self._path, index),
+            ),
+        )
         self._callback()
 
     def extend(self, values: Iterable[Any]) -> None:
-        wrapped = [_tracked_value(value, self._callback) for value in values]
+        raw_values = list(values)
+        start = len(self)
+        wrapped = [
+            _tracked_value(
+                value,
+                self._callback,
+                self._before_callback,
+                (*self._path, start + offset),
+            )
+            for offset, value in enumerate(raw_values)
+        ]
         if wrapped:
+            self._before_callback(self._path, "extend")
             list.extend(self, wrapped)
             self._callback()
 
     def insert(self, index: int, value: Any) -> None:
-        list.insert(self, index, _tracked_value(value, self._callback))
+        self._before_callback((*self._path, index), "insert")
+        list.insert(
+            self,
+            index,
+            _tracked_value(
+                value,
+                self._callback,
+                self._before_callback,
+                (*self._path, index),
+            ),
+        )
         self._callback()
 
     def pop(self, index: int = -1) -> Any:
+        self._before_callback((*self._path, index), "delete")
         result = list.pop(self, index)
         self._callback()
         return result
 
     def remove(self, value: Any) -> None:
+        self._before_callback((*self._path, self.index(value)), "delete")
         list.remove(self, value)
         self._callback()
 
     def clear(self) -> None:
         if self:
+            self._before_callback(self._path, "clear")
             list.clear(self)
             self._callback()
 
     def reverse(self) -> None:
         if len(self) > 1:
+            self._before_callback(self._path, "reorder")
             list.reverse(self)
             self._callback()
 
     def sort(self, *args: Any, **kwargs: Any) -> None:
         if len(self) > 1:
+            self._before_callback(self._path, "reorder")
             list.sort(self, *args, **kwargs)
             self._callback()
 
@@ -194,19 +321,27 @@ class _TrackedList(list):
 
     def __imul__(self, count: int) -> "_TrackedList":
         before = list(self)
+        if count != 1 and self:
+            self._before_callback(self._path, "resize")
         list.__imul__(self, count)
         if list(self) != before:
             self._callback()
         return self
 
 
-def _tracked_value(value: Any, callback: Callable[[], None]) -> Any:
+def _tracked_value(
+    value: Any,
+    callback: Callable[[], None],
+    before_callback: Optional[Callable[[tuple[Any, ...], str], None]] = None,
+    path: tuple[Any, ...] = (),
+) -> Any:
+    before = before_callback or (lambda _path, _operation: None)
     if isinstance(value, Mapping):
-        return _TrackedDict(value, callback)
+        return _TrackedDict(value, callback, before, path)
     if isinstance(value, Sequence) and not isinstance(
         value, (str, bytes, bytearray)
     ):
-        return _TrackedList(value, callback)
+        return _TrackedList(value, callback, before, path)
     return value
 
 
@@ -252,12 +387,16 @@ class IncrementalStateIdentity:
         metric_lineage: Any,
         components: Optional[Mapping[str, Any]] = None,
         component_normalizers: Optional[Mapping[str, Callable[[Any], Any]]] = None,
+        before_mutation: Optional[
+            Callable[[str, tuple[Any, ...], str], None]
+        ] = None,
     ) -> None:
         if not str(schema_version or "").strip():
             raise ValueError("schema_version must be non-empty")
         self._state_schema_version = str(schema_version)
         self._metric_lineage = copy.deepcopy(metric_lineage)
         self._normalizers = dict(component_normalizers or {})
+        self._before_mutation = before_mutation
         self._components: Dict[str, Any] = {}
         self._component_digests: Dict[str, str] = {}
         self._dirty: set[str] = set()
@@ -273,8 +412,23 @@ class IncrementalStateIdentity:
     def _callback(self, name: str) -> Callable[[], None]:
         return lambda: self.dirty(name)
 
+    def _before_callback(
+        self,
+        name: str,
+    ) -> Callable[[tuple[Any, ...], str], None]:
+        def notify(path: tuple[Any, ...], operation: str) -> None:
+            listener = self._before_mutation
+            if listener is not None:
+                listener(name, path, operation)
+
+        return notify
+
     def _install(self, name: str, value: Any, *, mutation: bool) -> Any:
-        wrapped = _tracked_value(value, self._callback(name))
+        wrapped = _tracked_value(
+            value,
+            self._callback(name),
+            self._before_callback(name),
+        )
         with self._lock:
             self._components[name] = wrapped
             self._dirty.add(name)
@@ -321,6 +475,38 @@ class IncrementalStateIdentity:
             # Cached identities contain the object-local revision even though
             # their digest does not.  Rebuild them on the next request.
             self._identity_cache.clear()
+
+    def transaction_checkpoint(self) -> Dict[str, Any]:
+        """Capture the small identity bookkeeping needed for exact rollback."""
+
+        with self._lock:
+            return {
+                "component_compute_counts": dict(self._component_compute_counts),
+                "component_digests": dict(self._component_digests),
+                "component_recomputations": self._component_recomputations,
+                "dirty": set(self._dirty),
+                "identity_cache": dict(self._identity_cache),
+                "identity_recomputations": self._identity_recomputations,
+                "revision": self._revision,
+            }
+
+    def restore_transaction_checkpoint(self, checkpoint: Mapping[str, Any]) -> None:
+        """Restore identity bookkeeping after transactional row restoration."""
+
+        with self._lock:
+            self._component_compute_counts = dict(
+                checkpoint["component_compute_counts"]
+            )
+            self._component_digests = dict(checkpoint["component_digests"])
+            self._component_recomputations = int(
+                checkpoint["component_recomputations"]
+            )
+            self._dirty = set(checkpoint["dirty"])
+            self._identity_cache = dict(checkpoint["identity_cache"])
+            self._identity_recomputations = int(
+                checkpoint["identity_recomputations"]
+            )
+            self._revision = int(checkpoint["revision"])
 
     def set_lineage(self, metric_lineage: Any) -> None:
         with self._lock:
