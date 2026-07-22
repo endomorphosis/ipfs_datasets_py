@@ -175,6 +175,31 @@ class ParallelismProfile:
 
 FIXED_DGX_SPARK_BASELINE: Final = ParallelismProfile(name="fixed_baseline")
 
+# Admission ceiling for the dependency-DAG runtime.  The persistent
+# Leanstral lane is deliberately a singleton; batching and request concurrency
+# happen inside that service rather than by loading another model.  The CPU
+# lane allocation remains valid under the default 20-slot global bound.
+DGX_SPARK_INITIAL_PIPELINE_PROFILE: Final = ParallelismProfile(
+    name="dgx_spark_pipeline_initial",
+    hammer_workers=2,
+    lean_reconstruction_workers=2,
+    leanstral_workers=1,
+    legal_ir_family_workers=4,
+    incremental_validation_workers=4,
+    snapshot_evaluator_workers=4,
+    codex_workers=6,
+    orchestration_workers=2,
+    trainer_count=1,
+    hammer_lean_cpu_slots=5,
+    validation_cpu_slots=4,
+    codex_cpu_slots=6,
+    orchestration_cpu_slots=2,
+    reserve_cpu_slots=3,
+)
+# More concise compatibility alias for callers that describe it as stage
+# rather than pipeline parallelism.
+DGX_SPARK_INITIAL_STAGE_PROFILE: Final = DGX_SPARK_INITIAL_PIPELINE_PROFILE
+
 
 @dataclass(frozen=True, slots=True)
 class GlobalResourceBounds:
@@ -582,6 +607,7 @@ class RuntimeResourcePressure:
     memory_pressure: float = 0.0
     swap_pressure: float = 0.0
     gpu_memory_pressure: float = 0.0
+    unified_memory_pressure: float = 0.0
     gpu_utilization: float = 0.0
     gpu_telemetry_known: bool = True
     child_process_count: int = 0
@@ -593,6 +619,7 @@ class RuntimeResourcePressure:
             "memory_pressure",
             "swap_pressure",
             "gpu_memory_pressure",
+            "unified_memory_pressure",
             "gpu_utilization",
         ):
             object.__setattr__(
@@ -625,11 +652,21 @@ class RuntimeResourcePressure:
         gpu_memory = data.get("gpu_memory_pressure")
         if gpu_memory is None:
             gpu_memory = data.get("gpu_memory_percent", 0.0)
+        unified_memory = data.get("unified_memory_pressure")
+        if unified_memory is None:
+            unified_memory = data.get(
+                "unified_memory_percent",
+                max(
+                    _bounded_ratio(memory, name="memory_pressure"),
+                    _bounded_ratio(gpu_memory, name="gpu_memory_pressure"),
+                ),
+            )
         return cls(
             cpu_utilization=data.get("cpu_utilization", data.get("cpu_percent", 0.0)),
             memory_pressure=memory,
             swap_pressure=swap,
             gpu_memory_pressure=gpu_memory,
+            unified_memory_pressure=unified_memory,
             gpu_utilization=data.get("gpu_utilization", data.get("gpu_utilization_percent", 0.0)),
             gpu_telemetry_known=bool(gpu_known),
             child_process_count=int(data.get("child_process_count", 0) or 0),
@@ -643,6 +680,7 @@ class RuntimeResourcePressure:
             "child_process_pressure": round(self.child_process_pressure, 9),
             "cpu_utilization": self.cpu_utilization,
             "gpu_memory_pressure": self.gpu_memory_pressure,
+            "unified_memory_pressure": self.unified_memory_pressure,
             "gpu_telemetry_known": self.gpu_telemetry_known,
             "gpu_utilization": self.gpu_utilization,
             "memory_pressure": self.memory_pressure,
@@ -659,7 +697,10 @@ class AdaptivePipelineSignals:
     disjoint_codex_scope_count: int = 0
     nested_child_count: int = 0
     validation_capacity: int = 1
+    validation_backlog: int = 0
     merge_conflict_rate: float = 0.0
+    accepted_patch_throughput_per_hour: float = 0.0
+    accepted_patch_target_per_hour: float = 0.0
     resource_pressure: RuntimeResourcePressure | Mapping[str, Any] = field(
         default_factory=RuntimeResourcePressure
     )
@@ -687,6 +728,16 @@ class AdaptivePipelineSignals:
         _integer(self.disjoint_codex_scope_count, name="disjoint_codex_scope_count", minimum=0)
         _integer(self.nested_child_count, name="nested_child_count", minimum=0)
         _integer(self.validation_capacity, name="validation_capacity", minimum=0)
+        _integer(self.validation_backlog, name="validation_backlog", minimum=0)
+        for name in (
+            "accepted_patch_throughput_per_hour",
+            "accepted_patch_target_per_hour",
+        ):
+            object.__setattr__(
+                self,
+                name,
+                _finite(getattr(self, name), name=name, minimum=0.0),
+            )
         object.__setattr__(
             self,
             "merge_conflict_rate",
@@ -712,7 +763,22 @@ class AdaptivePipelineSignals:
                 data.get("nested_child_count", data.get("child_process_count", 0)) or 0
             ),
             validation_capacity=int(data.get("validation_capacity", 1) or 0),
+            validation_backlog=int(
+                data.get(
+                    "validation_backlog",
+                    data.get("pending_validation_count", 0),
+                )
+                or 0
+            ),
             merge_conflict_rate=data.get("merge_conflict_rate", data.get("apply_conflict_rate", 0.0)),
+            accepted_patch_throughput_per_hour=data.get(
+                "accepted_patch_throughput_per_hour",
+                data.get("accepted_patches_per_hour", 0.0),
+            ),
+            accepted_patch_target_per_hour=data.get(
+                "accepted_patch_target_per_hour",
+                data.get("target_accepted_patches_per_hour", 0.0),
+            ),
             resource_pressure=data.get("resource_pressure", data),
             active_worker_counts=dict(data.get("active_worker_counts") or {}),
         )
@@ -729,6 +795,8 @@ class AdaptivePipelineSignals:
     def to_dict(self) -> dict[str, Any]:
         return {
             "active_worker_counts": dict(sorted(self.active_worker_counts.items())),
+            "accepted_patch_target_per_hour": self.accepted_patch_target_per_hour,
+            "accepted_patch_throughput_per_hour": self.accepted_patch_throughput_per_hour,
             "disjoint_codex_scope_count": self.disjoint_codex_scope_count,
             "measured_service_time_seconds": dict(
                 sorted(self.measured_service_time_seconds.items())
@@ -738,6 +806,7 @@ class AdaptivePipelineSignals:
             "ready_queue_depth": dict(sorted(self.ready_queue_depth.items())),
             "resource_pressure": self.resource_pressure.to_dict(),
             "validation_capacity": self.validation_capacity,
+            "validation_backlog": self.validation_backlog,
         }
 
 
@@ -778,6 +847,24 @@ class AdaptiveWorkerCounts:
             + self.orchestration_workers
             + self.overlapping_write_merge_workers
         )
+
+    @property
+    def hammer_coordinator_workers(self) -> int:
+        """Pipeline-stage name for the bounded Hammer root processes."""
+
+        return self.hammer_workers
+
+    @property
+    def leanstral_service_count(self) -> int:
+        """Number of persistent Leanstral service generations admitted."""
+
+        return min(1, self.leanstral_workers)
+
+    @property
+    def validation_workers(self) -> int:
+        """The independently runnable incremental-validation lane size."""
+
+        return self.incremental_validation_workers
 
     def to_dict(self) -> dict[str, Any]:
         return {name: getattr(self, name) for name in self.__dataclass_fields__}
@@ -850,8 +937,13 @@ class AdaptivePipelineParallelismController:
         names: Sequence[str],
         *,
         capacity: int,
+        queue_depth: int | None = None,
     ) -> int:
-        queue_depth = signals.queue_depth_for(*names)
+        queue_depth = (
+            signals.queue_depth_for(*names)
+            if queue_depth is None
+            else _integer(queue_depth, name="queue_depth", minimum=0)
+        )
         if queue_depth <= 0 or capacity <= 0:
             return 0
         service = max(0.001, signals.service_time_for(*names))
@@ -890,6 +982,12 @@ class AdaptivePipelineParallelismController:
         elif pressure.memory_pressure >= 0.82:
             factor = min(factor, 0.70)
             reasons.append("ram_precontention")
+        if pressure.unified_memory_pressure >= 0.90:
+            factor = min(factor, 0.40)
+            reasons.append("unified_memory_contention")
+        elif pressure.unified_memory_pressure >= 0.82:
+            factor = min(factor, 0.70)
+            reasons.append("unified_memory_precontention")
         if pressure.swap_pressure > 0.0:
             factor = min(factor, 0.50)
             reasons.append("swap_pressure")
@@ -960,6 +1058,7 @@ class AdaptivePipelineParallelismController:
         if isinstance(signals, Mapping):
             signals = AdaptivePipelineSignals.from_mapping(signals)
         selected_profile = profile or self.profile
+        policy_reasons: list[str] = []
         validation_cap = max(
             1,
             min(selected_profile.validation_cpu_slots, signals.validation_capacity or 1),
@@ -970,6 +1069,15 @@ class AdaptivePipelineParallelismController:
             ("hammer", "proof", "solver_execution", "hammer_lean"),
             capacity=min(selected_profile.hammer_workers, hammer_lane_capacity),
         )
+        nested_ratio = signals.nested_child_count / max(
+            1, signals.resource_pressure.child_process_limit
+        )
+        if nested_ratio >= 0.75 and hammer > 1:
+            hammer = max(1, math.floor(hammer * 0.50))
+            policy_reasons.append("nested_solver_children_throttle_hammer")
+        elif nested_ratio >= 0.50 and hammer > 1:
+            hammer = max(1, math.floor(hammer * 0.75))
+            policy_reasons.append("nested_solver_children_limit_hammer")
         lean_reconstruction = self._demand_workers(
             signals,
             ("lean_reconstruction", "reconstruction"),
@@ -998,7 +1106,20 @@ class AdaptivePipelineParallelismController:
             signals,
             ("validation", "incremental_validation"),
             capacity=min(selected_profile.incremental_validation_workers, validation_cap),
+            queue_depth=max(
+                signals.validation_backlog,
+                signals.queue_depth_for("validation", "incremental_validation"),
+            ),
         )
+        if signals.validation_backlog:
+            # Backlog represents accepted generated work waiting on the trust
+            # gate, not merely speculative ready work.  Drain at least two
+            # queued patches per admitted validator window when capacity is
+            # available, while never exceeding the measured validation cap.
+            incremental_validation = max(
+                incremental_validation,
+                min(validation_cap, math.ceil(signals.validation_backlog / 2)),
+            )
         snapshot_evaluator = self._demand_workers(
             signals,
             ("snapshot", "snapshot_evaluator", "snapshot_evaluation"),
@@ -1016,6 +1137,20 @@ class AdaptivePipelineParallelismController:
         )
         if signals.merge_conflict_rate >= 0.10:
             codex = max(1, math.floor(codex * (0.75 if signals.merge_conflict_rate < 0.20 else 0.50)))
+        backlog_high_watermark = max(2, validation_cap * 2)
+        if signals.validation_backlog > backlog_high_watermark and codex > 1:
+            codex = max(1, math.floor(codex * 0.50))
+            policy_reasons.append("validation_backlog_throttles_codex")
+        if signals.accepted_patch_target_per_hour > 0.0:
+            accepted_ratio = (
+                signals.accepted_patch_throughput_per_hour
+                / signals.accepted_patch_target_per_hour
+            )
+            if accepted_ratio < 0.50 and codex > 1:
+                codex = max(1, math.floor(codex * 0.75))
+                policy_reasons.append("accepted_patch_throughput_below_target")
+            elif accepted_ratio >= 1.0:
+                policy_reasons.append("accepted_patch_throughput_on_target")
         orchestration = self._demand_workers(
             signals,
             ("orchestration",),
@@ -1033,6 +1168,7 @@ class AdaptivePipelineParallelismController:
             "orchestration_workers": orchestration,
         }
         pressure_total_cap, reasons = self._pressure_cap(signals, counts)
+        reasons.extend(policy_reasons)
         counts = self._reduce_to_total_cap(counts, pressure_total_cap)
         counts["hammer_workers"] = self._apply_cap(counts["hammer_workers"], selected_profile.hammer_workers)
         counts["lean_reconstruction_workers"] = self._apply_cap(
@@ -1708,6 +1844,7 @@ __all__ = [
     "ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION",
     "BATCH_SIZE_AUTOTUNER_SCHEMA_VERSION", "DGX_SPARK_BATCH_AUTOTUNE_CONFIG",
     "DGX_SPARK_PROFILE_SCHEMA_VERSION", "FIXED_DGX_SPARK_BASELINE",
+    "DGX_SPARK_INITIAL_PIPELINE_PROFILE", "DGX_SPARK_INITIAL_STAGE_PROFILE",
     "HIGHER_IS_BETTER_QUALITY", "LOWER_IS_BETTER_QUALITY",
     "PARALLELISM_AUTOTUNER_SCHEMA_VERSION", "PIPELINE_BENCHMARK_SCHEMA_VERSION",
     "AdaptivePipelineDecision", "AdaptivePipelineParallelismController",

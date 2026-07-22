@@ -407,6 +407,16 @@ __all__ = [
     'get_global_resource_scheduler',
     'configure_global_resource_scheduler',
     'acquire_resource_lease',
+    # Resource-aware explicit LegalIR stage DAG
+    'PipelineStage',
+    'StageStatus',
+    'StageResourceRequest',
+    'PipelineTask',
+    'PipelineSchedulerSignals',
+    'StageConcurrencyLimits',
+    'StageAdmission',
+    'PipelineStageScheduler',
+    'build_canonical_pipeline_dag',
     # Asynchronous immutable state evaluation
     'SnapshotVersions',
     'EvaluationSnapshot',
@@ -733,6 +743,22 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_family_evaluator, name)
+    if name in (
+        'PipelineStage',
+        'StageStatus',
+        'StageResourceRequest',
+        'PipelineTask',
+        'PipelineSchedulerSignals',
+        'StageConcurrencyLimits',
+        'StageAdmission',
+        'PipelineStageScheduler',
+        'build_canonical_pipeline_dag',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            pipeline_stage_scheduler,
+        )
+
+        return getattr(pipeline_stage_scheduler, name)
     if name in (
         'ResourceLane',
         'LaneReservation',
