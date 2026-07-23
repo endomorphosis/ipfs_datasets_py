@@ -16,9 +16,11 @@ import hashlib
 import json
 import math
 import os
+import signal
 import statistics
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -39,11 +41,13 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hparam_schedul
 )
 
 
-SCHEMA_VERSION = "legal-ir-hparam-execution-v1"
+SCHEMA_VERSION = "legal-ir-hparam-execution-v2"
 IMMUTABLE_BUDGET_SECONDS = 3600
 DEFAULT_CANDIDATE_COUNT = 6
 DEFAULT_SEEDS_PER_CANDIDATE = 3
-DEFAULT_RUNG_BUDGETS = (300, 600, 1050)
+DEFAULT_RUNG_BUDGETS = (180, 360, 1350)
+TRIAL_WALL_CAP_SECONDS = 900
+TRIAL_TIMEOUT_SECONDS = 1200
 METRIC_NAMES = (
     "ir_cross_entropy_loss",
     "ir_cosine_similarity",
@@ -68,6 +72,93 @@ FAMILY_METRIC_NAMES = METRIC_NAMES + ("semantic_equivalence",)
 REQUIRED_FAMILY_OBSERVED_METRICS = frozenset(
     {"ir_cross_entropy_loss", "ir_cosine_similarity"}
 )
+_STOP_REQUESTED = threading.Event()
+_ACTIVE_PROCESS_GROUPS: set[int] = set()
+_ACTIVE_PROCESS_GROUPS_LOCK = threading.Lock()
+
+
+@dataclass(frozen=True)
+class FidelityProfile:
+    rung_index: int
+    name: str
+    validation_canary_indices: tuple[int, ...]
+    train_count: int
+    validation_count: int
+    max_sample_text_chars: int
+    max_cycles: int = 1
+    wall_cap_seconds: int = TRIAL_WALL_CAP_SECONDS
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "rung_index": self.rung_index,
+            "name": self.name,
+            "validation_canary_indices": list(self.validation_canary_indices),
+            "validation_canary_count": len(self.validation_canary_indices),
+            "train_count": self.train_count,
+            "validation_count": self.validation_count,
+            "max_sample_text_chars": self.max_sample_text_chars,
+            "max_cycles": self.max_cycles,
+            "wall_cap_seconds": self.wall_cap_seconds,
+        }
+
+
+def build_fidelity_profiles(
+    baseline_summary: Mapping[str, Any],
+    validation_canary_indices: Sequence[int],
+) -> tuple[FidelityProfile, ...]:
+    """Build nested, baseline-bound holdouts for the three search rungs."""
+
+    records = _nested(
+        baseline_summary,
+        "latest_compiler_ir_validation",
+    ).get("sample_metric_records")
+    if not isinstance(records, list) or len(records) != len(validation_canary_indices):
+        records = _nested(
+            baseline_summary,
+            "latest_rollout_baseline_snapshot",
+            "compiler_ir_validation",
+        ).get("sample_metric_records")
+    if not isinstance(records, list) or len(records) != len(validation_canary_indices):
+        raise ValueError(
+            "baseline summary does not bind every validation canary to a metric record"
+        )
+    indexed_lengths: list[tuple[int, int]] = []
+    for index, record in zip(validation_canary_indices, records, strict=True):
+        length = _finite(_mapping(record).get("original_text_length"))
+        if length is None or length < 1:
+            raise ValueError(f"baseline canary {index} has no source-text length")
+        indexed_lengths.append((int(index), int(length)))
+    shortest = sorted(indexed_lengths, key=lambda item: (item[1], item[0]))
+    if shortest[-1][1] > 2500:
+        raise ValueError("task-117 canary exceeds the final 2500-character fidelity cap")
+    one = (shortest[0][0],)
+    two = tuple(index for index, _length in shortest[:2])
+    return (
+        FidelityProfile(
+            rung_index=0,
+            name="nested_shortest_1",
+            validation_canary_indices=one,
+            train_count=1,
+            validation_count=1,
+            max_sample_text_chars=max(600, shortest[0][1]),
+        ),
+        FidelityProfile(
+            rung_index=1,
+            name="nested_shortest_2",
+            validation_canary_indices=two,
+            train_count=2,
+            validation_count=2,
+            max_sample_text_chars=max(600, *(length for _index, length in shortest[:2])),
+        ),
+        FidelityProfile(
+            rung_index=2,
+            name="task_117_full_8",
+            validation_canary_indices=tuple(int(index) for index in validation_canary_indices),
+            train_count=4,
+            validation_count=4,
+            max_sample_text_chars=2500,
+        ),
+    )
 
 
 def _canonical_bytes(value: Any) -> bytes:
@@ -562,7 +653,17 @@ class SeedRun:
     stderr_path: Path
     summary: Mapping[str, Any]
     expected_validation_canary_indices: tuple[int, ...]
+    fidelity_profile: FidelityProfile
     error: str = ""
+
+    @property
+    def metric_evidence_complete(self) -> bool:
+        try:
+            extract_rollout_baseline_metrics(self.summary)
+            extract_summary_metrics(self.summary)
+        except ValueError:
+            return False
+        return True
 
     @property
     def succeeded(self) -> bool:
@@ -570,16 +671,29 @@ class SeedRun:
             self.returncode == 0
             and not self.error
             and self.summary.get("final") is True
+            and self.summary.get("run_id") == self.run_id
             and self.summary.get("autoencoder_compute_backend") == "torch_cuda"
-            and int(self.summary.get("cycles", 0) or 0) >= 1
+            and self.summary.get("autoencoder_compute_device_request") == "cuda"
+            and self.summary.get("autoencoder_cuda_residency_applied") == "true"
+            and int(self.summary.get("cycles", 0) or 0) == self.fidelity_profile.max_cycles
+            and int(self.summary.get("max_cycles", 0) or 0)
+            == self.fidelity_profile.max_cycles
             and tuple(self.summary.get("validation_canary_indices", ()))
             == self.expected_validation_canary_indices
+            and int(self.summary.get("validation_canary_count", 0) or 0)
+            == len(self.expected_validation_canary_indices)
+            and self.summary.get("validation_canary_indices_source")
+            == "operator_pinned"
+            and int(self.summary.get("max_sample_text_chars", 0) or 0)
+            == self.fidelity_profile.max_sample_text_chars
+            and self.active_seconds > 0
+            and self.metric_evidence_complete
             and self.state_path.is_file()
         )
 
     @property
     def active_seconds(self) -> float:
-        value = _finite(self.summary.get("elapsed_seconds"), 0.0)
+        value = _finite(self.summary.get("latest_cycle_seconds"), 0.0)
         return max(0.0, float(value or 0.0))
 
     def to_dict(self) -> dict[str, Any]:
@@ -592,10 +706,13 @@ class SeedRun:
             "returncode": self.returncode,
             "elapsed_wall_seconds": self.elapsed_wall_seconds,
             "active_seconds": self.active_seconds,
+            "active_seconds_source": "latest_cycle_seconds",
+            "metric_evidence_complete": self.metric_evidence_complete,
             "succeeded": self.succeeded,
             "error": self.error or None,
             "cycles": int(self.summary.get("cycles", 0) or 0),
             "compute_backend": self.summary.get("autoencoder_compute_backend"),
+            "fidelity_profile": self.fidelity_profile.to_dict(),
             "summary_path": str(self.summary_path),
             "summary_sha256": (
                 _sha256_file(self.summary_path) if self.summary_path.is_file() else None
@@ -613,12 +730,12 @@ def _trial_command(
     *,
     python: Path,
     run_id: str,
-    seconds: int,
     seed: int,
     params: Mapping[str, float],
     warm_state: Path,
-    validation_canary_indices: Sequence[int],
+    fidelity_profile: FidelityProfile,
 ) -> list[str]:
+    validation_canary_indices = fidelity_profile.validation_canary_indices
     return [
         str(python),
         "-m",
@@ -628,19 +745,19 @@ def _trial_command(
         "--run-id",
         run_id,
         "--duration-seconds",
-        str(seconds),
+        str(fidelity_profile.wall_cap_seconds),
         "--max-cycles",
-        "0",
+        str(fidelity_profile.max_cycles),
         "--train-count",
-        "4",
+        str(fidelity_profile.train_count),
         "--validation-count",
-        "4",
+        str(fidelity_profile.validation_count),
         "--validation-canary-count",
         str(len(validation_canary_indices)),
         "--validation-canary-indices",
         ",".join(str(index) for index in validation_canary_indices),
         "--max-sample-text-chars",
-        "2500",
+        str(fidelity_profile.max_sample_text_chars),
         "--compiler-ir-metric-max-sample-text-chars",
         "600",
         "--compiler-ir-metric-sample-timeout-seconds",
@@ -718,6 +835,43 @@ def _trial_command(
     ]
 
 
+def _register_process_group(process_group_id: int) -> None:
+    with _ACTIVE_PROCESS_GROUPS_LOCK:
+        _ACTIVE_PROCESS_GROUPS.add(process_group_id)
+
+
+def _unregister_process_group(process_group_id: int) -> None:
+    with _ACTIVE_PROCESS_GROUPS_LOCK:
+        _ACTIVE_PROCESS_GROUPS.discard(process_group_id)
+
+
+def _signal_process_groups(signum: int) -> None:
+    with _ACTIVE_PROCESS_GROUPS_LOCK:
+        process_group_ids = tuple(_ACTIVE_PROCESS_GROUPS)
+    for process_group_id in process_group_ids:
+        try:
+            os.killpg(process_group_id, signum)
+        except ProcessLookupError:
+            _unregister_process_group(process_group_id)
+
+
+def _terminate_process_group(process: subprocess.Popen[bytes]) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait(timeout=10)
+
+
 def _execute_seed(
     *,
     repo_root: Path,
@@ -727,7 +881,7 @@ def _execute_seed(
     item: TrialWorkItem,
     seed: int,
     warm_state: Path,
-    validation_canary_indices: tuple[int, ...],
+    fidelity_profile: FidelityProfile,
 ) -> SeedRun:
     seconds = max(1, math.ceil(item.additional_budget_seconds / len(item.candidate.seeds)))
     run_id = (
@@ -743,11 +897,10 @@ def _execute_seed(
     command = _trial_command(
         python=python,
         run_id=run_id,
-        seconds=seconds,
         seed=seed,
         params=item.candidate.param_dict(),
         warm_state=warm_state,
-        validation_canary_indices=validation_canary_indices,
+        fidelity_profile=fidelity_profile,
     )
     started = time.monotonic()
     env = dict(os.environ)
@@ -757,20 +910,28 @@ def _execute_seed(
     returncode = 125
     error = ""
     try:
+        if _STOP_REQUESTED.is_set():
+            raise InterruptedError("search stop requested before seed launch")
         with stdout_path.open("wb") as stdout, stderr_path.open("wb") as stderr:
-            completed = subprocess.run(
+            process = subprocess.Popen(
                 command,
                 cwd=repo_root,
                 env=env,
                 stdout=stdout,
                 stderr=stderr,
-                check=False,
-                timeout=max(900, seconds * 6),
+                start_new_session=True,
             )
-        returncode = completed.returncode
-    except subprocess.TimeoutExpired as exc:
+            _register_process_group(process.pid)
+            try:
+                returncode = process.wait(timeout=TRIAL_TIMEOUT_SECONDS)
+            except subprocess.TimeoutExpired:
+                _terminate_process_group(process)
+                raise
+            finally:
+                _unregister_process_group(process.pid)
+    except subprocess.TimeoutExpired:
         returncode = 124
-        error = f"timeout:{exc.timeout}"
+        error = f"timeout:{TRIAL_TIMEOUT_SECONDS}"
     except Exception as exc:  # preserve a fail-closed seed receipt
         error = f"{type(exc).__name__}:{exc}"
     try:
@@ -791,8 +952,84 @@ def _execute_seed(
         stdout_path=stdout_path,
         stderr_path=stderr_path,
         summary=summary,
-        expected_validation_canary_indices=validation_canary_indices,
+        expected_validation_canary_indices=fidelity_profile.validation_canary_indices,
+        fidelity_profile=fidelity_profile,
         error=error,
+    )
+
+
+def extract_rollout_baseline_metrics(
+    summary: Mapping[str, Any],
+) -> tuple[dict[str, float], dict[str, dict[str, float]]]:
+    """Extract the pre-update metrics captured inside a completed cycle."""
+
+    snapshot = _mapping(summary.get("latest_rollout_baseline_snapshot"))
+    if not snapshot:
+        raise ValueError("summary has no rollout baseline snapshot")
+    normalized = {
+        "latest_autoencoder_validation": snapshot.get("validation"),
+        "latest_learned_ir_validation": snapshot.get("learned_ir_view_validation"),
+        "latest_legal_ir_view_family_validation": snapshot.get(
+            "legal_ir_view_family_validation"
+        ),
+    }
+    return extract_summary_metrics(normalized)
+
+
+def _bounded_estimate(name: str, value: float) -> float:
+    if name in {
+        "autoencoder_cosine_similarity",
+        "ir_cosine_similarity",
+    }:
+        return max(-1.0, min(1.0, value))
+    if name in {
+        "semantic_equivalence",
+        "symbolic_validity_success_rate",
+        "hammer_proof_success_rate",
+        "reconstruction_success_rate",
+        "round_trip_success_rate",
+        "calibration_error",
+        "source_copy_penalty",
+    }:
+        return max(0.0, min(1.0, value))
+    return max(0.0, value)
+
+
+def _paired_delta_estimate(
+    *,
+    runs: Sequence[SeedRun],
+    baseline_metrics: Mapping[str, float],
+    baseline_families: Mapping[str, Mapping[str, float]],
+) -> tuple[dict[str, float], dict[str, dict[str, float]]]:
+    """Anchor measured within-run deltas to the task-117 full baseline."""
+
+    metrics = {name: float(baseline_metrics[name]) for name in METRIC_NAMES}
+    families = {
+        family: {
+            name: float(baseline_families[family][name])
+            for name in FAMILY_METRIC_NAMES
+        }
+        for family in DEFAULT_REQUIRED_FAMILIES
+    }
+    for run in sorted(runs, key=lambda item: item.rung_index):
+        before_metrics, before_families = extract_rollout_baseline_metrics(run.summary)
+        after_metrics, after_families = extract_summary_metrics(run.summary)
+        for name in METRIC_NAMES:
+            metrics[name] += after_metrics[name] - before_metrics[name]
+        for family in DEFAULT_REQUIRED_FAMILIES:
+            for name in FAMILY_METRIC_NAMES:
+                families[family][name] += (
+                    after_families[family][name] - before_families[family][name]
+                )
+    return (
+        {name: _bounded_estimate(name, value) for name, value in metrics.items()},
+        {
+            family: {
+                name: _bounded_estimate(name, value)
+                for name, value in values.items()
+            }
+            for family, values in families.items()
+        },
     )
 
 
@@ -804,6 +1041,7 @@ def _snapshot_from_runs(
     prior_runs: Sequence[SeedRun],
     baseline_metrics: Mapping[str, float],
     baseline_families: Mapping[str, Mapping[str, float]],
+    final_rung_index: int,
 ) -> TrialSnapshot:
     complete = len(runs) == len(item.candidate.seeds) and all(run.succeeded for run in runs)
     all_runs = [*prior_runs, *runs]
@@ -813,7 +1051,24 @@ def _snapshot_from_runs(
     for run in runs:
         if not run.succeeded:
             continue
-        metrics, families = extract_summary_metrics(run.summary)
+        try:
+            if item.rung.index == final_rung_index:
+                metrics, families = extract_summary_metrics(run.summary)
+            else:
+                metrics, families = _paired_delta_estimate(
+                    runs=[
+                        *(
+                            prior
+                            for prior in prior_runs
+                            if prior.seed == run.seed and prior.succeeded
+                        ),
+                        run,
+                    ],
+                    baseline_metrics=baseline_metrics,
+                    baseline_families=baseline_families,
+                )
+        except ValueError:
+            continue
         if set(metrics) == set(METRIC_NAMES) and set(families) == set(DEFAULT_REQUIRED_FAMILIES):
             seed_metrics.append(metrics)
             seed_families.append(families)
@@ -891,6 +1146,15 @@ def execute_search(
         baseline_summary=baseline_summary,
         baseline_state=baseline_state,
     )
+    baseline_summary_payload = _load_json(baseline_summary)
+    fidelity_profiles = build_fidelity_profiles(
+        baseline_summary_payload,
+        validation_canary_indices,
+    )
+    if tuple(profile.rung_index for profile in fidelity_profiles) != tuple(
+        range(len(DEFAULT_RUNG_BUDGETS))
+    ):
+        raise ValueError("fidelity profile ladder does not match the scheduler rungs")
     scheduler, baseline_record = build_scheduler_from_baseline(
         evidence=evidence,
         baseline_summary=baseline_summary,
@@ -907,7 +1171,15 @@ def execute_search(
     latest_state: dict[tuple[str, int], Path] = {}
 
     while scheduler.current_rung_index() is not None:
+        if _STOP_REQUESTED.is_set():
+            raise InterruptedError("search stop requested")
         ready = scheduler.ready_work()
+        if not ready:
+            break
+        rung_index = ready[0].rung.index
+        if any(item.rung.index != rung_index for item in ready):
+            raise RuntimeError("scheduler returned work from multiple rungs")
+        fidelity_profile = fidelity_profiles[rung_index]
         futures: dict[Future[SeedRun], tuple[TrialWorkItem, int]] = {}
         completed_by_candidate: dict[str, list[SeedRun]] = {
             item.candidate.candidate_id: [] for item in ready
@@ -931,7 +1203,7 @@ def execute_search(
                         item=item,
                         seed=seed,
                         warm_state=warm_state,
-                        validation_canary_indices=validation_canary_indices,
+                        fidelity_profile=fidelity_profile,
                     )
                     futures[future] = (item, seed)
             for future in as_completed(futures):
@@ -941,6 +1213,9 @@ def execute_search(
                 run_records.append(run.to_dict())
                 if run.succeeded:
                     latest_state[(item.candidate.candidate_id, seed)] = run.state_path
+
+        if _STOP_REQUESTED.is_set():
+            raise InterruptedError("search stop requested")
 
         for item in ready:
             candidate_id = item.candidate.candidate_id
@@ -961,6 +1236,7 @@ def execute_search(
                 prior_runs=prior_runs,
                 baseline_metrics=baseline_record["metrics"],
                 baseline_families=baseline_record["family_metrics"],
+                final_rung_index=len(fidelity_profiles) - 1,
             )
             scheduler.record_result(snapshot)
             histories[(candidate_id, item.rung.index)] = current_runs
@@ -995,6 +1271,7 @@ def execute_search(
         "baseline_state_path": str(baseline_state),
         "resource_admission": pressure,
         "trainer_limit": trainer_limit,
+        "fidelity_profiles": [profile.to_dict() for profile in fidelity_profiles],
         "validation_canary_indices": list(validation_canary_indices),
         "validation_canary_indices_sha256": _sha256_value(
             list(validation_canary_indices)
@@ -1020,6 +1297,13 @@ def execute_search(
             ),
             "round_trip_success_rate": "family_reconstruction_success_rate",
             "confidence": "three_seed_student_t_95_percent",
+            "early_rung_comparison": (
+                "task_117_baseline_plus_cumulative_paired_before_after_deltas"
+            ),
+            "final_rung_comparison": "absolute_task_117_full_8_canary_metrics",
+            "resource_accounting": (
+                "latest_cycle_seconds_excludes_dataset_and_precycle_evaluation_startup"
+            ),
             "missing_values": "fail_closed_no_imputation",
         },
     }
@@ -1117,25 +1401,45 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     lock_path = repo_root / "workspace/.legal-ir-canonical-writer.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
-    with lock_path.open("a+") as lock:
-        try:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            print("another canonical LegalIR writer holds the lock", file=sys.stderr)
-            return 2
-        report = execute_search(
-            repo_root=repo_root,
-            python=python,
-            run_id=args.run_id,
-            baseline_evidence=baseline_evidence,
-            baseline_summary=baseline_summary,
-            baseline_state=baseline_state,
-            output=output,
-            work_root=work_root,
-            candidate_count=args.candidate_count,
-            seeds_per_candidate=args.seeds_per_candidate,
-            requested_trainers=args.max_concurrent_trainers,
-        )
+    _STOP_REQUESTED.clear()
+    received_signal = [0]
+
+    def request_stop(signum: int, _frame: Any) -> None:
+        received_signal[0] = signum
+        _STOP_REQUESTED.set()
+        _signal_process_groups(signal.SIGTERM)
+
+    previous_handlers = {
+        signum: signal.signal(signum, request_stop)
+        for signum in (signal.SIGINT, signal.SIGTERM)
+    }
+    try:
+        with lock_path.open("a+") as lock:
+            try:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                print("another canonical LegalIR writer holds the lock", file=sys.stderr)
+                return 2
+            report = execute_search(
+                repo_root=repo_root,
+                python=python,
+                run_id=args.run_id,
+                baseline_evidence=baseline_evidence,
+                baseline_summary=baseline_summary,
+                baseline_state=baseline_state,
+                output=output,
+                work_root=work_root,
+                candidate_count=args.candidate_count,
+                seeds_per_candidate=args.seeds_per_candidate,
+                requested_trainers=args.max_concurrent_trainers,
+            )
+    except InterruptedError:
+        return 128 + (received_signal[0] or signal.SIGTERM)
+    finally:
+        _signal_process_groups(signal.SIGTERM)
+        for signum, handler in previous_handlers.items():
+            signal.signal(signum, handler)
+        _STOP_REQUESTED.clear()
     print(
         "legal_ir_hparam_search_completed "
         f"run_id={args.run_id} promotion_eligible={str(report['promotion_eligible']).lower()} "

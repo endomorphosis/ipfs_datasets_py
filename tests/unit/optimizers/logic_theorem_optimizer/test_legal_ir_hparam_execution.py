@@ -10,11 +10,16 @@ import pytest
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hparam_execution import (
     DEFAULT_RUNG_BUDGETS,
     FAMILY_METRIC_NAMES,
+    FidelityProfile,
     IMMUTABLE_BUDGET_SECONDS,
     METRIC_NAMES,
+    SeedRun,
     _aggregate_seed_metrics,
+    _paired_delta_estimate,
     _trial_command,
+    build_fidelity_profiles,
     build_scheduler_from_baseline,
+    extract_rollout_baseline_metrics,
     extract_summary_metrics,
     main,
 )
@@ -139,10 +144,17 @@ def test_seed_confidence_is_conservative_and_baseline_bound() -> None:
 
 
 def test_trial_command_is_cuda_only_seeded_and_warm_started(tmp_path: Path) -> None:
+    profile = FidelityProfile(
+        rung_index=0,
+        name="unit",
+        validation_canary_indices=(11, 29, 41),
+        train_count=1,
+        validation_count=1,
+        max_sample_text_chars=600,
+    )
     command = _trial_command(
         python=Path("/venv/python"),
         run_id="candidate-r0-s7",
-        seconds=100,
         seed=7,
         params={
             "lr": 0.3,
@@ -155,15 +167,88 @@ def test_trial_command_is_cuda_only_seeded_and_warm_started(tmp_path: Path) -> N
             "emb": 0.55,
         },
         warm_state=tmp_path / "baseline.state.json",
-        validation_canary_indices=(11, 29, 41),
+        fidelity_profile=profile,
     )
     joined = " ".join(command)
     assert "--autoencoder-device cuda" in joined
     assert "--sampling-seed 7" in joined
-    assert "--duration-seconds 100" in joined
+    assert "--duration-seconds 900" in joined
+    assert "--max-cycles 1" in joined
+    assert "--train-count 1" in joined
+    assert "--validation-count 1" in joined
+    assert "--max-sample-text-chars 600" in joined
     assert "--validation-canary-indices 11,29,41" in joined
     assert "--warm-start-state" in command
     assert "--bridge-loss-adapters modal_frame_logic,deontic_norms" in joined
+
+
+def test_fidelity_profiles_are_nested_and_finish_on_full_task117_holdout() -> None:
+    indices = (10, 20, 30, 40, 50, 60, 70, 80)
+    lengths = (2312, 1078, 2218, 2189, 1271, 504, 1642, 516)
+    summary = {
+        "latest_compiler_ir_validation": {
+            "sample_metric_records": [
+                {"original_text_length": length} for length in lengths
+            ]
+        }
+    }
+    profiles = build_fidelity_profiles(summary, indices)
+    assert DEFAULT_RUNG_BUDGETS == (180, 360, 1350)
+    assert profiles[0].validation_canary_indices == (60,)
+    assert profiles[1].validation_canary_indices == (60, 80)
+    assert set(profiles[0].validation_canary_indices) < set(
+        profiles[1].validation_canary_indices
+    )
+    assert profiles[2].validation_canary_indices == indices
+    assert profiles[2].max_sample_text_chars == 2500
+
+
+def test_early_rung_estimate_uses_paired_delta_anchored_to_full_baseline(
+    tmp_path: Path,
+) -> None:
+    baseline_summary = _summary()
+    baseline_metrics, baseline_families = extract_summary_metrics(baseline_summary)
+    candidate_summary = _summary(0.02)
+    candidate_summary["latest_rollout_baseline_snapshot"] = {
+        "validation": baseline_summary["latest_autoencoder_validation"],
+        "learned_ir_view_validation": baseline_summary[
+            "latest_learned_ir_validation"
+        ],
+        "legal_ir_view_family_validation": baseline_summary[
+            "latest_legal_ir_view_family_validation"
+        ],
+    }
+    profile = FidelityProfile(0, "unit", (11,), 1, 1, 600)
+    run = SeedRun(
+        candidate_id="candidate",
+        rung_index=0,
+        seed=7,
+        run_id="candidate-r0-s7",
+        requested_seconds=60,
+        returncode=0,
+        elapsed_wall_seconds=20.0,
+        summary_path=tmp_path / "candidate.summary",
+        state_path=tmp_path / "candidate.state.json",
+        stdout_path=tmp_path / "candidate.stdout",
+        stderr_path=tmp_path / "candidate.stderr",
+        summary=candidate_summary,
+        expected_validation_canary_indices=(11,),
+        fidelity_profile=profile,
+    )
+    before_metrics, _before_families = extract_rollout_baseline_metrics(
+        candidate_summary
+    )
+    estimated_metrics, estimated_families = _paired_delta_estimate(
+        runs=[run],
+        baseline_metrics=baseline_metrics,
+        baseline_families=baseline_families,
+    )
+    assert before_metrics == baseline_metrics
+    assert estimated_metrics["ir_cross_entropy_loss"] == pytest.approx(0.78)
+    assert estimated_metrics["ir_cosine_similarity"] == pytest.approx(0.72)
+    assert estimated_families["deontic"]["ir_cross_entropy_loss"] == pytest.approx(
+        0.78
+    )
 
 
 def test_dry_run_is_non_promotable_and_creates_no_output(
