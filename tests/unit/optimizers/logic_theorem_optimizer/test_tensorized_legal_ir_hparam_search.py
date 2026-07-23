@@ -5,6 +5,7 @@ from __future__ import annotations
 import threading
 import time
 from pathlib import Path
+from typing import Mapping
 
 import pytest
 
@@ -64,7 +65,11 @@ def _baseline() -> SharedBaseline:
     )
 
 
-def _scheduler(*, candidates: int = 4) -> LegalIRHParamScheduler:
+def _scheduler(
+    *,
+    candidates: int = 4,
+    metric_regression_tolerances: Mapping[str, float] | None = None,
+) -> LegalIRHParamScheduler:
     return LegalIRHParamScheduler(
         HParamSearchConfig(
             baseline=_baseline(),
@@ -79,6 +84,7 @@ def _scheduler(*, candidates: int = 4) -> LegalIRHParamScheduler:
             require_compiler_artifact_set=True,
             require_complete_parallel_lanes=True,
             require_tensorized_objective=True,
+            metric_regression_tolerances=metric_regression_tolerances or {},
             max_evidence_age_seconds=60.0,
             guardrails=FamilyGuardrailConfig(
                 required_families=FAMILIES,
@@ -216,6 +222,52 @@ def test_any_metric_or_family_confidence_regression_is_a_hard_guardrail() -> Non
     assert decision.eligible is False
     assert "objective_metric_regression:calibration_error" in decision.failures
     assert "family_metric_regression:deontic:semantic_equivalence" in decision.failures
+
+
+def test_explicit_proxy_tolerances_preserve_strict_legal_ir_guardrails() -> None:
+    scheduler = _scheduler(
+        metric_regression_tolerances={
+            "autoencoder_cross_entropy_loss": 1.0e-4,
+            "calibration_error": 2.0e-4,
+        }
+    )
+    candidate_id = scheduler.ready_work()[0].candidate.candidate_id
+    metrics = _metrics(0.01)
+    metrics["autoencoder_cross_entropy_loss"] = (
+        _metrics()["autoencoder_cross_entropy_loss"] + 5.0e-5
+    )
+    metrics["calibration_error"] = _metrics()["calibration_error"] + 1.5e-4
+    families = _family_metrics(0.01)
+    for family in FAMILIES:
+        candidate = families[family]["candidate"]  # type: ignore[index]
+        candidate["autoencoder_cross_entropy_loss"] = (  # type: ignore[index]
+            _metrics()["autoencoder_cross_entropy_loss"] + 5.0e-5
+        )
+        candidate["calibration_error"] = _metrics()["calibration_error"] + 1.5e-4  # type: ignore[index]
+
+    tolerated = scheduler.score_snapshot(
+        _snapshot(scheduler, candidate_id, metrics=metrics, family_metrics=families)
+    )
+    assert tolerated.eligible is True
+    assert scheduler.plan_dict()["promotion_policy"]["metric_regression_tolerances"] == {
+        "autoencoder_cross_entropy_loss": 1.0e-4,
+        "calibration_error": 2.0e-4,
+    }
+
+    metrics["ir_cross_entropy_loss"] = _metrics()["ir_cross_entropy_loss"] + 1.0e-6
+    strict_ir = scheduler.score_snapshot(
+        _snapshot(scheduler, candidate_id, metrics=metrics, family_metrics=families)
+    )
+    assert strict_ir.eligible is False
+    assert "objective_metric_regression:ir_cross_entropy_loss" in strict_ir.failures
+
+    metrics["ir_cross_entropy_loss"] = _metrics(0.01)["ir_cross_entropy_loss"]
+    metrics["source_copy_penalty"] = _metrics()["source_copy_penalty"] + 1.0e-6
+    strict_copy = scheduler.score_snapshot(
+        _snapshot(scheduler, candidate_id, metrics=metrics, family_metrics=families)
+    )
+    assert strict_copy.eligible is False
+    assert "objective_metric_regression:source_copy_penalty" in strict_copy.failures
 
 
 def test_evaluation_and_proof_lanes_execute_concurrently_on_same_inputs() -> None:

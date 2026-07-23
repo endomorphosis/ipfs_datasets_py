@@ -197,6 +197,10 @@ def test_scheduler_is_bound_to_measured_baseline_and_exact_budget(tmp_path: Path
     assert scheduler.config.planned_resource_seconds == IMMUTABLE_BUDGET_SECONDS
     assert scheduler.config.require_multi_seed_evidence is True
     assert scheduler.config.require_cuda_evidence is True
+    assert dict(scheduler.config.metric_regression_tolerances) == {
+        "autoencoder_cross_entropy_loss": 1.0e-4,
+        "calibration_error": 2.0e-4,
+    }
     assert scheduler.config.baseline.metrics
     assert baseline["summary_sha256"].startswith("sha256:")
     assert all(len(candidate.seeds) == 3 for candidate in scheduler.candidates)

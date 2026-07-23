@@ -567,6 +567,10 @@ def build_scheduler_from_baseline(
         require_compiler_artifact_set=True,
         require_complete_parallel_lanes=True,
         require_tensorized_objective=True,
+        metric_regression_tolerances={
+            "autoencoder_cross_entropy_loss": 1.0e-4,
+            "calibration_error": 2.0e-4,
+        },
         max_evidence_age_seconds=12 * 60 * 60,
         require_measured_second_trainer_pressure=True,
         guardrails=FamilyGuardrailConfig(
