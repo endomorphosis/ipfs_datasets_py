@@ -30,6 +30,7 @@ from ipfs_datasets_py.logic.modal.codec import (
     _frame_ontology_audit_feature_keys,
     _frame_ontology_audit_terms,
     _modal_ir_semantic_family_distribution_with_floors,
+    _official_uscode_scaffold_ontology_terms,
     _structural_decoded_text,
     target_family_distribution_for_modal_ir,
 )
@@ -20859,6 +20860,51 @@ def test_modal_codec_emits_frame_ontology_term_triples() -> None:
     )
     assert result.flogic_result is not None
     assert result.flogic_result.metadata["frame_ontology_term_count"] > 0
+
+
+def test_modal_codec_selects_official_uscode_scaffold_ontology_terms() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    text = (
+        "16 U.S.C. 430mm: U.S.C. Title 16 - CONSERVATION 16 U.S.C. "
+        "United States Code, 2024 Edition Title 16 - CONSERVATION "
+        "CHAPTER 1 - NATIONAL PARKS, MILITARY PARKS, MONUMENTS, AND "
+        "SEASHORES SUBCHAPTER LX - NATIONAL MILITARY PARKS "
+        "Sec. 430mm - Authorization of appropriations There are authorized "
+        "to be appropriated such sums as may be necessary."
+    )
+
+    result = codec.encode(
+        text,
+        document_id="us-code-16-430mm-scaffold",
+        citation="16 U.S.C. 430mm",
+        source="us_code",
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in result.kg_triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert result.losses["ontology_violation_count"] == 0.0
+    assert {
+        "16",
+        "16_430mm",
+        "conservation",
+        "national_parks_military_parks_monuments_seashores",
+        "national_military_parks",
+        "authorization_appropriations",
+    } <= selected_terms
+    assert _official_uscode_scaffold_ontology_terms(text) == [
+        "16",
+        "conservation",
+        "national_parks_military_parks_monuments_seashores",
+        "national_military_parks",
+        "430mm",
+        "16_430mm",
+        "authorization_appropriations",
+    ]
 
 
 def test_modal_codec_normalizes_legacy_slot_positioned_frame_audit_terms() -> None:

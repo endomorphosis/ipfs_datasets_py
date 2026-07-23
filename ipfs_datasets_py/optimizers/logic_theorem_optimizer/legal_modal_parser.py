@@ -297,6 +297,31 @@ _USCODE_ADMINISTRATIVE_PROCEDURE_SIGNAL_TOKENS = frozenset(
         "testimony",
     }
 )
+_USCODE_ADMINISTRATIVE_ORDER_APPEAL_RESIDUAL_MAX_TOKENS = 32
+_USCODE_ADMINISTRATIVE_ORDER_APPEAL_PHRASE_RE = re.compile(
+    r"\b(?:"
+    r"(?:final\s+)?orders?\s+and\s+appeals?|"
+    r"appeals?\s+(?:from|of)\s+(?:final\s+)?orders?|"
+    r"(?:final\s+)?orders?\s+and\s+appeals?\s+deadlines?|"
+    r"appeals?\s+deadlines?|"
+    r"deadlines?\s+for\s+appeals?|"
+    r"findings?\s*,?\s+(?:orders?|and\s+orders?)\s*,?\s+and\s+appeals?|"
+    r"findings?\s+and\s+(?:final\s+)?orders?"
+    r")\b",
+    re.IGNORECASE,
+)
+_USCODE_ADMINISTRATIVE_ORDER_APPEAL_SIGNAL_TOKENS = frozenset(
+    {
+        "appeal",
+        "appeals",
+        "deadline",
+        "deadlines",
+        "finding",
+        "findings",
+        "order",
+        "orders",
+    }
+)
 _USCODE_ADMINISTRATIVE_FRAME_RESIDUAL_MAX_TOKENS = 72
 _USCODE_ADMINISTRATIVE_FRAME_CONTEXT_TOKENS = frozenset(
     {
@@ -2167,6 +2192,11 @@ class LegalModalParser:
             tokens,
         ):
             return True
+        if self._is_uscode_administrative_order_appeal_residual_candidate(
+            normalized,
+            tokens,
+        ):
+            return True
         if self._is_uscode_administrative_frame_residual_candidate(
             normalized,
             tokens,
@@ -2811,6 +2841,36 @@ class LegalModalParser:
                 "records",
                 "review",
             }
+        )
+
+    def _is_uscode_administrative_order_appeal_residual_candidate(
+        self,
+        normalized_segment_text: str,
+        tokens: Sequence[str],
+    ) -> bool:
+        """Recover compact administrative order/appeal-deadline frame spans."""
+        token_count = len(tokens)
+        if (
+            token_count < 3
+            or token_count > _USCODE_ADMINISTRATIVE_ORDER_APPEAL_RESIDUAL_MAX_TOKENS
+        ):
+            return False
+        lowered = normalized_segment_text.lower()
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+            or _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered)
+        ):
+            return False
+        token_set = set(tokens)
+        signal_count = len(
+            token_set & _USCODE_ADMINISTRATIVE_ORDER_APPEAL_SIGNAL_TOKENS
+        )
+        if signal_count < 2:
+            return False
+        return bool(
+            _USCODE_ADMINISTRATIVE_ORDER_APPEAL_PHRASE_RE.search(lowered)
         )
 
     def _is_uscode_administrative_frame_residual_candidate(

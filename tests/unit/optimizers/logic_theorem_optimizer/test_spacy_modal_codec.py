@@ -12305,6 +12305,58 @@ def test_spacy_compiler_adds_administrative_proceeding_record_residual_span_cove
     )
 
 
+def test_spacy_compiler_adds_packet_000044_order_appeal_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-16-836a-a0580692a8e36a32",
+            "16 U.S.C. 836a",
+            "Sec. 836a - Administrative appeals. Final order and appeal deadline.",
+            "Final order and appeal deadline.",
+        ),
+        (
+            "us-code-26-522-8478dfa9ac52bce7",
+            "26 U.S.C. 522",
+            "Sec. 522 - Review procedures. Findings and final orders.",
+            "Findings and final orders.",
+        ),
+        (
+            "us-code-16-430mm-71ab9a5977f3a620",
+            "16 U.S.C. 430mm",
+            "Sec. 430mm - Administrative review. Orders and appeals.",
+            "Orders and appeals.",
+        ),
+        (
+            "us-code-42-7651m.-01758fd211279ef7",
+            "42 U.S.C. 7651m.",
+            "Sec. 7651m - Permit appeals. Deadline for appeal.",
+            "Deadline for appeal.",
+        ),
+    ]
+
+    for document_id, citation, text, expected_span in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        residual_text_spans = {
+            modal_ir.normalized_text[
+                int(formula.provenance.start_char) : int(formula.provenance.end_char)
+            ].strip()
+            for formula in modal_ir.formulas
+            if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+        }
+        assert expected_span in residual_text_spans
+        assert all(
+            formula.provenance.citation == citation for formula in modal_ir.formulas
+        )
+
+
 def test_spacy_compiler_adds_public_review_recommendation_residual_span_coverage() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

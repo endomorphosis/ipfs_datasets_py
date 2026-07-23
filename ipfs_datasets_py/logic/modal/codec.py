@@ -10137,12 +10137,109 @@ def _selected_frame_source_grounding_terms(modal_ir: ModalIRDocument) -> List[st
         )
 
     terms: List[str] = []
+    terms.extend(_official_uscode_scaffold_ontology_terms(modal_ir.normalized_text))
     for value in values:
         for term in _frame_ontology_metadata_terms(value):
             cleaned = _clean_non_empty_string(term)
             if cleaned:
                 terms.append(cleaned)
     return _unique_preserve_order(terms)
+
+
+def _official_uscode_scaffold_ontology_terms(text: str) -> List[str]:
+    """Extract bounded ontology terms from official U.S.C. heading scaffolds."""
+
+    normalized = _clean_non_empty_string(text)
+    if not _is_uscode_compilation_frame_scaffold(normalized):
+        return []
+
+    term_values: List[tuple[str, bool]] = []
+    for marker, value in _official_uscode_scaffold_components(normalized):
+        if marker in {"title_number", "section_number", "title_section"}:
+            term_values.append((value, True))
+        else:
+            term_values.append((value, False))
+
+    terms: List[str] = []
+    for value, keep_numeric in term_values:
+        term = normalize_frame_ontology_term(
+            value,
+            keep_numeric_tokens=keep_numeric,
+        )
+        if term:
+            terms.append(term)
+    return _unique_preserve_order(terms)
+
+
+def _official_uscode_scaffold_components(text: str) -> List[tuple[str, str]]:
+    """Return semantic heading components from bounded official U.S.C. text."""
+
+    normalized = _clean_non_empty_string(
+        _USCODE_GPO_ATTRIBUTION_RE.sub("", _clean_non_empty_string(text))
+    )
+    if not normalized:
+        return []
+
+    components: List[tuple[str, str]] = []
+    title_matches = list(
+        re.finditer(
+            r"\bTitle\s+(?P<number>\d+[A-Za-z]*)\s*-\s*"
+            r"(?P<label>[^.;:]{2,120}?)(?=\s+(?:\d+\s+U\.?\s*S\.?\s*C\.?\b|"
+            r"CHAPTER\b|SUBCHAPTER\b|Sec\.?\b)|$)",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+    )
+    if title_matches:
+        title_match = title_matches[-1]
+        title_number = _clean_non_empty_string(title_match.group("number"))
+        title_label = _clean_non_empty_string(title_match.group("label"))
+        if title_number:
+            components.append(("title_number", title_number))
+        if title_label:
+            components.append(("title_label", title_label))
+
+    for marker, pattern in (
+        (
+            "chapter_label",
+            r"\bCHAPTER\s+[0-9A-Z.-]+\s*-\s*(?P<label>[^.;:]{2,140}?)(?=\s+SUBCHAPTER\b|\s+Sec\.?\b|$)",
+        ),
+        (
+            "subchapter_label",
+            r"\bSUBCHAPTER\s+[0-9A-Z.-]+\s*-\s*(?P<label>[^.;:]{2,140}?)(?=\s+Sec\.?\b|$)",
+        ),
+    ):
+        match = re.search(pattern, normalized, flags=re.IGNORECASE)
+        if match:
+            label = _clean_non_empty_string(match.group("label"))
+            if label:
+                components.append((marker, label))
+
+    section_match = re.search(
+        r"\bSec\.?\s+(?P<section>[0-9A-Za-z.\-]+)\s*-\s*"
+        r"(?P<label>[^.;:]{2,160}?)(?=\s+(?:From\s+the\s+U\.S\.\s+Government|"
+        r"\([a-z0-9]+\)\b|There\s+are\b|The\s+\w+\b|A\s+\w+\b|An\s+\w+\b)|$)",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if section_match:
+        section = _TRAILING_SECTION_PUNCT_RE.sub(
+            "",
+            _clean_non_empty_string(section_match.group("section")),
+        )
+        section_label = _clean_non_empty_string(section_match.group("label"))
+        if section:
+            components.append(("section_number", section))
+            title_number = next(
+                (value for marker, value in components if marker == "title_number"),
+                "",
+            )
+            if title_number:
+                components.append(("title_section", f"{title_number} {section}"))
+        if section_label:
+            components.append(("section_label", section_label))
+
+    return _unique_preserve_order_tuples(components)
 
 
 def _inferred_citations_from_source_ids(source_ids: Sequence[str]) -> List[str]:
