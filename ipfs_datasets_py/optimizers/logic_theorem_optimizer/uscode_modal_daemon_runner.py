@@ -11828,6 +11828,82 @@ def _build_codex_child_command(
     return command
 
 
+def _paired_codex_runtime_budget(args: argparse.Namespace) -> Dict[str, float]:
+    """Separate the Codex queue-claim window from its shutdown drain reserve."""
+
+    producer_lifetime_seconds = max(0.0, float(args.duration_seconds))
+    cycle_completion_grace_seconds = max(
+        0.0,
+        float(getattr(args, "paired_grace_seconds", 0.0)),
+    )
+    queue_grace_seconds = max(
+        0.0,
+        float(getattr(args, "paired_codex_queue_grace_seconds", 0.0)),
+    )
+    shutdown_drain_window_seconds = _codex_shutdown_drain_window_seconds(args)
+    claim_window_seconds = (
+        producer_lifetime_seconds
+        + cycle_completion_grace_seconds
+        + queue_grace_seconds
+    )
+    return {
+        "producer_lifetime_seconds": producer_lifetime_seconds,
+        "cycle_completion_grace_seconds": cycle_completion_grace_seconds,
+        "queue_grace_seconds": queue_grace_seconds,
+        "claim_window_seconds": claim_window_seconds,
+        "shutdown_drain_window_seconds": shutdown_drain_window_seconds,
+        "child_duration_seconds": (
+            claim_window_seconds + shutdown_drain_window_seconds
+        ),
+    }
+
+
+def _paired_parent_runtime_budget(
+    args: argparse.Namespace,
+    paired: Mapping[str, Any],
+    *,
+    leanstral_enabled: bool,
+    shutdown_poll_cushion_seconds: float,
+) -> Dict[str, float]:
+    """Return parent-relative deadlines for every finite paired child."""
+
+    producer_lifetime_seconds = max(0.0, float(args.duration_seconds))
+    cycle_completion_grace_seconds = max(
+        0.0,
+        float(getattr(args, "paired_grace_seconds", 0.0)),
+    )
+    autoencoder_deadline_seconds = (
+        producer_lifetime_seconds + cycle_completion_grace_seconds
+    )
+    leanstral_deadline_seconds = 0.0
+    if leanstral_enabled:
+        leanstral_deadline_seconds = (
+            autoencoder_deadline_seconds
+            + max(
+                0.0,
+                float(getattr(args, "paired_leanstral_grace_seconds", 0.0)),
+            )
+        )
+    codex_deadline_seconds = (
+        max(0.0, float(getattr(args, "paired_launch_delay_seconds", 0.0)))
+        + max(0.0, float(paired.get("codex_duration_seconds", 0.0)))
+    )
+    child_deadline_seconds = max(
+        autoencoder_deadline_seconds,
+        leanstral_deadline_seconds,
+        codex_deadline_seconds,
+    )
+    cushion_seconds = max(0.0, float(shutdown_poll_cushion_seconds))
+    return {
+        "autoencoder_deadline_seconds": autoencoder_deadline_seconds,
+        "leanstral_deadline_seconds": leanstral_deadline_seconds,
+        "codex_deadline_seconds": codex_deadline_seconds,
+        "child_deadline_seconds": child_deadline_seconds,
+        "shutdown_poll_cushion_seconds": cushion_seconds,
+        "max_wait_seconds": child_deadline_seconds + cushion_seconds,
+    }
+
+
 def build_paired_daemon_commands(
     args: argparse.Namespace,
     *,
@@ -11837,12 +11913,8 @@ def build_paired_daemon_commands(
     autoencoder_run_id = getattr(args, "autoencoder_run_id", None) or f"{args.run_id}-autoencoder"
     codex_run_id = getattr(args, "codex_run_id", None) or f"{args.run_id}-codex"
     queue_run_id = autoencoder_run_id
-    codex_duration_seconds = (
-        float(args.duration_seconds)
-        + max(0.0, float(getattr(args, "paired_grace_seconds", 0.0)))
-        + max(0.0, float(getattr(args, "paired_leanstral_grace_seconds", 0.0)))
-        + max(0.0, float(getattr(args, "paired_codex_queue_grace_seconds", 0.0)))
-    )
+    codex_runtime_budget = _paired_codex_runtime_budget(args)
+    codex_duration_seconds = codex_runtime_budget["child_duration_seconds"]
     autoencoder_command = [
         sys.executable,
         "-m",
@@ -12467,6 +12539,8 @@ def build_paired_daemon_commands(
     return {
         "autoencoder_run_id": autoencoder_run_id,
         "codex_run_id": codex_run_id,
+        "codex_duration_seconds": codex_duration_seconds,
+        "codex_runtime_budget": codex_runtime_budget,
         "queue_run_id": queue_run_id,
         "autoencoder_command": autoencoder_command,
         "codex_command": codex_command,
@@ -18538,6 +18612,12 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         15.0,
         2.0 * float(args.paired_poll_seconds),
     )
+    paired_parent_runtime_budget = _paired_parent_runtime_budget(
+        args,
+        paired,
+        leanstral_enabled=leanstral_enabled,
+        shutdown_poll_cushion_seconds=paired_shutdown_poll_cushion_seconds,
+    )
 
     summary: Dict[str, Any] = {
         "autoencoder_command": list(paired["autoencoder_command"]),
@@ -18555,7 +18635,9 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "codex_command": list(paired["codex_command"]),
         "codex_children": codex_child_summaries,
         "codex_child_count": len(codex_child_summaries),
+        "codex_duration_seconds": float(paired["codex_duration_seconds"]),
         "codex_resource_plan": codex_resource_plan,
+        "codex_runtime_budget": dict(paired["codex_runtime_budget"]),
         "codex_scope_schedule": dict(paired.get("codex_scope_schedule") or {}),
         "codex_run_id": paired["codex_run_id"],
         "codex_stderr_path": str(codex_stderr_path),
@@ -18572,6 +18654,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             args.paired_codex_queue_grace_seconds
         ),
         "paired_poll_seconds": float(args.paired_poll_seconds),
+        "paired_parent_runtime_budget": paired_parent_runtime_budget,
         "paired_shutdown_poll_cushion_seconds": (
             paired_shutdown_poll_cushion_seconds
         ),
@@ -18608,6 +18691,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 for child in codex_child_summaries
             ],
             "codex_run_id": paired["codex_run_id"],
+            "codex_runtime_budget": dict(paired["codex_runtime_budget"]),
+            "parent_runtime_budget": paired_parent_runtime_budget,
             "queue_run_id": paired["queue_run_id"],
         },
     )
@@ -18708,17 +18793,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 )
 
             poll_seconds = max(0.2, float(args.paired_poll_seconds))
-            max_wait = (
-                float(args.duration_seconds)
-                + max(0.0, float(args.paired_grace_seconds))
-                + (
-                    max(0.0, float(args.paired_leanstral_grace_seconds))
-                    if leanstral_enabled
-                    else 0.0
-                )
-                + max(0.0, float(args.paired_codex_queue_grace_seconds))
-                + paired_shutdown_poll_cushion_seconds
-            )
+            max_wait = paired_parent_runtime_budget["max_wait_seconds"]
             while True:
                 auto_exit_code = auto_process.poll()
                 leanstral_exit_code = (
