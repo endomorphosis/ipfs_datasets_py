@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
+import sys
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
@@ -22,7 +25,19 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_guidance_repla
     load_historical_compiler_guidance_reports,
     sign_guidance_replay_payload,
 )
-from scripts.ops.legal_ir.revalidate_compiler_guidance import main as replay_cli_main
+
+
+ROOT = Path(__file__).resolve().parents[4]
+_CLI_PATH = ROOT / "scripts" / "ops" / "legal_ir" / "revalidate_compiler_guidance.py"
+_CLI_SPEC = importlib.util.spec_from_file_location(
+    "legal_ir_revalidate_compiler_guidance_under_test",
+    _CLI_PATH,
+)
+assert _CLI_SPEC is not None and _CLI_SPEC.loader is not None
+_CLI_MODULE = importlib.util.module_from_spec(_CLI_SPEC)
+sys.modules[_CLI_SPEC.name] = _CLI_MODULE
+_CLI_SPEC.loader.exec_module(_CLI_MODULE)
+replay_cli_main = _CLI_MODULE.main
 
 
 SECRET = "unit-test-trust-key"

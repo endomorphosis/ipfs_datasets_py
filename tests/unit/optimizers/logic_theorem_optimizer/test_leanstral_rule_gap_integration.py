@@ -22,6 +22,7 @@ from ipfs_datasets_py.logic.modal.leanstral_verifier import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.leanstral_rule_gap_reaudit import (
     LeanstralRuleGapReauditPolicy,
     build_current_rule_gap_evidence,
+    canonical_historical_rule_gap_report_paths,
     reaudit_leanstral_rule_gaps,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
@@ -39,8 +40,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-HISTORICAL_REPORTS = tuple(
-    sorted((REPO_ROOT / "workspace" / "leanstral-smoke").glob("*/rule-gaps.json"))
+HISTORICAL_REPORTS = canonical_historical_rule_gap_report_paths(
+    REPO_ROOT / "workspace" / "leanstral-smoke"
 )
 
 
@@ -202,17 +203,17 @@ def test_current_sanitizer_and_trusted_hammer_receipts_are_required_end_to_end()
             "trusted": False,
         }
     ]
-    response = json.loads(build_leanstral_failure_branch_prompt(task, failures))[
-        "response_shape"
-    ]
+    prompt = json.loads(build_leanstral_failure_branch_prompt(task, failures))
+    response = prompt["response_shape"]
     candidate = response["candidates"][0]
     assert candidate["schema_version"] == LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION
     assert candidate["compiler_surface"] == "modal.frame_logic"
     assert candidate["logic_family"] == "frame_logic"
-    candidate["candidate"] = (
-        "frame(entity:Entity, role:Role) "
-        "and ontology(entity:Entity, class:Class)"
-    )
+    candidate["candidate"] = prompt["failed_obligation_subtrees"][0][
+        "candidate_language"
+    ][
+        "grounded_candidate_seed"
+    ]
     candidate["confidence"] = 0.75
 
     evidence = build_current_rule_gap_evidence(

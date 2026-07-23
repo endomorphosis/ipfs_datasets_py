@@ -31,6 +31,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.leanstral_rule_gap_reau
     ZERO_GUIDANCE_ID,
     LeanstralRuleGapReauditError,
     LeanstralRuleGapReauditPolicy,
+    canonical_historical_rule_gap_report_paths,
     deduplicate_historical_rule_gaps,
     leanstral_rule_gap_reaudit_to_json,
     load_historical_rule_gap_reports,
@@ -41,8 +42,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.leanstral_rule_gap_reau
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-HISTORICAL_REPORTS = tuple(
-    sorted((REPO_ROOT / "workspace" / "leanstral-smoke").glob("*/rule-gaps.json"))
+HISTORICAL_REPORTS = canonical_historical_rule_gap_report_paths(
+    REPO_ROOT / "workspace" / "leanstral-smoke"
 )
 OBLIGATION_ID = "PO-async-frame-logic-9de349f60855"
 CONTRACT_ID = "legal-ir-view/modal.frame_logic/v1"

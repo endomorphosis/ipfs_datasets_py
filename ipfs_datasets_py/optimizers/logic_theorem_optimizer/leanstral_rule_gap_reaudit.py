@@ -70,7 +70,20 @@ LEANSTRAL_CANDIDATE_SCHEMA_RECEIPT_VERSION = (
     "legal-ir-leanstral-candidate-schema-receipt-v1"
 )
 
-CANONICAL_HISTORICAL_REPORT_COUNT = 9
+CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS = (
+    "leanstral-local-compact-20260718T075226Z/rule-gaps.json",
+    "leanstral-local-compact-racefix-20260718T080542Z/rule-gaps.json",
+    "leanstral-local-json-smoke-20260718T073902Z/rule-gaps.json",
+    "leanstral-local-normalized-20260718T081318Z/rule-gaps.json",
+    "leanstral-local-normalized-fullverify-20260718T081551Z/rule-gaps.json",
+    "leanstral-local-normalized-reference-20260718T081524Z/rule-gaps.json",
+    "leanstral-local-parse-smoke-20260718T074238Z/rule-gaps.json",
+    "leanstral-local-smoke-20260718T072926Z/rule-gaps.json",
+    "leanstral-local-smoke-20260718T073126Z/rule-gaps.json",
+)
+CANONICAL_HISTORICAL_REPORT_COUNT = len(
+    CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS
+)
 CANONICAL_UNIQUE_GAP_COUNT = 1
 CANONICAL_FRAME_LOGIC_COMPONENT = "modal.frame_logic"
 CANONICAL_FRAME_LOGIC_FAMILY = "frame_logic"
@@ -154,6 +167,25 @@ _STRICT_CANDIDATE_FIELDS = frozenset(
 
 class LeanstralRuleGapReauditError(ValueError):
     """Raised when historical or current evidence fails closed."""
+
+
+def canonical_historical_rule_gap_report_paths(
+    reports_root: str | os.PathLike[str],
+) -> tuple[Path, ...]:
+    """Return the lineage-bound report inventory beneath ``reports_root``."""
+
+    root = Path(reports_root)
+    paths = tuple(
+        root / relative
+        for relative in CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS
+    )
+    missing = [str(path) for path in paths if not path.is_file()]
+    if missing:
+        raise LeanstralRuleGapReauditError(
+            "canonical historical rule-gap inventory is incomplete: "
+            + ", ".join(missing)
+        )
+    return paths
 
 
 @dataclass(frozen=True, slots=True)
@@ -1479,6 +1511,7 @@ __all__ = [
     "CANONICAL_FRAME_LOGIC_COMPONENT",
     "CANONICAL_FRAME_LOGIC_FAMILY",
     "CANONICAL_HISTORICAL_REPORT_COUNT",
+    "CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS",
     "CANONICAL_UNIQUE_GAP_COUNT",
     "HistoricalGapIdentity",
     "HistoricalRuleGapSource",
@@ -1491,6 +1524,7 @@ __all__ = [
     "LeanstralRuleGapReauditPolicy",
     "ZERO_GUIDANCE_ID",
     "build_current_rule_gap_evidence",
+    "canonical_historical_rule_gap_report_paths",
     "canonical_json_bytes",
     "content_sha256",
     "deduplicate_historical_rule_gaps",

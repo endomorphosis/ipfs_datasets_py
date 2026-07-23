@@ -19,6 +19,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.leanstral_rule_gap_reau
     CANONICAL_UNIQUE_GAP_COUNT,
     LeanstralRuleGapReauditError,
     LeanstralRuleGapReauditPolicy,
+    canonical_historical_rule_gap_report_paths,
     reaudit_leanstral_rule_gaps,
     write_reaudit_report_atomic,
 )
@@ -35,8 +36,8 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         nargs="*",
         help=(
-            "Historical rule-gaps.json files. When omitted, discover one report "
-            "below each immediate child of --reports-root."
+            "Historical rule-gaps.json files. When omitted, use the canonical "
+            "lineage-bound inventory below --reports-root."
         ),
     )
     parser.add_argument(
@@ -54,7 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=DEFAULT_HISTORICAL_ROOT,
         help=(
-            "Discovery root used only when no REPORT or --report is supplied "
+            "Canonical inventory root used only when no REPORT or --report is supplied "
             f"(default: {DEFAULT_HISTORICAL_ROOT})."
         ),
     )
@@ -145,7 +146,9 @@ def _historical_paths(args: argparse.Namespace) -> list[Path]:
     if explicit:
         paths = explicit
     else:
-        paths = sorted(args.reports_root.glob("*/rule-gaps.json"))
+        paths = list(
+            canonical_historical_rule_gap_report_paths(args.reports_root)
+        )
     resolved = [path.resolve() for path in paths]
     if not resolved:
         raise LeanstralRuleGapReauditError("no historical rule-gap reports found")
