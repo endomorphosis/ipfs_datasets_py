@@ -22,21 +22,21 @@ is never completion evidence.
 - Gap task: Add the smallest fail-closed evidence-index fix and regression test in the isolated ipfs_accelerate_py submodule worktree, then rerun objective compilation without forced goals.
 - Refinement depth: 1
 
-## HSSL-G000 Decide the evidence-backed production delegation architecture
+## HSSL-G000 Establish the isolated benchmark package and execution skeleton
 
 - Status: active
 - Goal completion schema version: 1
 - Parent:
-- Fib priority: 1597
-- Track: benchmark-decision
+- Fib priority: 0
+- Track: benchmark-foundation
 - Priority: P0
-- Bundle: objective/hssl/final-decision
-- Goal: Determine whether Hammer, SyMAI, spaCy, and Leanstral improve the current architecture and assign each component only the responsibilities justified by paired holdout evidence.
+- Bundle: objective/hssl/foundation
+- Goal: Create the non-production benchmark package skeleton, smoke contract, and run-scoped execution defaults without changing production routing.
 - Evidence: HSSLEV0009A31
-- Outputs: docs/performance_snapshots, docs/implementation/runbooks
-- Validation: python -m pytest tests/unit/benchmarks/logic_pipeline -q; python benchmarks/logic_pipeline/report.py --validate-final-decision
-- Acceptance: The final decision cites immutable baseline and holdout manifests, counts only kernel-verified proofs, reports quality and resource tradeoffs, and selects or rejects each delegation policy without automatically promoting production.
-- Gap task: Produce the final architecture decision after every prerequisite phase gate has a validated receipt.
+- Outputs: benchmarks/logic_pipeline/__init__.py, tests/unit/benchmarks/logic_pipeline/test_package.py
+- Validation: python -m pytest tests/unit/benchmarks/logic_pipeline/test_package.py -q
+- Acceptance: The package imports when optional components are absent, all state and output defaults are run-scoped, the smoke manifest is deterministic, and no production routing default changes.
+- Gap task: Scaffold the isolated benchmark package and its deterministic smoke test.
 - Refinement depth: 0
 - Conflict policy: keep benchmark changes isolated; require review before merging any production routing change
 
@@ -44,7 +44,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G000, HSSL-G009
 - Fib priority: 1
 - Track: benchmark-protocol
 - Priority: P0
@@ -95,7 +95,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G010
 - Fib priority: 3
 - Track: benchmark-corpus
 - Priority: P0
@@ -163,7 +163,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G012
 - Fib priority: 5
 - Track: benchmark-adapters
 - Priority: P0
@@ -265,7 +265,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G011, HSSL-G021, HSSL-G022, HSSL-G023, HSSL-G031, HSSL-G032, HSSL-G033, HSSL-G034, HSSL-G035
 - Fib priority: 8
 - Track: benchmark-baseline
 - Priority: P0
@@ -282,7 +282,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G040
 - Fib priority: 13
 - Track: benchmark-execution
 - Priority: P0
@@ -350,7 +350,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G051, HSSL-G052, HSSL-G053
 - Fib priority: 21
 - Track: benchmark-analysis
 - Priority: P0
@@ -384,7 +384,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G050
 - Fib priority: 34
 - Track: benchmark-robustness
 - Priority: P0
@@ -435,7 +435,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G061, HSSL-G071, HSSL-G072
 - Fib priority: 55
 - Track: benchmark-gate
 - Priority: P0
@@ -452,7 +452,7 @@ is never completion evidence.
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
+- Parent: HSSL-G080
 - Fib priority: 89
 - Track: benchmark-gate
 - Priority: P0
@@ -465,19 +465,19 @@ is never completion evidence.
 - Gap task: Run, replay, and seal the holdout evaluation.
 - Refinement depth: 1
 
-## HSSL-G100 Publish the delegation matrix and repeatable operator runbook
+## HSSL-G100 Publish the final architecture decision, delegation matrix, and runbook
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G000
-- Fib priority: 144
-- Track: benchmark-documentation
-- Priority: P1
-- Bundle: objective/hssl/documentation
-- Goal: Explain which component owns each responsibility, when escalation occurs, how to repeat the benchmark safely, and which overlapping paths were rejected.
+- Parent: HSSL-G090
+- Fib priority: 1597
+- Track: benchmark-decision
+- Priority: P0
+- Bundle: objective/hssl/final-decision
+- Goal: Determine whether Hammer, SyMAI, spaCy, and Leanstral improve the current architecture, assign each component only responsibilities justified by paired holdout evidence, and explain how to reproduce the decision safely.
 - Evidence: HSSLEV1006B8A
 - Outputs: docs/implementation/runbooks, docs/performance_snapshots
-- Validation: python benchmarks/logic_pipeline/report.py --validate-runbook
-- Acceptance: A new operator can reproduce capability probing, objective ingestion, pilot, shortlist, holdout, replay, and report generation in a clean worktree without touching active progress.
-- Gap task: Write and validate the delegation matrix, decision rationale, and worktree-safe operator runbook.
+- Validation: python -m pytest tests/unit/benchmarks/logic_pipeline -q; python benchmarks/logic_pipeline/report.py --validate-final-decision; python benchmarks/logic_pipeline/report.py --validate-runbook
+- Acceptance: The decision cites immutable baseline and holdout manifests, counts only kernel-verified proofs, reports quality, resource, and complexity tradeoffs, selects or rejects every delegation policy, and lets a new operator reproduce capability probing, objective ingestion, pilot, shortlist, holdout, replay, and reporting in a clean worktree without automatically promoting production or touching active progress.
+- Gap task: After every prerequisite phase gate has a validated receipt, publish the evidence-backed delegation decision and worktree-safe operator runbook.
 - Refinement depth: 1

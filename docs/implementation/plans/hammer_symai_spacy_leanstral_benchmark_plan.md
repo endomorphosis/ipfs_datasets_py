@@ -584,14 +584,23 @@ Omitting `--submit-bundles` keeps this as local planning and artifact
 generation. Inspect the generated todo, graph, bundle index, and vector index
 before starting workers. The first pass intentionally generates the scanner
 repair. After that repair validates, rerun without `--force-goal-id` to compile
-the remaining goals. Use the bundle supervisor's default dry-run planning before
-any `--start`.
+the remaining goals and raise `--max-findings` to at least 64 so no unresolved
+phase parent is truncated. Use the bundle supervisor's default dry-run planning
+before any `--start`. The compiled task graph must contain all 27 unresolved
+goal IDs (HSSL-G009 is the only evidence-complete omission), no invalid task or
+dependency-repair record, and exactly one initially claimable foundation task.
+Any packet aggregate must contain tasks from one bundle shard only.
 
 Goals are ordered through Fibonacci priority, parent relationships, bundles,
 and phase gates. The objective file intentionally names goal-specific opaque
 evidence markers. Each marker must remain absent until a validated receipt
 embeds it; this prevents semantic evidence matching from treating descriptive
 plan prose as completed work.
+
+For supervisor ingestion, `Parent` denotes an executable prerequisite whenever
+that parent also has a materialized task. The heap therefore uses HSSL-G000 as
+the sole foundation root and HSSL-G100 as the terminal decision leaf; phase
+parents encode runnable order rather than merely a documentation outline.
 
 ## Phase gates
 
