@@ -4593,6 +4593,49 @@ BRIDGE_ROUND_TRIP_METRIC_NAMES = (
     "text_reconstruction_loss",
 )
 
+BRIDGE_IR_ADAPTER_METRIC_CACHE_SCHEMA = "multiview-adapter-metrics-v1"
+
+
+def _bridge_ir_cached_block_has_adapter_metrics(
+    payload: Mapping[str, Any],
+    *,
+    adapter_names: Sequence[str],
+    sample_count: int,
+) -> bool:
+    """Return whether a cached bridge block accounts for every requested adapter."""
+
+    if payload.get("adapter_metric_cache_schema") != BRIDGE_IR_ADAPTER_METRIC_CACHE_SCHEMA:
+        return False
+    adapters = payload.get("adapters")
+    if not isinstance(adapters, Mapping):
+        return False
+    try:
+        expected_samples = max(0, int(sample_count or 0))
+    except (TypeError, ValueError):
+        return False
+    for adapter_name in adapter_names:
+        adapter = adapters.get(adapter_name)
+        if not isinstance(adapter, Mapping):
+            return False
+        try:
+            evaluated_count = max(0, int(adapter.get("evaluated_count", 0) or 0))
+            failure_count = max(0, int(adapter.get("metric_failures", 0) or 0))
+        except (TypeError, ValueError):
+            return False
+        if evaluated_count + failure_count < expected_samples:
+            return False
+        if evaluated_count > 0 and not str(adapter.get("target_component") or ""):
+            return False
+        if evaluated_count > 0:
+            for metric_name in ("cross_entropy_loss", "cosine_similarity"):
+                try:
+                    metric_value = float(adapter[metric_name])
+                except (KeyError, TypeError, ValueError):
+                    return False
+                if not math.isfinite(metric_value):
+                    return False
+    return True
+
 
 def bridge_ir_metric_block(
     samples: Sequence[Any],
@@ -4641,7 +4684,15 @@ def bridge_ir_metric_block(
         block_payload,
     )
     cached_block = _read_metric_disk_cache("bridge_ir_metric_block", persistent_cache_key)
-    if cached_block is not None:
+    cached_block_complete = bool(
+        cached_block is not None
+        and _bridge_ir_cached_block_has_adapter_metrics(
+            cached_block,
+            adapter_names=adapter_names,
+            sample_count=len(sample_list),
+        )
+    )
+    if cached_block_complete:
         cached = dict(cached_block)
         cached["persistent_cache_enabled"] = True
         cached["persistent_cache_hit"] = True
@@ -4663,7 +4714,9 @@ def bridge_ir_metric_block(
         "persistent_cache_hit": False,
         "persistent_cache_key": persistent_cache_key,
         "persistent_cache_kind": "bridge_ir_metric_block",
+        "persistent_cache_stale_rejected": cached_block is not None,
         "persistent_sample_cache_hits": 0,
+        "persistent_sample_cache_refreshes": 0,
         "max_sample_text_chars": max(0, int(max_sample_text_chars or 0)),
         "sample_count": len(sample_list),
     }
@@ -4697,43 +4750,6 @@ def bridge_ir_metric_block(
         _write_legal_ir_target_disk_cache,
     )
 
-    class _CachedBridgeMultiviewReport:
-        def __init__(self, target: Any) -> None:
-            self._target = target
-            self.acceptance_rate = 1.0 if bool(getattr(target, "accepted", False)) else 0.0
-            losses = dict(getattr(target, "losses", {}) or {})
-            self.graph_failure_penalty = float(
-                losses.get("legal_ir_multiview_graph_failure_penalty", 0.0) or 0.0
-            )
-            self.proof_failure_ratio = float(
-                losses.get("legal_ir_multiview_proof_failure_ratio", 0.0) or 0.0
-            )
-            self.reports = {}
-            self.failures = {}
-            self.total_loss = float(
-                losses.get(
-                    "legal_ir_multiview_total_loss",
-                    getattr(target, "total_loss", 0.0),
-                )
-                or 0.0
-            )
-            self.view_count = max(
-                0,
-                len(dict(getattr(target, "view_distribution", {}) or {})),
-            )
-            self.document = getattr(
-                target,
-                "document",
-                SimpleNamespace(canonical_hash=lambda: "cached-legal-ir-target"),
-            )
-
-        def training_target(self) -> Any:
-            return self._target
-
-        def view_coverage_loss(self) -> float:
-            losses = dict(getattr(self._target, "losses", {}) or {})
-            return float(losses.get("legal_ir_multiview_view_coverage_loss", 0.0) or 0.0)
-
     def evaluate_sample(sample: Any) -> Any:
         sample_started = time.time()
         cache_key = _bridge_ir_report_cache_key(
@@ -4751,13 +4767,6 @@ def bridge_ir_metric_block(
             evaluate_provers=evaluate_provers,
         )
         cached_target = _read_legal_ir_target_disk_cache(target_cache_key)
-        if cached_target is not None:
-            report = _CachedBridgeMultiviewReport(cached_target)
-            with _BRIDGE_IR_REPORT_CACHE_LOCK:
-                if len(_BRIDGE_IR_REPORT_CACHE) >= BRIDGE_IR_REPORT_CACHE_MAX:
-                    _BRIDGE_IR_REPORT_CACHE.pop(next(iter(_BRIDGE_IR_REPORT_CACHE)), None)
-                _BRIDGE_IR_REPORT_CACHE[cache_key] = report
-            return report, "persistent_target", time.time() - sample_started
         report = evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=adapter_names,
@@ -4787,7 +4796,8 @@ def bridge_ir_metric_block(
             _write_legal_ir_target_disk_cache(target_cache_key, target)
         except Exception:
             pass
-        return report, "miss", time.time() - sample_started
+        cache_source = "persistent_target_refresh" if cached_target is not None else "miss"
+        return report, cache_source, time.time() - sample_started
 
     worker_count = _parallel_worker_count(
         requested=parallel_workers,
@@ -4805,7 +4815,11 @@ def bridge_ir_metric_block(
             )
             result = evaluate_sample(sample)
             emit_progress(
-                "sample_done" if result[1] == "miss" else "sample_cache_hit",
+                (
+                    "sample_done"
+                    if result[1] in {"miss", "persistent_target_refresh"}
+                    else "sample_cache_hit"
+                ),
                 cache_source=result[1],
                 sample_id=str(getattr(sample, "sample_id", "") or ""),
                 sample_index=sample_index,
@@ -4831,7 +4845,11 @@ def bridge_ir_metric_block(
                 sample_index=sample_index,
             )
             emit_progress(
-                "sample_done" if result[1] == "miss" else "sample_cache_hit",
+                (
+                    "sample_done"
+                    if result[1] in {"miss", "persistent_target_refresh"}
+                    else "sample_cache_hit"
+                ),
                 cache_source=result[1],
                 sample_id=sample_id,
                 sample_index=sample_index,
@@ -4841,9 +4859,14 @@ def bridge_ir_metric_block(
     cache_sources = [str(result[1]) for result in sample_results]
     evaluation_seconds = [float(result[2]) for result in sample_results]
     block["cache_hits"] = sum(1 for source in cache_sources if source == "memory")
-    block["cache_misses"] = sum(1 for source in cache_sources if source == "miss")
+    block["cache_misses"] = sum(
+        1 for source in cache_sources if source in {"miss", "persistent_target_refresh"}
+    )
     block["persistent_sample_cache_hits"] = sum(
-        1 for source in cache_sources if source == "persistent_target"
+        1 for source in cache_sources if source == "persistent_target_refresh"
+    )
+    block["persistent_sample_cache_refreshes"] = sum(
+        1 for source in cache_sources if source == "persistent_target_refresh"
     )
     block["evaluation_seconds_max"] = round(max(evaluation_seconds or [0.0]), 9)
     with _BRIDGE_IR_REPORT_CACHE_LOCK:
@@ -4919,10 +4942,14 @@ def bridge_ir_metric_block(
                 else "memory_metric_certificate"
             )
         }
-    block["legal_ir_target_cache_exports"] = (
-        block["cache_misses"] + block["persistent_sample_cache_hits"]
+    block["adapter_metric_cache_schema"] = BRIDGE_IR_ADAPTER_METRIC_CACHE_SCHEMA
+    block["adapter_metrics_complete"] = _bridge_ir_cached_block_has_adapter_metrics(
+        block,
+        adapter_names=adapter_names,
+        sample_count=len(sample_list),
     )
-    if block["persistent_cache_enabled"]:
+    block["legal_ir_target_cache_exports"] = block["cache_misses"]
+    if block["persistent_cache_enabled"] and block["adapter_metrics_complete"]:
         _write_metric_disk_cache("bridge_ir_metric_block", persistent_cache_key, block)
     emit_progress("done", evaluated_count=block["evaluated_count"])
     return block
@@ -22639,6 +22666,32 @@ def _codex_execution_budget_reached(
     return limit > 0 and max(0, int(execution_count or 0)) >= limit
 
 
+def _codex_queue_producer_is_final(log_dir: Path, queue_run_id: str) -> bool:
+    """Return whether the process producing a shared TODO queue has finished."""
+
+    summary_path = log_dir / f"{queue_run_id}.summary"
+    try:
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return isinstance(payload, Mapping) and bool(payload.get("final"))
+
+
+def _codex_shutdown_drain_complete(
+    *,
+    claim_window_open: bool,
+    queue_producer_final: bool,
+    status: Mapping[str, Any],
+) -> bool:
+    """Return whether an idle worker can safely finish its shutdown drain."""
+
+    return (
+        not claim_window_open
+        and max(0, int(status.get("claimed", 0) or 0)) == 0
+        and queue_producer_final
+    )
+
+
 def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     """Claim program-synthesis TODOs asynchronously for an external Codex worker."""
     root = Path.cwd()
@@ -22851,6 +22904,17 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 queue_depth=_runtime_queue_depth(queue),
                 attributes={"sample_count": len(claimed), "mode": execution_mode},
             )
+            queue_producer_final = bool(
+                not claim_window_open
+                and _codex_queue_producer_is_final(log_dir, queue_run_id)
+            )
+            shutdown_drain_complete = _codex_shutdown_drain_complete(
+                claim_window_open=claim_window_open,
+                queue_producer_final=queue_producer_final,
+                status=status,
+            )
+            summary["codex_shutdown_drain_complete"] = shutdown_drain_complete
+            summary["queue_producer_final"] = queue_producer_final
 
             if claimed:
                 packet = create_codex_work_packet(
@@ -23037,7 +23101,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 "claimed_program_synthesis_todos"
                 if claimed
                 else (
-                    "draining_for_clean_shutdown"
+                    "queue_producer_finished_drain_complete"
+                    if shutdown_drain_complete
+                    else "draining_for_clean_shutdown"
                     if not claim_window_open
                     else "waiting_for_program_synthesis_todos"
                 )
@@ -23105,6 +23171,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             ):
                 summary["latest_stop_reason"] = "max_codex_executions"
                 save_summary(summary_path, summary)
+                break
+            if shutdown_drain_complete:
                 break
             sleep_seconds = max(0.1, float(args.poll_seconds))
             if not stop_requested:

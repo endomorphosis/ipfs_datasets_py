@@ -3105,6 +3105,31 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
     )
     calls = {"count": 0}
 
+    fake_adapter_reports = {
+        name: SimpleNamespace(
+            accepted=True,
+            graph_projection=SimpleNamespace(
+                graph_failure_penalty=0.0,
+                node_count=2,
+                relationship_count=1,
+            ),
+            ir_document=SimpleNamespace(views={}),
+            proof_gate=SimpleNamespace(
+                attempted_count=0,
+                error_count=0,
+                failed_count=0,
+                failure_ratio=0.0,
+                unavailable_count=0,
+                valid_count=0,
+            ),
+            round_trip=SimpleNamespace(extra_losses={}),
+            status="accepted",
+            target_component=f"bridge.{name}",
+            total_loss=0.25,
+        )
+        for name in ("deontic_norms", "zkp_attestation")
+    }
+
     class FakeDocument:
         def canonical_hash(self) -> str:
             return "fake-canonical-hash"
@@ -3115,7 +3140,7 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
         failures = {}
         graph_failure_penalty = 0.0
         proof_failure_ratio = 0.0
-        reports = {}
+        reports = fake_adapter_reports
         total_loss = 0.25
         view_count = 1
 
@@ -3184,7 +3209,15 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
         first["persistent_cache_key"],
     )
     assert block_cache_path is not None
-    block_cache_path.unlink()
+    block_cache_wrapper = json.loads(block_cache_path.read_text(encoding="utf-8"))
+    block_cache_wrapper["payload"].pop("adapter_metric_cache_schema", None)
+    block_cache_wrapper["payload"]["adapters"]["deontic_norms"][
+        "evaluated_count"
+    ] = 0
+    block_cache_path.write_text(
+        json.dumps(block_cache_wrapper, sort_keys=True),
+        encoding="utf-8",
+    )
     with runner._BRIDGE_IR_REPORT_CACHE_LOCK:
         runner._BRIDGE_IR_REPORT_CACHE.clear()
     with _LEGAL_IR_TARGET_CACHE_LOCK:
@@ -3201,9 +3234,13 @@ def test_bridge_ir_metric_block_uses_persistent_metric_cache(
         evaluate_provers=False,
     )
 
-    assert calls["count"] == 1
+    assert calls["count"] == 2
     assert second["persistent_cache_hit"] is False
+    assert second["persistent_cache_stale_rejected"] is True
+    assert second["cache_misses"] == 1
     assert second["persistent_sample_cache_hits"] == 1
+    assert second["persistent_sample_cache_refreshes"] == 1
+    assert second["adapter_metrics_complete"] is True
     assert second["legal_ir_target_cache_exports"] == 1
     assert third["persistent_cache_hit"] is True
     assert second["persistent_cache_kind"] == "bridge_ir_metric_block"
@@ -5870,6 +5907,40 @@ def test_codex_execution_budget_counts_validation_dispositions() -> None:
     assert runner._codex_execution_budget_reached(
         execution_count=3,
         max_executions=2,
+    )
+
+
+def test_codex_shutdown_drain_waits_for_final_producer_and_active_claims(
+    tmp_path: Path,
+) -> None:
+    queue_run_id = "paired-autoencoder"
+    producer_summary = tmp_path / f"{queue_run_id}.summary"
+    producer_summary.write_text(json.dumps({"final": False}), encoding="utf-8")
+
+    assert not runner._codex_queue_producer_is_final(tmp_path, queue_run_id)
+    assert not runner._codex_shutdown_drain_complete(
+        claim_window_open=False,
+        queue_producer_final=False,
+        status={"claimed": 0},
+    )
+
+    producer_summary.write_text(json.dumps({"final": True}), encoding="utf-8")
+
+    assert runner._codex_queue_producer_is_final(tmp_path, queue_run_id)
+    assert runner._codex_shutdown_drain_complete(
+        claim_window_open=False,
+        queue_producer_final=True,
+        status={"claimed": 0},
+    )
+    assert not runner._codex_shutdown_drain_complete(
+        claim_window_open=False,
+        queue_producer_final=True,
+        status={"claimed": 1},
+    )
+    assert not runner._codex_shutdown_drain_complete(
+        claim_window_open=True,
+        queue_producer_final=True,
+        status={"claimed": 0},
     )
 
 
