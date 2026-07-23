@@ -181,8 +181,15 @@ if _MINIMAL_IMPORTS:
 
     def ensure_module(*_: object, **__: object) -> bool:  # type: ignore
         return False
+
+    lazy_import = ensure_module
 else:
-    from .auto_installer import get_installer, ensure_module, ensure_repo_installer_current
+    from .auto_installer import (
+        ensure_module,
+        ensure_repo_installer_current,
+        get_installer,
+        lazy_import,
+    )
 
     # Initialize installer with environment configuration
     installer = get_installer()
@@ -1125,6 +1132,8 @@ __all__ = [
     'FileConverter',
     'ConversionResult',
     'load_dataset',
+    'ensure_module',
+    'lazy_import',
 ]
 
 # Conditionally add exports based on available components

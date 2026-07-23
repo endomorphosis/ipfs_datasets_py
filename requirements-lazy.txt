@@ -1,0 +1,31 @@
+# Eager equivalent of the runtime lazy dependency catalog.
+#
+# Normal feature use can install these one at a time on first access. Use this
+# file for hermetic images or offline environments that pre-provision every
+# dependency exposed by the shared dependency proxy.
+
+chardet>=5.0.0,<6.0.0
+llama-cpp-python
+playsound3
+pydub>=0.25.0
+pymediainfo
+pydocx
+rouge
+openai-whisper
+xformers; platform_system != "Darwin"
+torch-directml; platform_system == "Windows"
+intel-extension-for-pytorch; platform_system == "Linux" and platform_machine == "x86_64"
+rasterio
+geopandas
+requests-cache>=1.2.0
+httpx>=0.27.0
+httpx-cache
+aiohttp-cache
+python-magic>=0.4.27; platform_system != "Windows"
+python-magic-bin>=0.4.14; platform_system == "Windows"
+lxml>=5.0.0
+
+# Previously installer-only feature dependencies.
+easyocr>=1.6.0
+imageio-ffmpeg>=0.6.0
+github-copilot-sdk>=0.1.0
