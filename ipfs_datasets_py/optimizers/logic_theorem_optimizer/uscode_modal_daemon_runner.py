@@ -7239,6 +7239,33 @@ def _sampling_seed_for_args(args: argparse.Namespace) -> tuple[int, str]:
     return int(hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:12], 16), "run_id"
 
 
+def _configured_validation_canary_indices(
+    args: argparse.Namespace,
+) -> tuple[int, ...]:
+    """Parse an operator-pinned holdout set without silently repairing it."""
+
+    raw = str(getattr(args, "validation_canary_indices", "") or "").strip()
+    if not raw:
+        return ()
+    values: list[int] = []
+    for token in raw.split(","):
+        token = token.strip()
+        if not token:
+            raise ValueError("validation canary indices contain an empty item")
+        try:
+            value = int(token)
+        except ValueError as exc:
+            raise ValueError(
+                f"validation canary index is not an integer: {token!r}"
+            ) from exc
+        if value < 0:
+            raise ValueError("validation canary indices must be non-negative")
+        values.append(value)
+    if len(values) != len(set(values)):
+        raise ValueError("validation canary indices must be unique")
+    return tuple(values)
+
+
 def _should_run_cycle_cadence(*, cycle: int, mode: str, every_n_cycles: int) -> bool:
     normalized = str(mode or "every_cycle").strip().lower()
     if normalized in {"off", "none", "false"}:
@@ -12422,6 +12449,13 @@ def build_paired_daemon_commands(
             )
         ),
     ]
+    configured_canary_indices = str(
+        getattr(args, "validation_canary_indices", "") or ""
+    ).strip()
+    if configured_canary_indices:
+        autoencoder_command.extend(
+            ["--validation-canary-indices", configured_canary_indices]
+        )
     max_cycles = max(0, int(getattr(args, "max_cycles", 0) or 0))
     if max_cycles > 0:
         autoencoder_command.extend(["--max-cycles", str(max_cycles)])
@@ -16803,6 +16837,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--validation-canary-indices",
+        default="",
+        help=(
+            "Comma-separated immutable holdout row indices. When supplied, the "
+            "count must exactly match --validation-canary-count and no random "
+            "replacement or text-length filtering is allowed."
+        ),
+    )
+    parser.add_argument(
         "--max-sample-text-chars",
         type=int,
         default=0,
@@ -20007,28 +20050,55 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         0,
         int(getattr(args, "validation_canary_count", 0) or 0),
     )
+    configured_canary_indices = _configured_validation_canary_indices(args)
+    if configured_canary_indices and len(configured_canary_indices) != validation_canary_count:
+        raise ValueError(
+            "configured validation canary index count does not match "
+            f"--validation-canary-count: {len(configured_canary_indices)} "
+            f"!= {validation_canary_count}"
+        )
     validation_canary_indices: List[int] = []
     validation_canary_samples: List[Any] = []
     validation_canary_sampling_attempts = 0
     if validation_canary_count > 0:
-        stored_canary_indices: List[int] = []
-        for raw_index in list(summary.get("validation_canary_indices", []) or []):
-            try:
-                index = int(raw_index)
-            except (TypeError, ValueError):
-                continue
-            if 0 <= index < laws_table.num_rows:
-                stored_canary_indices.append(index)
+        if configured_canary_indices:
+            stored_canary_indices = list(configured_canary_indices)
+            validation_canary_source = "operator_pinned"
+        else:
+            stored_canary_indices = []
+            for raw_index in list(summary.get("validation_canary_indices", []) or []):
+                try:
+                    index = int(raw_index)
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= index < laws_table.num_rows:
+                    stored_canary_indices.append(index)
+            validation_canary_source = (
+                "summary_restored" if stored_canary_indices else "sampled"
+            )
         for index in stored_canary_indices[:validation_canary_count]:
+            if index < 0 or index >= laws_table.num_rows:
+                raise ValueError(
+                    f"configured validation canary index is out of range: {index}"
+                )
             row = laws_table.take([index]).to_pylist()[0]
             if not _row_text_within_limit(
                 row,
                 int(getattr(args, "max_sample_text_chars", 0) or 0),
             ):
+                if configured_canary_indices:
+                    raise ValueError(
+                        "configured validation canary row exceeds "
+                        f"--max-sample-text-chars: {index}"
+                    )
                 continue
             validation_canary_indices.append(index)
             validation_canary_samples.append(row_to_sample(row))
         if len(validation_canary_samples) < validation_canary_count:
+            if configured_canary_indices:
+                raise ValueError(
+                    "configured validation canary indices could not be loaded exactly"
+                )
             (
                 _unused_train_indices,
                 _unused_train_samples,
@@ -20051,6 +20121,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         blocked_validation_sample_ids.update(validation_canary_sample_ids)
         summary["validation_canary_count"] = len(validation_canary_samples)
         summary["validation_canary_indices"] = list(validation_canary_indices)
+        summary["validation_canary_indices_source"] = validation_canary_source
+        summary["validation_canary_indices_sha256"] = hashlib.sha256(
+            json.dumps(
+                validation_canary_indices,
+                ensure_ascii=True,
+                separators=(",", ":"),
+            ).encode("ascii")
+        ).hexdigest()
         summary["validation_canary_sampling_attempts"] = validation_canary_sampling_attempts
         save_summary(summary_path, summary)
         append_event(
@@ -20060,6 +20138,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 "event": "validation_canary_selected",
                 "sample_count": len(validation_canary_samples),
                 "sampling_attempts": validation_canary_sampling_attempts,
+                "source": validation_canary_source,
                 "validation_canary_indices": validation_canary_indices,
             },
         )
