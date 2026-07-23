@@ -18328,8 +18328,8 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=float(os.environ.get("IPFS_DATASETS_PAIRED_CODEX_QUEUE_GRACE_SECONDS", "900") or 900),
         help=(
-            "Extra Codex child runtime beyond paired autoencoder and Leanstral "
-            "grace so late autoencoder TODO queue flushes can still be claimed."
+            "Extra queue-claim time after the paired autoencoder producer and "
+            "cycle-completion grace so late TODO flushes can still be claimed."
         ),
     )
     parser.add_argument(

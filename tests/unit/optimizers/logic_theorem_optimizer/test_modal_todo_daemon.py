@@ -4900,6 +4900,14 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert paired["autoencoder_run_id"] == "paired-run-autoencoder"
     assert paired["codex_run_id"] == "paired-run-codex"
     assert paired["queue_run_id"] == "paired-run-autoencoder"
+    assert paired["codex_runtime_budget"] == {
+        "producer_lifetime_seconds": 120.0,
+        "cycle_completion_grace_seconds": 300.0,
+        "queue_grace_seconds": 15.0,
+        "claim_window_seconds": 435.0,
+        "shutdown_drain_window_seconds": 16.5,
+        "child_duration_seconds": 451.5,
+    }
     assert "--queue-run-id" in paired["codex_command"]
     queue_index = paired["codex_command"].index("--queue-run-id")
     assert paired["codex_command"][queue_index + 1] == paired["queue_run_id"]
@@ -4910,7 +4918,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         "/tmp/leanstral-guidance"
     )
     duration_index = paired["codex_command"].index("--duration-seconds")
-    assert paired["codex_command"][duration_index + 1] == "480.0"
+    assert paired["codex_command"][duration_index + 1] == "451.5"
     max_executions_index = paired["codex_command"].index(
         "--codex-max-executions"
     )
@@ -5953,6 +5961,51 @@ def test_codex_shutdown_drain_window_does_not_reserve_impossible_fallback() -> N
     assert runner._codex_shutdown_drain_window_seconds(args) == 465.0
     args.codex_exec_mode = "packet_only"
     assert runner._codex_shutdown_drain_window_seconds(args) == 45.0
+
+
+def test_paired_codex_budget_keeps_cold_producer_claim_window_open() -> None:
+    args = SimpleNamespace(
+        duration_seconds=610.0,
+        paired_grace_seconds=30.0,
+        paired_codex_queue_grace_seconds=120.0,
+        paired_leanstral_grace_seconds=120.0,
+        paired_launch_delay_seconds=0.0,
+        codex_apply_mode="patch_only",
+        codex_exec_mode="codex_cli",
+        codex_main_apply_lock_timeout_seconds=300.0,
+        codex_sandbox="danger-full-access",
+        codex_timeout_seconds=420.0,
+        codex_validation_timeout_seconds=120.0,
+        codex_vector_max_bundle_wait_seconds=30.0,
+        poll_seconds=5.0,
+    )
+
+    budget = runner._paired_codex_runtime_budget(args)
+
+    assert budget == {
+        "producer_lifetime_seconds": 610.0,
+        "cycle_completion_grace_seconds": 30.0,
+        "queue_grace_seconds": 120.0,
+        "claim_window_seconds": 760.0,
+        "shutdown_drain_window_seconds": 705.0,
+        "child_duration_seconds": 1465.0,
+    }
+    assert budget["claim_window_seconds"] > 301.0
+
+    parent_budget = runner._paired_parent_runtime_budget(
+        args,
+        {"codex_duration_seconds": budget["child_duration_seconds"]},
+        leanstral_enabled=True,
+        shutdown_poll_cushion_seconds=15.0,
+    )
+    assert parent_budget == {
+        "autoencoder_deadline_seconds": 640.0,
+        "leanstral_deadline_seconds": 760.0,
+        "codex_deadline_seconds": 1465.0,
+        "child_deadline_seconds": 1465.0,
+        "shutdown_poll_cushion_seconds": 15.0,
+        "max_wait_seconds": 1480.0,
+    }
 
 
 def test_codex_execution_budget_counts_validation_dispositions() -> None:
