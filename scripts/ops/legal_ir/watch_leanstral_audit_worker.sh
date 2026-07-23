@@ -936,7 +936,15 @@ run_audit_if_due() {
     --model "${LEANSTRAL_AUDIT_MODEL:-Leanstral}" \
     --vibe-agent "${LEANSTRAL_AUDIT_VIBE_AGENT:-lean}" \
     --max-new-tokens "${LEANSTRAL_AUDIT_MAX_NEW_TOKENS:-512}" \
-    --prompt-payload-mode "${LEANSTRAL_AUDIT_PROMPT_PAYLOAD_MODE:-compact}" \
+    --prompt-payload-mode "${LEANSTRAL_AUDIT_PROMPT_PAYLOAD_MODE:-daemon}" \
+    --context-size-per-slot "${LLAMA_CPP_CONTEXT_DEFAULT}" \
+    --context-safety-margin-tokens "${LEANSTRAL_AUDIT_CONTEXT_SAFETY_MARGIN_TOKENS:-512}" \
+    --tokenizer-base-url "${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL}" \
+    --require-exact-token-count \
+    --require-trusted-semantic-context \
+    --max-semantic-context-source-chars "${LEANSTRAL_AUDIT_MAX_SEMANTIC_SOURCE_CHARS:-2500}" \
+    --max-semantic-context-formulas "${LEANSTRAL_AUDIT_MAX_SEMANTIC_FORMULAS:-6}" \
+    --max-semantic-context-obligations "${LEANSTRAL_AUDIT_MAX_SEMANTIC_OBLIGATIONS:-3}" \
     --batch-size "${LEANSTRAL_AUDIT_BATCH_SIZE:-2}" \
     --batch-min-size "${LEANSTRAL_AUDIT_BATCH_MIN_SIZE:-1}" \
     --batch-queue-max-items "${LEANSTRAL_AUDIT_BATCH_QUEUE_MAX_ITEMS:-0}" \
@@ -956,6 +964,9 @@ run_audit_if_due() {
     --lean-slice-size "${LEANSTRAL_LEAN_SLICE_SIZE:-4}" \
     --lean-proof-cache-path "${PROOF_CACHE_PATH}" \
     --prover-timeout-seconds "${LEANSTRAL_PROVER_TIMEOUT_SECONDS:-5}" \
+    --hammer-timeout-seconds "${LEANSTRAL_HAMMER_TIMEOUT_SECONDS:-5}" \
+    --hammer-max-premises "${LEANSTRAL_HAMMER_MAX_PREMISES:-64}" \
+    --hammer-parallel-workers "${LEANSTRAL_HAMMER_PARALLEL_WORKERS:-4}" \
     > "${AUDIT_STDOUT_OUTPUT}" \
     &
   CURRENT_AUDIT_PID=$!

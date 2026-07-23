@@ -31,6 +31,7 @@ from ipfs_datasets_py.logic.modal.leanstral_audit import (
     _leanstral_audit_prompt_payload,
     _leanstral_audit_prompt_text,
     canonical_sha256,
+    leanstral_audit_context_preflight,
     normalize_leanstral_audit_response_for_request,
     parse_leanstral_audit_response,
     validate_leanstral_audit_response,
@@ -202,6 +203,9 @@ def test_live_audit_worker_lean_timeout_default_matches_canary_budget() -> None:
     assert args.batch_size == 2
     assert args.batch_max_workers == 2
     assert args.batch_use_mesh is True
+    assert args.prompt_payload_mode == "daemon"
+    assert args.context_size_per_slot == 8096
+    assert args.context_safety_margin_tokens == 512
 
     watcher = Path("scripts/ops/legal_ir/watch_leanstral_audit_worker.sh").read_text(
         encoding="utf-8"
@@ -235,6 +239,9 @@ def test_live_audit_worker_lean_timeout_default_matches_canary_budget() -> None:
     assert "LEANSTRAL_AUDIT_TIMEOUT_SECONDS:-600" in watcher
     assert "LEANSTRAL_AUDIT_MAX_WORK_ITEMS:-2" in watcher
     assert "LEANSTRAL_AUDIT_MAX_NEW_TOKENS:-512" in watcher
+    assert 'LEANSTRAL_AUDIT_PROMPT_PAYLOAD_MODE:-daemon' in watcher
+    assert "--require-exact-token-count" in watcher
+    assert "--require-trusted-semantic-context" in watcher
     assert "LEANSTRAL_AUDIT_BATCH_SIZE:-2" in watcher
     assert "LEANSTRAL_AUDIT_BATCH_MAX_WORKERS" in watcher
     assert "LEANSTRAL_AUDIT_BATCH_USE_MESH:-1" in watcher
@@ -529,6 +536,185 @@ def test_worker_bounds_model_evidence_and_preserves_full_hash_manifest(tmp_path)
         assert cluster["gap_detail_selection"] == (
             "selected_evidence_packets_with_hash_manifest"
         )
+
+
+def test_worker_builds_hash_attested_semantic_context_and_real_obligations(
+    tmp_path,
+) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text=(
+            "The agency must provide notice within 30 days after application "
+            "unless emergency review applies."
+        ),
+    )
+    packet = _packet(1)
+    source_hash = hashlib.sha256(sample.text.encode("utf-8")).hexdigest()
+    modal_hash = sample.modal_ir.canonical_hash()
+    packet["sample_hashes"].update(
+        {
+            "modal_ir_hash": modal_hash,
+            "sample_id": sample.sample_id,
+            "source_text_hash": source_hash,
+        }
+    )
+    packet["evidence_hashes"].update(
+        {
+            "canonical_modal_ir_hash": modal_hash,
+            "source_text_hash": source_hash,
+        }
+    )
+    references = {
+        sample.sample_id: {
+            "citation": sample.citation,
+            "sample_id": sample.sample_id,
+            "section": sample.section,
+            "text": sample.text,
+            "title": sample.title,
+        }
+    }
+    config = LeanstralAuditWorkerConfig(
+        cache_dir=str(tmp_path / "cache"),
+        context_size_per_slot=8096,
+        max_work_items=1,
+        prompt_payload_mode="daemon",
+    )
+
+    item = build_leanstral_audit_work_items(
+        [packet],
+        config=config,
+        reference_examples=references,
+    )[0][0]
+    context = item.request.evidence["semantic_context"]
+
+    assert context["accepted"] is True
+    assert context["legal_text_data"]["value"] == sample.text
+    assert context["actual_source_text_hash"] == source_hash
+    assert context["actual_modal_ir_hash"] == modal_hash
+    assert context["proof_obligations"]
+    assert all(
+        obligation["obligation_id"].startswith("lir-obligation-")
+        for obligation in context["proof_obligations"]
+    )
+    assert tuple(item.request.proof_obligation_ids) == tuple(
+        obligation["obligation_id"]
+        for obligation in context["proof_obligations"]
+    )
+    obligation = context["proof_obligations"][0]
+    candidate = {
+        "candidate": (
+            "obligation(role_agency, action_notify) "
+            "unless exception(scope_emergency)"
+        ),
+        "compiler_surface": obligation["legal_ir_view"],
+        "confidence": 0.8,
+        "contract_id": obligation["metadata"]["contract_id"],
+        "expected_failure_mode": "hammer_unproved",
+        "logic_family": obligation["logic_family"],
+        "premise_hints": obligation["premise_hints"],
+        "proof_obligation_ids": [obligation["obligation_id"]],
+        "repair_scope": "failed_obligation_subtree",
+        "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+        "source_copy_policy": "reject_full_span_copy",
+        "source_copy_rejected": False,
+        "target_view": obligation["legal_ir_view"],
+    }
+    response_payload = {
+        "abstention_reason": "",
+        "affected_ir_families": [obligation["logic_family"]],
+        "classification": "missing_semantic_rule",
+        "confidence": 0.8,
+        "counterexample": {"evidence_id": packet["evidence_id"]},
+        "drafted_logic_candidates": [candidate],
+        "missing_semantic_rule": {"rule_id": "exception_scope"},
+        "proof_obligation_ids": [obligation["obligation_id"]],
+        "proposed_compiler_surface": [
+            {"component": obligation["legal_ir_view"]}
+        ],
+        "request_id": item.request.request_id,
+        "schema_version": LEANSTRAL_AUDIT_RESPONSE_SCHEMA_VERSION,
+        "witness": None,
+    }
+    response = LeanstralAuditResponse.from_mapping(response_payload)
+    assert validate_leanstral_audit_response(item.request, response).accepted
+
+    copied = LeanstralAuditResponse.from_mapping(
+        {
+            **response_payload,
+            "drafted_logic_candidates": [
+                {**candidate, "candidate": sample.text}
+            ],
+        }
+    )
+    copied_validation = validate_leanstral_audit_response(
+        item.request,
+        copied,
+    )
+    assert copied_validation.accepted is False
+    assert (
+        "drafted_logic_candidate_copies_source_span"
+        in copied_validation.reasons
+    )
+    prompt = _leanstral_audit_prompt_text(
+        item.request,
+        payload_mode="daemon",
+    )
+    assert sample.text in prompt
+    assert "obligation(actor, action) unless exception_condition" not in prompt
+    preflight = leanstral_audit_context_preflight(
+        item.request,
+        config=config.runner_config(),
+    )
+    assert preflight["accepted"] is True
+    assert preflight["prompt_tokens"] > 0
+
+    too_small = replace(
+        config.runner_config(),
+        context_size_per_slot=128,
+    )
+    rejected = leanstral_audit_context_preflight(
+        item.request,
+        config=too_small,
+    )
+    assert rejected["accepted"] is False
+    assert rejected["reason"] == "context_window_exceeded"
+
+
+def test_worker_fails_closed_on_reference_source_hash_mismatch(tmp_path) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+    )
+    packet = _packet(1)
+    packet["sample_hashes"]["sample_id"] = sample.sample_id
+    references = {
+        sample.sample_id: {
+            "sample_id": sample.sample_id,
+            "text": sample.text,
+            "title": sample.title,
+            "section": sample.section,
+        }
+    }
+    config = LeanstralAuditWorkerConfig(
+        cache_dir=str(tmp_path / "cache"),
+        max_work_items=1,
+        require_trusted_semantic_context=True,
+    )
+
+    item = build_leanstral_audit_work_items(
+        [packet],
+        config=config,
+        reference_examples=references,
+    )[0][0]
+    context = item.request.evidence["semantic_context"]
+
+    assert context["accepted"] is False
+    assert any(
+        "source_text_hash_mismatch" in reason
+        for reason in context["rejection_reasons"]
+    )
 
 
 def test_daemon_prompt_payload_is_bounded_and_preserves_response_identity(tmp_path) -> None:
@@ -1104,8 +1290,14 @@ def test_worker_verifier_resolves_hash_only_audit_from_trusted_examples(tmp_path
             "modal_ir_hash": modal_hash,
             "sample_id": sample.sample_id,
             "source_span_hashes": source_span_hashes,
+            "source_text_hash": hashlib.sha256(
+                sample.text.encode("utf-8")
+            ).hexdigest(),
         }
     )
+    packet["evidence_hashes"]["source_text_hash"] = hashlib.sha256(
+        sample.text.encode("utf-8")
+    ).hexdigest()
     path = tmp_path / "packets.jsonl"
     path.write_text(json.dumps(packet) + "\n", encoding="utf-8")
     reference_path = tmp_path / "daemon-state.json"
@@ -1132,7 +1324,12 @@ def test_worker_verifier_resolves_hash_only_audit_from_trusted_examples(tmp_path
         provider_enabled=False,
     )
     worker = LeanstralAuditWorker(config)
-    item = build_leanstral_audit_work_items(records, config=config)[0][0]
+    references = load_reference_examples([reference_path])
+    item = build_leanstral_audit_work_items(
+        records,
+        config=config,
+        reference_examples=references,
+    )[0][0]
     response = LeanstralAuditResponse.from_mapping(
         {
             "abstention_reason": "",
@@ -1169,7 +1366,7 @@ def test_worker_verifier_resolves_hash_only_audit_from_trusted_examples(tmp_path
         [path],
         worker=worker,
         worker_config=config,
-        reference_examples=load_reference_examples([reference_path]),
+        reference_examples=references,
         verifier_config=LeanstralVerifierConfig(
             run_lean=False,
             run_modal_bridge=False,

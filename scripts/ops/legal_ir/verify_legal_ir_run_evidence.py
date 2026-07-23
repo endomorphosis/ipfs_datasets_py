@@ -400,7 +400,14 @@ def verify_evidence(
         value = model.get(name)
         if not str(value or "").strip() or (name == "model_sha256" and not _sha(value)):
             failures.append(f"model_context:{name}")
-    if not _positive(model, "context_size") or not str(model.get("device") or "").lower().startswith("cuda"):
+    required_context = max(
+        1,
+        int(os.environ.get("IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT", "8096")),
+    )
+    if (
+        (_nonnegative_integer(model.get("context_size")) or 0) < required_context
+        or not str(model.get("device") or "").lower().startswith("cuda")
+    ):
         failures.append("model_context:cuda_context")
 
     services = _mapping(payload.get("services"))
