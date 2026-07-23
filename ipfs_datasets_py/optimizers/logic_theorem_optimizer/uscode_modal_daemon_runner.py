@@ -18448,7 +18448,15 @@ def resolve_warm_start_state_paths(args: argparse.Namespace, queue_dir: Path) ->
     ).strip().lower()
     if canonical_mode not in AUTOENCODER_CANONICAL_WARM_START_MODES:
         canonical_mode = "auto"
-    if canonical_mode != "off":
+    explicit_warm_start = bool(
+        getattr(args, "warm_start_state", [])
+        or getattr(args, "warm_start_run_id", [])
+    )
+    include_canonical = (
+        canonical_mode == "require"
+        or (canonical_mode == "auto" and not explicit_warm_start)
+    )
+    if include_canonical:
         canonical_path = Path(
             getattr(
                 args,
@@ -18487,11 +18495,36 @@ def load_warm_start_state(
         if not path.exists():
             missing_paths.append(str(path))
             continue
-        loaded = ModalAutoencoderTrainingState.load_json(path)
+        loaded_checkpoint = load_autoencoder_checkpoint(path)
+        loaded = loaded_checkpoint.state
+        checkpoint_metadata = dict(loaded_checkpoint.manifest.metadata)
+        required_capacity = int(
+            checkpoint_metadata.get(
+                "required_max_generalizable_entries_per_group",
+                0,
+            )
+            or 0
+        )
+        if required_capacity < 0:
+            raise ValueError(
+                "warm-start checkpoint declares a negative required capacity: "
+                f"{path}"
+            )
+        if required_capacity > int(max_entries_per_group):
+            raise ValueError(
+                f"warm-start checkpoint {path} requires at least "
+                f"{required_capacity} generalizable entries per group; set "
+                "--autoencoder-max-generalizable-entries-per-group to "
+                f"{required_capacity} or greater"
+            )
         source_capacity_report = loaded.compact_generalizable_capacity(
             max_entries_per_group
         )
+        source_capacity_report["checkpoint_metadata"] = checkpoint_metadata
         source_capacity_report["path"] = str(path)
+        source_capacity_report["required_max_entries_per_group"] = (
+            required_capacity
+        )
         source_capacity_reports.append(source_capacity_report)
         loaded_states.append(loaded.generalizable_copy())
         loaded_paths.append(str(path))

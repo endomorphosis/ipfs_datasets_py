@@ -842,6 +842,8 @@ def _trial_command(
         "true",
         "--async-artifact-full-checkpoint-every-n-cycles",
         "2",
+        "--autoencoder-canonical-warm-start",
+        "off",
         "--warm-start-state",
         str(warm_state),
     ]
