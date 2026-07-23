@@ -141,6 +141,10 @@ export IPFS_DATASETS_AUTO_INSTALL=true
 export IPFS_INSTALL_VERBOSE=true
 ```
 
+For first-access behavior, offline wheelhouse controls, and the shared
+dependency proxy, see
+[Lazy Dependency Installation](LAZY_DEPENDENCY_INSTALLATION.md).
+
 ## 🏥 Health Monitoring
 
 ### Health Status Levels:

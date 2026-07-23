@@ -2,6 +2,8 @@
 # Use this to test if basic setup works, then add more dependencies gradually
 # Optional theorem-prover Python bindings are kept separate so regular installs
 # do not pull them in: pip install -r requirements-theorem-provers.txt
+# Optional modules exposed through the lazy dependency proxy are also available
+# eagerly with: pip install -r requirements-lazy.txt
 
 # Local submodule dependencies. These avoid fragile nested GitHub submodule
 # fetches and match the dynamic setup.py resolver used by editable installs.
