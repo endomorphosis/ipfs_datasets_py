@@ -221,7 +221,7 @@ DEFAULT_AUTOENCODER_METRIC_BRIDGE_ADAPTERS = (
     "deontic_norms",
 )
 DEFAULT_VALIDATION_CANARY_COUNT = 4
-DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS = 400
+DEFAULT_AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS = 600
 DEFAULT_GENERALIZABLE_PROJECTION_TIMEOUT_SECONDS = 600.0
 DEFAULT_GENERALIZABLE_PROJECTION_MAX_LINE_SEARCH_ATTEMPTS = 3
 DEFAULT_COMPILER_IR_TRAIN_MODE = "periodic"
@@ -6288,13 +6288,15 @@ def run_daemon_hammer_guidance_cycle(
             selected_samples.append(source_sample)
         else:
             selected_samples.append(projected_sample)
-            contract_view_payloads_by_sample_id[sample_id] = dict(
+            projected_sample_id = _daemon_hammer_sample_id(projected_sample) or sample_id
+            contract_view_payloads_by_sample_id[projected_sample_id] = dict(
                 projected_sample.get("legal_ir_views") or {}
             )
             contract_projection_diagnostics.append(
                 {
                     **projection_diagnostics,
-                    "sample_id": sample_id,
+                    "sample_id": projected_sample_id,
+                    "source_sample_id": sample_id,
                 }
             )
     sample_ids = [_daemon_hammer_sample_id(sample) for sample in selected_samples]
@@ -6302,10 +6304,15 @@ def run_daemon_hammer_guidance_cycle(
     for sample in selected_samples:
         sample_id = _daemon_hammer_sample_id(sample)
         if enabled:
+            contract_payloads = contract_view_payloads_by_sample_id.get(sample_id)
+            if contract_payloads is None and isinstance(sample, Mapping):
+                embedded_payloads = sample.get("legal_ir_views")
+                if isinstance(embedded_payloads, Mapping):
+                    contract_payloads = dict(embedded_payloads)
             contract_telemetry_records.append(
                 collect_legal_ir_contract_telemetry(
                     sample,
-                    view_payloads=contract_view_payloads_by_sample_id.get(sample_id, {}),
+                    view_payloads=contract_payloads or {},
                     sample_id=sample_id,
                     derive_modal_ir_views=False,
                 )
@@ -6317,7 +6324,11 @@ def run_daemon_hammer_guidance_cycle(
     if runtime_telemetry is not None:
         for sample, contract_record in zip(selected_samples, contract_telemetry_records):
             sample_id = _daemon_hammer_sample_id(sample)
-            observed_views = set(contract_record.contract_coverage)
+            observed_views = {
+                family
+                for family, evidence in contract_record.contract_coverage.items()
+                if bool(evidence.get("present"))
+            }
             for family in LEGAL_IR_VIEW_FAMILIES:
                 runtime_telemetry.record_instant(
                     f"legal_ir_view.{family}",

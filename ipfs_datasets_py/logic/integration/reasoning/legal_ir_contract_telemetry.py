@@ -482,11 +482,17 @@ def legal_ir_contract_payloads_from_multiview_report(
             events_by_source.setdefault(source_id, []).append(event)
 
     tdfol_records = _bridge_records(multiview, "fol_tdfol", "tdfol_formula", "records")
-    for record in tdfol_records:
+    event_groups = list(events_by_source.values())
+    for index, record in enumerate(tdfol_records):
         source_id = _string(record.get("source_id"))
+        aligned_events = events_by_source.get(source_id, [])
+        if not aligned_events and (
+            len(event_groups) == 1 or len(event_groups) == len(tdfol_records)
+        ):
+            aligned_events = event_groups[min(index, len(event_groups) - 1)]
         anchors = [
             _string(event.get("event_id") or event.get("event_symbol") or event.get("event"))
-            for event in events_by_source.get(source_id, [])
+            for event in aligned_events
         ]
         anchors = list(dict.fromkeys(anchor for anchor in anchors if anchor))
         result.setdefault("tdfol", []).append(

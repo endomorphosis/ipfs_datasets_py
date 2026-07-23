@@ -268,6 +268,23 @@ def test_multiview_projection_uses_only_executed_stages_and_hashes_source_spans(
     assert "tdfol" not in partial_payloads
 
 
+def test_multiview_projection_aligns_namespaced_tdfol_and_cec_records() -> None:
+    report = _executed_multiview_report()
+    report["reports"]["fol_tdfol"]["ir_document"]["views"]["tdfol_formula"][
+        "payload"
+    ]["records"][0]["source_id"] = "deontic:formula-1"
+    report["reports"]["cec_dcec"]["ir_document"]["views"]["cec_events"][
+        "payload"
+    ]["events"][0]["source_id"] = "dcec:event-1"
+    report["reports"]["cec_dcec"]["ir_document"]["views"]["event_calculus"][
+        "payload"
+    ]["records"][0]["source_id"] = "dcec:event-1"
+
+    payloads = legal_ir_contract_payloads_from_multiview_report(report)
+
+    assert payloads["tdfol"][0]["temporal_anchors"] == ["event:notice"]
+
+
 def test_complete_contract_telemetry_is_deterministic_and_fully_covered() -> None:
     first = collect_legal_ir_contract_telemetry("sample-1", _views())
     second = collect_legal_ir_contract_telemetry("sample-1", _views())
@@ -418,7 +435,10 @@ def test_daemon_cycle_persists_and_embeds_per_sample_contract_telemetry(
         daemon_runner,
         "_daemon_hammer_contract_sample",
         lambda _args, source: (
-            dict(source),
+            {
+                **dict(source),
+                "sample_id": "daemon-sample:metric-prefix:unit",
+            },
             {
                 "adapter_count": 5,
                 "bridge_failures": {},
@@ -456,7 +476,7 @@ def test_daemon_cycle_persists_and_embeds_per_sample_contract_telemetry(
     embedded = report["hammer_guidance_artifacts"][0][
         "legal_ir_contract_telemetry"
     ]
-    assert embedded["sample_id"] == "daemon-sample"
+    assert embedded["sample_id"] == "daemon-sample:metric-prefix:unit"
     assert embedded["source_references"] == ["prov:sha256:111"]
     persisted = json.loads(Path(report["output_path"]).read_text(encoding="utf-8"))
     assert persisted["legal_ir_contract_coverage"] == 1.0

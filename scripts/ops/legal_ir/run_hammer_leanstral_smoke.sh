@@ -290,6 +290,7 @@ CMD=(
   --generalizable-projection-max-legal-ir-loss-regression "${MAX_LEGAL_IR_LOSS_REGRESSION:-0.01}"
   --autoencoder-hard-guardrail-metrics "${HARD_GUARDRAILS}"
   --autoencoder-device "${AUTOENCODER_DEVICE:-cuda}"
+  --autoencoder-metric-bridge-max-sample-text-chars "${AUTOENCODER_METRIC_BRIDGE_MAX_SAMPLE_TEXT_CHARS:-600}"
   --autoencoder-max-generalizable-entries-per-group "${MAX_GENERALIZABLE_ENTRIES_PER_GROUP}"
   --async-artifact-writer-max-queue-bytes "${MAX_CHECKPOINT_BYTES}"
   --async-artifact-full-checkpoint-every-n-cycles "${ASYNC_ARTIFACT_FULL_CHECKPOINT_EVERY_N_CYCLES:-16}"
