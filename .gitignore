@@ -137,6 +137,7 @@ workspace/test-logs/
 workspace/autoencoder-weight-review/
 workspace/artifact-writer/
 workspace/legal-ir-hammer-guidance/
+workspace/legal-ir-10m-smoke/
 workspace/leanstral-audit-worker/
 workspace/hammer-leanstral-supervisor/
 workspace/hammer-throughput-board-check/
