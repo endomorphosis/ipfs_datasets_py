@@ -2180,7 +2180,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-120 Add per-group capacity and evidence-aware sparse-tail selection
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: legacy-signal-migration
