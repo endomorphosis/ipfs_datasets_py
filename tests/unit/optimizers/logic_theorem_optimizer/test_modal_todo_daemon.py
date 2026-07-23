@@ -2844,8 +2844,24 @@ def test_autoencoder_evaluation_bounds_only_expensive_bridge_text() -> None:
                     if bridge_enabled
                     else {}
                 ),
+                legal_ir_grammar_rejection_reasons=(
+                    {row.sample_id: ["test-reason"] for row in rows}
+                    if bridge_enabled
+                    else {}
+                ),
                 legal_ir_view_distribution=(
                     {"deontic.ir": 1.0} if bridge_enabled else {}
+                ),
+                legal_ir_view_family_metrics=(
+                    {
+                        "deontic": {
+                            "autoencoder_cross_entropy_loss": 0.3,
+                            "autoencoder_cosine_similarity": 0.75,
+                            "sample_count": 1.0,
+                        }
+                    }
+                    if bridge_enabled
+                    else {}
                 ),
             )
 
@@ -2868,6 +2884,10 @@ def test_autoencoder_evaluation_bounds_only_expensive_bridge_text() -> None:
     assert result.embedding_cosine_similarity == 0.75
     assert result.legal_ir_target_count == 1
     assert result.legal_ir_losses == {"bridge_loss": 0.4}
+    assert result.legal_ir_grammar_rejection_reasons
+    assert result.legal_ir_view_family_metrics["deontic"][
+        "autoencoder_cross_entropy_loss"
+    ] == pytest.approx(0.3)
 
 
 def test_bounded_bridge_targets_are_aliased_before_full_sample_evaluation() -> None:
@@ -2922,6 +2942,50 @@ def test_bounded_bridge_targets_are_aliased_before_full_sample_evaluation() -> N
         sample,
         learning_rate=0.1,
     ) is True
+    assert evaluation.legal_ir_view_family_metrics["deontic"][
+        "autoencoder_cross_entropy_loss"
+    ] > 0.0
+    assert evaluation.legal_ir_view_family_metrics["deontic"][
+        "autoencoder_cosine_similarity"
+    ] >= 0.0
+
+
+def test_learned_representation_promotion_reports_safe_non_activation() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide records promptly.",
+    )
+    autoencoder = runner.AdaptiveModalAutoencoder()
+    evaluation = autoencoder.evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms",),
+        use_sample_memory=False,
+    )
+    family_metrics = runner.legal_ir_validation_view_family_metric_block(
+        autoencoder_validation=evaluation,
+    )
+
+    report = runner.learned_representation_promotion_report(
+        autoencoder,
+        [sample],
+        baseline_view_family_validation=family_metrics,
+        candidate_view_family_validation=family_metrics,
+        feature_projection_report={"accepted_epochs": 0},
+        compiler_commit="compiler-test",
+        fixed_canary_id="fixed-canary-test",
+        proof_receipts=[{"receipt_id": "receipt-test", "trusted": False}],
+        eligible_snapshot_id="snapshot-test",
+        baseline_state_hash="unchanged-state",
+        candidate_state_hash="unchanged-state",
+    )
+
+    assert report["promoted"] is False
+    assert report["report_outcome"] == "no_candidate"
+    assert "no_validated_representation_update" in report["block_reasons"]
+    assert "untrusted_proof_receipts" in report["block_reasons"]
+    assert report["canary_evidence"]["canary_id"] == "fixed-canary-test"
+    assert report["eligible_snapshot_id"] == "snapshot-test"
 
 
 def test_autoencoder_diagnostic_bridge_defaults_to_off(monkeypatch) -> None:

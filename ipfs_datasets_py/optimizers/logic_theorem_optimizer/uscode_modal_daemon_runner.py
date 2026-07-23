@@ -45,6 +45,7 @@ from ipfs_datasets_py.logic.integration.reasoning import (
     generate_legal_ir_proof_obligations,
     legal_ir_contract_payloads_from_multiview_report,
     legal_ir_view_contract,
+    promote_learned_autoencoder_guidance,
     run_legal_ir_hammer,
     summarize_legal_ir_contract_telemetry,
 )
@@ -2811,6 +2812,84 @@ def legal_ir_validation_view_family_metric_block(
         block["metric_lineage_schema_version"] = LEGAL_IR_METRIC_LINEAGE_SCHEMA_VERSION
         block["metric_lineages"] = lineages
     return block
+
+
+def learned_representation_promotion_report(
+    autoencoder: AdaptiveModalAutoencoder,
+    validation_samples: Sequence[Any],
+    *,
+    baseline_view_family_validation: Mapping[str, Any],
+    candidate_view_family_validation: Mapping[str, Any],
+    feature_projection_report: Mapping[str, Any],
+    compiler_commit: str,
+    fixed_canary_id: str,
+    proof_receipts: Sequence[Mapping[str, Any]],
+    eligible_snapshot_id: str = "",
+    baseline_state_hash: str = "",
+    candidate_state_hash: str = "",
+    validated_update_count: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Build the canonical promotion disposition for one fixed holdout cycle.
+
+    A cycle with no accepted projection still emits a complete decision record,
+    but it cannot activate pre-existing features as though they were learned by
+    that cycle. Hammer receipts remain attached even when untrusted so the
+    rejection is auditable rather than silently converted into missing data.
+    """
+
+    samples = list(validation_samples)
+    sample_ids = [str(getattr(sample, "sample_id", "") or "") for sample in samples]
+    baseline = {
+        "canary_id": str(fixed_canary_id),
+        "canary_sample_ids": sample_ids,
+        "view_family_metrics": dict(
+            baseline_view_family_validation.get("view_family_metrics") or {}
+        ),
+    }
+    candidate = {
+        "canary_id": str(fixed_canary_id),
+        "canary_sample_ids": sample_ids,
+        "view_family_metrics": dict(
+            candidate_view_family_validation.get("view_family_metrics") or {}
+        ),
+    }
+    accepted_epochs = int(feature_projection_report.get("accepted_epochs", 0) or 0)
+    state_hashes_available = bool(baseline_state_hash and candidate_state_hash)
+    representation_state_changed = (
+        str(baseline_state_hash) != str(candidate_state_hash)
+        if state_hashes_available
+        else accepted_epochs > 0
+    )
+    validated_updates = (
+        max(0, int(validated_update_count))
+        if validated_update_count is not None
+        else accepted_epochs
+    )
+    eligibility_blocks = (
+        ("no_validated_representation_update",)
+        if not representation_state_changed or validated_updates <= 0
+        else ()
+    )
+    promotion = promote_learned_autoencoder_guidance(
+        autoencoder,
+        samples,
+        baseline_canary_metrics=baseline,
+        candidate_canary_metrics=candidate,
+        fixed_canary_id=str(fixed_canary_id),
+        compiler_commit=str(compiler_commit),
+        proof_receipts=proof_receipts,
+        causal_evidence={
+            "projection_accepted_epochs": accepted_epochs,
+            "projection_report_present": bool(feature_projection_report),
+            "representation_state_changed": representation_state_changed,
+            "validated_update_count": validated_updates,
+            "baseline_state_hash": str(baseline_state_hash or ""),
+            "candidate_state_hash": str(candidate_state_hash or ""),
+        },
+        eligible_snapshot_id=str(eligible_snapshot_id or ""),
+        eligibility_block_reasons=eligibility_blocks,
+    )
+    return promotion.to_dict()
 
 
 def _guidance_slot_safe_key(value: Any) -> str:
@@ -6890,6 +6969,37 @@ def compact_daemon_hammer_guidance_report(
     return compact
 
 
+def daemon_hammer_reconstruction_receipts(
+    cycle_report: Mapping[str, Any],
+    *,
+    limit: int = 64,
+) -> List[Dict[str, Any]]:
+    """Return a bounded, deduplicated set of Hammer proof receipts."""
+
+    receipts: Dict[str, Dict[str, Any]] = {}
+    for report in cycle_report.get("hammer_reports", []) or []:
+        if not isinstance(report, Mapping):
+            continue
+        for receipt in report.get("reconstruction_receipts", []) or []:
+            if not isinstance(receipt, Mapping):
+                continue
+            payload = _metric_cache_object_payload(dict(receipt))
+            receipt_id = str(
+                payload.get("receipt_id")
+                or payload.get("id")
+                or payload.get("reconstruction_receipt_id")
+                or ""
+            ).strip()
+            if not receipt_id:
+                receipt_id = "hammer-receipt-" + hashlib.sha256(
+                    _stable_metric_json(payload).encode("utf-8")
+                ).hexdigest()[:20]
+                payload["receipt_id"] = receipt_id
+            receipts[receipt_id] = payload
+    bounded = max(0, int(limit))
+    return [receipts[key] for key in sorted(receipts)[:bounded]]
+
+
 def _hammer_projected_count_from_projection(projection: Mapping[str, Any]) -> int:
     count = 0
     sources = projection.get("projection_sources")
@@ -10563,9 +10673,19 @@ def evaluate_autoencoder_with_bounded_metric_bridges(
         legal_ir_target_hashes=dict(
             getattr(bridge, "legal_ir_target_hashes", {}) or {}
         ),
+        legal_ir_grammar_rejection_reasons=dict(
+            getattr(bridge, "legal_ir_grammar_rejection_reasons", {}) or {}
+        ),
         legal_ir_view_distribution=dict(
             getattr(bridge, "legal_ir_view_distribution", {}) or {}
         ),
+        legal_ir_view_family_metrics={
+            str(family): dict(metrics)
+            for family, metrics in dict(
+                getattr(bridge, "legal_ir_view_family_metrics", {}) or {}
+            ).items()
+            if isinstance(metrics, Mapping)
+        },
     )
 
 
@@ -21553,6 +21673,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 samples=acceptance_validation_samples,
                 state_hash=learned_after_state_hash,
             )
+            legal_ir_view_family_before_validation = (
+                legal_ir_validation_view_family_metric_block(
+                    compiler_ir_validation=compiler_ir_validation,
+                    autoencoder_validation=learned_ir_before_validation,
+                    hammer_validation=dict(
+                        daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
+                    ),
+                    logic_bridge_validation=bridge_ir_validation,
+                )
+            )
             legal_ir_view_family_validation = (
                 legal_ir_validation_view_family_metric_block(
                     compiler_ir_validation=compiler_ir_validation,
@@ -21561,6 +21691,58 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                         daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
                     ),
                     logic_bridge_validation=bridge_ir_validation,
+                )
+            )
+            validation_holdout_version = canonical_holdout_version(
+                [
+                    str(getattr(sample, "sample_id", "") or "")
+                    for sample in acceptance_validation_samples
+                ],
+                validation_mode=validation_mode,
+            )
+            fixed_canary_id = "legal-ir-fixed-canary-" + validation_holdout_version[:24]
+            latest_published_snapshot = summary.get("latest_published_snapshot")
+            eligible_snapshot_id = (
+                str(latest_published_snapshot.get("snapshot_id") or "")
+                if isinstance(latest_published_snapshot, Mapping)
+                else ""
+            )
+            learned_representation_promotion = (
+                learned_representation_promotion_report(
+                    autoencoder,
+                    acceptance_validation_samples,
+                    baseline_view_family_validation=(
+                        legal_ir_view_family_before_validation
+                    ),
+                    candidate_view_family_validation=(
+                        legal_ir_view_family_validation
+                    ),
+                    feature_projection_report=feature_projection_report,
+                    compiler_commit=evaluation_compiler_commit,
+                    fixed_canary_id=fixed_canary_id,
+                    proof_receipts=daemon_hammer_reconstruction_receipts(
+                        daemon_hammer_guidance_cycle
+                    ),
+                    eligible_snapshot_id=eligible_snapshot_id,
+                    baseline_state_hash=baseline_evaluation_state_hash,
+                    candidate_state_hash=learned_after_state_hash,
+                    validated_update_count=(
+                        int(feature_projection_report.get("accepted_epochs", 0) or 0)
+                        + int(
+                            (
+                                daemon_hammer_guidance_cycle.get(
+                                    "autoencoder_training"
+                                )
+                                or {}
+                            ).get("applied_count", 0)
+                            or 0
+                        )
+                        + sum(
+                            int(step.applied_count)
+                            for step in run.steps
+                            if step.improved and step.failed_validation_count <= 0
+                        )
+                    ),
                 )
             )
             latest_compiler_ir_ce = _metric_value(
@@ -21892,12 +22074,27 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_learned_ir_validation"] = learned_ir_validation
             summary["latest_learned_ir_view_ce"] = latest_learned_ir_view_ce
             summary["latest_learned_ir_view_cosine"] = latest_learned_ir_view_cosine
+            summary["latest_before_legal_ir_view_family_validation"] = (
+                legal_ir_view_family_before_validation
+            )
             summary["latest_legal_ir_view_family_validation"] = (
                 legal_ir_view_family_validation
             )
             summary["latest_legal_ir_view_family_macro_score"] = float(
                 legal_ir_view_family_validation.get("macro_score", 0.0) or 0.0
             )
+            summary["latest_legal_ir_learned_guidance_promotion"] = (
+                learned_representation_promotion
+            )
+            summary["source_export_id"] = str(
+                learned_representation_promotion.get("source_export_id")
+                or learned_representation_promotion.get("learned_export_id")
+                or ""
+            )
+            summary["compiler_commit"] = evaluation_compiler_commit
+            summary["fixed_canary_id"] = fixed_canary_id
+            if eligible_snapshot_id:
+                summary["snapshot_id"] = eligible_snapshot_id
             summary["latest_rollout_baseline_snapshot"] = rollout_baseline_snapshot(
                 summary=summary,
                 cycle=cycle,

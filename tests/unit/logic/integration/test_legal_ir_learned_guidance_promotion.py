@@ -253,6 +253,24 @@ def test_promotion_report_blocks_activation_when_mandatory_bindings_are_absent()
     assert payload["source_copy_checks"]["guardrails_passed"] is True
 
 
+def test_promotion_blocks_external_eligibility_and_untrusted_receipts() -> None:
+    result = promote_learned_autoencoder_guidance(
+        _stable_export(),
+        baseline_canary_metrics=_canary(),
+        candidate_canary_metrics=_canary(),
+        fixed_canary_id="fixed-canary-2026-07",
+        compiler_commit="compiler-commit-test",
+        proof_receipts=[{"receipt_id": "untrusted", "trusted": False}],
+        eligibility_block_reasons=("no_validated_representation_update",),
+    )
+
+    assert result.promoted is False
+    assert result.report_outcome == "rejection"
+    assert "no_validated_representation_update" in result.block_reasons
+    assert "untrusted_proof_receipts" in result.block_reasons
+    assert result.activation_state["activation_allowed"] is False
+
+
 def test_fixed_canary_evidence_reports_directional_deltas() -> None:
     evidence = evaluate_fixed_canary_evidence(
         _canary(copy=0.1, symbolic=0.9),

@@ -183,6 +183,36 @@ def test_daemon_hammer_cycle_persists_guidance_and_updates_summary(
     assert "hammer_reports" not in compact
 
 
+def test_daemon_hammer_receipts_are_bounded_and_deduplicated() -> None:
+    cycle_report = {
+        "hammer_reports": [
+            {
+                "reconstruction_receipts": [
+                    {"receipt_id": "receipt-b", "trusted": False},
+                    {"receipt_id": "receipt-a", "trusted": True},
+                ]
+            },
+            {
+                "reconstruction_receipts": [
+                    {"receipt_id": "receipt-a", "trusted": False},
+                    {"trusted": True, "outcome": "proved"},
+                ]
+            },
+        ]
+    }
+
+    receipts = runner.daemon_hammer_reconstruction_receipts(
+        cycle_report,
+        limit=2,
+    )
+
+    assert len(receipts) == 2
+    assert [receipt["receipt_id"] for receipt in receipts] == sorted(
+        receipt["receipt_id"] for receipt in receipts
+    )
+    assert len({receipt["receipt_id"] for receipt in receipts}) == 2
+
+
 def test_daemon_hammer_cycle_reuses_cache_and_counts_leanstral_candidates(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

@@ -212,7 +212,11 @@ def test_rollout_scripts_dry_run_include_hammer_leanstral_gates() -> None:
     assert "--daemon-hammer-guidance-enabled true" in hparam.stdout
     assert f"gate_metrics={expected_metrics}" in hparam.stdout
     assert "representation_gate_required=true" in smoke.stdout
+    assert "representation_gate_require_successful=false" in smoke.stdout
+    assert "representation_gate_require_complete_evidence=false" in smoke.stdout
     assert "representation_gate_required=true" in hparam.stdout
+    assert "representation_gate_require_successful=true" in hparam.stdout
+    assert "representation_gate_require_complete_evidence=true" in hparam.stdout
     assert (
         "summary_gate_module=scripts.ops.legal_ir.hammer_leanstral_rollout_gate"
         in hparam.stdout

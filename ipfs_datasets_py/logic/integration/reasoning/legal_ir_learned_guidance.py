@@ -657,6 +657,7 @@ def promote_learned_autoencoder_guidance(
     previous_promotion_id: str = "",
     max_features_per_record: int = 12,
     min_sample_support: int = 1,
+    eligibility_block_reasons: Sequence[str] = (),
 ) -> LegalIRLearnedGuidancePromotion:
     """Promote stable autoencoder features when fixed-canary guardrails pass.
 
@@ -702,7 +703,11 @@ def promote_learned_autoencoder_guidance(
         or ""
     ).strip()
 
-    block_reasons: list[str] = []
+    block_reasons: list[str] = [
+        str(reason).strip()
+        for reason in eligibility_block_reasons
+        if str(reason).strip()
+    ]
     if str(export.get("schema_version") or "") != (
         LEGAL_IR_STABLE_FEATURE_EXPORT_SCHEMA_VERSION
     ):
@@ -713,6 +718,8 @@ def promote_learned_autoencoder_guidance(
         block_reasons.append("compiler_commit_missing")
     if not normalized_receipts:
         block_reasons.append("proof_receipts_missing")
+    elif any(receipt.get("trusted") is not True for receipt in normalized_receipts):
+        block_reasons.append("untrusted_proof_receipts")
     if bool(export.get("sample_memory_included")):
         block_reasons.append("sample_memory_features_present")
     if unsafe_feature_count:
