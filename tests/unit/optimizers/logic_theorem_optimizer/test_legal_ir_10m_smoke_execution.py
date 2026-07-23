@@ -163,7 +163,7 @@ def complete_evidence() -> dict[str, object]:
         "model_context": {
             "model_id": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4",
             "model_sha256": SHA_B,
-            "context_size": 2048,
+            "context_size": 8096,
             "context_fingerprint": "leanstral-context-unit",
             "service_generation": "generation-unit",
             "device": "cuda:0",
