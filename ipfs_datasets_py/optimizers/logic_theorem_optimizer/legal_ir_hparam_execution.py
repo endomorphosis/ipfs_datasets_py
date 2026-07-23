@@ -660,7 +660,7 @@ class SeedRun:
     def metric_evidence_complete(self) -> bool:
         try:
             extract_rollout_baseline_metrics(self.summary)
-            extract_summary_metrics(self.summary)
+            extract_candidate_metrics(self.summary)
         except ValueError:
             return False
         return True
@@ -965,19 +965,123 @@ def _execute_seed(
 def extract_rollout_baseline_metrics(
     summary: Mapping[str, Any],
 ) -> tuple[dict[str, float], dict[str, dict[str, float]]]:
-    """Extract the pre-update metrics captured inside a completed cycle."""
+    """Extract the true pre-projection half of the paired cycle receipt."""
 
-    snapshot = _mapping(summary.get("latest_rollout_baseline_snapshot"))
-    if not snapshot:
-        raise ValueError("summary has no rollout baseline snapshot")
-    normalized = {
-        "latest_autoencoder_validation": snapshot.get("validation"),
-        "latest_learned_ir_validation": snapshot.get("learned_ir_view_validation"),
-        "latest_legal_ir_view_family_validation": snapshot.get(
-            "legal_ir_view_family_validation"
+    return extract_summary_metrics(_projection_metric_summary(summary, side="before"))
+
+
+def _projection_metric_summary(
+    summary: Mapping[str, Any],
+    *,
+    side: str,
+) -> dict[str, Any]:
+    if side not in {"before", "after"}:
+        raise ValueError(f"unknown projection metric side: {side}")
+    projection = _mapping(summary.get("latest_feature_projection_report"))
+    point = _mapping(projection.get(side))
+    losses = _mapping(point.get("legal_ir_losses"))
+    auto_ce = _required_metric(
+        point,
+        "cross_entropy_loss",
+        context=f"latest_feature_projection_report.{side}",
+    )
+    auto_cosine = _required_metric(
+        point,
+        "embedding_cosine_similarity",
+        context=f"latest_feature_projection_report.{side}",
+    )
+    ir_ce = _required_metric(
+        losses,
+        "legal_ir_view_cross_entropy_loss",
+        context=f"latest_feature_projection_report.{side}.legal_ir_losses",
+    )
+    ir_cosine_gap = _required_metric(
+        losses,
+        "legal_ir_view_family_cosine_gap_loss",
+        context=f"latest_feature_projection_report.{side}.legal_ir_losses",
+    )
+    family_key = (
+        "latest_before_legal_ir_view_family_validation"
+        if side == "before"
+        else "latest_legal_ir_view_family_validation"
+    )
+    family_block = _mapping(summary.get(family_key))
+    if not family_block:
+        raise ValueError(f"summary has no {family_key}")
+    return {
+        "latest_autoencoder_validation": {
+            "cross_entropy_loss": auto_ce,
+            "cosine_similarity": auto_cosine,
+        },
+        "latest_learned_ir_validation": {
+            "view_cross_entropy_loss": ir_ce,
+            "view_cosine_similarity": max(-1.0, min(1.0, 1.0 - ir_cosine_gap)),
+        },
+        "latest_legal_ir_view_family_validation": family_block,
+    }
+
+
+def extract_candidate_metrics(
+    summary: Mapping[str, Any],
+) -> tuple[dict[str, float], dict[str, dict[str, float]]]:
+    """Extract post-update metrics from the state-versioned snapshot receipt."""
+
+    evaluation = _mapping(summary.get("latest_promoted_snapshot_evaluation"))
+    snapshot_metrics = _mapping(evaluation.get("metrics"))
+    aggregate = _mapping(snapshot_metrics.get("aggregate"))
+    versions = _mapping(evaluation.get("versions"))
+    published = _mapping(summary.get("latest_published_snapshot"))
+    published_versions = _mapping(published.get("versions"))
+    state_version = str(versions.get("state_version") or "")
+    if (
+        summary.get("latest_promoted_snapshot_complete") is not True
+        or evaluation.get("status") != "succeeded"
+        or evaluation.get("error") not in {None, ""}
+        or snapshot_metrics.get("snapshot_complete") is not True
+        or aggregate.get("complete") is not True
+        or not state_version
+        or state_version != str(published_versions.get("state_version") or "")
+        or int(evaluation.get("sequence", 0) or 0)
+        != int(published.get("sequence", -1) or -1)
+    ):
+        raise ValueError("post-update snapshot receipt is incomplete or has stale lineage")
+    metrics, families = extract_summary_metrics(
+        _projection_metric_summary(summary, side="after")
+    )
+    validation = _mapping(snapshot_metrics.get("validation"))
+    snapshot_losses = _mapping(validation.get("legal_ir_losses"))
+    snapshot_values = {
+        "autoencoder_cross_entropy_loss": _required_metric(
+            validation,
+            "cross_entropy_loss",
+            context="promoted_snapshot.validation",
+        ),
+        "autoencoder_cosine_similarity": _required_metric(
+            validation,
+            "cosine_similarity",
+            context="promoted_snapshot.validation",
+        ),
+        "ir_cross_entropy_loss": _required_metric(
+            snapshot_losses,
+            "legal_ir_view_cross_entropy_loss",
+            context="promoted_snapshot.validation.legal_ir_losses",
+        ),
+        "ir_cosine_similarity": 1.0
+        - _required_metric(
+            snapshot_losses,
+            "legal_ir_view_family_cosine_gap_loss",
+            context="promoted_snapshot.validation.legal_ir_losses",
         ),
     }
-    return extract_summary_metrics(normalized)
+    for name, snapshot_value in snapshot_values.items():
+        if not math.isclose(
+            metrics[name],
+            snapshot_value,
+            rel_tol=1.0e-6,
+            abs_tol=1.0e-6,
+        ):
+            raise ValueError(f"post-update projection and snapshot disagree for {name}")
+    return metrics, families
 
 
 def _bounded_estimate(name: str, value: float) -> float:
@@ -1017,7 +1121,7 @@ def _paired_delta_estimate(
     }
     for run in sorted(runs, key=lambda item: item.rung_index):
         before_metrics, before_families = extract_rollout_baseline_metrics(run.summary)
-        after_metrics, after_families = extract_summary_metrics(run.summary)
+        after_metrics, after_families = extract_candidate_metrics(run.summary)
         for name in METRIC_NAMES:
             metrics[name] += after_metrics[name] - before_metrics[name]
         for family in DEFAULT_REQUIRED_FAMILIES:
@@ -1057,7 +1161,7 @@ def _snapshot_from_runs(
             continue
         try:
             if item.rung.index == final_rung_index:
-                metrics, families = extract_summary_metrics(run.summary)
+                metrics, families = extract_candidate_metrics(run.summary)
             else:
                 metrics, families = _paired_delta_estimate(
                     runs=[
@@ -1292,7 +1396,11 @@ def execute_search(
         ),
         "selected_seed_states": selected_states,
         "metric_extraction_policy": {
-            "ir_metrics": "learned_ir_view_with_family_macro_fallback",
+            "candidate_metrics": (
+                "projection_after_cross_checked_with_state_versioned_snapshot"
+            ),
+            "paired_baseline": "projection_before_from_the_same_optimizer_cycle",
+            "ir_metrics": "learned_ir_projection_objective",
             "family_autoencoder_metrics": (
                 "observed_family_value_else_global_validation_broadcast"
             ),

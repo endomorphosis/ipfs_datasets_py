@@ -19,6 +19,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hparam_executi
     _trial_command,
     build_fidelity_profiles,
     build_scheduler_from_baseline,
+    extract_candidate_metrics,
     extract_rollout_baseline_metrics,
     extract_summary_metrics,
     main,
@@ -78,6 +79,78 @@ def _summary(offset: float = 0.0) -> dict[str, object]:
             "view_family_metrics": {
                 family: _family_row(offset) for family in DEFAULT_REQUIRED_FAMILIES
             }
+        },
+    }
+
+
+def _attach_promoted_snapshot(
+    candidate: dict[str, object],
+    baseline: dict[str, object],
+) -> None:
+    candidate["latest_rollout_baseline_snapshot"] = {
+        "validation": baseline["latest_autoencoder_validation"],
+        "learned_ir_view_validation": baseline["latest_learned_ir_validation"],
+        "legal_ir_view_family_validation": baseline[
+            "latest_legal_ir_view_family_validation"
+        ],
+    }
+    validation = candidate["latest_autoencoder_validation"]
+    learned = candidate["latest_learned_ir_validation"]
+    baseline_validation = baseline["latest_autoencoder_validation"]
+    baseline_learned = baseline["latest_learned_ir_validation"]
+
+    def projection_point(
+        autoencoder: dict[str, float],
+        learned_ir: dict[str, float],
+    ) -> dict[str, object]:
+        return {
+            "cross_entropy_loss": autoencoder["cross_entropy_loss"],
+            "embedding_cosine_similarity": autoencoder["cosine_similarity"],
+            "legal_ir_losses": {
+                "legal_ir_view_cross_entropy_loss": learned_ir[
+                    "view_cross_entropy_loss"
+                ],
+                "legal_ir_view_family_cosine_gap_loss": 1.0
+                - learned_ir["view_cosine_similarity"],
+            },
+        }
+
+    candidate["latest_feature_projection_report"] = {
+        "before": projection_point(baseline_validation, baseline_learned),
+        "after": projection_point(validation, learned),
+    }
+    candidate["latest_before_legal_ir_view_family_validation"] = baseline[
+        "latest_legal_ir_view_family_validation"
+    ]
+    candidate["latest_promoted_snapshot_complete"] = True
+    candidate["latest_published_snapshot"] = {
+        "sequence": 1,
+        "versions": {"state_version": "state-v1"},
+    }
+    candidate["latest_promoted_snapshot_evaluation"] = {
+        "error": "",
+        "sequence": 1,
+        "status": "succeeded",
+        "versions": {"state_version": "state-v1"},
+        "metrics": {
+            "aggregate": {"complete": True},
+            "snapshot_complete": True,
+            "validation": {
+                "cross_entropy_loss": validation["cross_entropy_loss"],
+                "cosine_similarity": validation["cosine_similarity"],
+                "legal_ir_losses": {
+                    "legal_ir_view_cross_entropy_loss": learned[
+                        "view_cross_entropy_loss"
+                    ],
+                    "legal_ir_view_family_cosine_gap_loss": 1.0
+                    - learned["view_cosine_similarity"],
+                },
+            },
+            "promotion": {
+                "view_family_validation": candidate[
+                    "latest_legal_ir_view_family_validation"
+                ]
+            },
         },
     }
 
@@ -212,15 +285,15 @@ def test_early_rung_estimate_uses_paired_delta_anchored_to_full_baseline(
     baseline_summary = _summary()
     baseline_metrics, baseline_families = extract_summary_metrics(baseline_summary)
     candidate_summary = _summary(0.02)
-    candidate_summary["latest_rollout_baseline_snapshot"] = {
-        "validation": baseline_summary["latest_autoencoder_validation"],
-        "learned_ir_view_validation": baseline_summary[
-            "latest_learned_ir_validation"
-        ],
-        "legal_ir_view_family_validation": baseline_summary[
-            "latest_legal_ir_view_family_validation"
-        ],
-    }
+    _attach_promoted_snapshot(candidate_summary, baseline_summary)
+    # The daemon's legacy top-level fields may be stale after projection.  The
+    # state-versioned projection/snapshot pair must remain the ranking source.
+    candidate_summary["latest_autoencoder_validation"] = baseline_summary[
+        "latest_autoencoder_validation"
+    ]
+    candidate_summary["latest_learned_ir_validation"] = baseline_summary[
+        "latest_learned_ir_validation"
+    ]
     profile = FidelityProfile(0, "unit", (11,), 1, 1, 600)
     run = SeedRun(
         candidate_id="candidate",
@@ -241,12 +314,17 @@ def test_early_rung_estimate_uses_paired_delta_anchored_to_full_baseline(
     before_metrics, _before_families = extract_rollout_baseline_metrics(
         candidate_summary
     )
+    candidate_metrics, _candidate_families = extract_candidate_metrics(
+        candidate_summary
+    )
     estimated_metrics, estimated_families = _paired_delta_estimate(
         runs=[run],
         baseline_metrics=baseline_metrics,
         baseline_families=baseline_families,
     )
     assert before_metrics == baseline_metrics
+    assert candidate_metrics["ir_cross_entropy_loss"] == pytest.approx(0.78)
+    assert candidate_metrics["ir_cosine_similarity"] == pytest.approx(0.72)
     assert estimated_metrics["ir_cross_entropy_loss"] == pytest.approx(0.78)
     assert estimated_metrics["ir_cosine_similarity"] == pytest.approx(0.72)
     assert estimated_families["deontic"]["ir_cross_entropy_loss"] == pytest.approx(
