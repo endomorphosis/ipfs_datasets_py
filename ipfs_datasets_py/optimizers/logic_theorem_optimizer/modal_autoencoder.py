@@ -1685,6 +1685,23 @@ class ModalAutoencoderTrainingState:
             ),
         }
 
+    def distill_legacy_embedding_tails(
+        self,
+        teacher: "ModalAutoencoderTrainingState",
+        **kwargs: Any,
+    ) -> Any:
+        """Fit separate legacy-teacher adapters with this state as student."""
+
+        from .modal_autoencoder_legacy_distillation import (
+            distill_legacy_embedding_tails,
+        )
+
+        return distill_legacy_embedding_tails(
+            teacher,
+            self,
+            **kwargs,
+        )
+
     def low_rank_shadow_report(
         self,
         *,
@@ -3888,6 +3905,8 @@ class AdaptiveModalAutoencoder:
         proof_head_abstention_threshold: float = 0.55,
         proof_feedback_version_fingerprint: str = "",
         compute_device: str = "auto",
+        legacy_embedding_adapters: Optional[Any] = None,
+        legacy_distillation_adapters: Optional[Any] = None,
     ) -> None:
         self.state = state or ModalAutoencoderTrainingState()
         self.initial_embedding_scale = float(initial_embedding_scale)
@@ -4244,6 +4263,22 @@ class AdaptiveModalAutoencoder:
         self._cuda_resident_projection_state: Any = None
         self._cuda_resident_proof_state: Any = None
         self._cuda_residency_reports: List[Dict[str, Any]] = []
+        self._legacy_embedding_adapters: Optional[Any] = None
+        if (
+            legacy_embedding_adapters is not None
+            and legacy_distillation_adapters is not None
+        ):
+            raise ValueError(
+                "provide only one of legacy_embedding_adapters and "
+                "legacy_distillation_adapters"
+            )
+        effective_legacy_adapters = (
+            legacy_embedding_adapters
+            if legacy_embedding_adapters is not None
+            else legacy_distillation_adapters
+        )
+        if effective_legacy_adapters is not None:
+            self.attach_legacy_embedding_adapters(effective_legacy_adapters)
 
     def evaluate(
         self,
@@ -4595,6 +4630,70 @@ class AdaptiveModalAutoencoder:
             "target_family_distribution": _observed_family_distribution(sample),
             "embedding_projection": self._decoded_for(sample, use_sample_memory=use_sample_memory),
         }
+
+    @property
+    def legacy_embedding_adapters(self) -> Optional[Any]:
+        """Return the separately owned legacy-teacher adapter bundle, if any."""
+
+        return self._legacy_embedding_adapters
+
+    def attach_legacy_embedding_adapters(self, bundle: Any) -> Dict[str, Any]:
+        """Attach a bounded adapter bundle without merging it into model state.
+
+        The import is local to keep the core autoencoder usable in minimal
+        environments and to avoid a module import cycle.
+        """
+
+        from .modal_autoencoder_legacy_distillation import (
+            LegacyEmbeddingAdapterBundle,
+        )
+
+        if not isinstance(bundle, LegacyEmbeddingAdapterBundle):
+            raise TypeError(
+                "legacy_embedding_adapters must be a "
+                "LegacyEmbeddingAdapterBundle"
+            )
+        if (
+            bundle.lineage.student_architecture
+            != self.state.architecture_version
+        ):
+            raise ValueError(
+                "legacy adapter student architecture does not match "
+                "autoencoder state"
+            )
+        if not bundle.zero_influence and not bundle.promotion_allowed:
+            raise ValueError(
+                "nonzero legacy adapter influence requires a passing "
+                "lineage-bound multi-seed promotion report"
+            )
+        object.__setattr__(self, "_legacy_embedding_adapters", bundle)
+        return bundle.report()
+
+    def detach_legacy_embedding_adapters(self) -> Optional[Any]:
+        """Detach and return the bundle without changing student parameters."""
+
+        previous = self._legacy_embedding_adapters
+        object.__setattr__(self, "_legacy_embedding_adapters", None)
+        return previous
+
+    attach_legacy_distillation_adapters = attach_legacy_embedding_adapters
+    detach_legacy_distillation_adapters = detach_legacy_embedding_adapters
+
+    def legacy_embedding_adapter_report(self) -> Dict[str, Any]:
+        """Return a key-free report including the exact zero-influence mode."""
+
+        bundle = self._legacy_embedding_adapters
+        if bundle is None:
+            return {
+                "adapter_count": 0,
+                "attached": False,
+                "direct_bulk_embedding_replacement": False,
+                "sample_memory_included": False,
+                "zero_influence": True,
+            }
+        return {"attached": True, **bundle.report()}
+
+    legacy_distillation_adapter_report = legacy_embedding_adapter_report
 
     def decode(self, encoded: Mapping[str, object]) -> List[float]:
         """Decode the intermediate representation into an embedding vector."""
@@ -8289,6 +8388,11 @@ class AdaptiveModalAutoencoder:
             use_sample_memory=use_sample_memory,
         )
         adjustment = self._feature_embedding_adjustment(sample, dimensions=len(base))
+        legacy_tail_adjustment = self._legacy_embedding_tail_adjustment(
+            sample,
+            dimensions=len(base),
+            use_sample_memory=use_sample_memory,
+        )
         candidate = [
             (
                 base_value
@@ -8305,8 +8409,9 @@ class AdaptiveModalAutoencoder:
                 + joint_value
                 + view_value
                 + adjustment_value
+                + legacy_tail_value
             )
-            for base_value, compiler_quality_value, logic_signature_value, round_trip_signal_value, decompiler_plan_value, predicate_argument_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value in zip(
+            for base_value, compiler_quality_value, logic_signature_value, round_trip_signal_value, decompiler_plan_value, predicate_argument_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value, legacy_tail_value in zip(
                 base,
                 compiler_quality_adjustment,
                 logic_signature_adjustment,
@@ -8321,6 +8426,7 @@ class AdaptiveModalAutoencoder:
                 family_legal_ir_view_adjustment,
                 legal_ir_view_adjustment,
                 adjustment,
+                legacy_tail_adjustment,
             )
         ]
         return self._reconstruction_safe_projection(
@@ -8328,6 +8434,146 @@ class AdaptiveModalAutoencoder:
             base,
             candidate,
         )
+
+    def _legacy_embedding_tail_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+        use_sample_memory: bool,
+    ) -> List[float]:
+        """Apply separately owned legacy-tail adapters to current activations.
+
+        The early zero-influence return is intentionally exact: no feature
+        extraction, teacher state, adapter reconstruction, or floating-point
+        addition occurs in the accepted-state baseline.
+        """
+
+        bundle = self._legacy_embedding_adapters
+        if bundle is None or bundle.zero_influence:
+            return [0.0 for _ in range(dimensions)]
+        if not bundle.promotion_allowed:
+            raise RuntimeError(
+                "unpromoted legacy adapter attempted nonzero runtime influence"
+            )
+        adapters = bundle.adapters
+        adjustment = [0.0 for _ in range(dimensions)]
+
+        def add(
+            field_name: str,
+            distribution: Mapping[str, float],
+            scale: float,
+        ) -> None:
+            if field_name not in adapters or scale <= 0.0:
+                return
+            weighted = {
+                str(key): max(0.0, float(weight)) * float(scale)
+                for key, weight in distribution.items()
+                if float(weight) > 0.0
+            }
+            values = bundle.adjustment_for(
+                field_name,
+                weighted,
+                dimensions=dimensions,
+            )
+            for index, value in enumerate(values):
+                adjustment[index] += float(value)
+
+        add(
+            "compiler_quality_embedding_weights",
+            self._compiler_quality_slot_distribution_for(sample),
+            self.compiler_quality_embedding_weight_scale,
+        )
+        add(
+            "logic_signature_embedding_weights",
+            self._logic_signature_distribution_for(sample),
+            self.logic_signature_embedding_weight_scale,
+        )
+        add(
+            "round_trip_signal_embedding_weights",
+            self._round_trip_signal_distribution_for(sample),
+            self.round_trip_signal_embedding_weight_scale,
+        )
+        add(
+            "decompiler_plan_embedding_weights",
+            self._decompiler_plan_distribution_for(sample),
+            self.decompiler_plan_embedding_weight_scale,
+        )
+        add(
+            "predicate_argument_embedding_weights",
+            self._predicate_argument_distribution_for(sample),
+            self.predicate_argument_embedding_weight_scale,
+        )
+        add(
+            "family_embedding_weights",
+            self._family_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.family_embedding_weight_scale,
+        )
+        add(
+            "semantic_slot_embedding_weights",
+            self._semantic_slot_distribution_for(sample),
+            self.semantic_slot_embedding_weight_scale,
+        )
+        add(
+            "family_semantic_slot_embedding_weights",
+            self._family_semantic_slot_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.family_semantic_slot_embedding_weight_scale,
+        )
+        add(
+            "semantic_slot_legal_ir_view_embedding_weights",
+            self._semantic_slot_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.semantic_slot_legal_ir_view_embedding_weight_scale,
+        )
+        add(
+            "family_semantic_slot_legal_ir_view_embedding_weights",
+            self._family_semantic_slot_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.family_semantic_slot_legal_ir_view_embedding_weight_scale,
+        )
+        add(
+            "family_legal_ir_view_embedding_weights",
+            self._family_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.family_legal_ir_view_embedding_weight_scale,
+        )
+        add(
+            "legal_ir_view_embedding_weights",
+            self._legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.legal_ir_view_embedding_weight_scale,
+        )
+        if "feature_embedding_weights" in adapters:
+            feature_keys = self._feature_keys_for(sample)
+            feature_adapter = adapters["feature_embedding_weights"]
+            active_feature_count = sum(
+                1 for feature in feature_keys if feature in feature_adapter.keys
+            )
+            feature_scale = (
+                1.0 / self._feature_activity_scale(active_feature_count)
+                if active_feature_count
+                else 0.0
+            )
+            add(
+                "feature_embedding_weights",
+                {feature: 1.0 for feature in feature_keys},
+                self.feature_embedding_weight_scale * feature_scale,
+            )
+        return adjustment
 
     def _reconstruction_safe_projection(
         self,
