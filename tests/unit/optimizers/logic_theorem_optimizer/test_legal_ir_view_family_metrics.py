@@ -169,6 +169,47 @@ def test_runner_projects_family_metrics_into_validation_report() -> None:
     ] == pytest.approx(0.84)
 
 
+def test_runner_attributes_bridge_adapter_metrics_to_canonical_families() -> None:
+    adapter_families = {
+        "modal_frame_logic": "frame_logic",
+        "deontic_norms": "deontic",
+        "fol_tdfol": "tdfol",
+        "cec_dcec": "cec",
+        "external_prover_router": "external_provers",
+    }
+    bridge_validation = {
+        "adapters": {
+            adapter: {
+                "cosine_similarity": 0.91,
+                "cross_entropy_loss": 0.12,
+                "evaluated_count": 4,
+                "reconstruction_loss": 0.08,
+                "source_copy_reward_hack_penalty": 0.0,
+                "symbolic_validity_penalty": 0.0,
+                "target_component": FAMILY_VIEWS[family],
+            }
+            for adapter, family in adapter_families.items()
+        }
+    }
+
+    report = runner.legal_ir_validation_view_family_metric_block(
+        compiler_ir_validation={},
+        logic_bridge_validation=bridge_validation,
+    )
+
+    for family in adapter_families.values():
+        metrics = report["view_family_metrics"][family]
+        assert metrics["sample_count"] == 4
+        assert metrics["ir_cross_entropy_loss"] == pytest.approx(0.12)
+        assert metrics["ir_cosine_similarity"] == pytest.approx(0.91)
+        assert metrics["reconstruction_success_rate"] == pytest.approx(0.92)
+        assert metrics["symbolic_validity_success_rate"] == pytest.approx(1.0)
+        assert {
+            "ir_cross_entropy_loss",
+            "ir_cosine_similarity",
+        }.issubset(metrics["observed_metrics"])
+
+
 def test_family_guardrail_regression_increases_training_objective() -> None:
     artifacts = [
         _artifact(family, 0) for family in LEGAL_IR_VIEW_FAMILIES

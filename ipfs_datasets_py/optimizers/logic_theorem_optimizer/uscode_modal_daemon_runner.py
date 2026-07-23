@@ -2676,23 +2676,128 @@ def learned_ir_metric_block(
     return attach_metric_lineage(block, lineage)
 
 
+def _compiler_ir_validation_with_bridge_family_metrics(
+    compiler_ir_validation: Optional[Mapping[str, Any]],
+    logic_bridge_validation: Optional[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Project measured bridge adapter metrics into canonical family rows."""
+
+    payload = copy.deepcopy(dict(compiler_ir_validation or {}))
+    bridge_adapters = (
+        logic_bridge_validation.get("adapters")
+        if isinstance(logic_bridge_validation, Mapping)
+        else None
+    )
+    if not isinstance(bridge_adapters, Mapping):
+        return payload
+    nested = payload.get("view_family_metrics")
+    if not isinstance(nested, Mapping):
+        nested = payload.get("legal_ir_view_family_metrics")
+    family_metrics: Dict[str, Dict[str, Any]] = {
+        str(family): dict(metrics)
+        for family, metrics in dict(nested or {}).items()
+        if isinstance(metrics, Mapping)
+    }
+
+    for adapter_name, adapter_metrics in bridge_adapters.items():
+        if not isinstance(adapter_metrics, Mapping):
+            continue
+        try:
+            evaluated_count = max(
+                0,
+                int(adapter_metrics.get("evaluated_count", 0) or 0),
+            )
+        except (TypeError, ValueError):
+            continue
+        if evaluated_count <= 0:
+            continue
+        family = legal_ir_view_family_name(
+            str(adapter_metrics.get("target_component") or adapter_name)
+        )
+        if family not in LEGAL_IR_VIEW_FAMILIES:
+            continue
+        row = dict(family_metrics.get(family) or {})
+        try:
+            row["sample_count"] = max(
+                int(row.get("sample_count", 0) or 0),
+                evaluated_count,
+            )
+        except (TypeError, ValueError):
+            row["sample_count"] = evaluated_count
+        observed = {
+            str(name)
+            for name in list(row.get("observed_metrics") or ())
+            if str(name)
+        }
+
+        def observe_bridge_metric(name: str, value: Any) -> None:
+            try:
+                numeric = float(value)
+            except (TypeError, ValueError):
+                return
+            if not math.isfinite(numeric):
+                return
+            row[name] = round(max(0.0, numeric), 12)
+            observed.add(name)
+
+        observe_bridge_metric(
+            "ir_cross_entropy_loss",
+            adapter_metrics.get("cross_entropy_loss"),
+        )
+        observe_bridge_metric(
+            "ir_cosine_similarity",
+            adapter_metrics.get("cosine_similarity"),
+        )
+        if "reconstruction_loss" in adapter_metrics:
+            observe_bridge_metric(
+                "reconstruction_success_rate",
+                1.0 - min(
+                    1.0,
+                    max(0.0, _float_or_zero(adapter_metrics["reconstruction_loss"])),
+                ),
+            )
+        if "source_copy_reward_hack_penalty" in adapter_metrics:
+            observe_bridge_metric(
+                "source_copy_penalty",
+                adapter_metrics["source_copy_reward_hack_penalty"],
+            )
+        if "symbolic_validity_penalty" in adapter_metrics:
+            observe_bridge_metric(
+                "symbolic_validity_success_rate",
+                1.0 - min(
+                    1.0,
+                    max(0.0, _float_or_zero(adapter_metrics["symbolic_validity_penalty"])),
+                ),
+            )
+        row["observed_metrics"] = sorted(observed)
+        family_metrics[family] = row
+
+    payload["view_family_metrics"] = family_metrics
+    return payload
+
+
 def legal_ir_validation_view_family_metric_block(
     *,
     compiler_ir_validation: Optional[Mapping[str, Any]] = None,
     autoencoder_validation: Optional[Any] = None,
     hammer_validation: Any = None,
+    logic_bridge_validation: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Return the production validation report split by canonical view family."""
 
+    compiler_payload = _compiler_ir_validation_with_bridge_family_metrics(
+        compiler_ir_validation,
+        logic_bridge_validation,
+    )
     block = legal_ir_view_family_metric_block(
-        ir_metrics=compiler_ir_validation,
+        ir_metrics=compiler_payload,
         autoencoder_metrics=autoencoder_validation,
         hammer_guidance=hammer_validation,
     )
     lineages: Dict[str, Any] = {}
     compiler_lineage = (
-        compiler_ir_validation.get("metric_lineage")
-        if isinstance(compiler_ir_validation, Mapping)
+        compiler_payload.get("metric_lineage")
+        if isinstance(compiler_payload, Mapping)
         else None
     )
     if isinstance(compiler_lineage, Mapping):
@@ -7680,6 +7785,7 @@ def rollout_baseline_snapshot(
         compiler_ir_validation=compiler_payload,
         autoencoder_validation=learned_payload,
         hammer_validation=hammer_validation,
+        logic_bridge_validation=bridge_payload,
     )
     resolved_failed_validation_count = int(
         failed_validation_count
@@ -21454,6 +21560,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     hammer_validation=dict(
                         daemon_hammer_guidance_cycle.get("hammer_metrics") or {}
                     ),
+                    logic_bridge_validation=bridge_ir_validation,
                 )
             )
             latest_compiler_ir_ce = _metric_value(
