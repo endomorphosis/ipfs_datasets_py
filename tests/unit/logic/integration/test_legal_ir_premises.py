@@ -82,10 +82,25 @@ def test_export_legal_ir_premises_combines_document_obligation_and_registry_fact
 
     assert "formula_fact_f1" in names
     assert "formula_exception_fact_f1" in names
+    assert "compiler_candidate_fact_f1_tdfol_temporal_anchor" in names
+    assert "compiler_candidate_fact_f1_dcec_happens" in names
+    assert "compiler_candidate_fact_f1_flogic_frame_role" in names
+    assert "compiler_candidate_fact_f1_deontic_obligation" in names
     assert "notice_exception_scope" in names
     assert any(name.startswith("obligation_context_lir-obligation-") for name in names)
     assert len(names) == len(premises)
     assert any(
         premise.metadata.get("source_module") == "legal_ir_theorem_registry"
         for premise in premises
+    )
+    formal_statements = {
+        premise.statement
+        for premise in premises
+        if premise.metadata.get("premise_kind") == "compiler_candidate_fact"
+    }
+    assert "temporal_anchor(event:provide_notice, time:shall)" in formal_statements
+    assert "happens(event:provide_notice, time:shall)" in formal_statements
+    assert (
+        "frame_role(frame:provide_notice, role:obligation, value:provide_notice)"
+        in formal_statements
     )

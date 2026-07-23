@@ -34,6 +34,7 @@ Environment variables (all optional):
 - ERGOAI_BINARY: explicit path to the ErgoAI executable/runErgo.sh.
 - IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT: root for downloaded native solver
   artifacts (default: ~/.local/share/ipfs_datasets_py/theorem-provers).
+- IPFS_DATASETS_PY_<SOLVER>_EXECUTABLE: explicit executable or launcher path.
 - IPFS_DATASETS_PY_<SOLVER>_INSTALL_COMMAND: platform-specific custom native
   installer override for APALACHE, TAMARIN, MAUDE, PROVERIF, CVC5, or COQ.
 - IPFS_DATASETS_PY_COQ_OPAM_ROOT: root of the isolated user-local Coq OPAM
@@ -64,7 +65,7 @@ from importlib import metadata as importlib_metadata
 from pathlib import Path
 from shlex import quote as shell_quote
 from shlex import split as shell_split
-from typing import Callable
+from typing import Callable, Sequence
 
 logger = logging.getLogger(__name__)
 DEFAULT_ERGOAI_GIT_URL = "https://github.com/ErgoAI/ErgoEngine.git"
@@ -76,13 +77,16 @@ DEFAULT_EXTERNAL_PROVER_ROOT = (
     Path.home() / ".local" / "share" / "ipfs_datasets_py" / "theorem-provers"
 )
 APALACHE_VERSION = "0.58.3"
-APALACHE_LINUX_X86_64_URL = (
+APALACHE_PORTABLE_URL = (
     "https://github.com/apalache-mc/apalache/releases/download/"
     "v0.58.3/apalache-0.58.3.tgz"
 )
-APALACHE_LINUX_X86_64_SHA256 = (
+APALACHE_PORTABLE_SHA256 = (
     "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
 )
+# Compatibility aliases retained for callers that imported the old names.
+APALACHE_LINUX_X86_64_URL = APALACHE_PORTABLE_URL
+APALACHE_LINUX_X86_64_SHA256 = APALACHE_PORTABLE_SHA256
 TAMARIN_VERSION = "1.12.0"
 TAMARIN_LINUX_X86_64_URL = (
     "https://github.com/tamarin-prover/tamarin-prover/releases/download/"
@@ -91,6 +95,26 @@ TAMARIN_LINUX_X86_64_URL = (
 TAMARIN_LINUX_X86_64_SHA256 = (
     "201be06f469e47cff554df6ca93db8366fc2c69d70c61fcbd1370a1074b469c6"
 )
+TAMARIN_SOURCE_URL = (
+    "https://github.com/tamarin-prover/tamarin-prover/archive/refs/tags/"
+    "1.12.0.tar.gz"
+)
+TAMARIN_SOURCE_SHA256 = (
+    "35f0262e770db3632fcb297deb6ecc2d7c724c693fecfe97892e8224fa161956"
+)
+STACK_VERSION = "3.11.1"
+STACK_RELEASES: dict[tuple[str, str], tuple[str, str]] = {
+    ("linux", "x86_64"): (
+        "https://github.com/commercialhaskell/stack/releases/download/v3.11.1/"
+        "stack-3.11.1-linux-x86_64.tar.gz",
+        "1fda71e657cd8d355625cc66b61b352699279dfee2664c014a392163bd19a952",
+    ),
+    ("linux", "aarch64"): (
+        "https://github.com/commercialhaskell/stack/releases/download/v3.11.1/"
+        "stack-3.11.1-linux-aarch64.tar.gz",
+        "1617ae9976a5cd38ad4daec583b026b589eb45d5482afb045cd4ca8c8d0de6d0",
+    ),
+}
 MAUDE_VERSION = "3.5.1"
 MAUDE_LINUX_X86_64_URL = (
     "https://github.com/maude-lang/Maude/releases/download/"
@@ -98,6 +122,30 @@ MAUDE_LINUX_X86_64_URL = (
 )
 MAUDE_LINUX_X86_64_SHA256 = (
     "72ed1ca87e3b3d0dfc6ee1436baf154bf04c45ff97d521bec040c5e8dfc8f92c"
+)
+MAUDE_DEBIAN_ARM64_URL = (
+    "https://deb.debian.org/debian/pool/main/m/maude/"
+    "maude_3.5.1-1+b1_arm64.deb"
+)
+MAUDE_DEBIAN_ARM64_SHA256 = (
+    "4ed71228ef698a6019ee011e54fbb04fe74145fce465e65838a6c92f743ef730"
+)
+# Tamarin 1.12 validates exact Maude releases rather than accepting every
+# version in an interval. In particular, Maude 3.2 is rejected while 3.2.1 is
+# accepted, so a simple minimum-version comparison is unsafe.
+TAMARIN_MAUDE_COMPATIBLE_VERSIONS = frozenset(
+    {
+        (2, 7, 1),
+        (3, 0),
+        (3, 1),
+        (3, 2, 1),
+        (3, 2, 2),
+        (3, 3),
+        (3, 3, 1),
+        (3, 4),
+        (3, 5),
+        (3, 5, 1),
+    }
 )
 PROVERIF_VERSION = "2.05"
 PROVERIF_SOURCE_URL = "https://proverif.inria.fr/proverif2.05.tar.gz"
@@ -107,27 +155,94 @@ PROVERIF_SOURCE_SHA256 = (
 ROCQ_VERSION = "9.1.1"
 ROCQ_OPAM_REPOSITORY = "https://rocq-prover.org/opam/released"
 LEAN_TOOLCHAIN = "v4.31.0"
-CVC5_VERSION = "1.3.2"
+CVC5_VERSION = "1.3.3"
 CVC5_RELEASES: dict[tuple[str, str], tuple[str, str]] = {
     ("linux", "x86_64"): (
-        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/"
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.3/"
         "cvc5-Linux-x86_64-static.zip",
-        "1060daaf507edef9d0a68e399cfc0e9038150bccb9e2d34d081d50a7687544d2",
+        "413f56f01f3a7374105c654581e67249eb66d4e430e748b17962d595cd4861b6",
     ),
     ("linux", "aarch64"): (
-        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/"
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.3/"
         "cvc5-Linux-arm64-static.zip",
-        "21bd93916b3214ba64538cbd82bb2f6650ab441c5781f6c83afd3707d78d79da",
+        "2572d01b142a6bfebdcb259f5a395f6228d2db5609f7dcc9a60851a5f1a58655",
     ),
     ("darwin", "x86_64"): (
-        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/"
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.3/"
         "cvc5-macOS-x86_64-static.zip",
-        "b4ab528a63592da89c81eb10e35167f1e6051fd2ad8969f4e6ec54e0708fe774",
+        "45e4156e9285162ae7e43504fa451ca2f618994f0d83fdd661d945f208d75f14",
     ),
     ("darwin", "arm64"): (
-        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.2/"
+        "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.3/"
         "cvc5-macOS-arm64-static.zip",
-        "172b6ff70662184725aedf64b0189a870cc7562aca1bad9cd0ec92f682edb3af",
+        "0ad2df5de1b35c0fda6afa9ca9f7b542a615c2137e1ec678a45deccdda1871b2",
+    ),
+}
+VAMPIRE_VERSION = "5.0.1"
+VAMPIRE_RELEASES: dict[tuple[str, str], tuple[str, str]] = {
+    ("linux", "x86_64"): (
+        "https://github.com/vprover/vampire/releases/download/v5.0.1/"
+        "vampire-Linux-X64.zip",
+        "6ff2f42ea7fb9753ee104efc3e623d5e39443190f7c82a63e1e1517bf9d2cde3",
+    ),
+    ("linux", "aarch64"): (
+        "https://github.com/vprover/vampire/releases/download/v5.0.1/"
+        "vampire-Linux-ARM64.zip",
+        "2fc419d3ac1eb075b4ceb6ce770242247507afd8c64f897799e479643f4b2c6b",
+    ),
+    ("darwin", "x86_64"): (
+        "https://github.com/vprover/vampire/releases/download/v5.0.1/"
+        "vampire-macOS-X64.zip",
+        "e252f1bf8c41f17f620a0009f8952809fc473a1250cad010fc1a8c43ae9af1a9",
+    ),
+    ("darwin", "arm64"): (
+        "https://github.com/vprover/vampire/releases/download/v5.0.1/"
+        "vampire-macOS-ARM64.zip",
+        "8c92e649fe7bc622a70000afbdf5a5c51007b384e2d8b8235c95474cc7a68f35",
+    ),
+}
+EPROVER_VERSION = "3.2.5"
+EPROVER_SOURCE_URL = (
+    "https://wwwlehre.dhbw-stuttgart.de/~sschulz/WORK/"
+    "E_DOWNLOAD/V_3.2/E.tgz"
+)
+EPROVER_SOURCE_SHA256 = (
+    "074c8e5fc3062476341ce790fd15ad8004d322d6b6627844bd2768a8830bd4ae"
+)
+OPAM_VERSION = "2.5.2"
+OPAM_RELEASES: dict[tuple[str, str], tuple[str, str]] = {
+    ("linux", "x86_64"): (
+        "https://github.com/ocaml/opam/releases/download/2.5.2/"
+        "opam-2.5.2-x86_64-linux",
+        "edfca2630c373b44b7ee1c2f81cd8dcf67468d0db57d6c02158de553ac63dbd4",
+    ),
+    ("linux", "aarch64"): (
+        "https://github.com/ocaml/opam/releases/download/2.5.2/"
+        "opam-2.5.2-arm64-linux",
+        "c4106ece84bcb60c68342573d2d6b4f0d6770ee088015c2216adc83d8854dcf9",
+    ),
+}
+ISABELLE_VERSION = "Isabelle2025-2"
+ISABELLE_RELEASES: dict[tuple[str, str], tuple[str, str]] = {
+    ("linux", "x86_64"): (
+        "https://isabelle.in.tum.de/website-Isabelle2025-2/dist/"
+        "Isabelle2025-2_linux.tar.gz",
+        "a20a507bc7c1270d8be96a9f3fbec06345387789d2dc2c4d3df6260d47bfb33c",
+    ),
+    ("linux", "aarch64"): (
+        "https://isabelle.in.tum.de/website-Isabelle2025-2/dist/"
+        "Isabelle2025-2_linux_arm.tar.gz",
+        "650a9669b4a087675afb34294d82ded2f0704d47d580dd9ed45cddc9f1764bdd",
+    ),
+    ("darwin", "x86_64"): (
+        "https://isabelle.in.tum.de/website-Isabelle2025-2/dist/"
+        "Isabelle2025-2_macos.tar.gz",
+        "8f187496e295f169952e944745af9e4ae00c9c1cd2ed4cadbcf7d898e444913e",
+    ),
+    ("darwin", "arm64"): (
+        "https://isabelle.in.tum.de/website-Isabelle2025-2/dist/"
+        "Isabelle2025-2_macos.tar.gz",
+        "8f187496e295f169952e944745af9e4ae00c9c1cd2ed4cadbcf7d898e444913e",
     ),
 }
 ProgressCallback = Callable[[str, str], None]
@@ -141,11 +256,58 @@ MANAGED_SOLVER_VERSIONS: dict[str, str] = {
     "maude": MAUDE_VERSION,
     "proverif": PROVERIF_VERSION,
     "cvc5": CVC5_VERSION,
+    "vampire": VAMPIRE_VERSION,
+    "eprover": EPROVER_VERSION,
     "lean": LEAN_TOOLCHAIN,
     "rocq": ROCQ_VERSION,
+    "isabelle": ISABELLE_VERSION,
     "z3": ">=4.12.0,<5.0.0",
     "symbolicai": ">=1.14.0,<2.0.0",
     "ergoai": "3.0",
+}
+
+PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
+    # Fast, architecture-portable routes used by every LegalIR Hammer run.
+    "legal_ir_core": ("z3", "cvc5", "cvc5_cli", "lean", "vampire", "eprover"),
+    # Candidate generation also needs the native F-logic authority. TDFOL and
+    # DCEC use in-process typed engines plus the core SMT/ATP portfolio.
+    "legal_ir_generation": (
+        "z3",
+        "cvc5",
+        "cvc5_cli",
+        "lean",
+        "vampire",
+        "eprover",
+        "ergoai",
+    ),
+    # Native engines attached to specific LegalIR families.
+    "legal_ir_specialists": (
+        "ergoai",
+        "apalache",
+        "maude",
+        "tamarin",
+        "proverif",
+    ),
+    # Reconstruction kernels are intentionally separate because first install
+    # can require a lengthy toolchain build.
+    "reconstruction": ("coq", "isabelle"),
+    # Explicit operator action only: this may download/build several gigabytes.
+    "legal_ir_full": (
+        "z3",
+        "cvc5",
+        "cvc5_cli",
+        "lean",
+        "vampire",
+        "eprover",
+        "ergoai",
+        "apalache",
+        "maude",
+        "tamarin",
+        "proverif",
+        "coq",
+        "isabelle",
+        "symbolicai",
+    ),
 }
 
 
@@ -210,6 +372,25 @@ def _prepend_external_prover_bin_to_path() -> None:
 
 
 def _which(cmd: str) -> str | None:
+    env_name = re.sub(r"[^A-Za-z0-9]+", "_", str(cmd)).strip("_").upper()
+    explicit = os.environ.get(f"IPFS_DATASETS_PY_{env_name}_EXECUTABLE")
+    if explicit:
+        candidate = Path(explicit).expanduser()
+        try:
+            if candidate.is_file() and os.access(str(candidate), os.X_OK):
+                return str(candidate)
+        except OSError:
+            pass
+
+    # Managed launchers are reviewed, checksummed, and architecture-specific.
+    # Prefer them over an unrelated same-named executable inherited through PATH.
+    managed = _external_prover_bin_dir() / cmd
+    try:
+        if managed.is_file() and os.access(str(managed), os.X_OK):
+            return str(managed)
+    except OSError:
+        pass
+
     found = shutil.which(cmd)
     if found:
         return found
@@ -229,7 +410,7 @@ def _read_version(executable: str | None) -> str:
     if executable is None:
         return ""
     version_pattern = re.compile(
-        r"(?:^|\b(?:version|proverif|tamarin-prover|lean|rocq|coq|maude|cvc5|apalache(?:-mc)?)\s*(?:is|,)?\s*)v?\d+\.\d+",
+        r"(?:^|\b(?:version|proverif|tamarin-prover|lean|rocq|coq|maude|cvc5|vampire|e(?:prover)?|apalache(?:-mc)?|isabelle)\s*(?:is|,)?\s*)v?\d+\.\d+",
         flags=re.IGNORECASE,
     )
     for arguments in (["--version"], ["-version"], ["version"]):
@@ -259,6 +440,8 @@ def _read_version(executable: str | None) -> str:
                 for marker in ("usage", "unknown option", "unrecognized option", "error:")
             ):
                 continue
+            if re.search(r"\bIsabelle\d{4}(?:-\d+)?\b", compact):
+                return compact
             # A few tools (notably ProVerif) return a non-zero status for an
             # unsupported flag but still print an authoritative version line.
             # Do not accept arbitrary output from those failed invocations.
@@ -290,8 +473,11 @@ def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
         ("maude", "maude", MAUDE_VERSION, None),
         ("proverif", "proverif", PROVERIF_VERSION, None),
         ("cvc5", "cvc5", CVC5_VERSION, None),
+        ("vampire", "vampire", VAMPIRE_VERSION, None),
+        ("eprover", "eprover", EPROVER_VERSION, None),
         ("lean", "lean", os.environ.get("IPFS_DATASETS_PY_LEAN_TOOLCHAIN", LEAN_TOOLCHAIN), None),
         ("rocq", _which("rocq") or _which("coqc"), ROCQ_VERSION, None),
+        ("isabelle", "isabelle", ISABELLE_VERSION, None),
         ("z3", "z3", MANAGED_SOLVER_VERSIONS["z3"], "z3-solver"),
         ("symbolicai", None, MANAGED_SOLVER_VERSIONS["symbolicai"], "symbolicai"),
         ("ergoai", _find_ergoai_binary(), MANAGED_SOLVER_VERSIONS["ergoai"], None),
@@ -395,7 +581,13 @@ def _safe_extract_zip(archive: Path, destination: Path) -> None:
         bundle.extractall(destination)
 
 
-def _write_launcher(name: str, executable: Path, *, environment: dict[str, str] | None = None) -> Path:
+def _write_launcher(
+    name: str,
+    executable: Path,
+    *,
+    environment: dict[str, str] | None = None,
+    arguments: Sequence[str] = (),
+) -> Path:
     """Create a user-local launcher that keeps solver dependencies discoverable."""
 
     bin_dir = _external_prover_bin_dir()
@@ -409,10 +601,14 @@ def _write_launcher(name: str, executable: Path, *, environment: dict[str, str] 
         if not key.isidentifier():
             raise ValueError(f"invalid launcher environment key: {key}")
         exports.append(f"export {key}={shell_quote(str(value))}\"${{{key}:+:${key}}}\"")
+    command = " ".join(
+        shell_quote(str(value))
+        for value in (str(executable), *(str(argument) for argument in arguments))
+    )
     launcher.write_text(
         "#!/bin/sh\nset -eu\n"
         + "\n".join(exports)
-        + f"\nexec {shell_quote(str(executable))} \"$@\"\n",
+        + f"\nexec {command} \"$@\"\n",
         encoding="utf-8",
     )
     launcher.chmod(0o755)
@@ -668,17 +864,55 @@ def _ensure_opam_binary(
     strict: bool,
     on_progress: ProgressCallback | None,
 ) -> str | None:
-    """Resolve OPAM, installing only when the caller explicitly permits it.
+    """Resolve OPAM, preferring a checksummed user-local binary.
 
     OPAM is a bootstrap dependency for the user-local Rocq and ProVerif
-    toolchains.  It is intentionally not installed during package import or a
-    normal proof run.  A caller using ``--allow-sudo`` receives stage messages
-    for the package-manager work rather than an apparent hang.
+    toolchains. It is intentionally not installed during package import. On
+    supported Linux architectures the official standalone binary avoids root
+    entirely; package-manager installation remains a fallback.
     """
 
     existing = _which("opam")
     if existing is not None:
         return existing
+
+    platform_key = _normalized_platform_key()
+    release = OPAM_RELEASES.get(platform_key)
+    if release is not None:
+        url, checksum = release
+        root = _external_prover_root()
+        artifact = root / "downloads" / f"opam-{OPAM_VERSION}-{platform_key[1]}"
+        executable = root / f"opam-{OPAM_VERSION}" / "opam"
+        if _download_release_artifact(
+            url,
+            artifact,
+            checksum,
+            strict=strict,
+            on_progress=on_progress,
+        ):
+            try:
+                executable.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(artifact, executable)
+                executable.chmod(0o755)
+                launcher = _write_launcher("opam", executable)
+                if _version_matches(str(launcher), OPAM_VERSION):
+                    _announce(
+                        f"Installed OPAM {OPAM_VERSION} user-locally at {launcher}.",
+                        on_progress,
+                        phase="installed",
+                    )
+                    return str(launcher)
+                raise RuntimeError(
+                    f"standalone OPAM binary did not report {OPAM_VERSION}"
+                )
+            except Exception as exc:
+                _announce(
+                    f"User-local OPAM installation failed: {exc}",
+                    on_progress,
+                    phase="failed",
+                )
+                if strict:
+                    raise
 
     profile = detect_platform_install_profile()
     packages = _package_names_for("opam", profile.package_manager)
@@ -1288,18 +1522,33 @@ def _install_coq_via_opam(
     switch_bin = root / switch / "bin"
     coqc = switch_bin / "coqc"
     coqtop = switch_bin / "coqtop"
-    if coqc.is_file() and not force:
-        _write_launcher(
-            "coqc",
-            coqc,
-            environment={"OPAMROOT": str(root), "OPAMSWITCH": switch},
-        )
-        if coqtop.is_file():
+    rocq = switch_bin / "rocq"
+
+    def write_compatibility_launchers() -> bool:
+        environment = {"OPAMROOT": str(root), "OPAMSWITCH": switch}
+        if coqc.is_file():
+            _write_launcher("coqc", coqc, environment=environment)
+            if coqtop.is_file():
+                _write_launcher("coqtop", coqtop, environment=environment)
+            return True
+        if rocq.is_file():
+            _write_launcher(
+                "coqc",
+                rocq,
+                arguments=("compile",),
+                environment=environment,
+            )
             _write_launcher(
                 "coqtop",
-                coqtop,
-                environment={"OPAMROOT": str(root), "OPAMSWITCH": switch},
+                rocq,
+                arguments=("repl",),
+                environment=environment,
             )
+            return True
+        return False
+
+    if (coqc.is_file() or rocq.is_file()) and not force:
+        write_compatibility_launchers()
         _announce(f"Coq is already available in user-local OPAM switch {switch}.", on_progress, phase="available")
         return _version_matches(_which("coqc"), ROCQ_VERSION)
 
@@ -1344,19 +1593,8 @@ def _install_coq_via_opam(
             env=env,
         ) != 0:
             raise RuntimeError("OPAM Rocq installation failed")
-        if not coqc.is_file():
-            raise RuntimeError("OPAM completed without a coqc binary")
-        _write_launcher(
-            "coqc",
-            coqc,
-            environment={"OPAMROOT": str(root), "OPAMSWITCH": switch},
-        )
-        if coqtop.is_file():
-            _write_launcher(
-                "coqtop",
-                coqtop,
-                environment={"OPAMROOT": str(root), "OPAMSWITCH": switch},
-            )
+        if not write_compatibility_launchers():
+            raise RuntimeError("OPAM completed without a coqc or rocq binary")
         _announce(f"Installed Rocq {ROCQ_VERSION} in user-local OPAM switch {switch}.", on_progress, phase="installed")
         if not _version_matches(_which("coqc"), ROCQ_VERSION):
             raise RuntimeError(f"OPAM installed Rocq but coqc does not report {ROCQ_VERSION}")
@@ -1513,7 +1751,7 @@ def _proverif_build_environment(
 def ensure_apalache(
     *, yes: bool, strict: bool, on_progress: ProgressCallback | None = None, force: bool = False
 ) -> bool:
-    """Ensure the pinned Apalache binary is available in a user-local root."""
+    """Ensure the pinned JVM-based Apalache distribution is user-local."""
 
     existing = _which("apalache-mc") or _which("apalache")
     if existing and not force:
@@ -1524,10 +1762,10 @@ def ensure_apalache(
         return False
     if _run_custom_solver_installer("apalache", strict=strict, on_progress=on_progress):
         return _which("apalache-mc") is not None or _which("apalache") is not None
-    if not _linux_x86_64():
+    if platform.system().lower() not in {"linux", "darwin"}:
         _announce(
-            "Apalache automatic artifact installation currently supports Linux x86_64. "
-            "Set IPFS_DATASETS_PY_APALACHE_INSTALL_COMMAND for this platform.",
+            "The portable Apalache launcher supports Linux and macOS. Set "
+            "IPFS_DATASETS_PY_APALACHE_INSTALL_COMMAND for this platform.",
             on_progress,
             phase="blocked",
         )
@@ -1545,9 +1783,9 @@ def ensure_apalache(
     destination = root / f"apalache-{APALACHE_VERSION}"
     try:
         if not _download_release_artifact(
-            APALACHE_LINUX_X86_64_URL,
+            APALACHE_PORTABLE_URL,
             archive,
-            APALACHE_LINUX_X86_64_SHA256,
+            APALACHE_PORTABLE_SHA256,
             strict=strict,
             on_progress=on_progress,
         ):
@@ -1567,6 +1805,192 @@ def ensure_apalache(
         return False
 
 
+def _numeric_version(value: str) -> tuple[int, ...]:
+    match = re.search(r"\b(\d+(?:\.\d+)+)\b", str(value or ""))
+    if not match:
+        return ()
+    return tuple(int(part) for part in match.group(1).split("."))
+
+
+def _maude_is_tamarin_compatible(executable: str | None) -> bool:
+    observed = _numeric_version(_read_version(executable))
+    return observed in TAMARIN_MAUDE_COMPATIBLE_VERSIONS
+
+
+def _install_pinned_debian_maude_arm64(
+    destination: Path,
+    *,
+    strict: bool,
+    on_progress: ProgressCallback | None,
+) -> bool:
+    """Overlay Debian's pinned ARM64 Maude on the local dependency payload."""
+
+    if platform.system().lower() != "linux" or platform.machine().lower() not in {
+        "aarch64",
+        "arm64",
+    }:
+        return False
+    root = _external_prover_root()
+    archive = root / "downloads" / "maude_3.5.1-1+b1_arm64.deb"
+    _announce(
+        "The distro Maude release is not accepted by Tamarin; installing "
+        "pinned Debian ARM64 Maude 3.5.1.",
+        on_progress,
+    )
+    if not _download_release_artifact(
+        MAUDE_DEBIAN_ARM64_URL,
+        archive,
+        MAUDE_DEBIAN_ARM64_SHA256,
+        strict=strict,
+        on_progress=on_progress,
+    ):
+        return False
+    if _run(
+        ["dpkg-deb", "--extract", str(archive), str(destination)],
+        check=False,
+    ) != 0:
+        if strict:
+            raise RuntimeError("could not extract pinned Debian ARM64 Maude package")
+        return False
+    return True
+
+
+def _apt_package_is_installed(package: str) -> bool:
+    try:
+        completed = subprocess.run(
+            ["dpkg-query", "-W", "-f=${db:Status-Status}", package],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return completed.returncode == 0 and completed.stdout.strip() == "installed"
+
+
+def _apt_direct_dependencies(package: str) -> list[str]:
+    try:
+        completed = subprocess.run(
+            ["apt-cache", "depends", package],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if completed.returncode != 0:
+        return []
+    dependencies: list[str] = []
+    for line in completed.stdout.splitlines():
+        match = re.match(r"\s*(?:Pre)?Depends:\s*<?([A-Za-z0-9+.-]+)>?", line)
+        if match:
+            dependencies.append(match.group(1))
+    return list(dict.fromkeys(dependencies))
+
+
+def _install_maude_from_apt_payload(
+    *,
+    strict: bool,
+    on_progress: ProgressCallback | None,
+) -> bool:
+    """Extract a repository-verified distro package without requiring root."""
+
+    if _which("apt-get") is None or _which("dpkg-deb") is None:
+        return False
+    root = _external_prover_root()
+    destination = root / "maude-distro"
+    packages = ["maude"]
+    packages.extend(
+        dependency
+        for dependency in _apt_direct_dependencies("maude")
+        if not _apt_package_is_installed(dependency)
+    )
+    try:
+        with tempfile.TemporaryDirectory(prefix="ipfs-maude-") as temp:
+            download_dir = Path(temp)
+            _announce(
+                "Downloading the signed distro Maude package and missing runtime "
+                f"dependencies for {platform.machine()}.",
+                on_progress,
+            )
+            if _run(
+                ["apt-get", "download", *packages],
+                check=False,
+                cwd=download_dir,
+            ) != 0:
+                raise RuntimeError("apt-get download failed")
+            archives = sorted(download_dir.glob("*.deb"))
+            if not archives:
+                raise RuntimeError("apt-get produced no Maude package archives")
+            if destination.exists():
+                shutil.rmtree(destination)
+            destination.mkdir(parents=True, exist_ok=True)
+            for archive in archives:
+                if _run(
+                    ["dpkg-deb", "--extract", str(archive), str(destination)],
+                    check=False,
+                ) != 0:
+                    raise RuntimeError(f"could not extract {archive.name}")
+
+        executable = destination / "usr" / "bin" / "maude"
+        if not executable.is_file():
+            candidates = [
+                path
+                for path in destination.rglob("maude")
+                if path.is_file() and os.access(path, os.X_OK)
+            ]
+            if len(candidates) != 1:
+                raise RuntimeError("distro package did not contain one Maude executable")
+            executable = candidates[0]
+        library_dirs = sorted(
+            {
+                str(path)
+                for root_name in ("lib", "usr/lib")
+                for path in (destination / root_name).glob("*-linux-gnu")
+                if path.is_dir()
+            }
+        )
+        environment = {
+            "MAUDE_LIB": str(destination / "usr" / "share" / "maude"),
+        }
+        if library_dirs:
+            environment["LD_LIBRARY_PATH"] = os.pathsep.join(library_dirs)
+        launcher = _write_launcher("maude", executable, environment=environment)
+        if (
+            not _maude_is_tamarin_compatible(str(launcher))
+            and _install_pinned_debian_maude_arm64(
+                destination,
+                strict=strict,
+                on_progress=on_progress,
+            )
+        ):
+            executable = destination / "usr" / "bin" / "maude"
+            launcher = _write_launcher("maude", executable, environment=environment)
+        if not _maude_is_tamarin_compatible(str(launcher)):
+            observed = _read_version(str(launcher)) or "unknown"
+            raise RuntimeError(
+                f"installed Maude {observed} is not accepted by Tamarin "
+                f"{TAMARIN_VERSION}"
+            )
+        _announce(
+            f"Installed a Tamarin-compatible Maude user-locally at {launcher}.",
+            on_progress,
+            phase="installed",
+        )
+        return True
+    except Exception as exc:
+        _announce(
+            f"User-local distro Maude installation failed: {exc}",
+            on_progress,
+            phase="failed",
+        )
+        if strict:
+            raise
+        return False
+
+
 def ensure_maude(
     *, yes: bool, strict: bool, on_progress: ProgressCallback | None = None, force: bool = False
 ) -> bool:
@@ -1574,16 +1998,32 @@ def ensure_maude(
 
     existing = _which("maude")
     if existing and not force:
-        _announce(f"Maude is already available at {existing}", on_progress, phase="available")
-        return True
+        if _maude_is_tamarin_compatible(existing):
+            _announce(
+                f"A Tamarin-compatible Maude is already available at {existing}",
+                on_progress,
+                phase="available",
+            )
+            return True
+        _announce(
+            f"Maude at {existing} is not accepted by Tamarin {TAMARIN_VERSION}; "
+            "repairing the managed runtime.",
+            on_progress,
+            phase="installing",
+        )
     if not yes:
         _announce("Maude is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
         return False
     if _run_custom_solver_installer("maude", strict=strict, on_progress=on_progress):
         return _which("maude") is not None
     if not _linux_x86_64():
+        if platform.system().lower() == "linux" and _install_maude_from_apt_payload(
+            strict=strict,
+            on_progress=on_progress,
+        ):
+            return True
         _announce(
-            "Maude automatic artifact installation currently supports Linux x86_64. "
+            "No native Maude artifact or user-local distro package is available. "
             "Set IPFS_DATASETS_PY_MAUDE_INSTALL_COMMAND for this platform.",
             on_progress,
             phase="blocked",
@@ -1617,6 +2057,165 @@ def ensure_maude(
         return False
 
 
+def _ensure_stack_binary(
+    *,
+    strict: bool,
+    on_progress: ProgressCallback | None,
+) -> str | None:
+    existing = _which("stack")
+    if existing is not None:
+        return existing
+    platform_key = _normalized_platform_key()
+    release = STACK_RELEASES.get(platform_key)
+    if release is None:
+        _announce(
+            "Tamarin source installation requires Haskell Stack, and no managed "
+            f"Stack artifact is registered for {platform_key[0]}/{platform_key[1]}.",
+            on_progress,
+            phase="blocked",
+        )
+        return None
+    url, checksum = release
+    root = _external_prover_root()
+    archive = root / "downloads" / f"stack-{STACK_VERSION}-{platform_key[1]}.tar.gz"
+    destination = root / f"stack-{STACK_VERSION}-{platform_key[1]}"
+    try:
+        if not _download_release_artifact(
+            url,
+            archive,
+            checksum,
+            strict=strict,
+            on_progress=on_progress,
+        ):
+            return None
+        _safe_extract_tar(archive, destination)
+        candidates = [
+            path
+            for path in destination.rglob("stack")
+            if path.is_file() and os.access(path, os.X_OK)
+        ]
+        if len(candidates) != 1:
+            raise RuntimeError("Stack archive did not contain exactly one executable")
+        launcher = _write_launcher("stack", candidates[0])
+        _announce(
+            f"Installed Haskell Stack {STACK_VERSION} user-locally.",
+            on_progress,
+            phase="installed",
+        )
+        return str(launcher)
+    except Exception as exc:
+        _announce(f"Stack installation failed: {exc}", on_progress, phase="failed")
+        if strict:
+            raise
+        return None
+
+
+def _install_tamarin_from_source(
+    *,
+    strict: bool,
+    on_progress: ProgressCallback | None,
+) -> bool:
+    """Build pinned Tamarin source on architectures without a release binary."""
+
+    stack = _ensure_stack_binary(strict=strict, on_progress=on_progress)
+    if stack is None:
+        return False
+    if _which("npm") is None:
+        _announce(
+            "Tamarin's source release requires npm to build its bundled frontend.",
+            on_progress,
+            phase="blocked",
+        )
+        return False
+    root = _external_prover_root()
+    archive = root / "downloads" / f"tamarin-prover-{TAMARIN_VERSION}-source.tar.gz"
+    source_root = root / f"tamarin-prover-{TAMARIN_VERSION}-source"
+    install_root = root / f"tamarin-prover-{TAMARIN_VERSION}"
+    try:
+        if not _download_release_artifact(
+            TAMARIN_SOURCE_URL,
+            archive,
+            TAMARIN_SOURCE_SHA256,
+            strict=strict,
+            on_progress=on_progress,
+        ):
+            return False
+        _safe_extract_tar(archive, source_root)
+        candidates = [
+            path
+            for path in source_root.iterdir()
+            if path.is_dir() and (path / "stack.yaml").is_file()
+        ]
+        if len(candidates) != 1:
+            raise RuntimeError("Tamarin archive did not contain one source directory")
+        source_dir = candidates[0]
+        frontend = source_dir / "frontend"
+        _announce(
+            "Building Tamarin's static frontend assets.",
+            on_progress,
+        )
+        if _run(["npm", "install"], check=False, cwd=frontend) != 0:
+            raise RuntimeError("Tamarin frontend dependency installation failed")
+        if _run(["npm", "run", "build"], check=False, cwd=frontend) != 0:
+            raise RuntimeError("Tamarin frontend build failed")
+        for name in (
+            "intdot-graph.es.js",
+            "intdot-staticgraph.es.js",
+            "intdot-dynamicgraph.es.js",
+            "intdot-style.css",
+        ):
+            source = frontend / "dist" / name
+            target_dir = source_dir / "data" / ("css" if name.endswith(".css") else "js")
+            if not source.is_file():
+                raise RuntimeError(f"Tamarin frontend did not produce {name}")
+            target_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target_dir / name)
+
+        env = os.environ.copy()
+        env["STACK_ROOT"] = str(root / "stack-root")
+        env["PATH"] = (
+            str(_external_prover_bin_dir())
+            + os.pathsep
+            + env.get("PATH", "")
+        )
+        install_bin = install_root / "bin"
+        install_bin.mkdir(parents=True, exist_ok=True)
+        _announce(
+            "Building Tamarin from source with Stack; the first ARM build can "
+            "take 30-60 minutes.",
+            on_progress,
+        )
+        if _run([stack, "setup"], check=False, cwd=source_dir, env=env) != 0:
+            raise RuntimeError("Tamarin Stack toolchain setup failed")
+        jobs = max(1, min(16, int(os.cpu_count() or 1)))
+        if _run(
+            [
+                stack,
+                "install",
+                f"--jobs={jobs}",
+                f"--local-bin-path={install_bin}",
+            ],
+            check=False,
+            cwd=source_dir,
+            env=env,
+        ) != 0:
+            raise RuntimeError("Tamarin Stack build failed")
+        executable = install_bin / "tamarin-prover"
+        if not executable.is_file():
+            raise RuntimeError("Tamarin source build produced no executable")
+        _write_launcher("tamarin-prover", executable)
+        return True
+    except Exception as exc:
+        _announce(
+            f"Tamarin source installation failed: {exc}",
+            on_progress,
+            phase="failed",
+        )
+        if strict:
+            raise
+        return False
+
+
 def _tamarin_accepts_maude(tamarin: str | None, maude: str | None) -> bool:
     """Check the Tamarin binary against the selected Maude runtime.
 
@@ -1638,10 +2237,16 @@ def _tamarin_accepts_maude(tamarin: str | None, maude: str | None) -> bool:
     except (OSError, subprocess.SubprocessError):
         return False
     output = "\n".join(value for value in (completed.stdout, completed.stderr) if value)
+    maude_match = re.search(
+        r"\bMaude(?:\s+version)?\s+(\d+(?:\.\d+)+)",
+        output,
+        re.IGNORECASE,
+    )
+    maude_version = _numeric_version(maude_match.group(1) if maude_match else "")
     return bool(
         completed.returncode == 0
         and TAMARIN_VERSION in output
-        and MAUDE_VERSION in output
+        and maude_version >= (2, 7, 1)
         and "checking installation: OK" in output
     )
 
@@ -1678,13 +2283,34 @@ def ensure_tamarin(
     if _run_custom_solver_installer("tamarin", strict=strict, on_progress=on_progress):
         return _which("tamarin-prover") is not None
     if not _linux_x86_64():
+        if not _install_tamarin_from_source(
+            strict=strict,
+            on_progress=on_progress,
+        ):
+            _announce(
+                "Tamarin has no native artifact for this platform and its source "
+                "build did not complete. Set IPFS_DATASETS_PY_TAMARIN_INSTALL_COMMAND "
+                "to use another managed build.",
+                on_progress,
+                phase="blocked",
+            )
+            return False
+        tamarin = _which("tamarin-prover")
+        maude = _which("maude")
+        if not _tamarin_accepts_maude(tamarin, maude):
+            _announce(
+                "The source-built Tamarin/Maude pair failed Tamarin's runtime check.",
+                on_progress,
+                phase="failed",
+            )
+            return False
         _announce(
-            "Tamarin automatic artifact installation currently supports Linux x86_64. "
-            "Set IPFS_DATASETS_PY_TAMARIN_INSTALL_COMMAND for this platform.",
+            f"Installed Tamarin {TAMARIN_VERSION} from source for "
+            f"{platform.machine()}.",
             on_progress,
-            phase="blocked",
+            phase="installed",
         )
-        return False
+        return True
 
     root = _external_prover_root()
     archive = root / "downloads" / f"tamarin-prover-{TAMARIN_VERSION}-linux64-ubuntu.tar.gz"
@@ -1799,8 +2425,14 @@ def ensure_cvc5_cli(
 
     existing = _which("cvc5")
     if existing and not force:
-        _announce(f"CVC5 CLI is already available at {existing}", on_progress, phase="available")
-        return True
+        if _read_version(existing):
+            _announce(f"CVC5 CLI is already available at {existing}", on_progress, phase="available")
+            return True
+        _announce(
+            f"Ignoring unusable CVC5 executable at {existing}; installing a platform-compatible release.",
+            on_progress,
+            phase="failed",
+        )
     if not yes:
         _announce("CVC5 CLI is missing; rerun with --yes or set IPFS_DATASETS_PY_CVC5_INSTALL_COMMAND.", on_progress, phase="blocked")
         return False
@@ -1813,7 +2445,9 @@ def ensure_cvc5_cli(
     if release is None:
         _announce(
             "CVC5 automatic artifact installation does not support "
-            f"{system}/{machine}. Set IPFS_DATASETS_PY_CVC5_INSTALL_COMMAND for this platform.",
+            f"{system}/{machine}. Set IPFS_DATASETS_PY_CVC5_EXECUTABLE to a "
+            "runnable native or WebAssembly launcher, or configure "
+            "IPFS_DATASETS_PY_CVC5_INSTALL_COMMAND for this platform.",
             on_progress,
             phase="blocked",
         )
@@ -1837,11 +2471,312 @@ def ensure_cvc5_cli(
         candidates = [path for path in destination.rglob("cvc5") if path.is_file()]
         if len(candidates) != 1:
             raise RuntimeError("CVC5 archive did not contain exactly one cvc5 executable")
-        _write_launcher("cvc5", candidates[0])
+        executable = candidates[0]
+        executable.chmod(executable.stat().st_mode | 0o111)
+        launcher = _write_launcher("cvc5", executable)
+        if not _version_matches(str(launcher), CVC5_VERSION):
+            raise RuntimeError(
+                f"CVC5 launcher did not execute as the pinned {CVC5_VERSION} release"
+            )
         _announce(f"Installed CVC5 CLI {CVC5_VERSION} user-locally.", on_progress, phase="installed")
-        return _which("cvc5") is not None
+        return True
     except Exception as exc:
         _announce(f"CVC5 CLI installation failed: {exc}", on_progress, phase="failed")
+        if strict:
+            raise
+        return False
+
+
+def _normalized_platform_key() -> tuple[str, str]:
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    machine = {
+        "amd64": "x86_64",
+        "arm64": "aarch64" if system == "linux" else "arm64",
+    }.get(machine, machine)
+    return system, machine
+
+
+def ensure_vampire(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+) -> bool:
+    """Install the pinned Vampire ATP from an official checksummed artifact."""
+
+    existing = _which("vampire")
+    if existing and not force and _version_matches(existing, VAMPIRE_VERSION):
+        _announce(
+            f"Vampire {VAMPIRE_VERSION} is already available at {existing}",
+            on_progress,
+            phase="available",
+        )
+        return True
+    if not yes:
+        _announce(
+            "Vampire is missing; rerun with --yes or configure "
+            "IPFS_DATASETS_PY_VAMPIRE_INSTALL_COMMAND.",
+            on_progress,
+            phase="blocked",
+        )
+        return False
+    if _run_custom_solver_installer(
+        "vampire", strict=strict, on_progress=on_progress
+    ):
+        return bool(_which("vampire"))
+
+    system, machine = _normalized_platform_key()
+    release = VAMPIRE_RELEASES.get((system, machine))
+    if release is None:
+        _announce(
+            f"No reviewed Vampire artifact exists for {system}/{machine}; set "
+            "IPFS_DATASETS_PY_VAMPIRE_INSTALL_COMMAND or "
+            "IPFS_DATASETS_PY_VAMPIRE_EXECUTABLE.",
+            on_progress,
+            phase="blocked",
+        )
+        return False
+    url, sha256 = release
+    root = _external_prover_root()
+    archive = root / "downloads" / f"vampire-{VAMPIRE_VERSION}-{system}-{machine}.zip"
+    destination = root / f"vampire-{VAMPIRE_VERSION}-{system}-{machine}"
+    try:
+        if not _download_release_artifact(
+            url,
+            archive,
+            sha256,
+            strict=strict,
+            on_progress=on_progress,
+        ):
+            return False
+        _announce(
+            f"Extracting Vampire {VAMPIRE_VERSION} into {destination}",
+            on_progress,
+        )
+        _safe_extract_zip(archive, destination)
+        candidates = [
+            path
+            for path in destination.rglob("vampire")
+            if path.is_file()
+        ]
+        if len(candidates) != 1:
+            raise RuntimeError(
+                "Vampire archive did not contain exactly one vampire executable"
+            )
+        executable = candidates[0]
+        executable.chmod(executable.stat().st_mode | 0o111)
+        launcher = _write_launcher("vampire", executable)
+        if not _version_matches(str(launcher), VAMPIRE_VERSION):
+            raise RuntimeError(
+                f"Vampire launcher did not execute as {VAMPIRE_VERSION}"
+            )
+        _announce(
+            f"Installed Vampire {VAMPIRE_VERSION} user-locally.",
+            on_progress,
+            phase="installed",
+        )
+        return True
+    except Exception as exc:
+        _announce(f"Vampire installation failed: {exc}", on_progress, phase="failed")
+        if strict:
+            raise
+        return False
+
+
+def ensure_eprover(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+) -> bool:
+    """Build the pinned E prover source distribution into a user-local root."""
+
+    existing = _which("eprover")
+    if existing and not force and _version_matches(existing, EPROVER_VERSION):
+        _announce(
+            f"E prover {EPROVER_VERSION} is already available at {existing}",
+            on_progress,
+            phase="available",
+        )
+        return True
+    if not yes:
+        _announce(
+            "E prover is missing; rerun with --yes or configure "
+            "IPFS_DATASETS_PY_EPROVER_INSTALL_COMMAND.",
+            on_progress,
+            phase="blocked",
+        )
+        return False
+    if _run_custom_solver_installer(
+        "eprover", strict=strict, on_progress=on_progress
+    ):
+        return bool(_which("eprover"))
+    missing_tools = [tool for tool in ("make", "cc") if _which(tool) is None]
+    if missing_tools:
+        _announce(
+            "E prover source build requires: " + ", ".join(missing_tools),
+            on_progress,
+            phase="blocked",
+        )
+        return False
+
+    root = _external_prover_root()
+    archive = root / "downloads" / f"eprover-{EPROVER_VERSION}.tgz"
+    source_root = root / f"eprover-{EPROVER_VERSION}-source"
+    install_root = root / f"eprover-{EPROVER_VERSION}"
+    try:
+        if not _download_release_artifact(
+            EPROVER_SOURCE_URL,
+            archive,
+            EPROVER_SOURCE_SHA256,
+            strict=strict,
+            on_progress=on_progress,
+        ):
+            return False
+        _announce(
+            f"Extracting E prover {EPROVER_VERSION} into {source_root}",
+            on_progress,
+        )
+        _safe_extract_tar(archive, source_root)
+        candidates = [
+            path
+            for path in source_root.iterdir()
+            if path.is_dir() and (path / "configure").is_file()
+        ]
+        if len(candidates) != 1:
+            raise RuntimeError(
+                "E prover archive did not contain exactly one source directory"
+            )
+        source_dir = candidates[0]
+        bin_dir = install_root / "bin"
+        bin_dir.mkdir(parents=True, exist_ok=True)
+        _announce(
+            "Building the E prover first-order portfolio; this can take several minutes.",
+            on_progress,
+        )
+        if _run(
+            [str(source_dir / "configure"), f"--bindir={bin_dir}"],
+            check=False,
+            cwd=source_dir,
+        ) != 0:
+            raise RuntimeError("E prover configure failed")
+        jobs = max(1, min(16, int(os.cpu_count() or 1)))
+        if _run(["make", f"-j{jobs}"], check=False, cwd=source_dir) != 0:
+            raise RuntimeError("E prover build failed")
+        if _run(["make", "install"], check=False, cwd=source_dir) != 0:
+            raise RuntimeError("E prover install failed")
+        executable = bin_dir / "eprover"
+        if not executable.is_file():
+            raise RuntimeError("E prover build completed without eprover")
+        launcher = _write_launcher("eprover", executable)
+        if not _version_matches(str(launcher), EPROVER_VERSION):
+            raise RuntimeError(
+                f"E prover launcher did not execute as {EPROVER_VERSION}"
+            )
+        _announce(
+            f"Installed E prover {EPROVER_VERSION} user-locally.",
+            on_progress,
+            phase="installed",
+        )
+        return True
+    except Exception as exc:
+        _announce(f"E prover installation failed: {exc}", on_progress, phase="failed")
+        if strict:
+            raise
+        return False
+
+
+def ensure_isabelle(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+) -> bool:
+    """Install the official checksummed Isabelle application bundle.
+
+    Isabelle is deliberately part of the explicit reconstruction portfolio,
+    not the daemon's startup-critical generation portfolio: each bundle is
+    roughly 1.2 GB.
+    """
+
+    existing = _which("isabelle")
+    if existing and not force:
+        _announce(
+            f"Isabelle is already available at {existing}",
+            on_progress,
+            phase="available",
+        )
+        return True
+    if not yes:
+        _announce(
+            "Isabelle is missing; rerun with --yes to install its user-local bundle.",
+            on_progress,
+            phase="blocked",
+        )
+        return False
+    if _run_custom_solver_installer(
+        "isabelle",
+        strict=strict,
+        on_progress=on_progress,
+    ):
+        return _which("isabelle") is not None
+    platform_key = _normalized_platform_key()
+    release = ISABELLE_RELEASES.get(platform_key)
+    if release is None:
+        _announce(
+            "No managed Isabelle bundle is registered for "
+            f"{platform_key[0]}/{platform_key[1]}. Set "
+            "IPFS_DATASETS_PY_ISABELLE_INSTALL_COMMAND.",
+            on_progress,
+            phase="blocked",
+        )
+        return False
+
+    url, checksum = release
+    root = _external_prover_root()
+    archive = root / "downloads" / f"{ISABELLE_VERSION}-{platform_key[0]}-{platform_key[1]}.tar.gz"
+    destination = root / f"{ISABELLE_VERSION}-{platform_key[0]}-{platform_key[1]}"
+    try:
+        _announce(
+            f"Preparing the {ISABELLE_VERSION} reconstruction kernel bundle "
+            "(approximately 1.2 GB).",
+            on_progress,
+        )
+        if not _download_release_artifact(
+            url,
+            archive,
+            checksum,
+            strict=strict,
+            on_progress=on_progress,
+        ):
+            return False
+        _safe_extract_tar(archive, destination)
+        candidates = [
+            path
+            for path in destination.rglob("bin/isabelle")
+            if path.is_file() and os.access(path, os.X_OK)
+        ]
+        if len(candidates) != 1:
+            raise RuntimeError(
+                "Isabelle bundle did not contain exactly one bin/isabelle launcher"
+            )
+        launcher = _write_launcher("isabelle", candidates[0])
+        if ISABELLE_VERSION not in _read_version(str(launcher)):
+            raise RuntimeError(
+                f"Isabelle launcher did not report {ISABELLE_VERSION}"
+            )
+        _announce(
+            f"Installed {ISABELLE_VERSION} user-locally.",
+            on_progress,
+            phase="installed",
+        )
+        return True
+    except Exception as exc:
+        _announce(f"Isabelle installation failed: {exc}", on_progress, phase="failed")
         if strict:
             raise
         return False
@@ -1860,8 +2795,45 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--maude", action="store_true", help="Install/ensure the Maude runtime")
     parser.add_argument("--proverif", action="store_true", help="Install/ensure headless ProVerif")
     parser.add_argument("--cvc5-cli", action="store_true", help="Install/ensure the CVC5 command-line binary")
+    parser.add_argument("--vampire", action="store_true", help="Install/ensure Vampire")
+    parser.add_argument("--eprover", "--e-prover", action="store_true", help="Install/ensure E prover")
+    parser.add_argument(
+        "--isabelle",
+        action="store_true",
+        help="Install/ensure the large Isabelle reconstruction bundle",
+    )
     parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
     parser.add_argument("--ergoai", "--ergo", action="store_true", help="Install/ensure ErgoAI/ErgoEngine")
+    parser.add_argument(
+        "--portfolio",
+        action="append",
+        choices=tuple(sorted(PROVER_PORTFOLIOS)),
+        default=[],
+        help=(
+            "Install a named prover portfolio; repeatable. legal_ir_core is the "
+            "production Hammer preflight, legal_ir_generation also provides "
+            "F-logic candidate checking, legal_ir_specialists adds family-specific "
+            "engines, and reconstruction adds Rocq and Isabelle."
+        ),
+    )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        choices=tuple(
+            sorted(
+                {
+                    solver
+                    for portfolio in PROVER_PORTFOLIOS.values()
+                    for solver in portfolio
+                }
+            )
+        ),
+        default=[],
+        help=(
+            "Exclude a solver inherited from a selected portfolio; repeatable. "
+            "An explicit solver flag still takes precedence."
+        ),
+    )
     parser.add_argument(
         "--check-updates",
         action="store_true",
@@ -1902,11 +2874,35 @@ def main(argv: list[str] | None = None) -> int:
     want_maude = bool(args.maude)
     want_proverif = bool(args.proverif)
     want_cvc5_cli = bool(args.cvc5_cli)
+    want_vampire = bool(args.vampire)
+    want_eprover = bool(args.eprover)
+    want_isabelle = bool(args.isabelle)
     want_symbolicai = bool(args.symbolicai)
     want_ergoai = bool(args.ergoai)
+    portfolio_solvers = {
+        solver
+        for portfolio in args.portfolio
+        for solver in PROVER_PORTFOLIOS[portfolio]
+    }
+    portfolio_solvers.difference_update(args.exclude)
+    want_z3 = want_z3 or "z3" in portfolio_solvers
+    want_cvc5 = want_cvc5 or "cvc5" in portfolio_solvers
+    want_lean = want_lean or "lean" in portfolio_solvers
+    want_coq = want_coq or "coq" in portfolio_solvers
+    want_apalache = want_apalache or "apalache" in portfolio_solvers
+    want_tamarin = want_tamarin or "tamarin" in portfolio_solvers
+    want_maude = want_maude or "maude" in portfolio_solvers
+    want_proverif = want_proverif or "proverif" in portfolio_solvers
+    want_cvc5_cli = want_cvc5_cli or "cvc5_cli" in portfolio_solvers
+    want_vampire = want_vampire or "vampire" in portfolio_solvers
+    want_eprover = want_eprover or "eprover" in portfolio_solvers
+    want_isabelle = want_isabelle or "isabelle" in portfolio_solvers
+    want_symbolicai = want_symbolicai or "symbolicai" in portfolio_solvers
+    want_ergoai = want_ergoai or "ergoai" in portfolio_solvers
     if not (
         want_z3 or want_cvc5 or want_lean or want_coq or want_apalache
         or want_tamarin or want_maude or want_proverif or want_cvc5_cli
+        or want_vampire or want_eprover or want_isabelle
         or want_symbolicai or want_ergoai
     ):
         want_z3 = True
@@ -1917,6 +2913,8 @@ def main(argv: list[str] | None = None) -> int:
         want_tamarin = True
         want_proverif = True
         want_cvc5_cli = True
+        want_vampire = True
+        want_eprover = True
         want_symbolicai = True
         want_ergoai = True
 
@@ -1946,6 +2944,12 @@ def main(argv: list[str] | None = None) -> int:
         ok = ensure_proverif(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_cvc5_cli:
         ok = ensure_cvc5_cli(yes=args.yes, strict=args.strict, **update_kwargs) and ok
+    if want_vampire:
+        ok = ensure_vampire(yes=args.yes, strict=args.strict, **update_kwargs) and ok
+    if want_eprover:
+        ok = ensure_eprover(yes=args.yes, strict=args.strict, **update_kwargs) and ok
+    if want_isabelle:
+        ok = ensure_isabelle(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_symbolicai:
         ok = ensure_symbolicai(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_ergoai:

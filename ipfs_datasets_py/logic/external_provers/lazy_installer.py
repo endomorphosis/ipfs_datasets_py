@@ -17,6 +17,8 @@ Environment variables:
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND runs a custom ErgoAI installer command.
 - IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT controls user-local native solver
   artifacts (default: ~/.local/share/ipfs_datasets_py/theorem-provers).
+- IPFS_DATASETS_PY_<PROVER>_EXECUTABLE selects an explicit native executable
+  or a launcher for a portable runtime such as a Node-hosted WebAssembly build.
 - IPFS_DATASETS_PY_<SOLVER>_INSTALL_COMMAND overrides a native solver install
   on platforms without a packaged release artifact.
 """
@@ -27,6 +29,7 @@ import importlib
 import logging
 import os
 import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal
@@ -46,6 +49,11 @@ _ALIASES = {
     "z3prover": "z3",
     "cvc5": "cvc5",
     "cvc5_prover": "cvc5",
+    "vampire": "vampire",
+    "vampire_prover": "vampire",
+    "e": "eprover",
+    "e_prover": "eprover",
+    "eprover": "eprover",
     "lean": "lean",
     "lean_prover": "lean",
     "lake": "lean",
@@ -56,6 +64,8 @@ _ALIASES = {
     "rocq": "coq",
     "rocq_prover": "coq",
     "rocq-prover": "coq",
+    "isabelle": "isabelle",
+    "isabelle_prover": "isabelle",
     "apalache": "apalache",
     "apalache_mc": "apalache",
     "apalache-mc": "apalache",
@@ -82,8 +92,11 @@ _ALIASES = {
 _ENV_NAMES = {
     "z3": "Z3",
     "cvc5": "CVC5",
+    "vampire": "VAMPIRE",
+    "eprover": "EPROVER",
     "lean": "LEAN",
     "coq": "COQ",
+    "isabelle": "ISABELLE",
     "apalache": "APALACHE",
     "tamarin": "TAMARIN",
     "maude": "MAUDE",
@@ -99,7 +112,10 @@ _PROVER_EXECUTABLES: dict[str, tuple[str, ...]] = {
     "proverif": ("proverif",),
     "lean": ("lean",),
     "coq": ("coqc",),
+    "isabelle": ("isabelle",),
     "cvc5": ("cvc5",),
+    "vampire": ("vampire",),
+    "eprover": ("eprover",),
     "ergoai": ("ergoai", "ergo", "runErgo.sh", "runergo"),
 }
 
@@ -167,17 +183,54 @@ def _common_bin_dirs() -> list[Path]:
 
 
 def find_executable(command: str) -> str | None:
-    """Find a prover executable on PATH or in common user-local install dirs."""
+    """Find a usable prover executable, preferring managed and explicit paths."""
 
-    found = shutil.which(command)
-    if found:
-        return found
+    command = str(command or "").strip()
+    if not command:
+        return None
+    path = Path(command).expanduser()
+    env_name = normalize_prover_name(path.name).upper()
+    explicit = os.environ.get(f"IPFS_DATASETS_PY_{env_name}_EXECUTABLE")
+    candidates: list[Path] = []
+    if explicit:
+        candidates.append(Path(explicit).expanduser())
+    if path.parent != Path("."):
+        candidates.append(path)
+    else:
+        directories = _common_bin_dirs()
+        # The managed launcher is pinned and checksummed; it must outrank PATH,
+        # which can contain a stale binary for another CPU architecture.
+        if directories:
+            candidates.append(directories[-1] / command)
+        found = shutil.which(command)
+        if found:
+            candidates.append(Path(found))
+        candidates.extend(directory / command for directory in directories[:-1])
 
-    for directory in _common_bin_dirs():
-        candidate = directory / command
+    seen: set[str] = set()
+    for candidate in candidates:
         try:
-            if candidate.exists() and os.access(str(candidate), os.X_OK):
-                return str(candidate)
+            resolved = str(candidate.resolve())
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            if not candidate.is_file() or not os.access(str(candidate), os.X_OK):
+                continue
+            if normalize_prover_name(path.name) == "cvc5":
+                try:
+                    probe = subprocess.run(
+                        [str(candidate), "--version"],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+                except (OSError, subprocess.SubprocessError):
+                    continue
+                if probe.returncode != 0 or "cvc5" not in (
+                    f"{probe.stdout}\n{probe.stderr}".lower()
+                ):
+                    continue
+            return str(candidate)
         except OSError:
             continue
     return None
@@ -232,10 +285,10 @@ def prover_lazy_install_enabled(prover_name: str) -> bool:
     if auto_install is not None:
         return _truthy(auto_install)
 
-    # Keep Coq conservative by default; it usually needs a system package
-    # manager or a lengthy opam build.  The installer itself still refuses
-    # interactive sudo unless the caller opts in.
-    if prover == "coq":
+    # Reconstruction kernels are large/slow, so ordinary optional bridge use
+    # stays opt-in. An execution path that explicitly requests the kernel uses
+    # allow_automatic=True and still receives visible progress.
+    if prover in {"coq", "isabelle"}:
         return False
 
     return True
@@ -310,7 +363,7 @@ def lazy_install_prover(
             )
 
         if progress is not None and prover in {
-            "z3", "cvc5", "lean", "coq", "apalache", "tamarin", "maude", "proverif", "symbolicai", "ergoai"
+            "z3", "cvc5", "vampire", "eprover", "lean", "coq", "isabelle", "apalache", "tamarin", "maude", "proverif", "symbolicai", "ergoai"
         }:
             def forward_progress(phase: str, message: str) -> None:
                 normalized_phase = phase if phase in {

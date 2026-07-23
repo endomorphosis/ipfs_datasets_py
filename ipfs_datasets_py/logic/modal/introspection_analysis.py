@@ -475,6 +475,7 @@ def normalize_legal_ir_gaps(
     rows.extend(_explicit_gaps(root, context))
     rows.extend(_component_gaps(root, context))
     rows.extend(_per_family_gaps(root, context))
+    rows.extend(_learned_view_component_gaps(root, context))
     rows.extend(_compiler_round_trip_gaps(root, context))
     rows.extend(_proof_route_gaps(root, context))
     rows.extend(_metric_record_gaps(root, context))
@@ -746,6 +747,61 @@ def _per_family_gaps(root: Mapping[str, Any], context: _AnalysisContext) -> List
                 predicted_family=context.predicted_family,
             )
         )
+    return rows
+
+
+def _learned_view_component_gaps(
+    root: Mapping[str, Any],
+    context: _AnalysisContext,
+) -> List[NormalizedLegalIRGap]:
+    """Preserve missing/overweighted LegalIR view signals as owned family gaps."""
+
+    learned = _mapping(root.get("learned_view_gaps"))
+    if not learned:
+        return []
+    magnitude = max(
+        _float_from(learned, "cross_entropy_excess_loss", 0.0),
+        _float_from(learned, "cross_entropy_loss", 0.0),
+    )
+    if magnitude <= 0.0:
+        return []
+
+    rows: List[NormalizedLegalIRGap] = []
+    for direction, key in (
+        ("underrepresented", "underrepresented_components"),
+        ("overrepresented", "overrepresented_components"),
+    ):
+        values = learned.get(key, ()) or ()
+        if isinstance(values, (str, bytes)) or not isinstance(values, Sequence):
+            continue
+        for index, component_value in enumerate(values):
+            component = str(component_value or "").strip()
+            if not component or component == "modal.autoencoder":
+                continue
+            surface = _surface_for(component, f"learned_view_{direction}")
+            family = OWNED_COMPILER_SURFACES[surface].semantic_family
+            metric_name = f"learned_ir_view_{direction}"
+            rows.append(
+                _make_gap(
+                    context=context,
+                    semantic_family=family,
+                    compiler_surface=surface,
+                    metric_name=metric_name,
+                    gap_kind="learned_ir_view_component_gap",
+                    raw_value=magnitude,
+                    source_key=f"learned_view_gaps.{key}[{index}]",
+                    metadata={
+                        "component": component,
+                        "direction": direction,
+                    },
+                    heldout_impact=_heldout_impact_for(
+                        context.root,
+                        surface,
+                        family,
+                        metric_name,
+                    ),
+                )
+            )
     return rows
 
 
@@ -1110,7 +1166,18 @@ def _surface_for(component: str, metric_name: str) -> str:
         return "TDFOL.prover"
     if any(token in text for token in ("external_provers", "prover", "proof", "lean", "z3", "vampire", "validity_failure")):
         return "external_provers.router"
-    if any(token in text for token in ("event_calculus", "fluent", "initiates", "terminates", "cec.event")):
+    if any(
+        token in text
+        for token in (
+            "event_calculus",
+            "fluent",
+            "initiates",
+            "terminates",
+            "cec.event",
+            "cec.native",
+            "dcec",
+        )
+    ):
         return "event_calculus.core"
     if any(token in text for token in ("knowledge_graph", "knowledge_graphs", "neo4j", "graph_projection", "kg.")):
         return "knowledge_graphs.neo4j_compat"

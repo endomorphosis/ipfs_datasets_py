@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import inspect
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field, is_dataclass, replace
@@ -31,6 +32,9 @@ from ipfs_datasets_py.logic.integration.reasoning.legal_ir_hammer import (
     LegalIRHammerConfig,
     LegalIRHammerReport,
     LegalIRHammerRunner,
+)
+from ipfs_datasets_py.logic.integration.reasoning.legal_ir_obligations import (
+    generate_legal_ir_proof_obligations,
 )
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
@@ -59,11 +63,21 @@ from .leanstral_audit import (
 )
 from .leanstral import (
     LEANSTRAL_HAMMER_CANDIDATE_SCHEMA_VERSION,
+    LEANSTRAL_PROPOSAL_SCHEMA_VERSION,
     LegalIRLeanTask,
     LeanstralFailureBranchCandidateValidation,
     LeanstralFailureBranchSanitization,
     LeanstralProposal,
+    _drafted_logic_candidate_grounding_matches,
+    _drafted_logic_candidate_copies_obligation,
     _drafted_logic_candidate_copies_source_span,
+    _drafted_logic_candidate_copies_template,
+    _leanstral_candidate_grounding_catalog,
+    _leanstral_candidate_grounding_symbols,
+    _leanstral_candidate_predicate_vocabulary,
+    _leanstral_grounded_candidate_seed,
+    _leanstral_logic_predicate_heads,
+    _logic_family_candidate_rejection_reason,
     _obligation_contract_id,
     _typed_logic_rejection_reason,
     sanitize_leanstral_failure_branch_candidates,
@@ -492,14 +506,35 @@ class LeanstralHammerCandidateVerifier:
                 deterministic_checks=tuple(checks),
             )
 
+        candidate_statement = str(candidate.get("candidate") or "").strip()
+        candidate_obligations = []
+        for obligation in selected_obligations:
+            original_statement = str(obligation.get("statement") or "")
+            candidate_obligations.append(
+                {
+                    **dict(obligation),
+                    "metadata": {
+                        **dict(obligation.get("metadata") or {}),
+                        "drafted_candidate_goal": True,
+                        "drafted_candidate_sha256": hashlib.sha256(
+                            candidate_statement.encode("utf-8")
+                        ).hexdigest(),
+                        "original_obligation_statement_sha256": hashlib.sha256(
+                            original_statement.encode("utf-8")
+                        ).hexdigest(),
+                    },
+                    "statement": candidate_statement,
+                }
+            )
         hammer_report = LegalIRHammerRunner(
             config=self.config.hammer_config,
             backends=self.backends,
             kernel_verifier=self.kernel_verifier,
         ).prove(
             sample_or_document or {},
-            obligations=selected_obligations,
+            obligations=candidate_obligations,
             extra_candidate_metadata={
+                "drafted_candidate_goal": True,
                 "drafted_logic_candidates": [dict(candidate)],
                 "target_metrics": _string_sequence(candidate.get("target_metrics"))
                 or _string_sequence(candidate.get("target_metric")),
@@ -1375,6 +1410,161 @@ def verify_leanstral_hammer_candidates(
     ).verify(task, proposal, sample_or_document=sample_or_document)
 
 
+def verify_leanstral_audit_hammer_candidates(
+    request: LeanstralAuditRequest,
+    response: Optional[LeanstralAuditResponse],
+    *,
+    examples: Sequence[LegalSample | Mapping[str, Any]] = (),
+    verifier_config: Optional[LeanstralVerifierConfig] = None,
+    config: Optional[LeanstralHammerVerifierConfig] = None,
+    backends: Optional[Sequence[HammerBackendRunner]] = None,
+    kernel_verifier: Optional[KernelVerifier] = None,
+) -> LeanstralHammerVerificationReport:
+    """Bind audit candidates to a recompiled task and verify their obligations."""
+
+    if response is None or not response.drafted_logic_candidates:
+        return LeanstralHammerVerificationReport(
+            task_id=request.request_id,
+            proposal_task_id="",
+            accepted=False,
+            trusted=False,
+            reasons=("missing_drafted_logic_candidates",),
+        )
+    semantic_context = (
+        request.evidence.get("semantic_context")
+        if isinstance(request.evidence, Mapping)
+        else None
+    )
+    semantic_context = (
+        dict(semantic_context) if isinstance(semantic_context, Mapping) else {}
+    )
+    target_sample_id = str(semantic_context.get("sample_id") or "").strip()
+    ordered_examples = sorted(
+        examples,
+        key=lambda example: (
+            0
+            if _normalized_example_sample_id(example) == target_sample_id
+            else 1,
+            _normalized_example_sample_id(example),
+        ),
+    )
+    audit_verifier = LeanstralAuditVerifier(verifier_config)
+    sample: Optional[LegalSample] = None
+    compile_reasons: List[str] = []
+    for index, example in enumerate(ordered_examples):
+        compiled = audit_verifier._compile_example(
+            example,
+            request=request,
+            single_example=len(ordered_examples) == 1,
+            index=index,
+        )
+        compiler_check = compiled["compiler_check"]
+        if not compiler_check.accepted:
+            compile_reasons.extend(compiler_check.reasons)
+            continue
+        candidate_sample = compiled.get("sample")
+        if isinstance(candidate_sample, LegalSample):
+            sample = candidate_sample
+            break
+    if sample is None:
+        return LeanstralHammerVerificationReport(
+            task_id=request.request_id,
+            proposal_task_id="",
+            accepted=False,
+            trusted=False,
+            reasons=tuple(dict.fromkeys(compile_reasons))
+            or ("missing_recompiled_reference_example",),
+        )
+
+    formulas = list(sample.modal_ir.formulas)
+    if not formulas:
+        return LeanstralHammerVerificationReport(
+            task_id=request.request_id,
+            proposal_task_id="",
+            accepted=False,
+            trusted=False,
+            reasons=("missing_modal_ir_formulas",),
+        )
+    formula = formulas[0]
+    start = max(0, int(formula.provenance.start_char))
+    end = max(start, int(formula.provenance.end_char))
+    source_span = (sample.normalized_text or sample.text)[start:end].strip()
+    if not source_span:
+        source_span = sample.text[start:end].strip()
+    obligations = generate_legal_ir_proof_obligations(sample)
+    candidate_grounding_catalog = _leanstral_candidate_grounding_catalog(
+        semantic_context.get("modal_formulas")
+    )
+    candidate_grounding_symbols = _leanstral_candidate_grounding_symbols(
+        semantic_context.get("modal_formulas")
+    )
+    task_id = "leanstral-audit-hammer-" + hashlib.sha256(
+        f"{request.request_id}\0{sample.modal_ir.canonical_hash()}".encode("utf-8")
+    ).hexdigest()[:16]
+    task = LegalIRLeanTask(
+        task_id=task_id,
+        sample_id=sample.sample_id,
+        formula_id=formula.formula_id,
+        modal_ir_hash=sample.modal_ir.canonical_hash(),
+        target_statement="audit_candidate_obligation_contract",
+        source_span=source_span,
+        modal_formula=formula.to_dict(),
+        autoencoder_evidence={
+            "audit_request_id": request.request_id,
+            "candidate_grounding_catalog": {
+                key: list(values)
+                for key, values in candidate_grounding_catalog.items()
+            },
+            "candidate_grounding_symbols": list(
+                candidate_grounding_symbols
+            ),
+            "semantic_context_schema_version": str(
+                semantic_context.get("schema_version") or ""
+            ),
+        },
+        theorem_registry={
+            "registry_hash": request.theorem_registry_hash,
+            "schema_version": "leanstral-bounded-theorem-contract-v1",
+        },
+        proof_obligations=tuple(
+            obligation.to_dict() for obligation in obligations
+        ),
+    )
+    proposal = LeanstralProposal.from_mapping(
+        {
+            "compiler_change_spec_id": "",
+            "drafted_logic_candidates": [
+                dict(candidate) for candidate in response.drafted_logic_candidates
+            ],
+            "proof": "by exact True.intro",
+            "schema_version": LEANSTRAL_PROPOSAL_SCHEMA_VERSION,
+            "target_modal_ir_hash": task.modal_ir_hash,
+            "task_id": task.task_id,
+        }
+    )
+    return verify_leanstral_hammer_candidates(
+        task,
+        proposal,
+        sample_or_document=sample,
+        config=config,
+        backends=backends,
+        kernel_verifier=kernel_verifier,
+    )
+
+
+def _normalized_example_sample_id(
+    example: LegalSample | Mapping[str, Any],
+) -> str:
+    if isinstance(example, LegalSample):
+        return str(example.sample_id or "").strip()
+    return str(
+        example.get("sample_id")
+        or example.get("example_id")
+        or example.get("evidence_id")
+        or ""
+    ).strip()
+
+
 _REQUIRED_HAMMER_CANDIDATE_FIELDS = (
     "candidate",
     "compiler_surface",
@@ -1404,6 +1594,14 @@ def _check_hammer_candidate_syntax(candidate: Mapping[str, Any]) -> LeanstralLoc
         typed_reason = _typed_logic_rejection_reason(str(candidate.get("candidate") or ""))
         if typed_reason:
             reasons.append(typed_reason)
+        else:
+            family_reason = _logic_family_candidate_rejection_reason(
+                str(candidate.get("candidate") or ""),
+                candidate.get("logic_family"),
+                candidate.get("target_view"),
+            )
+            if family_reason:
+                reasons.append(family_reason)
     if not _string_sequence(candidate.get("proof_obligation_ids")):
         reasons.append("missing_drafted_logic_proof_obligation_ids")
     if not _string_sequence(candidate.get("premise_hints")):
@@ -1442,6 +1640,30 @@ def _check_hammer_candidate_contract(
     reasons: List[str] = []
     contract_id = str(candidate.get("contract_id") or "").strip()
     selected = _candidate_obligations(task, candidate)
+    evidence = dict(task.autoencoder_evidence or {})
+    grounding_symbols = tuple(
+        str(value)
+        for value in evidence.get("candidate_grounding_symbols", ())
+        if str(value).strip()
+    ) or _leanstral_candidate_grounding_symbols(task.modal_formula)
+    raw_catalog = evidence.get("candidate_grounding_catalog")
+    grounding_catalog = (
+        {
+            str(key): tuple(
+                str(value)
+                for value in values
+                if str(value).strip()
+            )
+            for key, values in raw_catalog.items()
+            if isinstance(values, Sequence)
+            and not isinstance(values, (str, bytes))
+        }
+        if isinstance(raw_catalog, Mapping)
+        else _leanstral_candidate_grounding_catalog(task.modal_formula)
+    )
+    grounding_matches: tuple[str, ...] = ()
+    grounded_seed = ""
+    candidate_text = str(candidate.get("candidate") or "").strip()
     if not contract_id:
         reasons.append("missing_contract_id")
     elif not selected:
@@ -1451,6 +1673,45 @@ def _check_hammer_candidate_contract(
         expected_ids.discard("")
         if not expected_ids or contract_id not in expected_ids:
             reasons.append("unknown_contract_id")
+        candidate_heads = set(
+            _leanstral_logic_predicate_heads(candidate_text)
+        )
+        grounding_matches = _drafted_logic_candidate_grounding_matches(
+            candidate_text,
+            grounding_symbols,
+        )
+        minimum_grounding = min(2, len(grounding_symbols))
+        if len(grounding_matches) < minimum_grounding:
+            reasons.append("drafted_logic_candidate_insufficient_grounding")
+        grounded_seed = _leanstral_grounded_candidate_seed(
+            candidate.get("logic_family"),
+            candidate.get("target_view"),
+            grounding_catalog,
+        )
+        if _drafted_logic_candidate_copies_template(
+            candidate_text,
+            candidate.get("logic_family"),
+            candidate.get("target_view"),
+        ):
+            reasons.append("drafted_logic_candidate_copies_shape_template")
+        for obligation in selected:
+            statement = str(obligation.get("statement") or "").strip()
+            if _drafted_logic_candidate_copies_obligation(
+                candidate_text,
+                statement,
+            ):
+                reasons.append("drafted_logic_candidate_copies_obligation")
+            allowed_heads = set(
+                _leanstral_logic_predicate_heads(statement)
+            )
+            allowed_heads.update(
+                _leanstral_candidate_predicate_vocabulary(
+                    obligation.get("logic_family"),
+                    obligation.get("legal_ir_view"),
+                )
+            )
+            if allowed_heads and not candidate_heads.issubset(allowed_heads):
+                reasons.append("unknown_drafted_logic_predicate")
     return _cheap_check(
         "leanstral_hammer_candidate_contract",
         started,
@@ -1460,6 +1721,14 @@ def _check_hammer_candidate_contract(
             "obligation_ids": [
                 str(item.get("obligation_id") or "") for item in selected
             ],
+            "grounding_match_count": len(grounding_matches),
+            "grounding_matches": list(grounding_matches),
+            "minimum_grounding_match_count": min(2, len(grounding_symbols)),
+            "candidate_matches_grounded_seed": bool(
+                grounded_seed
+                and re.sub(r"\s+", "", candidate_text).lower()
+                == re.sub(r"\s+", "", grounded_seed).lower()
+            ),
         },
     )
 
@@ -2034,6 +2303,7 @@ __all__ = [
     "LeanstralSourceSpanCheck",
     "LeanstralVerificationOutcome",
     "LeanstralVerifierConfig",
+    "verify_leanstral_audit_hammer_candidates",
     "verify_leanstral_hammer_candidates",
     "verify_leanstral_audit",
     "sanitize_leanstral_failure_branch_candidates",

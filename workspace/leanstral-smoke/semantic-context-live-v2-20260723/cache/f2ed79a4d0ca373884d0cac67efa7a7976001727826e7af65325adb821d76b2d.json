@@ -1,0 +1,109 @@
+{
+  "cache_key": "f2ed79a4d0ca373884d0cac67efa7a7976001727826e7af65325adb821d76b2d",
+  "request_hash": "fdcd81a348d122b75dcdd325cccf6a54f4e7cb32d618ab09553ffdc29c739a36",
+  "request_schema_hash": "9254d72e22b459bb578488956d599e085a3ef517fad997a3c2a13386d387620d",
+  "response": {
+    "abstention_reason": "",
+    "affected_ir_families": [
+      "frame_logic"
+    ],
+    "classification": "missing_semantic_rule",
+    "confidence": 0.0,
+    "counterexample": null,
+    "drafted_logic_candidates": [
+      {
+        "candidate": "frame_logic_required_fields",
+        "compiler_surface": "modal.frame_logic",
+        "confidence": 0.0,
+        "contract_id": "legal-ir-view/frame-logic/v1",
+        "expected_failure_mode": "hammer_unproved",
+        "guidance_only": true,
+        "intended_use": "guidance_only",
+        "logic_family": "frame_logic",
+        "premise_hints": [
+          "typed_role",
+          "relation_direction",
+          "modal_operator",
+          "exception_scope"
+        ],
+        "proof_obligation_id": "lir-obligation-7d0e25d98d6e8e698013",
+        "proof_obligation_ids": [
+          "lir-obligation-7d0e25d98d6e8e698013"
+        ],
+        "repair_scope": "failed_obligation_subtree",
+        "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+        "source_copy_policy": "reject_full_span_copy",
+        "source_copy_rejected": false,
+        "target_view": "modal.frame_logic"
+      }
+    ],
+    "missing_semantic_rule": {
+      "description": "missing deterministic semantic rule"
+    },
+    "proof_obligation_ids": [
+      "lir-obligation-7d0e25d98d6e8e698013"
+    ],
+    "proposed_compiler_surface": [
+      {
+        "component": "modal.frame_logic",
+        "operation": "add deterministic compiler or decompiler rule"
+      }
+    ],
+    "rationale": "",
+    "request_cache_key": "f2ed79a4d0ca373884d0cac67efa7a7976001727826e7af65325adb821d76b2d",
+    "request_id": "leanstral-audit-f2ed79a4d0ca3738",
+    "schema_version": "legal-ir-leanstral-audit-response-v3",
+    "witness": null
+  },
+  "response_hash": "780b30dec9963fe146421a370ed33f9f8ac9ffd600764d996785e12da88d5e08",
+  "response_schema_hash": "1554e2f71598bfae07c8e86561d95bf5cf33af514efcb2da3ce77e96079c745e",
+  "schema_version": "legal-ir-leanstral-audit-cache-v1",
+  "validation": {
+    "accepted": false,
+    "cache_key": "f2ed79a4d0ca373884d0cac67efa7a7976001727826e7af65325adb821d76b2d",
+    "deterministic_verification": {
+      "accepted": false,
+      "audit_validation": {
+        "accepted": false,
+        "cache_key": "f2ed79a4d0ca373884d0cac67efa7a7976001727826e7af65325adb821d76b2d",
+        "reasons": [
+          "untyped_logic",
+          "missing_counterexample_or_witness"
+        ],
+        "response_hash": "780b30dec9963fe146421a370ed33f9f8ac9ffd600764d996785e12da88d5e08",
+        "verified": false,
+        "verified_by": []
+      },
+      "compiler_checks": [],
+      "local_checks": [],
+      "outcome": "rejected",
+      "reasons": [
+        "untyped_logic",
+        "missing_counterexample_or_witness"
+      ],
+      "request_id": "leanstral-audit-f2ed79a4d0ca3738",
+      "response_hash": "780b30dec9963fe146421a370ed33f9f8ac9ffd600764d996785e12da88d5e08",
+      "schema_version": "legal-ir-leanstral-verifier-v1",
+      "source_span_checks": [],
+      "verified_by": []
+    },
+    "hammer_verification": {
+      "accepted": false,
+      "candidate_count": 1,
+      "candidate_results": [],
+      "reasons": [
+        "deterministic_audit_verification_failed"
+      ],
+      "schema_version": "legal-ir-leanstral-hammer-verifier-v1",
+      "status": "skipped",
+      "trusted": false
+    },
+    "reasons": [
+      "untyped_logic",
+      "missing_counterexample_or_witness"
+    ],
+    "response_hash": "780b30dec9963fe146421a370ed33f9f8ac9ffd600764d996785e12da88d5e08",
+    "verified": false,
+    "verified_by": []
+  }
+}

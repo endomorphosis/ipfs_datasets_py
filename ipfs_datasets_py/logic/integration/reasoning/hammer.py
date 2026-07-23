@@ -370,24 +370,29 @@ class HammerLogicTranslator:
             return "\n".join(lines) + "\n"
 
         lines = ["; hammer generated SMT-LIB problem", "(set-logic ALL)"]
+        declared_symbols: set[str] = set()
         for premise in premises:
-            symbol = _stable_symbol(premise.statement or premise.name, prefix="premise")
-            lines.extend(
-                [
-                    f"; premise {premise.name}: {self._comment_text(premise.statement)}",
-                    f"(declare-const {symbol} Bool)",
-                    f"(assert {symbol})",
-                ]
+            lines.append(
+                f"; premise {premise.name}: {self._comment_text(premise.statement)}"
             )
-        goal_symbol = _stable_symbol(goal.statement, prefix="goal")
-        lines.extend(
-            [
-                f"; conjecture {goal.name}: {self._comment_text(goal.statement)}",
-                f"(declare-const {goal_symbol} Bool)",
-                f"(assert (not {goal_symbol}))",
-                "(check-sat)",
-            ]
+            expression, atoms = self._boolean_statement(premise.statement or premise.name)
+            for atom in atoms:
+                symbol = _stable_symbol(atom, prefix="atom")
+                if symbol not in declared_symbols:
+                    lines.append(f"(declare-const {symbol} Bool)")
+                    declared_symbols.add(symbol)
+            lines.append(f"(assert {self._render_boolean(expression, target='smt')})")
+        goal_expression, goal_atoms = self._boolean_statement(goal.statement)
+        lines.append(
+            f"; conjecture {goal.name}: {self._comment_text(goal.statement)}"
         )
+        for atom in goal_atoms:
+            symbol = _stable_symbol(atom, prefix="atom")
+            if symbol not in declared_symbols:
+                lines.append(f"(declare-const {symbol} Bool)")
+                declared_symbols.add(symbol)
+        rendered_goal = self._render_boolean(goal_expression, target="smt")
+        lines.extend([f"(assert (not {rendered_goal}))", "(check-sat)"])
         return "\n".join(lines) + "\n"
 
     def _to_tptp_fof(self, goal: HammerGoal, premises: Sequence[HammerPremise]) -> str:
@@ -407,14 +412,154 @@ class HammerLogicTranslator:
         lines = ["% hammer generated TPTP FOF problem"]
         for premise in premises:
             name = _normalize_identifier(premise.name, prefix="premise")
-            atom = _stable_symbol(premise.statement or premise.name, prefix="premise")
+            expression, _atoms = self._boolean_statement(
+                premise.statement or premise.name
+            )
             lines.append(f"% {name}: {self._comment_text(premise.statement)}")
-            lines.append(f"fof({name}, axiom, {atom}).")
+            lines.append(
+                f"fof({name}, axiom, "
+                f"{self._render_boolean(expression, target='tptp')})."
+            )
         goal_name = _normalize_identifier(goal.name, prefix="goal")
-        goal_atom = _stable_symbol(goal.statement, prefix="goal")
+        goal_expression, _goal_atoms = self._boolean_statement(goal.statement)
         lines.append(f"% conjecture: {self._comment_text(goal.statement)}")
-        lines.append(f"fof({goal_name}, conjecture, {goal_atom}).")
+        lines.append(
+            f"fof({goal_name}, conjecture, "
+            f"{self._render_boolean(goal_expression, target='tptp')})."
+        )
         return "\n".join(lines) + "\n"
+
+    def _boolean_statement(self, statement: str) -> tuple[Any, tuple[str, ...]]:
+        """Parse compact typed LegalIR connectors, or retain one opaque atom."""
+
+        text = " ".join(str(statement or "").strip().split())
+        parsed = self._parse_boolean_expression(text)
+        if parsed is None:
+            parsed = ("atom", text)
+        atoms: list[str] = []
+
+        def collect(node: Any) -> None:
+            if node[0] == "atom":
+                atoms.append(str(node[1]))
+                return
+            if node[0] == "not":
+                collect(node[1])
+                return
+            collect(node[1])
+            collect(node[2])
+
+        collect(parsed)
+        return parsed, tuple(dict.fromkeys(atoms))
+
+    def _parse_boolean_expression(self, text: str) -> Any:
+        text = str(text or "").strip()
+        if not text:
+            return None
+        if text.lower().startswith("not "):
+            child = self._parse_boolean_expression(text[4:])
+            return ("not", child) if child is not None else None
+        # Lowest-precedence connectors are split first. "until" intentionally
+        # remains opaque because propositional lowering would erase time.
+        for connectors in (
+            ("iff", "implies", "unless", "when", "->"),
+            ("or",),
+            ("and",),
+        ):
+            split = self._split_top_level_connector(text, connectors)
+            if split is None:
+                continue
+            left_text, connector, right_text = split
+            left = self._parse_boolean_expression(left_text)
+            right = self._parse_boolean_expression(right_text)
+            if left is None or right is None:
+                return None
+            return (connector, left, right)
+        if self._is_balanced_predicate_application(text):
+            return ("atom", text)
+        return None
+
+    def _split_top_level_connector(
+        self,
+        text: str,
+        connectors: Sequence[str],
+    ) -> tuple[str, str, str] | None:
+        depth = 0
+        lowered = text.lower()
+        index = 0
+        while index < len(text):
+            char = text[index]
+            if char == "(":
+                depth += 1
+                index += 1
+                continue
+            if char == ")":
+                depth -= 1
+                if depth < 0:
+                    return None
+                index += 1
+                continue
+            if depth == 0:
+                for connector in connectors:
+                    if connector == "->":
+                        if lowered.startswith("->", index):
+                            left = text[:index].strip()
+                            right = text[index + 2 :].strip()
+                            if left and right:
+                                return left, "implies", right
+                        continue
+                    marker = f" {connector} "
+                    if lowered.startswith(marker, index):
+                        left = text[:index].strip()
+                        right = text[index + len(marker) :].strip()
+                        if left and right:
+                            return left, connector, right
+            index += 1
+        return None
+
+    @staticmethod
+    def _is_balanced_predicate_application(text: str) -> bool:
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_.:-]*\s*\(", text):
+            return False
+        depth = 0
+        opened = False
+        for char in text:
+            if char == "(":
+                depth += 1
+                opened = True
+            elif char == ")":
+                depth -= 1
+                if depth < 0:
+                    return False
+        return opened and depth == 0 and text.rstrip().endswith(")")
+
+    def _render_boolean(self, node: Any, *, target: str) -> str:
+        kind = node[0]
+        if kind == "atom":
+            return _stable_symbol(str(node[1]), prefix="atom")
+        if kind == "not":
+            child = self._render_boolean(node[1], target=target)
+            return f"(not {child})" if target == "smt" else f"(~ {child})"
+        left = self._render_boolean(node[1], target=target)
+        right = self._render_boolean(node[2], target=target)
+        if kind == "unless":
+            kind = "or"
+        elif kind == "when":
+            kind, left, right = "implies", right, left
+        if target == "smt":
+            operator = {
+                "and": "and",
+                "or": "or",
+                "implies": "=>",
+                "iff": "=",
+            }[kind]
+            return f"({operator} {left} {right})"
+        operator = {
+            "and": "&",
+            "or": "|",
+            "implies": "=>",
+            "iff": "<=>",
+        }[kind]
+        return f"({left} {operator} {right})"
 
     def _raw_solver_payload(self, metadata: Mapping[str, Any], *keys: str) -> str:
         for key in keys:
@@ -455,24 +600,28 @@ class SubprocessHammerBackendRunner:
         problem_format: str,
         args: Optional[Sequence[str]] = None,
         suffix: str = ".p",
+        executable_resolver: Optional[Callable[[str], Optional[str]]] = None,
     ) -> None:
         self.name = name
         self.executable = executable
         self.problem_format = problem_format
         self.args = list(args or [])
         self.suffix = suffix
+        self._executable_resolver = executable_resolver or shutil.which
 
     def run(self, translation: HammerTranslation, timeout_seconds: float) -> HammerBackendResult:
         start = time.time()
-        executable = shutil.which(self.executable) or self.executable
-        if not shutil.which(executable) and not Path(executable).exists():
+        executable = self._executable_resolver(self.executable)
+        if executable is None and Path(self.executable).is_file():
+            executable = self.executable
+        if not executable:
             return HammerBackendResult(
                 backend=self.name,
                 status=HammerBackendStatus.UNAVAILABLE,
                 proved=False,
                 elapsed_seconds=0.0,
                 translation_format=translation.target_format,
-                error=f"Executable not found: {self.executable}",
+                error=f"Usable executable not found: {self.executable}",
             )
         try:
             with tempfile.NamedTemporaryFile("w", suffix=self.suffix, delete=False) as handle:

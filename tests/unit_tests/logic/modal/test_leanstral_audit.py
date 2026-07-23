@@ -18,6 +18,9 @@ from ipfs_datasets_py.logic.modal import (
 )
 from ipfs_datasets_py.logic.modal.leanstral_artifact_cache import LeanstralArtifactCache
 from ipfs_datasets_py.logic.modal.leanstral_audit import canonical_sha256
+from ipfs_datasets_py.logic.modal.leanstral import (
+    _logic_family_candidate_rejection_reason,
+)
 
 
 class _MemoryArtifactStorage:
@@ -150,13 +153,20 @@ def test_audit_response_validation_requires_machine_readable_evidence() -> None:
     assert validation.accepted is True
     assert validation.verified is True
     assert validation.response_hash == response.content_hash
-    assert validation.verified_by == ("leanstral-audit-schema-v2",)
+    assert validation.verified_by == ("leanstral-audit-schema-v3",)
 
     missing_counterexample = _response(request, counterexample=None, witness=None)
     rejected = validate_leanstral_audit_response(request, missing_counterexample)
 
     assert rejected.accepted is False
     assert "missing_counterexample_or_witness" in rejected.reasons
+
+    zero_confidence = validate_leanstral_audit_response(
+        request,
+        _response(request, confidence=0.0),
+    )
+    assert zero_confidence.accepted is False
+    assert "nonpositive_audit_confidence" in zero_confidence.reasons
 
 
 def test_prompt_contract_uses_exact_ids_and_normalizes_null_abstention() -> None:
@@ -168,10 +178,13 @@ def test_prompt_contract_uses_exact_ids_and_normalizes_null_abstention() -> None
     assert template["proof_obligation_ids"] == [request.proof_obligation_ids[0]]
     assert template["abstention_reason"] is None
     assert payload["response_schema"]["optional"] == ("drafted_logic_candidates",)
-    assert template["drafted_logic_candidates"][0]["intended_use"] == "guidance_only"
+    assert template["drafted_logic_candidates"] == []
+    assert "candidate" in payload["drafted_logic_candidate_contract"]["required_fields"]
     assert (
-        template["drafted_logic_candidates"][0]["proof_obligation_id"]
-        == request.proof_obligation_ids[0]
+        payload["drafted_logic_candidate_contract"]["required_values"][
+            "source_copy_policy"
+        ]
+        == "reject_full_span_copy"
     )
 
     response = _response(request, abstention_reason="None")
@@ -188,7 +201,10 @@ def test_audit_response_preserves_sanitized_drafted_logic_guidance() -> None:
         drafted_logic_candidates=[
             {
                 "logic_family": "deontic",
-                "candidate": "obligation(agency, notify(applicant)) unless emergency_review",
+                "candidate": (
+                    "obligation(agency, notify(applicant)) "
+                    "unless exception(emergency_review)"
+                ),
                 "proof_obligation_id": "PO-modal-001",
                 "compiler_surface": "modal.ir_decompiler",
                 "confidence": 0.72,
@@ -196,7 +212,10 @@ def test_audit_response_preserves_sanitized_drafted_logic_guidance() -> None:
             },
             {
                 "logic_family": "deontic",
-                "candidate": "obligation(agency, notify(applicant)) unless emergency_review",
+                "candidate": (
+                    "obligation(agency, notify(applicant)) "
+                    "unless exception(emergency_review)"
+                ),
                 "proof_obligation_id": "PO-modal-001",
             },
         ],
@@ -229,6 +248,49 @@ def test_audit_response_rejects_unknown_drafted_logic_obligations() -> None:
 
     assert validation.accepted is False
     assert "unknown_drafted_logic_proof_obligation_id" in validation.reasons
+
+
+def test_audit_response_rejects_legacy_template_candidate() -> None:
+    request = _request()
+    response = _response(
+        request,
+        drafted_logic_candidates=[
+            {
+                "candidate": "obligation(actor, action) unless exception_condition",
+                "confidence": 0.9,
+                "logic_family": "deontic",
+                "proof_obligation_id": "PO-modal-001",
+            }
+        ],
+    )
+
+    validation = validate_leanstral_audit_response(request, response)
+
+    assert validation.accepted is False
+    assert "template_copied_drafted_logic_candidate" in validation.reasons
+
+
+def test_family_candidate_shape_distinguishes_tdfol_dcec_and_flogic() -> None:
+    assert not _logic_family_candidate_rejection_reason(
+        "temporal_anchor(event:e1, time:t1)",
+        "temporal_first_order",
+        "TDFOL.prover",
+    )
+    assert not _logic_family_candidate_rejection_reason(
+        "initiates(event:e1, fluent:f1, time:t1)",
+        "event_calculus",
+        "CEC.native",
+    )
+    assert not _logic_family_candidate_rejection_reason(
+        "frame_role(subject:agency, role:notice, object:person)",
+        "frame_logic",
+        "modal.frame_logic",
+    )
+    assert _logic_family_candidate_rejection_reason(
+        "frame_role(subject:agency, role:notice, object:person)",
+        "event_calculus",
+        "CEC.native",
+    ) == "dcec_candidate_shape_mismatch"
 
 
 def test_abstention_requires_reason_and_malformed_json_is_not_a_response() -> None:

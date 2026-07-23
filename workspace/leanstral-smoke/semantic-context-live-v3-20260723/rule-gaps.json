@@ -1,0 +1,268 @@
+{
+  "accepted_supporting_audit_count": 1,
+  "conflicting_audit_count": 0,
+  "gaps": [
+    {
+      "action": "repair_flogic_ontology_constraints",
+      "affected_ir_families": [
+        "frame_logic"
+      ],
+      "conflicting_evidence": [],
+      "gap_id": "leanstral-gap-91b8f634dcba4323",
+      "missing_semantic_rule": {
+        "description": "missing deterministic semantic rule"
+      },
+      "normalized_rule_key": "missing_deterministic_semantic_rule",
+      "priority": 0.3,
+      "status": "accepted",
+      "supporting_evidence": [
+        {
+          "affected_ir_families": [
+            "frame_logic"
+          ],
+          "classification": "missing_semantic_rule",
+          "codex_projection": {},
+          "confidence": 0.0,
+          "drafted_logic_candidates": [
+            {
+              "audit_evidence_id": "leanstral-evidence-43470ce8b1b4b066",
+              "candidate": "frame_relation_has_typed_subject_predicate_object(contract:legal-ir-view/frame-logic/v1) and frame_role_binding_is_preserved(contract:legal-ir-view/frame-logic/v1)",
+              "compiler_surface": "modal.frame_logic",
+              "confidence": 0.95,
+              "expected_failure_mode": "hammer_unproved",
+              "guidance_only": true,
+              "intended_use": "guidance_only",
+              "logic_family": "frame_logic",
+              "premise_hints": [
+                "frame_role_typing",
+                "typed_role",
+                "relation_direction",
+                "modal_operator",
+                "exception_scope"
+              ],
+              "proof_obligation_id": "lir-obligation-7d0e25d98d6e8e698013",
+              "proof_obligation_ids": [
+                "lir-obligation-7d0e25d98d6e8e698013"
+              ],
+              "request_id": "leanstral-audit-f2ed79a4d0ca3738",
+              "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+              "source_copy_policy": "reject_full_span_copy",
+              "source_copy_rejected": false,
+              "target_view": "modal.frame_logic"
+            }
+          ],
+          "evidence_id": "leanstral-evidence-43470ce8b1b4b066",
+          "examples": [
+            {
+              "evidence_id": "lir-obligation-7d0e25d98d6e8e698013",
+              "example_hash": "db65092d7af2a5bef2b26c0aa729d47ec1d3f8331c8a48cd71350427c3979a89",
+              "example_role": "counterexample",
+              "expected": "legal semantics should be preserved",
+              "observed": "compiler loses or distorts this semantic signal"
+            }
+          ],
+          "hammer_backend_health": {
+            "available_count": 0,
+            "available_routes": [],
+            "records": [
+              {
+                "available": false,
+                "check_error": "",
+                "elapsed_seconds": 9.5129013e-05,
+                "executable": "z3",
+                "install_command": [
+                  "python",
+                  "-m",
+                  "pip",
+                  "install",
+                  "z3-solver"
+                ],
+                "installer_available": true,
+                "name": "z3",
+                "problem_format": "smt-lib",
+                "resolved_path": "",
+                "route_type": "smt",
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "version_output": ""
+              },
+              {
+                "available": false,
+                "check_error": "OSError: [Errno 8] Exec format error: '/home/barberb/.local/bin/cvc5'",
+                "elapsed_seconds": 0.002359390259,
+                "executable": "cvc5",
+                "install_command": [
+                  "python",
+                  "-m",
+                  "pip",
+                  "install",
+                  "cvc5"
+                ],
+                "installer_available": true,
+                "name": "cvc5",
+                "problem_format": "smt-lib",
+                "resolved_path": "/home/barberb/.local/bin/cvc5",
+                "route_type": "smt",
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "version_output": ""
+              },
+              {
+                "available": false,
+                "check_error": "",
+                "elapsed_seconds": 9.8705292e-05,
+                "executable": "vampire",
+                "install_command": [
+                  "bash",
+                  "-lc",
+                  "install-vampire-or-add-to-PATH"
+                ],
+                "installer_available": true,
+                "name": "vampire",
+                "problem_format": "tptp-fof",
+                "resolved_path": "",
+                "route_type": "atp",
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "version_output": ""
+              },
+              {
+                "available": false,
+                "check_error": "",
+                "elapsed_seconds": 3.9339066e-05,
+                "executable": "eprover",
+                "install_command": [
+                  "bash",
+                  "-lc",
+                  "install-eprover-or-add-to-PATH"
+                ],
+                "installer_available": true,
+                "name": "e_prover",
+                "problem_format": "tptp-fof",
+                "resolved_path": "",
+                "route_type": "atp",
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "version_output": ""
+              }
+            ],
+            "schema_version": "legal-ir-hammer-backend-health-v1",
+            "unavailable_count": 4,
+            "unavailable_routes": [
+              "z3",
+              "cvc5",
+              "vampire",
+              "e_prover"
+            ]
+          },
+          "hammer_guidance_artifacts": [],
+          "hammer_proof_status": {
+            "accepted": false,
+            "candidate_count": 1,
+            "obligation_count": 1,
+            "proof_success_rate": 0.0,
+            "proved_count": 0,
+            "trusted": false,
+            "trusted_count": 0,
+            "trusted_success_rate": 0.0
+          },
+          "hammer_reconstruction_status": {
+            "proof_checked_count": 0,
+            "reconstruction_statuses": [],
+            "trusted_artifact_count": 0
+          },
+          "metric_attribution": {
+            "evidence_ids": [
+              "lir-obligation-7d0e25d98d6e8e698013"
+            ],
+            "metric_deltas": {},
+            "post_patch_metrics": {},
+            "pre_patch_metrics": {},
+            "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+            "source": "leanstral_audit_evidence",
+            "status": "missing_pre_patch_metrics"
+          },
+          "proof_obligation_ids": [
+            "lir-obligation-7d0e25d98d6e8e698013"
+          ],
+          "reasons": [
+            "unknown",
+            "unproved"
+          ],
+          "request_id": "leanstral-audit-f2ed79a4d0ca3738",
+          "response_hash": "bc9b86d0d17e22957b16cec56f2d9707f5ac19b3fc62672b93d354474f57694e",
+          "role": "supporting",
+          "verification_outcome": "accepted",
+          "verified_by": []
+        }
+      ],
+      "target_component": "modal.frame_logic",
+      "target_surface": {
+        "action": "repair_flogic_ontology_constraints",
+        "allowed_paths": [
+          "ipfs_datasets_py/logic/modal/kg_bridge.py"
+        ],
+        "component": "modal.frame_logic",
+        "mutation_cases": [
+          "remove_frame_relation",
+          "alter_scope"
+        ],
+        "target_file_lane": "frame_logic",
+        "target_metrics": [
+          "flogic_similarity_loss",
+          "legal_ir_view_cross_entropy_loss"
+        ],
+        "theorem_templates": [
+          "source_provenance_preserved",
+          "frame_terms_preserved"
+        ]
+      },
+      "title": "missing deterministic semantic rule (modal.frame_logic)",
+      "validation_set": {
+        "affected_ir_families": [
+          "frame_logic"
+        ],
+        "allowed_paths": [
+          "ipfs_datasets_py/logic/modal/kg_bridge.py"
+        ],
+        "formal_validity_checks": [
+          "source_provenance_preserved",
+          "frame_terms_preserved"
+        ],
+        "held_out_compiler_ir_metrics": [
+          "flogic_similarity_loss",
+          "legal_ir_view_cross_entropy_loss"
+        ],
+        "metric_attribution": {
+          "evidence_ids": [
+            "lir-obligation-7d0e25d98d6e8e698013"
+          ],
+          "metric_deltas": {},
+          "post_patch_metrics": {},
+          "pre_patch_metrics": {},
+          "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+          "source": "leanstral_rule_gap_report",
+          "status": "missing_pre_patch_metrics"
+        },
+        "mutation_cases": [
+          "remove_frame_relation",
+          "alter_scope"
+        ],
+        "proof_obligation_ids": [
+          "lir-obligation-7d0e25d98d6e8e698013"
+        ],
+        "regression_examples": [
+          {
+            "evidence_id": "lir-obligation-7d0e25d98d6e8e698013",
+            "example_hash": "db65092d7af2a5bef2b26c0aa729d47ec1d3f8331c8a48cd71350427c3979a89",
+            "example_role": "counterexample",
+            "expected": "legal semantics should be preserved",
+            "observed": "compiler loses or distorts this semantic signal"
+          }
+        ],
+        "target_file_lane": "frame_logic"
+      }
+    }
+  ],
+  "max_examples_per_gap": 5,
+  "max_gaps": 25,
+  "rejected_audits": [],
+  "schema_version": "legal-ir-leanstral-rule-gap-report-v1",
+  "source_audit_count": 1
+}

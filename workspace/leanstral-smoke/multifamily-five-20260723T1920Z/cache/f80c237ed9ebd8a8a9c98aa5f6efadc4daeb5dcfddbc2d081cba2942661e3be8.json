@@ -1,0 +1,111 @@
+{
+  "cache_key": "f80c237ed9ebd8a8a9c98aa5f6efadc4daeb5dcfddbc2d081cba2942661e3be8",
+  "request_hash": "5a44b74da4f6c2eead28059319c1c817507cf78482e1396a75f1c8106c9a82c9",
+  "request_schema_hash": "9254d72e22b459bb578488956d599e085a3ef517fad997a3c2a13386d387620d",
+  "response": {
+    "abstention_reason": "",
+    "affected_ir_families": [
+      "frame_logic"
+    ],
+    "classification": "missing_semantic_rule",
+    "confidence": 0.5,
+    "counterexample": {
+      "evidence_id": "lir-disagree-f1ab56ef85bed0bf3327",
+      "expected": "frame_relation_has_typed_subject_predicate_object(contract:legal-ir-view/frame-logic/v1) and frame_role_binding_is_preserved(contract:legal-ir-view/frame-logic/v1)",
+      "observed": "compiler loses or distorts this semantic signal"
+    },
+    "drafted_logic_candidates": [
+      {
+        "candidate": "frame_role_typing",
+        "compiler_surface": "modal.frame_logic",
+        "confidence": 0.5,
+        "contract_id": "legal-ir-view/frame-logic/v1",
+        "expected_failure_mode": "hammer_unproved",
+        "guidance_only": true,
+        "intended_use": "guidance_only",
+        "logic_family": "frame_logic",
+        "premise_hints": [
+          "frame_role_typing",
+          "typed_role",
+          "relation_direction",
+          "modal_operator",
+          "exception_scope"
+        ],
+        "proof_obligation_id": "lir-obligation-d0fe6decaf6384763265",
+        "proof_obligation_ids": [
+          "lir-obligation-d0fe6decaf6384763265"
+        ],
+        "repair_scope": "failed_obligation_subtree",
+        "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+        "source_copy_policy": "reject_full_span_copy",
+        "source_copy_rejected": false,
+        "target_view": "modal.frame_logic"
+      }
+    ],
+    "missing_semantic_rule": {
+      "description": "missing deterministic semantic rule"
+    },
+    "proof_obligation_ids": [
+      "lir-obligation-d0fe6decaf6384763265"
+    ],
+    "proposed_compiler_surface": [
+      {
+        "component": "modal.frame_logic",
+        "operation": "add deterministic compiler or decompiler rule"
+      }
+    ],
+    "rationale": "",
+    "request_cache_key": "f80c237ed9ebd8a8a9c98aa5f6efadc4daeb5dcfddbc2d081cba2942661e3be8",
+    "request_id": "leanstral-audit-f80c237ed9ebd8a8",
+    "schema_version": "legal-ir-leanstral-audit-response-v3",
+    "witness": null
+  },
+  "response_hash": "ab3cfede6bd212516f14cd43ffddf0147c858f47bcebcbb5ba64500ae7469fd3",
+  "response_schema_hash": "b83d792e69337419885022d5998be6f83dc6c4e4c9ba141d11e79d7cc47db26f",
+  "schema_version": "legal-ir-leanstral-audit-cache-v1",
+  "validation": {
+    "accepted": false,
+    "cache_key": "f80c237ed9ebd8a8a9c98aa5f6efadc4daeb5dcfddbc2d081cba2942661e3be8",
+    "deterministic_verification": {
+      "accepted": false,
+      "audit_validation": {
+        "accepted": false,
+        "cache_key": "f80c237ed9ebd8a8a9c98aa5f6efadc4daeb5dcfddbc2d081cba2942661e3be8",
+        "reasons": [
+          "untyped_logic"
+        ],
+        "response_hash": "ab3cfede6bd212516f14cd43ffddf0147c858f47bcebcbb5ba64500ae7469fd3",
+        "verified": false,
+        "verified_by": []
+      },
+      "compiler_checks": [],
+      "local_checks": [],
+      "outcome": "rejected",
+      "reasons": [
+        "untyped_logic"
+      ],
+      "request_id": "leanstral-audit-f80c237ed9ebd8a8",
+      "response_hash": "ab3cfede6bd212516f14cd43ffddf0147c858f47bcebcbb5ba64500ae7469fd3",
+      "schema_version": "legal-ir-leanstral-verifier-v1",
+      "source_span_checks": [],
+      "verified_by": []
+    },
+    "hammer_verification": {
+      "accepted": false,
+      "candidate_count": 1,
+      "candidate_results": [],
+      "reasons": [
+        "deterministic_audit_verification_failed"
+      ],
+      "schema_version": "legal-ir-leanstral-hammer-verifier-v1",
+      "status": "skipped",
+      "trusted": false
+    },
+    "reasons": [
+      "untyped_logic"
+    ],
+    "response_hash": "ab3cfede6bd212516f14cd43ffddf0147c858f47bcebcbb5ba64500ae7469fd3",
+    "verified": false,
+    "verified_by": []
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+  "request_hash": "51d1e96f2f7befa3efbfc04016747ccb5dff02275ac5aeb6bbd43a47a9f79de1",
+  "request_schema_hash": "9254d72e22b459bb578488956d599e085a3ef517fad997a3c2a13386d387620d",
+  "response": {
+    "abstention_reason": "",
+    "affected_ir_families": [
+      "tdfol"
+    ],
+    "classification": "missing_semantic_rule",
+    "confidence": 0.5,
+    "counterexample": {
+      "evidence_id": "lir-disagree-4986d60000adf40ee837",
+      "expected": "temporal_constraint_has_explicit_typed_anchor(contract:legal-ir-view/tdfol/v1) and event_order_is_preserved(contract:legal-ir-view/tdfol/v1)",
+      "observed": "compiler loses or distorts this semantic signal"
+    },
+    "drafted_logic_candidates": [
+      {
+        "candidate": "temporal_constraint_has_explicit_typed_anchor(contract:legal-ir-view/tdfol/v1) and event_order_is_preserved(contract:legal-ir-view/tdfol/v1)",
+        "compiler_surface": "TDFOL.prover",
+        "confidence": 0.5,
+        "contract_id": "legal-ir-view/tdfol/v1",
+        "expected_failure_mode": "hammer_unproved",
+        "guidance_only": true,
+        "intended_use": "guidance_only",
+        "logic_family": "temporal_first_order",
+        "premise_hints": [
+          "temporal_anchor",
+          "quantifier_scope",
+          "event_order",
+          "deontic_force"
+        ],
+        "proof_obligation_id": "lir-obligation-72432a79260cfb026d19",
+        "proof_obligation_ids": [
+          "lir-obligation-72432a79260cfb026d19"
+        ],
+        "repair_scope": "failed_obligation_subtree",
+        "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+        "source_copy_policy": "reject_full_span_copy",
+        "source_copy_rejected": false,
+        "target_view": "TDFOL.prover"
+      }
+    ],
+    "missing_semantic_rule": {
+      "description": "missing deterministic semantic rule"
+    },
+    "proof_obligation_ids": [
+      "lir-obligation-72432a79260cfb026d19"
+    ],
+    "proposed_compiler_surface": [
+      {
+        "component": "TDFOL.prover",
+        "operation": "add deterministic compiler or decompiler rule"
+      }
+    ],
+    "rationale": "",
+    "request_cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+    "request_id": "leanstral-audit-4243287695e8c241",
+    "schema_version": "legal-ir-leanstral-audit-response-v3",
+    "witness": null
+  },
+  "response_hash": "d9464650c2c7239fd8a4f489a7705de488cd421d6cb2fc153793ca4cf71698ba",
+  "response_schema_hash": "242d4ab9c40375eb1db8798238e7390da142ad18764df305e59c3d527d9ecd54",
+  "schema_version": "legal-ir-leanstral-audit-cache-v1",
+  "validation": {
+    "accepted": false,
+    "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+    "deterministic_verification": {
+      "accepted": false,
+      "audit_validation": {
+        "accepted": false,
+        "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+        "reasons": [
+          "drafted_logic_candidate_copies_obligation"
+        ],
+        "response_hash": "d9464650c2c7239fd8a4f489a7705de488cd421d6cb2fc153793ca4cf71698ba",
+        "verified": false,
+        "verified_by": []
+      },
+      "compiler_checks": [],
+      "local_checks": [],
+      "outcome": "rejected",
+      "reasons": [
+        "drafted_logic_candidate_copies_obligation"
+      ],
+      "request_id": "leanstral-audit-4243287695e8c241",
+      "response_hash": "d9464650c2c7239fd8a4f489a7705de488cd421d6cb2fc153793ca4cf71698ba",
+      "schema_version": "legal-ir-leanstral-verifier-v1",
+      "source_span_checks": [],
+      "verified_by": []
+    },
+    "hammer_verification": {
+      "accepted": false,
+      "candidate_count": 1,
+      "candidate_results": [],
+      "reasons": [
+        "deterministic_audit_verification_failed"
+      ],
+      "schema_version": "legal-ir-leanstral-hammer-verifier-v1",
+      "status": "skipped",
+      "trusted": false
+    },
+    "reasons": [
+      "drafted_logic_candidate_copies_obligation"
+    ],
+    "response_hash": "d9464650c2c7239fd8a4f489a7705de488cd421d6cb2fc153793ca4cf71698ba",
+    "verified": false,
+    "verified_by": []
+  }
+}

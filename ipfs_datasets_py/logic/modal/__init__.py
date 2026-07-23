@@ -209,6 +209,7 @@ from .leanstral_verifier import (
     LeanstralSourceSpanCheck,
     LeanstralVerificationOutcome,
     LeanstralVerifierConfig,
+    verify_leanstral_audit_hammer_candidates,
     verify_leanstral_hammer_candidates,
     verify_leanstral_audit,
 )
@@ -552,6 +553,7 @@ __all__ = [
     "plan_incremental_validation",
     "validate_leanstral_failure_branch_candidate",
     "verify_leanstral_hammer_candidates",
+    "verify_leanstral_audit_hammer_candidates",
     "lean_theorem_proof_rejection_reasons",
     "validate_leanstral_audit_response",
     "write_leanstral_audit_checkpoint",

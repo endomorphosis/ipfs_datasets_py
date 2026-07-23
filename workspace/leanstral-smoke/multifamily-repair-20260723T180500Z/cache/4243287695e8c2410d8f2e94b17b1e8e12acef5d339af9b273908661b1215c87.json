@@ -1,0 +1,1492 @@
+{
+  "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+  "request_hash": "51d1e96f2f7befa3efbfc04016747ccb5dff02275ac5aeb6bbd43a47a9f79de1",
+  "request_schema_hash": "9254d72e22b459bb578488956d599e085a3ef517fad997a3c2a13386d387620d",
+  "response": {
+    "abstention_reason": "",
+    "affected_ir_families": [
+      "tdfol"
+    ],
+    "classification": "missing_semantic_rule",
+    "confidence": 0.5,
+    "counterexample": {
+      "evidence_id": "lir-disagree-4986d60000adf40ee837",
+      "expected": "legal semantics should be preserved",
+      "observed": "compiler loses or distorts this semantic signal"
+    },
+    "drafted_logic_candidates": [
+      {
+        "candidate": "temporal_anchor(event:e1, time:t1) and before(time:t1, time:t2)",
+        "compiler_surface": "TDFOL.prover",
+        "confidence": 0.5,
+        "contract_id": "legal-ir-view/tdfol/v1",
+        "expected_failure_mode": "hammer_unproved",
+        "guidance_only": true,
+        "intended_use": "guidance_only",
+        "logic_family": "temporal_first_order",
+        "premise_hints": [
+          "temporal_anchor",
+          "quantifier_scope",
+          "event_order",
+          "deontic_force"
+        ],
+        "proof_obligation_id": "lir-obligation-72432a79260cfb026d19",
+        "proof_obligation_ids": [
+          "lir-obligation-72432a79260cfb026d19"
+        ],
+        "repair_scope": "failed_obligation_subtree",
+        "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+        "source_copy_policy": "reject_full_span_copy",
+        "source_copy_rejected": false,
+        "target_view": "TDFOL.prover"
+      }
+    ],
+    "missing_semantic_rule": {
+      "description": "missing deterministic compiler or decompiler rule"
+    },
+    "proof_obligation_ids": [
+      "lir-obligation-72432a79260cfb026d19"
+    ],
+    "proposed_compiler_surface": [
+      {
+        "component": "TDFOL.prover",
+        "operation": "add deterministic compiler or decompiler rule"
+      }
+    ],
+    "rationale": "",
+    "request_cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+    "request_id": "leanstral-audit-4243287695e8c241",
+    "schema_version": "legal-ir-leanstral-audit-response-v3",
+    "witness": null
+  },
+  "response_hash": "342923248ce2aa52c026054a6b346f7156c2356968d52a770d3706183808e9d8",
+  "response_schema_hash": "242d4ab9c40375eb1db8798238e7390da142ad18764df305e59c3d527d9ecd54",
+  "schema_version": "legal-ir-leanstral-audit-cache-v1",
+  "validation": {
+    "accepted": true,
+    "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+    "deterministic_verification": {
+      "accepted": true,
+      "audit_validation": {
+        "accepted": true,
+        "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+        "reasons": [],
+        "response_hash": "342923248ce2aa52c026054a6b346f7156c2356968d52a770d3706183808e9d8",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "compiler_checks": [
+        {
+          "accepted": true,
+          "actual_modal_ir_hash": "d979f64fc6edcff8637ff2858479062b73eff1bd02d097e871433800076c9761",
+          "document_id": "us-code-22-2568-8865a0d9f28239e6",
+          "example_id": "us-code-22-2568-8865a0d9f28239e6",
+          "expected_modal_ir_hash": "d979f64fc6edcff8637ff2858479062b73eff1bd02d097e871433800076c9761",
+          "reasons": []
+        }
+      ],
+      "local_checks": [
+        {
+          "checker_name": "syntax",
+          "details": {
+            "check_phase": "cheap",
+            "document_id": "us-code-22-2568-8865a0d9f28239e6",
+            "formula_count": 23
+          },
+          "elapsed_seconds": 1.7881393432617188e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": true,
+          "timeout_seconds": 0.0
+        },
+        {
+          "checker_name": "graph",
+          "details": {
+            "check_phase": "cheap",
+            "document_id": "us-code-22-2568-8865a0d9f28239e6",
+            "graph_id": "",
+            "node_count": 2065,
+            "relationship_count": 50945,
+            "triple_count": 50884
+          },
+          "elapsed_seconds": 2.7708213329315186,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": true,
+          "timeout_seconds": 0.0
+        },
+        {
+          "checker_name": "provenance",
+          "details": {
+            "check_phase": "cheap",
+            "document_id": "us-code-22-2568-8865a0d9f28239e6",
+            "formula_count": 23,
+            "source_span_check_count": 5
+          },
+          "elapsed_seconds": 4.00543212890625e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": true,
+          "timeout_seconds": 0.0
+        },
+        {
+          "checker_name": "lean",
+          "details": {
+            "cache_hit_count": 0,
+            "cache_miss_count": 6,
+            "full_formula_count": 23,
+            "lean_toolchain_hash": "c117518fe63d821b1c308a19fbdfd7c2171ba446b633e94b089a5b5dac8e9312",
+            "parallel_workers": 4,
+            "process_cache_hit": false,
+            "selected_formula_count": 23,
+            "slice_count": 6,
+            "slice_size": 4,
+            "slices": [
+              {
+                "checker_name": "lean",
+                "details": {
+                  "formula_ids": [
+                    "us-code-22-2568-8865a0d9f28239e6:f0001",
+                    "us-code-22-2568-8865a0d9f28239e6:f0002",
+                    "us-code-22-2568-8865a0d9f28239e6:f0003",
+                    "us-code-22-2568-8865a0d9f28239e6:f0004"
+                  ],
+                  "lean_output": "",
+                  "proof_cache_hit": false,
+                  "registry_hash": "156ac18cf995ca3baddc2d8e73e343a44600c68d0b5edf841617cf6dc05a4f81",
+                  "theorem_count": 33,
+                  "verified_formula_count": 4
+                },
+                "elapsed_seconds": 27.012044191360474,
+                "error_message": "",
+                "route_available": true,
+                "status": "accepted",
+                "theorem_valid": true,
+                "timeout_seconds": 90.0
+              },
+              {
+                "checker_name": "lean",
+                "details": {
+                  "formula_ids": [
+                    "us-code-22-2568-8865a0d9f28239e6:f0005",
+                    "us-code-22-2568-8865a0d9f28239e6:f0006",
+                    "us-code-22-2568-8865a0d9f28239e6:f0007",
+                    "us-code-22-2568-8865a0d9f28239e6:f0008"
+                  ],
+                  "lean_output": "",
+                  "proof_cache_hit": false,
+                  "registry_hash": "2541bf30056e5b0a8e287e2537dcbcc3217390bbd1c8978a6451559d24026e14",
+                  "theorem_count": 33,
+                  "verified_formula_count": 4
+                },
+                "elapsed_seconds": 28.160444259643555,
+                "error_message": "",
+                "route_available": true,
+                "status": "accepted",
+                "theorem_valid": true,
+                "timeout_seconds": 90.0
+              },
+              {
+                "checker_name": "lean",
+                "details": {
+                  "formula_ids": [
+                    "us-code-22-2568-8865a0d9f28239e6:f0009",
+                    "us-code-22-2568-8865a0d9f28239e6:f0010",
+                    "us-code-22-2568-8865a0d9f28239e6:f0011",
+                    "us-code-22-2568-8865a0d9f28239e6:f0012"
+                  ],
+                  "lean_output": "",
+                  "proof_cache_hit": false,
+                  "registry_hash": "0906b4095d870118e86222b35cf1f32b2f8de74f72bc9970db64a91f5ddbd7b7",
+                  "theorem_count": 33,
+                  "verified_formula_count": 4
+                },
+                "elapsed_seconds": 24.210209369659424,
+                "error_message": "",
+                "route_available": true,
+                "status": "accepted",
+                "theorem_valid": true,
+                "timeout_seconds": 90.0
+              },
+              {
+                "checker_name": "lean",
+                "details": {
+                  "formula_ids": [
+                    "us-code-22-2568-8865a0d9f28239e6:f0013",
+                    "us-code-22-2568-8865a0d9f28239e6:f0014",
+                    "us-code-22-2568-8865a0d9f28239e6:f0015",
+                    "us-code-22-2568-8865a0d9f28239e6:f0016"
+                  ],
+                  "lean_output": "",
+                  "proof_cache_hit": false,
+                  "registry_hash": "56a9d48280180446d8dcd8e227eecfae5d90c66cb2b395429028ee6ec182fdeb",
+                  "theorem_count": 33,
+                  "verified_formula_count": 4
+                },
+                "elapsed_seconds": 29.49185085296631,
+                "error_message": "",
+                "route_available": true,
+                "status": "accepted",
+                "theorem_valid": true,
+                "timeout_seconds": 90.0
+              },
+              {
+                "checker_name": "lean",
+                "details": {
+                  "formula_ids": [
+                    "us-code-22-2568-8865a0d9f28239e6:f0017",
+                    "us-code-22-2568-8865a0d9f28239e6:f0018",
+                    "us-code-22-2568-8865a0d9f28239e6:f0019",
+                    "us-code-22-2568-8865a0d9f28239e6:f0020"
+                  ],
+                  "lean_output": "",
+                  "proof_cache_hit": false,
+                  "registry_hash": "ceb023bd8c2e2e9dacc2b867bdd82cd418c30acc52d1e62d52fc683c7e2c9d1f",
+                  "theorem_count": 33,
+                  "verified_formula_count": 4
+                },
+                "elapsed_seconds": 15.796459674835205,
+                "error_message": "",
+                "route_available": true,
+                "status": "accepted",
+                "theorem_valid": true,
+                "timeout_seconds": 90.0
+              },
+              {
+                "checker_name": "lean",
+                "details": {
+                  "formula_ids": [
+                    "us-code-22-2568-8865a0d9f28239e6:f0021",
+                    "us-code-22-2568-8865a0d9f28239e6:f0022",
+                    "us-code-22-2568-8865a0d9f28239e6:f0023"
+                  ],
+                  "lean_output": "",
+                  "proof_cache_hit": false,
+                  "registry_hash": "d9ca6f73cc1ac9d4d7f0dd6df61939dffc4d0d6392b410cef737b20fdc6aea31",
+                  "theorem_count": 25,
+                  "verified_formula_count": 3
+                },
+                "elapsed_seconds": 12.885118007659912,
+                "error_message": "",
+                "route_available": true,
+                "status": "accepted",
+                "theorem_valid": true,
+                "timeout_seconds": 90.0
+              }
+            ],
+            "theorem_count": 190,
+            "theorem_generator_hash": "4097479f9d1d12bb7322d0db09b2825b1ddad42c4f89d462864c314a28218760",
+            "verified_formula_count": 23
+          },
+          "elapsed_seconds": 40.018293380737305,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": true,
+          "timeout_seconds": 90.0
+        },
+        {
+          "checker_name": "modal:tdfol_modal_tableaux",
+          "details": {
+            "backend": "tdfol_modal_tableaux",
+            "compiled_formula": "O(be_established_by_the_secretary_of)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0001",
+            "logic_type": "D",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "D",
+            "modal_theorem_valid": false,
+            "proof_steps": [
+              "Negated OBLIGATION: created world 1"
+            ],
+            "raw_result": {
+              "closed_branches": 0,
+              "is_valid": false,
+              "open_branch": {
+                "_box_history": {},
+                "_neg_diamond_history": {},
+                "accessibility": {
+                  "0": [
+                    1
+                  ],
+                  "1": []
+                },
+                "current_world": 0,
+                "is_closed": false,
+                "next_world_id": 2,
+                "worlds": {
+                  "0": {
+                    "formulas": [],
+                    "id": 0,
+                    "negated_formulas": []
+                  },
+                  "1": {
+                    "formulas": [],
+                    "id": 1,
+                    "negated_formulas": [
+                      {
+                        "arguments": [],
+                        "name": "be_established_by_the_secretary_of"
+                      }
+                    ]
+                  }
+                }
+              },
+              "proof_steps": [
+                "Negated OBLIGATION: created world 1"
+              ],
+              "total_branches": 1
+            },
+            "reason": ""
+          },
+          "elapsed_seconds": 0.002134561538696289,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:tdfol_modal_tableaux",
+          "details": {
+            "backend": "tdfol_modal_tableaux",
+            "compiled_formula": "O(be_appointed_for_a_term_of)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0002",
+            "logic_type": "D",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "D",
+            "modal_theorem_valid": false,
+            "proof_steps": [
+              "Negated OBLIGATION: created world 1"
+            ],
+            "raw_result": {
+              "closed_branches": 0,
+              "is_valid": false,
+              "open_branch": {
+                "_box_history": {},
+                "_neg_diamond_history": {},
+                "accessibility": {
+                  "0": [
+                    1
+                  ],
+                  "1": []
+                },
+                "current_world": 0,
+                "is_closed": false,
+                "next_world_id": 2,
+                "worlds": {
+                  "0": {
+                    "formulas": [],
+                    "id": 0,
+                    "negated_formulas": []
+                  },
+                  "1": {
+                    "formulas": [],
+                    "id": 1,
+                    "negated_formulas": [
+                      {
+                        "arguments": [],
+                        "name": "be_appointed_for_a_term_of"
+                      }
+                    ]
+                  }
+                }
+              },
+              "proof_steps": [
+                "Negated OBLIGATION: created world 1"
+              ],
+              "total_branches": 1
+            },
+            "reason": ""
+          },
+          "elapsed_seconds": 6.198883056640625e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:tdfol_modal_tableaux",
+          "details": {
+            "backend": "tdfol_modal_tableaux",
+            "compiled_formula": "O(for_a_term_of_one_year)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0003",
+            "logic_type": "D",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "D",
+            "modal_theorem_valid": false,
+            "proof_steps": [
+              "Negated OBLIGATION: created world 1"
+            ],
+            "raw_result": {
+              "closed_branches": 0,
+              "is_valid": false,
+              "open_branch": {
+                "_box_history": {},
+                "_neg_diamond_history": {},
+                "accessibility": {
+                  "0": [
+                    1
+                  ],
+                  "1": []
+                },
+                "current_world": 0,
+                "is_closed": false,
+                "next_world_id": 2,
+                "worlds": {
+                  "0": {
+                    "formulas": [],
+                    "id": 0,
+                    "negated_formulas": []
+                  },
+                  "1": {
+                    "formulas": [],
+                    "id": 1,
+                    "negated_formulas": [
+                      {
+                        "arguments": [],
+                        "name": "for_a_term_of_one_year"
+                      }
+                    ]
+                  }
+                }
+              },
+              "proof_steps": [
+                "Negated OBLIGATION: created world 1"
+              ],
+              "total_branches": 1
+            },
+            "reason": ""
+          },
+          "elapsed_seconds": 3.4809112548828125e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:tdfol_modal_tableaux_fallback",
+          "details": {
+            "backend": "tdfol_modal_tableaux_fallback",
+            "compiled_formula": "O(that_such_term_may_be_extended)",
+            "fallback_complete": false,
+            "fallback_sound_when_proved": true,
+            "fallback_system": "D",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0004",
+            "logic_type": "D",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "KD",
+            "modal_theorem_valid": false,
+            "original_system": "KD",
+            "proof_steps": [
+              "Negated OBLIGATION: created world 1"
+            ],
+            "raw_result": {
+              "closed_branches": 0,
+              "is_valid": false,
+              "open_branch": {
+                "_box_history": {},
+                "_neg_diamond_history": {},
+                "accessibility": {
+                  "0": [
+                    1
+                  ],
+                  "1": []
+                },
+                "current_world": 0,
+                "is_closed": false,
+                "next_world_id": 2,
+                "worlds": {
+                  "0": {
+                    "formulas": [],
+                    "id": 0,
+                    "negated_formulas": []
+                  },
+                  "1": {
+                    "formulas": [],
+                    "id": 1,
+                    "negated_formulas": [
+                      {
+                        "arguments": [],
+                        "name": "that_such_term_may_be_extended"
+                      }
+                    ]
+                  }
+                }
+              },
+              "proof_steps": [
+                "Negated OBLIGATION: created world 1"
+              ],
+              "total_branches": 1
+            },
+            "reason": "KD routed through sound weaker-system fallback D; non-proofs remain inconclusive for KD.",
+            "registered": true
+          },
+          "elapsed_seconds": 3.2901763916015625e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:tdfol_modal_tableaux",
+          "details": {
+            "backend": "tdfol_modal_tableaux",
+            "compiled_formula": "O(be_extended_for_a_year_period)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0005",
+            "logic_type": "D",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "D",
+            "modal_theorem_valid": false,
+            "proof_steps": [
+              "Negated OBLIGATION: created world 1"
+            ],
+            "raw_result": {
+              "closed_branches": 0,
+              "is_valid": false,
+              "open_branch": {
+                "_box_history": {},
+                "_neg_diamond_history": {},
+                "accessibility": {
+                  "0": [
+                    1
+                  ],
+                  "1": []
+                },
+                "current_world": 0,
+                "is_closed": false,
+                "next_world_id": 2,
+                "worlds": {
+                  "0": {
+                    "formulas": [],
+                    "id": 0,
+                    "negated_formulas": []
+                  },
+                  "1": {
+                    "formulas": [],
+                    "id": 1,
+                    "negated_formulas": [
+                      {
+                        "arguments": [],
+                        "name": "be_extended_for_a_year_period"
+                      }
+                    ]
+                  }
+                }
+              },
+              "proof_steps": [
+                "Negated OBLIGATION: created world 1"
+              ],
+              "total_branches": 1
+            },
+            "reason": ""
+          },
+          "elapsed_seconds": 2.6464462280273438e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:tdfol_modal_tableaux",
+          "details": {
+            "backend": "tdfol_modal_tableaux",
+            "compiled_formula": "O(for_a_year_period)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0006",
+            "logic_type": "D",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "D",
+            "modal_theorem_valid": false,
+            "proof_steps": [
+              "Negated OBLIGATION: created world 1"
+            ],
+            "raw_result": {
+              "closed_branches": 0,
+              "is_valid": false,
+              "open_branch": {
+                "_box_history": {},
+                "_neg_diamond_history": {},
+                "accessibility": {
+                  "0": [
+                    1
+                  ],
+                  "1": []
+                },
+                "current_world": 0,
+                "is_closed": false,
+                "next_world_id": 2,
+                "worlds": {
+                  "0": {
+                    "formulas": [],
+                    "id": 0,
+                    "negated_formulas": []
+                  },
+                  "1": {
+                    "formulas": [],
+                    "id": 1,
+                    "negated_formulas": [
+                      {
+                        "arguments": [],
+                        "name": "for_a_year_period"
+                      }
+                    ]
+                  }
+                }
+              },
+              "proof_steps": [
+                "Negated OBLIGATION: created world 1"
+              ],
+              "total_branches": 1
+            },
+            "reason": ""
+          },
+          "elapsed_seconds": 2.1457672119140625e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:ltl_compile_only",
+          "details": {
+            "backend": "ltl_compile_only",
+            "compiled_formula": "\u25ca(and_amended_pub)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0007",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "LTL",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25ca(and_amended_pub)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "LTL has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 1.4066696166992188e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:tdfol_modal_tableaux",
+          "details": {
+            "backend": "tdfol_modal_tableaux",
+            "compiled_formula": "O(be_chosen_by_a_board_consisting)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0008",
+            "logic_type": "D",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "D",
+            "modal_theorem_valid": false,
+            "proof_steps": [
+              "Negated OBLIGATION: created world 1"
+            ],
+            "raw_result": {
+              "closed_branches": 0,
+              "is_valid": false,
+              "open_branch": {
+                "_box_history": {},
+                "_neg_diamond_history": {},
+                "accessibility": {
+                  "0": [
+                    1
+                  ],
+                  "1": []
+                },
+                "current_world": 0,
+                "is_closed": false,
+                "next_world_id": 2,
+                "worlds": {
+                  "0": {
+                    "formulas": [],
+                    "id": 0,
+                    "negated_formulas": []
+                  },
+                  "1": {
+                    "formulas": [],
+                    "id": 1,
+                    "negated_formulas": [
+                      {
+                        "arguments": [],
+                        "name": "be_chosen_by_a_board_consisting"
+                      }
+                    ]
+                  }
+                }
+              },
+              "proof_steps": [
+                "Negated OBLIGATION: created world 1"
+              ],
+              "total_branches": 1
+            },
+            "reason": ""
+          },
+          "elapsed_seconds": 2.288818359375e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:tdfol_modal_tableaux",
+          "details": {
+            "backend": "tdfol_modal_tableaux",
+            "compiled_formula": "O(be_chosen_by_a_board_consisting)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0009",
+            "logic_type": "D",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "D",
+            "modal_theorem_valid": false,
+            "proof_steps": [
+              "Negated OBLIGATION: created world 1"
+            ],
+            "raw_result": {
+              "closed_branches": 0,
+              "is_valid": false,
+              "open_branch": {
+                "_box_history": {},
+                "_neg_diamond_history": {},
+                "accessibility": {
+                  "0": [
+                    1
+                  ],
+                  "1": []
+                },
+                "current_world": 0,
+                "is_closed": false,
+                "next_world_id": 2,
+                "worlds": {
+                  "0": {
+                    "formulas": [],
+                    "id": 0,
+                    "negated_formulas": []
+                  },
+                  "1": {
+                    "formulas": [],
+                    "id": 1,
+                    "negated_formulas": [
+                      {
+                        "arguments": [],
+                        "name": "be_chosen_by_a_board_consisting"
+                      }
+                    ]
+                  }
+                }
+              },
+              "proof_steps": [
+                "Negated OBLIGATION: created world 1"
+              ],
+              "total_branches": 1
+            },
+            "reason": ""
+          },
+          "elapsed_seconds": 1.8835067749023438e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:ltl_compile_only",
+          "details": {
+            "backend": "ltl_compile_only",
+            "compiled_formula": "X(participation_in_the_arms_control_in)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0010",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "LTL",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "X(participation_in_the_arms_control_in)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "LTL has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 8.58306884765625e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:ltl_compile_only",
+          "details": {
+            "backend": "ltl_compile_only",
+            "compiled_formula": "\u25ca(of_amendment_amendment_by_pub)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0011",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "LTL",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25ca(of_amendment_amendment_by_pub)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "LTL has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 7.62939453125e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:ltl_compile_only",
+          "details": {
+            "backend": "ltl_compile_only",
+            "compiled_formula": "\u25ca(note_under_section_of_this_title)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0012",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "LTL",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25ca(note_under_section_of_this_title)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "LTL has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 1.33514404296875e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(u_s_c_title_foreign_relations)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0014",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(u_s_c_title_foreign_relations)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 7.867813110351562e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(united_states_code_edition_title_foreign)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0015",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(united_states_code_edition_title_foreign)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 7.152557373046875e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(from_the_u_s_government_publishing)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0016",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(from_the_u_s_government_publishing)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 6.9141387939453125e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(the_purpose_of_the_program_will)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0017",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(the_purpose_of_the_program_will)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 6.9141387939453125e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(pub_l_title_ii_formerly_as)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0018",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(pub_l_title_ii_formerly_as)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 6.9141387939453125e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(l_div_g_subdiv_a_title)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0019",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(l_div_g_subdiv_a_title)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 7.152557373046875e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(pub_l)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0020",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(pub_l)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 6.67572021484375e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(l_effective_apr_see_section_of)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0021",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(l_effective_apr_see_section_of)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 7.152557373046875e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(the_purpose_of_the_program_will)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0022",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(the_purpose_of_the_program_will)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 6.67572021484375e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(program_for_visiting_scholars)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0023",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(program_for_visiting_scholars)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 6.4373016357421875e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        },
+        {
+          "checker_name": "modal:frame_bm25_compile_only",
+          "details": {
+            "backend": "frame_bm25_compile_only",
+            "compiled_formula": "\u25a1(program_for_visiting_scholars)",
+            "formula_assertion_proved": false,
+            "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0013",
+            "modal_bridge_validation_mode": "compilation",
+            "modal_route_status": "available",
+            "modal_system": "FRAME_BM25",
+            "modal_theorem_valid": false,
+            "proof_supported": false,
+            "raw_result": {
+              "compile_only": true,
+              "compiled_formula": "\u25a1(program_for_visiting_scholars)",
+              "is_valid": false,
+              "proof_supported": false
+            },
+            "reason": "FRAME_BM25 has a registered compiler/profile route but no complete local theorem prover adapter; treating it as compile-only.",
+            "registered": true,
+            "validation_mode": "compile_only"
+          },
+          "elapsed_seconds": 6.67572021484375e-06,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": false,
+          "timeout_seconds": 5.0
+        }
+      ],
+      "outcome": "accepted",
+      "reasons": [],
+      "request_id": "leanstral-audit-4243287695e8c241",
+      "response_hash": "342923248ce2aa52c026054a6b346f7156c2356968d52a770d3706183808e9d8",
+      "schema_version": "legal-ir-leanstral-verifier-v1",
+      "source_span_checks": [
+        {
+          "accepted": true,
+          "actual_hash": "26cbf25388643d3523f704a6ca9f61c21a85472601d2acb143b201344ff0db3e",
+          "end_char": 632,
+          "example_id": "us-code-22-2568-8865a0d9f28239e6",
+          "expected_hash": "26cbf25388643d3523f704a6ca9f61c21a85472601d2acb143b201344ff0db3e",
+          "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0001",
+          "reason": "",
+          "start_char": 348
+        },
+        {
+          "accepted": true,
+          "actual_hash": "db7801658c3131c9061230ad88be0703ca5d039f500590b19c6a095e3edccb1c",
+          "end_char": 1139,
+          "example_id": "us-code-22-2568-8865a0d9f28239e6",
+          "expected_hash": "db7801658c3131c9061230ad88be0703ca5d039f500590b19c6a095e3edccb1c",
+          "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0002",
+          "reason": "",
+          "start_char": 1010
+        },
+        {
+          "accepted": true,
+          "actual_hash": "162f5c9a3ccddc93510b2161c645749e24e14cef145e14a4cc24710684c2861c",
+          "end_char": 1139,
+          "example_id": "us-code-22-2568-8865a0d9f28239e6",
+          "expected_hash": "162f5c9a3ccddc93510b2161c645749e24e14cef145e14a4cc24710684c2861c",
+          "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0003",
+          "reason": "",
+          "start_char": 1010
+        },
+        {
+          "accepted": true,
+          "actual_hash": "1fa6ab711cd7a909fdb299f4b9cf44b5ef9fb056714960c6afb1d9b2ca7d2bfb",
+          "end_char": 1139,
+          "example_id": "us-code-22-2568-8865a0d9f28239e6",
+          "expected_hash": "1fa6ab711cd7a909fdb299f4b9cf44b5ef9fb056714960c6afb1d9b2ca7d2bfb",
+          "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0004",
+          "reason": "",
+          "start_char": 1010
+        },
+        {
+          "accepted": true,
+          "actual_hash": "dee9065b305689a9ce2da676b611a0f187c12b054d0edd89744a828ba6db0f6c",
+          "end_char": 1139,
+          "example_id": "us-code-22-2568-8865a0d9f28239e6",
+          "expected_hash": "dee9065b305689a9ce2da676b611a0f187c12b054d0edd89744a828ba6db0f6c",
+          "formula_id": "us-code-22-2568-8865a0d9f28239e6:f0005",
+          "reason": "",
+          "start_char": 1010
+        }
+      ],
+      "verified_by": [
+        "lean"
+      ]
+    },
+    "hammer_verification": {
+      "accepted": false,
+      "candidate_count": 1,
+      "candidate_results": [
+        {
+          "accepted": false,
+          "candidate_index": 1,
+          "deterministic_checks": [
+            {
+              "checker_name": "leanstral_hammer_candidate_syntax",
+              "error_message": "",
+              "route_available": true,
+              "status": "accepted",
+              "theorem_valid": true
+            },
+            {
+              "checker_name": "leanstral_hammer_candidate_contract",
+              "error_message": "",
+              "route_available": true,
+              "status": "accepted",
+              "theorem_valid": true
+            },
+            {
+              "checker_name": "leanstral_hammer_candidate_provenance",
+              "error_message": "",
+              "route_available": true,
+              "status": "accepted",
+              "theorem_valid": true
+            },
+            {
+              "checker_name": "leanstral_hammer_candidate_graph",
+              "error_message": "",
+              "route_available": true,
+              "status": "accepted",
+              "theorem_valid": true
+            }
+          ],
+          "hammer_report": {
+            "elapsed_seconds": 0.089471101761,
+            "metadata": {
+              "backend_health": {
+                "available_count": 4,
+                "available_routes": [
+                  "z3_python",
+                  "cvc5",
+                  "vampire",
+                  "e_prover"
+                ],
+                "records": [
+                  {
+                    "available": true,
+                    "check_error": "",
+                    "elapsed_seconds": 0.0,
+                    "executable": "",
+                    "install_command": [],
+                    "installer_available": false,
+                    "name": "z3_python",
+                    "problem_format": "smt-lib",
+                    "resolved_path": "",
+                    "route_type": "runtime_runner",
+                    "schema_version": "legal-ir-hammer-backend-health-v1",
+                    "version_output": ""
+                  },
+                  {
+                    "available": true,
+                    "check_error": "",
+                    "elapsed_seconds": 0.017234802246,
+                    "executable": "cvc5",
+                    "install_command": [
+                      "python",
+                      "-m",
+                      "scripts.setup.ipfs_prover_installer",
+                      "--yes",
+                      "--cvc5"
+                    ],
+                    "installer_available": true,
+                    "name": "cvc5",
+                    "problem_format": "smt-lib",
+                    "resolved_path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                    "route_type": "smt",
+                    "schema_version": "legal-ir-hammer-backend-health-v1",
+                    "version_output": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD]\ncompiled with GCC version 11.4.0\non Feb 26 2026 01:24:28\n\nCopyright (c) 2009-2025 by the authors and their institutional\naffiliations listed at https://cvc5.github.io/people.html\n\ncvc5 is open-source and is covered by the BSD license (modified).\n\nTHIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.\nUSE AT YOUR OWN RISK.\n\nThis version of cvc5 is linked against the following non-(L)GPL'ed\nthird party libraries.\n\n  CaDiCaL - Simplified Satisfiability Solver\n  See https://github.com/arminbiere/cadical for copyright information.\n\n  Editline Library\n  See https://thrysoee.dk/editline\n  for copyright information.\n\n  SymFPU - The Symbolic Floating Point Unit\n  See https://github.com/martin-cs/symfpu/tree/CVC4 for copyright information.\n\nThis version of cvc5 is linked against the following third party\nlibraries covered by the LGPLv3 license.\nSee licenses/lgpl-3.0.txt for more information.\n\n  GMP - Gnu Multi Precision Arithmetic Library"
+                  },
+                  {
+                    "available": true,
+                    "check_error": "",
+                    "elapsed_seconds": 0.00582075119,
+                    "executable": "vampire",
+                    "install_command": [
+                      "python",
+                      "-m",
+                      "scripts.setup.ipfs_prover_installer",
+                      "--yes",
+                      "--vampire"
+                    ],
+                    "installer_available": true,
+                    "name": "vampire",
+                    "problem_format": "tptp-fof",
+                    "resolved_path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/vampire",
+                    "route_type": "atp",
+                    "schema_version": "legal-ir-hammer-backend-health-v1",
+                    "version_output": "Vampire 5.0.1 (Release build, commit 1b13eaf on 2026-01-18 12:14:50 +0000)\nCaDiCaL: cadical-2.1.3\nLinked to Z3 4.14.0.0 3c47fd96cf5645d0c42b2c819d9e9a84380aa721 NOTFOUND"
+                  },
+                  {
+                    "available": true,
+                    "check_error": "",
+                    "elapsed_seconds": 0.004186630249,
+                    "executable": "eprover",
+                    "install_command": [
+                      "python",
+                      "-m",
+                      "scripts.setup.ipfs_prover_installer",
+                      "--yes",
+                      "--eprover"
+                    ],
+                    "installer_available": true,
+                    "name": "e_prover",
+                    "problem_format": "tptp-fof",
+                    "resolved_path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/eprover",
+                    "route_type": "atp",
+                    "schema_version": "legal-ir-hammer-backend-health-v1",
+                    "version_output": "E 3.2.5 Puttabong Moondrop (be41955555b56c9616992a99fe1643de343b212c)"
+                  }
+                ],
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "unavailable_count": 0,
+                "unavailable_routes": []
+              },
+              "coverage_promotion_allowed": false,
+              "proof_route_count": 1,
+              "proof_routing_enabled": true,
+              "timeout_seconds": 10.0,
+              "verify_reconstruction": false
+            },
+            "obligation_count": 1,
+            "premise_count": 42,
+            "proof_success_rate": 0.0,
+            "proved_count": 0,
+            "reconstruction_receipts": [
+              {
+                "backend": "",
+                "backend_proved": false,
+                "backend_statuses": {
+                  "cvc5": "disproved",
+                  "e_prover": "unknown",
+                  "vampire": "unknown",
+                  "z3_python": "disproved"
+                },
+                "errors": [
+                  "# Preprocessing class: FSMSSLSSSSSNFFN.\n# Configuration: G-E--_208_C18_F1_SE_CS_SP_PS_S5PRR_RG_S04AI\n# No SInE strategy applied\n# Search class: FUHNF-FFSM00-SFFFFFNN\n# Configuration: SAT001_MinMin_p005000_rr_RG\n# Initializing proof state\n# Scanning for AC axioms\n#\n#cnf(i_0_1, plain, (proof_obligation_lir_obligation_a79260cfb026d19_cf81b7a0bb16)).\n#\n#cnf(i_0_43, negated_conjecture, (~before_time_t1_time_t2_984bbcf07e45|~temporal_anchor_event_e1_time_t1_3a697e1566d6)).\n#\n#cnf(i_0_2, plain, (formula_us_code_a0d9f28239e6_f0001_b0b90d98b765)).\n#\n#cnf(i_0_3, plain, (formula_us_code_a0d9f28239e6_f0002_1f783df9eaea)).\n#\n#cnf(i_0_4, plain, (formula_us_code_a0d9f28239e6_f0003_d13386f63fd2)).\n#\n#cnf(i_0_5, plain, (formula_us_code_a0d9f28239e6_f0004_b4b7eae0e907)).\n#\n#cnf(i_0_6, plain, (formula_us_code_a0d9f28239e6_f0005_22c903c704a8)).\n#\n#cnf(i_0_7, plain, (formula_us_code_a0d9f28239e6_f0006_02a031981984)).\n#\n#cnf(i_0_8, plain, (formula_us_code_a0d9f28239e6_f0007_ef9ebd153bbb)).\n#\n#cnf(i_0_9, pla"
+                ],
+                "obligation_id": "lir-obligation-72432a79260cfb026d19",
+                "outcome": "no_backend_proof",
+                "receipt_id": "hammer-receipt-08b26978ecbfb799e2ae",
+                "reconstruction_status": "",
+                "translation_failed": false,
+                "translation_succeeded": true,
+                "trust_reason": "backend_proof_missing",
+                "trust_status": "untrusted",
+                "trusted": false
+              }
+            ],
+            "route_results": [
+              {
+                "obligation_id": "lir-obligation-72432a79260cfb026d19",
+                "proved": false,
+                "status": "theorem_failed",
+                "stop_reason": "conclusive_theorem_failure",
+                "trust_level": "none",
+                "trust_satisfied": false
+              }
+            ],
+            "schema_version": "legal-ir-hammer-report-v1",
+            "trusted_count": 0,
+            "trusted_success_rate": 0.0
+          },
+          "reasons": [
+            "theorem_failed",
+            "unproved"
+          ],
+          "schema_version": "legal-ir-leanstral-hammer-verifier-v1",
+          "trusted": false
+        }
+      ],
+      "proposal_task_id": "leanstral-audit-hammer-f0040108a130ae54",
+      "reasons": [
+        "theorem_failed",
+        "unproved"
+      ],
+      "schema_version": "legal-ir-leanstral-hammer-verifier-v1",
+      "task_id": "leanstral-audit-hammer-f0040108a130ae54",
+      "trusted": false,
+      "trusted_candidate_count": 0
+    },
+    "reasons": [],
+    "response_hash": "342923248ce2aa52c026054a6b346f7156c2356968d52a770d3706183808e9d8",
+    "verified": true,
+    "verified_by": [
+      "leanstral-audit-schema-v3"
+    ]
+  }
+}

@@ -82,6 +82,76 @@ _LEANSTRAL_ALLOWED_FAILURE_MODES = frozenset(
         "unsupported",
     }
 )
+_LEANSTRAL_FAMILY_CANDIDATE_PREDICATES: Dict[str, tuple[str, ...]] = {
+    "deontic": (
+        "obligation",
+        "permission",
+        "prohibition",
+        "exception",
+        "condition",
+        "actor",
+        "action",
+    ),
+    "event_calculus": (
+        "event",
+        "fluent",
+        "happens",
+        "occurs",
+        "initiates",
+        "terminates",
+        "holds_at",
+        "releases",
+        "lifecycle_transition",
+    ),
+    "frame_logic": (
+        "frame",
+        "frame_role",
+        "frame_slot",
+        "class",
+        "subclass",
+        "relation",
+        "subject",
+        "predicate",
+        "object",
+    ),
+    "graph_projection": (
+        "subject",
+        "predicate",
+        "object",
+        "node",
+        "edge",
+        "relation",
+        "provenance",
+    ),
+    "temporal_first_order": (
+        "temporal_anchor",
+        "time_anchor",
+        "event_order",
+        "before",
+        "after",
+        "within",
+        "until",
+        "deadline",
+        "occurs_at",
+        "obligation_at",
+    ),
+}
+_LEANSTRAL_FAMILY_CANDIDATE_EXAMPLES = {
+    "deontic": (
+        "obligation(actor:a1, action:x1) unless exception(condition:c1)"
+    ),
+    "event_calculus": (
+        "initiates(event:e1, fluent:f1, time:t1) and "
+        "holds_at(fluent:f1, time:t2)"
+    ),
+    "frame_logic": "frame_role(frame:f1, role:r1, value:v1)",
+    "graph_projection": (
+        "relation(subject:s1, predicate:p1, object:o1)"
+    ),
+    "temporal_first_order": (
+        "temporal_anchor(event:e1, time:t1) and before(time:t1, time:t2)"
+    ),
+}
 _SAFE_LEAN_IDENTIFIER = re.compile(r"[^A-Za-z0-9_]+")
 _ALLOWED_RULE_HINT_ACTIONS = frozenset(
     {
@@ -1492,6 +1562,12 @@ def _failed_obligation_branches(
     *,
     failed_obligation_ids: Sequence[str] = (),
 ) -> list[Dict[str, Any]]:
+    grounding_catalog = _leanstral_candidate_grounding_catalog(
+        task.modal_formula
+    )
+    grounding_symbols = _leanstral_candidate_grounding_symbols(
+        task.modal_formula
+    )
     obligations = {
         str(item.get("obligation_id") or ""): dict(item)
         for item in _legal_ir_proof_obligations(task)
@@ -1519,20 +1595,58 @@ def _failed_obligation_branches(
             continue
         failure = failure_by_id[obligation_id]
         statement = str(obligation.get("statement") or "")
+        logic_family = str(obligation.get("logic_family") or "")
+        target_view = str(obligation.get("legal_ir_view") or "")
+        grounded_candidate_seed = _leanstral_grounded_candidate_seed(
+            logic_family,
+            target_view,
+            grounding_catalog,
+        )
+        allowed_predicate_heads = tuple(
+            dict.fromkeys(
+                (
+                    *_leanstral_logic_predicate_heads(statement),
+                    *_leanstral_candidate_predicate_vocabulary(
+                        logic_family,
+                        target_view,
+                    ),
+                )
+            )
+        )
         branches.append(
             {
+                "candidate_language": {
+                    "allowed_predicate_heads": list(allowed_predicate_heads),
+                    "grounding_symbols": list(grounding_symbols),
+                    "grounding_symbols_by_role": {
+                        key: list(values)
+                        for key, values in grounding_catalog.items()
+                    },
+                    "grounding_required": bool(grounding_symbols),
+                    "grounded_candidate_seed": grounded_candidate_seed,
+                    "minimum_distinct_grounding_symbols": min(
+                        2,
+                        len(grounding_symbols),
+                    ),
+                    "shape_example": _leanstral_candidate_example(
+                        logic_family,
+                        target_view,
+                    ),
+                    "must_differ_from_obligation": True,
+                    "must_differ_from_shape_example": True,
+                },
                 "contract_id": _obligation_contract_id(obligation),
                 "expected_failure_mode": _normalized_failure_mode(
                     failure.get("failure_reason")
                     or next(iter(_string_sequence(failure.get("rejection_reasons"))), "")
                     or failure.get("reconstruction_status")
                 ),
-                "logic_family": str(obligation.get("logic_family") or ""),
+                "logic_family": logic_family,
                 "obligation_id": obligation_id,
                 "premise_hints": _string_sequence(obligation.get("premise_hints")),
                 "statement": statement,
                 "statement_sha256": hashlib.sha256(statement.encode("utf-8")).hexdigest(),
-                "target_view": str(obligation.get("legal_ir_view") or ""),
+                "target_view": target_view,
             }
         )
     return branches
@@ -1557,8 +1671,13 @@ def build_leanstral_failure_branch_prompt(
     )
     example = branches[0] if branches else {}
     obligation_id = str(example.get("obligation_id") or "")
+    candidate_language = dict(example.get("candidate_language") or {})
     candidate_shape = {
-        "candidate": "obligation(actor:Entity, action:Action) unless exception(condition:Condition)",
+        "candidate": str(
+            candidate_language.get("grounded_candidate_seed")
+            or candidate_language.get("shape_example")
+            or "typed_relation(subject:s1, object:o1)"
+        ),
         "compiler_surface": str(example.get("target_view") or ""),
         "confidence": 0.0,
         "contract_id": str(example.get("contract_id") or ""),
@@ -1582,6 +1701,11 @@ def build_leanstral_failure_branch_prompt(
             "Return candidates as typed Legal IR expressions, never Lean tactics, proof text, or natural-language advice.",
             "Each candidate must bind exactly one listed proof_obligation_id and use only that branch's premise_hints.",
             "Copy contract_id, logic_family, target_view, and compiler_surface exactly from the failed branch.",
+            "Use only predicate heads listed in that branch's candidate_language.allowed_predicate_heads.",
+            "Return a family-specific proof candidate; the grounded seed is a valid compiler witness, while any alternative must be derivable from compiler-owned facts.",
+            "The candidate_language.shape_example is syntax guidance and is invalid as a final candidate.",
+            "Use candidate_language.grounded_candidate_seed as the minimum valid evidence-grounded fallback, or improve it using only compiler-owned grounding_symbols.",
+            "Use at least candidate_language.minimum_distinct_grounding_symbols distinct grounding symbols; do not invent near-match identifiers.",
             "Do not copy, quote, paraphrase, or reconstruct the legal source span.",
             "Do not invent contract IDs, obligation IDs, premise hints, theorem statements, or source text.",
             "Use the candidate_shape fields exactly; additional candidate fields are rejected.",
@@ -1632,6 +1756,353 @@ def _typed_logic_rejection_reason(candidate_text: str) -> str:
     if not _is_typed_logic_expression(text):
         return "untyped_logic"
     return ""
+
+
+def _logic_family_candidate_rejection_reason(
+    candidate_text: str,
+    logic_family: Any,
+    target_view: Any = "",
+) -> str:
+    """Reject a typed expression that contains no signal from its claimed IR.
+
+    This is intentionally a shape check, not a theorem prover. It prevents a
+    model from labelling the same generic predicate as TDFOL, DCEC, or F-logic
+    while leaving family semantics to the native/SMT/ATP verification routes.
+    """
+
+    text = str(candidate_text or "").strip().lower()
+    family = (
+        f"{logic_family or ''} {target_view or ''}"
+        .lower()
+        .replace("-", "_")
+        .replace(".", "_")
+    )
+    heads = " ".join(
+        match.group(1).lower()
+        for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_.:-]*)\s*\(", text)
+    )
+    if any(token in family for token in ("tdfol", "temporal_first")):
+        required = (
+            "temporal",
+            "time",
+            "event_order",
+            "deadline",
+            "anchor",
+            "before",
+            "after",
+            "within",
+            "until",
+        )
+        return "" if any(token in heads for token in required) else "tdfol_candidate_shape_mismatch"
+    if any(token in family for token in ("dcec", "event_calculus", "cec_native")):
+        required = (
+            "cec",
+            "event",
+            "fluent",
+            "lifecycle",
+            "initiates",
+            "terminates",
+            "holds",
+            "occurs",
+        )
+        return "" if any(token in heads for token in required) else "dcec_candidate_shape_mismatch"
+    if any(token in family for token in ("flogic", "frame_logic", "modal_frame")):
+        required = (
+            "frame",
+            "slot",
+            "role",
+            "class",
+            "relation",
+            "subject",
+            "predicate",
+            "object",
+            "subclass",
+        )
+        return "" if any(token in heads for token in required) else "flogic_candidate_shape_mismatch"
+    return ""
+
+
+def _leanstral_candidate_family(
+    logic_family: Any,
+    target_view: Any = "",
+) -> str:
+    family = (
+        f"{logic_family or ''} {target_view or ''}"
+        .lower()
+        .replace("-", "_")
+        .replace(".", "_")
+    )
+    if any(token in family for token in ("tdfol", "temporal_first")):
+        return "temporal_first_order"
+    if any(token in family for token in ("dcec", "event_calculus", "cec_native")):
+        return "event_calculus"
+    if any(token in family for token in ("flogic", "frame_logic", "modal_frame")):
+        return "frame_logic"
+    if "deontic" in family:
+        return "deontic"
+    if "knowledge_graph" in family or "graph_projection" in family:
+        return "graph_projection"
+    return ""
+
+
+def _leanstral_candidate_predicate_vocabulary(
+    logic_family: Any,
+    target_view: Any = "",
+) -> tuple[str, ...]:
+    """Return the bounded predicate vocabulary for one LegalIR family."""
+
+    family = _leanstral_candidate_family(logic_family, target_view)
+    return _LEANSTRAL_FAMILY_CANDIDATE_PREDICATES.get(family, ())
+
+
+def _leanstral_candidate_example(
+    logic_family: Any,
+    target_view: Any = "",
+) -> str:
+    family = _leanstral_candidate_family(logic_family, target_view)
+    return _LEANSTRAL_FAMILY_CANDIDATE_EXAMPLES.get(
+        family,
+        "typed_relation(subject:s1, object:o1)",
+    )
+
+
+def _leanstral_candidate_grounding_symbols(
+    formulas: Any,
+    *,
+    limit: int = 12,
+) -> tuple[str, ...]:
+    """Extract compiler-owned identifiers suitable for candidate arguments."""
+
+    catalog = _leanstral_candidate_grounding_catalog(formulas, limit=limit)
+    ordered: list[str] = []
+    for values in catalog.values():
+        for value in values:
+            if value not in ordered:
+                ordered.append(value)
+    return tuple(ordered[: max(1, int(limit or 1))])
+
+
+def _leanstral_candidate_grounding_catalog(
+    formulas: Any,
+    *,
+    limit: int = 12,
+) -> Dict[str, tuple[str, ...]]:
+    """Group compact compiler-owned identifiers by semantic argument role."""
+
+    if isinstance(formulas, Mapping):
+        items: Sequence[Any] = (formulas,)
+    elif isinstance(formulas, Sequence) and not isinstance(
+        formulas,
+        (str, bytes),
+    ):
+        items = formulas
+    else:
+        items = ()
+    buckets: Dict[str, list[str]] = {
+        "predicate_symbols": [],
+        "argument_symbols": [],
+        "role_symbols": [],
+        "cue_symbols": [],
+    }
+
+    def add(bucket: str, value: Any) -> None:
+        normalized = _leanstral_candidate_symbol(value)
+        if (
+            len(normalized) >= 3
+            and not normalized.isdigit()
+            and normalized not in buckets[bucket]
+        ):
+            buckets[bucket].append(normalized)
+
+    for raw_formula in items:
+        formula = dict(raw_formula) if isinstance(raw_formula, Mapping) else {}
+        predicate = (
+            dict(formula.get("predicate") or {})
+            if isinstance(formula.get("predicate"), Mapping)
+            else {}
+        )
+        add("predicate_symbols", predicate.get("name"))
+        for argument in predicate.get("arguments") or ():
+            add("argument_symbols", argument)
+        add("role_symbols", predicate.get("role"))
+        metadata = (
+            dict(formula.get("metadata") or {})
+            if isinstance(formula.get("metadata"), Mapping)
+            else {}
+        )
+        operator = (
+            dict(formula.get("operator") or {})
+            if isinstance(formula.get("operator"), Mapping)
+            else {}
+        )
+        add(
+            "cue_symbols",
+            metadata.get("cue")
+            or operator.get("label")
+            or operator.get("symbol"),
+        )
+        if sum(len(values) for values in buckets.values()) >= max(
+            1,
+            int(limit or 1),
+        ):
+            break
+    remaining = max(1, int(limit or 1))
+    compact: Dict[str, tuple[str, ...]] = {}
+    for key, values in buckets.items():
+        selected = tuple(values[:remaining])
+        compact[key] = selected
+        remaining = max(0, remaining - len(selected))
+    return compact
+
+
+def _leanstral_candidate_symbol(value: Any) -> str:
+    """Return the bounded identifier shared by prompts and Hammer facts."""
+
+    normalized = re.sub(
+        r"[^A-Za-z0-9_]+",
+        "_",
+        str(value or "").strip().lower(),
+    ).strip("_")
+    if len(normalized) > 56:
+        digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:12]
+        normalized = f"{normalized[:40]}_{digest}"
+    return normalized
+
+
+def _leanstral_grounded_candidate_seed(
+    logic_family: Any,
+    target_view: Any,
+    grounding_catalog: Mapping[str, Sequence[str]],
+) -> str:
+    """Build a family-shaped candidate using only compiler-owned identifiers."""
+
+    predicates = tuple(
+        str(value)
+        for value in grounding_catalog.get("predicate_symbols", ())
+        if str(value)
+    )
+    arguments = tuple(
+        str(value)
+        for value in grounding_catalog.get("argument_symbols", ())
+        if str(value)
+    )
+    roles = tuple(
+        str(value)
+        for value in grounding_catalog.get("role_symbols", ())
+        if str(value)
+    )
+    cues = tuple(
+        str(value)
+        for value in grounding_catalog.get("cue_symbols", ())
+        if str(value)
+    )
+    all_symbols = tuple(
+        dict.fromkeys((*predicates, *arguments, *roles, *cues))
+    )
+    if not all_symbols:
+        return ""
+
+    def pick(values: Sequence[str], index: int, fallback_index: int) -> str:
+        if values:
+            return str(values[index % len(values)])
+        return all_symbols[fallback_index % len(all_symbols)]
+
+    first = pick(predicates, 0, 0)
+    second = pick(predicates, 1, 1)
+    family = _leanstral_candidate_family(logic_family, target_view)
+    if family == "deontic":
+        actor = pick(arguments or roles, 0, 1)
+        action = first
+        return f"obligation(actor:{actor}, action:{action})"
+    if family == "event_calculus":
+        time_one = pick(cues, 0, 2)
+        return f"happens(event:{first}, time:{time_one})"
+    if family == "frame_logic":
+        role = pick(roles, 0, 2)
+        return f"frame_role(frame:{first}, role:{role}, value:{first})"
+    if family == "graph_projection":
+        predicate = pick(roles, 0, 1)
+        return (
+            f"relation(subject:{first}, predicate:{predicate}, "
+            f"object:{first})"
+        )
+    if family == "temporal_first_order":
+        time_one = pick(cues, 0, 1)
+        return f"temporal_anchor(event:{first}, time:{time_one})"
+    return f"typed_relation(subject:{first}, object:{second})"
+
+
+def _drafted_logic_candidate_copies_template(
+    candidate_text: Any,
+    logic_family: Any,
+    target_view: Any = "",
+) -> bool:
+    candidate = re.sub(r"\s+", "", str(candidate_text or "")).lower()
+    example = re.sub(
+        r"\s+",
+        "",
+        _leanstral_candidate_example(logic_family, target_view),
+    ).lower()
+    return bool(candidate and example and candidate == example)
+
+
+def _drafted_logic_candidate_has_grounding(
+    candidate_text: Any,
+    grounding_symbols: Sequence[str],
+    *,
+    minimum_matches: int = 1,
+) -> bool:
+    return len(
+        _drafted_logic_candidate_grounding_matches(
+            candidate_text,
+            grounding_symbols,
+        )
+    ) >= max(1, int(minimum_matches or 1))
+
+
+def _drafted_logic_candidate_grounding_matches(
+    candidate_text: Any,
+    grounding_symbols: Sequence[str],
+) -> tuple[str, ...]:
+    """Return distinct compiler-owned symbols referenced by a candidate."""
+
+    text = str(candidate_text or "").lower()
+    matches: list[str] = []
+    for raw_symbol in grounding_symbols:
+        symbol = str(raw_symbol or "").strip().lower()
+        if not symbol:
+            continue
+        if re.search(
+            rf"(?<![A-Za-z0-9_]){re.escape(symbol)}(?![A-Za-z0-9_])",
+            text,
+        ):
+            matches.append(symbol)
+    return tuple(dict.fromkeys(matches))
+
+
+def _leanstral_logic_predicate_heads(value: Any) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            match.group(1).lower()
+            for match in re.finditer(
+                r"([A-Za-z_][A-Za-z0-9_.:-]*)\s*\(",
+                str(value or ""),
+            )
+        )
+    )
+
+
+def _drafted_logic_candidate_copies_obligation(
+    candidate_text: Any,
+    obligation_statement: Any,
+) -> bool:
+    """Reject exact obligation restatements, including copied subclauses."""
+
+    candidate = re.sub(r"\s+", "", str(candidate_text or "")).lower()
+    obligation = re.sub(r"\s+", "", str(obligation_statement or "")).lower()
+    if len(candidate) < 12 or len(obligation) < 12:
+        return False
+    return candidate in obligation or obligation in candidate
 
 
 def _is_typed_logic_expression(text: str) -> bool:
@@ -1733,8 +2204,58 @@ def validate_leanstral_failure_branch_candidate(
         typed_reason = _typed_logic_rejection_reason(candidate_text)
         if typed_reason:
             reasons.append(typed_reason)
+        else:
+            family_reason = _logic_family_candidate_rejection_reason(
+                candidate_text,
+                raw.get("logic_family"),
+                raw.get("target_view"),
+            )
+            if family_reason:
+                reasons.append(family_reason)
         if _drafted_logic_candidate_copies_source_span(candidate_text, task.source_span):
             reasons.append("source_copy")
+        if branch is not None:
+            statement = str(branch.get("statement") or "")
+            if _drafted_logic_candidate_copies_obligation(
+                candidate_text,
+                statement,
+            ):
+                reasons.append("candidate_copies_obligation")
+            candidate_heads = set(
+                _leanstral_logic_predicate_heads(candidate_text)
+            )
+            candidate_language = dict(branch.get("candidate_language") or {})
+            allowed_heads = {
+                str(value).strip().lower()
+                for value in candidate_language.get(
+                    "allowed_predicate_heads",
+                    (),
+                )
+                if str(value).strip()
+            }
+            if allowed_heads and not candidate_heads.issubset(allowed_heads):
+                reasons.append("unknown_candidate_predicate")
+            if _drafted_logic_candidate_copies_template(
+                candidate_text,
+                raw.get("logic_family"),
+                raw.get("target_view"),
+            ):
+                reasons.append("candidate_copies_shape_template")
+            grounding_symbols = tuple(
+                str(value)
+                for value in candidate_language.get(
+                    "grounding_symbols",
+                    (),
+                )
+                if str(value).strip()
+            )
+            minimum_grounding = min(2, len(grounding_symbols))
+            if grounding_symbols and not _drafted_logic_candidate_has_grounding(
+                candidate_text,
+                grounding_symbols,
+                minimum_matches=minimum_grounding,
+            ):
+                reasons.append("candidate_insufficient_grounding")
 
     hints = raw.get("premise_hints")
     valid_hints = (

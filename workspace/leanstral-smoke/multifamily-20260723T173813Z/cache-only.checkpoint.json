@@ -1,0 +1,59 @@
+{
+  "completed_work_keys": [],
+  "results": {
+    "61800ffe923c0d0d64ee063e76a94a1ecfac38aee3ac4a706a5a1a6b91435657": {
+      "attempts": 0,
+      "cache_hit": false,
+      "cache_key": "8da67c82ab50e2fd73d356520a21029b6b134d7093185d61299af11355868ace",
+      "elapsed_seconds": 1.5e-05,
+      "generation_attempts": 0,
+      "llm_called": false,
+      "reasons": [
+        "provider_disabled_cache_miss"
+      ],
+      "repair_reasons": [],
+      "request_id": "leanstral-audit-8da67c82ab50e2fd",
+      "response_hash": "",
+      "status": "provider_disabled",
+      "validation": null,
+      "work_key": "61800ffe923c0d0d64ee063e76a94a1ecfac38aee3ac4a706a5a1a6b91435657"
+    },
+    "70ad8bda8611ee4bd1357ef8d6478445f6468d2a165f122c7c517f901f60993d": {
+      "attempts": 0,
+      "cache_hit": false,
+      "cache_key": "ebc0bbea440d8b1dfa30c7648ef710c6d2fce3c2924679a5e5ac3fd6a8d49c41",
+      "elapsed_seconds": 9e-06,
+      "generation_attempts": 0,
+      "llm_called": false,
+      "reasons": [
+        "provider_disabled_cache_miss"
+      ],
+      "repair_reasons": [],
+      "request_id": "leanstral-audit-ebc0bbea440d8b1d",
+      "response_hash": "",
+      "status": "provider_disabled",
+      "validation": null,
+      "work_key": "70ad8bda8611ee4bd1357ef8d6478445f6468d2a165f122c7c517f901f60993d"
+    },
+    "d5fc377db811cf4911b6f16db5af5a92d9249f180359372354869c1b6a9aec7a": {
+      "attempts": 0,
+      "cache_hit": false,
+      "cache_key": "e74ba18391192451a043f40359a7b16449d13cdc30e5ac8eb7fa27071dc9e479",
+      "elapsed_seconds": 1e-05,
+      "generation_attempts": 0,
+      "llm_called": false,
+      "reasons": [
+        "provider_disabled_cache_miss"
+      ],
+      "repair_reasons": [],
+      "request_id": "leanstral-audit-e74ba18391192451",
+      "response_hash": "",
+      "status": "provider_disabled",
+      "validation": null,
+      "work_key": "d5fc377db811cf4911b6f16db5af5a92d9249f180359372354869c1b6a9aec7a"
+    }
+  },
+  "schema_version": "legal-ir-leanstral-audit-checkpoint-v1",
+  "source_digest": "a3e542d636b3b88d38135c1559fd7f1c1353843d0dab4228d51aebdac755048d",
+  "updated_at": 1784828307.345307
+}

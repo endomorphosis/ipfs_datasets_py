@@ -1,0 +1,390 @@
+{
+  "accepted_supporting_audit_count": 1,
+  "conflicting_audit_count": 1,
+  "gaps": [
+    {
+      "action": "repair_flogic_ontology_constraints",
+      "affected_ir_families": [
+        "frame_logic"
+      ],
+      "conflicting_evidence": [],
+      "gap_id": "leanstral-gap-f24c284e3c342ed3",
+      "missing_semantic_rule": {
+        "description": "missing deterministic semantic rule"
+      },
+      "normalized_rule_key": "missing_deterministic_semantic_rule",
+      "priority": 0.63,
+      "status": "accepted",
+      "supporting_evidence": [
+        {
+          "affected_ir_families": [
+            "frame_logic"
+          ],
+          "classification": "missing_semantic_rule",
+          "codex_projection": {},
+          "confidence": 0.5,
+          "drafted_logic_candidates": [
+            {
+              "audit_evidence_id": "leanstral-evidence-e8a6ff7a92421990",
+              "candidate": "frame_relation_has_typed_subject_predicate_object(contract:legal-ir-view/frame-logic/v1, subject:submission_of_reports_to_congress_in, predicate:submission_of_reports_to_congres_in, object:submission_of_reports_to_congres_in)",
+              "compiler_surface": "modal.frame_logic",
+              "confidence": 0.5,
+              "expected_failure_mode": "hammer_unproved",
+              "guidance_only": true,
+              "intended_use": "guidance_only",
+              "logic_family": "frame_logic",
+              "premise_hints": [
+                "frame_role_typing",
+                "typed_role",
+                "relation_direction",
+                "modal_operator",
+                "exception_scope"
+              ],
+              "proof_obligation_id": "lir-obligation-d0fe6decaf6384763265",
+              "proof_obligation_ids": [
+                "lir-obligation-d0fe6decaf6384763265"
+              ],
+              "request_id": "leanstral-audit-0a3719cc83e7899c",
+              "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+              "source_copy_policy": "reject_full_span_copy",
+              "source_copy_rejected": false,
+              "target_view": "modal.frame_logic"
+            }
+          ],
+          "evidence_id": "leanstral-evidence-e8a6ff7a92421990",
+          "examples": [
+            {
+              "compiler_decompiler_metrics": {
+                "compiler_guidance_applied": false,
+                "cosine_similarity": 0.636778806,
+                "cross_entropy_excess_loss": 1.555875526,
+                "cross_entropy_loss": 2.213758187,
+                "metric_sample_id": "us-code-38-118-c8a9a67e4e74c7fb:metric-prefix:c5dec1775ecf",
+                "metric_text_length": 595,
+                "metric_text_policy": "truncate",
+                "metric_text_truncated": true,
+                "sample_id": "us-code-38-118-c8a9a67e4e74c7fb",
+                "source_copy_loss": 0.0,
+                "source_copy_reward_hack_penalty": 0.0,
+                "source_decompiled_text_embedding_cosine_loss": 0.363221194,
+                "source_decompiled_text_embedding_cosine_similarity": 0.636778806,
+                "source_decompiled_text_token_loss": 0.47929,
+                "source_decompiled_text_token_similarity": 0.52071,
+                "structural_text_reconstruction_loss": 0.47929,
+                "text_reconstruction_loss": 0.0
+              },
+              "evidence_id": "lir-disagree-f1ab56ef85bed0bf3327",
+              "example_hash": "03531cc26e46734b0b9dc7621e8c9d39a460728d76f9a9f627d89f5e486a7cb5",
+              "example_id": "us-code-38-118-c8a9a67e4e74c7fb",
+              "example_role": "request_reference",
+              "expected_modal_ir_hash": "bfc6bd3d4804e691621326311a0eddff57b991416453f62e3dfcab2a68d9ce4c",
+              "sample_id": "us-code-38-118-c8a9a67e4e74c7fb",
+              "source_text_hash": "1afb5643396c94dbf9fd04a07a4c6c51a25d3622bde3d99c3265f8c3b1f7aca1"
+            },
+            {
+              "evidence_id": "lir-disagree-f1ab56ef85bed0bf3327",
+              "example_hash": "c1453d7e9ff6bc59fea73a808812add3b83e3fa84b96d3d2e8c7342d443fbdd0",
+              "example_role": "counterexample",
+              "expected": "legal semantics should be preserved",
+              "observed": "compiler loses or distorts this semantic signal"
+            }
+          ],
+          "hammer_backend_health": {
+            "available_count": 4,
+            "available_routes": [
+              "z3_python",
+              "cvc5",
+              "vampire",
+              "e_prover"
+            ],
+            "records": [
+              {
+                "available": true,
+                "check_error": "",
+                "elapsed_seconds": 0.0,
+                "executable": "",
+                "install_command": [],
+                "installer_available": false,
+                "name": "z3_python",
+                "problem_format": "smt-lib",
+                "resolved_path": "",
+                "route_type": "runtime_runner",
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "version_output": ""
+              },
+              {
+                "available": true,
+                "check_error": "",
+                "elapsed_seconds": 0.017445325851,
+                "executable": "cvc5",
+                "install_command": [
+                  "python",
+                  "-m",
+                  "scripts.setup.ipfs_prover_installer",
+                  "--yes",
+                  "--cvc5"
+                ],
+                "installer_available": true,
+                "name": "cvc5",
+                "problem_format": "smt-lib",
+                "resolved_path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/cvc5",
+                "route_type": "smt",
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "version_output": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD]\ncompiled with GCC version 11.4.0\non Feb 26 2026 01:24:28\n\nCopyright (c) 2009-2025 by the authors and their institutional\naffiliations listed at https://cvc5.github.io/people.html\n\ncvc5 is open-source and is covered by the BSD license (modified).\n\nTHIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.\nUSE AT YOUR OWN RISK.\n\nThis version of cvc5 is linked against the following non-(L)GPL'ed\nthird party libraries.\n\n  CaDiCaL - Simplified Satisfiability Solver\n  See https://github.com/arminbiere/cadical for copyright information.\n\n  Editline Library\n  See https://thrysoee.dk/editline\n  for copyright information.\n\n  SymFPU - The Symbolic Floating Point Unit\n  See https://github.com/martin-cs/symfpu/tree/CVC4 for copyright information.\n\nThis version of cvc5 is linked against the following third party\nlibraries covered by the LGPLv3 license.\nSee licenses/lgpl-3.0.txt for more information.\n\n  GMP - Gnu Multi Precision Arithmetic Library"
+              },
+              {
+                "available": true,
+                "check_error": "",
+                "elapsed_seconds": 0.004985570908,
+                "executable": "vampire",
+                "install_command": [
+                  "python",
+                  "-m",
+                  "scripts.setup.ipfs_prover_installer",
+                  "--yes",
+                  "--vampire"
+                ],
+                "installer_available": true,
+                "name": "vampire",
+                "problem_format": "tptp-fof",
+                "resolved_path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/vampire",
+                "route_type": "atp",
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "version_output": "Vampire 5.0.1 (Release build, commit 1b13eaf on 2026-01-18 12:14:50 +0000)\nCaDiCaL: cadical-2.1.3\nLinked to Z3 4.14.0.0 3c47fd96cf5645d0c42b2c819d9e9a84380aa721 NOTFOUND"
+              },
+              {
+                "available": true,
+                "check_error": "",
+                "elapsed_seconds": 0.003987073898,
+                "executable": "eprover",
+                "install_command": [
+                  "python",
+                  "-m",
+                  "scripts.setup.ipfs_prover_installer",
+                  "--yes",
+                  "--eprover"
+                ],
+                "installer_available": true,
+                "name": "e_prover",
+                "problem_format": "tptp-fof",
+                "resolved_path": "/home/barberb/.local/share/ipfs_datasets_py/theorem-provers/bin/eprover",
+                "route_type": "atp",
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "version_output": "E 3.2.5 Puttabong Moondrop (be41955555b56c9616992a99fe1643de343b212c)"
+              }
+            ],
+            "schema_version": "legal-ir-hammer-backend-health-v1",
+            "unavailable_count": 0,
+            "unavailable_routes": []
+          },
+          "hammer_guidance_artifacts": [],
+          "hammer_proof_status": {
+            "accepted": false,
+            "candidate_count": 1,
+            "obligation_count": 1,
+            "proof_success_rate": 0.0,
+            "proved_count": 0,
+            "trusted": false,
+            "trusted_count": 0,
+            "trusted_success_rate": 0.0
+          },
+          "hammer_reconstruction_status": {
+            "proof_checked_count": 0,
+            "reconstruction_statuses": [],
+            "trusted_artifact_count": 0
+          },
+          "metric_attribution": {
+            "evidence_ids": [
+              "lir-disagree-f1ab56ef85bed0bf3327"
+            ],
+            "metric_deltas": {},
+            "post_patch_metrics": {},
+            "pre_patch_metrics": {
+              "compiler_guidance_applied": 0.0,
+              "cosine_similarity": 0.636778806,
+              "cross_entropy_excess_loss": 1.555875526,
+              "cross_entropy_loss": 2.213758187,
+              "metric_text_length": 595.0,
+              "metric_text_truncated": 1.0,
+              "source_copy_loss": 0.0,
+              "source_copy_reward_hack_penalty": 0.0,
+              "source_decompiled_text_embedding_cosine_loss": 0.363221194,
+              "source_decompiled_text_embedding_cosine_similarity": 0.636778806,
+              "source_decompiled_text_token_loss": 0.47929,
+              "source_decompiled_text_token_similarity": 0.52071,
+              "structural_text_reconstruction_loss": 0.47929,
+              "text_reconstruction_loss": 0.0
+            },
+            "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+            "source": "leanstral_audit_evidence",
+            "status": "pre_patch_observed"
+          },
+          "proof_obligation_ids": [
+            "lir-obligation-d0fe6decaf6384763265"
+          ],
+          "reasons": [
+            "theorem_failed",
+            "unproved"
+          ],
+          "request_id": "leanstral-audit-0a3719cc83e7899c",
+          "response_hash": "2b532818d6623dd341b22b8ba838b18084c4082e353fbd7e1c8bc2c0d9c25d53",
+          "role": "supporting",
+          "verification_outcome": "accepted",
+          "verified_by": [
+            "lean"
+          ]
+        }
+      ],
+      "target_component": "modal.frame_logic",
+      "target_surface": {
+        "action": "repair_flogic_ontology_constraints",
+        "allowed_paths": [
+          "ipfs_datasets_py/logic/modal/kg_bridge.py"
+        ],
+        "component": "modal.frame_logic",
+        "mutation_cases": [
+          "remove_frame_relation",
+          "alter_scope"
+        ],
+        "target_file_lane": "frame_logic",
+        "target_metrics": [
+          "flogic_similarity_loss",
+          "legal_ir_view_cross_entropy_loss"
+        ],
+        "theorem_templates": [
+          "source_provenance_preserved",
+          "frame_terms_preserved"
+        ]
+      },
+      "title": "missing deterministic semantic rule (modal.frame_logic)",
+      "validation_set": {
+        "affected_ir_families": [
+          "frame_logic"
+        ],
+        "allowed_paths": [
+          "ipfs_datasets_py/logic/modal/kg_bridge.py"
+        ],
+        "formal_validity_checks": [
+          "source_provenance_preserved",
+          "frame_terms_preserved"
+        ],
+        "held_out_compiler_ir_metrics": [
+          "flogic_similarity_loss",
+          "legal_ir_view_cross_entropy_loss"
+        ],
+        "metric_attribution": {
+          "evidence_ids": [
+            "lir-disagree-f1ab56ef85bed0bf3327"
+          ],
+          "metric_deltas": {},
+          "post_patch_metrics": {},
+          "pre_patch_metrics": {
+            "compiler_guidance_applied": 0.0,
+            "cosine_similarity": 0.636778806,
+            "cross_entropy_excess_loss": 1.555875526,
+            "cross_entropy_loss": 2.213758187,
+            "metric_text_length": 595.0,
+            "metric_text_truncated": 1.0,
+            "source_copy_loss": 0.0,
+            "source_copy_reward_hack_penalty": 0.0,
+            "source_decompiled_text_embedding_cosine_loss": 0.363221194,
+            "source_decompiled_text_embedding_cosine_similarity": 0.636778806,
+            "source_decompiled_text_token_loss": 0.47929,
+            "source_decompiled_text_token_similarity": 0.52071,
+            "structural_text_reconstruction_loss": 0.47929,
+            "text_reconstruction_loss": 0.0
+          },
+          "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+          "source": "leanstral_rule_gap_report",
+          "status": "pre_patch_observed"
+        },
+        "mutation_cases": [
+          "remove_frame_relation",
+          "alter_scope"
+        ],
+        "proof_obligation_ids": [
+          "lir-obligation-d0fe6decaf6384763265"
+        ],
+        "regression_examples": [
+          {
+            "compiler_decompiler_metrics": {
+              "compiler_guidance_applied": false,
+              "cosine_similarity": 0.636778806,
+              "cross_entropy_excess_loss": 1.555875526,
+              "cross_entropy_loss": 2.213758187,
+              "metric_sample_id": "us-code-38-118-c8a9a67e4e74c7fb:metric-prefix:c5dec1775ecf",
+              "metric_text_length": 595,
+              "metric_text_policy": "truncate",
+              "metric_text_truncated": true,
+              "sample_id": "us-code-38-118-c8a9a67e4e74c7fb",
+              "source_copy_loss": 0.0,
+              "source_copy_reward_hack_penalty": 0.0,
+              "source_decompiled_text_embedding_cosine_loss": 0.363221194,
+              "source_decompiled_text_embedding_cosine_similarity": 0.636778806,
+              "source_decompiled_text_token_loss": 0.47929,
+              "source_decompiled_text_token_similarity": 0.52071,
+              "structural_text_reconstruction_loss": 0.47929,
+              "text_reconstruction_loss": 0.0
+            },
+            "evidence_id": "lir-disagree-f1ab56ef85bed0bf3327",
+            "example_hash": "03531cc26e46734b0b9dc7621e8c9d39a460728d76f9a9f627d89f5e486a7cb5",
+            "example_id": "us-code-38-118-c8a9a67e4e74c7fb",
+            "example_role": "request_reference",
+            "expected_modal_ir_hash": "bfc6bd3d4804e691621326311a0eddff57b991416453f62e3dfcab2a68d9ce4c",
+            "sample_id": "us-code-38-118-c8a9a67e4e74c7fb",
+            "source_text_hash": "1afb5643396c94dbf9fd04a07a4c6c51a25d3622bde3d99c3265f8c3b1f7aca1"
+          },
+          {
+            "evidence_id": "lir-disagree-f1ab56ef85bed0bf3327",
+            "example_hash": "c1453d7e9ff6bc59fea73a808812add3b83e3fa84b96d3d2e8c7342d443fbdd0",
+            "example_role": "counterexample",
+            "expected": "legal semantics should be preserved",
+            "observed": "compiler loses or distorts this semantic signal"
+          }
+        ],
+        "target_file_lane": "frame_logic"
+      }
+    }
+  ],
+  "max_examples_per_gap": 5,
+  "max_gaps": 25,
+  "rejected_audits": [
+    {
+      "audit_id": "leanstral-rejected-e26b8d2bc340693c",
+      "classification": "missing_semantic_rule",
+      "proposed_surfaces": [
+        {
+          "component": "event_calculus.core",
+          "operation": "add deterministic compiler or decompiler rule"
+        }
+      ],
+      "reasons": [
+        "unowned_compiler_surface"
+      ],
+      "request_id": "leanstral-audit-6631fd65a24644d8",
+      "response_hash": "36c977c3bb14721a28f22a044ed5f759ab1e721395149ae3b7e0ca206ebf6506",
+      "status": "rejected",
+      "verification_outcome": "rejected"
+    },
+    {
+      "audit_id": "leanstral-rejected-ee410d807369f18f",
+      "classification": "missing_semantic_rule",
+      "proposed_surfaces": [
+        {
+          "component": "TDFOL.prover",
+          "operation": "add deterministic compiler or decompiler rule"
+        }
+      ],
+      "reasons": [
+        "drafted_logic_candidate_copies_shape_template",
+        "drafted_logic_candidate_missing_grounding_symbol"
+      ],
+      "request_id": "leanstral-audit-f8febb4f3fa876cd",
+      "response_hash": "f8e904e73484e3dbf2dccd467bca4d0309e35656f0f185e6faf7fb6eef4d4f04",
+      "status": "rejected",
+      "verification_outcome": "rejected"
+    }
+  ],
+  "schema_version": "legal-ir-leanstral-rule-gap-report-v1",
+  "source_audit_count": 3
+}

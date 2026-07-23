@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 
 def _clear_lazy_install_environment(monkeypatch) -> None:
@@ -96,13 +97,16 @@ def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch
     root = tmp_path / "provers"
     monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
     monkeypatch.setattr(prover_installer.platform, "system", lambda: "Linux")
-    monkeypatch.setattr(prover_installer.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(prover_installer.platform, "machine", lambda: "aarch64")
+    downloaded: dict[str, str] = {}
 
     def fake_which(name: str) -> str | None:
         launcher = root / "bin" / name
         return str(launcher) if launcher.is_file() else None
 
-    def fake_download(_url, destination, _sha256, **_kwargs) -> bool:
+    def fake_download(url, destination, sha256, **_kwargs) -> bool:
+        downloaded["url"] = url
+        downloaded["sha256"] = sha256
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(b"fixture")
         return True
@@ -110,7 +114,10 @@ def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch
     def fake_extract(_archive: Path, destination: Path) -> None:
         executable = destination / "bin" / "cvc5"
         executable.parent.mkdir(parents=True, exist_ok=True)
-        executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        executable.write_text(
+            "#!/bin/sh\nprintf 'This is cvc5 version 1.3.3\\n'\n",
+            encoding="utf-8",
+        )
         executable.chmod(0o755)
 
     monkeypatch.setattr(prover_installer, "_which", fake_which)
@@ -121,6 +128,58 @@ def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch
     launcher = root / "bin" / "cvc5"
     assert launcher.is_file()
     assert "exec" in launcher.read_text(encoding="utf-8")
+    assert downloaded == {
+        "url": (
+            "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.3/"
+            "cvc5-Linux-arm64-static.zip"
+        ),
+        "sha256": "2572d01b142a6bfebdcb259f5a395f6228d2db5609f7dcc9a60851a5f1a58655",
+    }
+
+
+def test_cvc5_resolution_skips_broken_path_binary_for_managed_launcher(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    root = tmp_path / "provers"
+    managed = root / "bin" / "cvc5"
+    managed.parent.mkdir(parents=True)
+    managed.write_text(
+        "#!/bin/sh\nprintf 'This is cvc5 version 1.3.3\\n'\n",
+        encoding="utf-8",
+    )
+    managed.chmod(0o755)
+    incompatible = tmp_path / "path" / "cvc5"
+    incompatible.parent.mkdir()
+    incompatible.write_text("#!/bin/sh\nexit 126\n", encoding="utf-8")
+    incompatible.chmod(0o755)
+
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    monkeypatch.setattr(
+        lazy_installer.shutil,
+        "which",
+        lambda command: str(incompatible) if command == "cvc5" else None,
+    )
+
+    assert lazy_installer.find_executable("cvc5") == str(managed)
+
+
+def test_cvc5_resolution_accepts_explicit_portable_launcher(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    launcher = tmp_path / "cvc5-wasm"
+    launcher.write_text(
+        "#!/bin/sh\nprintf 'This is cvc5 version wasm-test\\n'\n",
+        encoding="utf-8",
+    )
+    launcher.chmod(0o755)
+    monkeypatch.setenv("IPFS_DATASETS_PY_CVC5_EXECUTABLE", str(launcher))
+    monkeypatch.setattr(lazy_installer.shutil, "which", lambda _command: None)
+
+    assert lazy_installer.find_executable("cvc5") == str(launcher)
 
 
 def test_apalache_installer_handles_versioned_archive_root(monkeypatch, tmp_path: Path) -> None:
@@ -128,7 +187,9 @@ def test_apalache_installer_handles_versioned_archive_root(monkeypatch, tmp_path
 
     root = tmp_path / "provers"
     monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
-    monkeypatch.setattr(prover_installer, "_linux_x86_64", lambda: True)
+    monkeypatch.setattr(prover_installer.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(prover_installer.platform, "machine", lambda: "aarch64")
+    downloaded: dict[str, str] = {}
 
     def fake_which(name: str) -> str | None:
         if name == "java":
@@ -136,7 +197,8 @@ def test_apalache_installer_handles_versioned_archive_root(monkeypatch, tmp_path
         launcher = root / "bin" / name
         return str(launcher) if launcher.is_file() else None
 
-    def fake_download(_url, destination, _sha256, **_kwargs) -> bool:
+    def fake_download(url, destination, sha256, **_kwargs) -> bool:
+        downloaded.update(url=url, sha256=sha256)
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(b"fixture")
         return True
@@ -153,6 +215,100 @@ def test_apalache_installer_handles_versioned_archive_root(monkeypatch, tmp_path
 
     assert prover_installer.ensure_apalache(yes=True, strict=True)
     assert (root / "bin" / "apalache-mc").is_file()
+    assert downloaded["url"].endswith("/apalache-0.58.3.tgz")
+    assert downloaded["sha256"] == prover_installer.APALACHE_PORTABLE_SHA256
+
+
+def test_opam_bootstrap_uses_official_user_local_arm_binary(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    monkeypatch.setattr(prover_installer.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(prover_installer.platform, "machine", lambda: "aarch64")
+    downloaded: dict[str, str] = {}
+
+    def fake_which(name: str) -> str | None:
+        launcher = root / "bin" / name
+        return str(launcher) if launcher.is_file() else None
+
+    def fake_download(url, destination, sha256, **_kwargs) -> bool:
+        downloaded.update(url=url, sha256=sha256)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(
+            "#!/bin/sh\nprintf '2.5.2\\n'\n",
+            encoding="utf-8",
+        )
+        destination.chmod(0o755)
+        return True
+
+    monkeypatch.setattr(prover_installer, "_which", fake_which)
+    monkeypatch.setattr(prover_installer, "_download_release_artifact", fake_download)
+
+    executable = prover_installer._ensure_opam_binary(
+        allow_sudo=False,
+        strict=True,
+        on_progress=None,
+    )
+
+    assert executable == str(root / "bin" / "opam")
+    assert downloaded == {
+        "url": (
+            "https://github.com/ocaml/opam/releases/download/2.5.2/"
+            "opam-2.5.2-arm64-linux"
+        ),
+        "sha256": (
+            "c4106ece84bcb60c68342573d2d6b4f0d6770ee088015c2216adc83d8854dcf9"
+        ),
+    }
+
+
+def test_generation_portfolio_includes_flogic_authority() -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    assert "ergoai" in prover_installer.PROVER_PORTFOLIOS["legal_ir_generation"]
+    assert "isabelle" not in prover_installer.PROVER_PORTFOLIOS["legal_ir_generation"]
+    assert {"coq", "isabelle"}.issubset(
+        prover_installer.PROVER_PORTFOLIOS["reconstruction"]
+    )
+    managed_install_keys = set(prover_installer.MANAGED_SOLVER_VERSIONS)
+    managed_install_keys.discard("rocq")
+    managed_install_keys.add("coq")
+    assert managed_install_keys.issubset(
+        prover_installer.PROVER_PORTFOLIOS["legal_ir_full"]
+    )
+
+
+def test_portfolio_exclusion_omits_inherited_solver(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    calls: list[str] = []
+    monkeypatch.setattr(
+        prover_installer,
+        "ensure_coq",
+        lambda **_kwargs: calls.append("coq") or True,
+    )
+    monkeypatch.setattr(
+        prover_installer,
+        "ensure_isabelle",
+        lambda **_kwargs: calls.append("isabelle") or True,
+    )
+
+    result = prover_installer.main(
+        [
+            "--portfolio",
+            "reconstruction",
+            "--exclude",
+            "isabelle",
+            "--yes",
+            "--strict",
+        ]
+    )
+
+    assert result == 0
+    assert calls == ["coq"]
 
 
 def test_coq_opam_fallback_uses_isolated_user_local_root(monkeypatch, tmp_path: Path) -> None:
@@ -196,6 +352,49 @@ def test_coq_opam_fallback_uses_isolated_user_local_root(monkeypatch, tmp_path: 
     assert any(command[1:3] == ["install", "rocq-prover"] for command in commands)
 
 
+def test_coq_opam_supports_unified_rocq_cli(monkeypatch, tmp_path: Path) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    opam_root = root / "opam"
+    switch = "test-rocq"
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    monkeypatch.setenv("IPFS_DATASETS_PY_COQ_OPAM_SWITCH", switch)
+
+    def fake_which(name: str) -> str | None:
+        if name == "opam":
+            return "/fixture/opam"
+        launcher = root / "bin" / name
+        return str(launcher) if launcher.is_file() else None
+
+    def fake_run(command, *, check, env=None, cwd=None) -> int:
+        if command[1:3] == ["install", "rocq-prover"]:
+            bin_dir = opam_root / switch / "bin"
+            bin_dir.mkdir(parents=True, exist_ok=True)
+            executable = bin_dir / "rocq"
+            executable.write_text(
+                "#!/bin/sh\necho 'The Rocq Prover, version 9.1.1'\n",
+                encoding="utf-8",
+            )
+            executable.chmod(0o755)
+        return 0
+
+    monkeypatch.setattr(prover_installer, "_which", fake_which)
+    monkeypatch.setattr(prover_installer, "_run", fake_run)
+    monkeypatch.setattr(
+        prover_installer,
+        "_run_custom_solver_installer",
+        lambda *_args, **_kwargs: False,
+    )
+    monkeypatch.setattr(prover_installer, "_package_names_for", lambda *_args: [])
+
+    assert prover_installer.ensure_coq(yes=True, strict=True)
+    coqc_launcher = (root / "bin" / "coqc").read_text(encoding="utf-8")
+    coqtop_launcher = (root / "bin" / "coqtop").read_text(encoding="utf-8")
+    assert "rocq compile \"$@\"" in coqc_launcher
+    assert "rocq repl \"$@\"" in coqtop_launcher
+
+
 def test_existing_tamarin_requires_its_maude_runtime_validation(monkeypatch) -> None:
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
@@ -215,6 +414,69 @@ def test_existing_tamarin_requires_its_maude_runtime_validation(monkeypatch) -> 
     )
     assert events[-1][0] == "failed"
     assert "runtime validation" in events[-1][1]
+
+
+def test_tamarin_runtime_receipt_accepts_actual_maude_version_format(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    monkeypatch.setattr(
+        prover_installer.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0,
+            stdout=(
+                "tamarin-prover 1.12.0\n"
+                "checking installation: OK.\n"
+                "Generated from:\n"
+                "Tamarin version 1.12.0\n"
+                "Maude version 3.5.1\n"
+            ),
+            stderr="",
+        ),
+    )
+
+    assert prover_installer._tamarin_accepts_maude(
+        "/fixture/tamarin-prover",
+        "/fixture/maude",
+    )
+
+
+def test_maude_compatibility_uses_tamarins_exact_release_allowlist(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    monkeypatch.setattr(prover_installer, "_read_version", lambda _path: "3.2")
+    assert not prover_installer._maude_is_tamarin_compatible("/fixture/maude")
+
+    monkeypatch.setattr(prover_installer, "_read_version", lambda _path: "3.2.1")
+    assert prover_installer._maude_is_tamarin_compatible("/fixture/maude")
+
+    monkeypatch.setattr(prover_installer, "_read_version", lambda _path: "3.5.1")
+    assert prover_installer._maude_is_tamarin_compatible("/fixture/maude")
+
+
+def test_incompatible_existing_maude_is_repaired_automatically(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    events: list[tuple[str, str]] = []
+    monkeypatch.setattr(prover_installer, "_which", lambda name: f"/fixture/{name}")
+    monkeypatch.setattr(
+        prover_installer,
+        "_maude_is_tamarin_compatible",
+        lambda path: path == "/fixture/repaired-maude",
+    )
+    monkeypatch.setattr(
+        prover_installer,
+        "_run_custom_solver_installer",
+        lambda *_args, **_kwargs: True,
+    )
+
+    assert prover_installer.ensure_maude(
+        yes=True,
+        strict=True,
+        on_progress=lambda phase, message: events.append((phase, message)),
+    )
+    assert events[0][0] == "installing"
+    assert "repairing" in events[0][1]
 
 
 def test_proverif_bootstraps_an_isolated_opam_ocaml_toolchain(monkeypatch, tmp_path: Path) -> None:

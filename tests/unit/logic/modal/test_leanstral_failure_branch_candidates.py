@@ -101,9 +101,10 @@ def _failures(task: LegalIRLeanTask) -> list[dict]:
 def _response_from_prompt(task: LegalIRLeanTask, failures: list[dict]) -> dict:
     prompt = json.loads(build_leanstral_failure_branch_prompt(task, failures))
     response = prompt["response_shape"]
-    response["candidates"][0]["candidate"] = (
-        "obligation(actor:Entity, action:Action) unless exception(condition:Condition)"
-    )
+    branch = prompt["failed_obligation_subtrees"][0]
+    response["candidates"][0]["candidate"] = branch["candidate_language"][
+        "grounded_candidate_seed"
+    ]
     response["candidates"][0]["confidence"] = 0.82
     return response
 
@@ -124,6 +125,12 @@ def test_prompt_contains_only_failed_subtree_and_registry_contract_id() -> None:
     )
     assert branch["contract_id"] == obligation["metadata"]["contract_id"]
     assert branch["premise_hints"] == obligation["premise_hints"]
+    assert branch["candidate_language"]["allowed_predicate_heads"]
+    assert branch["candidate_language"]["must_differ_from_obligation"] is True
+    assert first["candidate_shape"]["candidate"] == branch[
+        "candidate_language"
+    ]["grounded_candidate_seed"]
+    assert branch["candidate_language"]["minimum_distinct_grounding_symbols"] == 2
     assert task.source_span not in json.dumps(first)
     assert failures[1]["obligation_id"] not in json.dumps(first)
 
@@ -152,6 +159,15 @@ def test_strict_sanitizer_accepts_typed_failed_branch_candidate() -> None:
         (lambda candidate: candidate.update(contract_id="legal-ir-view/invented/v99"), "unknown_contract_id"),
         (lambda candidate: candidate.update(candidate="by simp [wellFormed]"), "freeform_proof_text"),
         (lambda candidate: candidate.update(candidate="Please try a stronger premise next time."), "untyped_logic"),
+        (
+            lambda candidate: candidate.update(
+                candidate=(
+                    f"{candidate['candidate']} and "
+                    "invented_predicate(subject:s1)"
+                )
+            ),
+            "unknown_candidate_predicate",
+        ),
     ],
 )
 def test_strict_sanitizer_rejects_unsafe_candidate_mutations(mutation, reason: str) -> None:
@@ -178,6 +194,45 @@ def test_strict_sanitizer_rejects_full_source_copy_even_when_metadata_claims_saf
 
     assert result.accepted is False
     assert "source_copy" in result.reasons
+
+
+def test_strict_sanitizer_rejects_obligation_restatement() -> None:
+    task = _task()
+    failures = _failures(task)
+    prompt = json.loads(build_leanstral_failure_branch_prompt(task, failures))
+    response = _response_from_prompt(task, failures)
+    response["candidates"][0]["candidate"] = (
+        prompt["failed_obligation_subtrees"][0]["statement"]
+    )
+
+    result = sanitize_leanstral_failure_branch_candidates(
+        task,
+        response,
+        failures,
+    )
+
+    assert result.accepted is False
+    assert "candidate_copies_obligation" in result.reasons
+
+
+def test_strict_sanitizer_rejects_generic_shape_template() -> None:
+    task = _task()
+    failures = _failures(task)
+    prompt = json.loads(build_leanstral_failure_branch_prompt(task, failures))
+    response = _response_from_prompt(task, failures)
+    response["candidates"][0]["candidate"] = prompt[
+        "failed_obligation_subtrees"
+    ][0]["candidate_language"]["shape_example"]
+
+    result = sanitize_leanstral_failure_branch_candidates(
+        task,
+        response,
+        failures,
+    )
+
+    assert result.accepted is False
+    assert "candidate_copies_shape_template" in result.reasons
+    assert "candidate_insufficient_grounding" in result.reasons
 
 
 def test_strict_sanitizer_rejects_successful_obligation_and_markdown_wrapper() -> None:

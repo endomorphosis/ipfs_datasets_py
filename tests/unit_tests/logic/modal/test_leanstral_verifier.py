@@ -557,6 +557,7 @@ def test_verifier_resolves_request_referenced_examples_by_evidence_id() -> None:
     result = verify_leanstral_audit(
         request,
         response,
+        examples=(sample,),
         config=LeanstralVerifierConfig(run_lean=False, run_modal_bridge=False),
     )
 
@@ -608,6 +609,7 @@ def test_verifier_resolves_nested_request_reference_ids() -> None:
     result = verify_leanstral_audit(
         request,
         response,
+        examples=(sample,),
         config=LeanstralVerifierConfig(run_lean=False, run_modal_bridge=False),
     )
 
