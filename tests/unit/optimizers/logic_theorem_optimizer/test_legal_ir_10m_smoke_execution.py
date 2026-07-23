@@ -555,7 +555,8 @@ def test_runner_contract_is_real_immutable_and_non_promotable_when_dry_run(tmp_p
     assert "promotable_evidence=false" in dry.stdout
     assert "minimum_active_seconds=600" in dry.stdout
     assert "--autoencoder-metric-bridge-max-sample-text-chars 600" in dry.stdout
-    assert "--paired-codex-queue-grace-seconds 360" in dry.stdout
+    assert "--paired-grace-seconds 30" in dry.stdout
+    assert "--paired-codex-queue-grace-seconds 120" in dry.stdout
 
 
 def test_canonical_runner_extracts_one_guardrail_contract_from_noisy_stdout(tmp_path: Path) -> None:

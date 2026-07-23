@@ -27,9 +27,10 @@ ACTIVE_SECONDS=600
 MAX_WALL_SECONDS=1500
 HEARTBEAT_SECONDS=5
 STALL_SECONDS=360
-# Preserve a full TODO claim window after reserving Codex execution plus
-# candidate and baseline validation inside the 1,500-second watchdog.
-CODEX_QUEUE_GRACE_SECONDS=360
+# These values keep the producer's observed cold-cycle overrun inside the
+# claim window while leaving the worst-case Codex drain inside the watchdog.
+CYCLE_COMPLETION_GRACE_SECONDS=30
+CODEX_QUEUE_GRACE_SECONDS=120
 
 usage() {
   cat <<'EOF'
@@ -106,7 +107,7 @@ if (( DRY_RUN )); then
   echo "canonical_runner=${CANONICAL_RUNNER}"
   echo "evidence=${EVIDENCE_PATH}"
   PYTHON_BIN="${PYTHON_BIN}" DURATION_SECONDS=600 MAX_CYCLES=0 \
-    PAIRED_GRACE_SECONDS=240 \
+    PAIRED_GRACE_SECONDS="${CYCLE_COMPLETION_GRACE_SECONDS}" \
     PAIRED_CODEX_QUEUE_GRACE_SECONDS="${CODEX_QUEUE_GRACE_SECONDS}" \
     "${CANONICAL_RUNNER}" --run-id "${RUN_ID}" --dry-run
   exit 0
@@ -170,7 +171,7 @@ setsid --wait env \
   PYTHON_BIN="${PYTHON_BIN}" \
   DURATION_SECONDS=600 \
   MAX_CYCLES=0 \
-  PAIRED_GRACE_SECONDS=240 \
+  PAIRED_GRACE_SECONDS="${CYCLE_COMPLETION_GRACE_SECONDS}" \
   PAIRED_CODEX_QUEUE_GRACE_SECONDS="${CODEX_QUEUE_GRACE_SECONDS}" \
   AUTOENCODER_DEVICE=cuda \
   LEANSTRAL_AUDIT_REQUIRE_CUDA=1 \
