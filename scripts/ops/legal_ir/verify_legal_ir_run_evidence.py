@@ -919,7 +919,7 @@ def _source_tree_identity(root: Path) -> tuple[str, str]:
     diff = subprocess.run(
         ["git", "diff", "--no-ext-diff", "--binary", "HEAD", "--"],
         cwd=root, check=True, capture_output=True,
-    ).stdout.encode("utf-8")
+    ).stdout
     untracked = subprocess.run(
         ["git", "ls-files", "--others", "--exclude-standard"], cwd=root,
         check=True, capture_output=True, text=True,
@@ -936,6 +936,59 @@ def _source_tree_identity(root: Path) -> tuple[str, str]:
         digest.update(b"\0")
         digest.update(path.read_bytes())
     return revision, "sha256:" + digest.hexdigest()
+
+
+def _clean_source_revision_identity(root: Path, revision: str) -> tuple[str, str]:
+    """Return the source identity a clean checkout had at a recorded commit."""
+
+    requested = str(revision or "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{40}", requested):
+        raise ValueError("recorded code revision is not a full Git commit")
+    resolved = subprocess.run(
+        ["git", "rev-parse", "--verify", f"{requested}^{{commit}}"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip().lower()
+    if resolved != requested:
+        raise ValueError("recorded code revision does not resolve exactly")
+    digest = hashlib.sha256()
+    digest.update(resolved.encode("ascii"))
+    digest.update(b"\0")
+    return resolved, "sha256:" + digest.hexdigest()
+
+
+def _codex_terminal_receipt_counts(
+    codex_health: Mapping[str, Any],
+) -> dict[str, int]:
+    """Account for merged, validated patch-only, and rejected Codex outcomes."""
+
+    invocation_count = _nonnegative_integer(codex_health.get("codex_execution_count")) or 0
+    completed_count = _nonnegative_integer(
+        codex_health.get("program_synthesis_completed")
+    ) or 0
+    applied_count = _nonnegative_integer(codex_health.get("codex_main_apply_count")) or 0
+    accepted_count = min(completed_count, applied_count)
+    patch_only_count = max(0, completed_count - accepted_count)
+    failure_reasons = _mapping(
+        codex_health.get("program_synthesis_failed_validation_reason_counts")
+    ) or {}
+    focused_rejection_count = min(
+        max(0, invocation_count - completed_count),
+        _nonnegative_integer(failure_reasons.get("program_synthesis_validation_rejected"))
+        or 0,
+    )
+    rejected_count = patch_only_count + focused_rejection_count
+    return {
+        "invocation_count": invocation_count,
+        "completed_count": completed_count,
+        "accepted_count": accepted_count,
+        "patch_only_count": patch_only_count,
+        "focused_rejection_count": focused_rejection_count,
+        "rejected_count": rejected_count,
+        "focused_validation_count": completed_count + focused_rejection_count,
+    }
 
 
 def _family_quality_pair(
@@ -1277,7 +1330,22 @@ def build_execution_receipt_from_legacy(
     startup_seconds = max(0.0, (active_started - outer_started).total_seconds())
     downtime_seconds = max(0.0, wall_seconds - startup_seconds - active_seconds)
 
-    revision, source_tree_sha = _source_tree_identity(repository_root)
+    fragment_revision = str(fragment.get("code_revision") or "").strip().lower()
+    auto_revision = str(auto.get("compiler_commit") or "").strip().lower()
+    promotion_revision = str(
+        (_mapping(auto.get("latest_legal_ir_learned_guidance_promotion")) or {}).get(
+            "compiler_commit"
+        )
+        or ""
+    ).strip().lower()
+    if not fragment_revision or auto_revision != fragment_revision:
+        raise ValueError("canonical fragment and autoencoder compiler revisions disagree")
+    if promotion_revision and promotion_revision != fragment_revision:
+        raise ValueError("promotion evidence compiler revision disagrees with the run")
+    revision, source_tree_sha = _clean_source_revision_identity(
+        repository_root,
+        fragment_revision,
+    )
     baseline_snapshot = _mapping(auto.get("latest_rollout_baseline_snapshot")) or {}
     baseline_validation = _mapping(baseline_snapshot.get("validation")) or {}
     candidate_validation = _mapping(auto.get("latest_autoencoder_validation")) or {}
@@ -1444,15 +1512,14 @@ def build_execution_receipt_from_legacy(
             "program_synthesis_superseded",
         )
     )
-    invocation_count = _nonnegative_integer(codex_health.get("codex_execution_count")) or 0
-    accepted_count = _nonnegative_integer(codex_health.get("codex_main_apply_count")) or 0
+    codex_terminal_counts = _codex_terminal_receipt_counts(codex_health)
+    invocation_count = codex_terminal_counts["invocation_count"]
+    accepted_count = codex_terminal_counts["accepted_count"]
+    patch_only_count = codex_terminal_counts["patch_only_count"]
     failure_reasons = _mapping(
         codex_health.get("program_synthesis_failed_validation_reason_counts")
     ) or {}
-    focused_rejection_count = (
-        _nonnegative_integer(failure_reasons.get("program_synthesis_validation_rejected"))
-        or 0
-    )
+    focused_rejection_count = codex_terminal_counts["focused_rejection_count"]
     transient_failure_count = sum(
         _nonnegative_integer(value) or 0
         for reason, value in failure_reasons.items()
@@ -1461,11 +1528,8 @@ def build_execution_receipt_from_legacy(
     transient_requeue_count = (
         _nonnegative_integer(codex_health.get("codex_transient_requeue_count")) or 0
     )
-    rejected_count = min(
-        max(0, invocation_count - accepted_count),
-        focused_rejection_count,
-    )
-    focused_validation_count = accepted_count + rejected_count
+    rejected_count = codex_terminal_counts["rejected_count"]
+    focused_validation_count = codex_terminal_counts["focused_validation_count"]
     if min(todo_count, invocation_count, focused_validation_count) < 1 or accepted_count + rejected_count < 1:
         raise ValueError("Codex TODO/invocation/validation/terminal evidence is incomplete")
     max_todos = selected_configuration["max_codex_todos"]
@@ -1486,9 +1550,16 @@ def build_execution_receipt_from_legacy(
             "status": "merged", "count": accepted_count, "focused_validation": True,
             "todo_sha256": todo_sha, "validation_sha256": validation_sha,
         })
-    if rejected_count:
+    if patch_only_count:
         dispositions.append({
-            "status": "safe_rejection", "count": rejected_count,
+            "status": "safe_rejection", "count": patch_only_count,
+            "reason_code": "validated_patch_withheld_by_patch_only_policy",
+            "focused_validation": True,
+            "todo_sha256": todo_sha, "validation_sha256": validation_sha,
+        })
+    if focused_rejection_count:
+        dispositions.append({
+            "status": "safe_rejection", "count": focused_rejection_count,
             "reason_code": "focused_validation_rejected", "focused_validation": True,
             "todo_sha256": todo_sha, "validation_sha256": validation_sha,
         })

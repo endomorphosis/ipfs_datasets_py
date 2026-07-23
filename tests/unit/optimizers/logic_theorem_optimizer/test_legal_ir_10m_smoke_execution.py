@@ -17,7 +17,10 @@ from scripts.ops.legal_ir.verify_legal_ir_run_evidence import (
     REQUIRED_METRIC_BRIDGE_ADAPTERS,
     REQUIRED_QUALITY_METRICS,
     SCHEMA_VERSION,
+    _clean_source_revision_identity,
+    _codex_terminal_receipt_counts,
     _family_quality_pair,
+    _source_tree_identity,
     _strict_contract_evidence,
     _strict_hammer_runtime_canary,
     _strict_metric_evidence,
@@ -527,6 +530,61 @@ def test_atomic_writer_refuses_overwrite(tmp_path: Path) -> None:
         write_evidence(output, complete_evidence())
 
 
+def test_source_tree_identity_hashes_binary_git_diff(tmp_path: Path) -> None:
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "legal-ir-tests@example.invalid"],
+        cwd=tmp_path,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Legal IR Tests"],
+        cwd=tmp_path,
+        check=True,
+    )
+    tracked = tmp_path / "binary.dat"
+    tracked.write_bytes(b"baseline\n")
+    subprocess.run(["git", "add", "binary.dat"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "baseline"], cwd=tmp_path, check=True)
+
+    revision, clean_identity = _source_tree_identity(tmp_path)
+    tracked.write_bytes(b"\x00\xffchanged\n")
+    dirty_revision, dirty_identity = _source_tree_identity(tmp_path)
+
+    assert dirty_revision == revision
+    assert clean_identity.startswith("sha256:")
+    assert dirty_identity.startswith("sha256:")
+    assert dirty_identity != clean_identity
+
+    recorded_revision, recorded_identity = _clean_source_revision_identity(
+        tmp_path,
+        revision,
+    )
+    assert recorded_revision == revision
+    assert recorded_identity == clean_identity
+
+
+def test_codex_terminal_counts_include_validated_patch_only_outcomes() -> None:
+    counts = _codex_terminal_receipt_counts(
+        {
+            "codex_execution_count": 4,
+            "codex_main_apply_count": 0,
+            "program_synthesis_completed": 4,
+            "program_synthesis_failed_validation_reason_counts": {},
+        }
+    )
+
+    assert counts == {
+        "invocation_count": 4,
+        "completed_count": 4,
+        "accepted_count": 0,
+        "patch_only_count": 4,
+        "focused_rejection_count": 0,
+        "rejected_count": 4,
+        "focused_validation_count": 4,
+    }
+
+
 def test_cli_rejects_incomplete_evidence(tmp_path: Path) -> None:
     path = tmp_path / "bad.json"
     path.write_text(json.dumps({"schema_version": SCHEMA_VERSION}), encoding="utf-8")
@@ -544,6 +602,10 @@ def test_cli_rejects_incomplete_evidence(tmp_path: Path) -> None:
 def test_runner_contract_is_real_immutable_and_non_promotable_when_dry_run(tmp_path: Path) -> None:
     syntax = subprocess.run(["bash", "-n", str(RUNNER)], cwd=ROOT, check=False)
     assert syntax.returncode == 0
+    runner_source = RUNNER.read_text(encoding="utf-8")
+    assert 'find "${RUN_LOG}" "${ROOT_DIR}/workspace"' not in runner_source
+    assert '"${ROOT_DIR}/workspace/test-logs/${RUN_ID}"*' in runner_source
+    assert '"${ROOT_DIR}/workspace/codex-work/${RUN_ID}"*' in runner_source
     env = dict(os.environ, DURATION_SECONDS="599")
     rejected = subprocess.run([str(RUNNER), "--dry-run"], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     assert rejected.returncode == 2
