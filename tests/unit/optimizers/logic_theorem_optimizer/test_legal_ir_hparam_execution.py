@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -15,8 +16,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hparam_executi
     METRIC_NAMES,
     SeedRun,
     _aggregate_seed_metrics,
+    _final_rung_metric_estimate,
     _paired_delta_estimate,
+    _sha256_value,
     _trial_command,
+    _verify_embedded_report_digest,
     build_fidelity_profiles,
     build_scheduler_from_baseline,
     extract_candidate_metrics,
@@ -336,6 +340,96 @@ def test_early_rung_estimate_uses_paired_delta_anchored_to_full_baseline(
     )
 
 
+def test_final_rung_keeps_absolute_ir_but_pairs_seed_sensitive_autoencoder_metrics(
+    tmp_path: Path,
+) -> None:
+    baseline_summary = _summary()
+    baseline_metrics, baseline_families = extract_summary_metrics(baseline_summary)
+
+    early_summary = _summary(0.02)
+    _attach_promoted_snapshot(early_summary, baseline_summary)
+    early_summary.update(
+        {
+            "final": True,
+            "run_id": "candidate-r0-s7",
+            "autoencoder_compute_backend": "torch_cuda",
+            "autoencoder_compute_device_request": "cuda",
+            "autoencoder_cuda_residency_applied": "true",
+            "cycles": 1,
+            "max_cycles": 1,
+            "validation_canary_indices": [11],
+            "validation_canary_count": 1,
+            "validation_canary_indices_source": "operator_pinned",
+            "max_sample_text_chars": 600,
+            "latest_cycle_seconds": 1.0,
+        }
+    )
+    early_state = tmp_path / "early.state.json"
+    early_state.write_text("{}\n", encoding="utf-8")
+    early_profile = FidelityProfile(0, "early", (11,), 1, 1, 600)
+    early_run = SeedRun(
+        candidate_id="candidate",
+        rung_index=0,
+        seed=7,
+        run_id="candidate-r0-s7",
+        requested_seconds=60,
+        returncode=0,
+        elapsed_wall_seconds=20.0,
+        summary_path=tmp_path / "early.summary",
+        state_path=early_state,
+        stdout_path=tmp_path / "early.stdout",
+        stderr_path=tmp_path / "early.stderr",
+        summary=early_summary,
+        expected_validation_canary_indices=(11,),
+        fidelity_profile=early_profile,
+    )
+
+    final_summary = _summary(0.03)
+    final_validation = final_summary["latest_autoencoder_validation"]
+    final_validation["cross_entropy_loss"] = 1.20  # type: ignore[index]
+    final_validation["cosine_similarity"] = 0.40  # type: ignore[index]
+    final_families = final_summary["latest_legal_ir_view_family_validation"]
+    for row in final_families["view_family_metrics"].values():  # type: ignore[index,union-attr]
+        row["autoencoder_cross_entropy_loss"] = 1.20
+        row["autoencoder_cosine_similarity"] = 0.40
+    # The final optimizer cycle makes no update.  Its autoencoder metrics are
+    # shifted only because this seed selected a different validation sample.
+    _attach_promoted_snapshot(final_summary, deepcopy(final_summary))
+    final_profile = FidelityProfile(2, "final", (11, 29), 4, 4, 2500)
+    final_run = SeedRun(
+        candidate_id="candidate",
+        rung_index=2,
+        seed=7,
+        run_id="candidate-r2-s7",
+        requested_seconds=330,
+        returncode=0,
+        elapsed_wall_seconds=300.0,
+        summary_path=tmp_path / "final.summary",
+        state_path=tmp_path / "final.state.json",
+        stdout_path=tmp_path / "final.stdout",
+        stderr_path=tmp_path / "final.stderr",
+        summary=final_summary,
+        expected_validation_canary_indices=(11, 29),
+        fidelity_profile=final_profile,
+    )
+
+    metrics, families = _final_rung_metric_estimate(
+        run=final_run,
+        prior_runs=[early_run],
+        baseline_metrics=baseline_metrics,
+        baseline_families=baseline_families,
+    )
+
+    assert metrics["ir_cross_entropy_loss"] == pytest.approx(0.77)
+    assert metrics["ir_cosine_similarity"] == pytest.approx(0.73)
+    assert metrics["autoencoder_cross_entropy_loss"] == pytest.approx(0.88)
+    assert metrics["autoencoder_cosine_similarity"] == pytest.approx(0.77)
+    assert families["deontic"]["ir_cross_entropy_loss"] == pytest.approx(0.77)
+    assert families["deontic"]["autoencoder_cross_entropy_loss"] == pytest.approx(
+        0.88
+    )
+
+
 def test_dry_run_is_non_promotable_and_creates_no_output(
     tmp_path: Path,
     capsys,
@@ -370,6 +464,16 @@ def test_dry_run_is_non_promotable_and_creates_no_output(
     assert printed["promotable_evidence"] is False
     assert not output.exists()
     assert not work_root.exists()
+
+
+def test_embedded_report_digest_fails_closed_after_tampering() -> None:
+    report: dict[str, object] = {"schema_version": "unit", "search_complete": True}
+    report["report_sha256"] = _sha256_value(report)
+    assert _verify_embedded_report_digest(report) == report["report_sha256"]
+
+    report["search_complete"] = False
+    with pytest.raises(ValueError, match="digest mismatch"):
+        _verify_embedded_report_digest(report)
 
 
 def test_validation_canary_indices_are_pinned_separately_from_training_seed() -> None:

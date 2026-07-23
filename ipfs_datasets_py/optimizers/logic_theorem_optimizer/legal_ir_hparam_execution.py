@@ -72,6 +72,10 @@ FAMILY_METRIC_NAMES = METRIC_NAMES + ("semantic_equivalence",)
 REQUIRED_FAMILY_OBSERVED_METRICS = frozenset(
     {"ir_cross_entropy_loss", "ir_cosine_similarity"}
 )
+SEED_SENSITIVE_AUTOENCODER_METRICS = (
+    "autoencoder_cross_entropy_loss",
+    "autoencoder_cosine_similarity",
+)
 _STOP_REQUESTED = threading.Event()
 _ACTIVE_PROCESS_GROUPS: set[int] = set()
 _ACTIVE_PROCESS_GROUPS_LOCK = threading.Lock()
@@ -1145,6 +1149,44 @@ def _paired_delta_estimate(
     )
 
 
+def _final_rung_metric_estimate(
+    *,
+    run: SeedRun,
+    prior_runs: Sequence[SeedRun],
+    baseline_metrics: Mapping[str, float],
+    baseline_families: Mapping[str, Mapping[str, float]],
+) -> tuple[dict[str, float], dict[str, dict[str, float]]]:
+    """Combine fixed-canary metrics with causal autoencoder comparisons.
+
+    Compiler/IR metrics in the final rung are evaluated on the same frozen
+    task-117 canary as the baseline, so their absolute values are comparable.
+    Autoencoder CE/cosine use a seed-selected validation sample, however, so
+    comparing them to task 117's different sampling seed confounds model
+    change with sample change.  Preserve the absolute full-canary signals and
+    replace only those two autoencoder metrics with cumulative same-seed
+    before/after deltas anchored to the shared baseline.
+    """
+
+    metrics, families = extract_candidate_metrics(run.summary)
+    paired_metrics, paired_families = _paired_delta_estimate(
+        runs=[
+            *(
+                prior
+                for prior in prior_runs
+                if prior.seed == run.seed and prior.succeeded
+            ),
+            run,
+        ],
+        baseline_metrics=baseline_metrics,
+        baseline_families=baseline_families,
+    )
+    for name in SEED_SENSITIVE_AUTOENCODER_METRICS:
+        metrics[name] = paired_metrics[name]
+        for family in DEFAULT_REQUIRED_FAMILIES:
+            families[family][name] = paired_families[family][name]
+    return metrics, families
+
+
 def _snapshot_from_runs(
     *,
     scheduler: LegalIRHParamScheduler,
@@ -1165,7 +1207,12 @@ def _snapshot_from_runs(
             continue
         try:
             if item.rung.index == final_rung_index:
-                metrics, families = extract_candidate_metrics(run.summary)
+                metrics, families = _final_rung_metric_estimate(
+                    run=run,
+                    prior_runs=prior_runs,
+                    baseline_metrics=baseline_metrics,
+                    baseline_families=baseline_families,
+                )
             else:
                 metrics, families = _paired_delta_estimate(
                     runs=[
@@ -1231,6 +1278,285 @@ def _snapshot_from_runs(
         ),
         metric_confidence=confidence,
     )
+
+
+def _metric_extraction_policy() -> dict[str, Any]:
+    return {
+        "candidate_metrics": (
+            "projection_after_cross_checked_with_state_versioned_snapshot"
+        ),
+        "paired_baseline": "projection_before_from_the_same_optimizer_cycle",
+        "ir_metrics": "learned_ir_projection_objective",
+        "family_autoencoder_metrics": (
+            "observed_family_value_else_global_validation_broadcast"
+        ),
+        "calibration_error": (
+            "absolute_family_score_minus_symbolic_validity_proxy_until_ece_head_exists"
+        ),
+        "round_trip_success_rate": "family_reconstruction_success_rate",
+        "confidence": "three_seed_student_t_95_percent",
+        "early_rung_comparison": (
+            "task_117_baseline_plus_cumulative_paired_before_after_deltas"
+        ),
+        "final_rung_comparison": (
+            "absolute_task_117_full_8_canary_metrics_except_seed_sensitive_autoencoder"
+        ),
+        "seed_sensitive_autoencoder_metrics": list(
+            SEED_SENSITIVE_AUTOENCODER_METRICS
+        ),
+        "autoencoder_metric_comparison": (
+            "task_117_baseline_plus_cumulative_same_seed_before_after_deltas"
+        ),
+        "resource_accounting": (
+            "latest_cycle_seconds_excludes_dataset_and_precycle_evaluation_startup"
+        ),
+        "missing_values": "fail_closed_no_imputation",
+    }
+
+
+def _verify_embedded_report_digest(report: Mapping[str, Any]) -> str:
+    expected = str(report.get("report_sha256") or "")
+    payload = dict(report)
+    payload.pop("report_sha256", None)
+    observed = _sha256_value(payload)
+    if expected != observed:
+        raise ValueError(
+            f"source hparam report digest mismatch: expected {expected or '<missing>'}, "
+            f"observed {observed}"
+        )
+    return observed
+
+
+def _clean_git_revision(repo_root: Path) -> str:
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if status.stdout.strip():
+        raise ValueError("hparam rescore requires a clean tracked Git worktree")
+    revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if len(revision) != 40:
+        raise ValueError("could not resolve the hparam scorer Git revision")
+    return revision
+
+
+def _seed_run_from_record(
+    record: Mapping[str, Any],
+    *,
+    fidelity_profile: FidelityProfile,
+) -> SeedRun:
+    if record.get("fidelity_profile") != fidelity_profile.to_dict():
+        raise ValueError("source run fidelity profile does not match the frozen ladder")
+    summary_path = Path(str(record.get("summary_path") or ""))
+    state_path = Path(str(record.get("state_path") or ""))
+    for path, digest_key in (
+        (summary_path, "summary_sha256"),
+        (state_path, "state_sha256"),
+    ):
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        observed = _sha256_file(path)
+        if observed != record.get(digest_key):
+            raise ValueError(f"source run artifact digest mismatch: {path}")
+    run = SeedRun(
+        candidate_id=str(record.get("candidate_id") or ""),
+        rung_index=int(record.get("rung_index", -1)),
+        seed=int(record.get("seed", -1)),
+        run_id=str(record.get("run_id") or ""),
+        requested_seconds=int(record.get("requested_seconds", 0)),
+        returncode=int(record.get("returncode", -1)),
+        elapsed_wall_seconds=float(record.get("elapsed_wall_seconds", 0.0)),
+        summary_path=summary_path,
+        state_path=state_path,
+        stdout_path=Path(str(record.get("stdout_path") or "")),
+        stderr_path=Path(str(record.get("stderr_path") or "")),
+        summary=_load_json(summary_path),
+        expected_validation_canary_indices=fidelity_profile.validation_canary_indices,
+        fidelity_profile=fidelity_profile,
+        error=str(record.get("error") or ""),
+    )
+    if not run.succeeded:
+        raise ValueError(f"source run is not complete CUDA evidence: {run.run_id}")
+    if run.to_dict() != dict(record):
+        raise ValueError(f"source run record disagrees with its artifacts: {run.run_id}")
+    return run
+
+
+def rescore_search_report(
+    *,
+    repo_root: Path,
+    source_report_path: Path,
+    output: Path,
+    scorer_revision: str,
+) -> dict[str, Any]:
+    """Rebuild promotion from an immutable, fully verified measured search."""
+
+    if output.exists():
+        raise FileExistsError(output)
+    source = _load_json(source_report_path)
+    source_embedded_digest = _verify_embedded_report_digest(source)
+    if source.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError("source hparam report schema is not supported")
+    if source.get("search_complete") is not True:
+        raise ValueError("source hparam search is incomplete")
+    baseline_evidence = Path(str(source.get("baseline_evidence_path") or ""))
+    baseline_summary = Path(str(source.get("baseline_summary_path") or ""))
+    baseline_state = Path(str(source.get("baseline_state_path") or ""))
+    evidence = _load_json(baseline_evidence)
+    validation_canary_indices = verify_baseline_receipt(
+        evidence=evidence,
+        baseline_summary=baseline_summary,
+        baseline_state=baseline_state,
+    )
+    if list(validation_canary_indices) != source.get("validation_canary_indices"):
+        raise ValueError("source report changed the baseline validation canary")
+    baseline_summary_payload = _load_json(baseline_summary)
+    fidelity_profiles = build_fidelity_profiles(
+        baseline_summary_payload,
+        validation_canary_indices,
+    )
+    if [profile.to_dict() for profile in fidelity_profiles] != source.get(
+        "fidelity_profiles"
+    ):
+        raise ValueError("source report fidelity ladder is inconsistent")
+    scheduler, baseline_record = build_scheduler_from_baseline(
+        evidence=evidence,
+        baseline_summary=baseline_summary,
+        baseline_state=baseline_state,
+        candidate_count=DEFAULT_CANDIDATE_COUNT,
+        seeds_per_candidate=DEFAULT_SEEDS_PER_CANDIDATE,
+        max_concurrent_trainers=int(
+            _nested(source, "search_plan", "resource_policy").get(
+                "max_concurrent_trainers",
+                0,
+            )
+        ),
+    )
+    if baseline_record != source.get("baseline"):
+        raise ValueError("source report baseline record is inconsistent")
+    if scheduler.plan_dict() != source.get("search_plan"):
+        raise ValueError("source report search plan is inconsistent")
+
+    raw_records = source.get("run_records")
+    if not isinstance(raw_records, list):
+        raise ValueError("source report has no run records")
+    records: dict[tuple[int, str, int], SeedRun] = {}
+    training_revisions: set[str] = set()
+    for raw_record in raw_records:
+        if not isinstance(raw_record, Mapping):
+            raise ValueError("source report contains a malformed run record")
+        rung_index = int(raw_record.get("rung_index", -1))
+        if rung_index < 0 or rung_index >= len(fidelity_profiles):
+            raise ValueError("source run has an invalid rung")
+        run = _seed_run_from_record(
+            raw_record,
+            fidelity_profile=fidelity_profiles[rung_index],
+        )
+        key = (run.rung_index, run.candidate_id, run.seed)
+        if key in records:
+            raise ValueError(f"source report contains a duplicate run: {key}")
+        records[key] = run
+        training_revision = str(run.summary.get("compiler_commit") or "")
+        if len(training_revision) != 40:
+            raise ValueError(f"source run has no compiler commit: {run.run_id}")
+        training_revisions.add(training_revision)
+    if len(training_revisions) != 1:
+        raise ValueError("source runs were produced by different compiler revisions")
+    requested_resource_seconds = sum(
+        run.requested_seconds for run in records.values()
+    )
+    measured_active_seconds = sum(run.active_seconds for run in records.values())
+    if requested_resource_seconds != IMMUTABLE_BUDGET_SECONDS:
+        raise ValueError("source runs do not consume the immutable one-hour budget")
+    if int(source.get("requested_resource_seconds_executed", -1)) != requested_resource_seconds:
+        raise ValueError("source requested-resource aggregate is inconsistent")
+    source_active_seconds = _finite(source.get("measured_active_seconds_executed"))
+    if source_active_seconds is None or not math.isclose(
+        source_active_seconds,
+        measured_active_seconds,
+        rel_tol=1.0e-12,
+        abs_tol=1.0e-9,
+    ):
+        raise ValueError("source measured-active aggregate is inconsistent")
+
+    consumed: set[tuple[int, str, int]] = set()
+    histories: dict[str, list[SeedRun]] = {}
+    latest_state: dict[tuple[str, int], Path] = {}
+    while scheduler.current_rung_index() is not None:
+        ready = scheduler.ready_work()
+        if not ready:
+            raise ValueError("rescored scheduler stalled before completing all rungs")
+        for item in ready:
+            current_runs: list[SeedRun] = []
+            for seed in item.candidate.seeds:
+                key = (item.rung.index, item.candidate.candidate_id, seed)
+                run = records.get(key)
+                if run is None:
+                    raise ValueError(f"source report is missing promoted work: {key}")
+                current_runs.append(run)
+                consumed.add(key)
+                latest_state[(item.candidate.candidate_id, seed)] = run.state_path
+            prior_runs = histories.get(item.candidate.candidate_id, [])
+            snapshot = _snapshot_from_runs(
+                scheduler=scheduler,
+                item=item,
+                runs=current_runs,
+                prior_runs=prior_runs,
+                baseline_metrics=baseline_record["metrics"],
+                baseline_families=baseline_record["family_metrics"],
+                final_rung_index=len(fidelity_profiles) - 1,
+            )
+            scheduler.record_result(snapshot)
+            histories[item.candidate.candidate_id] = [*prior_runs, *current_runs]
+    if consumed != set(records):
+        raise ValueError("source report contains work outside the rescored promotion path")
+
+    scheduler_report = scheduler.report_dict()
+    selected = scheduler.selected_candidate()
+    selected_states = (
+        {
+            str(seed): str(latest_state[(selected.candidate_id, seed)])
+            for seed in selected.seeds
+        }
+        if selected is not None
+        else {}
+    )
+    report = dict(source)
+    report.update(
+        {
+            "scheduler_report": scheduler_report,
+            "search_complete": scheduler_report["search_complete"],
+            "promotion_eligible": scheduler_report["promotion_eligible"],
+            "selected_candidate": None if selected is None else selected.to_dict(),
+            "selected_seed_states": selected_states,
+            "metric_extraction_policy": _metric_extraction_policy(),
+            "selection_evidence_mode": "verified_immutable_posthoc_rescore",
+            "rescore_provenance": {
+                "training_reexecuted": False,
+                "source_report_path": str(source_report_path),
+                "source_report_file_sha256": _sha256_file(source_report_path),
+                "source_report_embedded_sha256": source_embedded_digest,
+                "source_promotion_eligible": source.get("promotion_eligible") is True,
+                "training_revision": next(iter(training_revisions)),
+                "scorer_revision": scorer_revision,
+                "rescored_at_epoch": time.time(),
+                "verified_run_count": len(records),
+            },
+        }
+    )
+    report.pop("report_sha256", None)
+    report["report_sha256"] = _sha256_value(report)
+    _atomic_json(output, report)
+    return report
 
 
 def execute_search(
@@ -1399,29 +1725,7 @@ def execute_search(
             None if selected is None else selected.to_dict()
         ),
         "selected_seed_states": selected_states,
-        "metric_extraction_policy": {
-            "candidate_metrics": (
-                "projection_after_cross_checked_with_state_versioned_snapshot"
-            ),
-            "paired_baseline": "projection_before_from_the_same_optimizer_cycle",
-            "ir_metrics": "learned_ir_projection_objective",
-            "family_autoencoder_metrics": (
-                "observed_family_value_else_global_validation_broadcast"
-            ),
-            "calibration_error": (
-                "absolute_family_score_minus_symbolic_validity_proxy_until_ece_head_exists"
-            ),
-            "round_trip_success_rate": "family_reconstruction_success_rate",
-            "confidence": "three_seed_student_t_95_percent",
-            "early_rung_comparison": (
-                "task_117_baseline_plus_cumulative_paired_before_after_deltas"
-            ),
-            "final_rung_comparison": "absolute_task_117_full_8_canary_metrics",
-            "resource_accounting": (
-                "latest_cycle_seconds_excludes_dataset_and_precycle_evaluation_startup"
-            ),
-            "missing_values": "fail_closed_no_imputation",
-        },
+        "metric_extraction_policy": _metric_extraction_policy(),
     }
     report["report_sha256"] = _sha256_value(report)
     _atomic_json(output, report)
@@ -1445,7 +1749,8 @@ def _default_paths(repo_root: Path, run_id: str) -> dict[str, Path]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--run-id")
+    parser.add_argument("--rescore-from", type=Path)
     parser.add_argument("--repo-root", type=Path)
     parser.add_argument("--python", type=Path)
     parser.add_argument("--baseline-evidence", type=Path)
@@ -1466,18 +1771,34 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if bool(args.run_id) == bool(args.rescore_from):
+        raise SystemExit("exactly one of --run-id or --rescore-from is required")
+    if args.rescore_from and args.dry_run:
+        raise SystemExit("--dry-run cannot be combined with --rescore-from")
     repo_root = (
         args.repo_root.resolve()
         if args.repo_root
         else Path(__file__).resolve().parents[3]
     )
-    python = args.python or repo_root / ".venv-cuda/bin/python"
-    defaults = _default_paths(repo_root, args.run_id)
-    baseline_evidence = (args.baseline_evidence or defaults["evidence"]).resolve()
-    baseline_summary = (args.baseline_summary or defaults["summary"]).resolve()
-    baseline_state = (args.baseline_state or defaults["state"]).resolve()
-    output = (args.output or defaults["output"]).resolve()
-    work_root = (args.work_root or defaults["work_root"]).resolve()
+    if args.rescore_from:
+        source_report = args.rescore_from.resolve()
+        output = (
+            args.output.resolve()
+            if args.output
+            else source_report.with_name(
+                f"{source_report.stem}-causal-rescore.json"
+            )
+        )
+        python = None
+        baseline_evidence = baseline_summary = baseline_state = work_root = None
+    else:
+        python = args.python or repo_root / ".venv-cuda/bin/python"
+        defaults = _default_paths(repo_root, args.run_id)
+        baseline_evidence = (args.baseline_evidence or defaults["evidence"]).resolve()
+        baseline_summary = (args.baseline_summary or defaults["summary"]).resolve()
+        baseline_state = (args.baseline_state or defaults["state"]).resolve()
+        output = (args.output or defaults["output"]).resolve()
+        work_root = (args.work_root or defaults["work_root"]).resolve()
     if args.candidate_count != DEFAULT_CANDIDATE_COUNT:
         raise SystemExit(
             f"the immutable one-hour plan requires {DEFAULT_CANDIDATE_COUNT} candidates"
@@ -1489,6 +1810,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.max_concurrent_trainers not in {1, 2}:
         raise SystemExit("max concurrent trainers must be one or two")
     if args.dry_run:
+        assert args.run_id is not None
+        assert baseline_evidence is not None
+        assert baseline_summary is not None
+        assert baseline_state is not None
+        assert work_root is not None
         evidence = _load_json(baseline_evidence)
         scheduler, baseline = build_scheduler_from_baseline(
             evidence=evidence,
@@ -1536,19 +1862,33 @@ def main(argv: Sequence[str] | None = None) -> int:
             except BlockingIOError:
                 print("another canonical LegalIR writer holds the lock", file=sys.stderr)
                 return 2
-            report = execute_search(
-                repo_root=repo_root,
-                python=python,
-                run_id=args.run_id,
-                baseline_evidence=baseline_evidence,
-                baseline_summary=baseline_summary,
-                baseline_state=baseline_state,
-                output=output,
-                work_root=work_root,
-                candidate_count=args.candidate_count,
-                seeds_per_candidate=args.seeds_per_candidate,
-                requested_trainers=args.max_concurrent_trainers,
-            )
+            if args.rescore_from:
+                report = rescore_search_report(
+                    repo_root=repo_root,
+                    source_report_path=source_report,
+                    output=output,
+                    scorer_revision=_clean_git_revision(repo_root),
+                )
+            else:
+                assert args.run_id is not None
+                assert python is not None
+                assert baseline_evidence is not None
+                assert baseline_summary is not None
+                assert baseline_state is not None
+                assert work_root is not None
+                report = execute_search(
+                    repo_root=repo_root,
+                    python=python,
+                    run_id=args.run_id,
+                    baseline_evidence=baseline_evidence,
+                    baseline_summary=baseline_summary,
+                    baseline_state=baseline_state,
+                    output=output,
+                    work_root=work_root,
+                    candidate_count=args.candidate_count,
+                    seeds_per_candidate=args.seeds_per_candidate,
+                    requested_trainers=args.max_concurrent_trainers,
+                )
     except InterruptedError:
         return 128 + (received_signal[0] or signal.SIGTERM)
     finally:
@@ -1556,9 +1896,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         for signum, handler in previous_handlers.items():
             signal.signal(signum, handler)
         _STOP_REQUESTED.clear()
+    operation = "rescore" if args.rescore_from else "search"
     print(
-        "legal_ir_hparam_search_completed "
-        f"run_id={args.run_id} promotion_eligible={str(report['promotion_eligible']).lower()} "
+        f"legal_ir_hparam_{operation}_completed "
+        f"run_id={report['run_id']} promotion_eligible={str(report['promotion_eligible']).lower()} "
         f"output={output} report_sha256={report['report_sha256']}"
     )
     return 0 if report["promotion_eligible"] else 1
