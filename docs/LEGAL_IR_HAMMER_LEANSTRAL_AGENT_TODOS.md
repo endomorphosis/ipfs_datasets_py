@@ -2165,7 +2165,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-119 Audit and bind the complete legacy feature-transfer inventory
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: legacy-signal-migration
