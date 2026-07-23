@@ -177,6 +177,8 @@ def test_trial_command_is_cuda_only_seeded_and_warm_started(tmp_path: Path) -> N
     assert "--train-count 1" in joined
     assert "--validation-count 1" in joined
     assert "--max-sample-text-chars 600" in joined
+    assert "--autoencoder-projection-deadband-mode enforce" in joined
+    assert "--autoencoder-max-ce-deadband 0.0001" in joined
     assert "--test-every-cycles 0" in joined
     assert "--validation-canary-indices 11,29,41" in joined
     assert "--warm-start-state" in command
