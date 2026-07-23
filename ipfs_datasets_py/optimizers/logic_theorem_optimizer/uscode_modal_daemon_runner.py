@@ -11508,6 +11508,8 @@ def _build_codex_child_command(
         str(args.codex_sandbox),
         "--codex-timeout-seconds",
         str(args.codex_timeout_seconds),
+        "--codex-validation-timeout-seconds",
+        str(getattr(args, "codex_validation_timeout_seconds", 300.0)),
         "--codex-max-executions",
         str(max(0, int(getattr(args, "codex_max_executions", 0) or 0))),
         "--codex-apply-mode",
@@ -12603,6 +12605,11 @@ def _codex_packet_adaptive_worker_plan(
         or dict(packet.get("main_apply_validation", {}) or {}).get("status")
         or ""
     ).lower()
+    if bool(
+        packet.get("isolated_baseline_failure_accepted")
+        or packet.get("main_apply_baseline_failure_accepted")
+    ):
+        validation_status = "passed"
     patch_status = str(packet.get("patch_status") or "").lower()
     apply_error = str(packet.get("main_apply_error") or packet.get("patch_error") or "").lower()
     apply_conflict = bool(
@@ -15236,8 +15243,43 @@ def validate_codex_work_packet_isolated(
     validation["promotion_gate_revalidation_required"] = True
     updated["isolated_validation"] = validation
     if validation.get("status") not in {"passed", "skipped"}:
+        source_root_value = updated.get("source_repo_root") or updated.get("repo_root")
+        baseline_validation: Dict[str, Any] = {
+            "commands": [],
+            "error": "packet has no source_repo_root or repo_root",
+            "status": "unavailable",
+        }
+        if source_root_value:
+            baseline_dir = packet_dir / "isolated-baseline-validation"
+            baseline_dir.mkdir(parents=True, exist_ok=True)
+            baseline_validation = _run_codex_apply_validation(
+                Path(str(source_root_value)).resolve(),
+                baseline_dir,
+                target_files=target_files,
+                validation_commands=validation_commands,
+                timeout_seconds=validation_timeout_seconds,
+            )
+        updated["isolated_baseline_validation"] = baseline_validation
+        if baseline_validation.get("status") not in {"passed", "skipped"}:
+            comparison = _codex_validation_comparison(
+                validation,
+                baseline_validation,
+            )
+            updated["isolated_validation_comparison"] = comparison
+            if not comparison["packet_only_failure_tokens"]:
+                updated["isolated_baseline_failure_accepted"] = True
+                updated["isolated_validation_gate"] = (
+                    "inconclusive_baseline_failed"
+                )
+                _save_packet_if_possible(updated, packet_path)
+                return updated
         refreshed = refresh_codex_work_packet_patch(updated)
         refreshed["isolated_validation"] = validation
+        refreshed["isolated_baseline_validation"] = baseline_validation
+        if updated.get("isolated_validation_comparison"):
+            refreshed["isolated_validation_comparison"] = dict(
+                updated["isolated_validation_comparison"]
+            )
         refreshed["main_apply_status"] = "isolated_validation_failed"
         refreshed["main_apply_error"] = f"isolated validation {validation.get('status')}"
         refreshed["patch_error"] = refreshed["main_apply_error"]
@@ -15265,10 +15307,11 @@ def _validate_and_apply_codex_work_packet(
         validation_commands=validation_commands,
         validation_timeout_seconds=validation_timeout_seconds,
     )
-    if dict(isolated.get("isolated_validation", {})).get("status") not in {
-        "passed",
-        "skipped",
-    }:
+    if (
+        dict(isolated.get("isolated_validation", {})).get("status")
+        not in {"passed", "skipped"}
+        and not bool(isolated.get("isolated_baseline_failure_accepted"))
+    ):
         return isolated
     try:
         with codex_main_apply_lock(
@@ -15350,7 +15393,11 @@ def execute_codex_work_packet(
             main_apply_lock_timeout_seconds=main_apply_lock_timeout_seconds,
         )
     else:
-        refreshed = refresh_codex_work_packet_patch(updated)
+        refreshed = _refresh_and_validate_codex_patch_only_packet(
+            updated,
+            validation_commands=validation_commands,
+            validation_timeout_seconds=validation_timeout_seconds,
+        )
     exec_result["attempt_count"] = 1
 
     if _should_retry_codex_exec_with_fallback(
@@ -15389,8 +15436,30 @@ def execute_codex_work_packet(
                 main_apply_lock_timeout_seconds=main_apply_lock_timeout_seconds,
             )
         else:
-            refreshed = refresh_codex_work_packet_patch(refreshed)
+            refreshed = _refresh_and_validate_codex_patch_only_packet(
+                refreshed,
+                validation_commands=validation_commands,
+                validation_timeout_seconds=validation_timeout_seconds,
+            )
     return refreshed
+
+
+def _refresh_and_validate_codex_patch_only_packet(
+    packet: Mapping[str, Any],
+    *,
+    validation_commands: Optional[Sequence[Sequence[str]]],
+    validation_timeout_seconds: float,
+) -> Dict[str, Any]:
+    """Persist and validate a patch-only candidate inside its worktree."""
+
+    refreshed = refresh_codex_work_packet_patch(packet)
+    if str(refreshed.get("patch_status") or "").strip().lower() != "created":
+        return refreshed
+    return validate_codex_work_packet_isolated(
+        refreshed,
+        validation_commands=validation_commands,
+        validation_timeout_seconds=validation_timeout_seconds,
+    )
 
 
 def _process_text(value: Any) -> str:
@@ -15614,11 +15683,18 @@ def _codex_packet_validation_report(packet: Mapping[str, Any]) -> Dict[str, Any]
     if not main_validation and isolated_validation:
         main_validation = isolated_validation
     baseline_validation = dict(packet.get("main_apply_baseline_validation", {}) or {})
+    if not baseline_validation:
+        baseline_validation = dict(
+            packet.get("isolated_baseline_validation", {}) or {}
+        )
     target_metric_validation = dict(packet.get("target_metric_validation", {}) or {})
     holdout_target_metric_validation = dict(
         packet.get("holdout_target_metric_validation", {}) or {}
     )
-    baseline_failure_accepted = bool(packet.get("main_apply_baseline_failure_accepted"))
+    baseline_failure_accepted = bool(
+        packet.get("main_apply_baseline_failure_accepted")
+        or packet.get("isolated_baseline_failure_accepted")
+    )
     validation_status = (
         "passed"
         if baseline_failure_accepted
@@ -17871,6 +17947,12 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         default="workspace-write",
     )
     parser.add_argument("--codex-timeout-seconds", type=float, default=900.0)
+    parser.add_argument(
+        "--codex-validation-timeout-seconds",
+        type=float,
+        default=300.0,
+        help="Maximum seconds for task-derived validation in a Codex packet worktree.",
+    )
     parser.add_argument(
         "--codex-max-executions",
         type=int,
@@ -22514,13 +22596,20 @@ def _codex_shutdown_drain_window_seconds(args: argparse.Namespace) -> float:
         0.0,
         float(args.codex_timeout_seconds),
     )
-    if str(getattr(args, "codex_apply_mode", "patch_only")) == "apply_to_main":
-        validation_budget = 300.0
+    validation_budget = max(
+        0.0,
+        float(getattr(args, "codex_validation_timeout_seconds", 300.0) or 0.0),
+    )
+    if exec_attempt_count and str(
+        getattr(args, "codex_apply_mode", "patch_only")
+    ) == "apply_to_main":
         lock_budget = max(
             0.0,
             float(getattr(args, "codex_main_apply_lock_timeout_seconds", 0.0) or 0.0),
         )
-        exec_budget += (2.0 * validation_budget) + lock_budget
+        exec_budget += (4.0 * validation_budget) + lock_budget
+    elif exec_attempt_count:
+        exec_budget += 2.0 * validation_budget
     scheduling_budget = max(
         float(getattr(args, "poll_seconds", 0.0) or 0.0),
         float(getattr(args, "codex_vector_max_bundle_wait_seconds", 0.0) or 0.0),
@@ -22597,6 +22686,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_execution_count": 0,
             "codex_execution_failure_count": 0,
             "codex_max_executions": max_codex_executions,
+            "codex_validation_timeout_seconds": args.codex_validation_timeout_seconds,
             "codex_main_apply_count": 0,
             "codex_main_apply_failure_count": 0,
             "codex_main_apply_lock_timeout_seconds": (
@@ -22642,6 +22732,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_main_apply_failure_count", 0)
     summary.setdefault("codex_main_apply_repair_count", 0)
     summary["codex_max_executions"] = max_codex_executions
+    summary["codex_validation_timeout_seconds"] = args.codex_validation_timeout_seconds
     summary.setdefault("codex_transient_requeue_count", 0)
     runtime_telemetry = RuntimeTelemetry(args.run_id)
     attach_runtime_telemetry(summary, runtime_telemetry)
@@ -22668,6 +22759,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_main_apply_lock_timeout_seconds": (
                 args.codex_main_apply_lock_timeout_seconds
             ),
+            "codex_validation_timeout_seconds": args.codex_validation_timeout_seconds,
             "codex_scope": args.codex_scope,
             "codex_task_embeddings_provider": args.codex_task_embeddings_provider,
             "codex_vector_index_path": str(_codex_vector_index_path(args, queue_path)),
@@ -22781,6 +22873,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         sandbox=args.codex_sandbox,
                         timeout_seconds=args.codex_timeout_seconds,
                         validation_commands=_codex_validation_commands_for_todos(claimed),
+                        validation_timeout_seconds=args.codex_validation_timeout_seconds,
                     )
                     exec_status = str(
                         dict(packet.get("codex_exec", {})).get("status", "unknown")
@@ -22959,6 +23052,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "isolated_validation_status": dict(
                         packet.get("isolated_validation", {})
                     ).get("status"),
+                    "isolated_baseline_failure_accepted": bool(
+                        packet.get("isolated_baseline_failure_accepted")
+                    ),
                     "main_commit_status": dict(packet.get("main_commit", {})).get("status"),
                     "packet_path": packet.get("packet_path"),
                     "patch_path": packet.get("patch_path"),

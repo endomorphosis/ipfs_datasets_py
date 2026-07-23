@@ -328,6 +328,7 @@ CMD=(
   --codex-exec-mode "${CODEX_EXEC_MODE}"
   --codex-sandbox "${CODEX_SANDBOX:-danger-full-access}"
   --codex-timeout-seconds "${CODEX_TIMEOUT_SECONDS:-420}"
+  --codex-validation-timeout-seconds "${CODEX_VALIDATION_TIMEOUT_SECONDS:-120}"
   --codex-max-executions "${CODEX_MAX_EXECUTIONS:-1}"
   --codex-apply-mode "${CODEX_APPLY_MODE:-patch_only}"
   --codex-commit-mode "${CODEX_COMMIT_MODE:-none}"

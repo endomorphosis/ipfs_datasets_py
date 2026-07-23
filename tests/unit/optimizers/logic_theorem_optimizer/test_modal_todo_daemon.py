@@ -5827,13 +5827,14 @@ def test_codex_shutdown_drain_window_covers_fallback_attempts() -> None:
         codex_main_apply_lock_timeout_seconds=300.0,
         codex_sandbox="workspace-write",
         codex_timeout_seconds=180.0,
+        codex_validation_timeout_seconds=300.0,
         codex_vector_max_bundle_wait_seconds=30.0,
         poll_seconds=5.0,
     )
 
-    assert runner._codex_shutdown_drain_window_seconds(args) == 405.0
+    assert runner._codex_shutdown_drain_window_seconds(args) == 1005.0
     args.codex_apply_mode = "apply_to_main"
-    assert runner._codex_shutdown_drain_window_seconds(args) == 1305.0
+    assert runner._codex_shutdown_drain_window_seconds(args) == 1905.0
 
 
 def test_codex_shutdown_drain_window_does_not_reserve_impossible_fallback() -> None:
@@ -5843,11 +5844,12 @@ def test_codex_shutdown_drain_window_does_not_reserve_impossible_fallback() -> N
         codex_main_apply_lock_timeout_seconds=300.0,
         codex_sandbox="danger-full-access",
         codex_timeout_seconds=180.0,
+        codex_validation_timeout_seconds=120.0,
         codex_vector_max_bundle_wait_seconds=30.0,
         poll_seconds=5.0,
     )
 
-    assert runner._codex_shutdown_drain_window_seconds(args) == 225.0
+    assert runner._codex_shutdown_drain_window_seconds(args) == 465.0
     args.codex_exec_mode = "packet_only"
     assert runner._codex_shutdown_drain_window_seconds(args) == 45.0
 
@@ -8695,13 +8697,107 @@ def test_codex_work_packet_executor_writes_prompt_and_refreshes_patch(tmp_path, 
         packet,
         codex_command=str(codex_stub),
         timeout_seconds=1.0,
+        validation_commands=(),
     )
 
     assert updated["codex_exec"]["status"] == "succeeded"
     assert updated["patch_status"] == "created"
     assert updated["patch_path"]
+    assert updated["isolated_validation"]["status"] in {"passed", "skipped"}
     assert Path(updated["codex_exec"]["prompt_path"]).exists()
     assert Path(updated["codex_exec"]["stdout_path"]).read_text(encoding="utf-8") == "ok\n"
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_patch_only_packet_preserves_failed_validation_evidence(tmp_path) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    codex_stub = tmp_path / "codex-stub.py"
+    codex_stub.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "args = sys.argv\n"
+        "worktree = Path(args[args.index('--cd') + 1])\n"
+        "sys.stdin.read()\n"
+        "(worktree / 'README.md').write_text("
+        "'test repo\\ninvalid candidate\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    codex_stub.chmod(0o755)
+
+    updated = execute_codex_work_packet(
+        packet,
+        codex_command=str(codex_stub),
+        timeout_seconds=1.0,
+        validation_commands=(
+            (
+                sys.executable,
+                "-c",
+                "from pathlib import Path; raise SystemExit('invalid candidate' in Path('README.md').read_text())",
+            ),
+        ),
+        validation_timeout_seconds=5.0,
+    )
+
+    assert updated["codex_exec"]["status"] == "succeeded"
+    assert updated["isolated_validation"]["status"] == "failed"
+    assert updated["patch_status"] == "isolated_validation_failed"
+    assert updated["patch_path"]
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_patch_only_packet_accepts_unchanged_baseline_failures(tmp_path) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    codex_stub = tmp_path / "codex-stub.py"
+    codex_stub.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "args = sys.argv\n"
+        "worktree = Path(args[args.index('--cd') + 1])\n"
+        "sys.stdin.read()\n"
+        "(worktree / 'README.md').write_text("
+        "'test repo\\nbaseline-compatible candidate\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    codex_stub.chmod(0o755)
+
+    updated = execute_codex_work_packet(
+        packet,
+        codex_command=str(codex_stub),
+        timeout_seconds=1.0,
+        validation_commands=((sys.executable, "-c", "raise SystemExit(3)"),),
+        validation_timeout_seconds=5.0,
+    )
+
+    assert updated["codex_exec"]["status"] == "succeeded"
+    assert updated["isolated_validation"]["status"] == "failed"
+    assert updated["isolated_baseline_validation"]["status"] == "failed"
+    assert updated["isolated_baseline_failure_accepted"] is True
+    assert not updated["isolated_validation_comparison"][
+        "packet_only_failure_tokens"
+    ]
+    assert updated["patch_status"] == "created"
+    adaptive_plan = runner._codex_packet_adaptive_worker_plan(
+        updated,
+        transient_failure_rate=0.0,
+        requested_workers=2,
+    )
+    assert adaptive_plan["signals"]["validation_failure_rate"] == 0.0
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],
@@ -8841,6 +8937,7 @@ def test_codex_work_packet_executor_retries_with_sandbox_fallback(tmp_path, monk
         codex_command=str(codex_stub),
         sandbox="workspace-write",
         timeout_seconds=1.0,
+        validation_commands=(),
     )
 
     codex_calls = call_log.read_text(encoding="utf-8").splitlines()
@@ -8851,6 +8948,7 @@ def test_codex_work_packet_executor_retries_with_sandbox_fallback(tmp_path, monk
     assert updated["codex_exec"]["fallback_from_sandbox"] == "workspace-write"
     assert updated["patch_status"] == "created"
     assert updated["patch_path"]
+    assert updated["isolated_validation"]["status"] in {"passed", "skipped"}
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],
