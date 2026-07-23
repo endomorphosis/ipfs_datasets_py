@@ -1473,17 +1473,36 @@ class ModalAutoencoderTrainingState:
         max_entries_per_group: int = (
             DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
         ),
+        *,
+        capacity_policy: Any = None,
     ) -> bool:
-        """Return whether any coupled sparse-key group exceeds its global cap."""
+        """Return whether a coupled sparse-key group exceeds its capacity.
+
+        Passing ``capacity_policy`` enables the per-group policy introduced by
+        the evidence-aware sparse-tail selector.  The positional integer is
+        retained as the accepted-state rollout compatibility path.
+        """
 
         limit = int(max_entries_per_group)
         if limit < 1:
             raise ValueError("max_entries_per_group must be positive")
-        for fields in MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.values():
+        if (
+            capacity_policy is not None
+            and getattr(capacity_policy, "mode", "") == "accepted_state_v2"
+        ):
+            return False
+        for group_name, fields in (
+            MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()
+        ):
+            group_limit = (
+                int(capacity_policy.budget_for(group_name))
+                if capacity_policy is not None
+                else limit
+            )
             keys: set[Any] = set()
             for field_name in fields:
                 keys.update(getattr(self, field_name))
-                if len(keys) > limit:
+                if len(keys) > group_limit:
                     return True
         return False
 
@@ -1492,6 +1511,10 @@ class ModalAutoencoderTrainingState:
         max_entries_per_group: int = (
             DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
         ),
+        *,
+        capacity_policy: Any = None,
+        capacity_evidence: Optional[Mapping[str, Mapping[Any, Any]]] = None,
+        accepted_state: Optional["ModalAutoencoderTrainingState"] = None,
     ) -> Dict[str, Any]:
         """Bound reusable sparse rows while preserving coupled head alignment.
 
@@ -1503,6 +1526,21 @@ class ModalAutoencoderTrainingState:
         limit = int(max_entries_per_group)
         if limit < 1:
             raise ValueError("max_entries_per_group must be positive")
+        if capacity_policy is not None:
+            # Lazy import avoids making the core state class depend on the
+            # optional migration/selection layer during module initialization.
+            from .modal_autoencoder_feature_capacity import (
+                apply_modal_autoencoder_feature_capacity,
+            )
+
+            result = apply_modal_autoencoder_feature_capacity(
+                self,
+                policy=capacity_policy,
+                evidence_by_group=capacity_evidence,
+                accepted_state=accepted_state,
+                inplace=True,
+            )
+            return dict(result.report)
 
         before_entry_count = self.generalizable_entry_count()
         compacted_fields: set[str] = set()
